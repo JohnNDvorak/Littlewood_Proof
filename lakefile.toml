@@ -1,0 +1,11 @@
+name = "Littlewood"
+version = "0.1.0"
+defaultTargets = ["Littlewood"]
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "master"
+
+[[lean_lib]]
+name = "Littlewood"

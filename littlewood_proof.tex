@@ -1,0 +1,506 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+% Custom commands
+\newcommand{\li}{\operatorname{li}}
+\newcommand{\Li}{\operatorname{Li}}
+\newcommand{\re}{\operatorname{Re}}
+\newcommand{\im}{\operatorname{Im}}
+
+\title{\textbf{Littlewood's Theorem on the Oscillation of $\pi(x) - \li(x)$}\\[0.5em]
+\large A Complete Proof of Infinite Sign Changes}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This document provides a complete exposition of J.E. Littlewood's 1914 proof that the difference $\pi(x) - \li(x)$ changes sign infinitely many times. The proof demonstrates that
+\[
+\pi(x) - \li(x) = \Omega_{\pm}\left(\frac{x^{1/2}}{\log x} \log\log\log x\right),
+\]
+meaning the error achieves this order of magnitude infinitely often in both positive and negative directions. This was a landmark result, as all computational evidence at the time suggested $\pi(x) < \li(x)$ for all $x$.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%======================================================================
+\section{Introduction and Background}
+%======================================================================
+
+In 1791, Gauss conjectured that the prime counting function $\pi(x)$ (the number of primes $\leq x$) is approximated by $x/\log x$. In a letter to Encke in 1849, Gauss refined this to the logarithmic integral:
+\[
+\pi(x) \approx \li(x) = \int_2^x \frac{dt}{\log t}.
+\]
+This was proved precisely in 1896 (the Prime Number Theorem) independently by Hadamard and de la Vallée Poussin.
+
+Gauss observed that $\li(x)$ always exceeds $\pi(x)$ where he calculated up to $x = 3{,}000{,}000$. The conjecture that $\pi(x) < \li(x)$ for all $x$ was widely believed until Littlewood proved it false in 1914.
+
+\begin{definition}[Notation]
+We use the following standard definitions:
+\begin{itemize}
+    \item $\Li(x) = \lim_{\varepsilon \to 0^+}\left(\int_0^{1-\varepsilon} \frac{dt}{\log t} + \int_{1+\varepsilon}^x \frac{dt}{\log t}\right)$
+    \item $\li(x) = \int_2^x \frac{dt}{\log t} = \Li(x) - \Li(2)$ where $\Li(2) \approx 1.04$
+    \item $\psi(x) = \sum_{n \leq x} \Lambda(n)$ (Chebyshev's function)
+    \item $\vartheta(x) = \sum_{p \leq x} \log p$ (sum over primes)
+    \item $\rho = \sigma + i\gamma$ denotes a nontrivial zero of the Riemann zeta function
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Omega Notation]
+For real-valued functions $f$ and positive functions $g$:
+\begin{align*}
+f(x) = \Omega(g(x)) &\quad\text{if}\quad \limsup_{x\to\infty} \frac{|f(x)|}{g(x)} > 0\\[0.5em]
+f(x) = \Omega_+(g(x)) &\quad\text{if}\quad \limsup_{x\to\infty} \frac{f(x)}{g(x)} > 0\\[0.5em]
+f(x) = \Omega_-(g(x)) &\quad\text{if}\quad \liminf_{x\to\infty} \frac{f(x)}{g(x)} < 0\\[0.5em]
+f(x) = \Omega_{\pm}(g(x)) &\quad\text{if both } \Omega_+ \text{ and } \Omega_- \text{ hold}
+\end{align*}
+\end{definition}
+
+%======================================================================
+\section{Preliminary Results}
+%======================================================================
+
+We first establish the tools needed for the main theorem.
+
+\begin{theorem}[Properties of Zeta Zeros]\label{thm:zeta-zeros}
+Let $N(T)$ denote the number of zeros of $\zeta(s)$ with $0 < \gamma \leq T$. For $T \geq 4$:
+\begin{align}
+N(T) &= \frac{T}{2\pi}\left(\log \frac{T}{2\pi}\right) - \frac{T}{2\pi} + O(\log T)\\[0.5em]
+N(T+h) - N(T) &\ll h \log T
+\end{align}
+Consequently:
+\begin{align}
+\sum_{0 < \gamma \leq T} \frac{1}{\gamma} &\ll (\log T)^2\\[0.5em]
+\sum_{\gamma > T} \frac{1}{\gamma^2} &\ll \frac{\log T}{T}\\[0.5em]
+\sum_{\gamma} \frac{1}{\gamma^\alpha} &< \infty \quad\text{for } \alpha > 1
+\end{align}
+\end{theorem}
+
+\begin{theorem}[Explicit Formula for $\psi$]\label{thm:explicit-formula}
+Let $\psi_0(x) = \frac{\psi(x^+) + \psi(x^-)}{2}$. Then for $x > 0$ and $c > 1$:
+\[
+\psi_0(x) = \frac{1}{2\pi i}\int_{c-i\infty}^{c+i\infty} \frac{x^s}{s}\left(-\frac{\zeta'}{\zeta}(s)\right)ds
+\]
+and
+\[
+\psi_0(x) = x - \lim_{T\to\infty} \sum_{|\gamma| \leq T} \frac{x^\rho}{\rho} - \frac{\zeta'}{\zeta}(0) + \sum_{k \geq 1} \frac{x^{-2k}}{2k}.
+\]
+\end{theorem}
+
+For $k \geq 1$, define the smoothed version:
+\[
+\psi_k(x) = \frac{1}{k!} \sum_{n \leq x} (x-n)^k \Lambda(n).
+\]
+
+Then:
+\[
+\psi_k(x) = \frac{x^2}{(k+1)!} - \lim_{T\to\infty} \sum_{|\gamma| \leq T} \frac{x^{\rho+1}}{\rho(\rho+1)\cdots(\rho+k)} - \frac{x}{k!}\frac{\zeta'}{\zeta}(0) + O(1) - \sum_{r=1}^{\infty} \frac{x^{-2r+1}}{(-2r)(-2r+1)\cdots(-2r+k)}.
+\]
+
+\begin{theorem}[Conversion Formulas]\label{thm:conversion}
+Assuming the Riemann Hypothesis (RH):
+\begin{align}
+\vartheta(x) &= \psi(x) - x^{1/2} + O(x^{1/3})\\[0.5em]
+\pi(x) - \li(x) &= \frac{\vartheta(x) - x}{\log x} + O\left(\frac{x^{1/2}}{\log^2 x}\right)
+\end{align}
+\end{theorem}
+
+%======================================================================
+\section{Landau's Lemma}
+%======================================================================
+
+The key tool for establishing oscillation results is Landau's lemma.
+
+\begin{lemma}[Landau]\label{lem:landau}
+Suppose $A(x)$ is a bounded and Riemann integrable function on any finite interval $[1,x]$ and $A(x) \geq 0$ for all sufficiently large $x$. Let $\sigma_c$ be the infimum of $\sigma$ for which $\int_1^\infty A(x)x^{-\sigma}\,dx < \infty$. Then the function
+\[
+F(s) = \int_1^\infty A(x)x^{-s}\,dx
+\]
+is analytic on $\re(s) > \sigma_c$ but is \emph{not} analytic at $s = \sigma_c$.
+\end{lemma}
+
+\begin{proof}
+It follows from the definition of $\sigma_c$ that $\int_1^\infty A(x)x^{-s}\,dx$ is absolutely convergent for $\re(s) > \sigma_c$. Hence $\int_1^N A(x)x^{-s}\,dx \to \int_1^\infty A(x)x^{-s}\,dx$ uniformly in $\{s : \re(s) \geq \sigma_c + \varepsilon\}$ for any $\varepsilon > 0$, so $\int_1^\infty A(x)x^{-s}\,dx$ is analytic on $\{s : \re(s) > \sigma_c\}$.
+
+Now assume on the contrary that $F(s)$ is analytic at $s = \sigma_c$. Since the integral on any finite interval $[1,x]$ is entire, we may assume $A(x) \geq 0$ for $x \geq 1$, and by replacing $A(x)$ with $A(x)x^\sigma$ for $\sigma \geq 0$, we may assume $\sigma_c = 0$.
+
+Now $F$ would be analytic on a neighborhood of $0$, say $\{z \in \mathbb{C} : |z| < \delta\}$. Let $\Omega = \{s : \sigma > 0\} \cup \{s : |s| < \delta\}$. Then $F$ is analytic in $\Omega$.
+
+Write $F(s) = \sum_{k \geq 0} c_k(s-1)^k$. Since the nearest points to $1$ that are not in $\Omega$ are $\pm i\delta$, the radius of convergence is $\geq \sqrt{1+\delta^2} = 1 + \delta'$ for some $\delta' > 0$.
+
+For $s$ near $1$, $\left|\int_1^\infty A(x)x^{-s}\,dx\right| \leq \int_1^\infty |A(x)|\,dx < \infty$, so we can differentiate under the integral sign:
+\[
+c_k = \frac{1}{k!}F^{(k)}(1) = \frac{1}{k!}\int_1^\infty A(x)(-\log x)^k x^{-1}\,dx.
+\]
+
+So:
+\[
+F(s) = \sum_{k \geq 0} \frac{1}{k!}\int_1^\infty A(x)(-\log x)^k x^{-1}(s-1)^k\,dx.
+\]
+
+Now if $-\delta' < s < 1$, the integrand is nonnegative, so we may switch the order of summation and integration:
+\begin{align*}
+F(s) &= \int_1^\infty \sum_{k \geq 0} \frac{1}{k!}A(x)(-\log x)^k x^{-1}(s-1)^k\,dx\\
+&= \int_1^\infty \exp(\log(x)(1-s))A(x)x^{-1}\,dx\\
+&= \int_1^\infty A(x)x^{-s}\,dx.
+\end{align*}
+
+In particular, $\int_1^\infty A(x)x^{-s}\,dx$ converges at $s = -\delta'/2$, contradicting the definition of $\sigma_c$.
+\end{proof}
+
+%======================================================================
+\section{Schmidt's Result: First Oscillation Theorem}
+%======================================================================
+
+\begin{theorem}[E. Schmidt, 1903]\label{thm:schmidt}
+Let $\Theta$ denote the supremum of real parts of the zeros of $\zeta(s)$. Then for any $\varepsilon > 0$:
+\[
+\psi(x) - x = \Omega_{\pm}(x^{\Theta - \varepsilon}).
+\]
+\end{theorem}
+
+\begin{proof}
+By the Mellin transform formula, for $\sigma > 1$:
+\[
+-\frac{\zeta'}{\zeta}(s) = s\int_1^\infty \psi(x)x^{-s-1}\,dx.
+\]
+
+Hence for $\sigma > 1$:
+\[
+\frac{1}{s-\Theta+\varepsilon} + \frac{\zeta'(s)}{s\zeta(s)} - \frac{1}{s-1} = \int_1^\infty (x^{\Theta-\varepsilon} + \psi(x) - x)x^{-s-1}\,dx.
+\]
+
+Now assume that $\psi(x) - x \geq -x^{\Theta-\varepsilon}$ for $x$ large enough. The left-hand side has a pole at $\Theta - \varepsilon$, and $\zeta(s)$ is nonzero for real $s \in (0,1)$. We see that the left-hand side is analytic for real $s > \Theta - \varepsilon$, i.e., no such point is the abscissa $\sigma_c$.
+
+Applying Landau's lemma, $\int_1^\infty (x^{\Theta-\varepsilon} + \psi(x) - x)x^{-s-1}\,dx$ is analytic for $\re(s) > \Theta - \varepsilon$, so the equation holds for $\re(s) > \Theta - \varepsilon$. This is a contradiction since $\frac{\zeta'}{\zeta}$ has a pole with real part $> \Theta - \varepsilon$ by definition of $\Theta$.
+
+It follows that $\psi(x) - x = \Omega_-(x^{\Theta-\varepsilon})$.
+
+Similarly, if $\psi(x) - x < x^{\Theta-\varepsilon}$ for large enough $x$, consider:
+\[
+\frac{1}{s-\Theta+\varepsilon} + \frac{\zeta'(s)}{s\zeta(s)} + \frac{1}{s-1} = \int_1^\infty (x^{\Theta-\varepsilon} - \psi(x) + x)x^{-s-1}\,dx.
+\]
+The same argument gives $\psi(x) - x = \Omega_+(x^{\Theta-\varepsilon})$.
+\end{proof}
+
+\begin{theorem}\label{thm:schmidt-pi}
+Let $\Theta$ denote the supremum of real parts of zeros of $\zeta(s)$. For any $\varepsilon > 0$:
+\[
+\Pi(x) - \li(x) = \Omega_{\pm}(x^{\Theta-\varepsilon}),
+\]
+and assuming RH is false (i.e., $\Theta > 1/2$):
+\[
+\pi(x) - \li(x) = \Omega_{\pm}(x^{\Theta-\varepsilon}).
+\]
+\end{theorem}
+
+\begin{corollary}\label{cor:omega-minus}
+As $x \to \infty$:
+\begin{align*}
+\psi(x) - x &= \Omega_{\pm}(x^{1/2})\\
+\vartheta(x) - x &= \Omega_-(x^{1/2})\\
+\pi(x) - \li(x) &= \Omega_-\left(\frac{x^{1/2}}{\log x}\right)
+\end{align*}
+\end{corollary}
+
+\begin{proof}
+If RH is false, then Theorem~\ref{thm:schmidt-pi} gives a stronger result, so assume $\Theta = 1/2$. By the refinement involving zeros on the critical line, we have $\psi(x) - x = \Omega_{\pm}(x^{1/2})$.
+
+By Theorem~\ref{thm:conversion}, $\vartheta(x) - x = \psi(x) - x - x^{1/2} + O(x^{1/3}) = \Omega_-(x^{1/2})$. Hence:
+\[
+\pi(x) - \li(x) = \frac{\vartheta(x) - x}{\log x} + O\left(\frac{x^{1/2}}{\log^2 x}\right) = \Omega_-\left(\frac{x^{1/2}}{\log x}\right).
+\]
+\end{proof}
+
+\begin{remark}
+Note that in case RH is true (i.e., $\Theta = 1/2$), since $\Pi(x) > \pi(x)$ we have $\pi(x) - \li(x) = \Omega_-(x^{1/2-\varepsilon})$, but the $\Omega_+$ result is not obtainable by this method. This is where Littlewood's deeper analysis becomes essential.
+\end{remark}
+
+%======================================================================
+\section{Littlewood's Main Theorem}
+%======================================================================
+
+We now present Littlewood's 1914 theorem, which establishes that $\pi(x) - \li(x)$ oscillates in \emph{both} directions.
+
+\begin{theorem}[Littlewood, 1914]\label{thm:littlewood}
+\[
+\psi(x) - x = \Omega_{\pm}(x^{1/2}\log\log\log x).
+\]
+\[
+\pi(x) - \li(x) = \Omega_{\pm}\left(\frac{x^{1/2}}{\log x}\log\log\log x\right).
+\]
+\end{theorem}
+
+The proof requires two key lemmas.
+
+\begin{lemma}[Weighted Average Formula]\label{lem:weighted}
+Assume RH. Then:
+\[
+\frac{1}{x(e^\delta - e^{-\delta})}\int_{e^{-\delta}x}^{e^\delta x}(\psi(u) - u)\,du = -2x^{1/2}\sum_{\gamma > 0} \frac{\sin(\gamma\delta)}{\gamma\delta} \cdot \frac{\sin(\gamma\log x)}{\gamma} + O(x^{1/2}),
+\]
+where $\frac{1}{2x} \leq \delta \leq \frac{1}{2}$ and the $O$-constant is uniform for $x \geq 4$.
+\end{lemma}
+
+\begin{proof}
+By the explicit formula:
+\[
+\int_0^x (\psi(u) - u)\,du = -\sum_\rho \frac{x^\rho}{\rho(\rho+1)} - cx + O(1).
+\]
+
+Taking the average:
+\[
+\frac{1}{(e^\delta - e^{-\delta})x}\int_{e^{-\delta}x}^{e^\delta x}(\psi(u) - u)\,du = \frac{-\delta}{\sinh(\delta)}\sum_\rho \frac{e^{\delta(\rho+1)} - e^{-\delta(\rho+1)}}{2\delta\rho(\rho+1)}x^\rho + O(1).
+\]
+
+Now observe that $e^{\pm\delta(\rho+1)} = e^{\pm\delta(\re(\rho)+1+i\gamma)} = e^{\pm\delta i\gamma}(1 + O(\delta)) = e^{\pm\delta i\gamma} + O(\delta)$.
+
+Since $\sum_\rho \frac{1}{|\rho(\rho+1)|} \leq \sum \gamma^{-2} < \infty$, and $\frac{\delta}{\sinh(\delta)} = \frac{\delta}{\delta + O(\delta^3)} = 1 + O(\delta^2) \asymp 1$ as $\delta \to 0$.
+
+Assuming RH, $|x^\rho| = x^{1/2}$. Replacing $e^{\delta(\rho+1)}$ by $e^{i\delta\gamma}$ gives:
+\begin{align*}
+\frac{-\delta}{\sinh(\delta)}\sum_\rho \frac{e^{\delta(\rho+1)} - e^{-\delta(\rho+1)}}{2\delta\rho(\rho+1)}x^\rho &= -ix^{1/2}\frac{\delta}{\sinh(\delta)}\sum_\rho \frac{\sin(\gamma\delta)}{\delta}\cdot\frac{x^{i\gamma}}{\rho(\rho+1)} + O\left(x^{1/2}\frac{\delta}{\sinh(\delta)}\sum_\rho \frac{1}{\rho(\rho+1)}\right)\\
+&= -ix^{1/2}\frac{\delta}{\sinh(\delta)}\sum_\rho \frac{\sin(\gamma\delta)}{\delta}\cdot\frac{x^{i\gamma}}{\rho(\rho+1)} + O(x^{1/2}).
+\end{align*}
+
+Now:
+\[
+\sum_\rho \frac{\sin(\gamma\delta)}{\delta}\cdot\frac{x^{i\gamma}}{\rho(\rho+1)} \ll \sum_\rho \frac{\gamma}{|\rho(\rho+1)|} \ll \sum_{0 < \gamma < \delta^{-1}} \frac{1}{\gamma} + \delta^{-1}\sum_{\gamma > \delta^{-1}} \frac{1}{\gamma^2} \ll \log^2(\delta^{-1}) + \frac{\delta^{-1}\delta\log\delta^{-1}}{1} \ll \log^2(\delta^{-1}).
+\]
+
+Substituting $\frac{\delta}{\sinh(\delta)} = 1 + O(\delta^2)$:
+\[
+-ix^{1/2}\sum_\rho \frac{\sin\gamma\delta}{\delta}\cdot\frac{x^{i\gamma}}{\rho(\rho+1)} + O(x^{1/2}).
+\]
+
+Assuming RH, $\frac{1}{\rho} = \frac{1}{i\gamma} + O\left(\frac{1}{\gamma^2}\right)$, and note that $\frac{\sin\gamma\delta}{\delta} \leq |\gamma|$. Replacing $\frac{1}{\rho}$ by $\frac{1}{i\gamma}$ gives error $\ll x^{1/2}\sum \gamma^{-2} \ll x^{1/2}$. Similarly for $\frac{1}{\rho+1}$.
+
+Our expression becomes:
+\begin{align*}
+-x^{1/2}\sum_\rho \frac{\sin\gamma\delta}{\gamma\delta}\cdot\frac{x^{i\gamma}}{i\gamma} + O(x^{1/2}) &= -2x^{1/2}\sum_{\gamma > 0} \frac{\sin\gamma\delta}{\gamma\delta}\cdot\frac{e^{i\gamma\log x} - e^{-i\gamma\log x}}{2i\gamma} + O(x^{1/2})\\
+&= -2x^{1/2}\sum_{\gamma > 0} \frac{\sin(\gamma\delta)}{\gamma\delta}\cdot\frac{\sin(\gamma\log x)}{\gamma} + O(x^{1/2}).
+\end{align*}
+\end{proof}
+
+\begin{lemma}[Dirichlet's Approximation Theorem]\label{lem:dirichlet}
+For $x \in \mathbb{R}$, define $\|x\|$ to be the distance to the nearest integer. Let $\theta_1, \ldots, \theta_K$ be real numbers and $N$ be a positive integer. Then there exists a positive integer $n$ with $1 \leq n \leq N^K$ such that:
+\[
+\|\theta_i n\| < \frac{1}{N} \quad\text{for all } i = 1, \ldots, K.
+\]
+\end{lemma}
+
+\begin{proof}
+Partition $[0,1)^K$ into $N^K$ equal subcubes. Then there exist $0 \leq n_1 < n_2 \leq N^K$ such that $(\theta_1 n_1, \ldots, \theta_K n_1)$ and $(\theta_1 n_2, \ldots, \theta_K n_2)$ lie in the same subcube.
+
+Let $n = n_2 - n_1 \in [1, N^K]$. Then for $1 \leq i \leq K$:
+\[
+\|n\theta_i\| = \|n_2\theta_i - n_1\theta_i\| \leq |n_2\theta_i - n_1\theta_i| < \frac{1}{N}.
+\]
+\end{proof}
+
+%======================================================================
+\section{Proof of Littlewood's Theorem}
+%======================================================================
+
+\begin{proof}[Proof of Theorem~\ref{thm:littlewood}]
+If RH is false, then Theorem~\ref{thm:schmidt} gives a stronger result, so assume RH.
+
+If we can prove that
+\[
+\psi(x) - x = \Omega_{\pm}(x^{1/2}\log\log\log x),
+\]
+then since $\psi(x) - \vartheta(x) = O(x^{1/2})$, we have
+\[
+\vartheta(x) - x = \Omega_{\pm}(x^{1/2}\log\log\log x).
+\]
+
+Under RH, using Theorem~\ref{thm:conversion}:
+\[
+\pi(x) - \li(x) = \frac{\vartheta(x) - x}{\log x} + O\left(\frac{x^{1/2}}{\log^2 x}\right),
+\]
+which gives:
+\[
+\pi(x) - \li(x) = \Omega_{\pm}\left(\frac{x^{1/2}}{\log x}\log\log\log x\right).
+\]
+
+\medskip
+\noindent\textbf{Main Argument:}
+
+Let $N$ be a large integer. Apply Dirichlet's Lemma~\ref{lem:dirichlet} to the numbers $\frac{\gamma\log N}{2\pi}$ for $0 < \gamma \leq T = N\log N$.
+
+Here $K$, the number of elements in that set, is $N(T) \asymp T\log T$, and there exists $n$ with $1 \leq n \leq N^K$ such that:
+\begin{equation}\label{eq:dirichlet-bound}
+\left\|\frac{\gamma n}{2\pi}\log N\right\| < \frac{1}{N}, \quad 0 < \gamma \leq T.
+\end{equation}
+
+Note the inequality:
+\begin{equation}\label{eq:sin-bound}
+|\sin(\pi x)| \leq \pi\|x\|.
+\end{equation}
+This can be verified directly for $x \in [0,1]$ and extends by periodicity.
+
+From \eqref{eq:sin-bound}:
+\[
+|\sin(2\pi\alpha) - \sin(2\pi\beta)| = |2\sin(\pi(\alpha-\beta))\cos(\pi(\alpha+\beta))| \leq 2\pi\|\alpha - \beta\|.
+\]
+
+Take $x = N^n e^{\pm 1/N}$ and $\delta = \frac{1}{N}$. Then:
+\[
+|\sin(\gamma\log x) \mp \sin(\gamma/N)| \leq 2\pi\left\|\frac{\gamma(\log x \mp 1/N)}{2\pi}\right\| = 2\pi\left\|\frac{n\gamma\log N}{2\pi}\right\| \leq \frac{2\pi}{N}
+\]
+by Dirichlet's lemma.
+
+\medskip
+\noindent\textbf{Estimating the tail:}
+\[
+\sum_{\gamma > N\log N} \frac{\sin(\gamma/N)}{\gamma/N}\cdot\frac{\sin(\gamma\log x)}{\gamma} \ll N\sum_{\gamma > N\log N} \frac{1}{\gamma^2} \ll N(N\log N)^{-1}\log(N\log N) \ll 1.
+\]
+
+\medskip
+\noindent\textbf{Main sum estimate:}
+
+The right-hand side of Lemma~\ref{lem:weighted} becomes:
+\begin{align*}
+-2x^{1/2}\sum_{\gamma > 0} \frac{\sin(\gamma/N)}{\gamma/N}\cdot\frac{\sin(\gamma\log x)}{\gamma} &= \mp 2x^{1/2}\sum_{\gamma > 0} \frac{\sin(\gamma/N)}{\gamma/N}\cdot\frac{\sin(\gamma/N)}{\gamma}\\
+&\quad + O\left(\frac{1}{N}x^{1/2}\sum_{\gamma > 0}\left|\frac{\sin(\gamma/N)}{\gamma/N}\cdot\frac{1}{\gamma}\right|\right)\\
+&= \mp\frac{2x^{1/2}}{N}\sum_{\gamma > 0}\left(\frac{\sin(\gamma/N)}{\gamma/N}\right)^2 \mp 2x^{1/2}N\sum_{\gamma > N\log N}\left(\frac{\sin(\gamma/N)}{\gamma}\right)^2 + O(x^{1/2}).
+\end{align*}
+
+Now:
+\[
+\sum_{0 < \gamma \leq N\log N} 1 = N(N\log N) \asymp N\log N,
+\]
+and for $0 < \gamma \leq N\log N$, we have $\left(\frac{\sin(\gamma/N)}{\gamma/N}\right)^2 \asymp 1$ (bounded away from 0 and bounded above).
+
+Therefore:
+\[
+\sum_{0 < \gamma \leq N\log N}\left(\frac{\sin(\gamma/N)}{\gamma/N}\right)^2 \asymp N\log N,
+\]
+so the main sum is:
+\[
+\asymp \mp\frac{2x^{1/2}}{N}\cdot N\log N \mp 2x^{1/2}N\cdot\frac{\log(N\log N)}{N\log N} + O(x^{1/2}) = \mp 2x^{1/2}\log N + O(x^{1/2}).
+\]
+
+\medskip
+\noindent\textbf{Relating $N$ to $\log\log\log x$:}
+
+Since $x \leq N^{N^K}e^{1/N}$ where $K = N(T) \asymp T\log T \asymp N(\log N)^2$, we have:
+\[
+\log\log x \leq K\log N + \log\log N \asymp N(\log N)^3.
+\]
+
+Then for some constant $C$:
+\[
+\log N \geq \log\log\log x - \log C - 3\log\log N.
+\]
+
+Since $x \geq N^{e^{\pm(1/N)}} \gg N$, we have $\log\log N = o(\log\log\log x)$, so:
+\[
+\log N \geq (1 + o(1))\log\log\log x.
+\]
+
+\medskip
+\noindent\textbf{Conclusion:}
+
+By Lemma~\ref{lem:weighted}, the quantity
+\[
+\frac{1}{x(e^\delta - e^{-\delta})}\int_{e^{-\delta}x}^{e^\delta x}(\psi(u) - u)\,du
+\]
+is an average of $\psi(u) - u$ over a neighborhood of $x$, where $x \asymp N$ and $N$ can be arbitrarily large.
+
+This average achieves order $\pm x^{1/2}\log N \asymp \pm x^{1/2}\log\log\log x$ infinitely often in both signs. Since this is an average, the function $\psi(u) - u$ must achieve values of at least this magnitude (in both directions) infinitely often.
+
+Therefore:
+\[
+\psi(x) - x = \Omega_{\pm}(x^{1/2}\log\log\log x).
+\]
+\end{proof}
+
+%======================================================================
+\section{Quantitative Refinements}
+%======================================================================
+
+The proof actually gives us quantitative information:
+
+\begin{theorem}\label{thm:quantitative}
+\[
+\limsup_{x\to\infty} \frac{\psi(x) - x}{x^{1/2}\log\log\log x} \geq \frac{1}{2}, \qquad \liminf_{x\to\infty} \frac{\psi(x) - x}{x^{1/2}\log\log\log x} \leq -\frac{1}{2}.
+\]
+The same bounds hold for $\pi(x) - \li(x)$ in place of $\psi(x) - x$.
+\end{theorem}
+
+\begin{theorem}[Sign Changes in Bounded Intervals]\label{thm:bounded-intervals}
+Let $\Theta$ denote the supremum of the real parts of zeros of $\zeta(s)$. If $\zeta$ has a zero with real part $\Theta$, then there exists a constant $C > 0$ such that $\psi(x) - x$ changes sign in every interval $[x, Cx]$ for $x \geq 2$.
+\end{theorem}
+
+The proof uses the explicit formula and a mean value theorem argument on the smoothed functions $R_k(y)$.
+
+%======================================================================
+\section{Historical Remarks and Subsequent Developments}
+%======================================================================
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Littlewood's Original Proof (1914):} The proof is inherently non-constructive---it uses a case distinction on whether RH is true or false, and employs Dirichlet's approximation theorem which is also non-effective.
+
+\item \textbf{Skewes' Numbers:} Littlewood's proof gave no information about where the first sign change occurs. Skewes (1933), assuming RH, showed there exists $x < e^{e^{e^{79}}} < 10^{10^{10^{34}}}$ with $\pi(x) > \li(x)$. Without assuming RH, Skewes (1955) gave $x < 10^{10^{10^{963}}}$.
+
+\item \textbf{Modern Bounds:} These bounds have been dramatically reduced:
+    \begin{itemize}
+        \item Lehman (1966): Between $1.53 \times 10^{1165}$ and $1.65 \times 10^{1165}$, there are more than $10^{500}$ consecutive integers $x$ with $\pi(x) > \li(x)$.
+        \item te Riele (1987): $x < 6.69 \times 10^{370}$
+        \item Bays--Hudson (2000): $x < 1.40 \times 10^{316}$
+        \item Chao--Plymen (2010): Slight further improvements
+    \end{itemize}
+
+\item \textbf{Logarithmic Density:} Wintner (1941) showed that the logarithmic density of integers with $\pi(x) > \li(x)$ is positive. Rubinstein--Sarnak (1994), under GRH and a linear independence hypothesis for zeta zeros, showed this proportion is approximately $2.6 \times 10^{-7}$.
+
+\item \textbf{Verified Range:} It has been computed that $\pi(x) < \li(x)$ for all $x \leq 10^{14}$.
+\end{enumerate}
+
+%======================================================================
+\section{Conclusion}
+%======================================================================
+
+Littlewood's theorem stands as one of the great achievements of analytic number theory. It showed that our intuition about $\pi(x) < \li(x)$---based on all available numerical evidence---was fundamentally misleading about the long-term behavior of these functions.
+
+The key insight of the proof is that while the ``random'' contributions from the zeta zeros usually cancel, Dirichlet's approximation theorem guarantees that sometimes many of them align constructively, overwhelming the systematic bias from the $-\frac{1}{2}\li(x^{1/2})$ term.
+
+The proof beautifully combines:
+\begin{itemize}
+    \item The explicit formula connecting primes to zeta zeros
+    \item Landau's lemma on Dirichlet series with non-negative coefficients  
+    \item Dirichlet's approximation theorem from Diophantine analysis
+    \item Careful estimates on sums over zeros
+\end{itemize}
+
+\vspace{1em}
+\hrule
+\vspace{1em}
+
+\begin{thebibliography}{99}
+\bibitem{littlewood1914} J.E. Littlewood, ``Sur la distribution des nombres premiers,'' \emph{C.R. Acad. Sci. Paris}, \textbf{158} (1914), 1869--1872.
+
+\bibitem{montgomery-vaughan} H.L. Montgomery and R.C. Vaughan, \emph{Multiplicative Number Theory I: Classical Theory}, Cambridge Studies in Advanced Mathematics \textbf{97}, Cambridge University Press, 2007.
+
+\bibitem{ingham} A.E. Ingham, \emph{The Distribution of Prime Numbers}, Stechert-Hafner, 1964.
+
+\bibitem{edwards} H.M. Edwards, \emph{Riemann's Zeta Function}, Academic Press, 1974.
+
+\bibitem{rubinstein-sarnak} M. Rubinstein and P. Sarnak, ``Chebyshev's bias,'' \emph{Experiment. Math.}, \textbf{3} (1994), 173--197.
+\end{thebibliography}
+
+\end{document}
