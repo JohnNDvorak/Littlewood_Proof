@@ -18,6 +18,9 @@ import Littlewood.CoreLemmas.LandauLemma
 import Littlewood.CoreLemmas.DirichletApproximation
 import Littlewood.CoreLemmas.WeightedAverageFormula
 
+-- Mertens' theorems
+import Littlewood.Mertens.MertensFirst
+
 -- Oscillation theorems
 import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.Oscillation.SchmidtPi
