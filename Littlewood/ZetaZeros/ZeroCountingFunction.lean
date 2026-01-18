@@ -623,19 +623,6 @@ instance instZeroCountingAsymptoticHyp : ZeroCountingAsymptoticHyp := by
         ≤ C0 * Real.log T := hbound.trans hC_le
   simpa [Real.norm_eq_abs, hlogabs] using hbound'
 
-/-- AXIOM: main term ratio for N(T). -/
-axiom zeroCountingMainTerm_axiom :
-    Tendsto (fun T => (N T : ℝ) / (T / (2 * π) * Real.log T)) atTop (𝓝 1)
-
-instance instZeroCountingMainTermHyp : ZeroCountingMainTermHyp :=
-  ⟨zeroCountingMainTerm_axiom⟩
-
-/-- AXIOM: lower bound for N(T). -/
-axiom zeroCountingLowerBound_axiom :
-    ∃ T0 : ℝ, ∀ T ≥ T0, T / (3 * π) * Real.log T ≤ N T
-
-instance instZeroCountingLowerBoundHyp : ZeroCountingLowerBoundHyp :=
-  ⟨zeroCountingLowerBound_axiom⟩
 
 /-! ## Asymptotic Formula -/
 
@@ -650,7 +637,7 @@ theorem zeroCountingFunction_asymptotic :
   simpa using ZeroCountingAsymptoticHyp.asymptotic
 
 /-- Main term approximation -/
-theorem zeroCountingFunction_asymptotic' :
+theorem zeroCountingFunction_asymptotic' [ZeroCountingMainTermHyp] :
     Tendsto (fun T => (N T : ℝ) / ((T / (2 * π)) * Real.log (T / (2 * π)))) atTop (𝓝 1) := by
   classical
   set c : ℝ := Real.log (2 * π)
@@ -727,11 +714,11 @@ theorem zeroCountingFunction_asymptotic' :
   exact hmul.congr' hcongr.symm
 
 /-- For large T, N(T) ~ (T/2π) log T -/
-theorem zeroCountingFunction_mainTerm :
+theorem zeroCountingFunction_mainTerm [ZeroCountingMainTermHyp] :
     Tendsto (fun T => (N T : ℝ) / (T / (2 * π) * Real.log T)) atTop (𝓝 1) := by
   simpa using ZeroCountingMainTermHyp.mainTerm
 
-noncomputable instance zeroCountingAsymptoticRatioHyp_of_mainTerm :
+noncomputable instance zeroCountingAsymptoticRatioHyp_of_mainTerm [ZeroCountingMainTermHyp] :
     ZeroCountingAsymptoticRatioHyp := by
   classical
   exact ⟨zeroCountingFunction_asymptotic'⟩
@@ -931,11 +918,12 @@ theorem zeroCountingFunction_rvm_explicit_hyp :
   simpa using ZeroCountingRvmExplicitHyp.bound
 
 /-- Lower bound: eventually N(T) ≥ T/(3π) log T. -/
-theorem zeroCountingFunction_lower_bound :
+theorem zeroCountingFunction_lower_bound [ZeroCountingLowerBoundHyp] :
     ∃ T0 : ℝ, ∀ T ≥ T0, T / (3 * π) * Real.log T ≤ N T := by
   simpa using ZeroCountingLowerBoundHyp.lower_bound
 
-instance zeroCountingTendstoHyp_of_lower_bound : ZeroCountingTendstoHyp := by
+instance zeroCountingTendstoHyp_of_lower_bound [ZeroCountingLowerBoundHyp] :
+    ZeroCountingTendstoHyp := by
   refine ⟨?_⟩
   refine tendsto_atTop_atTop.2 ?_
   intro b
