@@ -718,10 +718,11 @@ theorem zeroCountingFunction_mainTerm [ZeroCountingMainTermHyp] :
     Tendsto (fun T => (N T : ℝ) / (T / (2 * π) * Real.log T)) atTop (𝓝 1) := by
   simpa using ZeroCountingMainTermHyp.mainTerm
 
-noncomputable instance zeroCountingAsymptoticRatioHyp_of_mainTerm [ZeroCountingMainTermHyp] :
+noncomputable instance zeroCountingAsymptoticRatioHyp_of_mainTerm
+    (inst : ZeroCountingMainTermHyp) :
     ZeroCountingAsymptoticRatioHyp := by
   classical
-  exact ⟨zeroCountingFunction_asymptotic'⟩
+  exact ⟨zeroCountingFunction_asymptotic' (inst := inst)⟩
 
 noncomputable instance zeroCountingMainTermHyp_of_asymptotic :
     ZeroCountingMainTermHyp := by
@@ -922,7 +923,7 @@ theorem zeroCountingFunction_lower_bound [ZeroCountingLowerBoundHyp] :
     ∃ T0 : ℝ, ∀ T ≥ T0, T / (3 * π) * Real.log T ≤ N T := by
   simpa using ZeroCountingLowerBoundHyp.lower_bound
 
-instance zeroCountingTendstoHyp_of_lower_bound [ZeroCountingLowerBoundHyp] :
+instance zeroCountingTendstoHyp_of_lower_bound (inst : ZeroCountingLowerBoundHyp) :
     ZeroCountingTendstoHyp := by
   refine ⟨?_⟩
   refine tendsto_atTop_atTop.2 ?_
@@ -936,7 +937,7 @@ instance zeroCountingTendstoHyp_of_lower_bound [ZeroCountingLowerBoundHyp] :
       Tendsto (fun T : ℝ => (1 / (3 * π)) * (T * Real.log T)) atTop atTop :=
     (Tendsto.const_mul_atTop hpos hmul)
   rcases (tendsto_atTop_atTop.1 hconst b) with ⟨T0, hT0⟩
-  rcases zeroCountingFunction_lower_bound with ⟨T1, hT1⟩
+  rcases zeroCountingFunction_lower_bound (inst := inst) with ⟨T1, hT1⟩
   refine ⟨max T0 T1, ?_⟩
   intro T hT
   have hT0' : T0 ≤ T := le_trans (le_max_left _ _) hT
