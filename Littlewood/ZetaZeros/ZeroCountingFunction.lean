@@ -441,15 +441,6 @@ theorem xiZerosUpTo_finite (T : ℝ) : (xiZerosUpTo T).Finite := by
 class ZeroCountingTendstoHyp : Prop where
   tendsto_atTop : Tendsto (fun T => (N T : ℝ)) atTop atTop
 
-/-! ### Global instances (axioms) -/
-
-/-- AXIOM: zero counting tends to infinity. -/
-axiom zeroCountingTendsto_atTop_axiom :
-    Tendsto (fun T => (N T : ℝ)) atTop atTop
-
-instance instZeroCountingTendstoHyp : ZeroCountingTendstoHyp :=
-  ⟨zeroCountingTendsto_atTop_axiom⟩
-
 /-! ## Basic Properties -/
 
 section BasicProperties
@@ -500,7 +491,7 @@ theorem zeroCountingFunction_eq_zero_iff (T : ℝ) : N T = 0 ↔ zerosUpTo T = �
   Set.ncard_eq_zero (zerosUpTo_finite T)
 
 /-- N(T) → ∞ as T → ∞ -/
-theorem zeroCountingFunction_tendsto_atTop :
+theorem zeroCountingFunction_tendsto_atTop [ZeroCountingTendstoHyp] :
     Tendsto (fun T => (N T : ℝ)) atTop atTop := by
   simpa using ZeroCountingTendstoHyp.tendsto_atTop
 
@@ -521,13 +512,6 @@ class FirstZeroOrdinateHyp : Prop where
       ∀ γ ∈ zetaZeroOrdinates, γ₁ ≤ γ
 
 /-! ### Global instances (axioms) -/
-
-/-- AXIOM: crude upper bound for zero counting. -/
-axiom zeroCountingCrudeBound_axiom :
-    ∃ C : ℝ, ∀ {T : ℝ}, 4 ≤ T → (N T : ℝ) ≤ C * T * Real.log T
-
-instance instZeroCountingCrudeBoundHyp : ZeroCountingCrudeBoundHyp :=
-  ⟨zeroCountingCrudeBound_axiom⟩
 
 /-- AXIOM: N(15) = 1. -/
 axiom zeroCountingFifteen_axiom : N 15 = 1
@@ -565,7 +549,7 @@ instance instZeroCountingSpecialValuesHyp : ZeroCountingSpecialValuesHyp := by
 section SpecificBounds
 
 /-- N(T) ≤ C * T * log T for T ≥ 4 -/
-theorem zeroCountingFunction_crude_bound :
+theorem zeroCountingFunction_crude_bound [ZeroCountingCrudeBoundHyp] :
     ∃ C : ℝ, ∀ {T : ℝ}, 4 ≤ T → (N T : ℝ) ≤ C * T * Real.log T := by
   simpa using ZeroCountingCrudeBoundHyp.crude_bound
 
