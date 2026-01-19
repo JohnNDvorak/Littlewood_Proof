@@ -64,6 +64,13 @@ theorem zetaZeroRealParts_bddAbove : BddAbove zetaZeroRealParts := by
   obtain ⟨ρ, hρ, rfl⟩ := hσ
   exact le_of_lt (zetaZeroRealPart_lt_one hρ)
 
+/-- The set of real parts is bounded below by 0 -/
+theorem zetaZeroRealParts_bddBelow : BddBelow zetaZeroRealParts := by
+  refine ⟨0, ?_⟩
+  intro σ hσ
+  obtain ⟨ρ, hρ, rfl⟩ := hσ
+  exact le_of_lt (zetaZeroRealPart_pos hρ)
+
 /-- The set of real parts is nonempty (there exist zeros) -/
 theorem zetaZeroRealParts_nonempty : zetaZeroRealParts.Nonempty := by
   -- Use existence of zeta zeros (e.g., first zero at ρ ≈ 0.5 + 14.13i)
@@ -174,11 +181,6 @@ theorem zetaZeroInfRealPart : sInf zetaZeroRealParts = 1 - Θ := by
     rcases hr with ⟨ρ, hρ, rfl⟩
     refine ⟨1 - ρ, zero_one_sub_zero hρ, ?_⟩
     simp [Complex.sub_re, Complex.one_re]
-  have hbddBelow : BddBelow zetaZeroRealParts := by
-    refine ⟨0, ?_⟩
-    intro r hr
-    rcases hr with ⟨ρ, hρ, rfl⟩
-    exact le_of_lt (zetaZeroRealPart_pos hρ)
   have hlower : 1 - Θ ≤ sInf zetaZeroRealParts := by
     refine le_csInf zetaZeroRealParts_nonempty ?_
     intro r hr
@@ -190,7 +192,7 @@ theorem zetaZeroInfRealPart : sInf zetaZeroRealParts = 1 - Θ := by
       apply csSup_le zetaZeroRealParts_nonempty
       intro r hr
       have hmem : 1 - r ∈ zetaZeroRealParts := hsymm r hr
-      have hle : sInf zetaZeroRealParts ≤ 1 - r := csInf_le hbddBelow hmem
+      have hle : sInf zetaZeroRealParts ≤ 1 - r := csInf_le zetaZeroRealParts_bddBelow hmem
       linarith
     linarith
   exact le_antisymm hupper hlower
