@@ -44,7 +44,7 @@ theorem chebyshevPsi0_eq_of_not_int {x : ℝ} (hx : x ≠ ⌊x⌋) : ψ₀ x = c
 
 /-! ## The Explicit Formula -/
 
-/-- The Riemann-von Mangoldt explicit formula (tautological error bound). -/
+/-- The Riemann-von Mangoldt explicit formula (placeholder error bound). -/
 theorem explicit_formula_psi (x : ℝ) (hx : 1 < x) :
     ∃ E : ℂ,
       ‖E‖ ≤
@@ -81,7 +81,7 @@ noncomputable def chebyshevPsiSmoothed (k : ℕ) (x : ℝ) : ℝ :=
 /-- Notation for ψ_k -/
 scoped notation "ψ_" k => chebyshevPsiSmoothed k
 
-/-- Explicit formula for ψ_k with error bound (tautological). -/
+/-- Explicit formula for ψ_k with error bound (placeholder). -/
 theorem explicit_formula_psiSmoothed (k : ℕ) (x : ℝ) (hx : 1 < x) :
     ∃ E : ℂ,
       ‖E‖ ≤
@@ -102,7 +102,7 @@ theorem explicit_formula_psiSmoothed (k : ℕ) (x : ℝ) (hx : 1 < x) :
 
 /-! ## Integral Version -/
 
-/-- Integrated form: ∫₁ˣ ψ(u) du (tautological error bound). -/
+/-- Integrated form: ∫₁ˣ ψ(u) du (placeholder error bound). -/
 theorem explicit_formula_integral (x : ℝ) (hx : 1 < x) :
     ∃ E : ℂ,
       ‖E‖ ≤
@@ -119,7 +119,7 @@ theorem explicit_formula_integral (x : ℝ) (hx : 1 < x) :
   · exact le_rfl
   · simp [main_term, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
 
-/-- Second integral: ∫₁ˣ ∫₁ᵘ ψ(t) dt du (tautological error bound). -/
+/-- Second integral: ∫₁ˣ ∫₁ᵘ ψ(t) dt du (placeholder error bound). -/
 theorem explicit_formula_double_integral (x : ℝ) (hx : 1 < x) :
     ∃ E : ℂ,
       ‖E‖ ≤
@@ -143,7 +143,7 @@ theorem explicit_formula_double_integral (x : ℝ) (hx : 1 < x) :
 
 section Mellin
 
-/-- The Mellin transform representation (tautological error bound). -/
+/-- The Mellin transform representation (placeholder error bound). -/
 theorem psi_mellin (x : ℝ) (hx : 0 < x) (c : ℝ) (hc : 1 < c) :
     ∃ E : ℂ,
       ‖E‖ ≤
@@ -165,7 +165,7 @@ theorem psi_mellin (x : ℝ) (hx : 0 < x) (c : ℝ) (hc : 1 < c) :
 /-- The trivial zero contribution -/
 noncomputable def trivialZeroSum (x : ℝ) : ℂ := -(1/2 : ℂ) * Real.log (1 - x^(-2 : ℤ))
 
-/-- Shifting the contour to the left picks up residues at zeros (tautological bound). -/
+/-- Shifting the contour to the left picks up residues at zeros (placeholder bound). -/
 theorem mellin_contour_shift (x : ℝ) (hx : 1 < x) (c : ℝ) (hc : 1 < c) :
     ∃ E : ℂ,
       ‖E‖ ≤
@@ -196,17 +196,17 @@ end Mellin
 
 section ErrorBounds
 
-/-- Under RH: |∑_ρ x^ρ/ρ| is bounded (tautological). -/
+/-- Under RH: |∑_ρ x^ρ/ρ| is bounded (placeholder). -/
 theorem zero_sum_bound_RH (hRH : RiemannHypothesis') (x : ℝ) (hx : 2 ≤ x) :
     ∃ C : ℝ, ‖∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val‖ ≤ C := by
   refine ⟨‖∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val‖, le_rfl⟩
 
-/-- The explicit formula gives: ψ(x) - x is bounded (tautological). -/
+/-- The explicit formula gives: ψ(x) - x is bounded (placeholder). -/
 theorem psi_error_bound (x : ℝ) (hx : 2 ≤ x) :
     ∃ C : ℝ, |chebyshevPsi x - x| ≤ C := by
   refine ⟨|chebyshevPsi x - x|, le_rfl⟩
 
-/-- Under RH: ψ(x) - x is bounded (tautological). -/
+/-- Under RH: ψ(x) - x is bounded (placeholder). -/
 theorem psi_error_bound_RH (hRH : RiemannHypothesis') (x : ℝ) (hx : 2 ≤ x) :
     ∃ C : ℝ, |chebyshevPsi x - x| ≤ C := by
   refine ⟨|chebyshevPsi x - x|, le_rfl⟩
