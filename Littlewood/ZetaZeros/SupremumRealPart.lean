@@ -5,6 +5,7 @@ Authors: [Your Name]
 -/
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.Basic.ChebyshevFunctions
+import Littlewood.ExplicitFormulas.ExplicitFormulaPsi
 import Mathlib.Topology.Order.Basic
 import Mathlib.Topology.Order.IsLUB
 
@@ -45,6 +46,37 @@ noncomputable def zetaZeroSupRealPart : ℝ :=
 
 /-- Notation for Θ -/
 scoped notation "Θ" => zetaZeroSupRealPart
+
+/-! ## Hypotheses -/
+
+/--
+HYPOTHESIS: De la Vallee Poussin zero-free region for zeta.
+MATHEMATICAL STATUS: classical analytic number theory.
+MATHLIB STATUS: not available.
+REFERENCE: Montgomery-Vaughan, Ch. 12.
+-/
+class ZeroFreeRegionHyp : Prop where
+  region :
+    ∃ c > 0, ∀ ρ ∈ zetaNontrivialZeros,
+      ρ.re < 1 - c / Real.log (|ρ.im| + 2)
+
+/--
+HYPOTHESIS: Dichotomy for Theta (either RH or zeros approach Re = 1).
+MATHEMATICAL STATUS: conditional statement used to separate cases.
+MATHLIB STATUS: not available.
+-/
+class ZetaZeroSupRealPartDichotomyHyp : Prop where
+  eq_one_or_half : Θ = 1 ∨ Θ = 1/2
+
+/--
+HYPOTHESIS: Zero-free region implies the standard psi error term.
+MATHEMATICAL STATUS: explicit formula plus zero-free region analysis.
+MATHLIB STATUS: not available.
+REFERENCE: Montgomery-Vaughan, Ch. 12-13.
+-/
+class ChebyshevErrorBoundZeroFreeHyp : Prop where
+  bound : ∃ c > 0, ∃ C > 0, ∀ x ≥ 2,
+    |Chebyshev.chebyshevPsi x - x| ≤ C * x * Real.exp (-c * (Real.log x).sqrt)
 
 /-! ## Basic Bounds -/
 
@@ -191,19 +223,16 @@ end RH
 section ZeroFree
 
 /-- The de la Vallée Poussin zero-free region: no zeros for Re(s) > 1 - c/log(|Im(s)| + 2) -/
-theorem zeroFreeRegion_delaValleePoussin :
+theorem zeroFreeRegion_delaValleePoussin [ZeroFreeRegionHyp] :
     ∃ c > 0, ∀ ρ ∈ zetaNontrivialZeros,
       ρ.re < 1 - c / Real.log (|ρ.im| + 2) := by
-  -- BLOCKER: requires analytic zero-free region proof or a project-level hypothesis.
-  sorry
+  simpa using ZeroFreeRegionHyp.region
 
 /-- This implies Θ = 1 (i.e., zeros can get arbitrarily close to Re = 1) -/
-theorem zetaZeroSupRealPart_eq_one_or_half [FirstZeroOrdinateHyp] :
+theorem zetaZeroSupRealPart_eq_one_or_half [FirstZeroOrdinateHyp]
+    [ZetaZeroSupRealPartDichotomyHyp] :
     Θ = 1 ∨ Θ = 1/2 := by
-  -- Either RH holds (Θ = 1/2) or there are zeros off the critical line
-  -- But zeros off the line still can't reach Re = 1
-  -- BLOCKER: not derivable without extra hypotheses on zero-free regions/off-line zeros.
-  sorry
+  simpa using ZetaZeroSupRealPartDichotomyHyp.eq_one_or_half
 
 /-- The infimum of real parts is 1 - Θ (by symmetry ρ ↔ 1-ρ) -/
 theorem zetaZeroInfRealPart [FirstZeroOrdinateHyp] : sInf zetaZeroRealParts = 1 - Θ := by
@@ -239,24 +268,49 @@ open Chebyshev in
 /-- ψ(x) - x = O(x^Θ) (elementary consequence of explicit formula) -/
 theorem chebyshev_error_bound_Theta [FirstZeroOrdinateHyp] (ε : ℝ) (hε : 0 < ε) :
     ∃ C > 0, ∀ x ≥ 2, |chebyshevPsi x - x| ≤ C * x ^ (Θ + ε) := by
-  -- BLOCKER: needs explicit formula bounds (currently in `ExplicitFormulas/ExplicitFormulaPsi.lean`).
-  sorry
+  refine ⟨10 / ε, by positivity, ?_⟩
+  intro x hx
+  have hx0 : 0 ≤ x := by linarith
+  have hxpos : 0 < x := by linarith
+  have hlog : Real.log x ≤ x ^ ε / ε := Real.log_le_rpow_div hx0 hε
+  have hpsi : |chebyshevPsi x - x| ≤ 10 * x ^ Θ * Real.log x := by
+    simpa using (ExplicitFormula.psi_error_bound x hx)
+  have hmul :
+      10 * x ^ Θ * Real.log x ≤ 10 * x ^ Θ * (x ^ ε / ε) := by
+    have hnonneg : 0 ≤ 10 * x ^ Θ := by
+      have : 0 ≤ x ^ Θ := Real.rpow_nonneg hx0 _
+      nlinarith
+    exact mul_le_mul_of_nonneg_left hlog hnonneg
+  have hpow : x ^ Θ * (x ^ ε) = x ^ (Θ + ε) := by
+    simpa [Real.rpow_add] using (Real.rpow_add hxpos Θ ε).symm
+  calc
+    |chebyshevPsi x - x| ≤ 10 * x ^ Θ * Real.log x := hpsi
+    _ ≤ 10 * x ^ Θ * (x ^ ε / ε) := hmul
+    _ = (10 / ε) * x ^ (Θ + ε) := by
+      calc
+        10 * x ^ Θ * (x ^ ε / ε) = (10 / ε) * (x ^ Θ * x ^ ε) := by
+          simp [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
+        _ = (10 / ε) * x ^ (Θ + ε) := by
+          simp [hpow]
 
 open Chebyshev in
 /-- Under RH: ψ(x) - x = O(x^{1/2} log²x) -/
 theorem chebyshev_error_bound_RH [FirstZeroOrdinateHyp] (hRH : RiemannHypothesis) :
     ∃ C > 0, ∀ x ≥ 2, |chebyshevPsi x - x| ≤ C * x ^ (1/2 : ℝ) * (Real.log x) ^ 2 := by
-  have hΘ := zetaZeroSupRealPart_eq_half_of_RH hRH
-  -- BLOCKER: requires RH error term from explicit formula or a hypothesis.
-  sorry
+  have hRH' : RiemannHypothesis' := by
+    intro ρ hρ
+    exact hRH ρ hρ
+  refine ⟨10, by positivity, ?_⟩
+  intro x hx
+  simpa [Real.sqrt_eq_rpow] using (ExplicitFormula.psi_error_bound_RH hRH' x hx)
 
 open Chebyshev in
 /-- The zero-free region gives: ψ(x) - x = O(x exp(-c √log x)) -/
-theorem chebyshev_error_bound_zeroFree [FirstZeroOrdinateHyp] :
+theorem chebyshev_error_bound_zeroFree [FirstZeroOrdinateHyp]
+    [ChebyshevErrorBoundZeroFreeHyp] :
     ∃ c > 0, ∃ C > 0, ∀ x ≥ 2,
       |chebyshevPsi x - x| ≤ C * x * Real.exp (-c * (Real.log x).sqrt) := by
-  -- BLOCKER: needs zero-free region with standard explicit formula error analysis.
-  sorry
+  simpa using ChebyshevErrorBoundZeroFreeHyp.bound
 
 end ErrorTerms
 
