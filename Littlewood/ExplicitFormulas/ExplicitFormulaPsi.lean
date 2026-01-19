@@ -58,7 +58,7 @@ theorem explicit_formula_psi_conditional (x : ℝ) (hx : 1 < x) :
     ∃ E : ℂ, ‖E‖ ≤ Real.log x ∧
     (ψ₀ x : ℂ) = x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val
            - Real.log (2 * π) - (1/2 : ℂ) * Real.log (1 - x^(-2 : ℤ)) + E := by
-  sorry
+  simpa using explicit_formula_psi x hx
 
 /-! ## Smoothed Versions -/
 
