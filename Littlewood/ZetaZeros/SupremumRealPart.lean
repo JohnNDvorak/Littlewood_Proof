@@ -326,4 +326,24 @@ theorem chebyshev_error_bound_zeroFree [FirstZeroOrdinateHyp]
 
 end ErrorTerms
 
+-- ============================================================
+-- INSTANCES (Documented Assumptions)
+-- ============================================================
+
+instance : ZeroFreeRegionHyp where
+  region := by
+    sorry
+
+instance : ZetaZeroSupRealPartDichotomyHyp where
+  eq_one_or_half := by
+    sorry
+
+instance : ChebyshevErrorBoundZeroFreeHyp where
+  bound := by
+    sorry
+
+instance : ChebyshevErrorBoundThetaHyp where
+  bound := by
+    sorry
+
 end ZetaZeros
