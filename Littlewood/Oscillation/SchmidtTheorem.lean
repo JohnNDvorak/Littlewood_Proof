@@ -42,10 +42,12 @@ theorem schmidt_psi_oscillation (ε : ℝ) (hε : 0 < ε) :
     -- If ψ(x) - x ≤ x^{Θ-ε} for large x, then
     -- ∫ (x^{Θ-ε} + ψ(x) - x) x^{-s-1} dx converges for Re(s) > Θ-ε
     -- But -ζ'/ζ has a pole at some ρ with Re(ρ) > Θ-ε, contradiction
+    -- BLOCKER: requires Landau lemma + Mellin transform identity for ψ.
     sorry
   · -- Ω₋ part
     unfold IsOmegaMinus
     -- Similar argument with -ψ(x) + x
+    -- BLOCKER: requires Landau lemma + Mellin transform identity for ψ.
     sorry
 
 /-- Corollary: ψ(x) - x = Ω±(x^{1/2}) unconditionally -/
@@ -54,6 +56,7 @@ theorem psi_oscillation_sqrt :
   -- Since Θ ≥ 1/2, for any ε < Θ - 1/2 we have x^{Θ-ε} ≥ x^{1/2}
   -- But we need to be careful: if Θ = 1/2 exactly (RH), we need a different argument
   -- The proof works because there exist zeros ON the critical line (Hardy)
+  -- BLOCKER: needs Hardy critical-line zeros or a separate lemma on Θ.
   sorry
 
 /-! ## Proof via Landau's Lemma -/
@@ -65,6 +68,7 @@ theorem mellin_psi_identity (s : ℂ) (hs : 1 < s.re) :
     ∃ E : ℂ, ‖E‖ ≤ 1 ∧
     (∫ x in Set.Ioi 1, (chebyshevPsi x - x) * (x : ℂ)^(-s-1) : ℂ) =
       -deriv riemannZeta s / (s * riemannZeta s) - 1 / (s - 1) + E := by
+  -- BLOCKER: requires explicit formula for ψ and Mellin transform manipulations.
   sorry
 
 /-- If ψ(x) - x ≥ -x^{Θ-ε} for large x, contradiction arises -/
@@ -74,12 +78,14 @@ theorem omega_minus_necessity (ε : ℝ) (hε : 0 < ε)
   -- Its Mellin transform has abscissa of convergence ≤ Θ - ε
   -- But -ζ'/ζ has a pole at some ρ with Re(ρ) > Θ - ε by definition of Θ
   -- This contradicts Landau's lemma
+  -- BLOCKER: depends on Landau lemma and existence of a zero with Re > Θ - ε.
   sorry
 
 /-- If ψ(x) - x ≤ x^{Θ-ε} for large x, contradiction arises -/
 theorem omega_plus_necessity (ε : ℝ) (hε : 0 < ε)
     (hcontra : ∀ᶠ x in atTop, chebyshevPsi x - x ≤ x ^ (Θ - ε)) : False := by
   -- Similar argument with the function A(x) = x^{Θ-ε} - ψ(x) + x
+  -- BLOCKER: depends on Landau lemma and existence of a zero with Re > Θ - ε.
   sorry
 
 end LandauProof
@@ -91,6 +97,7 @@ section CriticalLine
 /-- Hardy's theorem: infinitely many zeros on the critical line -/
 theorem hardy_critical_line_zeros :
     Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1/2 } := by
+  -- BLOCKER: Hardy's theorem not available as lemma/hypothesis.
   sorry
 
 /-- This allows the Ω±(x^{1/2}) result even if RH holds -/
@@ -98,6 +105,7 @@ theorem psi_oscillation_from_critical_zeros :
     (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x] := by
   -- The zeros on the critical line contribute oscillations of size x^{1/2}
   -- Even under RH, the explicit formula gives this oscillation
+  -- BLOCKER: requires Hardy's theorem + explicit formula oscillation.
   sorry
 
 end CriticalLine
@@ -109,6 +117,7 @@ theorem theta_oscillation_minus :
     (fun x => chebyshevTheta x - x) =Ω₋[fun x => Real.sqrt x] := by
   -- θ = ψ - O(x^{1/2}), and ψ - x = Ω₋(x^{1/2})
   -- So θ - x = ψ - x - O(x^{1/2}) = Ω₋(x^{1/2})
+  -- BLOCKER: needs conversion formula ψ ↔ θ with O(x^{1/2}) bound.
   sorry
 
 /-- Under RH: θ(x) - x = Ω±(x^{1/2}) -/
@@ -118,6 +127,7 @@ theorem theta_oscillation_RH (hRH : ZetaZeros.RiemannHypothesis) :
   -- So θ - x = ψ - x - x^{1/2} + O(x^{1/3})
   -- The oscillation of ψ - x dominates x^{1/2}, giving Ω± behavior for θ - x
   -- But this requires the Littlewood strengthening...
+  -- BLOCKER: requires RH explicit formula for θ and Littlewood-style oscillation.
   sorry
 
 end Schmidt
