@@ -27,6 +27,8 @@ import Littlewood.CoreLemmas.LandauLemma
 
 namespace Littlewood.Assumptions
 
+open ExplicitFormula Conversion
+
 -- Explicit formula hypotheses.
 instance : ExplicitFormulaPsiHyp := by
   refine ⟨?_⟩
