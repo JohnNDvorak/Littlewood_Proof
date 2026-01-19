@@ -101,7 +101,7 @@ lemma log_factorial_eq_sum_vonMangoldt_floor (n : ℕ) :
         rcases hdiv with ⟨k, rfl⟩
         by_contra h
         push_neg at h
-        interval_cases d <;> omega
+        interval_cases d; omega
       exact ⟨⟨⟨hm1, hm2⟩, hdiv⟩, ⟨hd1, by omega⟩⟩
     · -- ((1 ≤ m ∧ m ≤ n) ∧ d ∣ m) ∧ (1 ≤ d ∧ d ≤ n) → (1 ≤ m ∧ m ≤ n) ∧ (d ∣ m ∧ m ≠ 0)
       intro ⟨⟨⟨hm1, hm2⟩, hdiv⟩, ⟨hd1, hd2⟩⟩

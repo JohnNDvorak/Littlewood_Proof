@@ -33,8 +33,8 @@ namespace Landau
 /-! ## Statement of Landau's Lemma -/
 
 /-- The abscissa of convergence for a Dirichlet integral ∫₁^∞ A(x)x^{-s}dx -/
-noncomputable def abscissaOfConvergence (A : ℝ → ℝ) : EReal :=
-  sInf { σ : EReal | True }  -- Placeholder definition
+noncomputable def abscissaOfConvergence (_A : ℝ → ℝ) : EReal :=
+  sInf (Set.univ : Set EReal)  -- Placeholder definition
 
 /-- The Dirichlet integral transform F(s) = ∫₁^∞ A(x)x^{-s}dx -/
 noncomputable def dirichletIntegral (A : ℝ → ℝ) (s : ℂ) : ℂ :=
@@ -109,20 +109,20 @@ section Corollaries
 /-- Corollary: If F(s) = ∫ A(x)x^{-s}dx with A ≥ 0 eventually, and F extends
     analytically to a neighborhood of σ₀ ∈ ℝ, then the integral converges for Re(s) > σ₀ - ε -/
 theorem landau_extension
-    (A : ℝ → ℝ) (hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x) (σ₀ : ℝ)
-    (hanalytic : AnalyticAt ℂ (dirichletIntegral A) σ₀) :
+    (_A : ℝ → ℝ) (_hA_nonneg : ∀ᶠ x in atTop, 0 ≤ _A x) (_σ₀ : ℝ)
+    (_hanalytic : AnalyticAt ℂ (dirichletIntegral _A) _σ₀) :
     True := by  -- Simplified statement
   trivial
 
 /-- Abscissa of convergence for a Dirichlet series -/
-noncomputable def abscissaOfConvergenceSeries (a : ℕ → ℝ) : EReal :=
-  sInf { σ : EReal | True }  -- Placeholder
+noncomputable def abscissaOfConvergenceSeries (_a : ℕ → ℝ) : EReal :=
+  sInf (Set.univ : Set EReal)  -- Placeholder
 
 /-- Version for Dirichlet series ∑ aₙn^{-s} -/
 theorem landau_lemma_series
-    (a : ℕ → ℂ) (ha_nonneg : ∀ᶠ n in atTop, 0 ≤ (a n).re)
-    (σ_c : ℂ) :
-    ¬AnalyticAt ℂ (fun s => ∑' n, a n * (n : ℂ) ^ (-s)) σ_c := by
+    (_a : ℕ → ℂ) (_ha_nonneg : ∀ᶠ n in atTop, 0 ≤ (_a n).re)
+    (_σ_c : ℂ) :
+    ¬AnalyticAt ℂ (fun s => ∑' n, _a n * (n : ℂ) ^ (-s)) _σ_c := by
   sorry
 
 end Corollaries

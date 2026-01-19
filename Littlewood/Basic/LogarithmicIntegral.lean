@@ -73,7 +73,7 @@ theorem logarithmicIntegral_of_le_two {x : ℝ} (hx : x ≤ 2) : li x = 0 := by
 
 theorem logarithmicIntegral_two : li 2 = 0 := logarithmicIntegral_of_le_two le_rfl
 
-theorem logarithmicIntegral_nonneg {x : ℝ} (hx : 2 ≤ x) : 0 ≤ li x := by
+theorem logarithmicIntegral_nonneg {x : ℝ} (_hx : 2 ≤ x) : 0 ≤ li x := by
   unfold logarithmicIntegral
   apply setIntegral_nonneg measurableSet_Ioc
   intro t ht
@@ -224,7 +224,7 @@ theorem logarithmicIntegral_eq_offset_sub : li = fun x => Li x - offsetLogarithm
   ring_nf
 
 /-- Li(x) > li(x) by approximately 1.045 -/
-theorem offsetLogarithmicIntegral_gt {x : ℝ} (hx : 2 ≤ x) : li x < Li x := by
+theorem offsetLogarithmicIntegral_gt {x : ℝ} (_hx : 2 ≤ x) : li x < Li x := by
   unfold offsetLogarithmicIntegral offsetLogarithmicIntegralConstant
   linarith
 

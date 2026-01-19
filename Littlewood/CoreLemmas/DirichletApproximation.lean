@@ -112,7 +112,7 @@ open ZetaZeros in
 /-- Given the first K zero ordinates γ₁, ..., γ_K and N, find n such that
     all γₖ n log N / (2π) are close to integers -/
 theorem dirichlet_for_zeta_zeros (K : ℕ)
-    (γ : Fin K → ℝ) (hγ : ∀ k, γ k ∈ zetaZeroOrdinates) (M : ℕ) (hM : 2 ≤ M) :
+    (γ : Fin K → ℝ) (_hγ : ∀ k, γ k ∈ zetaZeroOrdinates) (M : ℕ) (hM : 2 ≤ M) :
     ∃ n : ℕ, 1 ≤ n ∧ n ≤ M^K ∧
       ∀ k : Fin K, ‖γ k * n * Real.log (M : ℝ) / (2 * π)‖ᵢₙₜ < 1 / M := by
   have := dirichlet_approximation_simultaneous K (fun k => γ k * Real.log (M : ℝ) / (2 * π)) M (by linarith)
@@ -130,7 +130,7 @@ theorem littlewood_x_choice (N : ℕ) (hN : 2 ≤ N) (n : ℕ) (hn : 1 ≤ n) :
   · have hN' : (2 : ℝ) ≤ N := by exact_mod_cast hN
     have h1 : (1 : ℝ) ≤ N := by linarith
     have h2 : (N : ℝ)^n ≥ (N : ℝ)^1 := by
-      gcongr <;> assumption
+      gcongr; assumption
     have h3 : (N : ℝ)^1 = N := pow_one _
     linarith
 

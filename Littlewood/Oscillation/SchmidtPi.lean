@@ -58,7 +58,7 @@ theorem schmidt_limitation :
 
 /-- This is where Littlewood's deeper analysis is needed -/
 theorem littlewood_needed_for_omega_plus :
-    (∀ hRH : ZetaZeros.RiemannHypothesis,
+    (∀ _hRH : ZetaZeros.RiemannHypothesis,
       (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
       =Ω₊[fun x => Real.sqrt x / Real.log x]) →
     -- Littlewood's theorem provides this
