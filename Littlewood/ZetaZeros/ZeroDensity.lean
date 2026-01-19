@@ -6,6 +6,7 @@ Authors: [Your Name]
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Analysis.Normed.Field.Basic
+import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.Topology.Algebra.InfiniteSum.Order
 import Mathlib.Topology.Instances.ENNReal.Lemmas
@@ -96,12 +97,110 @@ lemma zeroOfOrdinate_injective : Function.Injective zeroOfOrdinate := by
 
 section Summability
 
+private lemma summable_log_div_rpow (α : ℝ) (hα : 1 < α) :
+    Summable (fun n : ℕ => (Real.log (n + 1) + 1) / (n + 1 : ℝ) ^ α) := by
+  classical
+  set r : ℝ := (α - 1) / 2
+  have hr : 0 < r := by
+    dsimp [r]
+    linarith [hα]
+  have hpr : 1 < α - r := by
+    dsimp [r]
+    linarith [hα]
+  have hlog :
+      (fun x : ℝ => Real.log x) =o[atTop] fun x => x ^ r :=
+    isLittleO_log_rpow_atTop hr
+  have hlog_nat :
+      (fun n : ℕ => Real.log (n + 1)) =o[atTop] fun n => (n + 1 : ℝ) ^ r := by
+    have hk :
+        Tendsto (fun n : ℕ => (n : ℝ) + 1) atTop atTop :=
+      tendsto_atTop_add_const_right _ _ tendsto_natCast_atTop_atTop
+    simpa [add_comm, add_left_comm, add_assoc] using hlog.comp_tendsto hk
+  have hlog_nat_le :
+      ∀ᶠ n : ℕ in atTop, Real.log (n + 1) ≤ (n + 1 : ℝ) ^ r := by
+    refine (hlog_nat.eventuallyLE).mono ?_
+    intro n hn
+    have hlog_nonneg : 0 ≤ Real.log (n + 1) := by
+      have hle : (1 : ℝ) ≤ (n + 1 : ℝ) := by
+        exact_mod_cast (Nat.succ_le_succ (Nat.zero_le n))
+      exact Real.log_nonneg hle
+    have hrpow_nonneg : 0 ≤ (n + 1 : ℝ) ^ r := by
+      have hle : (0 : ℝ) ≤ (n + 1 : ℝ) := by
+        exact_mod_cast (Nat.zero_le (n + 1))
+      exact Real.rpow_nonneg hle r
+    simpa [Real.norm_eq_abs, abs_of_nonneg hlog_nonneg, abs_of_nonneg hrpow_nonneg] using hn
+  have hbound :
+      ∀ᶠ n : ℕ in atTop, Real.log (n + 1) + 1 ≤ 2 * (n + 1 : ℝ) ^ r := by
+    refine hlog_nat_le.mono ?_
+    intro n hlogn
+    have hpow : (1 : ℝ) ≤ (n + 1 : ℝ) ^ r := by
+      have hle : (1 : ℝ) ≤ (n + 1 : ℝ) := by
+        exact_mod_cast (Nat.succ_le_succ (Nat.zero_le n))
+      exact Real.one_le_rpow hle (le_of_lt hr)
+    linarith
+  rcases (eventually_atTop.1 hbound) with ⟨N0, hN0⟩
+  set p : ℝ := α - r
+  have hsum_p : Summable (fun n : ℕ => ((n + 1 : ℝ) ^ p)⁻¹) := by
+    have hsum_base : Summable (fun n : ℕ => ((n : ℝ) ^ p)⁻¹) :=
+      (Real.summable_nat_rpow_inv).2 (by simpa [p] using hpr)
+    simpa using (summable_nat_add_iff (f := fun n : ℕ => ((n : ℝ) ^ p)⁻¹) 1).2 hsum_base
+  have hsum_p_tail : Summable (fun n : ℕ => ((n + N0 + 1 : ℝ) ^ p)⁻¹) := by
+    simpa [add_assoc, add_left_comm, add_comm] using
+      (summable_nat_add_iff (f := fun n : ℕ => ((n + 1 : ℝ) ^ p)⁻¹) N0).2 hsum_p
+  have hsum_tail :
+      Summable (fun n : ℕ => (Real.log (n + N0 + 1) + 1) / (n + N0 + 1 : ℝ) ^ α) := by
+    have hle :
+        ∀ n : ℕ,
+          (Real.log (n + N0 + 1) + 1) / (n + N0 + 1 : ℝ) ^ α ≤
+            2 * ((n + N0 + 1 : ℝ) ^ p)⁻¹ := by
+      intro n
+      have hN' : Real.log (n + N0 + 1) + 1 ≤ 2 * (n + N0 + 1 : ℝ) ^ r := by
+        have h := hN0 (n + N0) (Nat.le_add_left _ _)
+        simpa [add_assoc, add_left_comm, add_comm] using h
+      have hpos : 0 < (n + N0 + 1 : ℝ) ^ α := by
+        have hpos' : 0 < (n + N0 + 1 : ℝ) := by
+          exact_mod_cast Nat.succ_pos _
+        exact Real.rpow_pos_of_pos hpos' _
+      have hpow : (n + N0 + 1 : ℝ) ^ α = (n + N0 + 1 : ℝ) ^ r * (n + N0 + 1 : ℝ) ^ p := by
+        have hpos' : 0 < (n + N0 + 1 : ℝ) := by
+          exact_mod_cast Nat.succ_pos _
+        have hsum : α = r + p := by
+          dsimp [p, r]
+          ring
+        simpa [hsum, add_comm, add_left_comm, add_assoc] using
+          (Real.rpow_add hpos' r p)
+      calc
+        (Real.log (n + N0 + 1) + 1) / (n + N0 + 1 : ℝ) ^ α
+            ≤ (2 * (n + N0 + 1 : ℝ) ^ r) / (n + N0 + 1 : ℝ) ^ α := by
+              gcongr
+        _ = 2 * ((n + N0 + 1 : ℝ) ^ p)⁻¹ := by
+              field_simp [hpos, hpow, mul_comm, mul_left_comm, mul_assoc]
+              simpa using hpow.symm
+    refine Summable.of_nonneg_of_le ?_ ?_ (hsum_p_tail.mul_left 2)
+    · intro n
+      have hnum_nonneg : 0 ≤ Real.log (n + N0 + 1) + 1 := by
+        have hle : (1 : ℝ) ≤ (n + N0 + 1 : ℝ) := by
+          exact_mod_cast (Nat.succ_le_succ (Nat.zero_le _))
+        have hlog_nonneg : 0 ≤ Real.log (n + N0 + 1) := Real.log_nonneg hle
+        linarith
+      have hden_nonneg : 0 ≤ (n + N0 + 1 : ℝ) ^ α := by
+        have hle : 0 ≤ (n + N0 + 1 : ℝ) := by
+          exact_mod_cast (Nat.zero_le _)
+        exact Real.rpow_nonneg hle _
+      exact div_nonneg hnum_nonneg hden_nonneg
+    · intro n
+      exact hle n
+  set f : ℕ → ℝ := fun n => (Real.log (n + 1) + 1) / (n + 1 : ℝ) ^ α
+  have hsum_tail' : Summable (fun n : ℕ => f (n + N0)) := by
+    simpa [f, Nat.cast_add, Nat.cast_one, add_assoc, add_left_comm, add_comm] using hsum_tail
+  simpa [f] using (summable_nat_add_iff (f := f) N0).1 hsum_tail'
+
 /-- ∑ 1/γ^α converges for α > 1 -/
 theorem summable_inv_gamma_pow (α : ℝ) (hα : 1 < α) :
     Summable (fun γ : ZeroOrdinate => 1 / (γ : ℝ) ^ α) := by
-  -- Use comparison with N(T) asymptotic and integral comparison
-  -- BLOCKER: need a Mathlib lemma turning zero-counting bounds (e.g. `N T ≤ C*T*log T`)
-  -- into summability over `zetaZeroOrdinates`, or an enumeration of ordinates with growth control.
+  -- BLOCKER: need a bridge from zero-counting bounds (e.g. local density) to
+  -- summability over `ZeroOrdinate`, likely via partition into unit intervals and
+  -- a lemma comparing `∑'` with `N(T+1)-N(T)` bounds.
   sorry
 
 /-- ∑ 1/γ² converges absolutely -/
