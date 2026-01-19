@@ -4,10 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: [Your Name]
 -/
 import Littlewood.ZetaZeros.ZeroCountingFunction
+import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Analysis.Normed.Field.Basic
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.Topology.Algebra.InfiniteSum.Order
 import Mathlib.Topology.Instances.ENNReal.Lemmas
+
+open scoped BigOperators
 
 /-!
 # Zero Density Estimates
@@ -107,7 +110,7 @@ theorem summable_inv_gamma_sq :
   summable_inv_gamma_pow 2 one_lt_two
 
 /-- The value of ∑ 1/γ² is finite and positive -/
-theorem tsum_inv_gamma_sq_pos :
+theorem tsum_inv_gamma_sq_pos [FirstZeroOrdinateHyp] :
     0 < ∑' γ : ZeroOrdinate, 1 / (γ : ℝ) ^ (2 : ℝ) := by
   obtain ⟨γ₁, hγ₁_mem, _hγ₁_low, _hγ₁_high, _hmin⟩ := firstZeroOrdinate_bounds
   let γ0 : ZeroOrdinate := ⟨γ₁, hγ₁_mem⟩
@@ -150,6 +153,8 @@ end Summability
 
 section PartialSums
 
+open scoped BigOperators
+
 /-- Zero ordinates up to T -/
 def ordinatesUpTo (T : ℝ) : Set ℝ :=
   zetaZeroOrdinates ∩ Set.Ioc 0 T
@@ -157,6 +162,7 @@ def ordinatesUpTo (T : ℝ) : Set ℝ :=
 /-- The set of ordinates up to T is finite -/
 theorem ordinatesUpTo_finite (T : ℝ) : (ordinatesUpTo T).Finite := by
   unfold ordinatesUpTo
+  simp [zetaZeroOrdinates]
   -- We have (·.im) '' zetaNontrivialZerosPos ∩ Set.Ioc 0 T
   -- This equals (·.im) '' (zetaNontrivialZerosPos ∩ {s | s.im ≤ T})
   have h : (·.im) '' zetaNontrivialZerosPos ∩ Set.Ioc 0 T =
@@ -224,16 +230,18 @@ theorem ordinatesUpTo_ncard_le (T : ℝ) :
 /-- ∑_{0 < γ ≤ T} 1/γ = O((log T)²) -/
 theorem sum_inv_gamma_le_log_sq (T : ℝ) (hT : 4 ≤ T) :
     ∃ C : ℝ,
-      (∑ γ in (ordinatesUpTo_finite T).toFinset, 1 / γ) ≤ C * (Real.log T) ^ 2 := by
+      (Finset.sum (ordinatesUpTo_finite T).toFinset (fun γ => 1 / γ)) ≤
+        C * (Real.log T) ^ 2 := by
   classical
   have hlogpos : 0 < Real.log T := by
     exact Real.log_pos (by linarith : (1 : ℝ) < T)
   have hlogne : (Real.log T) ^ 2 ≠ 0 := by
     nlinarith [hlogpos]
-  refine ⟨(∑ γ in (ordinatesUpTo_finite T).toFinset, 1 / γ) / (Real.log T) ^ 2, ?_⟩
+  let s := (ordinatesUpTo_finite T).toFinset
+  refine ⟨(Finset.sum s (fun γ => 1 / γ)) / (Real.log T) ^ 2, ?_⟩
   have hEq :
-      (∑ γ in (ordinatesUpTo_finite T).toFinset, 1 / γ) =
-        ((∑ γ in (ordinatesUpTo_finite T).toFinset, 1 / γ) / (Real.log T) ^ 2) *
+      (Finset.sum s (fun γ => 1 / γ)) =
+        ((Finset.sum s (fun γ => 1 / γ)) / (Real.log T) ^ 2) *
           (Real.log T) ^ 2 := by
     field_simp [hlogne]
   exact le_of_eq hEq
@@ -273,7 +281,10 @@ theorem sum_inv_gamma_sq_tail (T : ℝ) (hT : 4 ≤ T) :
   have hEq :
       tail_sum = (tail_sum * T / Real.log T) * (Real.log T / T) := by
     field_simp [hlogne, hTne]
-  simpa [tail_sum, mul_assoc, mul_left_comm, mul_comm] using (le_of_eq hEq)
+  have hEq' :
+      tail_sum = (tail_sum * T / Real.log T * Real.log T) / T := by
+    simpa [mul_div_assoc'] using hEq
+  simpa [tail_sum, mul_assoc, mul_left_comm, mul_comm] using (le_of_eq hEq')
 
 /-- More precise tail bound -/
 theorem sum_inv_gamma_sq_tail_asymptotic :
@@ -422,7 +433,9 @@ theorem mean_zero_spacing (T : ℝ) (hT : 10 ≤ T) :
   have h1 : A * (Real.log T) ^ 2 ≤ A * (Real.log T) ^ 2 + 1 := by
     linarith
   have h2 : A ≤ C / (Real.log T) ^ 2 := by
-    have h := (div_le_iff hdenpos).2 h1
+    have h' : A * (Real.log T) ^ 2 ≤ C := by
+      simpa [C] using h1
+    have h := (le_div_iff₀ hdenpos).2 h'
     simpa [C] using h
   simpa [A] using h2
 
