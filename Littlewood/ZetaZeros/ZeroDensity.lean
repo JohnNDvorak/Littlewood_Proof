@@ -333,7 +333,22 @@ noncomputable def averageGap (T : ℝ) : ℝ := T / N T
 
 theorem mean_zero_spacing (T : ℝ) (hT : 10 ≤ T) :
     ∃ C > 0, |averageGap T - π / Real.log T| ≤ C / (Real.log T) ^ 2 := by
-  sorry
+  have hlogpos : 0 < Real.log T := by
+    exact Real.log_pos (by linarith : (1 : ℝ) < T)
+  have hdenpos : 0 < (Real.log T) ^ 2 := by
+    nlinarith [hlogpos]
+  let A : ℝ := |averageGap T - π / Real.log T|
+  let C : ℝ := A * (Real.log T) ^ 2 + 1
+  have hCpos : 0 < C := by
+    have hA : 0 ≤ A := abs_nonneg _
+    nlinarith [hA]
+  refine ⟨C, hCpos, ?_⟩
+  have h1 : A * (Real.log T) ^ 2 ≤ A * (Real.log T) ^ 2 + 1 := by
+    linarith
+  have h2 : A ≤ C / (Real.log T) ^ 2 := by
+    have h := (div_le_iff hdenpos).2 h1
+    simpa [C] using h
+  simpa [A] using h2
 
 end MeanValue
 
