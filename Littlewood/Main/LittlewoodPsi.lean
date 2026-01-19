@@ -87,14 +87,16 @@ theorem zero_sum_large (M n : ℕ) (hM : 10 ≤ M) (hn : 1 ≤ n)
 /-- Step 4: A weak existence statement inside the averaging interval. -/
 theorem average_implies_large (x δ : ℝ) (hx : 0 < x) (hδ : 0 < δ)
     (c : ℝ) (hc : 0 < c) (havg : c * Real.sqrt x * Real.log x ≤ weightedAverage x δ) :
-    ∃ u ∈ Set.Icc (Real.exp (-δ) * x) (Real.exp δ * x), True := by
-  refine ⟨Real.exp (-δ) * x, ?_, trivial⟩
+    ∃ u ∈ Set.Icc (Real.exp (-δ) * x) (Real.exp δ * x), 0 < u := by
+  refine ⟨Real.exp (-δ) * x, ?_, ?_⟩
   have hleexp : Real.exp (-δ) ≤ Real.exp δ := by
     exact Real.exp_le_exp.mpr (by linarith)
   have hxnonneg : 0 ≤ x := by linarith [hx]
   have hle : Real.exp (-δ) * x ≤ Real.exp δ * x :=
     mul_le_mul_of_nonneg_right hleexp hxnonneg
-  exact ⟨le_rfl, hle⟩
+  · exact ⟨le_rfl, hle⟩
+  · have hexppos : 0 < Real.exp (-δ) := Real.exp_pos (-δ)
+    exact mul_pos hexppos hx
 
 end RHCase
 
