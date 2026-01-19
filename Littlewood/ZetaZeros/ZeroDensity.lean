@@ -347,13 +347,15 @@ theorem sum_inv_gamma_le_log_sq (T : ℝ) (hT : 4 ≤ T) :
 
 /-- More precise: ∑_{0 < γ ≤ T} 1/γ ~ (1/2π)(log T)² -/
 theorem sum_inv_gamma_asymptotic :
-    True := by  -- Placeholder for complex asymptotic statement
-  trivial
+    (fun T : ℝ =>
+      Finset.sum (ordinatesUpTo_finite T).toFinset (fun γ => 1 / γ))
+      ~[atTop] (fun T : ℝ => (1 / (2 * π)) * (Real.log T) ^ 2) := by
+  sorry
 
 /-- ∑_{0 < γ ≤ T} 1 = N(T) (by definition) -/
 theorem sum_one_eq_N (T : ℝ) :
-    True := by  -- Type class issues with Finite instance
-  trivial
+    (Finset.sum (ordinatesUpTo_finite T).toFinset (fun _ => (1 : ℝ))) = (N T : ℝ) := by
+  sorry
 
 end PartialSums
 
@@ -387,8 +389,10 @@ theorem sum_inv_gamma_sq_tail (T : ℝ) (hT : 4 ≤ T) :
 
 /-- More precise tail bound -/
 theorem sum_inv_gamma_sq_tail_asymptotic :
-    True := by  -- Placeholder
-  trivial
+    (fun T : ℝ =>
+      ∑' γ : { γ : ℝ // γ ∈ ordinatesAbove T }, 1 / (γ : ℝ) ^ (2 : ℝ))
+      =O[atTop] (fun T : ℝ => Real.log T / T) := by
+  sorry
 
 /-- ∑_{γ > T} 1/γ^α = O(T^{1-α} log T) for α > 1 -/
 noncomputable def tailBoundConstant (α : ℝ) : ℝ := 2 * α / (α - 1)
@@ -473,8 +477,8 @@ theorem rh_rho_norm_sq (hRH : RiemannHypothesis') (ρ : zetaNontrivialZeros) :
 
 /-- Under RH: 1/|ρ| ~ 1/γ for large γ -/
 theorem rh_inv_rho_asymptotic (hRH : RiemannHypothesis') :
-    True := by  -- Complex filter statement
-  trivial
+    ∃ C : ℝ, ∀ ρ : zetaNontrivialZeros, 1 / ‖ρ.val‖ ≤ C / |ρ.val.im| := by
+  sorry
 
 end ComplexEstimates
 
@@ -511,8 +515,9 @@ section MeanValue
 
 /-- Average spacing of zeros: the average of 1/γ over γ ≤ T -/
 theorem average_inv_gamma (T : ℝ) (hT : 4 ≤ T) :
-    True := by  -- Complex statement
-  trivial
+    ∃ C : ℝ,
+      (Finset.sum (ordinatesUpTo_finite T).toFinset (fun γ => 1 / γ)) ≤ C * (N T : ℝ) := by
+  sorry
 
 /-- The zeros have mean spacing π / log T near height T -/
 noncomputable def averageGap (T : ℝ) : ℝ := T / N T

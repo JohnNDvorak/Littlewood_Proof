@@ -6,7 +6,7 @@ Authors: [Your Name]
 import Littlewood.Basic.OmegaNotation
 import Littlewood.Basic.ChebyshevFunctions
 import Littlewood.Basic.LogarithmicIntegral
-import Littlewood.ZetaZeros.SupremumRealPart
+import Littlewood.ZetaZeros.ZeroCountingFunction
 
 /-!
 # Conversion Formulas
@@ -55,18 +55,16 @@ theorem theta_from_psi (x : ℝ) (hx : 1 < x) :
       have hxpos : 0 < x := by linarith
       have hlog_le' : Real.log x ≤ Real.log 2 := by
         exact le_of_lt (Real.log_lt_log hxpos hxlt2)
-      have := (div_le_iff hlog2pos).2 (by simpa using hlog_le')
-      simpa using this
+      calc
+        Real.log x / Real.log 2 ≤ Real.log 2 / Real.log 2 := by
+          exact div_le_div_of_nonneg_right hlog_le' (le_of_lt hlog2pos)
+        _ = 1 := by field_simp [hlog2pos.ne']
     have hfloor : Nat.floor (Real.log x / Real.log 2) ≤ 1 :=
       Nat.floor_le_one_of_le_one hlog_le
     have hIcc : Finset.Icc 2 (Nat.floor (Real.log x / Real.log 2)) = ∅ := by
       refine Finset.Icc_eq_empty_of_lt ?_
       exact lt_of_le_of_lt hfloor (by decide : (1 : ℕ) < 2)
-    have hsum :
-        (∑ k ∈ Finset.Icc 2 (Nat.floor (Real.log x / Real.log 2)),
-          chebyshevTheta (x ^ (1 / k : ℝ))) = 0 := by
-      simp [hIcc]
-    simp [htheta, hpsi, hsum]
+    simp [htheta, hpsi, hIcc, one_div]
 
 /-- θ(x) = ψ(x) - ψ(x^{1/2}) + O(x^{1/3}) -/
 theorem theta_psi_first_correction (x : ℝ) (hx : 2 ≤ x) :
@@ -85,7 +83,7 @@ theorem theta_psi_simple (x : ℝ) (hx : 2 ≤ x) :
   · linarith
 
 /-- Under RH: θ(x) = ψ(x) - x^{1/2} + O(x^{1/3}) -/
-theorem theta_psi_RH (hRH : ZetaZeros.RiemannHypothesis) (x : ℝ) (hx : 2 ≤ x) :
+theorem theta_psi_RH (hRH : ZetaZeros.RiemannHypothesis') (x : ℝ) (hx : 2 ≤ x) :
     ∃ E : ℝ, |E| ≤ x ^ (1/3 : ℝ) ∧
     chebyshevTheta x = chebyshevPsi x - Real.sqrt x + E := by
   sorry
@@ -114,7 +112,7 @@ theorem pi_li_from_theta (x : ℝ) (hx : 2 < x) :
   sorry
 
 /-- Under RH: π(x) - li(x) = (ψ(x) - x)/log(x) - x^{1/2}/log(x) + O(x^{1/2}/log²x) -/
-theorem pi_li_from_psi_RH (hRH : ZetaZeros.RiemannHypothesis) (x : ℝ) (hx : 2 < x) :
+theorem pi_li_from_psi_RH (hRH : ZetaZeros.RiemannHypothesis') (x : ℝ) (hx : 2 < x) :
     ∃ E : ℝ, |E| ≤ Real.sqrt x / (Real.log x)^2 ∧
     (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x =
       (chebyshevPsi x - x) / Real.log x - Real.sqrt x / Real.log x + E := by
