@@ -49,6 +49,7 @@ theorem weighted_average_formula_RH
         ∑' γ : ZeroOrdinate,
           Real.sin ((γ : ℝ) * δ) / ((γ : ℝ) * δ) * Real.sin ((γ : ℝ) * Real.log x) / (γ : ℝ)
       + E := by
+  -- BLOCKER: needs explicit formula + RH and tail bounds for the zero sum.
   sorry
 
 /-! ## Proof Components -/
@@ -61,6 +62,7 @@ theorem integral_psi_minus_x (x : ℝ) (hx : 1 < x) :
     (∫ u in Set.Icc 0 x, (chebyshevPsi u - u) : ℂ) =
       -∑' ρ : zetaNontrivialZeros, (x : ℂ)^(ρ.val + 1) / (ρ.val * (ρ.val + 1))
       + E := by
+  -- BLOCKER: follows from explicit formula for ψ and integration; see `ExplicitFormulaPsi`.
   sorry
 
 /-- Taking the average involves exponential differences -/
@@ -196,6 +198,7 @@ theorem sinh_imaginary_sin (δ γ : ℝ) :
 /-- Replacing 1/ρ with 1/(iγ) under RH gives controlled error -/
 theorem rho_to_gamma_error (hRH : RiemannHypothesis') :
     Summable (fun ρ : zetaNontrivialZeros => ‖1 / ρ.val - 1 / (Complex.I * ρ.val.im)‖) := by
+  -- BLOCKER: needs RH + summability of 1/γ^2 or 1/‖ρ‖^2 from zero density.
   sorry
 
 /-- The sum over ρ becomes a sum over γ > 0 -/
@@ -203,6 +206,7 @@ theorem sum_over_positive_ordinates (f : ℂ → ℂ)
     (hf : ∀ ρ, f (starRingEnd ℂ ρ) = starRingEnd ℂ (f ρ)) :
     ∑' ρ : zetaNontrivialZeros, f ρ.val =
       2 * (∑' γ : ZeroOrdinate, (f ⟨1/2, γ⟩).re) := by
+  -- BLOCKER: requires pairing zeros with conjugates and identifying ordinates (RH-sensitive).
   sorry
 
 end ProofComponents
@@ -216,6 +220,7 @@ theorem zero_sum_tail (x T : ℝ) (hT : 1 ≤ T) :
     ‖∑' γ : { γ : ZeroOrdinate // T < (γ : ℝ) },
       Real.sin ((γ : ℝ) * (1/T)) / ((γ : ℝ) * (1/T)) * Real.sin ((γ : ℝ) * Real.log x) / (γ : ℝ)‖
     ≤ 10 * T * Real.log T / T^2 := by
+  -- BLOCKER: needs zero-density tail bounds for ordinates.
   sorry
 
 /-- The main contribution comes from γ ≤ T log T -/
@@ -223,6 +228,7 @@ theorem main_sum_bound (x M : ℝ) (hM : 2 ≤ M) :
     ∃ C > 0, ‖∑' γ : { γ : ZeroOrdinate // (γ : ℝ) ≤ M * Real.log M },
       Real.sin ((γ : ℝ) / M) / ((γ : ℝ) / M) * Real.sin ((γ : ℝ) * Real.log x) / (γ : ℝ)‖
     ≤ C * M * Real.log M := by
+  -- BLOCKER: needs crude bounds on the zero sum over ordinates up to M log M.
   sorry
 
 end TailEstimates
@@ -237,6 +243,7 @@ theorem aligned_sum_large (M : ℕ) (hM : 2 ≤ M) (n : ℕ) (hn : 1 ≤ n)
     ∃ sign : ℤ, (sign = 1 ∨ sign = -1) ∧
       ∃ E : ℝ, |E| ≤ x^(1/2 : ℝ) ∧
       weightedAverage x (1/M) = sign * x^(1/2 : ℝ) * Real.log (M : ℝ) + E := by
+  -- BLOCKER: combines Dirichlet approximation with main_sum_bound and tail estimates.
   sorry
 
 end WeightedAverage
