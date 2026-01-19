@@ -169,7 +169,31 @@ theorem zetaZeroSupRealPart_eq_one_or_half :
 /-- The infimum of real parts is 1 - Θ (by symmetry ρ ↔ 1-ρ) -/
 theorem zetaZeroInfRealPart : sInf zetaZeroRealParts = 1 - Θ := by
   -- The functional equation ρ ↔ 1-ρ gives this symmetry
-  sorry
+  have hsymm : ∀ r ∈ zetaZeroRealParts, 1 - r ∈ zetaZeroRealParts := by
+    intro r hr
+    rcases hr with ⟨ρ, hρ, rfl⟩
+    refine ⟨1 - ρ, zero_one_sub_zero hρ, ?_⟩
+    simp [Complex.sub_re, Complex.one_re]
+  have hbddBelow : BddBelow zetaZeroRealParts := by
+    refine ⟨0, ?_⟩
+    intro r hr
+    rcases hr with ⟨ρ, hρ, rfl⟩
+    exact le_of_lt (zetaZeroRealPart_pos hρ)
+  have hlower : 1 - Θ ≤ sInf zetaZeroRealParts := by
+    refine le_csInf zetaZeroRealParts_nonempty ?_
+    intro r hr
+    have hmem : 1 - r ∈ zetaZeroRealParts := hsymm r hr
+    have hle : 1 - r ≤ Θ := le_csSup zetaZeroRealParts_bddAbove hmem
+    linarith
+  have hupper : sInf zetaZeroRealParts ≤ 1 - Θ := by
+    have hsup : Θ ≤ 1 - sInf zetaZeroRealParts := by
+      apply csSup_le zetaZeroRealParts_nonempty
+      intro r hr
+      have hmem : 1 - r ∈ zetaZeroRealParts := hsymm r hr
+      have hle : sInf zetaZeroRealParts ≤ 1 - r := csInf_le hbddBelow hmem
+      linarith
+    linarith
+  exact le_antisymm hupper hlower
 
 end ZeroFree
 
