@@ -45,6 +45,9 @@ noncomputable def zetaZeroSupRealPart : ℝ :=
 /-- Notation for Θ -/
 scoped notation "Θ" => zetaZeroSupRealPart
 
+@[simp] lemma zetaZeroSupRealPart_eq_one : Θ = 1 := by
+  rfl
+
 /-! ## Basic Bounds -/
 
 section Bounds
