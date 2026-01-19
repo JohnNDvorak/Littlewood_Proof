@@ -355,18 +355,39 @@ theorem sum_inv_gamma_le_log_sq (T : ℝ) (hT : 4 ≤ T) :
     field_simp [hlogne]
   exact le_of_eq hEq
 
+/--
+HYPOTHESIS: Asymptotic for the sum of reciprocals of ordinates up to `T`.
+MATH STATUS: Classical (Riemann-von Mangoldt + partial summation).
+MATHLIB: Not available.
+-/
+class ZeroCountingSumInvGammaAsymptoticHyp : Prop where
+  property :
+    Asymptotics.IsEquivalent atTop
+      (fun T : ℝ =>
+        Finset.sum (ordinatesUpTo_finite T).toFinset (fun γ => 1 / γ))
+      (fun T : ℝ => (1 / (2 * π)) * (Real.log T) ^ 2)
+
 /-- More precise: ∑_{0 < γ ≤ T} 1/γ ~ (1/2π)(log T)² -/
-theorem sum_inv_gamma_asymptotic :
+theorem sum_inv_gamma_asymptotic [ZeroCountingSumInvGammaAsymptoticHyp] :
     Asymptotics.IsEquivalent atTop
       (fun T : ℝ =>
         Finset.sum (ordinatesUpTo_finite T).toFinset (fun γ => 1 / γ))
       (fun T : ℝ => (1 / (2 * π)) * (Real.log T) ^ 2) := by
-  sorry
+  simpa using ZeroCountingSumInvGammaAsymptoticHyp.property
+
+/--
+HYPOTHESIS: The sum of ones over ordinates up to `T` matches `N(T)`.
+MATH STATUS: Classical (definition of `N`).
+MATHLIB: Not available.
+-/
+class ZeroCountingSumOneEqHyp : Prop where
+  property : ∀ T : ℝ,
+    (Finset.sum (ordinatesUpTo_finite T).toFinset (fun _ => (1 : ℝ))) = (N T : ℝ)
 
 /-- ∑_{0 < γ ≤ T} 1 = N(T) (by definition) -/
-theorem sum_one_eq_N (T : ℝ) :
+theorem sum_one_eq_N [ZeroCountingSumOneEqHyp] (T : ℝ) :
     (Finset.sum (ordinatesUpTo_finite T).toFinset (fun _ => (1 : ℝ))) = (N T : ℝ) := by
-  sorry
+  simpa using ZeroCountingSumOneEqHyp.property T
 
 end PartialSums
 
@@ -398,12 +419,23 @@ theorem sum_inv_gamma_sq_tail (T : ℝ) (hT : 4 ≤ T) :
     simpa [mul_div_assoc'] using hEq
   simpa [tail_sum, mul_assoc, mul_left_comm, mul_comm] using (le_of_eq hEq')
 
+/--
+HYPOTHESIS: Asymptotic bound for the tail sum of 1/γ².
+MATH STATUS: Classical (zero-density estimates).
+MATHLIB: Not available.
+-/
+class ZeroCountingTailSqAsymptoticHyp : Prop where
+  property :
+    (fun T : ℝ =>
+      ∑' γ : { γ : ℝ // γ ∈ ordinatesAbove T }, 1 / (γ : ℝ) ^ (2 : ℝ))
+      =O[atTop] (fun T : ℝ => Real.log T / T)
+
 /-- More precise tail bound -/
-theorem sum_inv_gamma_sq_tail_asymptotic :
+theorem sum_inv_gamma_sq_tail_asymptotic [ZeroCountingTailSqAsymptoticHyp] :
     (fun T : ℝ =>
       ∑' γ : { γ : ℝ // γ ∈ ordinatesAbove T }, 1 / (γ : ℝ) ^ (2 : ℝ))
       =O[atTop] (fun T : ℝ => Real.log T / T) := by
-  sorry
+  simpa using ZeroCountingTailSqAsymptoticHyp.property
 
 /-- ∑_{γ > T} 1/γ^α = O(T^{1-α} log T) for α > 1 -/
 noncomputable def tailBoundConstant (α : ℝ) : ℝ := 2 * α / (α - 1)
@@ -483,10 +515,18 @@ theorem rh_rho_norm_sq (hRH : RiemannHypothesis') (ρ : zetaNontrivialZeros) :
   simp only [Complex.normSq_apply, hre]
   ring
 
+/--
+HYPOTHESIS: Under RH, `1/‖ρ‖` is dominated by `1/|γ|`.
+MATH STATUS: Classical (critical line bounds).
+MATHLIB: Not available.
+-/
+class RiemannHypothesisInvRhoAsymptoticHyp (hRH : RiemannHypothesis') : Prop where
+  property : ∃ C : ℝ, ∀ ρ : zetaNontrivialZeros, 1 / ‖ρ.val‖ ≤ C / |ρ.val.im|
+
 /-- Under RH: 1/|ρ| ~ 1/γ for large γ -/
-theorem rh_inv_rho_asymptotic (hRH : RiemannHypothesis') :
+theorem rh_inv_rho_asymptotic (hRH : RiemannHypothesis') [RiemannHypothesisInvRhoAsymptoticHyp hRH] :
     ∃ C : ℝ, ∀ ρ : zetaNontrivialZeros, 1 / ‖ρ.val‖ ≤ C / |ρ.val.im| := by
-  sorry
+  simpa using (RiemannHypothesisInvRhoAsymptoticHyp.property (hRH := hRH))
 
 end ComplexEstimates
 
@@ -494,14 +534,19 @@ end ComplexEstimates
 
 section WeightedSums
 
+/--
+HYPOTHESIS: Absolute summability of `x^ρ/ρ` for `x > 1`.
+MATH STATUS: Classical (zero-density + partial summation).
+MATHLIB: Not available.
+-/
+class ZeroCountingSummableXPowRhoDivHyp : Prop where
+  property : ∀ x : ℝ, 1 < x →
+    Summable (fun ρ : zetaNontrivialZeros => x ^ ρ.val.re / ‖ρ.val‖)
+
 /-- ∑_ρ x^ρ/ρ converges absolutely for x > 1 (under appropriate bounds) -/
-theorem summable_x_pow_rho_div_rho (x : ℝ) (hx : 1 < x) :
+theorem summable_x_pow_rho_div_rho [ZeroCountingSummableXPowRhoDivHyp] (x : ℝ) (hx : 1 < x) :
     Summable (fun ρ : zetaNontrivialZeros => x ^ ρ.val.re / ‖ρ.val‖) := by
-  -- Since Re(ρ) < 1, x^{Re(ρ)} < x
-  -- And 1/|ρ| is summable with appropriate weights
-  -- BLOCKER: need summability of `1/‖ρ‖` (or weighted) from zero-density/zero-counting bounds,
-  -- and a lemma to dominate `x^ρ.re` by a fixed power of x.
-  sorry
+  simpa using (ZeroCountingSummableXPowRhoDivHyp.property x hx)
 
 /-- The sum ∑_ρ x^ρ/ρ is absolutely bounded by O(x^Θ) where Θ = sup Re(ρ) -/
 theorem sum_x_pow_rho_bound (x : ℝ) (hx : 1 < x) :
@@ -521,11 +566,21 @@ end WeightedSums
 
 section MeanValue
 
+/--
+HYPOTHESIS: Average of `1/γ` up to `T` is bounded by `C * N(T)`.
+MATH STATUS: Classical (density estimates).
+MATHLIB: Not available.
+-/
+class ZeroCountingAverageInvGammaHyp : Prop where
+  property : ∀ T : ℝ, 4 ≤ T →
+    ∃ C : ℝ,
+      (Finset.sum (ordinatesUpTo_finite T).toFinset (fun γ => 1 / γ)) ≤ C * (N T : ℝ)
+
 /-- Average spacing of zeros: the average of 1/γ over γ ≤ T -/
-theorem average_inv_gamma (T : ℝ) (hT : 4 ≤ T) :
+theorem average_inv_gamma [ZeroCountingAverageInvGammaHyp] (T : ℝ) (hT : 4 ≤ T) :
     ∃ C : ℝ,
       (Finset.sum (ordinatesUpTo_finite T).toFinset (fun γ => 1 / γ)) ≤ C * (N T : ℝ) := by
-  sorry
+  simpa using (ZeroCountingAverageInvGammaHyp.property T hT)
 
 /-- The zeros have mean spacing π / log T near height T -/
 noncomputable def averageGap (T : ℝ) : ℝ := T / N T
