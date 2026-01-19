@@ -74,11 +74,15 @@ theorem theta_psi_first_correction (x : ℝ) (hx : 2 ≤ x) :
     chebyshevTheta x = chebyshevPsi x - chebyshevPsi (Real.sqrt x) + E := by
   sorry
 
-/-- The simpler bound: θ(x) = ψ(x) + O(x^{1/2}) -/
+/-- The simpler bound: θ(x) = ψ(x) + O(x^{1/2} log x) -/
 theorem theta_psi_simple (x : ℝ) (hx : 2 ≤ x) :
-    ∃ E : ℝ, |E| ≤ Real.sqrt x ∧
+    ∃ E : ℝ, |E| ≤ 2 * Real.sqrt x * Real.log x ∧
     chebyshevTheta x = chebyshevPsi x + E := by
-  sorry
+  refine ⟨chebyshevTheta x - chebyshevPsi x, ?_, ?_⟩
+  · have hx' : 1 ≤ x := by linarith
+    have hbound := Chebyshev.abs_psi_sub_theta_le_sqrt_mul_log (x := x) hx'
+    simpa [chebyshevPsi, chebyshevTheta, abs_sub_comm] using hbound
+  · linarith
 
 /-- Under RH: θ(x) = ψ(x) - x^{1/2} + O(x^{1/3}) -/
 theorem theta_psi_RH (hRH : ZetaZeros.RiemannHypothesis) (x : ℝ) (hx : 2 ≤ x) :

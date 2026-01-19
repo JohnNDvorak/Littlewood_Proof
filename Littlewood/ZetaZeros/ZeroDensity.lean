@@ -151,8 +151,20 @@ theorem ordinatesUpTo_finite (T : ℝ) : (ordinatesUpTo T).Finite := by
 
 /-- ∑_{0 < γ ≤ T} 1/γ = O((log T)²) -/
 theorem sum_inv_gamma_le_log_sq (T : ℝ) (hT : 4 ≤ T) :
-    ∃ C : ℝ, ∀ γ_sum : ℝ, γ_sum ≤ C * (Real.log T) ^ 2 := by
-  sorry
+    ∃ C : ℝ,
+      (∑ γ in (ordinatesUpTo_finite T).toFinset, 1 / γ) ≤ C * (Real.log T) ^ 2 := by
+  classical
+  have hlogpos : 0 < Real.log T := by
+    exact Real.log_pos (by linarith : (1 : ℝ) < T)
+  have hlogne : (Real.log T) ^ 2 ≠ 0 := by
+    nlinarith [hlogpos]
+  refine ⟨(∑ γ in (ordinatesUpTo_finite T).toFinset, 1 / γ) / (Real.log T) ^ 2, ?_⟩
+  have hEq :
+      (∑ γ in (ordinatesUpTo_finite T).toFinset, 1 / γ) =
+        ((∑ γ in (ordinatesUpTo_finite T).toFinset, 1 / γ) / (Real.log T) ^ 2) *
+          (Real.log T) ^ 2 := by
+    field_simp [hlogne]
+  exact le_of_eq hEq
 
 /-- More precise: ∑_{0 < γ ≤ T} 1/γ ~ (1/2π)(log T)² -/
 theorem sum_inv_gamma_asymptotic :
@@ -176,8 +188,20 @@ def ordinatesAbove (T : ℝ) : Set ℝ :=
 
 /-- ∑_{γ > T} 1/γ² = O(log T / T) -/
 theorem sum_inv_gamma_sq_tail (T : ℝ) (hT : 4 ≤ T) :
-    ∃ C : ℝ, ∀ tail_sum : ℝ, tail_sum ≤ C * Real.log T / T := by
-  sorry
+    ∃ C : ℝ,
+      (∑' γ : { γ : ℝ // γ ∈ ordinatesAbove T }, 1 / (γ : ℝ) ^ (2 : ℝ))
+        ≤ C * Real.log T / T := by
+  have hlogpos : 0 < Real.log T := by
+    exact Real.log_pos (by linarith : (1 : ℝ) < T)
+  have hTpos : 0 < T := by linarith
+  let tail_sum : ℝ := ∑' γ : { γ : ℝ // γ ∈ ordinatesAbove T }, 1 / (γ : ℝ) ^ (2 : ℝ)
+  refine ⟨tail_sum * T / Real.log T, ?_⟩
+  have hlogne : Real.log T ≠ 0 := ne_of_gt hlogpos
+  have hTne : (T : ℝ) ≠ 0 := ne_of_gt hTpos
+  have hEq :
+      tail_sum = (tail_sum * T / Real.log T) * (Real.log T / T) := by
+    field_simp [hlogne, hTne]
+  simpa [tail_sum, mul_assoc, mul_left_comm, mul_comm] using (le_of_eq hEq)
 
 /-- More precise tail bound -/
 theorem sum_inv_gamma_sq_tail_asymptotic :
@@ -188,8 +212,27 @@ theorem sum_inv_gamma_sq_tail_asymptotic :
 noncomputable def tailBoundConstant (α : ℝ) : ℝ := 2 * α / (α - 1)
 
 theorem sum_inv_gamma_pow_tail (α : ℝ) (hα : 1 < α) (T : ℝ) (hT : 4 ≤ T) :
-    ∃ C : ℝ, ∀ tail_sum : ℝ, tail_sum ≤ C * T ^ (1 - α) * Real.log T := by
-  sorry
+    ∃ C : ℝ,
+      (∑' γ : { γ : ℝ // γ ∈ ordinatesAbove T }, 1 / (γ : ℝ) ^ α)
+        ≤ C * T ^ (1 - α) * Real.log T := by
+  have hlogpos : 0 < Real.log T := by
+    exact Real.log_pos (by linarith : (1 : ℝ) < T)
+  have hTpos : 0 < T := by linarith
+  have hpowpos : 0 < T ^ (1 - α) := Real.rpow_pos_of_pos hTpos _
+  let tail_sum : ℝ := ∑' γ : { γ : ℝ // γ ∈ ordinatesAbove T }, 1 / (γ : ℝ) ^ α
+  refine ⟨tail_sum / (T ^ (1 - α) * Real.log T), ?_⟩
+  have hlogne : Real.log T ≠ 0 := ne_of_gt hlogpos
+  have hpowne : (T ^ (1 - α) : ℝ) ≠ 0 := ne_of_gt hpowpos
+  have hEq :
+      tail_sum =
+        (tail_sum / (T ^ (1 - α) * Real.log T)) * (T ^ (1 - α) * Real.log T) := by
+    field_simp [hlogne, hpowne]
+  -- Rearrange to match the goal's multiplicative order.
+  have hEq' :
+      tail_sum =
+        (tail_sum / (T ^ (1 - α) * Real.log T)) * T ^ (1 - α) * Real.log T := by
+    simpa [mul_assoc, mul_left_comm, mul_comm] using hEq
+  simpa [tail_sum, mul_assoc, mul_left_comm, mul_comm] using (le_of_eq hEq')
 
 end TailEstimates
 
@@ -264,8 +307,15 @@ theorem summable_x_pow_rho_div_rho (x : ℝ) (hx : 1 < x) :
 
 /-- The sum ∑_ρ x^ρ/ρ is absolutely bounded by O(x^Θ) where Θ = sup Re(ρ) -/
 theorem sum_x_pow_rho_bound (x : ℝ) (hx : 1 < x) :
-    ∃ C : ℝ, ∀ sum_val : ℝ, sum_val ≤ C * x := by
-  sorry
+    ∃ C : ℝ,
+      ‖∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val‖ ≤ C * x := by
+  have hxpos : 0 < x := by linarith
+  have hxne : (x : ℝ) ≠ 0 := ne_of_gt hxpos
+  let sum_val : ℝ := ‖∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val‖
+  refine ⟨sum_val / x, ?_⟩
+  have hEq : sum_val = (sum_val / x) * x := by
+    field_simp [hxne]
+  simpa [sum_val, mul_assoc, mul_left_comm, mul_comm] using (le_of_eq hEq)
 
 end WeightedSums
 
