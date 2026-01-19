@@ -72,6 +72,8 @@ section Summability
 theorem summable_inv_gamma_pow (α : ℝ) (hα : 1 < α) :
     Summable (fun γ : ZeroOrdinate => 1 / (γ : ℝ) ^ α) := by
   -- Use comparison with N(T) asymptotic and integral comparison
+  -- BLOCKER: need a Mathlib lemma turning zero-counting bounds (e.g. `N T ≤ C*T*log T`)
+  -- into summability over `zetaZeroOrdinates`, or an enumeration of ordinates with growth control.
   sorry
 
 /-- ∑ 1/γ² converges absolutely -/
@@ -244,6 +246,8 @@ section ComplexEstimates
 theorem summable_inv_rho_sq :
     Summable (fun ρ : zetaNontrivialZeros => 1 / Complex.normSq ρ.val) := by
   -- Since 0 < σ < 1, we have |ρ|² ~ γ² for large γ
+  -- BLOCKER: need a lemma comparing sums over zeros to sums over ordinates,
+  -- e.g. summability of `1/γ^2` plus multiplicity control or a bound `|ρ|^2 ≥ γ^2`.
   sorry
 
 /-- ∑_ρ 1/|ρ(ρ+1)| converges -/
@@ -303,6 +307,8 @@ theorem summable_x_pow_rho_div_rho (x : ℝ) (hx : 1 < x) :
     Summable (fun ρ : zetaNontrivialZeros => x ^ ρ.val.re / ‖ρ.val‖) := by
   -- Since Re(ρ) < 1, x^{Re(ρ)} < x
   -- And 1/|ρ| is summable with appropriate weights
+  -- BLOCKER: need summability of `1/‖ρ‖` (or weighted) from zero-density/zero-counting bounds,
+  -- and a lemma to dominate `x^ρ.re` by a fixed power of x.
   sorry
 
 /-- The sum ∑_ρ x^ρ/ρ is absolutely bounded by O(x^Θ) where Θ = sup Re(ρ) -/
