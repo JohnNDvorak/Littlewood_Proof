@@ -6,6 +6,8 @@ Authors: [Your Name]
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Mathlib.Analysis.Normed.Field.Basic
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
+import Mathlib.Topology.Algebra.InfiniteSum.Order
+import Mathlib.Topology.Instances.ENNReal.Lemmas
 
 /-!
 # Zero Density Estimates
@@ -43,7 +45,24 @@ theorem ZeroOrdinate.pos (γ : ZeroOrdinate) : 0 < (γ : ℝ) := by
 /-- Zero ordinates form a countable set -/
 theorem zetaZeroOrdinates_countable : zetaZeroOrdinates.Countable := by
   -- The zeros are isolated, hence countable
-  sorry
+  -- This follows from the fact that zetaNontrivialZerosPos is countable
+  -- (zeros of analytic functions are isolated and hence countable in any bounded region).
+  unfold zetaZeroOrdinates
+  apply Set.Countable.image
+  -- Show zetaNontrivialZerosPos is countable by writing it as a union of finite sets.
+  have : zetaNontrivialZerosPos = ⋃ n : ℕ, zetaNontrivialZerosPos ∩ {s : ℂ | s.im ≤ n} := by
+    ext s
+    simp only [Set.mem_iUnion, Set.mem_inter_iff, Set.mem_setOf_eq]
+    constructor
+    · intro hs
+      refine ⟨⌈s.im⌉₊, ?_⟩
+      exact ⟨hs, Nat.le_ceil s.im⟩
+    · intro ⟨n, hn, _⟩
+      exact hn
+  rw [this]
+  apply Set.countable_iUnion
+  intro n
+  exact (finite_zeros_le n).countable
 
 /-! ## Summability of 1/γ^α -/
 
@@ -63,12 +82,40 @@ theorem summable_inv_gamma_sq :
 /-- The value of ∑ 1/γ² is finite and positive -/
 theorem tsum_inv_gamma_sq_pos :
     0 < ∑' γ : ZeroOrdinate, 1 / (γ : ℝ) ^ (2 : ℝ) := by
-  sorry
+  obtain ⟨γ₁, hγ₁_mem, _hγ₁_low, _hγ₁_high, _hmin⟩ := firstZeroOrdinate_bounds
+  let γ0 : ZeroOrdinate := ⟨γ₁, hγ₁_mem⟩
+  have hterm_pos : 0 < 1 / (γ0 : ℝ) ^ (2 : ℝ) := by
+    have hγpos : 0 < (γ0 : ℝ) := ZeroOrdinate.pos γ0
+    have hpow_pos : 0 < (γ0 : ℝ) ^ (2 : ℝ) := Real.rpow_pos_of_pos hγpos _
+    exact one_div_pos.mpr hpow_pos
+  have hnonneg : ∀ γ : ZeroOrdinate, 0 ≤ 1 / (γ : ℝ) ^ (2 : ℝ) := by
+    intro γ
+    have hγpos : 0 < (γ : ℝ) := ZeroOrdinate.pos γ
+    have hpow_nonneg : 0 ≤ (γ : ℝ) ^ (2 : ℝ) := Real.rpow_nonneg (le_of_lt hγpos) _
+    exact one_div_nonneg.mpr hpow_nonneg
+  exact (summable_inv_gamma_sq.tsum_pos hnonneg γ0 hterm_pos)
 
 /-- ∑ 1/(γ(γ+1)) converges (used in explicit formula) -/
 theorem summable_inv_gamma_gamma_add_one :
     Summable (fun γ : ZeroOrdinate => 1 / ((γ : ℝ) * ((γ : ℝ) + 1))) := by
-  sorry
+  refine Summable.of_nonneg_of_le ?_ ?_ summable_inv_gamma_sq
+  · intro γ
+    have hγpos : 0 < (γ : ℝ) := ZeroOrdinate.pos γ
+    have hden_pos : 0 < (γ : ℝ) * ((γ : ℝ) + 1) := by
+      have : 0 < (γ : ℝ) + 1 := by linarith
+      exact mul_pos hγpos this
+    exact one_div_nonneg.mpr (le_of_lt hden_pos)
+  · intro γ
+    have hγpos : 0 < (γ : ℝ) := ZeroOrdinate.pos γ
+    have hγnonneg : 0 ≤ (γ : ℝ) := le_of_lt hγpos
+    have hmul_le : (γ : ℝ) ^ 2 ≤ (γ : ℝ) * ((γ : ℝ) + 1) := by
+      have hle : (γ : ℝ) ≤ (γ : ℝ) + 1 := by linarith
+      have : (γ : ℝ) * (γ : ℝ) ≤ (γ : ℝ) * ((γ : ℝ) + 1) :=
+        mul_le_mul_of_nonneg_left hle hγnonneg
+      simpa [pow_two] using this
+    have hpos : 0 < (γ : ℝ) ^ 2 := by
+      simpa [pow_two] using (mul_pos hγpos hγpos)
+    simpa [pow_two] using (one_div_le_one_div_of_le hpos hmul_le)
 
 end Summability
 
@@ -83,8 +130,24 @@ def ordinatesUpTo (T : ℝ) : Set ℝ :=
 /-- The set of ordinates up to T is finite -/
 theorem ordinatesUpTo_finite (T : ℝ) : (ordinatesUpTo T).Finite := by
   unfold ordinatesUpTo
-  -- Use that zeros are isolated
-  sorry
+  -- We have (·.im) '' zetaNontrivialZerosPos ∩ Set.Ioc 0 T
+  -- This equals (·.im) '' (zetaNontrivialZerosPos ∩ {s | s.im ≤ T})
+  have h : (·.im) '' zetaNontrivialZerosPos ∩ Set.Ioc 0 T =
+           (·.im) '' (zetaNontrivialZerosPos ∩ {s : ℂ | s.im ≤ T}) := by
+    ext γ
+    simp only [Set.mem_inter_iff, Set.mem_image, Set.mem_setOf_eq, Set.mem_Ioc]
+    constructor
+    · intro ⟨⟨s, hs, heq⟩, h0, hT⟩
+      refine ⟨s, ⟨hs, ?_⟩, heq⟩
+      simpa [heq] using hT
+    · intro ⟨s, ⟨hs, hT⟩, heq⟩
+      refine ⟨⟨s, hs, heq⟩, ?_, ?_⟩
+      · rw [← heq]; exact hs.2
+      · rw [← heq]; exact hT
+  rw [h]
+  -- Now use that the preimage is finite (from finite_zeros_le)
+  apply Set.Finite.image
+  exact finite_zeros_le T
 
 /-- ∑_{0 < γ ≤ T} 1/γ = O((log T)²) -/
 theorem sum_inv_gamma_le_log_sq (T : ℝ) (hT : 4 ≤ T) :
@@ -144,7 +207,35 @@ theorem summable_inv_rho_sq :
 theorem summable_inv_rho_rho_add_one :
     Summable (fun ρ : zetaNontrivialZeros =>
       1 / (‖ρ.val‖ * ‖ρ.val + 1‖)) := by
-  sorry
+  refine Summable.of_nonneg_of_le ?_ ?_ summable_inv_rho_sq
+  · intro ρ
+    have hnonneg : 0 ≤ ‖ρ.val‖ * ‖ρ.val + 1‖ :=
+      mul_nonneg (norm_nonneg _) (norm_nonneg _)
+    exact one_div_nonneg.mpr hnonneg
+  · intro ρ
+    have hre : 0 < ρ.val.re := (ρ.property).2.1
+    have hne : (ρ.val : ℂ) ≠ 0 := by
+      intro hzero
+      have : (0 : ℝ) < 0 := by simpa [hzero] using hre
+      exact (lt_irrefl _ this)
+    have hnorm_pos : 0 < ‖ρ.val‖ := norm_pos_iff.mpr hne
+    have hnormsq :
+        Complex.normSq (ρ.val + 1) = Complex.normSq ρ.val + 1 + 2 * ρ.val.re := by
+      simpa using (Complex.normSq_add (ρ.val) (1 : ℂ))
+    have hnormsq_le : Complex.normSq ρ.val ≤ Complex.normSq (ρ.val + 1) := by
+      linarith [hnormsq, hre]
+    have hnorm_le : ‖ρ.val‖ ≤ ‖ρ.val + 1‖ := by
+      have hsq : ‖ρ.val‖ ^ 2 ≤ ‖ρ.val + 1‖ ^ 2 := by
+        simpa [Complex.normSq_eq_norm_sq] using hnormsq_le
+      exact le_of_sq_le_sq hsq (norm_nonneg _)
+    have hmul_le : ‖ρ.val‖ ^ 2 ≤ ‖ρ.val‖ * ‖ρ.val + 1‖ := by
+      have hnonneg : 0 ≤ ‖ρ.val‖ := norm_nonneg _
+      simpa [pow_two, mul_comm, mul_left_comm, mul_assoc] using
+        (mul_le_mul_of_nonneg_left hnorm_le hnonneg)
+    have hpos : 0 < ‖ρ.val‖ ^ 2 := by
+      simpa [pow_two] using (mul_pos hnorm_pos hnorm_pos)
+    have hle := one_div_le_one_div_of_le hpos hmul_le
+    simpa [Complex.normSq_eq_norm_sq, pow_two, mul_comm, mul_left_comm, mul_assoc] using hle
 
 /-- Under RH: |ρ|² = 1/4 + γ² -/
 theorem rh_rho_norm_sq (hRH : RiemannHypothesis') (ρ : zetaNontrivialZeros) :
