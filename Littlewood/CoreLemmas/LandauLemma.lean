@@ -111,10 +111,11 @@ section Corollaries
 /-- Corollary: If F(s) = ∫ A(x)x^{-s}dx with A ≥ 0 eventually, and F extends
     analytically to a neighborhood of σ₀ ∈ ℝ, then the integral converges for Re(s) > σ₀ - ε -/
 theorem landau_extension
-    (_A : ℝ → ℝ) (_hA_nonneg : ∀ᶠ x in atTop, 0 ≤ _A x) (_σ₀ : ℝ)
-    (_hanalytic : AnalyticAt ℂ (dirichletIntegral _A) _σ₀) :
-    True := by  -- Simplified statement
-  trivial
+    (A : ℝ → ℝ) (hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x) (σ₀ : ℝ)
+    (hanalytic : AnalyticAt ℂ (dirichletIntegral A) σ₀) :
+    ∃ ε > 0, ∀ s : ℝ, σ₀ - ε < s →
+      Integrable (fun x => A x * x ^ (-s)) (volume.restrict (Set.Ioi 1)) := by
+  sorry
 
 /-- Abscissa of convergence for a Dirichlet series -/
 noncomputable def abscissaOfConvergenceSeries (_a : ℕ → ℝ) : EReal :=
