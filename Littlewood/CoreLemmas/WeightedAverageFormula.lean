@@ -64,9 +64,12 @@ theorem integral_psi_minus_x (x : ℝ) (hx : 1 < x) :
   sorry
 
 /-- Taking the average involves exponential differences -/
-theorem average_of_power (x δ : ℝ) (ρ : ℂ) (hδ : 0 < δ) :
+theorem average_of_power (x δ : ℝ) (ρ : ℂ) (hx : 0 < x) (hδ : 0 < δ) :
     ((Real.exp δ * x : ℂ)^(ρ + 1) - (Real.exp (-δ) * x : ℂ)^(ρ + 1)) / (2 * δ * x * (ρ + 1)) =
       (x : ℂ)^ρ * Complex.sinh (δ * (ρ + 1)) / (δ * (ρ + 1)) := by
+  -- TODO: expand with `Complex.log_ofReal_mul` and `Complex.cpow_def_of_ne_zero`,
+  -- then use `Complex.two_sinh` to rewrite the exponential difference.
+  -- The proof should assume `hx : 0 < x` to control branch issues for `log`.
   sorry
 
 /-- Under RH, x^ρ = x^{1/2} * x^{iγ} -/
