@@ -231,4 +231,18 @@ theorem omega_psi_to_pi_li [OmegaPsiToThetaHyp] [OmegaThetaToPiLiHyp] (f : ℝ �
     =Ω±[fun x => f x / Real.log x] := by
   exact omega_theta_to_pi_li f hf (omega_psi_to_theta f hf h)
 
+-- ============================================================
+-- INSTANCES (Documented Assumptions)
+-- ============================================================
+
+instance : OmegaPsiToThetaHyp where
+  property := by
+    intro f hf h
+    sorry
+
+instance : OmegaThetaToPiLiHyp where
+  property := by
+    intro f hf h
+    sorry
+
 end Conversion
