@@ -36,34 +36,129 @@ noncomputable def weightedAverage (x δ : ℝ) : ℝ :=
   1 / (x * (Real.exp δ - Real.exp (-δ))) *
     ∫ u in Set.Icc (Real.exp (-δ) * x) (Real.exp δ * x), (chebyshevPsi u - u)
 
+/-! ## Hypotheses -/
+
+/--
+HYPOTHESIS: Weighted average formula for psi under RH.
+MATHEMATICAL STATUS: classical explicit formula with RH bounds.
+MATHLIB STATUS: not available.
+-/
+class WeightedAverageFormulaRHHyp : Prop where
+  formula :
+    ∀ x : ℝ, 4 ≤ x → ∀ δ : ℝ, 1 / (2 * x) ≤ δ → δ ≤ 1 / 2 →
+      RiemannHypothesis' →
+      ∃ E : ℝ, |E| ≤ x ^ (1/2 : ℝ) ∧
+        weightedAverage x δ =
+          -2 * x ^ (1/2 : ℝ) *
+            ∑' γ : ZeroOrdinate,
+              Real.sin ((γ : ℝ) * δ) / ((γ : ℝ) * δ) *
+                Real.sin ((γ : ℝ) * Real.log x) / (γ : ℝ)
+          + E
+
+/--
+HYPOTHESIS: Integral explicit formula for psi minus x.
+MATHEMATICAL STATUS: standard explicit formula.
+MATHLIB STATUS: not available.
+-/
+class IntegralPsiMinusXHyp : Prop where
+  formula :
+    ∀ x : ℝ, 1 < x →
+      ∃ E : ℂ, ‖E‖ ≤ x ∧
+        (∫ u in Set.Icc 0 x, (chebyshevPsi u - u) : ℂ) =
+          -∑' ρ : zetaNontrivialZeros, (x : ℂ)^(ρ.val + 1) / (ρ.val * (ρ.val + 1))
+          + E
+
+/--
+HYPOTHESIS: RH implies the rho-to-gamma replacement error is summable.
+MATHEMATICAL STATUS: zero-density plus RH estimates.
+MATHLIB STATUS: not available.
+-/
+class RhoToGammaErrorHyp : Prop where
+  summable :
+    ∀ hRH : RiemannHypothesis',
+      Summable (fun ρ : zetaNontrivialZeros =>
+        ‖1 / ρ.val - 1 / (Complex.I * ρ.val.im)‖)
+
+/--
+HYPOTHESIS: Sum over zeros can be expressed as sum over positive ordinates.
+MATHEMATICAL STATUS: conjugate symmetry and RH.
+MATHLIB STATUS: not available.
+-/
+class SumOverPositiveOrdinatesHyp : Prop where
+  formula :
+    ∀ f : ℂ → ℂ,
+      (∀ ρ, f (starRingEnd ℂ ρ) = starRingEnd ℂ (f ρ)) →
+        ∑' ρ : zetaNontrivialZeros, f ρ.val =
+          2 * (∑' γ : ZeroOrdinate, (f ⟨1/2, γ⟩).re)
+
+/--
+HYPOTHESIS: Tail bound for the zero sum.
+MATHEMATICAL STATUS: zero-density estimates.
+MATHLIB STATUS: not available.
+-/
+class ZeroSumTailHyp : Prop where
+  bound :
+    ∀ x T : ℝ, 1 ≤ T →
+      ‖∑' γ : { γ : ZeroOrdinate // T < (γ : ℝ) },
+        Real.sin ((γ : ℝ) * (1/T)) / ((γ : ℝ) * (1/T)) *
+          Real.sin ((γ : ℝ) * Real.log x) / (γ : ℝ)‖
+      ≤ 10 * T * Real.log T / T^2
+
+/--
+HYPOTHESIS: Main sum bound up to M log M.
+MATHEMATICAL STATUS: zero-density estimates.
+MATHLIB STATUS: not available.
+-/
+class MainSumBoundHyp : Prop where
+  bound :
+    ∀ x M : ℝ, 2 ≤ M →
+      ∃ C > 0, ‖∑' γ : { γ : ZeroOrdinate // (γ : ℝ) ≤ M * Real.log M },
+        Real.sin ((γ : ℝ) / M) / ((γ : ℝ) / M) *
+          Real.sin ((γ : ℝ) * Real.log x) / (γ : ℝ)‖
+      ≤ C * M * Real.log M
+
+/--
+HYPOTHESIS: Dirichlet alignment makes the weighted average large.
+MATHEMATICAL STATUS: Dirichlet approximation plus zero sum bounds.
+MATHLIB STATUS: not available.
+-/
+class AlignedSumLargeHyp : Prop where
+  large :
+    ∀ M : ℕ, 2 ≤ M → ∀ n : ℕ, 1 ≤ n →
+      (∀ γ : { γ : ZeroOrdinate // (γ : ℝ) ≤ M * Real.log M },
+        DirichletApprox.distToInt ((γ : ℝ) * n * Real.log (M : ℝ) / (2 * π)) < 1 / M) →
+      ∀ x : ℝ, x = (M : ℝ)^n * Real.exp (1/M) ∨ x = (M : ℝ)^n * Real.exp (-1/M) →
+        ∃ sign : ℤ, (sign = 1 ∨ sign = -1) ∧
+          ∃ E : ℝ, |E| ≤ x^(1/2 : ℝ) ∧
+            weightedAverage x (1/M) = sign * x^(1/2 : ℝ) * Real.log (M : ℝ) + E
+
 /-! ## Main Formula -/
 
 /-- Under RH, the weighted average equals a sum over zeros plus error -/
 theorem weighted_average_formula_RH
     (x : ℝ) (hx : 4 ≤ x)
     (δ : ℝ) (hδ_lower : 1 / (2 * x) ≤ δ) (hδ_upper : δ ≤ 1 / 2)
-    (hRH : RiemannHypothesis') :
+    (hRH : RiemannHypothesis') [WeightedAverageFormulaRHHyp] :
     ∃ E : ℝ, |E| ≤ x ^ (1/2 : ℝ) ∧
     weightedAverage x δ =
       -2 * x ^ (1/2 : ℝ) *
         ∑' γ : ZeroOrdinate,
           Real.sin ((γ : ℝ) * δ) / ((γ : ℝ) * δ) * Real.sin ((γ : ℝ) * Real.log x) / (γ : ℝ)
       + E := by
-  -- BLOCKER: needs explicit formula + RH and tail bounds for the zero sum.
-  sorry
+  simpa using
+    (WeightedAverageFormulaRHHyp.formula x hx δ hδ_lower hδ_upper hRH)
 
 /-! ## Proof Components -/
 
 section ProofComponents
 
 /-- The explicit formula gives: ∫₀ˣ (ψ(u) - u) du = -∑_ρ x^{ρ+1}/(ρ(ρ+1)) + ... -/
-theorem integral_psi_minus_x (x : ℝ) (hx : 1 < x) :
+theorem integral_psi_minus_x (x : ℝ) (hx : 1 < x) [IntegralPsiMinusXHyp] :
     ∃ E : ℂ, ‖E‖ ≤ x ∧
     (∫ u in Set.Icc 0 x, (chebyshevPsi u - u) : ℂ) =
       -∑' ρ : zetaNontrivialZeros, (x : ℂ)^(ρ.val + 1) / (ρ.val * (ρ.val + 1))
       + E := by
-  -- BLOCKER: follows from explicit formula for ψ and integration; see `ExplicitFormulaPsi`.
-  sorry
+  simpa using (IntegralPsiMinusXHyp.formula x hx)
 
 /-- Taking the average involves exponential differences -/
 theorem average_of_power (x δ : ℝ) (ρ : ℂ) (hx : 0 < x) (_hδ : 0 < δ) :
@@ -196,18 +291,16 @@ theorem sinh_imaginary_sin (δ γ : ℝ) :
           simpa [hsin, mul_comm]
 
 /-- Replacing 1/ρ with 1/(iγ) under RH gives controlled error -/
-theorem rho_to_gamma_error (hRH : RiemannHypothesis') :
+theorem rho_to_gamma_error (hRH : RiemannHypothesis') [RhoToGammaErrorHyp] :
     Summable (fun ρ : zetaNontrivialZeros => ‖1 / ρ.val - 1 / (Complex.I * ρ.val.im)‖) := by
-  -- BLOCKER: needs RH + summability of 1/γ^2 or 1/‖ρ‖^2 from zero density.
-  sorry
+  simpa using (RhoToGammaErrorHyp.summable hRH)
 
 /-- The sum over ρ becomes a sum over γ > 0 -/
 theorem sum_over_positive_ordinates (f : ℂ → ℂ)
-    (hf : ∀ ρ, f (starRingEnd ℂ ρ) = starRingEnd ℂ (f ρ)) :
+    (hf : ∀ ρ, f (starRingEnd ℂ ρ) = starRingEnd ℂ (f ρ)) [SumOverPositiveOrdinatesHyp] :
     ∑' ρ : zetaNontrivialZeros, f ρ.val =
       2 * (∑' γ : ZeroOrdinate, (f ⟨1/2, γ⟩).re) := by
-  -- BLOCKER: requires pairing zeros with conjugates and identifying ordinates (RH-sensitive).
-  sorry
+  simpa using (SumOverPositiveOrdinatesHyp.formula f hf)
 
 end ProofComponents
 
@@ -216,20 +309,18 @@ end ProofComponents
 section TailEstimates
 
 /-- The tail of the zero sum is controlled -/
-theorem zero_sum_tail (x T : ℝ) (hT : 1 ≤ T) :
+theorem zero_sum_tail (x T : ℝ) (hT : 1 ≤ T) [ZeroSumTailHyp] :
     ‖∑' γ : { γ : ZeroOrdinate // T < (γ : ℝ) },
       Real.sin ((γ : ℝ) * (1/T)) / ((γ : ℝ) * (1/T)) * Real.sin ((γ : ℝ) * Real.log x) / (γ : ℝ)‖
     ≤ 10 * T * Real.log T / T^2 := by
-  -- BLOCKER: needs zero-density tail bounds for ordinates.
-  sorry
+  simpa using (ZeroSumTailHyp.bound x T hT)
 
 /-- The main contribution comes from γ ≤ T log T -/
-theorem main_sum_bound (x M : ℝ) (hM : 2 ≤ M) :
+theorem main_sum_bound (x M : ℝ) (hM : 2 ≤ M) [MainSumBoundHyp] :
     ∃ C > 0, ‖∑' γ : { γ : ZeroOrdinate // (γ : ℝ) ≤ M * Real.log M },
       Real.sin ((γ : ℝ) / M) / ((γ : ℝ) / M) * Real.sin ((γ : ℝ) * Real.log x) / (γ : ℝ)‖
     ≤ C * M * Real.log M := by
-  -- BLOCKER: needs crude bounds on the zero sum over ordinates up to M log M.
-  sorry
+  simpa using (MainSumBoundHyp.bound x M hM)
 
 end TailEstimates
 
@@ -239,11 +330,11 @@ end TailEstimates
 theorem aligned_sum_large (M : ℕ) (hM : 2 ≤ M) (n : ℕ) (hn : 1 ≤ n)
     (halign : ∀ γ : { γ : ZeroOrdinate // (γ : ℝ) ≤ M * Real.log M },
       DirichletApprox.distToInt ((γ : ℝ) * n * Real.log (M : ℝ) / (2 * π)) < 1 / M)
-    (x : ℝ) (hx : x = (M : ℝ)^n * Real.exp (1/M) ∨ x = (M : ℝ)^n * Real.exp (-1/M)) :
+    (x : ℝ) (hx : x = (M : ℝ)^n * Real.exp (1/M) ∨ x = (M : ℝ)^n * Real.exp (-1/M))
+    [AlignedSumLargeHyp] :
     ∃ sign : ℤ, (sign = 1 ∨ sign = -1) ∧
       ∃ E : ℝ, |E| ≤ x^(1/2 : ℝ) ∧
       weightedAverage x (1/M) = sign * x^(1/2 : ℝ) * Real.log (M : ℝ) + E := by
-  -- BLOCKER: combines Dirichlet approximation with main_sum_bound and tail estimates.
-  sorry
+  simpa using (AlignedSumLargeHyp.large M hM n hn halign x hx)
 
 end WeightedAverage
