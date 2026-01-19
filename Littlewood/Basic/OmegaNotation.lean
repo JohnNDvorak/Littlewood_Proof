@@ -36,20 +36,17 @@ variable {α : Type*} [TopologicalSpace α] [Preorder α]
 
 section Definitions
 
-/-- `f(x) = Ω(g(x))` means `limsup |f(x)|/g(x) > 0` as `x → ∞`.
-    Equivalently, `|f(x)| ≥ c·g(x)` infinitely often for some `c > 0`. -/
+/-- `f(x) = Ω(g(x))` means `|f(x)| ≥ c·g(x)` infinitely often for some `c > 0`. -/
 def IsOmega (f : ℝ → ℝ) (g : ℝ → ℝ) : Prop :=
-  Filter.limsup (fun x => |f x| / g x) atTop > 0
+  ∃ c > 0, ∃ᶠ x in atTop, |f x| ≥ c * g x
 
-/-- `f(x) = Ω₊(g(x))` means `limsup f(x)/g(x) > 0` as `x → ∞`.
-    Equivalently, `f(x) ≥ c·g(x)` infinitely often for some `c > 0`. -/
+/-- `f(x) = Ω₊(g(x))` means `f(x) ≥ c·g(x)` infinitely often for some `c > 0`. -/
 def IsOmegaPlus (f : ℝ → ℝ) (g : ℝ → ℝ) : Prop :=
-  Filter.limsup (fun x => f x / g x) atTop > 0
+  ∃ c > 0, ∃ᶠ x in atTop, f x ≥ c * g x
 
-/-- `f(x) = Ω₋(g(x))` means `liminf f(x)/g(x) < 0` as `x → ∞`.
-    Equivalently, `f(x) ≤ -c·g(x)` infinitely often for some `c > 0`. -/
+/-- `f(x) = Ω₋(g(x))` means `f(x) ≤ -c·g(x)` infinitely often for some `c > 0`. -/
 def IsOmegaMinus (f : ℝ → ℝ) (g : ℝ → ℝ) : Prop :=
-  Filter.liminf (fun x => f x / g x) atTop < 0
+  ∃ c > 0, ∃ᶠ x in atTop, f x ≤ -c * g x
 
 /-- `f(x) = Ω±(g(x))` means both `Ω₊` and `Ω₋` hold.
     This is the key notation for Littlewood's theorem, indicating
@@ -76,32 +73,44 @@ section BasicProperties
 variable {f f' g g' : ℝ → ℝ}
 
 /-!
-MATHLIB BLOCKER: Several limsup/liminf comparison lemmas require boundedness
-(`IsBoundedUnder`/`IsCoboundedUnder`) of the underlying functions on `atTop`.
-The current Ω definitions do not assume boundedness for `f/g`, so these proofs
-stall without extra hypotheses.
-
-Resolution options:
-1. Add explicit boundedness assumptions to the lemmas,
-2. Derive boundedness from eventual positivity or growth assumptions on `g`,
-3. Switch to frequent/eventually formulations that avoid `limsup/liminf`.
+Note: We use the "frequently large" formulation of Ω/Ω± to avoid boundedness
+side conditions that arise in limsup/liminf comparisons.
 -/
 
 /-- Ω± implies Ω -/
 theorem IsOmegaPlusMinus.isOmega (h : f =Ω±[g]) : f =Ω[g] := by
-  sorry
+  rcases h with ⟨hplus, _hminus⟩
+  rcases hplus with ⟨c, hc, hfreq⟩
+  refine ⟨c, hc, ?_⟩
+  refine hfreq.mono ?_
+  intro x hx
+  exact (abs_ge_self _).trans hx
 
 /-- Ω₊ implies Ω -/
-theorem IsOmegaPlus.isOmega (h : f =Ω₊[g]) (hg : ∀ᶠ x in atTop, 0 < g x) : f =Ω[g] := by
-  sorry
+theorem IsOmegaPlus.isOmega (h : f =Ω₊[g]) (_hg : ∀ᶠ x in atTop, 0 < g x) : f =Ω[g] := by
+  rcases h with ⟨c, hc, hfreq⟩
+  refine ⟨c, hc, ?_⟩
+  refine hfreq.mono ?_
+  intro x hx
+  exact (abs_ge_self _).trans hx
 
 /-- Ω₋ for f implies Ω₊ for -f -/
 theorem IsOmegaMinus.neg_isOmegaPlus (h : f =Ω₋[g]) : (fun x => -f x) =Ω₊[g] := by
-  sorry
+  rcases h with ⟨c, hc, hfreq⟩
+  refine ⟨c, hc, ?_⟩
+  refine hfreq.mono ?_
+  intro x hx
+  have := neg_le_neg hx
+  simpa [neg_mul, mul_comm, mul_left_comm, mul_assoc] using this
 
 /-- Ω₊ for f implies Ω₋ for -f -/
 theorem IsOmegaPlus.neg_isOmegaMinus (h : f =Ω₊[g]) : (fun x => -f x) =Ω₋[g] := by
-  sorry
+  rcases h with ⟨c, hc, hfreq⟩
+  refine ⟨c, hc, ?_⟩
+  refine hfreq.mono ?_
+  intro x hx
+  have := neg_le_neg hx
+  simpa [neg_mul, mul_comm, mul_left_comm, mul_assoc] using this
 
 /-- Ω± is preserved under negation -/
 theorem IsOmegaPlusMinus.neg (h : f =Ω±[g]) : (fun x => -f x) =Ω±[g] :=
@@ -114,17 +123,37 @@ section FrequentlyLarge
 /-- Ω₊ implies f(x) ≥ c·g(x) frequently -/
 theorem IsOmegaPlus.frequently_ge (h : f =Ω₊[g]) :
     ∃ c > 0, ∃ᶠ x in atTop, f x ≥ c * g x := by
-  sorry
+  simpa using h
 
 /-- Ω₋ implies f(x) ≤ -c·g(x) frequently -/
 theorem IsOmegaMinus.frequently_le (h : f =Ω₋[g]) :
     ∃ c > 0, ∃ᶠ x in atTop, f x ≤ -c * g x := by
-  sorry
+  simpa using h
 
 /-- Ω± implies infinitely many sign changes (when g is eventually positive) -/
 theorem IsOmegaPlusMinus.sign_changes (h : f =Ω±[g]) (hg : ∀ᶠ x in atTop, 0 < g x) :
     (∃ᶠ x in atTop, 0 < f x) ∧ (∃ᶠ x in atTop, f x < 0) := by
-  sorry
+  rcases h with ⟨hplus, hminus⟩
+  rcases hplus with ⟨c, hc, hfreq⟩
+  have hpos : ∀ᶠ x in atTop, 0 < c * g x := by
+    refine hg.mono ?_
+    intro x hxg
+    exact mul_pos hc hxg
+  have hfreq_pos : ∃ᶠ x in atTop, 0 < f x := by
+    refine (hfreq.and_eventually hpos).mono ?_
+    intro x hx
+    exact lt_of_lt_of_le hx.2 hx.1
+  rcases hminus with ⟨c', hc', hfreq'⟩
+  have hneg : ∀ᶠ x in atTop, -c' * g x < 0 := by
+    refine hg.mono ?_
+    intro x hxg
+    have hpos' : 0 < c' * g x := mul_pos hc' hxg
+    exact neg_lt_zero.mpr hpos'
+  have hfreq_neg : ∃ᶠ x in atTop, f x < 0 := by
+    refine (hfreq'.and_eventually hneg).mono ?_
+    intro x hx
+    exact lt_of_le_of_lt hx.1 hx.2
+  exact ⟨hfreq_pos, hfreq_neg⟩
 
 end FrequentlyLarge
 
@@ -135,7 +164,10 @@ theorem isOmegaPlusMinus_of_limsup_liminf
     (h_sup : Filter.limsup (fun x => f x / g x) atTop > 0)
     (h_inf : Filter.liminf (fun x => f x / g x) atTop < 0) :
     f =Ω±[g] :=
-  ⟨h_sup, h_inf⟩
+  by
+    -- TODO: Relate limsup/liminf bounds to the "frequently large" definition.
+    -- This should follow from standard filter characterizations.
+    sorry
 
 end Construction
 
@@ -144,12 +176,44 @@ section Scaling
 /-- Scaling: if f =Ω±[g] and c > 0, then c·f =Ω±[g] -/
 theorem IsOmegaPlusMinus.const_mul (h : f =Ω±[g]) (c : ℝ) (hc : 0 < c) :
     (fun x => c * f x) =Ω±[g] := by
-  sorry
+  rcases h with ⟨hplus, hminus⟩
+  rcases hplus with ⟨c', hc', hfreq⟩
+  rcases hminus with ⟨c'', hc'', hfreq'⟩
+  refine ⟨?_, ?_⟩
+  · refine ⟨c * c', mul_pos hc hc', ?_⟩
+    refine hfreq.mono ?_
+    intro x hx
+    have : c * f x ≥ c * (c' * g x) := by
+      exact mul_le_mul_of_nonneg_left hx (le_of_lt hc)
+    simpa [mul_comm, mul_left_comm, mul_assoc] using this
+  · refine ⟨c * c'', mul_pos hc hc'', ?_⟩
+    refine hfreq'.mono ?_
+    intro x hx
+    have : c * f x ≤ c * (-c'' * g x) := by
+      exact mul_le_mul_of_nonneg_left hx (le_of_lt hc)
+    simpa [mul_comm, mul_left_comm, mul_assoc] using this
 
 /-- Scaling the comparison function: if f =Ω±[g] and c > 0, then f =Ω±[c·g] -/
 theorem IsOmegaPlusMinus.div_const (h : f =Ω±[g]) (c : ℝ) (hc : 0 < c) :
     f =Ω±[fun x => c * g x] := by
-  sorry
+  rcases h with ⟨hplus, hminus⟩
+  rcases hplus with ⟨c', hc', hfreq⟩
+  rcases hminus with ⟨c'', hc'', hfreq'⟩
+  refine ⟨?_, ?_⟩
+  · refine ⟨c' / c, div_pos hc' hc, ?_⟩
+    refine hfreq.mono ?_
+    intro x hx
+    have hc0 : c ≠ 0 := ne_of_gt hc
+    have : (c' / c) * (c * g x) = c' * g x := by
+      simp [div_eq_mul_inv, hc0, mul_comm, mul_left_comm, mul_assoc]
+    simpa [this] using hx
+  · refine ⟨c'' / c, div_pos hc'' hc, ?_⟩
+    refine hfreq'.mono ?_
+    intro x hx
+    have hc0 : c ≠ 0 := ne_of_gt hc
+    have : -(c'' / c) * (c * g x) = -c'' * g x := by
+      simp [div_eq_mul_inv, hc0, mul_comm, mul_left_comm, mul_assoc]
+    simpa [this] using hx
 
 end Scaling
 
