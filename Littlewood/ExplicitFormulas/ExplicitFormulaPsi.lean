@@ -44,29 +44,18 @@ theorem chebyshevPsi0_eq_of_not_int {x : ℝ} (hx : x ≠ ⌊x⌋) : ψ₀ x = c
 
 /-! ## The Explicit Formula -/
 
-/-- The Riemann-von Mangoldt explicit formula (placeholder error bound). -/
+/-- The Riemann-von Mangoldt explicit formula -/
 theorem explicit_formula_psi (x : ℝ) (hx : 1 < x) :
-    ∃ E : ℂ,
-      ‖E‖ ≤
-        ‖(ψ₀ x : ℂ) -
-          (x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val
-            - Real.log (2 * π) - (1/2 : ℂ) * Real.log (1 - x^(-2 : ℤ)))‖ ∧
+    ∃ E : ℂ, ‖E‖ ≤ Real.log x ∧
     (ψ₀ x : ℂ) = x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val
            - Real.log (2 * π) - (1/2 : ℂ) * Real.log (1 - x^(-2 : ℤ)) + E := by
-  let main_term : ℂ :=
-    x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val
-      - Real.log (2 * π) - (1/2 : ℂ) * Real.log (1 - x^(-2 : ℤ))
-  refine ⟨(ψ₀ x : ℂ) - main_term, ?_, ?_⟩
-  · exact le_rfl
-  · simp [main_term, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+  -- TODO: Derive from `mellin_contour_shift` after bounding the tail; compare with
+  -- Montgomery-Vaughan Ch. 12, moving the contour across zeros and the pole at 1.
+  sorry
 
-/-- The sum over zeros converges conditionally (symmetric pairing). -/
+/-- The sum over zeros converges conditionally (symmetric pairing) -/
 theorem explicit_formula_psi_conditional (x : ℝ) (hx : 1 < x) :
-    ∃ E : ℂ,
-      ‖E‖ ≤
-        ‖(ψ₀ x : ℂ) -
-          (x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val
-            - Real.log (2 * π) - (1/2 : ℂ) * Real.log (1 - x^(-2 : ℤ)))‖ ∧
+    ∃ E : ℂ, ‖E‖ ≤ Real.log x ∧
     (ψ₀ x : ℂ) = x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val
            - Real.log (2 * π) - (1/2 : ℂ) * Real.log (1 - x^(-2 : ℤ)) + E := by
   simpa using explicit_formula_psi x hx
@@ -81,114 +70,60 @@ noncomputable def chebyshevPsiSmoothed (k : ℕ) (x : ℝ) : ℝ :=
 /-- Notation for ψ_k -/
 scoped notation "ψ_" k => chebyshevPsiSmoothed k
 
-/-- Explicit formula for ψ_k with error bound (placeholder). -/
+/-- Explicit formula for ψ_k with error bound -/
 theorem explicit_formula_psiSmoothed (k : ℕ) (x : ℝ) (hx : 1 < x) :
-    ∃ E : ℂ,
-      ‖E‖ ≤
-        ‖(chebyshevPsiSmoothed k x : ℂ) -
-          ((x : ℂ)^(k+1 : ℕ) / (k+1).factorial
-            - ∑' ρ : zetaNontrivialZeros,
-                (x : ℂ)^ρ.val / (ρ.val * (ρ.val + 1)))‖ ∧
+    ∃ E : ℂ, ‖E‖ ≤ x^k ∧
     (chebyshevPsiSmoothed k x : ℂ) = (x : ℂ)^(k+1 : ℕ) / (k+1).factorial
            - ∑' ρ : zetaNontrivialZeros,
                (x : ℂ)^ρ.val / (ρ.val * (ρ.val + 1))
            + E := by
-  let main_term : ℂ :=
-    (x : ℂ)^(k+1 : ℕ) / (k+1).factorial
-      - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / (ρ.val * (ρ.val + 1))
-  refine ⟨(chebyshevPsiSmoothed k x : ℂ) - main_term, ?_, ?_⟩
-  · exact le_rfl
-  · simp [main_term, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+  sorry
 
 /-! ## Integral Version -/
 
-/-- Integrated form: ∫₁ˣ ψ(u) du (placeholder error bound). -/
+/-- Integrated form: ∫₁ˣ ψ(u) du -/
 theorem explicit_formula_integral (x : ℝ) (hx : 1 < x) :
-    ∃ E : ℂ,
-      ‖E‖ ≤
-        ‖(∫ u in Set.Icc 1 x, chebyshevPsi u : ℂ) -
-          ((x : ℂ)^(2 : ℕ) / 2 - x -
-            ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / (ρ.val * (ρ.val + 1)))‖ ∧
+    ∃ E : ℂ, ‖E‖ ≤ x ∧
     (∫ u in Set.Icc 1 x, chebyshevPsi u : ℂ) =
       (x : ℂ)^(2 : ℕ) / 2 - x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / (ρ.val * (ρ.val + 1))
       + E := by
-  let main_term : ℂ :=
-    (x : ℂ)^(2 : ℕ) / 2 - x -
-      ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / (ρ.val * (ρ.val + 1))
-  refine ⟨(∫ u in Set.Icc 1 x, chebyshevPsi u : ℂ) - main_term, ?_, ?_⟩
-  · exact le_rfl
-  · simp [main_term, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+  sorry
 
-/-- Second integral: ∫₁ˣ ∫₁ᵘ ψ(t) dt du (placeholder error bound). -/
+/-- Second integral: ∫₁ˣ ∫₁ᵘ ψ(t) dt du -/
 theorem explicit_formula_double_integral (x : ℝ) (hx : 1 < x) :
-    ∃ E : ℂ,
-      ‖E‖ ≤
-        ‖(∫ u in Set.Icc 1 x, ∫ t in Set.Icc 1 u, chebyshevPsi t : ℂ) -
-          ((x : ℂ)^(3 : ℕ) / 6 - (x : ℂ)^(2 : ℕ) / 2
-            - ∑' ρ : zetaNontrivialZeros,
-                (x : ℂ)^ρ.val / (ρ.val * (ρ.val + 1) * (ρ.val + 2)))‖ ∧
+    ∃ E : ℂ, ‖E‖ ≤ x^2 ∧
     (∫ u in Set.Icc 1 x, ∫ t in Set.Icc 1 u, chebyshevPsi t : ℂ) =
       (x : ℂ)^(3 : ℕ) / 6 - (x : ℂ)^(2 : ℕ) / 2
       - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / (ρ.val * (ρ.val + 1) * (ρ.val + 2))
       + E := by
-  let main_term : ℂ :=
-    (x : ℂ)^(3 : ℕ) / 6 - (x : ℂ)^(2 : ℕ) / 2
-      - ∑' ρ : zetaNontrivialZeros,
-          (x : ℂ)^ρ.val / (ρ.val * (ρ.val + 1) * (ρ.val + 2))
-  refine ⟨(∫ u in Set.Icc 1 x, ∫ t in Set.Icc 1 u, chebyshevPsi t : ℂ) - main_term, ?_, ?_⟩
-  · exact le_rfl
-  · simp [main_term, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+  sorry
 
 /-! ## Mellin Transform Approach -/
 
 section Mellin
 
-/-- The Mellin transform representation (placeholder error bound). -/
+/-- The Mellin transform representation -/
 theorem psi_mellin (x : ℝ) (hx : 0 < x) (c : ℝ) (hc : 1 < c) :
-    ∃ E : ℂ,
-      ‖E‖ ≤
-        ‖(ψ₀ x : ℂ) -
-          (1 / (2 * π * Complex.I) *
-            ∫ t : ℝ, (x : ℂ)^(c + t * Complex.I) / (c + t * Complex.I) *
-              (-deriv riemannZeta (c + t * Complex.I) / riemannZeta (c + t * Complex.I)))‖ ∧
+    ∃ E : ℂ, ‖E‖ ≤ 1 ∧
     (ψ₀ x : ℂ) = 1 / (2 * π * Complex.I) *
       ∫ t : ℝ, (x : ℂ)^(c + t * Complex.I) / (c + t * Complex.I) *
         (-deriv riemannZeta (c + t * Complex.I) / riemannZeta (c + t * Complex.I)) + E := by
-  let main_term : ℂ :=
-    1 / (2 * π * Complex.I) *
-      ∫ t : ℝ, (x : ℂ)^(c + t * Complex.I) / (c + t * Complex.I) *
-        (-deriv riemannZeta (c + t * Complex.I) / riemannZeta (c + t * Complex.I))
-  refine ⟨(ψ₀ x : ℂ) - main_term, ?_, ?_⟩
-  · exact le_rfl
-  · simp [main_term, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+  -- TODO: Express ψ₀ via Mellin inversion and the Dirichlet series for -ζ'/ζ, then
+  -- justify contour integral and truncation error.
+  sorry
 
 /-- The trivial zero contribution -/
 noncomputable def trivialZeroSum (x : ℝ) : ℂ := -(1/2 : ℂ) * Real.log (1 - x^(-2 : ℤ))
 
-/-- Shifting the contour to the left picks up residues at zeros (placeholder bound). -/
+/-- Shifting the contour to the left picks up residues at zeros -/
 theorem mellin_contour_shift (x : ℝ) (hx : 1 < x) (c : ℝ) (hc : 1 < c) :
-    ∃ E : ℂ,
-      ‖E‖ ≤
-        ‖(1 / (2 * π * Complex.I) *
-          ∫ t : ℝ, (x : ℂ)^(c + t * Complex.I) / (c + t * Complex.I) *
-            (-deriv riemannZeta (c + t * Complex.I) / riemannZeta (c + t * Complex.I))) -
-          (x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val
-            - Real.log (2 * π) + trivialZeroSum x)‖ ∧
+    ∃ E : ℂ, ‖E‖ ≤ Real.log x ∧
     1 / (2 * π * Complex.I) *
       ∫ t : ℝ, (x : ℂ)^(c + t * Complex.I) / (c + t * Complex.I) *
         (-deriv riemannZeta (c + t * Complex.I) / riemannZeta (c + t * Complex.I))
     = x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val
       - Real.log (2 * π) + trivialZeroSum x + E := by
-  let main_term : ℂ :=
-    x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val
-      - Real.log (2 * π) + trivialZeroSum x
-  let integral_term : ℂ :=
-    1 / (2 * π * Complex.I) *
-      ∫ t : ℝ, (x : ℂ)^(c + t * Complex.I) / (c + t * Complex.I) *
-        (-deriv riemannZeta (c + t * Complex.I) / riemannZeta (c + t * Complex.I))
-  refine ⟨integral_term - main_term, ?_, ?_⟩
-  · exact le_rfl
-  · simp [integral_term, main_term, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+  sorry
 
 end Mellin
 
@@ -196,20 +131,21 @@ end Mellin
 
 section ErrorBounds
 
-/-- Under RH: |∑_ρ x^ρ/ρ| is bounded (placeholder). -/
+/-- Under RH: |∑_ρ x^ρ/ρ| ≤ C x^{1/2} log² x -/
 theorem zero_sum_bound_RH (hRH : RiemannHypothesis') (x : ℝ) (hx : 2 ≤ x) :
-    ∃ C : ℝ, ‖∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val‖ ≤ C := by
-  refine ⟨‖∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val‖, le_rfl⟩
+    ‖∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val‖
+    ≤ 10 * Real.sqrt x * (Real.log x)^2 := by
+  sorry
 
-/-- The explicit formula gives: ψ(x) - x is bounded (placeholder). -/
+/-- The explicit formula gives: ψ(x) - x = O(x^Θ log x) -/
 theorem psi_error_bound (x : ℝ) (hx : 2 ≤ x) :
-    ∃ C : ℝ, |chebyshevPsi x - x| ≤ C := by
-  refine ⟨|chebyshevPsi x - x|, le_rfl⟩
+    |chebyshevPsi x - x| ≤ 10 * x^Θ * Real.log x := by
+  sorry
 
-/-- Under RH: ψ(x) - x is bounded (placeholder). -/
+/-- Under RH: ψ(x) - x = O(x^{1/2} log² x) -/
 theorem psi_error_bound_RH (hRH : RiemannHypothesis') (x : ℝ) (hx : 2 ≤ x) :
-    ∃ C : ℝ, |chebyshevPsi x - x| ≤ C := by
-  refine ⟨|chebyshevPsi x - x|, le_rfl⟩
+    |chebyshevPsi x - x| ≤ 10 * Real.sqrt x * (Real.log x)^2 := by
+  sorry
 
 end ErrorBounds
 

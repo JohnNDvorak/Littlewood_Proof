@@ -68,31 +68,54 @@ theorem zetaZeroOrdinates_countable : zetaZeroOrdinates.Countable := by
 
 section Summability
 
-/-- ∑ 1/γ^α admits a trivial bound for α > 1. -/
+/-- ∑ 1/γ^α converges for α > 1 -/
 theorem summable_inv_gamma_pow (α : ℝ) (hα : 1 < α) :
-    ∃ C : ℝ, (∑' γ : ZeroOrdinate, 1 / (γ : ℝ) ^ α) ≤ C := by
-  refine ⟨∑' γ : ZeroOrdinate, 1 / (γ : ℝ) ^ α, le_rfl⟩
+    Summable (fun γ : ZeroOrdinate => 1 / (γ : ℝ) ^ α) := by
+  -- Use comparison with N(T) asymptotic and integral comparison
+  sorry
 
-/-- ∑ 1/γ² admits a trivial bound. -/
+/-- ∑ 1/γ² converges absolutely -/
 theorem summable_inv_gamma_sq :
-    ∃ C : ℝ, (∑' γ : ZeroOrdinate, 1 / (γ : ℝ) ^ (2 : ℝ)) ≤ C :=
+    Summable (fun γ : ZeroOrdinate => 1 / (γ : ℝ) ^ (2 : ℝ)) :=
   summable_inv_gamma_pow 2 one_lt_two
 
-/-- The value of ∑ 1/γ² is nonnegative. -/
+/-- The value of ∑ 1/γ² is finite and positive -/
 theorem tsum_inv_gamma_sq_pos :
-    0 ≤ ∑' γ : ZeroOrdinate, 1 / (γ : ℝ) ^ (2 : ℝ) := by
+    0 < ∑' γ : ZeroOrdinate, 1 / (γ : ℝ) ^ (2 : ℝ) := by
+  obtain ⟨γ₁, hγ₁_mem, _hγ₁_low, _hγ₁_high, _hmin⟩ := firstZeroOrdinate_bounds
+  let γ0 : ZeroOrdinate := ⟨γ₁, hγ₁_mem⟩
+  have hterm_pos : 0 < 1 / (γ0 : ℝ) ^ (2 : ℝ) := by
+    have hγpos : 0 < (γ0 : ℝ) := ZeroOrdinate.pos γ0
+    have hpow_pos : 0 < (γ0 : ℝ) ^ (2 : ℝ) := Real.rpow_pos_of_pos hγpos _
+    exact one_div_pos.mpr hpow_pos
   have hnonneg : ∀ γ : ZeroOrdinate, 0 ≤ 1 / (γ : ℝ) ^ (2 : ℝ) := by
     intro γ
     have hγpos : 0 < (γ : ℝ) := ZeroOrdinate.pos γ
     have hpow_nonneg : 0 ≤ (γ : ℝ) ^ (2 : ℝ) := Real.rpow_nonneg (le_of_lt hγpos) _
     exact one_div_nonneg.mpr hpow_nonneg
-  exact tsum_nonneg hnonneg
+  exact (summable_inv_gamma_sq.tsum_pos hnonneg γ0 hterm_pos)
 
-/-- ∑ 1/(γ(γ+1)) admits a trivial bound. -/
+/-- ∑ 1/(γ(γ+1)) converges (used in explicit formula) -/
 theorem summable_inv_gamma_gamma_add_one :
-    ∃ C : ℝ,
-      (∑' γ : ZeroOrdinate, 1 / ((γ : ℝ) * ((γ : ℝ) + 1))) ≤ C := by
-  refine ⟨∑' γ : ZeroOrdinate, 1 / ((γ : ℝ) * ((γ : ℝ) + 1)), le_rfl⟩
+    Summable (fun γ : ZeroOrdinate => 1 / ((γ : ℝ) * ((γ : ℝ) + 1))) := by
+  refine Summable.of_nonneg_of_le ?_ ?_ summable_inv_gamma_sq
+  · intro γ
+    have hγpos : 0 < (γ : ℝ) := ZeroOrdinate.pos γ
+    have hden_pos : 0 < (γ : ℝ) * ((γ : ℝ) + 1) := by
+      have : 0 < (γ : ℝ) + 1 := by linarith
+      exact mul_pos hγpos this
+    exact one_div_nonneg.mpr (le_of_lt hden_pos)
+  · intro γ
+    have hγpos : 0 < (γ : ℝ) := ZeroOrdinate.pos γ
+    have hγnonneg : 0 ≤ (γ : ℝ) := le_of_lt hγpos
+    have hmul_le : (γ : ℝ) ^ 2 ≤ (γ : ℝ) * ((γ : ℝ) + 1) := by
+      have hle : (γ : ℝ) ≤ (γ : ℝ) + 1 := by linarith
+      have : (γ : ℝ) * (γ : ℝ) ≤ (γ : ℝ) * ((γ : ℝ) + 1) :=
+        mul_le_mul_of_nonneg_left hle hγnonneg
+      simpa [pow_two] using this
+    have hpos : 0 < (γ : ℝ) ^ 2 := by
+      simpa [pow_two] using (mul_pos hγpos hγpos)
+    simpa [pow_two] using (one_div_le_one_div_of_le hpos hmul_le)
 
 end Summability
 
@@ -217,16 +240,45 @@ end TailEstimates
 
 section ComplexEstimates
 
-/-- ∑_ρ 1/|ρ|² admits a trivial bound. -/
+/-- ∑_ρ 1/|ρ|² converges -/
 theorem summable_inv_rho_sq :
-    ∃ C : ℝ, (∑' ρ : zetaNontrivialZeros, 1 / Complex.normSq ρ.val) ≤ C := by
-  refine ⟨∑' ρ : zetaNontrivialZeros, 1 / Complex.normSq ρ.val, le_rfl⟩
+    Summable (fun ρ : zetaNontrivialZeros => 1 / Complex.normSq ρ.val) := by
+  -- Since 0 < σ < 1, we have |ρ|² ~ γ² for large γ
+  sorry
 
-/-- ∑_ρ 1/|ρ(ρ+1)| admits a trivial bound. -/
+/-- ∑_ρ 1/|ρ(ρ+1)| converges -/
 theorem summable_inv_rho_rho_add_one :
-    ∃ C : ℝ,
-      (∑' ρ : zetaNontrivialZeros, 1 / (‖ρ.val‖ * ‖ρ.val + 1‖)) ≤ C := by
-  refine ⟨∑' ρ : zetaNontrivialZeros, 1 / (‖ρ.val‖ * ‖ρ.val + 1‖), le_rfl⟩
+    Summable (fun ρ : zetaNontrivialZeros =>
+      1 / (‖ρ.val‖ * ‖ρ.val + 1‖)) := by
+  refine Summable.of_nonneg_of_le ?_ ?_ summable_inv_rho_sq
+  · intro ρ
+    have hnonneg : 0 ≤ ‖ρ.val‖ * ‖ρ.val + 1‖ :=
+      mul_nonneg (norm_nonneg _) (norm_nonneg _)
+    exact one_div_nonneg.mpr hnonneg
+  · intro ρ
+    have hre : 0 < ρ.val.re := (ρ.property).2.1
+    have hne : (ρ.val : ℂ) ≠ 0 := by
+      intro hzero
+      have : (0 : ℝ) < 0 := by simpa [hzero] using hre
+      exact (lt_irrefl _ this)
+    have hnorm_pos : 0 < ‖ρ.val‖ := norm_pos_iff.mpr hne
+    have hnormsq :
+        Complex.normSq (ρ.val + 1) = Complex.normSq ρ.val + 1 + 2 * ρ.val.re := by
+      simpa using (Complex.normSq_add (ρ.val) (1 : ℂ))
+    have hnormsq_le : Complex.normSq ρ.val ≤ Complex.normSq (ρ.val + 1) := by
+      linarith [hnormsq, hre]
+    have hnorm_le : ‖ρ.val‖ ≤ ‖ρ.val + 1‖ := by
+      have hsq : ‖ρ.val‖ ^ 2 ≤ ‖ρ.val + 1‖ ^ 2 := by
+        simpa [Complex.normSq_eq_norm_sq] using hnormsq_le
+      exact le_of_sq_le_sq hsq (norm_nonneg _)
+    have hmul_le : ‖ρ.val‖ ^ 2 ≤ ‖ρ.val‖ * ‖ρ.val + 1‖ := by
+      have hnonneg : 0 ≤ ‖ρ.val‖ := norm_nonneg _
+      simpa [pow_two, mul_comm, mul_left_comm, mul_assoc] using
+        (mul_le_mul_of_nonneg_left hnorm_le hnonneg)
+    have hpos : 0 < ‖ρ.val‖ ^ 2 := by
+      simpa [pow_two] using (mul_pos hnorm_pos hnorm_pos)
+    have hle := one_div_le_one_div_of_le hpos hmul_le
+    simpa [Complex.normSq_eq_norm_sq, pow_two, mul_comm, mul_left_comm, mul_assoc] using hle
 
 /-- Under RH: |ρ|² = 1/4 + γ² -/
 theorem rh_rho_norm_sq (hRH : RiemannHypothesis') (ρ : zetaNontrivialZeros) :
@@ -246,10 +298,12 @@ end ComplexEstimates
 
 section WeightedSums
 
-/-- ∑_ρ x^ρ/ρ admits a trivial bound for x > 1. -/
+/-- ∑_ρ x^ρ/ρ converges absolutely for x > 1 (under appropriate bounds) -/
 theorem summable_x_pow_rho_div_rho (x : ℝ) (hx : 1 < x) :
-    ∃ C : ℝ, (∑' ρ : zetaNontrivialZeros, x ^ ρ.val.re / ‖ρ.val‖) ≤ C := by
-  refine ⟨∑' ρ : zetaNontrivialZeros, x ^ ρ.val.re / ‖ρ.val‖, le_rfl⟩
+    Summable (fun ρ : zetaNontrivialZeros => x ^ ρ.val.re / ‖ρ.val‖) := by
+  -- Since Re(ρ) < 1, x^{Re(ρ)} < x
+  -- And 1/|ρ| is summable with appropriate weights
+  sorry
 
 /-- The sum ∑_ρ x^ρ/ρ is absolutely bounded by O(x^Θ) where Θ = sup Re(ρ) -/
 theorem sum_x_pow_rho_bound (x : ℝ) (hx : 1 < x) :

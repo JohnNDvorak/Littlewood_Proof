@@ -68,13 +68,11 @@ theorem theta_from_psi (x : ℝ) (hx : 1 < x) :
       simp [hIcc]
     simp [htheta, hpsi, hsum]
 
-/-- θ(x) = ψ(x) - ψ(x^{1/2}) + E with a trivial bound on E. -/
+/-- θ(x) = ψ(x) - ψ(x^{1/2}) + O(x^{1/3}) -/
 theorem theta_psi_first_correction (x : ℝ) (hx : 2 ≤ x) :
-    ∃ E : ℝ, |E| ≤ |chebyshevTheta x - chebyshevPsi x + chebyshevPsi (Real.sqrt x)| ∧
+    ∃ E : ℝ, |E| ≤ x ^ (1/3 : ℝ) ∧
     chebyshevTheta x = chebyshevPsi x - chebyshevPsi (Real.sqrt x) + E := by
-  refine ⟨chebyshevTheta x - chebyshevPsi x + chebyshevPsi (Real.sqrt x), ?_, ?_⟩
-  · exact le_rfl
-  · linarith
+  sorry
 
 /-- The simpler bound: θ(x) = ψ(x) + O(x^{1/2} log x) -/
 theorem theta_psi_simple (x : ℝ) (hx : 2 ≤ x) :
@@ -86,88 +84,62 @@ theorem theta_psi_simple (x : ℝ) (hx : 2 ≤ x) :
     simpa [chebyshevPsi, chebyshevTheta, abs_sub_comm] using hbound
   · linarith
 
-/-- Under RH: θ(x) = ψ(x) - x^{1/2} + E with a trivial bound on E. -/
+/-- Under RH: θ(x) = ψ(x) - x^{1/2} + O(x^{1/3}) -/
 theorem theta_psi_RH (hRH : ZetaZeros.RiemannHypothesis) (x : ℝ) (hx : 2 ≤ x) :
-    ∃ E : ℝ, |E| ≤ |chebyshevTheta x - chebyshevPsi x + Real.sqrt x| ∧
+    ∃ E : ℝ, |E| ≤ x ^ (1/3 : ℝ) ∧
     chebyshevTheta x = chebyshevPsi x - Real.sqrt x + E := by
-  refine ⟨chebyshevTheta x - chebyshevPsi x + Real.sqrt x, ?_, ?_⟩
-  · exact le_rfl
-  · linarith
+  sorry
 
 /-! ## θ to π - li Conversion -/
 
-/-- Partial summation: π(x) = θ(x)/log(x) + ∫₂ˣ θ(t)/(t log²t) dt + E (trivial bound). -/
+/-- Partial summation: π(x) = θ(x)/log(x) + ∫₂ˣ θ(t)/(t log²t) dt -/
 theorem pi_from_theta_summation (x : ℝ) (hx : 2 < x) :
-    ∃ E : ℝ,
-      |E| ≤
-        |(Nat.primeCounting (Nat.floor x) : ℝ) -
-          (chebyshevTheta x / Real.log x +
-            ∫ t in Set.Ioc 2 x, chebyshevTheta t / (t * (Real.log t)^2))| ∧
+    ∃ E : ℝ, |E| ≤ Real.sqrt x / (Real.log x)^2 ∧
     (Nat.primeCounting (Nat.floor x) : ℝ) =
       chebyshevTheta x / Real.log x +
       ∫ t in Set.Ioc 2 x, chebyshevTheta t / (t * (Real.log t)^2) + E := by
-  refine ⟨(Nat.primeCounting (Nat.floor x) : ℝ) -
-      (chebyshevTheta x / Real.log x +
-        ∫ t in Set.Ioc 2 x, chebyshevTheta t / (t * (Real.log t)^2)), ?_, ?_⟩
-  · exact le_rfl
-  · linarith
+  sorry
 
-/-- li(x) = x/log(x) + ∫₂ˣ 1/log²t dt + E (trivial bound). -/
+/-- li(x) = x/log(x) + ∫₂ˣ 1/log²t dt -/
 theorem li_expansion (x : ℝ) (hx : 2 < x) :
-    ∃ E : ℝ,
-      |E| ≤
-        |logarithmicIntegral x -
-          (x / Real.log x + ∫ t in Set.Ioc 2 x, 1 / (Real.log t)^2)| ∧
+    ∃ E : ℝ, |E| ≤ x / (Real.log x)^2 ∧
     logarithmicIntegral x = x / Real.log x + ∫ t in Set.Ioc 2 x, 1 / (Real.log t)^2 + E := by
-  refine ⟨logarithmicIntegral x -
-      (x / Real.log x + ∫ t in Set.Ioc 2 x, 1 / (Real.log t)^2), ?_, ?_⟩
-  · exact le_rfl
-  · linarith
+  sorry
 
-/-- The key conversion: π(x) - li(x) = (θ(x) - x)/log(x) + E (trivial bound). -/
+/-- The key conversion: π(x) - li(x) = (θ(x) - x)/log(x) + O(x^{1/2}/log²x) -/
 theorem pi_li_from_theta (x : ℝ) (hx : 2 < x) :
-    ∃ E : ℝ,
-      |E| ≤
-        |(Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x -
-          (chebyshevTheta x - x) / Real.log x| ∧
+    ∃ E : ℝ, |E| ≤ Real.sqrt x / (Real.log x)^2 ∧
     (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x =
       (chebyshevTheta x - x) / Real.log x + E := by
-  refine ⟨(Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x -
-      (chebyshevTheta x - x) / Real.log x, ?_, ?_⟩
-  · exact le_rfl
-  · linarith
+  sorry
 
-/-- Under RH: π(x) - li(x) = (ψ(x) - x)/log(x) - x^{1/2}/log(x) + E (trivial bound). -/
+/-- Under RH: π(x) - li(x) = (ψ(x) - x)/log(x) - x^{1/2}/log(x) + O(x^{1/2}/log²x) -/
 theorem pi_li_from_psi_RH (hRH : ZetaZeros.RiemannHypothesis) (x : ℝ) (hx : 2 < x) :
-    ∃ E : ℝ,
-      |E| ≤
-        |(Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x -
-          ((chebyshevPsi x - x) / Real.log x - Real.sqrt x / Real.log x)| ∧
+    ∃ E : ℝ, |E| ≤ Real.sqrt x / (Real.log x)^2 ∧
     (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x =
       (chebyshevPsi x - x) / Real.log x - Real.sqrt x / Real.log x + E := by
-  refine ⟨(Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x -
-      ((chebyshevPsi x - x) / Real.log x - Real.sqrt x / Real.log x), ?_, ?_⟩
-  · exact le_rfl
-  · linarith
+  sorry
 
 /-! ## Omega Transfer -/
 
-/-- Placeholder Ω± transfer. -/
+/-- If ψ - x = Ω±(f), then θ - x = Ω±(f) provided f dominates x^{1/2} -/
 theorem omega_psi_to_theta (f : ℝ → ℝ) (hf : ∀ᶠ x in atTop, Real.sqrt x ≤ f x)
     (h : (fun x => chebyshevPsi x - x) =Ω±[f]) :
-    True := by
-  trivial
+    (fun x => chebyshevTheta x - x) =Ω±[f] := by
+  sorry
 
-/-- Placeholder Ω± transfer. -/
+/-- If θ - x = Ω±(f), then π - li = Ω±(f/log) -/
 theorem omega_theta_to_pi_li (f : ℝ → ℝ) (hf : ∀ᶠ x in atTop, Real.sqrt x ≤ f x)
     (h : (fun x => chebyshevTheta x - x) =Ω±[f]) :
-    True := by
-  trivial
+    (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
+    =Ω±[fun x => f x / Real.log x] := by
+  sorry
 
-/-- Combined Ω± transfer (placeholder). -/
+/-- Combined: If ψ - x = Ω±(f) with f ≥ x^{1/2}, then π - li = Ω±(f/log) -/
 theorem omega_psi_to_pi_li (f : ℝ → ℝ) (hf : ∀ᶠ x in atTop, Real.sqrt x ≤ f x)
     (h : (fun x => chebyshevPsi x - x) =Ω±[f]) :
-    True := by
-  trivial
+    (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
+    =Ω±[fun x => f x / Real.log x] := by
+  exact omega_theta_to_pi_li f hf (omega_psi_to_theta f hf h)
 
 end Conversion

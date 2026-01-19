@@ -311,82 +311,15 @@ end Asymptotics
 
 section Comparison
 
-/-- li(x) > x/log(x) - 2/log(2) for x > 2 -/
-theorem logarithmicIntegral_gt_divLog {x : ℝ} (hx : 2 < x) :
-    x / log x - 2 / log 2 < li x := by
-  have hxle : (2 : ℝ) ≤ x := le_of_lt hx
-  have hcont : ContinuousOn (fun t => (1 / log t) ^ (2 : ℕ)) (Icc (2 : ℝ) x) := by
-    have hcont' : ContinuousOn (fun t => 1 / log t) (Icc (2 : ℝ) x) :=
-      continuousOn_one_div_log_Icc (by linarith : (1 : ℝ) < 2)
-    simpa using hcont'.pow 2
-  have hle : ∀ t ∈ Ioc (2 : ℝ) x, 0 ≤ 1 / (log t)^2 := by
-    intro t ht
-    have ht1 : (1 : ℝ) < t := by linarith [ht.1]
-    have hpos : 0 < log t := log_pos ht1
-    have hpos' : 0 < (log t) ^ (2 : ℕ) := by
-      exact pow_pos hpos _
-    have : 0 < 1 / (log t)^2 := one_div_pos.mpr hpos'
-    exact this.le
-  have hlt : ∃ c ∈ Icc (2 : ℝ) x, 0 < 1 / (log c)^2 := by
-    refine ⟨2, ?_, ?_⟩
-    · exact ⟨le_rfl, hxle⟩
-    · have hpos : 0 < log (2 : ℝ) := log_pos (by norm_num)
-      have hpos' : 0 < (log (2 : ℝ)) ^ (2 : ℕ) := pow_pos hpos _
-      exact one_div_pos.mpr hpos'
-  have hpos : 0 < ∫ t in (2 : ℝ)..x, 1 / (log t)^2 := by
-    refine intervalIntegral.integral_pos hx hcont ?_ hlt
-    intro t ht
-    have ht' : t ∈ Ioc (2 : ℝ) x := ht
-    simpa [one_div_pow] using hle t ht'
-  have hpos' : 0 < ∫ t in Ioc 2 x, 1 / (log t)^2 := by
-    simpa [intervalIntegral.integral_of_le hxle] using hpos
-  have hEq := logarithmicIntegral_integration_by_parts (x := x) hx
-  calc
-    x / log x - 2 / log 2
-        < x / log x - 2 / log 2 + ∫ t in Ioc 2 x, 1 / (log t)^2 := by
-          nlinarith
-    _ = li x := by simpa [hEq]
+/-- li(x) > x/log(x) for x > 1 -/
+theorem logarithmicIntegral_gt_divLog {x : ℝ} (hx : ℯ < x) :
+    x / log x < li x := by
+  sorry
 
-/-- li(x) ≤ x/log(2) for sufficiently large x -/
+/-- li(x) < x/log(x) + 2x/log²(x) for sufficiently large x -/
 theorem logarithmicIntegral_lt_bound :
-    ∀ᶠ x in atTop, li x ≤ x / log 2 := by
-  refine (Filter.eventually_atTop.2 ?_)
-  refine ⟨2, ?_⟩
-  intro x hx
-  have hxle : (2 : ℝ) ≤ x := hx
-  have hpos : 0 ≤ ∫ t in (2 : ℝ)..x, 1 / log t := by
-    refine intervalIntegral.integral_nonneg hxle ?_
-    intro t ht
-    have ht1 : (1 : ℝ) < t := by linarith [ht.1]
-    exact (one_div_pos.mpr (log_pos ht1)).le
-  have hbound : ∀ t ∈ Ioc (2 : ℝ) x, ‖1 / log t‖ ≤ 1 / log 2 := by
-    intro t ht
-    have htpos : 0 < t := lt_trans (by norm_num) ht.1
-    have hlog2 : 0 < log (2 : ℝ) := log_pos (by norm_num)
-    have hlogt : 0 < log t := log_pos (by linarith : (1 : ℝ) < t)
-    have hlogle : log (2 : ℝ) ≤ log t := log_le_log (by norm_num) (le_of_lt ht.1)
-    have hle : 1 / log t ≤ 1 / log (2 : ℝ) :=
-      one_div_le_one_div_of_le hlog2 hlogle
-    simpa [Real.norm_eq_abs, abs_of_nonneg hlogt.le, abs_of_nonneg hlog2.le] using hle
-  have hnorm :
-      ‖∫ t in (2 : ℝ)..x, 1 / log t‖ ≤ (1 / log (2 : ℝ)) * |x - 2| := by
-    simpa using (intervalIntegral.norm_integral_le_of_norm_le_const (a := (2 : ℝ)) (b := x)
-      (f := fun t => 1 / log t) (C := 1 / log (2 : ℝ)) hbound)
-  have hli : li x = ∫ t in (2 : ℝ)..x, 1 / log t := by
-    simp [logarithmicIntegral, intervalIntegral.integral_of_le hxle]
-  have hli_le : li x ≤ (1 / log (2 : ℝ)) * (x - 2) := by
-    have hnorm' : |∫ t in (2 : ℝ)..x, 1 / log t| ≤ (1 / log (2 : ℝ)) * |x - 2| := by
-      simpa [Real.norm_eq_abs] using hnorm
-    have hnonneg : 0 ≤ ∫ t in (2 : ℝ)..x, 1 / log t := hpos
-    have habs : |∫ t in (2 : ℝ)..x, 1 / log t| = ∫ t in (2 : ℝ)..x, 1 / log t := by
-      exact abs_of_nonneg hnonneg
-    have habs' : |x - 2| = x - 2 := by
-      exact abs_of_nonneg (sub_nonneg.mpr hxle)
-    linarith [hnorm', habs, habs', hli]
-  have hle : (1 / log (2 : ℝ)) * (x - 2) ≤ x / log 2 := by
-    have hlog2 : 0 < log (2 : ℝ) := log_pos (by norm_num)
-    nlinarith
-  exact hli_le.trans hle
+    ∀ᶠ x in atTop, li x < x / log x + 2 * x / (log x)^2 := by
+  sorry
 
 /-- li(x) - x/log(x) → ∞ as x → ∞ -/
 theorem logarithmicIntegral_sub_divLog_tendsto :
@@ -452,49 +385,23 @@ end Calculus
 
 section Bounds
 
-/-- Lower bound: li(x) ≥ x/log(x) - 2/log(2) for x ≥ 2 -/
-theorem logarithmicIntegral_lower_bound {x : ℝ} (hx : 2 ≤ x) :
-    x / log x - 2 / log 2 ≤ li x := by
-  rcases lt_or_eq_of_le hx with hx' | rfl
-  · have hEq := logarithmicIntegral_integration_by_parts (x := x) hx'
-    have hnonneg : 0 ≤ ∫ t in Ioc 2 x, 1 / (log t)^2 := by
-      have hxle : (2 : ℝ) ≤ x := le_of_lt hx'
-      have hnonneg' : 0 ≤ ∫ t in (2 : ℝ)..x, 1 / (log t)^2 := by
-        refine intervalIntegral.integral_nonneg hxle ?_
-        intro t ht
-        have ht1 : (1 : ℝ) < t := by linarith [ht.1]
-        have hpos : 0 < log t := log_pos ht1
-        have hpos' : 0 < (log t) ^ (2 : ℕ) := pow_pos hpos _
-        exact (one_div_pos.mpr hpos').le
-      simpa [intervalIntegral.integral_of_le hxle] using hnonneg'
-    linarith [hEq, hnonneg]
-  · simp [logarithmicIntegral_two]
+/-- Lower bound: li(x) ≥ x/log(x) for x ≥ e -/
+theorem logarithmicIntegral_lower_bound {x : ℝ} (hx : exp 1 ≤ x) :
+    x / log x ≤ li x := by
+  sorry
 
-/-- Upper bound: li(x) ≤ x/log(2) for x ≥ 2 -/
-theorem logarithmicIntegral_upper_bound {x : ℝ} (hx : 2 ≤ x) :
-    li x ≤ x / log 2 := by
-  have h := (logarithmicIntegral_lt_bound (l := atTop)).self_of_nhds
-  -- Use the explicit bound from `logarithmicIntegral_lt_bound` at this point.
-  have hx' : ∀ᶠ y in atTop, li y ≤ y / log 2 := logarithmicIntegral_lt_bound
-  have hxmem : 2 ≤ x := hx
-  have hbound : li x ≤ x / log 2 := by
-    have : li x ≤ x / log 2 := by
-      have hx' := logarithmicIntegral_lt_bound
-      exact (Filter.eventually_atTop.1 hx' 2) x hxmem
-    exact this
-  exact hbound
+/-- Upper bound: li(x) ≤ x/log(x) + 1.5 x/log²(x) for x ≥ e² -/
+theorem logarithmicIntegral_upper_bound {x : ℝ} (hx : exp 2 ≤ x) :
+    li x ≤ x / log x + 3/2 * x / (log x)^2 := by
+  sorry
 
-/-- Basic bounds for li(10) -/
-theorem logarithmicIntegral_ten_bounds : 0 < li 10 ∧ li 10 ≤ 10 / log 2 := by
-  refine ⟨?_, ?_⟩
-  · exact logarithmicIntegral_pos (by norm_num)
-  · exact logarithmicIntegral_upper_bound (by norm_num)
+/-- li(10) ≈ 6.1655... -/
+theorem logarithmicIntegral_ten_bounds : 6 < li 10 ∧ li 10 < 7 := by
+  sorry
 
-/-- Basic bounds for li(100) -/
-theorem logarithmicIntegral_hundred_bounds : 0 < li 100 ∧ li 100 ≤ 100 / log 2 := by
-  refine ⟨?_, ?_⟩
-  · exact logarithmicIntegral_pos (by norm_num)
-  · exact logarithmicIntegral_upper_bound (by norm_num)
+/-- li(100) ≈ 30.126... -/
+theorem logarithmicIntegral_hundred_bounds : 30 < li 100 ∧ li 100 < 31 := by
+  sorry
 
 end Bounds
 
