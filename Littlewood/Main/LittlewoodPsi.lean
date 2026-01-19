@@ -64,6 +64,8 @@ theorem dirichlet_step (M : ℕ) (hM : 10 ≤ M) :
     ∃ n : ℕ, 1 ≤ n ∧ n ≤ M^(zeroCount (M * Real.log M)) ∧
       ∀ γ : { γ : ZetaZeros.Density.ZeroOrdinate // (γ : ℝ) ≤ M * Real.log M },
         ‖(γ : ℝ) * n * Real.log M / (2 * π)‖ᵢₙₜ < 1 / M := by
+  -- TODO: Apply Dirichlet approximation to the finite set of ordinates
+  -- `γ ≤ M log M`, then bound the denominator via `zeroCount`.
   sorry
 
 /-- Step 2: Choose x appropriately -/
@@ -87,6 +89,8 @@ theorem average_implies_large (x δ : ℝ) (hx : 0 < x) (hδ : 0 < δ)
     (c : ℝ) (hc : 0 < c) (havg : c * Real.sqrt x * Real.log x ≤ weightedAverage x δ) :
     ∃ u ∈ Set.Icc (Real.exp (-δ) * x) (Real.exp δ * x),
       (c/2) * Real.sqrt u * Real.log x ≤ chebyshevPsi u - u := by
+  -- TODO: Use the definition of `weightedAverage` and the mean-value principle for integrals:
+  -- if the average over an interval is ≥ A, there exists a point where the integrand ≥ A/2.
   sorry
 
 end RHCase
