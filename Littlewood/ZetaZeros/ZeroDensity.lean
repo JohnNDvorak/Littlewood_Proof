@@ -64,6 +64,31 @@ theorem zetaZeroOrdinates_countable : zetaZeroOrdinates.Countable := by
   intro n
   exact (finite_zeros_le n).countable
 
+/-! ## Choosing a zero from an ordinate -/
+
+lemma exists_zeroOfOrdinate (γ : ZeroOrdinate) :
+    ∃ s : zetaNontrivialZerosPos, s.val.im = (γ : ℝ) := by
+  rcases γ.property with ⟨s, hs, hγ⟩
+  refine ⟨⟨s, hs⟩, ?_⟩
+  simpa [hγ]
+
+noncomputable def zeroOfOrdinate (γ : ZeroOrdinate) : zetaNontrivialZerosPos :=
+  Classical.choose (exists_zeroOfOrdinate γ)
+
+lemma zeroOfOrdinate_im (γ : ZeroOrdinate) :
+    (zeroOfOrdinate γ).val.im = (γ : ℝ) :=
+  Classical.choose_spec (exists_zeroOfOrdinate γ)
+
+lemma zeroOfOrdinate_injective : Function.Injective zeroOfOrdinate := by
+  intro γ₁ γ₂ h
+  apply Subtype.ext
+  have h1 : (zeroOfOrdinate γ₁).val.im = (γ₁ : ℝ) := zeroOfOrdinate_im γ₁
+  have h2 : (zeroOfOrdinate γ₂).val.im = (γ₂ : ℝ) := zeroOfOrdinate_im γ₂
+  have him :
+      (zeroOfOrdinate γ₁).val.im = (zeroOfOrdinate γ₂).val.im := by
+    simpa [h] using rfl
+  simpa [h1, h2] using him
+
 /-! ## Summability of 1/γ^α -/
 
 section Summability
@@ -150,6 +175,51 @@ theorem ordinatesUpTo_finite (T : ℝ) : (ordinatesUpTo T).Finite := by
   -- Now use that the preimage is finite (from finite_zeros_le)
   apply Set.Finite.image
   exact finite_zeros_le T
+
+/-- The number of ordinates up to `T` is bounded by the zero counting function. -/
+theorem ordinatesUpTo_ncard_le (T : ℝ) :
+    (ordinatesUpTo T).ncard ≤ N T := by
+  classical
+  let f : ℝ → ℂ := fun γ =>
+    if h : γ ∈ zetaZeroOrdinates then (zeroOfOrdinate ⟨γ, h⟩).val else 0
+  have hf : ∀ γ ∈ ordinatesUpTo T, f γ ∈ zerosUpTo T := by
+    intro γ hγ
+    have hγ' : γ ∈ zetaZeroOrdinates := hγ.1
+    have hle : γ ≤ T := (hγ.2).2
+    have hfγ : f γ = (zeroOfOrdinate ⟨γ, hγ'⟩).val := by
+      simp [f, hγ']
+    have hmem : (zeroOfOrdinate ⟨γ, hγ'⟩).val ∈ zetaNontrivialZerosPos :=
+      (zeroOfOrdinate ⟨γ, hγ'⟩).property
+    have him : (zeroOfOrdinate ⟨γ, hγ'⟩).val.im = γ :=
+      zeroOfOrdinate_im ⟨γ, hγ'⟩
+    have himle : (zeroOfOrdinate ⟨γ, hγ'⟩).val.im ≤ T := by
+      simpa [him] using hle
+    have hmem' : (zeroOfOrdinate ⟨γ, hγ'⟩).val ∈ zerosUpTo T := by
+      exact ⟨hmem, himle⟩
+    simpa [hfγ] using hmem'
+  have h_inj : InjOn f (ordinatesUpTo T) := by
+    intro γ₁ h₁ γ₂ h₂ hfg
+    have h₁' : γ₁ ∈ zetaZeroOrdinates := h₁.1
+    have h₂' : γ₂ ∈ zetaZeroOrdinates := h₂.1
+    have hf₁ : f γ₁ = (zeroOfOrdinate ⟨γ₁, h₁'⟩).val := by
+      simp [f, h₁']
+    have hf₂ : f γ₂ = (zeroOfOrdinate ⟨γ₂, h₂'⟩).val := by
+      simp [f, h₂']
+    have him :
+        (zeroOfOrdinate ⟨γ₁, h₁'⟩).val.im =
+          (zeroOfOrdinate ⟨γ₂, h₂'⟩).val.im := by
+      have h' : f γ₁ = f γ₂ := hfg
+      have h'' : (f γ₁).im = (f γ₂).im := congrArg Complex.im h'
+      simpa [hf₁, hf₂] using h''
+    have h₁im : (zeroOfOrdinate ⟨γ₁, h₁'⟩).val.im = γ₁ :=
+      zeroOfOrdinate_im ⟨γ₁, h₁'⟩
+    have h₂im : (zeroOfOrdinate ⟨γ₂, h₂'⟩).val.im = γ₂ :=
+      zeroOfOrdinate_im ⟨γ₂, h₂'⟩
+    simpa [h₁im, h₂im] using him
+  have hle :
+      (ordinatesUpTo T).ncard ≤ (zerosUpTo T).ncard :=
+    ncard_le_ncard_of_injOn f hf h_inj (finite_zeros_le T)
+  simpa [zeroCountingFunction_eq_ncard] using hle
 
 /-- ∑_{0 < γ ≤ T} 1/γ = O((log T)²) -/
 theorem sum_inv_gamma_le_log_sq (T : ℝ) (hT : 4 ≤ T) :
