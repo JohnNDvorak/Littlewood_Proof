@@ -49,6 +49,8 @@ theorem explicit_formula_psi (x : ℝ) (hx : 1 < x) :
     ∃ E : ℂ, ‖E‖ ≤ Real.log x ∧
     (ψ₀ x : ℂ) = x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val
            - Real.log (2 * π) - (1/2 : ℂ) * Real.log (1 - x^(-2 : ℤ)) + E := by
+  -- TODO: Derive from `mellin_contour_shift` after bounding the tail; compare with
+  -- Montgomery-Vaughan Ch. 12, moving the contour across zeros and the pole at 1.
   sorry
 
 /-- The sum over zeros converges conditionally (symmetric pairing) -/
@@ -106,6 +108,8 @@ theorem psi_mellin (x : ℝ) (hx : 0 < x) (c : ℝ) (hc : 1 < c) :
     (ψ₀ x : ℂ) = 1 / (2 * π * Complex.I) *
       ∫ t : ℝ, (x : ℂ)^(c + t * Complex.I) / (c + t * Complex.I) *
         (-deriv riemannZeta (c + t * Complex.I) / riemannZeta (c + t * Complex.I)) + E := by
+  -- TODO: Express ψ₀ via Mellin inversion and the Dirichlet series for -ζ'/ζ, then
+  -- justify contour integral and truncation error.
   sorry
 
 /-- The trivial zero contribution -/
