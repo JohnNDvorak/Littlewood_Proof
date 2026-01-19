@@ -7,6 +7,7 @@ import Mathlib.Analysis.Calculus.ParametricIntegral
 import Mathlib.Analysis.Analytic.Basic
 import Mathlib.NumberTheory.LSeries.Dirichlet
 import Mathlib.NumberTheory.LSeries.RiemannZeta
+import Mathlib.NumberTheory.Harmonic.ZetaAsymp
 import Mathlib.NumberTheory.ArithmeticFunction.VonMangoldt
 
 /-!
@@ -135,11 +136,15 @@ section ZetaApplication
 /-- The logarithmic derivative -ζ'/ζ has a pole at any zero of ζ -/
 theorem zetaLogDeriv_pole_at_zero (ρ : ℂ) (hρ : riemannZeta ρ = 0) :
     ¬AnalyticAt ℂ (fun s => -deriv riemannZeta s / riemannZeta s) ρ := by
-  -- TODO: Use the zero of `riemannZeta` to show the log-derivative has a pole.
-  -- Sketch: write `riemannZeta` as `(s-ρ)^m * g(s)` with `g ρ ≠ 0`, then
-  -- `deriv ζ / ζ = m / (s-ρ) + deriv g / g`, hence not analytic at `ρ`.
-  -- Likely requires a Mathlib lemma on zeros of analytic functions and
-  -- `logDeriv` or `meromorphicAt` for `riemannZeta`.
+  have hρ1 : ρ ≠ 1 := by
+    intro hρ1
+    subst hρ1
+    exact riemannZeta_one_ne_zero (by simpa using hρ)
+  have hdiff : DifferentiableAt ℂ riemannZeta ρ :=
+    differentiableAt_riemannZeta hρ1
+  -- TODO: Use analytic order to factor `riemannZeta` as `(s - ρ)^m * g(s)` with `g ρ ≠ 0`.
+  -- Then `deriv ζ / ζ = m / (s - ρ) + deriv g / g`, so the log-derivative has a pole at `ρ`.
+  -- Likely via `analyticOrderAt` and the local power series factorization.
   sorry
 
 /-- -ζ'/ζ(s) = ∑ Λ(n)/n^s for Re(s) > 1, connecting to Chebyshev's ψ -/

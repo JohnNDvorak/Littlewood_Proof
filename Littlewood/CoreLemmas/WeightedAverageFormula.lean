@@ -64,13 +64,79 @@ theorem integral_psi_minus_x (x : ℝ) (hx : 1 < x) :
   sorry
 
 /-- Taking the average involves exponential differences -/
-theorem average_of_power (x δ : ℝ) (ρ : ℂ) (hx : 0 < x) (hδ : 0 < δ) :
+theorem average_of_power (x δ : ℝ) (ρ : ℂ) (hx : 0 < x) (_hδ : 0 < δ) :
     ((Real.exp δ * x : ℂ)^(ρ + 1) - (Real.exp (-δ) * x : ℂ)^(ρ + 1)) / (2 * δ * x * (ρ + 1)) =
       (x : ℂ)^ρ * Complex.sinh (δ * (ρ + 1)) / (δ * (ρ + 1)) := by
-  -- TODO: expand with `Complex.log_ofReal_mul` and `Complex.cpow_def_of_ne_zero`,
-  -- then use `Complex.two_sinh` to rewrite the exponential difference.
-  -- The proof should assume `hx : 0 < x` to control branch issues for `log`.
-  sorry
+  have hx0 : (x : ℂ) ≠ 0 := by
+    exact_mod_cast (ne_of_gt hx)
+  have hx0r : 0 ≤ x := le_of_lt hx
+  have hmul_pos :
+      ((Real.exp δ * x : ℂ)^(ρ + 1)) = (Real.exp δ : ℂ)^(ρ + 1) * (x : ℂ)^(ρ + 1) := by
+    simpa [Complex.ofReal_mul] using
+      (Complex.mul_cpow_ofReal_nonneg (a := Real.exp δ) (b := x) (r := ρ + 1)
+        (Real.exp_pos δ).le hx0r)
+  have hmul_neg :
+      ((Real.exp (-δ) * x : ℂ)^(ρ + 1)) = (Real.exp (-δ) : ℂ)^(ρ + 1) * (x : ℂ)^(ρ + 1) := by
+    simpa [Complex.ofReal_mul] using
+      (Complex.mul_cpow_ofReal_nonneg (a := Real.exp (-δ)) (b := x) (r := ρ + 1)
+        (Real.exp_pos (-δ)).le hx0r)
+  have hxpow : (x : ℂ)^(ρ + 1) = (x : ℂ)^ρ * (x : ℂ) := by
+    simpa using (Complex.cpow_add (x := (x : ℂ)) (y := ρ) (z := (1 : ℂ)) hx0)
+  have hlog_pos : Complex.log (Real.exp δ : ℂ) = (δ : ℂ) := by
+    have h := (Complex.ofReal_log (Real.exp_pos δ).le).symm
+    simpa [Real.log_exp] using h
+  have hlog_neg : Complex.log (Real.exp (-δ) : ℂ) = ((-δ) : ℂ) := by
+    have h := (Complex.ofReal_log (Real.exp_pos (-δ)).le).symm
+    simpa [Real.log_exp] using h
+  have hpow_pos : (Real.exp δ : ℂ)^(ρ + 1) = Complex.exp ((δ : ℂ) * (ρ + 1)) := by
+    have hne : (Real.exp δ : ℂ) ≠ 0 := by
+      exact_mod_cast (Real.exp_ne_zero δ)
+    rw [Complex.cpow_def_of_ne_zero hne, hlog_pos]
+  have hpow_neg : (Real.exp (-δ) : ℂ)^(ρ + 1) = Complex.exp ((-δ : ℂ) * (ρ + 1)) := by
+    have hne : (Real.exp (-δ) : ℂ) ≠ 0 := by
+      exact_mod_cast (Real.exp_ne_zero (-δ))
+    rw [Complex.cpow_def_of_ne_zero hne, hlog_neg]
+  have hnum :
+      ((Real.exp δ * x : ℂ)^(ρ + 1) - (Real.exp (-δ) * x : ℂ)^(ρ + 1)) =
+        (x : ℂ)^(ρ + 1) *
+          ((Real.exp δ : ℂ)^(ρ + 1) - (Real.exp (-δ) : ℂ)^(ρ + 1)) := by
+    calc
+      ((Real.exp δ * x : ℂ)^(ρ + 1) - (Real.exp (-δ) * x : ℂ)^(ρ + 1)) =
+          (Real.exp δ : ℂ)^(ρ + 1) * (x : ℂ)^(ρ + 1) -
+            (Real.exp (-δ) : ℂ)^(ρ + 1) * (x : ℂ)^(ρ + 1) := by
+              rw [hmul_pos, hmul_neg]
+      _ = (x : ℂ)^(ρ + 1) *
+            ((Real.exp δ : ℂ)^(ρ + 1) - (Real.exp (-δ) : ℂ)^(ρ + 1)) := by
+              ring
+  calc
+    ((Real.exp δ * x : ℂ)^(ρ + 1) - (Real.exp (-δ) * x : ℂ)^(ρ + 1)) /
+        (2 * δ * x * (ρ + 1)) =
+        (x : ℂ)^(ρ + 1) *
+            ((Real.exp δ : ℂ)^(ρ + 1) - (Real.exp (-δ) : ℂ)^(ρ + 1)) /
+          (2 * δ * x * (ρ + 1)) := by
+            rw [hnum]
+    _ = (x : ℂ)^ρ *
+          ((Real.exp δ : ℂ)^(ρ + 1) - (Real.exp (-δ) : ℂ)^(ρ + 1)) /
+          (2 * δ * (ρ + 1)) := by
+            have hx0' : (x : ℂ) ≠ 0 := hx0
+            -- cancel the factor `x`
+            have :=
+              (mul_div_mul_left (a := (x : ℂ)^ρ *
+                ((Real.exp δ : ℂ)^(ρ + 1) - (Real.exp (-δ) : ℂ)^(ρ + 1)))
+                (b := (2 : ℂ) * (δ : ℂ) * (ρ + 1)) (c := (x : ℂ)) hx0')
+            -- rearrange to match the lemma's shape
+            simpa [hxpow, mul_comm, mul_left_comm, mul_assoc] using this
+    _ = (x : ℂ)^ρ *
+          (Complex.exp ((δ : ℂ) * (ρ + 1)) - Complex.exp ((-δ : ℂ) * (ρ + 1))) /
+          (2 * δ * (ρ + 1)) := by
+            rw [hpow_pos, hpow_neg]
+    _ = (x : ℂ)^ρ *
+          ((Complex.exp ((δ : ℂ) * (ρ + 1)) - Complex.exp (-(δ : ℂ) * (ρ + 1))) / 2) /
+          (δ * (ρ + 1)) := by
+            -- rearrange the denominator to expose the factor `2`
+            simp [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
+    _ = (x : ℂ)^ρ * Complex.sinh (δ * (ρ + 1)) / (δ * (ρ + 1)) := by
+            simp [Complex.sinh]
 
 /-- Under RH, x^ρ = x^{1/2} * x^{iγ} -/
 theorem rh_power_factor (hRH : RiemannHypothesis') (ρ : zetaNontrivialZeros)
