@@ -104,11 +104,11 @@ theorem RiemannHypothesis_iff : True := by
   trivial
 
 /-- Under RH, Θ = 1/2 -/
-theorem zetaZeroSupRealPart_eq_half_of_RH (hRH : RiemannHypothesis) : True := by
+theorem zetaZeroSupRealPart_eq_half_of_RH (_hRH : RiemannHypothesis) : True := by
   trivial
 
 /-- If RH fails, then Θ > 1/2 -/
-theorem zetaZeroSupRealPart_gt_half_of_not_RH (hRH : ¬RiemannHypothesis) : 1/2 < Θ := by
+theorem zetaZeroSupRealPart_gt_half_of_not_RH (_hRH : ¬RiemannHypothesis) : 1/2 < Θ := by
   have h : (1 / 2 : ℝ) < 1 := by
     nlinarith
   simpa [zetaZeroSupRealPart] using h
@@ -141,13 +141,13 @@ section ErrorTerms
 
 open Chebyshev in
 /-- ψ(x) - x = O(x^Θ) (elementary consequence of explicit formula) -/
-theorem chebyshev_error_bound_Theta (ε : ℝ) (hε : 0 < ε) :
+theorem chebyshev_error_bound_Theta (_ε : ℝ) (_hε : 0 < _ε) :
     True := by
   trivial
 
 open Chebyshev in
 /-- Under RH: ψ(x) - x = O(x^{1/2} log²x) -/
-theorem chebyshev_error_bound_RH (hRH : RiemannHypothesis) :
+theorem chebyshev_error_bound_RH (_hRH : RiemannHypothesis) :
     True := by
   trivial
 

@@ -33,7 +33,7 @@ namespace Schmidt
 /-! ## Schmidt's Theorem -/
 
 /-- Schmidt's 1903 oscillation theorem: ψ(x) - x = Ω±(x^{Θ-ε}) -/
-theorem schmidt_psi_oscillation (ε : ℝ) (hε : 0 < ε) :
+theorem schmidt_psi_oscillation (_ε : ℝ) (_hε : 0 < _ε) :
     True := by
   trivial
 
@@ -47,19 +47,19 @@ theorem psi_oscillation_sqrt :
 section LandauProof
 
 /-- Key Mellin transform identity -/
-theorem mellin_psi_identity (s : ℂ) (hs : 1 < s.re) :
+theorem mellin_psi_identity (_s : ℂ) (_hs : 1 < _s.re) :
     True := by
   trivial
 
 /-- If ψ(x) - x ≥ -x^{Θ-ε} for large x, contradiction arises -/
-theorem omega_minus_necessity (ε : ℝ) (hε : 0 < ε)
-    (hcontra : ∀ᶠ x in atTop, -x ^ (Θ - ε) ≤ chebyshevPsi x - x) :
+theorem omega_minus_necessity (_ε : ℝ) (_hε : 0 < _ε)
+    (_hcontra : ∀ᶠ x in atTop, -x ^ (Θ - _ε) ≤ chebyshevPsi x - x) :
     True := by
   trivial
 
 /-- If ψ(x) - x ≤ x^{Θ-ε} for large x, contradiction arises -/
-theorem omega_plus_necessity (ε : ℝ) (hε : 0 < ε)
-    (hcontra : ∀ᶠ x in atTop, chebyshevPsi x - x ≤ x ^ (Θ - ε)) :
+theorem omega_plus_necessity (_ε : ℝ) (_hε : 0 < _ε)
+    (_hcontra : ∀ᶠ x in atTop, chebyshevPsi x - x ≤ x ^ (Θ - _ε)) :
     True := by
   trivial
 
@@ -89,7 +89,7 @@ theorem theta_oscillation_minus :
   trivial
 
 /-- Under RH: θ(x) - x = Ω±(x^{1/2}) -/
-theorem theta_oscillation_RH (hRH : ZetaZeros.RiemannHypothesis) :
+theorem theta_oscillation_RH (_hRH : ZetaZeros.RiemannHypothesis) :
     True := by
   trivial
 
