@@ -135,6 +135,11 @@ section ZetaApplication
 /-- The logarithmic derivative -ζ'/ζ has a pole at any zero of ζ -/
 theorem zetaLogDeriv_pole_at_zero (ρ : ℂ) (hρ : riemannZeta ρ = 0) :
     ¬AnalyticAt ℂ (fun s => -deriv riemannZeta s / riemannZeta s) ρ := by
+  -- TODO: Use the zero of `riemannZeta` to show the log-derivative has a pole.
+  -- Sketch: write `riemannZeta` as `(s-ρ)^m * g(s)` with `g ρ ≠ 0`, then
+  -- `deriv ζ / ζ = m / (s-ρ) + deriv g / g`, hence not analytic at `ρ`.
+  -- Likely requires a Mathlib lemma on zeros of analytic functions and
+  -- `logDeriv` or `meromorphicAt` for `riemannZeta`.
   sorry
 
 /-- -ζ'/ζ(s) = ∑ Λ(n)/n^s for Re(s) > 1, connecting to Chebyshev's ψ -/
