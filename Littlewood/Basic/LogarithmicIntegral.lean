@@ -5,7 +5,9 @@ Authors: [Your Name]
 -/
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.IntegrationByParts
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Analysis.Asymptotics.Defs
 import Mathlib.Topology.Order.Basic
@@ -34,6 +36,7 @@ asymptotic expansion of the prime counting function π(x).
 -/
 
 open MeasureTheory Set Real Filter Topology
+open scoped Interval
 
 namespace LogarithmicIntegral
 
@@ -197,7 +200,80 @@ theorem logarithmicIntegral_sub {x y : ℝ} (hx : 2 ≤ x) (hxy : x ≤ y) :
 theorem logarithmicIntegral_integration_by_parts {x : ℝ} (hx : 2 < x) :
     li x = x / log x - 2 / log 2 + ∫ t in Ioc 2 x, 1 / (log t)^2 := by
   -- Standard integration by parts with u = 1/log(t), dv = dt
-  sorry
+  have hxle : (2 : ℝ) ≤ x := le_of_lt hx
+  let u : ℝ → ℝ := fun t => (log t)⁻¹
+  let u' : ℝ → ℝ := fun t => -(t⁻¹) / (log t)^2
+  let v : ℝ → ℝ := fun t => t
+  let v' : ℝ → ℝ := fun _ => (1 : ℝ)
+  have hu : ∀ t ∈ [[(2 : ℝ), x]], HasDerivAt u (u' t) t := by
+    intro t ht
+    have ht' : t ∈ Icc (2 : ℝ) x := by
+      simpa [Set.uIcc_of_le hxle] using ht
+    have ht0 : t ≠ 0 := by
+      have htpos : 0 < t := lt_of_lt_of_le (by norm_num) ht'.1
+      exact ne_of_gt htpos
+    have ht1 : (1 : ℝ) < t := by
+      linarith [ht'.1]
+    have hlog_ne : log t ≠ 0 := by
+      exact ne_of_gt (log_pos ht1)
+    simpa [u, u', one_div] using (Real.hasDerivAt_log ht0).inv hlog_ne
+  have hv : ∀ t ∈ [[(2 : ℝ), x]], HasDerivAt v (v' t) t := by
+    intro t ht
+    simpa [v, v'] using (hasDerivAt_id t)
+  have hcont_inv : ContinuousOn (fun t => t⁻¹) (Icc (2 : ℝ) x) := by
+    have hne : ∀ t ∈ Icc (2 : ℝ) x, t ≠ 0 := by
+      intro t ht
+      exact ne_of_gt (lt_of_lt_of_le (by norm_num) ht.1)
+    exact (continuousOn_id.inv₀ hne)
+  have hcont_log : ContinuousOn log (Icc (2 : ℝ) x) := by
+    have hsubset : Icc (2 : ℝ) x ⊆ ({0}ᶜ : Set ℝ) := by
+      intro t ht
+      exact ne_of_gt (lt_of_lt_of_le (by norm_num) ht.1)
+    exact continuousOn_log.mono hsubset
+  have hcont_log_sq : ContinuousOn (fun t => (log t)^2) (Icc (2 : ℝ) x) :=
+    hcont_log.pow 2
+  have hcont_inv_log_sq : ContinuousOn (fun t => ((log t)^2)⁻¹) (Icc (2 : ℝ) x) := by
+    have hne : ∀ t ∈ Icc (2 : ℝ) x, (log t)^2 ≠ 0 := by
+      intro t ht
+      have ht1 : (1 : ℝ) < t := by
+        linarith [ht.1]
+      exact pow_ne_zero 2 (ne_of_gt (log_pos ht1))
+    exact hcont_log_sq.inv₀ hne
+  have hcont_u' : ContinuousOn u' (Icc (2 : ℝ) x) := by
+    have hcont_mul :
+        ContinuousOn (fun t => t⁻¹ * ((log t)^2)⁻¹) (Icc (2 : ℝ) x) :=
+      hcont_inv.mul hcont_inv_log_sq
+    simpa [u', div_eq_mul_inv, one_div, mul_comm, mul_left_comm, mul_assoc] using hcont_mul.neg
+  have hint_u' : IntervalIntegrable u' volume (2 : ℝ) x :=
+    (ContinuousOn.intervalIntegrable_of_Icc (a := (2 : ℝ)) (b := x) hxle hcont_u')
+  have hint_v' : IntervalIntegrable v' volume (2 : ℝ) x := by
+    simpa [v'] using
+      (intervalIntegrable_const (μ := volume) (a := (2 : ℝ)) (b := x) (c := (1 : ℝ)))
+  have hparts :
+      ∫ t in (2 : ℝ)..x, u t * v' t =
+        u x * v x - u 2 * v 2 - ∫ t in (2 : ℝ)..x, u' t * v t := by
+    simpa using
+      (intervalIntegral.integral_mul_deriv_eq_deriv_mul (a := (2 : ℝ)) (b := x)
+        (u := u) (u' := u') (v := v) (v' := v') hu hv hint_u' hint_v')
+  have huv : (fun t => u' t * v t) = fun t => -(1 / (log t)^2) := by
+    funext t
+    by_cases ht : t = 0
+    · simp [u', v, ht]
+    · simp [u', v, ht, div_eq_mul_inv, mul_comm]
+  have hparts' :
+      ∫ t in (2 : ℝ)..x, 1 / log t =
+        x / log x - 2 / log 2 + ∫ t in (2 : ℝ)..x, 1 / (log t)^2 := by
+    have hparts1 :
+        ∫ t in (2 : ℝ)..x, 1 / log t =
+          x / log x - 2 / log 2 - ∫ t in (2 : ℝ)..x, u' t * v t := by
+      simpa [u, v, v', one_div, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hparts
+    simpa [huv, sub_eq_add_neg, intervalIntegral.integral_neg] using hparts1
+  calc
+    li x = ∫ t in (2 : ℝ)..x, 1 / log t := by
+      simp [logarithmicIntegral, intervalIntegral.integral_of_le hxle]
+    _ = x / log x - 2 / log 2 + ∫ t in (2 : ℝ)..x, 1 / (log t)^2 := hparts'
+    _ = x / log x - 2 / log 2 + ∫ t in Ioc 2 x, 1 / (log t)^2 := by
+      simp [intervalIntegral.integral_of_le hxle]
 
 end Splitting
 
