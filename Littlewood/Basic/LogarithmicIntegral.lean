@@ -303,19 +303,19 @@ theorem logarithmicIntegral_asymptotic :
     · have hbpos : 0 < b := lt_of_not_ge hb
       have hlt : ∀ᶠ x in atTop, log x / x < 1 / b :=
         (tendsto_order.1 hlog).2 _ (by positivity)
-      have hx1 : ∀ᶠ x in atTop, 1 < x := eventually_gt_atTop 1
+      have hx1 : ∀ᶠ x in (atTop : Filter ℝ), 1 < x := eventually_gt_atTop (1 : ℝ)
       refine (hlt.and hx1).mono ?_
       intro x hx
       rcases hx with ⟨hlt, hx1⟩
       have hxpos : 0 < x := lt_trans (by norm_num) hx1
       have hlogpos : 0 < log x := log_pos hx1
       have h1 : log x < x / b := by
-        have h1' : log x < (1 / b) * x := (div_lt_iff hxpos).1 hlt
+        have h1' : log x < (1 / b) * x := (div_lt_iff₀ hxpos).1 hlt
         simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using h1'
       have h2 : b * log x < x := by
-        have h2' : log x * b < x := (lt_div_iff hbpos).1 h1
+        have h2' : log x * b < x := (lt_div_iff₀ hbpos).1 h1
         simpa [mul_comm, mul_left_comm, mul_assoc] using h2'
-      have h3 : b < x / log x := (lt_div_iff hlogpos).2 h2
+      have h3 : b < x / log x := (lt_div_iff₀ hlogpos).2 h2
       exact le_of_lt h3
   have hdiv' : Tendsto (fun x => x / log x - 2 / log 2) atTop atTop := by
     refine tendsto_atTop.2 ?_
@@ -349,11 +349,14 @@ theorem logarithmicIntegral_bigO_one :
     intro x hx
     have hxpos : 0 ≤ x := by linarith
     have hli_nonneg : 0 ≤ li x := logarithmicIntegral_nonneg hx
-    have hbound : ∀ t ∈ Ioc (2 : ℝ) x, ‖1 / log t‖ ≤ 1 / log 2 := by
+    have hbound : ∀ t ∈ Ι (2 : ℝ) x, ‖1 / log t‖ ≤ 1 / log 2 := by
       intro t ht
+      have ht' : t ∈ Ioc (2 : ℝ) x := by
+        simpa [uIoc_of_le hx] using ht
+      have ht1 : (1 : ℝ) < t := lt_trans (by norm_num) ht'.1
       have hlog2 : 0 < log (2 : ℝ) := log_pos (by norm_num)
-      have hlogt : 0 < log t := log_pos (by linarith : (1 : ℝ) < t)
-      have hlogle : log (2 : ℝ) ≤ log t := log_le_log (by norm_num) (le_of_lt ht.1)
+      have hlogt : 0 < log t := log_pos ht1
+      have hlogle : log (2 : ℝ) ≤ log t := log_le_log (by norm_num) (le_of_lt ht'.1)
       have hle : 1 / log t ≤ 1 / log (2 : ℝ) :=
         one_div_le_one_div_of_le hlog2 hlogle
       simpa [Real.norm_eq_abs, abs_of_nonneg hlogt.le, abs_of_nonneg hlog2.le] using hle
@@ -375,10 +378,20 @@ theorem logarithmicIntegral_bigO_one :
         exact abs_of_nonneg hnonneg
       have habs' : |x - 2| = x - 2 := by
         exact abs_of_nonneg (sub_nonneg.mpr hx)
-      linarith [hnorm', habs, habs', hli]
+      calc
+        li x = ∫ t in (2 : ℝ)..x, 1 / log t := hli
+        _ = |∫ t in (2 : ℝ)..x, 1 / log t| := by
+          symm
+          exact habs
+        _ ≤ (1 / log (2 : ℝ)) * |x - 2| := hnorm'
+        _ = (1 / log (2 : ℝ)) * (x - 2) := by simpa [habs']
     have hle : (1 / log (2 : ℝ)) * (x - 2) ≤ x / log 2 := by
       have hlog2 : 0 < log (2 : ℝ) := log_pos (by norm_num)
-      nlinarith
+      have hlog2_nonneg : 0 ≤ (1 / log (2 : ℝ)) := (one_div_pos.mpr hlog2).le
+      have hsub : x - 2 ≤ x := by linarith
+      have hmul : (1 / log (2 : ℝ)) * (x - 2) ≤ (1 / log (2 : ℝ)) * x :=
+        mul_le_mul_of_nonneg_left hsub hlog2_nonneg
+      simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hmul
     have hli_le' : li x ≤ x / log 2 := hli_le.trans hle
     simpa [Real.norm_eq_abs, abs_of_nonneg hli_nonneg, abs_of_nonneg hxpos,
       div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hli_le'
@@ -396,11 +409,17 @@ theorem logarithmicIntegral_bigO_one :
       have hmul : x * (1 / log x) ≤ x * (1 / log (2 : ℝ)) :=
         mul_le_mul_of_nonneg_left hle hxpos
       simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hmul
-    have hdiv_nonneg : 0 ≤ x / log x := by
-      have hlogpos : 0 < log x := log_pos (by linarith : (1 : ℝ) < x)
-      exact div_nonneg hxpos hlogpos.le
-    simpa [Real.norm_eq_abs, abs_of_nonneg hdiv_nonneg, abs_of_nonneg hxpos,
-      div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hle'
+    have hlogpos : 0 < log x := log_pos (by linarith : (1 : ℝ) < x)
+    have hdiv_nonneg : 0 ≤ x / log x := div_nonneg hxpos hlogpos.le
+    have hnorm1 : ‖x / log x‖ = x / log x := by
+      exact norm_of_nonneg hdiv_nonneg
+    have hnorm2 : ‖x‖ = x := by
+      simpa [Real.norm_eq_abs, abs_of_nonneg hxpos]
+    calc
+      ‖x / log x‖ = x / log x := hnorm1
+      _ ≤ x / log 2 := hle'
+      _ = (1 / log 2) * x := by simp [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
+      _ = (1 / log 2) * ‖x‖ := by simpa [hnorm2]
   exact hli.sub hdiv
 
 /-- li(x) = x/log(x) + x/log²(x) + O(x) -/
@@ -417,7 +436,7 @@ theorem logarithmicIntegral_bigO_two :
     have hlog2pos : 0 < log (2 : ℝ) := log_pos (by norm_num)
     have hlogle : log (2 : ℝ) ≤ log x := log_le_log (by norm_num) hx
     have hpow : (log (2 : ℝ)) ^ (2 : ℕ) ≤ (log x) ^ (2 : ℕ) :=
-      pow_le_pow_of_le_left hlog2pos.le hlogle _
+      pow_le_pow_left₀ hlog2pos.le hlogle _
     have hle : 1 / (log x) ^ (2 : ℕ) ≤ 1 / (log (2 : ℝ)) ^ (2 : ℕ) :=
       one_div_le_one_div_of_le (pow_pos hlog2pos _) hpow
     have hmul : x * (1 / (log x) ^ (2 : ℕ)) ≤ x * (1 / (log (2 : ℝ)) ^ (2 : ℕ)) :=
@@ -452,11 +471,17 @@ theorem logarithmicIntegral_expansion (n : ℕ) :
       have hmul : x * (1 / log x) ≤ x * (1 / log (2 : ℝ)) :=
         mul_le_mul_of_nonneg_left hle hxpos
       simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hmul
-    have hdiv_nonneg : 0 ≤ x / log x := by
-      have hlogpos : 0 < log x := log_pos (by linarith : (1 : ℝ) < x)
-      exact div_nonneg hxpos hlogpos.le
-    simpa [Real.norm_eq_abs, abs_of_nonneg hdiv_nonneg, abs_of_nonneg hxpos,
-      div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hle'
+    have hlogpos : 0 < log x := log_pos (by linarith : (1 : ℝ) < x)
+    have hdiv_nonneg : 0 ≤ x / log x := div_nonneg hxpos hlogpos.le
+    have hnorm1 : ‖x / log x‖ = x / log x := by
+      exact norm_of_nonneg hdiv_nonneg
+    have hnorm2 : ‖x‖ = x := by
+      simpa [Real.norm_eq_abs, abs_of_nonneg hxpos]
+    calc
+      ‖x / log x‖ = x / log x := hnorm1
+      _ ≤ x / log 2 := hle'
+      _ = (1 / log 2) * x := by simp [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
+      _ = (1 / log 2) * ‖x‖ := by simpa [hnorm2]
   have hli : (fun x => li x) =O[atTop] (fun x => x) := by
     have hsum := h1.add h2
     simpa [sub_eq_add_neg, add_assoc, add_left_comm, add_comm] using hsum
@@ -475,7 +500,7 @@ theorem logarithmicIntegral_expansion (n : ℕ) :
           (k.factorial : ℝ) / (log x)^(k+1) ≤ (k.factorial : ℝ) / (log 2)^(k+1) := by
       intro k hk
       have hpow : (log (2 : ℝ)) ^ (k + 1) ≤ (log x) ^ (k + 1) :=
-        pow_le_pow_of_le_left hlog2pos.le hlogle _
+        pow_le_pow_left₀ hlog2pos.le hlogle _
       have hle : 1 / (log x) ^ (k + 1) ≤ 1 / (log (2 : ℝ)) ^ (k + 1) :=
         one_div_le_one_div_of_le (pow_pos hlog2pos _) hpow
       have hfac_nonneg : 0 ≤ (k.factorial : ℝ) := by
@@ -523,10 +548,12 @@ section Comparison
 theorem logarithmicIntegral_gt_divLog {x : ℝ} (hx : 2 < x) :
     x / log x - 2 / log 2 < li x := by
   have hxle : (2 : ℝ) ≤ x := le_of_lt hx
-  have hcont : ContinuousOn (fun t => (1 / log t) ^ (2 : ℕ)) (Icc (2 : ℝ) x) := by
+  have hcont : ContinuousOn (fun t => 1 / (log t)^2) (Icc (2 : ℝ) x) := by
     have hcont' : ContinuousOn (fun t => 1 / log t) (Icc (2 : ℝ) x) :=
       continuousOn_one_div_log_Icc (by linarith : (1 : ℝ) < 2)
-    simpa using hcont'.pow 2
+    have hcont'' : ContinuousOn (fun t => (1 / log t) ^ (2 : ℕ)) (Icc (2 : ℝ) x) :=
+      hcont'.pow 2
+    simpa [one_div_pow] using hcont''
   have hle : ∀ t ∈ Ioc (2 : ℝ) x, 0 ≤ 1 / (log t)^2 := by
     intro t ht
     have ht1 : (1 : ℝ) < t := by linarith [ht.1]
@@ -558,11 +585,14 @@ theorem logarithmicIntegral_gt_divLog {x : ℝ} (hx : 2 < x) :
 /-- li(x) ≤ x/log(2) for x ≥ 2 -/
 theorem logarithmicIntegral_lt_bound {x : ℝ} (hx : 2 ≤ x) :
     li x ≤ x / log 2 := by
-  have hbound : ∀ t ∈ Ioc (2 : ℝ) x, ‖1 / log t‖ ≤ 1 / log 2 := by
+  have hbound : ∀ t ∈ Ι (2 : ℝ) x, ‖1 / log t‖ ≤ 1 / log 2 := by
     intro t ht
+    have ht' : t ∈ Ioc (2 : ℝ) x := by
+      simpa [uIoc_of_le hx] using ht
+    have ht1 : (1 : ℝ) < t := lt_trans (by norm_num) ht'.1
     have hlog2 : 0 < log (2 : ℝ) := log_pos (by norm_num)
-    have hlogt : 0 < log t := log_pos (by linarith : (1 : ℝ) < t)
-    have hlogle : log (2 : ℝ) ≤ log t := log_le_log (by norm_num) (le_of_lt ht.1)
+    have hlogt : 0 < log t := log_pos ht1
+    have hlogle : log (2 : ℝ) ≤ log t := log_le_log (by norm_num) (le_of_lt ht'.1)
     have hle : 1 / log t ≤ 1 / log (2 : ℝ) :=
       one_div_le_one_div_of_le hlog2 hlogle
     simpa [Real.norm_eq_abs, abs_of_nonneg hlogt.le, abs_of_nonneg hlog2.le] using hle
@@ -578,16 +608,26 @@ theorem logarithmicIntegral_lt_bound {x : ℝ} (hx : 2 ≤ x) :
     have hnonneg : 0 ≤ ∫ t in (2 : ℝ)..x, 1 / log t := by
       refine intervalIntegral.integral_nonneg hx ?_
       intro t ht
-      have ht1 : (1 : ℝ) < t := by linarith [ht.1]
+      have ht1 : (1 : ℝ) < t := lt_of_lt_of_le (by norm_num) ht.1
       exact (one_div_pos.mpr (log_pos ht1)).le
     have habs : |∫ t in (2 : ℝ)..x, 1 / log t| = ∫ t in (2 : ℝ)..x, 1 / log t := by
       exact abs_of_nonneg hnonneg
     have habs' : |x - 2| = x - 2 := by
       exact abs_of_nonneg (sub_nonneg.mpr hx)
-    linarith [hnorm', habs, habs', hli]
+    calc
+      li x = ∫ t in (2 : ℝ)..x, 1 / log t := hli
+      _ = |∫ t in (2 : ℝ)..x, 1 / log t| := by
+        symm
+        exact habs
+      _ ≤ (1 / log (2 : ℝ)) * |x - 2| := hnorm'
+      _ = (1 / log (2 : ℝ)) * (x - 2) := by simpa [habs']
   have hle : (1 / log (2 : ℝ)) * (x - 2) ≤ x / log 2 := by
     have hlog2 : 0 < log (2 : ℝ) := log_pos (by norm_num)
-    nlinarith
+    have hlog2_nonneg : 0 ≤ (1 / log (2 : ℝ)) := (one_div_pos.mpr hlog2).le
+    have hsub : x - 2 ≤ x := by linarith
+    have hmul : (1 / log (2 : ℝ)) * (x - 2) ≤ (1 / log (2 : ℝ)) * x :=
+      mul_le_mul_of_nonneg_left hsub hlog2_nonneg
+    simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hmul
   exact hli_le.trans hle
 
 /-- li(x) - x/log(x) → ∞ as x → ∞ -/
@@ -611,21 +651,21 @@ theorem logarithmicIntegral_sub_divLog_tendsto :
     · have hbpos : 0 < b := lt_of_not_ge hb
       have hlt : ∀ᶠ x in atTop, (log x)^2 / x < 1 / b :=
         (tendsto_order.1 hlog2).2 _ (by positivity)
-      have hx1 : ∀ᶠ x in atTop, 1 < x := eventually_gt_atTop 1
+      have hx1 : ∀ᶠ x in (atTop : Filter ℝ), 1 < x := eventually_gt_atTop (1 : ℝ)
       refine (hlt.and hx1).mono ?_
       intro x hx
       rcases hx with ⟨hlt, hx1⟩
       have hxpos : 0 < x := lt_trans (by norm_num) hx1
       have hlogpos : 0 < log x := log_pos hx1
       have h1 : (log x)^2 < x / b := by
-        have h1' : (log x)^2 < (1 / b) * x := (div_lt_iff hxpos).1 hlt
+        have h1' : (log x)^2 < (1 / b) * x := (div_lt_iff₀ hxpos).1 hlt
         simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using h1'
       have h2 : b * (log x)^2 < x := by
-        have h2' : (log x)^2 * b < x := (lt_div_iff hbpos).1 h1
+        have h2' : (log x)^2 * b < x := (lt_div_iff₀ hbpos).1 h1
         simpa [mul_comm, mul_left_comm, mul_assoc] using h2'
       have h3 : b < x / (log x)^2 := by
         have hpow_pos : 0 < (log x) ^ (2 : ℕ) := pow_pos hlogpos _
-        exact (lt_div_iff hpow_pos).2 h2
+        exact (lt_div_iff₀ hpow_pos).2 h2
       exact le_of_lt h3
   have hmain : Tendsto (fun x => (1 / 2) * (x / (log x)^2) - 2 / log 2) atTop atTop := by
     refine tendsto_atTop.2 ?_
@@ -643,7 +683,11 @@ theorem logarithmicIntegral_sub_divLog_tendsto :
     have hEq := logarithmicIntegral_integration_by_parts (x := x) hxgt
     have hEq' :
         li x - x / log x = -2 / log 2 + ∫ t in Ioc 2 x, 1 / (log t)^2 := by
-      linarith [hEq]
+      calc
+        li x - x / log x =
+            (x / log x - 2 / log 2 + ∫ t in Ioc 2 x, 1 / (log t)^2) - x / log x := by
+              simpa [hEq]
+        _ = -2 / log 2 + ∫ t in Ioc 2 x, 1 / (log t)^2 := by ring
     have hcont : ContinuousOn (fun t => (1 / log t) ^ (2 : ℕ)) (Icc (2 : ℝ) x) := by
       have hcont' : ContinuousOn (fun t => 1 / log t) (Icc (2 : ℝ) x) :=
         continuousOn_one_div_log_Icc (by linarith : (1 : ℝ) < 2)
@@ -681,26 +725,42 @@ theorem logarithmicIntegral_sub_divLog_tendsto :
         have hlogpos : 0 < log t := log_pos ht1
         have hlogle : log t ≤ log x := log_le_log (by linarith : (0 : ℝ) < t) ht.2
         have hpow : (log t) ^ (2 : ℕ) ≤ (log x) ^ (2 : ℕ) :=
-          pow_le_pow_of_le_left hlogpos.le hlogle _
+          pow_le_pow_left₀ hlogpos.le hlogle _
         have hpos : 0 < (log t) ^ (2 : ℕ) := pow_pos hlogpos _
         exact one_div_le_one_div_of_le hpos hpow
       exact intervalIntegral.integral_mono_on (a := x / 2) (b := x) (by linarith)
         hconst hfi_sub hle
     have hconst_int :
-        ∫ t in (x / 2)..x, (1 / (log x)^2) = (x / 2) * (1 / (log x)^2) := by
-      have hlen : x - x / 2 = x / 2 := by ring
-      simp [intervalIntegral.integral_const, hlen]
+        ∫ t in (x / 2)..x, (1 / (log x)^2) = (x - x / 2) * (1 / (log x)^2) := by
+      simp [intervalIntegral.integral_const]
     have hlower :
         (x / 2) * (1 / (log x)^2) ≤ ∫ t in (2 : ℝ)..x, 1 / (log t)^2 := by
+      have hlen : x - x / 2 = x / 2 := by ring
       calc
         (x / 2) * (1 / (log x)^2)
-            = ∫ t in (x / 2)..x, (1 / (log x)^2) := by simpa [hconst_int]
+            = (x - x / 2) * (1 / (log x)^2) := by simpa [hlen]
+        _ = ∫ t in (x / 2)..x, (1 / (log x)^2) := by simpa [hconst_int]
         _ ≤ ∫ t in (x / 2)..x, 1 / (log t)^2 := hconst_le
         _ ≤ ∫ t in (2 : ℝ)..x, 1 / (log t)^2 := hmono_interval
     have hlower' :
         (x / 2) * (1 / (log x)^2) ≤ ∫ t in Ioc 2 x, 1 / (log t)^2 := by
       simpa [intervalIntegral.integral_of_le hxle] using hlower
-    linarith [hEq', hlower']
+    have hbound' :
+        -2 / log 2 + (x / 2) * (1 / (log x)^2) ≤ li x - x / log x := by
+      calc
+        -2 / log 2 + (x / 2) * (1 / (log x)^2)
+            ≤ -2 / log 2 + ∫ t in Ioc 2 x, 1 / (log t)^2 := by
+              have h' := add_le_add_left hlower' (-2 / log 2)
+              simpa [add_comm, add_left_comm, add_assoc] using h'
+        _ = li x - x / log x := by simpa [hEq']
+    have hbound'' :
+        (1 / 2) * (x / (log x)^2) - 2 / log 2 ≤ -2 / log 2 + (x / 2) * (1 / (log x)^2) := by
+      have hEq :
+          (1 / 2) * (x / (log x)^2) - 2 / log 2 =
+            -2 / log 2 + (x / 2) * (1 / (log x)^2) := by
+        ring_nf
+      exact hEq.le
+    exact hbound''.trans hbound'
   exact tendsto_atTop_mono' atTop hbound hmain
 
 end Comparison
