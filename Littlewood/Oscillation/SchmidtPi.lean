@@ -26,6 +26,8 @@ open Chebyshev LogarithmicIntegral ZetaZeros Schmidt Conversion
 
 namespace SchmidtPi
 
+variable [OmegaPsiToThetaHyp] [OmegaThetaToPiLiHyp]
+
 /-! ## Transfer to π - li -/
 
 /-- π(x) - li(x) = Ω₋(x^{1/2}/log x) unconditionally -/
@@ -35,7 +37,8 @@ theorem pi_li_oscillation_minus [Schmidt.PsiOscillationSqrtHyp] :
   -- From θ - x = Ω₋(x^{1/2}) and π - li = (θ - x)/log x + O(x^{1/2}/log²x)
   have hf : ∀ᶠ x in atTop, Real.sqrt x ≤ (fun x => Real.sqrt x) x := by
     exact Filter.Eventually.of_forall fun x => le_rfl
-  have h := omega_psi_to_pi_li (f := fun x => Real.sqrt x) hf Schmidt.psi_oscillation_sqrt
+  have h := omega_psi_to_pi_li (f := fun x => Real.sqrt x) hf
+    Schmidt.psi_oscillation_sqrt
   simpa using h.2
 
 /-- If RH fails (Θ > 1/2), then π(x) - li(x) = Ω±(x^{Θ-ε}) -/
