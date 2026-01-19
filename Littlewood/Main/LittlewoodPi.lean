@@ -44,13 +44,37 @@ namespace LittlewoodPi
 theorem littlewood_pi_li :
     (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
     =Ω±[fun x => Real.sqrt x / Real.log x * Real.log (Real.log (Real.log x))] := by
-  -- Transfer from ψ using conversion formulas
-  -- h_psi : ψ(x) - x = Ω±(x^{1/2} log log log x)
-  -- By conversion: π - li = (θ - x)/log x + O(x^{1/2}/log² x)
-  -- And: θ - x = ψ - x + O(x^{1/2})
-  -- So: π - li = (ψ - x)/log x + O(x^{1/2}/log x)
-  -- The Ω± behavior of ψ - x transfers to π - li divided by log x
-  sorry
+  -- Transfer from ψ using conversion formulas.
+  have hpsi :
+      (fun x => chebyshevPsi x - x) =Ω±[fun x =>
+        Real.sqrt x * Real.log (Real.log (Real.log x))] :=
+    Littlewood.littlewood_psi
+  have hf :
+      ∀ᶠ x in atTop,
+        Real.sqrt x ≤ Real.sqrt x * Real.log (Real.log (Real.log x)) := by
+    filter_upwards [eventually_gt_atTop (Real.exp (Real.exp (Real.exp 1)))] with x hx
+    have hxle : Real.exp (Real.exp (Real.exp 1)) ≤ x := le_of_lt hx
+    have hxpos : 0 < x := lt_of_lt_of_le (Real.exp_pos (Real.exp (Real.exp 1))) hxle
+    have h1 : (1 : ℝ) ≤ Real.exp 1 := one_le_exp (by linarith)
+    have h2 : Real.exp 1 ≤ Real.exp (Real.exp 1) := exp_le_exp_of_le h1
+    have hexp_exp1_le_logx : Real.exp (Real.exp 1) ≤ Real.log x :=
+      (Real.le_log_iff_exp_le hxpos).2 hxle
+    have hexp1_le_logx : Real.exp 1 ≤ Real.log x := h2.trans hexp_exp1_le_logx
+    have hlogx_pos : 0 < Real.log x := lt_of_lt_of_le (Real.exp_pos 1) hexp1_le_logx
+    have hexp1_le_loglog : Real.exp 1 ≤ Real.log (Real.log x) :=
+      (Real.le_log_iff_exp_le hlogx_pos).2 hexp_exp1_le_logx
+    have hloglog_pos : 0 < Real.log (Real.log x) :=
+      lt_of_lt_of_le (Real.exp_pos 1) hexp1_le_loglog
+    have hlogloglog_ge : 1 ≤ Real.log (Real.log (Real.log x)) :=
+      (Real.le_log_iff_exp_le hloglog_pos).2 hexp1_le_loglog
+    have hmul :
+        Real.sqrt x * 1 ≤ Real.sqrt x * Real.log (Real.log (Real.log x)) := by
+      exact mul_le_mul_of_nonneg_left hlogloglog_ge (Real.sqrt_nonneg _)
+    simpa using hmul
+  have hpi :=
+    Conversion.omega_psi_to_pi_li
+      (f := fun x => Real.sqrt x * Real.log (Real.log (Real.log x))) hf hpsi
+  simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hpi
 
 /-! ## Corollaries -/
 
