@@ -84,7 +84,7 @@ theorem IsOmegaPlusMinus.isOmega (h : f =Ω±[g]) : f =Ω[g] := by
   refine ⟨c, hc, ?_⟩
   refine hfreq.mono ?_
   intro x hx
-  exact (abs_ge_self _).trans hx
+  exact hx.trans (le_abs_self _)
 
 /-- Ω₊ implies Ω -/
 theorem IsOmegaPlus.isOmega (h : f =Ω₊[g]) (_hg : ∀ᶠ x in atTop, 0 < g x) : f =Ω[g] := by
@@ -92,7 +92,7 @@ theorem IsOmegaPlus.isOmega (h : f =Ω₊[g]) (_hg : ∀ᶠ x in atTop, 0 < g x)
   refine ⟨c, hc, ?_⟩
   refine hfreq.mono ?_
   intro x hx
-  exact (abs_ge_self _).trans hx
+  exact hx.trans (le_abs_self _)
 
 /-- Ω₋ for f implies Ω₊ for -f -/
 theorem IsOmegaMinus.neg_isOmegaPlus (h : f =Ω₋[g]) : (fun x => -f x) =Ω₊[g] := by
@@ -123,12 +123,12 @@ section FrequentlyLarge
 /-- Ω₊ implies f(x) ≥ c·g(x) frequently -/
 theorem IsOmegaPlus.frequently_ge (h : f =Ω₊[g]) :
     ∃ c > 0, ∃ᶠ x in atTop, f x ≥ c * g x := by
-  simpa using h
+  simpa [IsOmegaPlus] using h
 
 /-- Ω₋ implies f(x) ≤ -c·g(x) frequently -/
 theorem IsOmegaMinus.frequently_le (h : f =Ω₋[g]) :
     ∃ c > 0, ∃ᶠ x in atTop, f x ≤ -c * g x := by
-  simpa using h
+  simpa [IsOmegaMinus] using h
 
 /-- Ω± implies infinitely many sign changes (when g is eventually positive) -/
 theorem IsOmegaPlusMinus.sign_changes (h : f =Ω±[g]) (hg : ∀ᶠ x in atTop, 0 < g x) :
@@ -148,7 +148,8 @@ theorem IsOmegaPlusMinus.sign_changes (h : f =Ω±[g]) (hg : ∀ᶠ x in atTop, 
     refine hg.mono ?_
     intro x hxg
     have hpos' : 0 < c' * g x := mul_pos hc' hxg
-    exact neg_lt_zero.mpr hpos'
+    have : -(c' * g x) < 0 := neg_lt_zero.mpr hpos'
+    simpa [neg_mul, mul_comm, mul_left_comm, mul_assoc] using this
   have hfreq_neg : ∃ᶠ x in atTop, f x < 0 := by
     refine (hfreq'.and_eventually hneg).mono ?_
     intro x hx
@@ -205,14 +206,14 @@ theorem IsOmegaPlusMinus.div_const (h : f =Ω±[g]) (c : ℝ) (hc : 0 < c) :
     intro x hx
     have hc0 : c ≠ 0 := ne_of_gt hc
     have : (c' / c) * (c * g x) = c' * g x := by
-      simp [div_eq_mul_inv, hc0, mul_comm, mul_left_comm, mul_assoc]
+      field_simp [hc0, mul_comm, mul_left_comm, mul_assoc]
     simpa [this] using hx
   · refine ⟨c'' / c, div_pos hc'' hc, ?_⟩
     refine hfreq'.mono ?_
     intro x hx
     have hc0 : c ≠ 0 := ne_of_gt hc
     have : -(c'' / c) * (c * g x) = -c'' * g x := by
-      simp [div_eq_mul_inv, hc0, mul_comm, mul_left_comm, mul_assoc]
+      field_simp [hc0, mul_comm, mul_left_comm, mul_assoc]
     simpa [this] using hx
 
 end Scaling
