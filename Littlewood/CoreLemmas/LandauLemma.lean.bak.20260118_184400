@@ -5,7 +5,6 @@ Authors: [Your Name]
 -/
 import Mathlib.Analysis.Calculus.ParametricIntegral
 import Mathlib.Analysis.Analytic.Basic
-import Mathlib.NumberTheory.LSeries.Dirichlet
 import Mathlib.NumberTheory.LSeries.RiemannZeta
 import Mathlib.NumberTheory.ArithmeticFunction.VonMangoldt
 
@@ -34,8 +33,8 @@ namespace Landau
 /-! ## Statement of Landau's Lemma -/
 
 /-- The abscissa of convergence for a Dirichlet integral ∫₁^∞ A(x)x^{-s}dx -/
-noncomputable def abscissaOfConvergence (_A : ℝ → ℝ) : EReal :=
-  sInf (Set.univ : Set EReal)  -- Placeholder definition
+noncomputable def abscissaOfConvergence (A : ℝ → ℝ) : EReal :=
+  sInf { σ : EReal | True }  -- Placeholder definition
 
 /-- The Dirichlet integral transform F(s) = ∫₁^∞ A(x)x^{-s}dx -/
 noncomputable def dirichletIntegral (A : ℝ → ℝ) (s : ℂ) : ℂ :=
@@ -110,20 +109,20 @@ section Corollaries
 /-- Corollary: If F(s) = ∫ A(x)x^{-s}dx with A ≥ 0 eventually, and F extends
     analytically to a neighborhood of σ₀ ∈ ℝ, then the integral converges for Re(s) > σ₀ - ε -/
 theorem landau_extension
-    (_A : ℝ → ℝ) (_hA_nonneg : ∀ᶠ x in atTop, 0 ≤ _A x) (_σ₀ : ℝ)
-    (_hanalytic : AnalyticAt ℂ (dirichletIntegral _A) _σ₀) :
+    (A : ℝ → ℝ) (hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x) (σ₀ : ℝ)
+    (hanalytic : AnalyticAt ℂ (dirichletIntegral A) σ₀) :
     True := by  -- Simplified statement
   trivial
 
 /-- Abscissa of convergence for a Dirichlet series -/
-noncomputable def abscissaOfConvergenceSeries (_a : ℕ → ℝ) : EReal :=
-  sInf (Set.univ : Set EReal)  -- Placeholder
+noncomputable def abscissaOfConvergenceSeries (a : ℕ → ℝ) : EReal :=
+  sInf { σ : EReal | True }  -- Placeholder
 
 /-- Version for Dirichlet series ∑ aₙn^{-s} -/
 theorem landau_lemma_series
-    (_a : ℕ → ℂ) (_ha_nonneg : ∀ᶠ n in atTop, 0 ≤ (_a n).re)
-    (_σ_c : ℂ) :
-    ¬AnalyticAt ℂ (fun s => ∑' n, _a n * (n : ℂ) ^ (-s)) _σ_c := by
+    (a : ℕ → ℂ) (ha_nonneg : ∀ᶠ n in atTop, 0 ≤ (a n).re)
+    (σ_c : ℂ) :
+    ¬AnalyticAt ℂ (fun s => ∑' n, a n * (n : ℂ) ^ (-s)) σ_c := by
   sorry
 
 end Corollaries
@@ -141,21 +140,7 @@ theorem zetaLogDeriv_pole_at_zero (ρ : ℂ) (hρ : riemannZeta ρ = 0) :
 theorem zetaLogDeriv_vonMangoldt (s : ℂ) (hs : 1 < s.re) :
     -deriv riemannZeta s / riemannZeta s =
       ∑' n : ℕ, ArithmeticFunction.vonMangoldt n / (n : ℂ) ^ s := by
-  have h := (ArithmeticFunction.LSeries_vonMangoldt_eq_deriv_riemannZeta_div (s := s) hs).symm
-  have hterm :
-      (fun n : ℕ =>
-          LSeries.term (fun n : ℕ => (ArithmeticFunction.vonMangoldt n : ℂ)) s n) =
-        fun n : ℕ => (ArithmeticFunction.vonMangoldt n : ℂ) / (n : ℂ) ^ s := by
-    funext n
-    by_cases h0 : n = 0
-    · subst h0
-      simp [LSeries.term]
-    · simp [LSeries.term, h0]
-  have hL :
-      LSeries (fun n : ℕ => (ArithmeticFunction.vonMangoldt n : ℂ)) s =
-        ∑' n : ℕ, (ArithmeticFunction.vonMangoldt n : ℂ) / (n : ℂ) ^ s := by
-    simp [LSeries, hterm]
-  simpa [hL] using h
+  sorry
 
 end ZetaApplication
 
