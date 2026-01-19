@@ -34,8 +34,8 @@ theorem pi_li_oscillation_minus :
   trivial
 
 /-- If RH fails (Θ > 1/2), then π(x) - li(x) = Ω±(x^{Θ-ε}/log x) -/
-theorem pi_li_oscillation_RH_false (ε : ℝ) (hε : 0 < ε) (_hRH_false : 1/2 < Θ)
-    (_hε_small : ε < Θ - 1/2) :
+theorem pi_li_oscillation_RH_false (_ε : ℝ) (_hε : 0 < _ε) (_hRH_false : 1/2 < Θ)
+    (_hε_small : _ε < Θ - 1/2) :
     True := by
   trivial
 
