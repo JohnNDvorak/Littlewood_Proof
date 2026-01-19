@@ -36,7 +36,37 @@ theorem theta_from_psi (x : ℝ) (hx : 1 < x) :
     chebyshevTheta x = chebyshevPsi x -
       ∑ k ∈ Finset.Icc 2 (Nat.floor (Real.log x / Real.log 2)),
         chebyshevTheta (x ^ (1 / k : ℝ)) := by
-  sorry
+  by_cases hx2 : 2 ≤ x
+  · have h := Chebyshev.psi_eq_theta_add_sum_theta (x := x) hx2
+    have h' :
+        chebyshevTheta x +
+          ∑ k ∈ Finset.Icc 2 (Nat.floor (Real.log x / Real.log 2)),
+            chebyshevTheta (x ^ (1 / k : ℝ)) =
+          chebyshevPsi x := by
+      simpa [chebyshevTheta, chebyshevPsi] using h.symm
+    exact (eq_sub_iff_add_eq).2 h'
+  · have hxlt2 : x < 2 := lt_of_not_ge hx2
+    have hpsi : chebyshevPsi x = 0 := by
+      simpa [chebyshevPsi] using (Chebyshev.psi_eq_zero_of_lt_two (x := x) hxlt2)
+    have htheta : chebyshevTheta x = 0 := by
+      simpa [chebyshevTheta] using (Chebyshev.theta_eq_zero_of_lt_two (x := x) hxlt2)
+    have hlog_le : Real.log x / Real.log 2 ≤ 1 := by
+      have hlog2pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+      have hxpos : 0 < x := by linarith
+      have hlog_le' : Real.log x ≤ Real.log 2 := by
+        exact le_of_lt (Real.log_lt_log hxpos hxlt2)
+      have := (div_le_iff hlog2pos).2 (by simpa using hlog_le')
+      simpa using this
+    have hfloor : Nat.floor (Real.log x / Real.log 2) ≤ 1 :=
+      Nat.floor_le_one_of_le_one hlog_le
+    have hIcc : Finset.Icc 2 (Nat.floor (Real.log x / Real.log 2)) = ∅ := by
+      refine Finset.Icc_eq_empty_of_lt ?_
+      exact lt_of_le_of_lt hfloor (by decide : (1 : ℕ) < 2)
+    have hsum :
+        (∑ k ∈ Finset.Icc 2 (Nat.floor (Real.log x / Real.log 2)),
+          chebyshevTheta (x ^ (1 / k : ℝ))) = 0 := by
+      simp [hIcc]
+    simp [htheta, hpsi, hsum]
 
 /-- θ(x) = ψ(x) - ψ(x^{1/2}) + O(x^{1/3}) -/
 theorem theta_psi_first_correction (x : ℝ) (hx : 2 ≤ x) :
