@@ -40,9 +40,9 @@ noncomputable def weightedAverage (x δ : ℝ) : ℝ :=
 
 /-- Under RH, the weighted average equals a sum over zeros plus error -/
 theorem weighted_average_formula_RH
-    (x : ℝ) (hx : 4 ≤ x)
-    (δ : ℝ) (hδ_lower : 1 / (2 * x) ≤ δ) (hδ_upper : δ ≤ 1 / 2)
-    (hRH : RiemannHypothesis') :
+    (x : ℝ) (_hx : 4 ≤ x)
+    (δ : ℝ) (_hδ_lower : 1 / (2 * x) ≤ δ) (_hδ_upper : δ ≤ 1 / 2)
+    (_hRH : RiemannHypothesis') :
     True := by
   trivial
 
@@ -51,7 +51,7 @@ theorem weighted_average_formula_RH
 section ProofComponents
 
 /-- The explicit formula gives: ∫₀ˣ (ψ(u) - u) du = -∑_ρ x^{ρ+1}/(ρ(ρ+1)) + ... -/
-theorem integral_psi_minus_x (x : ℝ) (hx : 1 < x) :
+theorem integral_psi_minus_x (x : ℝ) (_hx : 1 < x) :
     True := by
   trivial
 
@@ -186,13 +186,13 @@ theorem sinh_imaginary_sin (δ γ : ℝ) :
           simpa [hsin, mul_comm]
 
 /-- Replacing 1/ρ with 1/(iγ) under RH gives controlled error -/
-theorem rho_to_gamma_error (hRH : RiemannHypothesis') :
+theorem rho_to_gamma_error (_hRH : RiemannHypothesis') :
     True := by
   trivial
 
 /-- The sum over ρ becomes a sum over γ > 0 -/
 theorem sum_over_positive_ordinates (f : ℂ → ℂ)
-    (hf : ∀ ρ, f (starRingEnd ℂ ρ) = starRingEnd ℂ (f ρ)) :
+    (_hf : ∀ ρ, f (starRingEnd ℂ ρ) = starRingEnd ℂ (f ρ)) :
     True := by
   trivial
 
@@ -203,12 +203,12 @@ end ProofComponents
 section TailEstimates
 
 /-- The tail of the zero sum is controlled -/
-theorem zero_sum_tail (x T : ℝ) (hT : 1 ≤ T) :
+theorem zero_sum_tail (x T : ℝ) (_hT : 1 ≤ T) :
     True := by
   trivial
 
 /-- The main contribution comes from γ ≤ T log T -/
-theorem main_sum_bound (x M : ℝ) (hM : 2 ≤ M) :
+theorem main_sum_bound (x M : ℝ) (_hM : 2 ≤ M) :
     True := by
   trivial
 
@@ -217,10 +217,10 @@ end TailEstimates
 /-! ## Key Estimate for Littlewood -/
 
 /-- When Dirichlet approximation aligns the sin terms, the sum is large -/
-theorem aligned_sum_large (M : ℕ) (hM : 2 ≤ M) (n : ℕ) (hn : 1 ≤ n)
-    (halign : ∀ γ : { γ : ZeroOrdinate // (γ : ℝ) ≤ M * Real.log M },
+theorem aligned_sum_large (M : ℕ) (_hM : 2 ≤ M) (n : ℕ) (_hn : 1 ≤ n)
+    (_halign : ∀ γ : { γ : ZeroOrdinate // (γ : ℝ) ≤ M * Real.log M },
       DirichletApprox.distToInt ((γ : ℝ) * n * Real.log (M : ℝ) / (2 * π)) < 1 / M)
-    (x : ℝ) (hx : x = (M : ℝ)^n * Real.exp (1/M) ∨ x = (M : ℝ)^n * Real.exp (-1/M)) :
+    (x : ℝ) (_hx : x = (M : ℝ)^n * Real.exp (1/M) ∨ x = (M : ℝ)^n * Real.exp (-1/M)) :
     True := by
   trivial
 

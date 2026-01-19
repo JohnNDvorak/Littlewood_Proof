@@ -46,9 +46,9 @@ noncomputable def dirichletIntegral (A : ℝ → ℝ) (s : ℂ) : ℂ :=
     the abscissa of convergence is a singularity. -/
 theorem landau_lemma
     (A : ℝ → ℝ)
-    (hA_measurable : Measurable A)
-    (hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x)
-    (σ_c : ℝ) :
+    (_hA_measurable : Measurable A)
+    (_hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x)
+    (_σ_c : ℝ) :
     True := by
   trivial
 
@@ -58,34 +58,34 @@ section ProofOutline
 
 /-- Step 1: The integral converges absolutely for Re(s) > σ_c -/
 theorem dirichletIntegral_converges
-    (A : ℝ → ℝ) (hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x) (s : ℂ) (σ_c : ℝ)
-    (hs : σ_c < s.re) :
+    (A : ℝ → ℝ) (_hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x) (s : ℂ) (σ_c : ℝ)
+    (_hs : σ_c < s.re) :
     True := by
   trivial
 
 /-- Step 2: The integral defines an analytic function for Re(s) > σ_c -/
 theorem dirichletIntegral_analytic
-    (A : ℝ → ℝ) (hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x) (s : ℂ) (σ_c : ℝ)
-    (hs : σ_c < s.re) :
+    (A : ℝ → ℝ) (_hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x) (s : ℂ) (σ_c : ℝ)
+    (_hs : σ_c < s.re) :
     True := by
   trivial
 
 /-- Step 3: If analytic at σ_c, we can differentiate under the integral -/
 theorem dirichletIntegral_deriv
-    (A : ℝ → ℝ) (s : ℂ) (σ_c : ℝ) (hs : σ_c < s.re) (k : ℕ) :
+    (_A : ℝ → ℝ) (s : ℂ) (σ_c : ℝ) (_hs : σ_c < s.re) (_k : ℕ) :
     True := by
   trivial
 
 /-- Step 4: Power series expansion around s = 1 -/
 theorem dirichletIntegral_powerSeries
-    (A : ℝ → ℝ) (hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x) (σ_c : ℝ) (hσ_c : σ_c < 1) :
+    (A : ℝ → ℝ) (_hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x) (σ_c : ℝ) (_hσ_c : σ_c < 1) :
     True := by
   trivial
 
 /-- Step 5: For non-negative A, the radius extends past σ_c (contradiction) -/
 theorem radius_exceeds_abscissa
-    (A : ℝ → ℝ) (hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x) (σ_c : ℝ) (hσ_c_lt_1 : σ_c < 1)
-    (hanalytic : AnalyticAt ℂ (dirichletIntegral A) σ_c) :
+    (A : ℝ → ℝ) (_hA_nonneg : ∀ᶠ x in atTop, 0 ≤ A x) (σ_c : ℝ) (_hσ_c_lt_1 : σ_c < 1)
+    (_hanalytic : AnalyticAt ℂ (dirichletIntegral A) σ_c) :
     True := by
   trivial
 
@@ -121,7 +121,7 @@ end Corollaries
 section ZetaApplication
 
 /-- The logarithmic derivative -ζ'/ζ has a pole at any zero of ζ -/
-theorem zetaLogDeriv_pole_at_zero (ρ : ℂ) (hρ : riemannZeta ρ = 0) :
+theorem zetaLogDeriv_pole_at_zero (ρ : ℂ) (_hρ : riemannZeta ρ = 0) :
     True := by
   trivial
 

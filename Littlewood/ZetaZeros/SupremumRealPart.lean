@@ -74,9 +74,7 @@ theorem zetaZeroSupRealPart_le_one : Θ ≤ 1 := by
 
 /-- 0 < Θ -/
 theorem zetaZeroSupRealPart_pos : 0 < Θ := by
-  have h : (0 : ℝ) < 1 := by
-    exact zero_lt_one
-  simpa [zetaZeroSupRealPart] using h
+  simp [zetaZeroSupRealPart]
 
 /-- 1/2 ≤ Θ (there exist zeros with real part = 1/2 on the critical line) -/
 theorem zetaZeroSupRealPart_ge_half : 1/2 ≤ Θ := by
