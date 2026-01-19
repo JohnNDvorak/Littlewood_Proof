@@ -34,6 +34,8 @@ open Chebyshev LogarithmicIntegral ZetaZeros Conversion Littlewood
 
 namespace LittlewoodPi
 
+variable [OmegaPsiToThetaHyp] [OmegaThetaToPiLiHyp]
+
 /-! ## Main Theorem -/
 
 /-- Weak Littlewood-type oscillation: π(x) - li(x) = Ω±(x^{1/2}/log x) -/
@@ -98,7 +100,7 @@ theorem pi_minus_li_sign_changes :
 /-- A crossover exists (non-quantitative). -/
 theorem first_crossover_bound :
     ∃ x₀ : ℝ, ∃ x ≤ x₀, (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x := by
-  rcases (pi_gt_li_infinitely_often.frequently.exists) with ⟨x, hx⟩
+  rcases (Filter.Frequently.exists pi_gt_li_infinitely_often) with ⟨x, hx⟩
   exact ⟨x, x, le_rfl, hx⟩
 
 /-- Weak positivity: the normalized integral is eventually nonnegative. -/

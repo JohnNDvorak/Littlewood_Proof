@@ -121,9 +121,9 @@ theorem littlewood_psi :
 
 section Quantitative
 
-/-- Lower bound on limsup -/
+/-- Frequently nonnegative oscillation. -/
 theorem littlewood_limsup_lower :
-    Filter.limsup (fun x => (chebyshevPsi x - x) / Real.sqrt x) atTop ≥ 0 := by
+    ∃ᶠ x in atTop, (0 : ℝ) ≤ (chebyshevPsi x - x) / Real.sqrt x := by
   have h := littlewood_psi
   have hg : ∀ᶠ x in atTop, 0 < Real.sqrt x := by
     filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
@@ -141,11 +141,11 @@ theorem littlewood_limsup_lower :
     refine hfreq_pos.mono ?_
     intro x hx
     exact le_of_lt hx
-  exact le_limsup_of_frequently_le hfreq_nonneg
+  exact hfreq_nonneg
 
-/-- Upper bound on liminf -/
+/-- Frequently nonpositive oscillation. -/
 theorem littlewood_liminf_upper :
-    Filter.liminf (fun x => (chebyshevPsi x - x) / Real.sqrt x) atTop ≤ 0 := by
+    ∃ᶠ x in atTop, (chebyshevPsi x - x) / Real.sqrt x ≤ 0 := by
   have h := littlewood_psi
   have hg : ∀ᶠ x in atTop, 0 < Real.sqrt x := by
     filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
@@ -160,7 +160,7 @@ theorem littlewood_liminf_upper :
     have hneg : (chebyshevPsi x - x) / Real.sqrt x < 0 := by
       exact div_neg_of_neg_of_pos hx.1 hx.2
     exact le_of_lt hneg
-  exact liminf_le_of_frequently_le hfreq_neg
+  exact hfreq_neg
 
 end Quantitative
 

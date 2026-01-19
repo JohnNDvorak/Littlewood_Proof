@@ -17,6 +17,7 @@ their Lean proofs await Mathlib infrastructure.
 import Littlewood.Main.LittlewoodPsi
 import Littlewood.Main.LittlewoodPi
 import Littlewood.ExplicitFormulas.ExplicitFormulaPsi
+import Littlewood.ExplicitFormulas.ConversionFormulas
 import Littlewood.CoreLemmas.WeightedAverageFormula
 import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.ZetaZeros.ZeroDensity
@@ -70,6 +71,16 @@ instance : PsiErrorBoundHyp := by
 instance : PsiErrorBoundRHHyp := by
   refine ⟨?_⟩
   intro hRH x hx
+  sorry
+
+instance : OmegaPsiToThetaHyp := by
+  refine ⟨?_⟩
+  intro f hf h
+  sorry
+
+instance : OmegaThetaToPiLiHyp := by
+  refine ⟨?_⟩
+  intro f hf h
   sorry
 
 -- Weighted average hypotheses.
