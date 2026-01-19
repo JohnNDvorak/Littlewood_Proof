@@ -160,15 +160,47 @@ end FrequentlyLarge
 
 section Construction
 
-/-- Construct Ω± from explicit limsup/liminf bounds -/
+/-- Construct Ω± from explicit limsup/liminf bounds (assuming `g` is eventually positive and the
+ratio is cobounded). -/
 theorem isOmegaPlusMinus_of_limsup_liminf
     (h_sup : Filter.limsup (fun x => f x / g x) atTop > 0)
-    (h_inf : Filter.liminf (fun x => f x / g x) atTop < 0) :
-    f =Ω±[g] :=
-  by
-    -- TODO: Relate limsup/liminf bounds to the "frequently large" definition.
-    -- This should follow from standard filter characterizations.
-    sorry
+    (h_inf : Filter.liminf (fun x => f x / g x) atTop < 0)
+    (hg : ∀ᶠ x in atTop, 0 < g x)
+    (h_cob_le : IsCoboundedUnder (· ≤ ·) atTop (fun x => f x / g x))
+    (h_cob_ge : IsCoboundedUnder (· ≥ ·) atTop (fun x => f x / g x)) :
+    f =Ω±[g] := by
+  have hplus : f =Ω₊[g] := by
+    rcases exists_between h_sup with ⟨c, hcpos, hclt⟩
+    have hfreq : ∃ᶠ x in atTop, c < f x / g x := by
+      exact
+        Filter.frequently_lt_of_lt_limsup
+          (f := atTop) (u := fun x => f x / g x) (b := c)
+          (hu := h_cob_le) hclt
+    refine ⟨c, hcpos, ?_⟩
+    refine (hfreq.and_eventually hg).mono ?_
+    intro x hx
+    have hxg : 0 < g x := hx.2
+    have hx' : c < f x / g x := hx.1
+    have : c * g x < f x := (lt_div_iff₀ hxg).1 hx'
+    exact le_of_lt this
+  have hminus : f =Ω₋[g] := by
+    rcases exists_between h_inf with ⟨b, hblt, hbneg⟩
+    have hfreq : ∃ᶠ x in atTop, f x / g x < b := by
+      exact
+        Filter.frequently_lt_of_liminf_lt
+          (f := atTop) (u := fun x => f x / g x) (b := b)
+          (hu := h_cob_ge) hblt
+    have hcpos : 0 < -b := neg_pos.mpr hbneg
+    refine ⟨-b, hcpos, ?_⟩
+    refine (hfreq.and_eventually hg).mono ?_
+    intro x hx
+    have hxg : 0 < g x := hx.2
+    have hx' : f x / g x < b := hx.1
+    have : f x < b * g x := (div_lt_iff₀ hxg).1 hx'
+    have : f x < -(-b) * g x := by
+      simpa [mul_comm, mul_left_comm, mul_assoc] using this
+    exact le_of_lt this
+  exact ⟨hplus, hminus⟩
 
 end Construction
 
