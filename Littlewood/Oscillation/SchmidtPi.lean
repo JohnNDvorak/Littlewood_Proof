@@ -29,7 +29,7 @@ namespace SchmidtPi
 /-! ## Transfer to π - li -/
 
 /-- π(x) - li(x) = Ω₋(x^{1/2}/log x) unconditionally -/
-theorem pi_li_oscillation_minus :
+theorem pi_li_oscillation_minus [Schmidt.PsiOscillationSqrtHyp] :
     (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
     =Ω₋[fun x => Real.sqrt x / Real.log x] := by
   -- From θ - x = Ω₋(x^{1/2}) and π - li = (θ - x)/log x + O(x^{1/2}/log²x)
@@ -40,7 +40,7 @@ theorem pi_li_oscillation_minus :
 
 /-- If RH fails (Θ > 1/2), then π(x) - li(x) = Ω±(x^{Θ-ε}) -/
 theorem pi_li_oscillation_RH_false (ε : ℝ) (hε : 0 < ε) (hRH_false : 1/2 < Θ)
-    (hε_small : ε < Θ - 1/2) :
+    (hε_small : ε < Θ - 1/2) [Schmidt.SchmidtPsiOscillationHyp] :
     (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
     =Ω±[fun x => x ^ (Θ - ε) / Real.log x] := by
   -- When Θ > 1/2, Schmidt's theorem gives Ω±(x^{Θ-ε})
@@ -59,11 +59,11 @@ theorem pi_li_oscillation_RH_false (ε : ℝ) (hε : 0 < ε) (hRH_false : 1/2 < 
 /-! ## The Gap: Ω₊ Under RH -/
 
 /-- Under RH, Schmidt's method only gives Ω₋ for π - li, not Ω₊ -/
-theorem schmidt_limitation :
+theorem schmidt_limitation [Schmidt.PsiOscillationSqrtHyp] :
     ∃ (π_li_error : ℝ → ℝ),
       (∀ x, π_li_error x = (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x) ∧
       π_li_error =Ω₋[fun x => Real.sqrt x / Real.log x] := by
-  refine ⟨_, ?_, ?_⟩
+  refine ⟨fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x, ?_, ?_⟩
   · intro x
     rfl
   · exact pi_li_oscillation_minus

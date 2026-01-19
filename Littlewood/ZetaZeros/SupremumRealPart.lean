@@ -306,7 +306,8 @@ theorem chebyshev_error_bound_Theta [FirstZeroOrdinateHyp] [ChebyshevErrorBoundT
 
 open Chebyshev in
 /-- Under RH: ψ(x) - x = O(x^{1/2} log²x) -/
-theorem chebyshev_error_bound_RH [FirstZeroOrdinateHyp] (hRH : RiemannHypothesis) :
+theorem chebyshev_error_bound_RH [FirstZeroOrdinateHyp]
+    [ExplicitFormula.PsiErrorBoundRHHyp] (hRH : RiemannHypothesis) :
     ∃ C > 0, ∀ x ≥ 2, |chebyshevPsi x - x| ≤ C * x ^ (1/2 : ℝ) * (Real.log x) ^ 2 := by
   have hRH' : RiemannHypothesis' := by
     intro ρ hρ

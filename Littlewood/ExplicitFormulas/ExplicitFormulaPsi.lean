@@ -183,7 +183,7 @@ class MellinContourShiftHyp : Prop where
           ∫ t : ℝ, (x : ℂ)^(c + t * Complex.I) / (c + t * Complex.I) *
             (-deriv riemannZeta (c + t * Complex.I) / riemannZeta (c + t * Complex.I))
         = x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val
-          - Real.log (2 * π) + trivialZeroSum x + E
+          - Real.log (2 * π) - (1/2 : ℂ) * Real.log (1 - x^(-2 : ℤ)) + E
 
 /-- The Mellin transform representation -/
 theorem psi_mellin (x : ℝ) (hx : 0 < x) (c : ℝ) (hc : 1 < c) [PsiMellinHyp] :
@@ -205,7 +205,7 @@ theorem mellin_contour_shift (x : ℝ) (hx : 1 < x) (c : ℝ) (hc : 1 < c)
         (-deriv riemannZeta (c + t * Complex.I) / riemannZeta (c + t * Complex.I))
     = x - ∑' ρ : zetaNontrivialZeros, (x : ℂ)^ρ.val / ρ.val
       - Real.log (2 * π) + trivialZeroSum x + E := by
-  simpa using (MellinContourShiftHyp.shift x hx c hc)
+  simpa [trivialZeroSum] using (MellinContourShiftHyp.shift x hx c hc)
 
 end Mellin
 
