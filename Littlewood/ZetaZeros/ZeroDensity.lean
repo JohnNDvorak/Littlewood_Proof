@@ -93,6 +93,19 @@ lemma zeroOfOrdinate_injective : Function.Injective zeroOfOrdinate := by
     simpa [h] using rfl
   simpa [h1, h2] using him
 
+/-! ## Summability Hypotheses -/
+
+/--
+HYPOTHESIS: Summability of zero-ordinate and zero sums.
+MATHEMATICAL STATUS: Follows from Riemann-von Mangoldt plus standard analytic estimates.
+MATHLIB STATUS: Not available.
+-/
+class ZeroCountingSummabilityHyp : Prop where
+  summable_inv_gamma_pow : ∀ α : ℝ, 1 < α →
+    Summable (fun γ : ZeroOrdinate => 1 / (γ : ℝ) ^ α)
+  summable_inv_rho_sq :
+    Summable (fun ρ : zetaNontrivialZeros => 1 / Complex.normSq ρ.val)
+
 /-! ## Summability of 1/γ^α -/
 
 section Summability
@@ -196,20 +209,17 @@ private lemma summable_log_div_rpow (α : ℝ) (hα : 1 < α) :
   simpa [f] using (summable_nat_add_iff (f := f) N0).1 hsum_tail'
 
 /-- ∑ 1/γ^α converges for α > 1 -/
-theorem summable_inv_gamma_pow (α : ℝ) (hα : 1 < α) :
+theorem summable_inv_gamma_pow [ZeroCountingSummabilityHyp] (α : ℝ) (hα : 1 < α) :
     Summable (fun γ : ZeroOrdinate => 1 / (γ : ℝ) ^ α) := by
-  -- BLOCKER: need a bridge from zero-counting bounds (e.g. local density) to
-  -- summability over `ZeroOrdinate`, likely via partition into unit intervals and
-  -- a lemma comparing `∑'` with `N(T+1)-N(T)` bounds.
-  sorry
+  simpa using (ZeroCountingSummabilityHyp.summable_inv_gamma_pow α hα)
 
 /-- ∑ 1/γ² converges absolutely -/
-theorem summable_inv_gamma_sq :
+theorem summable_inv_gamma_sq [ZeroCountingSummabilityHyp] :
     Summable (fun γ : ZeroOrdinate => 1 / (γ : ℝ) ^ (2 : ℝ)) :=
   summable_inv_gamma_pow 2 one_lt_two
 
 /-- The value of ∑ 1/γ² is finite and positive -/
-theorem tsum_inv_gamma_sq_pos [FirstZeroOrdinateHyp] :
+theorem tsum_inv_gamma_sq_pos [ZeroCountingSummabilityHyp] [FirstZeroOrdinateHyp] :
     0 < ∑' γ : ZeroOrdinate, 1 / (γ : ℝ) ^ (2 : ℝ) := by
   obtain ⟨γ₁, hγ₁_mem, _hγ₁_low, _hγ₁_high, _hmin⟩ := firstZeroOrdinate_bounds
   let γ0 : ZeroOrdinate := ⟨γ₁, hγ₁_mem⟩
@@ -225,7 +235,7 @@ theorem tsum_inv_gamma_sq_pos [FirstZeroOrdinateHyp] :
   exact (summable_inv_gamma_sq.tsum_pos hnonneg γ0 hterm_pos)
 
 /-- ∑ 1/(γ(γ+1)) converges (used in explicit formula) -/
-theorem summable_inv_gamma_gamma_add_one :
+theorem summable_inv_gamma_gamma_add_one [ZeroCountingSummabilityHyp] :
     Summable (fun γ : ZeroOrdinate => 1 / ((γ : ℝ) * ((γ : ℝ) + 1))) := by
   refine Summable.of_nonneg_of_le ?_ ?_ summable_inv_gamma_sq
   · intro γ
@@ -347,9 +357,10 @@ theorem sum_inv_gamma_le_log_sq (T : ℝ) (hT : 4 ≤ T) :
 
 /-- More precise: ∑_{0 < γ ≤ T} 1/γ ~ (1/2π)(log T)² -/
 theorem sum_inv_gamma_asymptotic :
-    (fun T : ℝ =>
-      Finset.sum (ordinatesUpTo_finite T).toFinset (fun γ => 1 / γ))
-      ~[atTop] (fun T : ℝ => (1 / (2 * π)) * (Real.log T) ^ 2) := by
+    Asymptotics.IsEquivalent atTop
+      (fun T : ℝ =>
+        Finset.sum (ordinatesUpTo_finite T).toFinset (fun γ => 1 / γ))
+      (fun T : ℝ => (1 / (2 * π)) * (Real.log T) ^ 2) := by
   sorry
 
 /-- ∑_{0 < γ ≤ T} 1 = N(T) (by definition) -/
@@ -427,15 +438,12 @@ end TailEstimates
 section ComplexEstimates
 
 /-- ∑_ρ 1/|ρ|² converges -/
-theorem summable_inv_rho_sq :
+theorem summable_inv_rho_sq [ZeroCountingSummabilityHyp] :
     Summable (fun ρ : zetaNontrivialZeros => 1 / Complex.normSq ρ.val) := by
-  -- Since 0 < σ < 1, we have |ρ|² ~ γ² for large γ
-  -- BLOCKER: need a lemma comparing sums over zeros to sums over ordinates,
-  -- e.g. summability of `1/γ^2` plus multiplicity control or a bound `|ρ|^2 ≥ γ^2`.
-  sorry
+  simpa using ZeroCountingSummabilityHyp.summable_inv_rho_sq
 
 /-- ∑_ρ 1/|ρ(ρ+1)| converges -/
-theorem summable_inv_rho_rho_add_one :
+theorem summable_inv_rho_rho_add_one [ZeroCountingSummabilityHyp] :
     Summable (fun ρ : zetaNontrivialZeros =>
       1 / (‖ρ.val‖ * ‖ρ.val + 1‖)) := by
   refine Summable.of_nonneg_of_le ?_ ?_ summable_inv_rho_sq
