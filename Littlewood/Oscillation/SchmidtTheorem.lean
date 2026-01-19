@@ -33,35 +33,54 @@ namespace Schmidt
 /-! ## Schmidt's Theorem -/
 
 /-- Schmidt's 1903 oscillation theorem: ψ(x) - x = Ω±(x^{Θ-ε}) -/
-theorem schmidt_psi_oscillation (_ε : ℝ) (_hε : 0 < _ε) :
-    True := by
-  trivial
+theorem schmidt_psi_oscillation (ε : ℝ) (hε : 0 < ε) :
+    (fun x => chebyshevPsi x - x) =Ω±[fun x => x ^ (Θ - ε)] := by
+  constructor
+  · -- Ω₊ part
+    unfold IsOmegaPlus
+    -- Proof by contradiction using Landau's lemma
+    -- If ψ(x) - x ≤ x^{Θ-ε} for large x, then
+    -- ∫ (x^{Θ-ε} + ψ(x) - x) x^{-s-1} dx converges for Re(s) > Θ-ε
+    -- But -ζ'/ζ has a pole at some ρ with Re(ρ) > Θ-ε, contradiction
+    sorry
+  · -- Ω₋ part
+    unfold IsOmegaMinus
+    -- Similar argument with -ψ(x) + x
+    sorry
 
 /-- Corollary: ψ(x) - x = Ω±(x^{1/2}) unconditionally -/
 theorem psi_oscillation_sqrt :
-    True := by
-  trivial
+    (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x] := by
+  -- Since Θ ≥ 1/2, for any ε < Θ - 1/2 we have x^{Θ-ε} ≥ x^{1/2}
+  -- But we need to be careful: if Θ = 1/2 exactly (RH), we need a different argument
+  -- The proof works because there exist zeros ON the critical line (Hardy)
+  sorry
 
 /-! ## Proof via Landau's Lemma -/
 
 section LandauProof
 
 /-- Key Mellin transform identity -/
-theorem mellin_psi_identity (_s : ℂ) (_hs : 1 < _s.re) :
-    True := by
-  trivial
+theorem mellin_psi_identity (s : ℂ) (hs : 1 < s.re) :
+    ∃ E : ℂ, ‖E‖ ≤ 1 ∧
+    (∫ x in Set.Ioi 1, (chebyshevPsi x - x) * (x : ℂ)^(-s-1) : ℂ) =
+      -deriv riemannZeta s / (s * riemannZeta s) - 1 / (s - 1) + E := by
+  sorry
 
 /-- If ψ(x) - x ≥ -x^{Θ-ε} for large x, contradiction arises -/
-theorem omega_minus_necessity (_ε : ℝ) (_hε : 0 < _ε)
-    (_hcontra : ∀ᶠ x in atTop, -x ^ (Θ - _ε) ≤ chebyshevPsi x - x) :
-    True := by
-  trivial
+theorem omega_minus_necessity (ε : ℝ) (hε : 0 < ε)
+    (hcontra : ∀ᶠ x in atTop, -x ^ (Θ - ε) ≤ chebyshevPsi x - x) : False := by
+  -- The function A(x) = x^{Θ-ε} + ψ(x) - x is eventually non-negative
+  -- Its Mellin transform has abscissa of convergence ≤ Θ - ε
+  -- But -ζ'/ζ has a pole at some ρ with Re(ρ) > Θ - ε by definition of Θ
+  -- This contradicts Landau's lemma
+  sorry
 
 /-- If ψ(x) - x ≤ x^{Θ-ε} for large x, contradiction arises -/
-theorem omega_plus_necessity (_ε : ℝ) (_hε : 0 < _ε)
-    (_hcontra : ∀ᶠ x in atTop, chebyshevPsi x - x ≤ x ^ (Θ - _ε)) :
-    True := by
-  trivial
+theorem omega_plus_necessity (ε : ℝ) (hε : 0 < ε)
+    (hcontra : ∀ᶠ x in atTop, chebyshevPsi x - x ≤ x ^ (Θ - ε)) : False := by
+  -- Similar argument with the function A(x) = x^{Θ-ε} - ψ(x) + x
+  sorry
 
 end LandauProof
 
@@ -71,13 +90,15 @@ section CriticalLine
 
 /-- Hardy's theorem: infinitely many zeros on the critical line -/
 theorem hardy_critical_line_zeros :
-    True := by
-  trivial
+    Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1/2 } := by
+  sorry
 
 /-- This allows the Ω±(x^{1/2}) result even if RH holds -/
 theorem psi_oscillation_from_critical_zeros :
-    True := by
-  trivial
+    (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x] := by
+  -- The zeros on the critical line contribute oscillations of size x^{1/2}
+  -- Even under RH, the explicit formula gives this oscillation
+  sorry
 
 end CriticalLine
 
@@ -85,12 +106,18 @@ end CriticalLine
 
 /-- θ(x) - x = Ω₋(x^{1/2}) -/
 theorem theta_oscillation_minus :
-    True := by
-  trivial
+    (fun x => chebyshevTheta x - x) =Ω₋[fun x => Real.sqrt x] := by
+  -- θ = ψ - O(x^{1/2}), and ψ - x = Ω₋(x^{1/2})
+  -- So θ - x = ψ - x - O(x^{1/2}) = Ω₋(x^{1/2})
+  sorry
 
 /-- Under RH: θ(x) - x = Ω±(x^{1/2}) -/
-theorem theta_oscillation_RH (_hRH : ZetaZeros.RiemannHypothesis) :
-    True := by
-  trivial
+theorem theta_oscillation_RH (hRH : ZetaZeros.RiemannHypothesis) :
+    (fun x => chebyshevTheta x - x) =Ω±[fun x => Real.sqrt x] := by
+  -- Under RH, θ = ψ - x^{1/2} + O(x^{1/3})
+  -- So θ - x = ψ - x - x^{1/2} + O(x^{1/3})
+  -- The oscillation of ψ - x dominates x^{1/2}, giving Ω± behavior for θ - x
+  -- But this requires the Littlewood strengthening...
+  sorry
 
 end Schmidt
