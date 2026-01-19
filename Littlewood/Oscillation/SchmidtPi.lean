@@ -14,7 +14,7 @@ This file transfers Schmidt's oscillation results to π(x) - li(x).
 ## Main Results
 
 * `pi_li_oscillation_minus` : π(x) - li(x) = Ω₋(x^{1/2}/log x)
-* `pi_li_oscillation_RH_false` : If RH fails, π(x) - li(x) = Ω±(x^{Θ-ε})
+* `pi_li_oscillation_RH_false` : If RH fails, π(x) - li(x) = Ω±(x^{Θ-ε}/log x)
 
 ## References
 
@@ -33,17 +33,27 @@ theorem pi_li_oscillation_minus :
     (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
     =Ω₋[fun x => Real.sqrt x / Real.log x] := by
   -- From θ - x = Ω₋(x^{1/2}) and π - li = (θ - x)/log x + O(x^{1/2}/log²x)
-  sorry
+  have hf : ∀ᶠ x in atTop, Real.sqrt x ≤ (fun x => Real.sqrt x) x := by
+    exact Filter.Eventually.of_forall fun x => le_rfl
+  have h := omega_psi_to_pi_li (f := fun x => Real.sqrt x) hf Schmidt.psi_oscillation_sqrt
+  simpa using h.2
 
-/-- If RH fails (Θ > 1/2), then π(x) - li(x) = Ω±(x^{Θ-ε}) -/
-theorem pi_li_oscillation_RH_false (ε : ℝ) (hε : 0 < ε) (hRH_false : 1/2 < Θ)
-    (hε_small : ε < Θ - 1/2) :
+/-- If RH fails (Θ > 1/2), then π(x) - li(x) = Ω±(x^{Θ-ε}/log x) -/
+theorem pi_li_oscillation_RH_false (ε : ℝ) (hε : 0 < ε) (_hRH_false : 1/2 < Θ)
+    (_hε_small : ε < Θ - 1/2) :
     (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
-    =Ω±[fun x => x ^ (Θ - ε)] := by
+    =Ω±[fun x => x ^ (Θ - ε) / Real.log x] := by
   -- When Θ > 1/2, Schmidt's theorem gives Ω±(x^{Θ-ε})
   -- Since Θ - ε > 1/2, the conversion π - li = (θ - x)/log x + O(x^{1/2}/log²x)
   -- preserves the Ω± behavior (the error is smaller order)
-  sorry
+  have hf : ∀ᶠ x in atTop, Real.sqrt x ≤ (fun x => x ^ (Θ - ε)) x := by
+    refine (eventually_ge_atTop (1 : ℝ)).mono ?_
+    intro x hx
+    have hle : (1 / 2 : ℝ) ≤ Θ - ε := by linarith
+    have hpow : x ^ (1 / 2 : ℝ) ≤ x ^ (Θ - ε) :=
+      Real.rpow_le_rpow_of_exponent_le hx hle
+    simpa [Real.sqrt_eq_rpow] using hpow
+  simpa using omega_psi_to_pi_li (f := fun x => x ^ (Θ - ε)) hf (Schmidt.schmidt_psi_oscillation ε hε)
 
 /-! ## The Gap: Ω₊ Under RH -/
 

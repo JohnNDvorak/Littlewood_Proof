@@ -5,6 +5,7 @@ Authors: [Your Name]
 -/
 import Mathlib.NumberTheory.ArithmeticFunction.VonMangoldt
 import Mathlib.NumberTheory.Chebyshev
+import Mathlib.NumberTheory.LSeries.PrimesInAP
 import Mathlib.Analysis.SpecialFunctions.Stirling
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
@@ -289,17 +290,48 @@ lemma sum_vonMangoldt_div_eq_sum_primes_plus_powers (n : ℕ) :
 lemma sum_prime_powers_bounded :
     ∃ C : ℝ, ∀ n : ℕ,
       ∑ d ∈ (Icc 1 n).filter (fun d => IsPrimePow d ∧ ¬Nat.Prime d), Λ d / d ≤ C := by
-  -- This is ∑_{p, k≥2, p^k ≤ n} log(p)/p^k
-  -- For each prime p: ∑_{k≥2} log(p)/p^k = log(p)·p^{-2}/(1 - p^{-1}) = log(p)/(p² - p)
-  -- The total sum ∑_p log(p)/(p² - p) ≈ 0.76 converges since:
-  --   log(p)/(p² - p) ≤ 2·log(p)/p² and ∑_p log(p)/p² converges by comparison with ∫ log(x)/x² dx
-  -- Explicit computation: log(2)/2 + log(3)/6 + log(5)/20 + log(7)/42 + ... ≈ 0.76 < 3
-  use 3
+  classical
+  let f : ℕ → ℝ := fun n => (if n.Prime then 0 else Λ n) / n
+  have hf_nonneg : ∀ n, 0 ≤ f n := by
+    intro n
+    by_cases hn : n.Prime
+    · simp [f, hn]
+    · have hΛ : 0 ≤ Λ n := vonMangoldt_nonneg
+      have hden : 0 ≤ (n : ℝ) := Nat.cast_nonneg n
+      simpa [f, hn] using (div_nonneg hΛ hden)
+  have hsum : Summable f := by
+    -- For q = 1, the residue class function is just von Mangoldt.
+    have hsum' :
+        Summable fun n : ℕ =>
+          (if n.Prime then 0 else
+              ArithmeticFunction.vonMangoldt.residueClass (q := 1) (a := (0 : ZMod 1)) n) / n :=
+      ArithmeticFunction.vonMangoldt.summable_residueClass_non_primes_div (q := 1) (a := (0 : ZMod 1))
+    have hset : {n : ℕ | (n : ZMod 1) = (0 : ZMod 1)} = Set.univ := by
+      ext n
+      constructor
+      · intro _; trivial
+      · intro _; simpa using (Subsingleton.elim (n : ZMod 1) 0)
+    simpa [f, ArithmeticFunction.vonMangoldt.residueClass, hset] using hsum'
+  refine ⟨∑' n, f n, ?_⟩
   intro n
-  -- Each term Λ(d)/d for d = p^k with k ≥ 2 is log(p)/p^k ≤ log(p)/p² ≤ 2·log(p)/p²
-  -- The sum is bounded by the convergent series ∑_p log(p)/(p² - p) < 1 < 3
-  -- This bound is independent of n since the finite sum is always ≤ the infinite limit
-  sorry
+  set s := (Icc 1 n).filter (fun d => IsPrimePow d ∧ ¬Nat.Prime d)
+  have hsubset : s ⊆ Icc 1 n := by
+    intro d hd
+    exact (mem_filter.mp hd).1
+  have hrewrite :
+      ∑ d ∈ s, Λ d / d = ∑ d ∈ s, f d := by
+    refine sum_congr rfl ?_
+    intro d hd
+    have hnotprime : ¬Nat.Prime d := (mem_filter.mp hd).2.2
+    simp [f, hnotprime]
+  have hle :
+      ∑ d ∈ s, f d ≤ ∑ d ∈ Icc 1 n, f d := by
+    refine Finset.sum_le_sum_of_subset_of_nonneg hsubset ?_
+    intro d hd hdnot
+    exact hf_nonneg d
+  have htsum : ∑ d ∈ Icc 1 n, f d ≤ ∑' n, f n :=
+    hsum.sum_le_tsum (Icc 1 n) (fun d hd => hf_nonneg d)
+  exact (hrewrite.le.trans hle).trans htsum
 
 /-- **Mertens' First Theorem**: ∑_{p≤n} log(p)/p = log(n) + O(1) -/
 theorem mertens_first :
