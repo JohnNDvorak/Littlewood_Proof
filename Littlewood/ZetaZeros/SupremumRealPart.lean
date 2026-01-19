@@ -76,7 +76,17 @@ REFERENCE: Montgomery-Vaughan, Ch. 12-13.
 -/
 class ChebyshevErrorBoundZeroFreeHyp : Prop where
   bound : ∃ c > 0, ∃ C > 0, ∀ x ≥ 2,
-    |Chebyshev.chebyshevPsi x - x| ≤ C * x * Real.exp (-c * (Real.log x).sqrt)
+    |chebyshevPsi x - x| ≤ C * x * Real.exp (-c * (Real.log x).sqrt)
+
+/-! ## Additional Error Bound Hypothesis -/
+
+/--
+HYPOTHESIS: Explicit formula bound |ψ(x) - x| ≤ 10 * x^Θ * log x.
+MATHEMATICAL STATUS: classical explicit formula.
+MATHLIB STATUS: not available.
+-/
+class ChebyshevErrorBoundThetaHyp : Prop where
+  bound : ∀ x ≥ 2, |chebyshevPsi x - x| ≤ 10 * x ^ Θ * Real.log x
 
 /-! ## Basic Bounds -/
 
@@ -266,7 +276,8 @@ section ErrorTerms
 
 open Chebyshev in
 /-- ψ(x) - x = O(x^Θ) (elementary consequence of explicit formula) -/
-theorem chebyshev_error_bound_Theta [FirstZeroOrdinateHyp] (ε : ℝ) (hε : 0 < ε) :
+theorem chebyshev_error_bound_Theta [FirstZeroOrdinateHyp] [ChebyshevErrorBoundThetaHyp]
+    (ε : ℝ) (hε : 0 < ε) :
     ∃ C > 0, ∀ x ≥ 2, |chebyshevPsi x - x| ≤ C * x ^ (Θ + ε) := by
   refine ⟨10 / ε, by positivity, ?_⟩
   intro x hx
@@ -274,7 +285,7 @@ theorem chebyshev_error_bound_Theta [FirstZeroOrdinateHyp] (ε : ℝ) (hε : 0 <
   have hxpos : 0 < x := by linarith
   have hlog : Real.log x ≤ x ^ ε / ε := Real.log_le_rpow_div hx0 hε
   have hpsi : |chebyshevPsi x - x| ≤ 10 * x ^ Θ * Real.log x := by
-    simpa using (ExplicitFormula.psi_error_bound x hx)
+    simpa using (ChebyshevErrorBoundThetaHyp.bound x hx)
   have hmul :
       10 * x ^ Θ * Real.log x ≤ 10 * x ^ Θ * (x ^ ε / ε) := by
     have hnonneg : 0 ≤ 10 * x ^ Θ := by
