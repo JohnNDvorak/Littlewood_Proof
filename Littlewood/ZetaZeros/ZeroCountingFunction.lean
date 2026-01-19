@@ -517,25 +517,12 @@ class FirstZeroOrdinateHyp : Prop where
     ∃ γ₁ ∈ zetaZeroOrdinates, 14.13 < γ₁ ∧ γ₁ < 14.14 ∧
       ∀ γ ∈ zetaZeroOrdinates, γ₁ ≤ γ
 
-/-! ### Global instances (axioms) -/
+/-! ### Global instances (assumptions) -/
 
-/-- AXIOM: N(15) = 1. -/
-axiom zeroCountingFifteen_axiom : N 15 = 1
-
-instance instZeroCountingFifteenHyp : ZeroCountingFifteenHyp :=
-  ⟨zeroCountingFifteen_axiom⟩
-
-/-- AXIOM: the first zero ordinate lies in (14.13, 14.14). -/
-axiom firstZeroOrdinate_bounds_axiom :
-    ∃ γ₁ ∈ zetaZeroOrdinates, 14.13 < γ₁ ∧ γ₁ < 14.14 ∧
-      ∀ γ ∈ zetaZeroOrdinates, γ₁ ≤ γ
-
-instance instFirstZeroOrdinateHyp : FirstZeroOrdinateHyp :=
-  ⟨firstZeroOrdinate_bounds_axiom⟩
-
-instance instZeroCountingSpecialValuesHyp : ZeroCountingSpecialValuesHyp := by
+instance instZeroCountingSpecialValuesHyp [FirstZeroOrdinateHyp] :
+    ZeroCountingSpecialValuesHyp := by
   refine ⟨?_⟩
-  rcases firstZeroOrdinate_bounds_axiom with ⟨γ₁, _, hγ₁low, _, hγ₁min⟩
+  rcases FirstZeroOrdinateHyp.bounds with ⟨γ₁, _, hγ₁low, _, hγ₁min⟩
   apply (zeroCountingFunction_eq_zero_iff 14).2
   apply Set.eq_empty_iff_forall_notMem.mpr
   intro z hz
@@ -560,15 +547,15 @@ theorem zeroCountingFunction_crude_bound [ZeroCountingCrudeBoundHyp] :
   simpa using ZeroCountingCrudeBoundHyp.crude_bound
 
 /-- N(14) = 0 (the first zero is at T ≈ 14.13...) -/
-theorem zeroCountingFunction_fourteen : N 14 = 0 := by
+theorem zeroCountingFunction_fourteen [ZeroCountingSpecialValuesHyp] : N 14 = 0 := by
   simpa using ZeroCountingSpecialValuesHyp.fourteen
 
 /-- N(15) = 1 (the first zero is at T ≈ 14.13...) -/
-theorem zeroCountingFunction_fifteen : N 15 = 1 := by
+theorem zeroCountingFunction_fifteen [ZeroCountingFifteenHyp] : N 15 = 1 := by
   simpa using ZeroCountingFifteenHyp.fifteen
 
 /-- The first zero ordinate γ₁ ≈ 14.134725... -/
-theorem firstZeroOrdinate_bounds :
+theorem firstZeroOrdinate_bounds [FirstZeroOrdinateHyp] :
     ∃ γ₁ ∈ zetaZeroOrdinates, 14.13 < γ₁ ∧ γ₁ < 14.14 ∧
       ∀ γ ∈ zetaZeroOrdinates, γ₁ ≤ γ := by
   simpa using FirstZeroOrdinateHyp.bounds
@@ -597,18 +584,10 @@ class ZeroCountingMainTermHyp : Prop where
 class ZeroCountingLowerBoundHyp : Prop where
   lower_bound : ∃ T0 : ℝ, ∀ T ≥ T0, T / (3 * π) * Real.log T ≤ N T
 
-/-! ### Global instances (axioms) -/
+/-! ### Global instances (assumptions) -/
 
-/-- AXIOM: explicit Riemann–von Mangoldt bound. -/
-axiom zeroCountingRvmExplicit_axiom :
-    ∃ C T0 : ℝ, ∀ T ≥ T0,
-      |(N T : ℝ) - (T / (2 * π)) * Real.log (T / (2 * π)) + T / (2 * π)|
-        ≤ C * Real.log T
-
-instance instZeroCountingRvmExplicitHyp : ZeroCountingRvmExplicitHyp :=
-  ⟨zeroCountingRvmExplicit_axiom⟩
-
-instance instZeroCountingAsymptoticHyp : ZeroCountingAsymptoticHyp := by
+instance instZeroCountingAsymptoticHyp [ZeroCountingRvmExplicitHyp] :
+    ZeroCountingAsymptoticHyp := by
   classical
   refine ⟨?_⟩
   rcases ZeroCountingRvmExplicitHyp.bound with ⟨C, T0, hC⟩
@@ -637,7 +616,7 @@ section Asymptotics
 open Asymptotics
 
 /-- The Riemann-von Mangoldt formula: N(T) = (T/2π) log(T/2π) - T/2π + O(log T) -/
-theorem zeroCountingFunction_asymptotic :
+theorem zeroCountingFunction_asymptotic [ZeroCountingAsymptoticHyp] :
     (fun T => (N T : ℝ) - (T / (2 * π)) * Real.log (T / (2 * π)) + T / (2 * π))
     =O[atTop] (fun T => Real.log T) := by
   simpa using ZeroCountingAsymptoticHyp.asymptotic
@@ -730,7 +709,8 @@ noncomputable instance zeroCountingAsymptoticRatioHyp_of_mainTerm
   classical
   exact ⟨zeroCountingFunction_asymptotic'⟩
 
-noncomputable instance zeroCountingMainTermHyp_of_asymptotic :
+noncomputable instance zeroCountingMainTermHyp_of_asymptotic
+    [ZeroCountingAsymptoticHyp] :
     ZeroCountingMainTermHyp := by
   classical
   refine ⟨?_⟩
@@ -887,7 +867,7 @@ noncomputable instance zeroCountingMainTermHyp_of_asymptotic :
 
 /-! ### Explicit error term (big-O) -/
 
-lemma zeroCountingFunction_rvm_eventually_bound :
+lemma zeroCountingFunction_rvm_eventually_bound [ZeroCountingAsymptoticHyp] :
     ∃ C : ℝ, ∀ᶠ T in atTop,
       |(N T : ℝ) - (T / (2 * π)) * Real.log (T / (2 * π)) + T / (2 * π)|
         ≤ C * |Real.log T| := by
@@ -895,7 +875,7 @@ lemma zeroCountingFunction_rvm_eventually_bound :
   refine ⟨C, ?_⟩
   simpa [Real.norm_eq_abs] using hC
 
-lemma zeroCountingFunction_rvm_eventually_bound_log :
+lemma zeroCountingFunction_rvm_eventually_bound_log [ZeroCountingAsymptoticHyp] :
     ∃ C T0 : ℝ, ∀ T ≥ T0,
       |(N T : ℝ) - (T / (2 * π)) * Real.log (T / (2 * π)) + T / (2 * π)|
         ≤ C * Real.log T := by
@@ -912,13 +892,13 @@ lemma zeroCountingFunction_rvm_eventually_bound_log :
   simpa [hlogabs] using hbound
 
 /-- Riemann–von Mangoldt with explicit `O(log T)` error term. -/
-theorem zeroCountingFunction_rvm_explicit :
+theorem zeroCountingFunction_rvm_explicit [ZeroCountingAsymptoticHyp] :
     ∃ C T0 : ℝ, ∀ T ≥ T0,
       |(N T : ℝ) - (T / (2 * π)) * Real.log (T / (2 * π)) + T / (2 * π)|
         ≤ C * Real.log T := by
   simpa using zeroCountingFunction_rvm_eventually_bound_log
 
-theorem zeroCountingFunction_rvm_explicit_hyp :
+theorem zeroCountingFunction_rvm_explicit_hyp [ZeroCountingRvmExplicitHyp] :
     ∃ C T0 : ℝ, ∀ T ≥ T0,
       |(N T : ℝ) - (T / (2 * π)) * Real.log (T / (2 * π)) + T / (2 * π)|
         ≤ C * Real.log T := by
@@ -956,7 +936,7 @@ instance zeroCountingTendstoHyp_of_lower_bound [ZeroCountingLowerBoundHyp] :
   exact hb.trans hlow
 
 /-- Upper bound: `N(T) ≤ C * T * log T` for `T ≥ 4`. -/
-theorem zeroCountingFunction_upper_bound :
+theorem zeroCountingFunction_upper_bound [ZeroCountingAsymptoticHyp] :
     ∃ C : ℝ, ∀ T : ℝ, 4 ≤ T → (N T : ℝ) ≤ C * T * Real.log T := by
   rcases zeroCountingFunction_rvm_explicit with ⟨C, T0, hC⟩
   set C0 : ℝ := max C 0
@@ -1078,7 +1058,7 @@ theorem zeroCountingFunction_upper_bound :
     exact (hle.trans hsmall).trans hmul
 
 /-- Upper bound from the main term: `N(T) ≤ C * T * log T` for `T ≥ 4`. -/
-theorem zeroCountingFunction_upper_bound_of_mainTerm :
+theorem zeroCountingFunction_upper_bound_of_mainTerm [ZeroCountingMainTermHyp] :
     ∃ C : ℝ, ∀ T : ℝ, 4 ≤ T → (N T : ℝ) ≤ C * T * Real.log T := by
   have hmain : Tendsto (fun T => (N T : ℝ) / (T / (2 * π) * Real.log T)) atTop (𝓝 1) :=
     zeroCountingFunction_mainTerm
@@ -1175,19 +1155,22 @@ theorem zeroCountingFunction_upper_bound_of_mainTerm :
       simpa [mul_left_comm, mul_assoc] using hmul'
     exact (hle.trans hsmall).trans hmul
 
-noncomputable instance zeroCountingCrudeBoundHyp_of_asymptotic :
+noncomputable instance zeroCountingCrudeBoundHyp_of_asymptotic
+    [ZeroCountingAsymptoticHyp] :
     ZeroCountingCrudeBoundHyp := by
   classical
   rcases zeroCountingFunction_upper_bound with ⟨C, hC⟩
   exact ⟨C, fun {T} hT => hC T hT⟩
 
-noncomputable instance zeroCountingCrudeBoundHyp_of_mainTerm :
+noncomputable instance zeroCountingCrudeBoundHyp_of_mainTerm
+    [ZeroCountingMainTermHyp] :
     ZeroCountingCrudeBoundHyp := by
   classical
   rcases zeroCountingFunction_upper_bound_of_mainTerm with ⟨C, hC⟩
   exact ⟨C, fun {T} hT => hC T hT⟩
 
-noncomputable instance zeroCountingLowerBoundHyp_of_mainTerm :
+noncomputable instance zeroCountingLowerBoundHyp_of_mainTerm
+    [ZeroCountingMainTermHyp] :
     ZeroCountingLowerBoundHyp := by
   classical
   refine ⟨?_⟩
@@ -1231,7 +1214,8 @@ class ZeroCountingLocalDensityHyp : Prop where
 
 /-! ### Global instances -/
 
-noncomputable instance zeroCountingLocalDensityHyp_of_asymptotic :
+noncomputable instance zeroCountingLocalDensityHyp_of_asymptotic
+    [ZeroCountingAsymptoticHyp] :
     ZeroCountingLocalDensityHyp := by
   classical
   rcases zeroCountingFunction_rvm_explicit with ⟨C, T0, hC⟩
@@ -1512,7 +1496,8 @@ class ZeroGapsLowerBoundHyp : Prop where
 
 /-! ### Global instances -/
 
-noncomputable instance zeroGapsLowerBoundHyp_of_local_density :
+noncomputable instance zeroGapsLowerBoundHyp_of_local_density
+    [ZeroCountingLocalDensityHyp] :
     ZeroGapsLowerBoundHyp := by
   classical
   rcases ZeroCountingLocalDensityHyp.local_density with ⟨C, T0, hC⟩
@@ -1533,13 +1518,13 @@ noncomputable instance zeroGapsLowerBoundHyp_of_local_density :
 section LocalDensity
 
 /-- The number of zeros in an interval [T, T+h] is O((h + 1) (log (T + h) + 1)) -/
-theorem zeroCountingFunction_local_density :
+theorem zeroCountingFunction_local_density [ZeroCountingLocalDensityHyp] :
     ∃ C T0 : ℝ, ∀ {T h : ℝ}, T0 ≤ T → 0 ≤ h →
       (N (T + h) : ℝ) - N T ≤ C * (h + 1) * (Real.log (T + h) + 1) := by
   simpa using ZeroCountingLocalDensityHyp.local_density
 
 /-- Unit interval zero count bound (implies a lower bound on some gap). -/
-theorem zeroGaps_lower_bound :
+theorem zeroGaps_lower_bound [ZeroGapsLowerBoundHyp] :
     ∃ C T0 : ℝ, ∀ {T : ℝ}, T0 ≤ T →
       (N (T + 1) : ℝ) - N T ≤ C * (Real.log (T + 1) + 1) := by
   simpa using ZeroGapsLowerBoundHyp.gaps_lower_bound

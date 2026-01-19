@@ -5,6 +5,7 @@ Authors: [Your Name]
 -/
 import Mathlib.Order.Filter.AtTopBot.Basic
 import Mathlib.Order.LiminfLimsup
+import Mathlib.Algebra.Order.Field.Basic
 import Mathlib.Topology.Order.Basic
 import Mathlib.Analysis.Asymptotics.Defs
 
@@ -73,6 +74,18 @@ end Definitions
 section BasicProperties
 
 variable {f f' g g' : ℝ → ℝ}
+
+/-!
+MATHLIB BLOCKER: Several limsup/liminf comparison lemmas require boundedness
+(`IsBoundedUnder`/`IsCoboundedUnder`) of the underlying functions on `atTop`.
+The current Ω definitions do not assume boundedness for `f/g`, so these proofs
+stall without extra hypotheses.
+
+Resolution options:
+1. Add explicit boundedness assumptions to the lemmas,
+2. Derive boundedness from eventual positivity or growth assumptions on `g`,
+3. Switch to frequent/eventually formulations that avoid `limsup/liminf`.
+-/
 
 /-- Ω± implies Ω -/
 theorem IsOmegaPlusMinus.isOmega (h : f =Ω±[g]) : f =Ω[g] := by

@@ -6,6 +6,8 @@ Authors: [Your Name]
 import Littlewood.Basic.ChebyshevFunctions
 import Littlewood.ZetaZeros.ZeroDensity
 import Littlewood.CoreLemmas.DirichletApproximation
+import Mathlib.Analysis.Complex.Trigonometric
+import Mathlib.Analysis.SpecialFunctions.Complex.Log
 
 /-!
 # Weighted Average Formula
@@ -71,13 +73,56 @@ theorem average_of_power (x δ : ℝ) (ρ : ℂ) (hδ : 0 < δ) :
 theorem rh_power_factor (hRH : RiemannHypothesis') (ρ : zetaNontrivialZeros)
     (x : ℝ) (hx : 0 < x) :
     (x : ℂ)^ρ.val = Real.sqrt x * Complex.exp (Complex.I * ρ.val.im * Real.log x) := by
-  have hre := hRH ρ.val ρ.property
-  sorry
+  have hre : ρ.val.re = (1 / 2 : ℝ) := hRH ρ.val ρ.property
+  have hx0 : (x : ℂ) ≠ 0 := by
+    exact_mod_cast (ne_of_gt hx)
+  have hx0' : 0 ≤ x := le_of_lt hx
+  have hρ : ρ.val = (1 / 2 : ℂ) + ρ.val.im * Complex.I := by
+    simpa [hre] using (Complex.re_add_im ρ.val).symm
+  have hsqrt' : (x : ℂ) ^ (1 / 2 : ℂ) = (Real.sqrt x : ℂ) := by
+    have h := Complex.ofReal_cpow hx0' (1 / 2 : ℝ)
+    simpa [Real.sqrt_eq_rpow] using h.symm
+  have hpow :
+      (x : ℂ) ^ (ρ.val.im * Complex.I) =
+        Complex.exp (Complex.I * ρ.val.im * Real.log x) := by
+    have hlog : Complex.log (x : ℂ) = (Real.log x : ℂ) := by
+      simpa using (Complex.ofReal_log hx0').symm
+    calc
+      (x : ℂ) ^ (ρ.val.im * Complex.I) =
+          Complex.exp (Complex.log (x : ℂ) * (ρ.val.im * Complex.I)) := by
+            simpa [Complex.cpow_def_of_ne_zero hx0]
+      _ = Complex.exp ((Real.log x : ℂ) * (ρ.val.im * Complex.I)) := by
+            rw [hlog]
+      _ = Complex.exp (Complex.I * ρ.val.im * Real.log x) := by
+            ring_nf
+  calc
+    (x : ℂ) ^ ρ.val = (x : ℂ) ^ ((1 / 2 : ℂ) + ρ.val.im * Complex.I) := by
+      nth_rewrite 1 [hρ]
+      rfl
+    _ = (x : ℂ) ^ (1 / 2 : ℂ) * (x : ℂ) ^ (ρ.val.im * Complex.I) := by
+      rw [Complex.cpow_add _ _ hx0]
+    _ = (Real.sqrt x : ℂ) * Complex.exp (Complex.I * ρ.val.im * Real.log x) := by
+      rw [hsqrt', hpow]
 
 /-- The sinh factor simplifies to sin for imaginary arguments -/
 theorem sinh_imaginary_sin (δ γ : ℝ) :
     Complex.sinh (δ * Complex.I * γ) = Complex.I * Real.sin (δ * γ) := by
-  sorry
+  have hmul :
+      (δ : ℂ) * Complex.I * (γ : ℂ) = ((δ * γ : ℝ) : ℂ) * Complex.I := by
+    simp [mul_comm, mul_left_comm]
+  have hsin :
+      Complex.sin ((δ * γ : ℝ) : ℂ) = (Real.sin (δ * γ) : ℂ) := by
+    refine Complex.ext ?_ ?_
+    · simpa using (Complex.sin_ofReal_re (δ * γ))
+    · simpa using (Complex.sin_ofReal_im (δ * γ))
+  calc
+    Complex.sinh (δ * Complex.I * γ)
+        = Complex.sinh (((δ * γ : ℝ) : ℂ) * Complex.I) := by
+            simpa [hmul]
+    _ = Complex.sin ((δ * γ : ℂ)) * Complex.I := by
+          simpa using (Complex.sinh_mul_I (x := ((δ * γ : ℝ) : ℂ)))
+    _ = Complex.I * Real.sin (δ * γ) := by
+          simpa [hsin, mul_comm]
 
 /-- Replacing 1/ρ with 1/(iγ) under RH gives controlled error -/
 theorem rho_to_gamma_error (hRH : RiemannHypothesis') :
