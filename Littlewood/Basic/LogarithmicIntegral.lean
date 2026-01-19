@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: [Your Name]
 -/
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Analysis.Asymptotics.Defs
@@ -81,16 +82,79 @@ theorem logarithmicIntegral_nonneg {x : ℝ} (_hx : 2 ≤ x) : 0 ≤ li x := by
   have hlog : 0 < log t := log_pos (by linarith : 1 < t)
   positivity
 
+private lemma continuousOn_one_div_log_Icc {a b : ℝ} (ha : 1 < a) :
+    ContinuousOn (fun t => 1 / log t) (Icc a b) := by
+  have hsubset : Icc a b ⊆ ({0}ᶜ : Set ℝ) := by
+    intro t ht
+    have htpos : (0 : ℝ) < t := lt_of_lt_of_le (lt_trans zero_lt_one ha) ht.1
+    exact ne_of_gt htpos
+  have hlog : ContinuousOn log (Icc a b) := continuousOn_log.mono hsubset
+  have hlog_ne : ∀ t ∈ Icc a b, log t ≠ 0 := by
+    intro t ht
+    have ht1 : (1 : ℝ) < t := lt_of_lt_of_le ha ht.1
+    exact ne_of_gt (log_pos ht1)
+  have hcont_inv : ContinuousOn (fun t => (log t)⁻¹) (Icc a b) := hlog.inv₀ hlog_ne
+  simpa [one_div] using hcont_inv
+
+private lemma one_div_log_pos {t : ℝ} (ht : 1 < t) : 0 < 1 / log t :=
+  one_div_pos.mpr (log_pos ht)
+
 theorem logarithmicIntegral_pos {x : ℝ} (hx : 2 < x) : 0 < li x := by
-  sorry
+  unfold logarithmicIntegral
+  have hxle : (2 : ℝ) ≤ x := le_of_lt hx
+  have hcont : ContinuousOn (fun t => 1 / log t) (Icc (2 : ℝ) x) :=
+    continuousOn_one_div_log_Icc (by linarith : (1 : ℝ) < 2)
+  have hle : ∀ t ∈ Ioc (2 : ℝ) x, 0 ≤ 1 / log t := by
+    intro t ht
+    have ht1 : (1 : ℝ) < t := by linarith [ht.1]
+    exact (one_div_log_pos ht1).le
+  have hlt : ∃ c ∈ Icc (2 : ℝ) x, 0 < 1 / log c := by
+    refine ⟨2, ?_, ?_⟩
+    · exact ⟨le_rfl, hxle⟩
+    · exact one_div_log_pos (by linarith : (1 : ℝ) < 2)
+  have hpos : 0 < ∫ t in (2 : ℝ)..x, 1 / log t := by
+    exact intervalIntegral.integral_pos hx hcont hle hlt
+  simpa [intervalIntegral.integral_of_le hxle] using hpos
 
 theorem logarithmicIntegral_strictMono : StrictMonoOn li (Set.Ici 2) := by
   intro x hx y hy hxy
-  unfold logarithmicIntegral
-  have h_sub : Ioc 2 x ⊆ Ioc 2 y := Ioc_subset_Ioc_right (le_of_lt hxy)
-  have h_nonempty : (Ioc x y).Nonempty := nonempty_Ioc.mpr hxy
-  -- The integral over [2,y] minus integral over [2,x] equals integral over (x,y]
-  sorry
+  have hxy_le : x ≤ y := le_of_lt hxy
+  have hx1 : (1 : ℝ) < x := lt_of_lt_of_le (by linarith : (1 : ℝ) < 2) hx
+  have hcont : ContinuousOn (fun t => 1 / log t) (Icc x y) :=
+    continuousOn_one_div_log_Icc hx1
+  have hle : ∀ t ∈ Ioc x y, 0 ≤ 1 / log t := by
+    intro t ht
+    have ht1 : (1 : ℝ) < t := lt_of_lt_of_le hx1 (le_of_lt ht.1)
+    exact (one_div_log_pos ht1).le
+  have hlt : ∃ c ∈ Icc x y, 0 < 1 / log c := by
+    refine ⟨x, ?_, ?_⟩
+    · exact ⟨le_rfl, hxy_le⟩
+    · exact one_div_log_pos hx1
+  have hpos_interval : 0 < ∫ t in x..y, 1 / log t := by
+    exact intervalIntegral.integral_pos hxy hcont hle hlt
+  have hpos : 0 < ∫ t in Ioc x y, 1 / log t := by
+    simpa [intervalIntegral.integral_of_le hxy_le] using hpos_interval
+  have hcont_big : ContinuousOn (fun t => 1 / log t) (Icc (2 : ℝ) y) :=
+    continuousOn_one_div_log_Icc (by linarith : (1 : ℝ) < 2)
+  have hcont_x : ContinuousOn (fun t => 1 / log t) (Icc (2 : ℝ) x) :=
+    hcont_big.mono (by
+      intro t ht
+      exact ⟨ht.1, ht.2.trans hxy_le⟩)
+  have hint_y : IntervalIntegrable (fun t => 1 / log t) volume (2 : ℝ) y :=
+    (ContinuousOn.intervalIntegrable_of_Icc (a := (2 : ℝ)) (b := y) (hx.trans hxy_le)
+      hcont_big)
+  have hint_x : IntervalIntegrable (fun t => 1 / log t) volume (2 : ℝ) x :=
+    (ContinuousOn.intervalIntegrable_of_Icc (a := (2 : ℝ)) (b := x) hx hcont_x)
+  have hsub_interval :
+      (∫ t in (2 : ℝ)..y, 1 / log t) - ∫ t in (2 : ℝ)..x, 1 / log t =
+        ∫ t in x..y, 1 / log t := by
+    exact intervalIntegral.integral_interval_sub_left hint_y hint_x
+  have hsub : li y - li x = ∫ t in Ioc x y, 1 / log t := by
+    simpa [logarithmicIntegral, intervalIntegral.integral_of_le (hx.trans hxy_le),
+      intervalIntegral.integral_of_le hx, intervalIntegral.integral_of_le hxy_le, one_div]
+      using hsub_interval
+  have hlt' : 0 < li y - li x := by simpa [hsub] using hpos
+  exact sub_pos.mp hlt'
 
 theorem logarithmicIntegral_mono {x y : ℝ} (hx : 2 ≤ x) (hxy : x ≤ y) : li x ≤ li y := by
   rcases eq_or_lt_of_le hxy with rfl | hxy'
@@ -108,7 +172,26 @@ theorem logarithmicIntegral_sub {x y : ℝ} (hx : 2 ≤ x) (hxy : x ≤ y) :
     li y - li x = ∫ t in Ioc x y, 1 / log t := by
   unfold logarithmicIntegral
   -- Use interval integral splitting
-  sorry
+  have hxy_le : x ≤ y := hxy
+  have hy : 2 ≤ y := hx.trans hxy
+  have hcont : ContinuousOn (fun t => 1 / log t) (Icc (2 : ℝ) y) :=
+    continuousOn_one_div_log_Icc (by linarith : (1 : ℝ) < 2)
+  have hcont_x : ContinuousOn (fun t => 1 / log t) (Icc (2 : ℝ) x) :=
+    hcont.mono (by
+      intro t ht
+      exact ⟨ht.1, ht.2.trans hxy⟩)
+  have hint_y : IntervalIntegrable (fun t => 1 / log t) volume (2 : ℝ) y :=
+    (ContinuousOn.intervalIntegrable_of_Icc (a := (2 : ℝ)) (b := y) hy hcont)
+  have hint_x : IntervalIntegrable (fun t => 1 / log t) volume (2 : ℝ) x :=
+    (ContinuousOn.intervalIntegrable_of_Icc (a := (2 : ℝ)) (b := x) hx hcont_x)
+  have hsub_interval :
+      (∫ t in (2 : ℝ)..y, 1 / log t) - ∫ t in (2 : ℝ)..x, 1 / log t =
+        ∫ t in x..y, 1 / log t := by
+    exact intervalIntegral.integral_interval_sub_left hint_y hint_x
+  have hxle : (2 : ℝ) ≤ x := hx
+  have hyle : (2 : ℝ) ≤ y := hy
+  simpa [intervalIntegral.integral_of_le hyle, intervalIntegral.integral_of_le hxle,
+    intervalIntegral.integral_of_le hxy_le, one_div] using hsub_interval
 
 /-- Integration by parts identity -/
 theorem logarithmicIntegral_integration_by_parts {x : ℝ} (hx : 2 < x) :
@@ -173,14 +256,47 @@ end Comparison
 
 section Calculus
 
-/-- li is continuous on (2, ∞) -/
-theorem logarithmicIntegral_continuousOn : ContinuousOn li (Set.Ioi 2) := by
-  sorry
-
 /-- li is differentiable on (2, ∞) with derivative 1/log(x) -/
 theorem logarithmicIntegral_hasDerivAt {x : ℝ} (hx : 2 < x) :
     HasDerivAt li (1 / log x) x := by
-  sorry
+  let g : ℝ → ℝ := fun u => ∫ t in (2 : ℝ)..u, 1 / log t
+  have hxle : (2 : ℝ) ≤ x := le_of_lt hx
+  have hcont_Icc : ContinuousOn (fun t => 1 / log t) (Icc (2 : ℝ) x) :=
+    continuousOn_one_div_log_Icc (by linarith : (1 : ℝ) < 2)
+  have hint : IntervalIntegrable (fun t => 1 / log t) volume (2 : ℝ) x :=
+    (ContinuousOn.intervalIntegrable_of_Icc (a := (2 : ℝ)) (b := x) hxle hcont_Icc)
+  have hxpos : (0 : ℝ) < x := lt_trans (by linarith : (0 : ℝ) < 2) hx
+  have hx1 : (1 : ℝ) < x := lt_trans (by linarith : (1 : ℝ) < 2) hx
+  have hcontAt_log : ContinuousAt log x := continuousAt_log (ne_of_gt hxpos)
+  have hlog_ne : log x ≠ 0 := ne_of_gt (log_pos hx1)
+  have hcontAt : ContinuousAt (fun t => 1 / log t) x := by
+    simpa [one_div] using hcontAt_log.inv₀ hlog_ne
+  have hmeas : StronglyMeasurableAtFilter (fun t => 1 / log t) (𝓝 x) := by
+    have hs : IsOpen (Set.Ioi (1 : ℝ)) := isOpen_Ioi
+    have hcont_on : ContinuousOn (fun t => 1 / log t) (Set.Ioi (1 : ℝ)) := by
+      intro t ht
+      have htpos : (0 : ℝ) < t := lt_trans (by linarith : (0 : ℝ) < 1) ht
+      have hlogt : ContinuousAt log t := continuousAt_log (ne_of_gt htpos)
+      have hlog_ne : log t ≠ 0 := ne_of_gt (log_pos ht)
+      have hcont_inv : ContinuousAt (fun u => (log u)⁻¹) t := hlogt.inv₀ hlog_ne
+      simpa [one_div] using hcont_inv.continuousWithinAt
+    have hmeas_all :=
+      ContinuousOn.stronglyMeasurableAtFilter (μ := volume) hs hcont_on
+    exact hmeas_all x (by linarith : (1 : ℝ) < x)
+  have hderiv : HasDerivAt g (1 / log x) x :=
+    intervalIntegral.integral_hasDerivAt_right hint hmeas hcontAt
+  have hEq : (fun u => li u) =ᶠ[𝓝 x] g := by
+    have hmem : Ioi (2 : ℝ) ∈ 𝓝 x := Ioi_mem_nhds hx
+    refine (Filter.eventually_of_mem hmem ?_)
+    intro u hu
+    have hu_le : (2 : ℝ) ≤ u := le_of_lt hu
+    simp [logarithmicIntegral, g, intervalIntegral.integral_of_le hu_le, one_div]
+  exact hderiv.congr_of_eventuallyEq hEq
+
+/-- li is continuous on (2, ∞) -/
+theorem logarithmicIntegral_continuousOn : ContinuousOn li (Set.Ioi 2) := by
+  intro x hx
+  exact (logarithmicIntegral_hasDerivAt hx).continuousAt.continuousWithinAt
 
 /-- The derivative of li is 1/log(x) -/
 theorem logarithmicIntegral_deriv {x : ℝ} (hx : 2 < x) :
