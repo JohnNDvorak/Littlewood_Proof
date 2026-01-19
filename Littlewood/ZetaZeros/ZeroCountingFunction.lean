@@ -24,7 +24,6 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 import Mathlib.Order.Filter.AtTopBot.Field
 import Mathlib.NumberTheory.LSeries.Dirichlet
 import Mathlib.Tactic
-import Littlewood.ZetaZeros.ArgumentPrinciple
 
 /-!
 # Zero Counting Function N(T)
@@ -52,6 +51,13 @@ nontrivial zeros of the Riemann zeta function with imaginary part in (0, T].
 open Complex Real Filter Topology Set
 
 namespace ZetaZeros
+
+theorem logDeriv_sub_const (x a : ℂ) :
+    logDeriv (fun z : ℂ => z - a) x = 1 / (x - a) := by
+  have hderiv : deriv (fun z : ℂ => z - a) x = (1 : ℂ) := by
+    simpa [deriv_id] using
+      (deriv_sub_const (f := fun z : ℂ => z) (x := x) (c := a))
+  simp [logDeriv_apply, hderiv]
 
 /-! ## The Set of Nontrivial Zeros -/
 
@@ -139,7 +145,7 @@ theorem logDeriv_riemannXi (s : ℂ) (hs0 : s ≠ 0) (hs1 : s ≠ 1)
         = logDeriv (fun z : ℂ => z * (z - 1)) s +
             logDeriv completedRiemannZeta s := hmul2
     _ = (1 / s + 1 / (s - 1)) + logDeriv completedRiemannZeta s := by
-        simp [hmul1, ArgumentPrinciple.logDeriv_sub_const, logDeriv_id, add_assoc]
+        simp [hmul1, logDeriv_sub_const, logDeriv_id, add_assoc]
     _ = 1 / s + 1 / (s - 1) + logDeriv completedRiemannZeta s := by
         simp [add_assoc]
 
@@ -719,10 +725,10 @@ theorem zeroCountingFunction_mainTerm [ZeroCountingMainTermHyp] :
   simpa using ZeroCountingMainTermHyp.mainTerm
 
 noncomputable instance zeroCountingAsymptoticRatioHyp_of_mainTerm
-    (inst : ZeroCountingMainTermHyp) :
+    [ZeroCountingMainTermHyp] :
     ZeroCountingAsymptoticRatioHyp := by
   classical
-  exact ⟨zeroCountingFunction_asymptotic' (inst := inst)⟩
+  exact ⟨zeroCountingFunction_asymptotic'⟩
 
 noncomputable instance zeroCountingMainTermHyp_of_asymptotic :
     ZeroCountingMainTermHyp := by
@@ -923,7 +929,7 @@ theorem zeroCountingFunction_lower_bound [ZeroCountingLowerBoundHyp] :
     ∃ T0 : ℝ, ∀ T ≥ T0, T / (3 * π) * Real.log T ≤ N T := by
   simpa using ZeroCountingLowerBoundHyp.lower_bound
 
-instance zeroCountingTendstoHyp_of_lower_bound (inst : ZeroCountingLowerBoundHyp) :
+instance zeroCountingTendstoHyp_of_lower_bound [ZeroCountingLowerBoundHyp] :
     ZeroCountingTendstoHyp := by
   refine ⟨?_⟩
   refine tendsto_atTop_atTop.2 ?_
@@ -937,7 +943,7 @@ instance zeroCountingTendstoHyp_of_lower_bound (inst : ZeroCountingLowerBoundHyp
       Tendsto (fun T : ℝ => (1 / (3 * π)) * (T * Real.log T)) atTop atTop :=
     (Tendsto.const_mul_atTop hpos hmul)
   rcases (tendsto_atTop_atTop.1 hconst b) with ⟨T0, hT0⟩
-  rcases zeroCountingFunction_lower_bound (inst := inst) with ⟨T1, hT1⟩
+  rcases zeroCountingFunction_lower_bound with ⟨T1, hT1⟩
   refine ⟨max T0 T1, ?_⟩
   intro T hT
   have hT0' : T0 ≤ T := le_trans (le_max_left _ _) hT
