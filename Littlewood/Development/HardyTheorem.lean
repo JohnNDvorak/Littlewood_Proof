@@ -1,0 +1,221 @@
+/-
+Copyright (c) 2025. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+import Mathlib.NumberTheory.LSeries.RiemannZeta
+import Mathlib.Analysis.SpecialFunctions.Complex.Log
+import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
+
+/-!
+# Hardy's Theorem Development
+
+Working toward: There are infinitely many zeros of ζ(s) on Re(s) = 1/2.
+
+## Hardy's 1914 Proof Outline
+
+Hardy's proof uses:
+1. The Hardy Z-function: Z(t) = exp(iθ(t)) ζ(1/2 + it)
+   where θ(t) is the Riemann-Siegel theta function
+2. Key property: Z(t) is real for real t
+3. Sign changes of Z(t) correspond to zeros on the critical line
+4. Showing Z(t) changes sign infinitely often
+
+## Historical Note
+
+Hardy's 1914 paper "Sur les zéros de la fonction ζ(s) de Riemann" established
+that there are infinitely many zeros on the critical line Re(s) = 1/2.
+This was a major breakthrough in understanding the Riemann zeta function.
+
+## References
+- Hardy, "Sur les zéros de la fonction ζ(s) de Riemann" (1914)
+- Titchmarsh, "Theory of the Riemann Zeta Function", Chapter 10
+- Edwards, "Riemann's Zeta Function", Chapter 8
+-/
+
+namespace Littlewood.Development.HardyTheorem
+
+open Complex Real Topology
+
+-- ============================================================
+-- SECTION 1: What Mathlib provides
+-- ============================================================
+
+#check Complex.Gamma
+-- Complex.Gamma : ℂ → ℂ
+
+#check riemannZeta
+-- riemannZeta : ℂ → ℂ
+
+#check Complex.arg
+-- Complex.arg : ℂ → ℝ (argument of a complex number)
+
+/-
+## What Mathlib Provides:
+
+1. **Gamma function:** `Complex.Gamma : ℂ → ℂ`
+2. **Riemann zeta:** `riemannZeta : ℂ → ℂ`
+3. **Complex argument:** `Complex.arg : ℂ → ℝ`
+4. **Functional equation:** `riemannZeta_one_sub`
+
+## What's Missing:
+
+1. **Riemann-Siegel theta function:** θ(t) = arg(Γ(1/4 + it/2)) - (t/2)log(π)
+2. **Hardy Z-function:** Z(t) = exp(iθ(t)) · ζ(1/2 + it)
+3. **Z(t) is real:** Proof that Z takes real values on ℝ
+4. **Sign change analysis:** Tools to detect sign changes
+-/
+
+-- ============================================================
+-- SECTION 2: The Riemann-Siegel theta function
+-- ============================================================
+
+/-- The Riemann-Siegel theta function.
+
+θ(t) = arg(Γ(1/4 + it/2)) - (t/2) · log(π)
+
+This is the phase function that makes Z(t) real.
+-/
+noncomputable def riemannSiegelTheta (t : ℝ) : ℝ :=
+  Complex.arg (Complex.Gamma (1/4 + t/2 * I)) - t/2 * Real.log Real.pi
+
+/-- Asymptotic formula for θ(t) as t → ∞.
+
+θ(t) ~ (t/2) log(t/(2πe)) - π/8 + O(1/t)
+
+This comes from Stirling's approximation for the Gamma function.
+-/
+theorem riemannSiegelTheta_asymptotic_stub (t : ℝ) (ht : t > 0) :
+    ∃ E : ℝ, |E| ≤ 1/t ∧
+    riemannSiegelTheta t = t/2 * Real.log (t / (2 * Real.pi * Real.exp 1)) - Real.pi/8 + E := by
+  sorry
+
+-- ============================================================
+-- SECTION 3: The Hardy Z-function
+-- ============================================================
+
+/-- The Hardy Z-function.
+
+Z(t) = exp(i·θ(t)) · ζ(1/2 + it)
+
+Key property: Z(t) is real for all real t.
+Zeros of Z(t) correspond to zeros of ζ(s) on the critical line.
+-/
+noncomputable def hardyZ (t : ℝ) : ℂ :=
+  Complex.exp (I * riemannSiegelTheta t) * riemannZeta (1/2 + t * I)
+
+/-- Z(t) is real for all real t.
+
+This follows from the functional equation of ζ(s):
+ξ(s) = ξ(1-s) where ξ(s) = π^(-s/2) Γ(s/2) ζ(s)
+-/
+theorem hardyZ_real (t : ℝ) : (hardyZ t).im = 0 := by
+  sorry
+
+/-- Extract the real value of Z(t) -/
+noncomputable def hardyZ_real_val (t : ℝ) : ℝ :=
+  (hardyZ t).re
+
+-- ============================================================
+-- SECTION 4: Connection to zeros
+-- ============================================================
+
+/-- Z(t) = 0 if and only if ζ(1/2 + it) = 0 -/
+theorem hardyZ_zero_iff (t : ℝ) :
+    hardyZ t = 0 ↔ riemannZeta (1/2 + t * I) = 0 := by
+  constructor
+  · intro hz
+    simp only [hardyZ] at hz
+    have hexp : Complex.exp (I * riemannSiegelTheta t) ≠ 0 := Complex.exp_ne_zero _
+    exact (mul_eq_zero.mp hz).resolve_left hexp
+  · intro hζ
+    simp only [hardyZ, hζ, mul_zero]
+
+/-- Sign changes of Z(t) correspond to zeros on the critical line.
+
+If Z(t₁) > 0 and Z(t₂) < 0 (or vice versa), then there exists
+t ∈ (t₁, t₂) such that ζ(1/2 + it) = 0.
+-/
+theorem sign_change_implies_zero (t₁ t₂ : ℝ) (ht : t₁ < t₂)
+    (h1 : hardyZ_real_val t₁ * hardyZ_real_val t₂ < 0) :
+    ∃ t ∈ Set.Ioo t₁ t₂, riemannZeta (1/2 + t * I) = 0 := by
+  -- By intermediate value theorem + hardyZ_zero_iff
+  sorry
+
+-- ============================================================
+-- SECTION 5: Hardy's theorem (stub)
+-- ============================================================
+
+/-- Hardy's Theorem: There are infinitely many zeros on the critical line.
+
+More precisely: For all T > 0, there exists t > T such that ζ(1/2 + it) = 0.
+-/
+theorem hardy_infinitely_many_zeros_stub :
+    ∀ T : ℝ, ∃ t : ℝ, t > T ∧ riemannZeta (1/2 + t * I) = 0 := by
+  sorry
+
+/-- Stronger form: The number of zeros on the critical line up to height T
+grows at least like c·T for some c > 0. -/
+theorem hardy_zeros_density_stub :
+    ∃ c : ℝ, c > 0 ∧ ∀ T > 1,
+    ∃ S : Finset ℂ, S.card ≥ c * T ∧
+    ∀ s ∈ S, s.re = 1/2 ∧ 0 < s.im ∧ s.im ≤ T ∧ riemannZeta s = 0 := by
+  sorry
+
+-- ============================================================
+-- SECTION 6: Gap Analysis
+-- ============================================================
+
+/-
+## Gap Analysis for Hardy's Theorem
+
+### What We Can Define/State Now:
+1. ✓ Riemann-Siegel theta function (defined above)
+2. ✓ Hardy Z-function (defined above)
+3. ✓ Connection between Z(t) zeros and ζ zeros (stated, needs proof)
+4. ✓ Statement of Hardy's theorem
+
+### What Needs Substantial Work:
+
+1. **Z(t) is Real:**
+   - Requires detailed analysis of functional equation
+   - Need to track phases carefully
+   - Proof difficulty: HARD
+
+2. **Sign Change Detection:**
+   - Need to show Z(t) changes sign infinitely often
+   - Hardy's approach: integral representations
+   - Proof difficulty: VERY HARD
+
+3. **Asymptotic Analysis:**
+   - θ(t) asymptotics from Stirling
+   - Z(t) behavior for large t
+   - Proof difficulty: HARD
+
+4. **Density Lower Bound:**
+   - Showing proportion of zeros on critical line
+   - More refined than just "infinitely many"
+   - Proof difficulty: VERY HARD
+
+### Why Hardy's Theorem is Hard to Formalize:
+
+1. The original proof uses detailed asymptotic analysis
+2. Requires careful handling of oscillatory integrals
+3. The Riemann-Siegel formula is complex
+4. Sign change arguments need continuity + explicit bounds
+
+### Potential Approaches:
+
+1. **Direct:** Formalize Hardy's original argument
+   - Most faithful to the mathematics
+   - Requires significant Mathlib extensions
+
+2. **Indirect:** Use known results about zero density
+   - Requires even more machinery (density theorems)
+   - May be harder overall
+
+3. **Axiomatic:** Assume key properties and derive structure
+   - Current approach: define concepts, leave proofs as sorry
+   - Allows exploring the logical structure
+-/
+
+end Littlewood.Development.HardyTheorem
