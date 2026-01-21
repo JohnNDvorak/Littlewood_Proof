@@ -1,0 +1,163 @@
+{
+  "last_updated": "2026-01-21",
+  "summary": {
+    "total_hypotheses": 67,
+    "proved": 2,
+    "assumed": 61,
+    "parametric": 9,
+    "not_instantiated": 7
+  },
+  "proved": [
+    {
+      "name": "ZeroConjZeroHyp",
+      "file": "ZetaZeros/ZeroCountingFunction.lean",
+      "line": 1618,
+      "proof_method": "riemannZeta_conj from Mathlib"
+    },
+    {
+      "name": "ZeroOneSubZeroHyp",
+      "file": "ZetaZeros/ZeroCountingFunction.lean",
+      "line": 1640,
+      "proof_method": "Functional equation from Mathlib"
+    }
+  ],
+  "categories": {
+    "explicit_formula": {
+      "count": 9,
+      "hypotheses": [
+        "ExplicitFormulaPsiHyp",
+        "ExplicitFormulaPsiSmoothedHyp",
+        "ExplicitFormulaIntegralHyp",
+        "ExplicitFormulaDoubleIntegralHyp",
+        "PsiMellinHyp",
+        "MellinContourShiftHyp",
+        "ZeroSumBoundRHHyp",
+        "PsiErrorBoundHyp",
+        "PsiErrorBoundRHHyp"
+      ]
+    },
+    "conversion_formula": {
+      "count": 7,
+      "hypotheses": [
+        "ThetaPsiFirstCorrectionHyp",
+        "ThetaPsiRHHyp",
+        "PiFromThetaSummationHyp",
+        "LiExpansionHyp",
+        "PiLiFromThetaHyp",
+        "PiLiFromPsiRHHyp",
+        "OmegaPsiToThetaHyp",
+        "OmegaThetaToPiLiHyp"
+      ]
+    },
+    "weighted_average": {
+      "count": 7,
+      "hypotheses": [
+        "WeightedAverageFormulaRHHyp",
+        "IntegralPsiMinusXHyp",
+        "RhoToGammaErrorHyp",
+        "SumOverPositiveOrdinatesHyp",
+        "ZeroSumTailHyp",
+        "MainSumBoundHyp",
+        "AlignedSumLargeHyp"
+      ]
+    },
+    "oscillation": {
+      "count": 9,
+      "hypotheses": [
+        "SchmidtPsiOscillationHyp",
+        "PsiOscillationSqrtHyp",
+        "MellinPsiIdentityHyp",
+        "OmegaMinusNecessityHyp",
+        "OmegaPlusNecessityHyp",
+        "HardyCriticalLineZerosHyp",
+        "PsiOscillationFromCriticalZerosHyp",
+        "ThetaOscillationMinusHyp",
+        "ThetaOscillationRHHyp"
+      ]
+    },
+    "zero_density": {
+      "count": 7,
+      "hypotheses": [
+        "ZeroCountingSummabilityHyp",
+        "ZeroCountingSumInvGammaAsymptoticHyp",
+        "ZeroCountingSumOneEqHyp",
+        "ZeroCountingTailSqAsymptoticHyp",
+        "RiemannHypothesisInvRhoAsymptoticHyp",
+        "ZeroCountingSummableXPowRhoDivHyp",
+        "ZeroCountingAverageInvGammaHyp"
+      ]
+    },
+    "zero_free_region": {
+      "count": 4,
+      "hypotheses": [
+        "ZeroFreeRegionHyp",
+        "ZetaZeroSupRealPartDichotomyHyp",
+        "ChebyshevErrorBoundZeroFreeHyp",
+        "ChebyshevErrorBoundThetaHyp"
+      ]
+    },
+    "zero_counting": {
+      "count": 12,
+      "hypotheses": [
+        "ZeroCountingTendstoHyp",
+        "ZeroCountingCrudeBoundHyp",
+        "ZeroCountingSpecialValuesHyp",
+        "ZeroCountingFifteenHyp",
+        "FirstZeroOrdinateHyp",
+        "ZeroCountingAsymptoticHyp",
+        "ZeroCountingRvmExplicitHyp",
+        "ZeroCountingAsymptoticRatioHyp",
+        "ZeroCountingMainTermHyp",
+        "ZeroCountingLowerBoundHyp",
+        "ZeroCountingLocalDensityHyp",
+        "ZeroGapsLowerBoundHyp"
+      ]
+    },
+    "symmetry": {
+      "count": 2,
+      "hypotheses": ["ZeroConjZeroHyp", "ZeroOneSubZeroHyp"],
+      "all_proved": true
+    },
+    "landau": {
+      "count": 9,
+      "parametric": true,
+      "hypotheses": [
+        "LandauLemmaHyp",
+        "DirichletIntegralConvergesHyp",
+        "DirichletIntegralAnalyticHyp",
+        "DirichletIntegralDerivHyp",
+        "DirichletIntegralPowerSeriesHyp",
+        "RadiusExceedsAbscissaHyp",
+        "LandauExtensionHyp",
+        "LandauLemmaSeriesHyp",
+        "ZetaLogDerivPoleHyp"
+      ]
+    }
+  },
+  "mathlib_enablers": [
+    "riemannZeta_ne_zero_of_one_le_re",
+    "riemannZeta_residue_one",
+    "riemannZeta_one_sub",
+    "riemannZeta_conj",
+    "LSeries_analyticOnNhd",
+    "completedRiemannZeta_one_sub"
+  ],
+  "development_progress": {
+    "LandauLemma.lean": {
+      "sorries": 0,
+      "status": "complete"
+    },
+    "ZeroFreeRegion.lean": {
+      "sorries": 8,
+      "status": "blocked - needs Euler product infrastructure"
+    },
+    "HardyTheorem.lean": {
+      "sorries": 11,
+      "status": "in_progress"
+    },
+    "Bridge.lean": {
+      "sorries": 0,
+      "status": "complete"
+    }
+  }
+}
