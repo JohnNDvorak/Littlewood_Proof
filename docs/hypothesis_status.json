@@ -145,19 +145,31 @@
   "development_progress": {
     "LandauLemma.lean": {
       "sorries": 0,
-      "status": "complete"
+      "status": "complete",
+      "note": "Real proofs for all lemmas"
+    },
+    "MathlibZetaAudit.lean": {
+      "sorries": 0,
+      "status": "complete",
+      "note": "Mathlib API verification"
+    },
+    "Bridge.lean": {
+      "sorries": 0,
+      "status": "complete",
+      "note": "Documentation and type-checks"
+    },
+    "MainTheoremsVerification.lean": {
+      "sorries": 0,
+      "status": "complete",
+      "note": "Main theorem verification"
     },
     "ZeroFreeRegion.lean": {
       "sorries": 8,
       "status": "blocked - needs Euler product infrastructure"
     },
     "HardyTheorem.lean": {
-      "sorries": 11,
+      "sorries": 12,
       "status": "in_progress"
-    },
-    "Bridge.lean": {
-      "sorries": 0,
-      "status": "complete"
     }
   }
 }
