@@ -8,9 +8,35 @@ Each represents a classical theorem from analytic number theory not yet in Mathl
 These are PROVED theorems in classical mathematics—assumptions only because
 their Lean proofs await Mathlib infrastructure.
 
+## Current Status (as of Gauss integration)
+- Total instance sorries: 94
+- Proved from Gauss: 0 (hypothesis instance level)
+- Theorem sorries fixed: 3 (ChebyshevFunctions.lean)
+
+## Organization
+Instances are organized by mathematical domain:
+1. Explicit Formula (Perron, Mellin)
+2. Weighted Average Formula
+3. Schmidt/Oscillation
+4. Zero Density
+5. Zeta Zero Supremum
+6. Zero Counting
+7. Landau Lemma Family
+
+## Note on Instance Location
+Currently, instances are ALSO defined in their respective module files:
+- Littlewood/CoreLemmas/LandauLemma.lean (9 instances)
+- Littlewood/CoreLemmas/WeightedAverageFormula.lean (7 instances)
+- Littlewood/ZetaZeros/SupremumRealPart.lean (4 instances)
+- Littlewood/ZetaZeros/ZeroCountingFunction.lean (2 instances)
+- Littlewood/ExplicitFormulas/ConversionFormulas.lean (2 instances)
+- Littlewood/Oscillation/SchmidtTheorem.lean (9 instances)
+
+This file provides a CENTRALIZED view but is not currently imported.
+
 ## References
 - [IK] Iwaniec & Kowalski, Analytic Number Theory
-- [MV] Montgomery & Vaughan, Multiplicative Number Theory  
+- [MV] Montgomery & Vaughan, Multiplicative Number Theory
 - [T] Titchmarsh, Theory of the Riemann Zeta Function
 -/
 
@@ -29,7 +55,13 @@ namespace Littlewood.Assumptions
 
 open ExplicitFormula Conversion
 
--- Explicit formula hypotheses.
+-- ============================================================
+-- SECTION 1: Explicit Formula Hypotheses
+-- ============================================================
+-- These relate to Perron's formula, Mellin transforms, and
+-- the representation of ψ(x) via contour integrals.
+-- Reference: [MV] Chapter 5, [IK] Chapter 5
+-- ============================================================
 instance : ExplicitFormulaPsiHyp := by
   refine ⟨?_⟩
   intro x hx
@@ -85,7 +117,12 @@ instance : OmegaThetaToPiLiHyp := by
   intro f hf h
   sorry
 
--- Weighted average hypotheses.
+-- ============================================================
+-- SECTION 2: Weighted Average Formula Hypotheses
+-- ============================================================
+-- These relate to the weighted average approach to oscillation.
+-- Reference: [MV] Chapter 15
+-- ============================================================
 instance : WeightedAverage.WeightedAverageFormulaRHHyp := by
   refine ⟨?_⟩
   intro x hx δ hδ_lower hδ_upper hRH
@@ -121,7 +158,13 @@ instance : WeightedAverage.AlignedSumLargeHyp := by
   intro M hM n hn halign x hx
   sorry
 
--- Schmidt/Littlewood oscillation hypotheses.
+-- ============================================================
+-- SECTION 3: Schmidt/Littlewood Oscillation Hypotheses
+-- ============================================================
+-- These relate to Schmidt's 1983 refinement and the core
+-- oscillation results for ψ and θ.
+-- Reference: [MV] Chapter 15, Schmidt 1983
+-- ============================================================
 instance : Schmidt.SchmidtPsiOscillationHyp := by
   refine ⟨?_⟩
   intro ε hε
@@ -163,7 +206,12 @@ instance : Schmidt.ThetaOscillationRHHyp := by
   intro hRH
   sorry
 
--- Zero density hypotheses.
+-- ============================================================
+-- SECTION 4: Zero Density Hypotheses
+-- ============================================================
+-- These relate to summability over zeros and density estimates.
+-- Reference: [MV] Chapter 10, [IK] Chapter 10
+-- ============================================================
 instance : ZetaZeros.Density.ZeroCountingSummabilityHyp := by
   refine ⟨?_, ?_⟩
   · intro α hα
@@ -193,7 +241,12 @@ instance : ZetaZeros.Density.ZeroCountingSummableXPowRhoDivHyp := by
   intro x hx
   sorry
 
--- Zeta zero supremum hypotheses.
+-- ============================================================
+-- SECTION 5: Zeta Zero Supremum Hypotheses
+-- ============================================================
+-- These relate to Θ = sup{Re(ρ)} and error bounds.
+-- Reference: [MV] Chapter 12-13
+-- ============================================================
 instance : ZetaZeros.ZeroFreeRegionHyp := by
   refine ⟨?_⟩
   sorry
@@ -211,7 +264,12 @@ instance : ZetaZeros.ChebyshevErrorBoundThetaHyp := by
   intro x hx
   sorry
 
--- Zero counting hypotheses.
+-- ============================================================
+-- SECTION 6: Zero Counting Hypotheses
+-- ============================================================
+-- These relate to N(T), the zero counting function.
+-- Reference: [T] Chapter 9, [MV] Chapter 14
+-- ============================================================
 instance : ZetaZeros.ZeroCountingTendstoHyp := by
   refine ⟨?_⟩
   sorry
@@ -270,7 +328,14 @@ instance : ZetaZeros.ZeroOneSubZeroHyp := by
   intro ρ hρ
   sorry
 
--- Landau lemma hypotheses.
+-- ============================================================
+-- SECTION 7: Landau Lemma Hypotheses
+-- ============================================================
+-- These relate to Dirichlet series singularity detection.
+-- Landau's lemma: non-negative Dirichlet series have singularity
+-- at their abscissa of convergence.
+-- Reference: [T] Chapter 9.5
+-- ============================================================
 instance (A : ℝ → ℝ) (σ_c : ℝ) : Landau.LandauLemmaHyp A σ_c := by
   refine ⟨?_, ?_⟩
   · intro s hs
