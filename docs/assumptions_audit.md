@@ -154,3 +154,42 @@
 
 ### Lower Priority (Research-Level)
 21-67. Schmidt, Hardy, Explicit formula machinery
+
+---
+
+## Task 18 Audit: "Other Files" Sorries (2025-01-21)
+
+### Summary
+
+A grep audit found **33 sorries** in files outside `Assumptions.lean` and `Development/`:
+
+| File | Sorry Count | Type |
+|------|-------------|------|
+| `CoreLemmas/LandauLemma.lean` | 10 | Hypothesis instances |
+| `Oscillation/SchmidtTheorem.lean` | 9 | Hypothesis instances |
+| `CoreLemmas/WeightedAverageFormula.lean` | 7 | Hypothesis instances |
+| `ZetaZeros/SupremumRealPart.lean` | 4 | Hypothesis instances |
+| `ExplicitFormulas/ConversionFormulas.lean` | 2 | Hypothesis instances |
+| `Bridge/FromGauss.lean` | 1 | Comment (not actual sorry) |
+
+### Finding
+
+**All "other files" sorries are hypothesis instance duplicates.** They are local instances
+in module files that duplicate the centralized instances in `Assumptions.lean`. These
+exist to allow each module to type-check independently while keeping hypotheses visible.
+
+### Conclusion
+
+**Cannot reduce these sorries** without substantial mathematical development. They encode
+the same theorems listed above (Landau lemma, Schmidt oscillation, etc.). The architecture
+is intentional: `Assumptions.lean` centralizes all hypothesis instances, while modules
+may have local duplicates for independent compilation.
+
+### Recommendation
+
+Focus development effort on:
+1. `Development/ZeroFreeRegion.lean` - building toward `ZeroFreeRegionHyp`
+2. `Development/HardyTheorem.lean` - building toward `HardyCriticalLineZerosHyp`
+3. `Development/LandauLemma.lean` - building toward Landau family hypotheses
+
+Proved theorems in Development files can eventually replace hypothesis sorries.
