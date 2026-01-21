@@ -230,4 +230,111 @@ Mathlib ALREADY has the LSeries ↔ integral bridge:
 The hard work (Abel summation) is done in Mathlib!
 -/
 
+-- ============================================================
+-- SECTION 8: Task 40 - Bridge to Landau Hypotheses
+-- ============================================================
+
+/-!
+## Task 40: Reformulating Landau Hypotheses
+
+### Current Problem
+Our Landau hypotheses use `dirichletIntegral : (ℝ → ℝ) → ℂ → ℂ`:
+```
+dirichletIntegral A s = ∫ x in Ioi 1, A(x) * x^{-s} dx
+```
+
+But Mathlib's infrastructure works with `LSeries : (ℕ → ℂ) → ℂ → ℂ`:
+```
+LSeries f s = ∑' n, f(n) * n^{-s}
+```
+
+### Solution: Two Approaches
+
+**Approach A: Use LSeries Directly**
+For discrete coefficient sequences (like von Mangoldt Λ):
+- Use `LSeries Λ s` instead of `dirichletIntegral (summatory Λ) s`
+- Leverage `LSeries_analyticOnNhd` for analyticity
+- Leverage `LSeries_eq_mul_integral` when integral form needed
+
+**Approach B: Keep dirichletIntegral for Continuous Functions**
+For truly continuous functions A(x):
+- dirichletIntegral remains the right tool
+- But such cases are rare in our application
+
+### Key Insight: Most Applications Are Discrete
+The main uses of Landau lemma in analytic number theory involve:
+1. Von Mangoldt function Λ(n) → -ζ'/ζ
+2. Chebyshev ψ(x) = ∑_{n≤x} Λ(n) → summatory of Λ
+3. Various arithmetic functions
+
+All of these are DISCRETE, so LSeries is the right abstraction!
+-/
+
+-- ============================================================
+-- SECTION 9: LSeries-Based Landau Hypothesis (Proposed)
+-- ============================================================
+
+/--
+PROPOSED HYPOTHESIS: Landau's lemma for LSeries.
+
+For arithmetic function f : ℕ → ℂ with f(n) ≥ 0 for all n > 0,
+if LSeries f converges for Re(s) > σ_c, then
+LSeries f is NOT analytic at s = σ_c.
+
+This is equivalent to our current LandauLemmaHyp but uses LSeries
+instead of dirichletIntegral.
+-/
+class LandauLemmaLSeriesHyp (f : ℕ → ℂ) (σ_c : ℝ) : Prop where
+  analytic_right : ∀ s : ℂ, σ_c < s.re → AnalyticAt ℂ (LSeries f) s
+  not_analytic_at : ¬AnalyticAt ℂ (LSeries f) σ_c
+
+/--
+Key observation: For LSeries, we get analytic_right nearly for free!
+`LSeries_analyticOnNhd` gives analyticity in the convergence half-plane.
+-/
+theorem lseries_analytic_from_mathlib (f : ℕ → ℂ) (s : ℂ)
+    (hs : LSeries.abscissaOfAbsConv f < s.re) :
+    AnalyticAt ℂ (LSeries f) s := by
+  have h := LSeries_analyticOnNhd f
+  have hmem : s ∈ {s | LSeries.abscissaOfAbsConv f < s.re} := by
+    simp only [Set.mem_setOf_eq]; exact hs
+  exact h s hmem
+
+/--
+The main remaining content of Landau's lemma for LSeries:
+If f(n) ≥ 0 for n > 0 and σ_c is the abscissa of convergence,
+then LSeries f is NOT analytic at σ_c.
+
+This is the "singularity at boundary" part that needs work.
+-/
+theorem landau_lseries_not_analytic_at_boundary
+    (f : ℕ → ℝ) (hf : ∀ n, 0 ≤ f n) (σ_c : ℝ)
+    (hconv : ∀ s : ℂ, σ_c < s.re → LSeriesSummable (fun n => (f n : ℂ)) s)
+    (hdiv : ∀ s : ℂ, s.re < σ_c → ¬LSeriesSummable (fun n => (f n : ℂ)) s) :
+    ¬AnalyticAt ℂ (LSeries (fun n => (f n : ℂ))) σ_c := by
+  -- The key insight: if analytic at σ_c, the power series would converge
+  -- in a disk around σ_c, including points with Re(s) < σ_c.
+  -- But by hdiv, the series diverges there. Contradiction.
+  sorry
+
+/-!
+## Gap #5 Final Status
+
+### Fully Closed
+- Mathlib has Abel summation: `Mathlib.NumberTheory.AbelSummation`
+- Mathlib has LSeries ↔ integral: `LSeries_eq_mul_integral`
+- Mathlib has analyticity: `LSeries_analyticOnNhd`
+
+### Remaining (1 theorem)
+- `landau_lseries_not_analytic_at_boundary`: singularity detection
+
+### Recommendation
+Reformulate our Landau hypotheses to use `LSeries` instead of `dirichletIntegral`.
+This leverages Mathlib's existing infrastructure and reduces the gap to
+a single theorem about singularity at the boundary.
+
+### Estimated Work: 5-10 hours for full closure
+Down from original 40-80 hours!
+-/
+
 end Littlewood.Development.TypeBridge
