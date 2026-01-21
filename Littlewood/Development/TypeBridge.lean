@@ -306,15 +306,34 @@ If f(n) ≥ 0 for n > 0 and σ_c is the abscissa of convergence,
 then LSeries f is NOT analytic at σ_c.
 
 This is the "singularity at boundary" part that needs work.
+
+## Proof Strategy (BLOCKED - needs Mathlib extension)
+
+The classical proof uses:
+1. AnalyticAt implies ContinuousAt (Mathlib has this: `AnalyticAt.continuousAt`)
+2. For non-negative real series, if not summable at σ_c, then L(σ) → +∞ as σ → σ_c⁺
+3. But ContinuousAt implies bounded in neighborhood, contradiction
+
+The blocker is step 2: proving LSeries → +∞ for non-negative divergent series.
+This requires showing partial sums are unbounded, which needs:
+- Monotone convergence for non-negative terms
+- Connection between series divergence and sum divergence to +∞
+
+## Status: BLOCKED
+Needs theorem: For f : ℕ → ℝ≥0, ¬Summable f ↔ ∑ f(n) → +∞
 -/
 theorem landau_lseries_not_analytic_at_boundary
     (f : ℕ → ℝ) (hf : ∀ n, 0 ≤ f n) (σ_c : ℝ)
     (hconv : ∀ s : ℂ, σ_c < s.re → LSeriesSummable (fun n => (f n : ℂ)) s)
     (hdiv : ∀ s : ℂ, s.re < σ_c → ¬LSeriesSummable (fun n => (f n : ℂ)) s) :
     ¬AnalyticAt ℂ (LSeries (fun n => (f n : ℂ))) σ_c := by
-  -- The key insight: if analytic at σ_c, the power series would converge
-  -- in a disk around σ_c, including points with Re(s) < σ_c.
-  -- But by hdiv, the series diverges there. Contradiction.
+  intro hanalytic
+  -- Step 1: AnalyticAt implies ContinuousAt
+  have hcont : ContinuousAt (LSeries (fun n => (f n : ℂ))) σ_c := hanalytic.continuousAt
+  -- Step 2: For real σ > σ_c, the L-series L(σ) is real and equals ∑ f(n)/n^σ
+  -- Step 3: As σ → σ_c⁺, L(σ) → +∞ (because series diverges at σ_c with non-negative terms)
+  -- Step 4: This contradicts continuity at σ_c
+  -- BLOCKED: Need to prove L(σ) → +∞ for non-negative divergent series
   sorry
 
 /-!
