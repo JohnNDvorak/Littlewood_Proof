@@ -1,10 +1,12 @@
-# Development Files Audit (Task 33)
+# Development Files Audit (Task 33, updated Task 45)
 
 ## Summary
 
-**Total Development sorries:** 20
-**Easy wins found:** 0
-**All sorries blocked on infrastructure gaps**
+**Total Development sorries:** 23 (increased due to new files)
+**Easy wins found:** 3-5 (NEW - from Mathlib discoveries)
+**Blocked on infrastructure:** ~18
+
+**MAJOR UPDATE (Task 45):** Mathlib discoveries in Tasks 43-44 have unblocked some ZeroFreeRegion work!
 
 ## File-by-File Analysis
 
@@ -19,20 +21,25 @@
 
 ### IN-PROGRESS FILES
 
-#### ZeroFreeRegion.lean (8 sorries)
+#### ZeroFreeRegion.lean (8 sorries) - PARTIALLY UNBLOCKED!
 
 | Lemma | Status | Blocker |
 |-------|--------|---------|
-| `mertens_inequality_stub` | BLOCKED | Euler product infrastructure |
-| `zero_free_region_stub` | BLOCKED | Depends on mertens_inequality |
-| `zeta_product_lower_bound` | BLOCKED | Euler product logarithm expansion |
-| `zero_forces_zeta_large` | BLOCKED | Depends on zeta_product_lower_bound |
-| `zeta_pole_behavior` | PARTIAL | Mathlib has `riemannZeta_residue_one`, but norm conversion needs work |
-| `neg_zeta_logderiv_expansion` | BLOCKED | Log derivative infrastructure missing |
-| `neg_zeta_logderiv_re_bound` | BLOCKED | Depends on expansion |
-| `de_la_vallee_poussin_zero_free` | BLOCKED | Requires all above |
+| `mertens_inequality_stub` | **UNBLOCKED?** | `re_log_comb_nonneg'` in Mathlib! |
+| `zero_free_region_stub` | PARTIAL | Boundary case proved in Mathlib |
+| `zeta_product_lower_bound` | **UNBLOCKED?** | `riemannZeta_eulerProduct_exp_log` available |
+| `zero_forces_zeta_large` | PARTIAL | Depends on zeta_product_lower_bound |
+| `zeta_pole_behavior` | PARTIAL | `riemannZeta_residue_one` available |
+| `neg_zeta_logderiv_expansion` | **UNBLOCKED!** | `LSeries_vonMangoldt_eq_deriv_riemannZeta_div` |
+| `neg_zeta_logderiv_re_bound` | PARTIAL | Depends on expansion (now available) |
+| `de_la_vallee_poussin_zero_free` | BLOCKED | Needs quantitative region (not just Re = 1) |
 
-**Key Finding:** Mathlib has `riemannZeta_residue_one : Tendsto (fun s => (s - 1) * riemannZeta s) (nhdsWithin 1 {1}ᶜ) (nhds 1)` but converting to `(σ - 1) * ‖riemannZeta σ‖` for real σ requires proving zeta is real and positive for σ > 1.
+**NEW Key Finding (Task 45):** Mathlib now has:
+- `riemannZeta_ne_zero_of_one_le_re` - Non-vanishing on Re(s) ≥ 1
+- `re_log_comb_nonneg'` - The 3-4-1 inequality
+- `LSeries_vonMangoldt_eq_deriv_riemannZeta_div` - Log derivative identity
+
+The remaining blocker is extending from Re(s) = 1 to a quantitative zero-free region.
 
 #### HardyTheorem.lean (12 sorries)
 
@@ -82,30 +89,40 @@ hardyZ_sign_change_in_interval ← BLOCKED (hard)
 hardy_infinitely_many_zeros_stub
 ```
 
-## Mathlib Gaps Identified
+## Mathlib Gaps Identified (Updated Task 45)
 
-### Critical Gaps
+### RESOLVED Gaps (Mathlib now has these!)
 
-1. **Euler product in critical strip**
-   - Mathlib: Euler product for Re(s) > 1 only
-   - Need: Bounds/analysis extending toward Re(s) = 1
+1. **Euler product** ✓ RESOLVED
+   - `riemannZeta_eulerProduct` - Full Euler product formula
+   - `riemannZeta_eulerProduct_exp_log` - Log form
 
-2. **Logarithmic derivative of zeta**
-   - Mathlib: Basic definition via deriv
-   - Need: -ζ'/ζ(s) = Σ Λ(n) n^{-s} for Re(s) > 1
-   - Need: Pole structure at s = 1
+2. **Logarithmic derivative of zeta** ✓ RESOLVED
+   - `LSeries_vonMangoldt_eq_deriv_riemannZeta_div` - The identity L(Λ,s) = -ζ'/ζ(s)
+   - This is now provable in the project via `vonMangoldt_eq_neg_zeta_logderiv`
 
-3. **Zeta real and positive for real σ > 1**
-   - Mathlib: `zeta_nat_eq_tsum_of_gt_one` for natural numbers
-   - Need: General real argument version
+3. **Non-vanishing on Re(s) = 1** ✓ RESOLVED
+   - `riemannZeta_ne_zero_of_one_le_re` - Non-vanishing for Re(s) ≥ 1
+   - `LFunction_ne_zero_of_one_le_re` - For Dirichlet L-functions
+   - The 3-4-1 inequality `re_log_comb_nonneg'` is in Mathlib!
 
-4. **Gamma function slitPlane membership**
+### Remaining Gaps
+
+4. **Gamma function slitPlane membership** - STILL BLOCKED
    - Mathlib: `Complex.continuousAt_arg` requires slitPlane
    - Need: Gamma(α + it) ∈ slitPlane for suitable α
 
-5. **Stirling asymptotic formulas**
+5. **Stirling asymptotic formulas** - STILL BLOCKED
    - Mathlib: Limited Stirling support
    - Need: arg(Gamma) asymptotics
+
+6. **Quantitative zero-free region** - NEW IDENTIFIED GAP
+   - Mathlib has: Re(s) = 1 non-vanishing
+   - Need: σ > 1 - c/log(|t|) type region (de la Vallée-Poussin)
+
+7. **Landau singularity theorem** - PARTIALLY BLOCKED
+   - Mathlib has: LSeries analyticity, convergence
+   - Need: non-negative divergent series → boundary singularity
 
 ## Automation Attempted
 
@@ -118,18 +135,37 @@ Tried the following tactics on various sorries:
 
 All sorries require substantive mathematical development, not just automation.
 
-## Recommendations
+## Recommendations (Updated Task 45)
 
-1. **ZeroFreeRegion.lean:** Focus on `zeta_pole_behavior` first - closest to existing Mathlib
-2. **HardyTheorem.lean:** Focus on `hardyZ_continuous` - unblocks multiple downstream proofs
-3. **Both files:** Consider creating hypothesis classes for blocked infrastructure
-4. **Mathlib contribution:** Euler product bounds would benefit the community
+1. **ZeroFreeRegion.lean:** NOW ACTIONABLE!
+   - `neg_zeta_logderiv_expansion` can be proved using `LSeries_vonMangoldt_eq_deriv_riemannZeta_div`
+   - `mertens_inequality_stub` may be provable using `re_log_comb_nonneg'`
+   - `zeta_product_lower_bound` can leverage `riemannZeta_eulerProduct_exp_log`
 
-## Conclusion
+2. **HardyTheorem.lean:** Still blocked on slitPlane membership
+   - Focus on `hardyZ_continuous` - unblocks multiple downstream proofs
+   - This requires Gamma function analysis not in Mathlib
 
-No "easy wins" exist in the current Development sorries. All require either:
-- Significant Mathlib extensions (Euler product, log derivative)
-- Research-level proofs (Hardy's sign change analysis)
-- Careful complex analysis (slitPlane membership)
+3. **LandauLemma.lean:** Mostly complete
+   - vonMangoldt infrastructure now proved
+   - Only parametric hypotheses remain blocked
 
-The project architecture is sound - hypothesis classes allow Main theorems to compile while Development work proceeds independently.
+4. **Next steps:**
+   - Fill the newly unblocked ZeroFreeRegion sorries
+   - Consider contributing quantitative zero-free region to Mathlib
+
+## Conclusion (Updated Task 45)
+
+**MAJOR PROGRESS:** Several "easy wins" now exist!
+
+**Unblocked:**
+- Log derivative expansion (`neg_zeta_logderiv_expansion`)
+- Euler product bounds (`zeta_product_lower_bound`)
+- Mertens inequality core (`mertens_inequality_stub`)
+
+**Still blocked:**
+- Hardy's theorem (slitPlane membership)
+- Quantitative zero-free region (de la Vallée-Poussin)
+- Parametric Landau hypotheses
+
+The project architecture is sound - hypothesis classes allow Main theorems to compile while Development work proceeds. With the new Mathlib discoveries, real progress on ZeroFreeRegion.lean is now possible!

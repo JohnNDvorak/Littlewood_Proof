@@ -360,8 +360,9 @@ theorem vonMangoldt_eq_neg_zeta_logderiv (s : ℂ) (hs : 1 < s.re) :
 /--
 For the Chebyshev function connection: ψ(x) = Σ_{n ≤ x} Λ(n)
 The Mellin transform of ψ gives the von Mangoldt L-series.
+Note: This is `Landau.chebyshevPsiLocal` to avoid conflict with root-level definition.
 -/
-noncomputable def chebyshevPsi (x : ℝ) : ℝ :=
+noncomputable def chebyshevPsiLocal (x : ℝ) : ℝ :=
   ∑ n ∈ Finset.Icc 1 (Nat.floor x), ArithmeticFunction.vonMangoldt n
 
 /--
