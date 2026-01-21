@@ -8,10 +8,20 @@ Each represents a classical theorem from analytic number theory not yet in Mathl
 These are PROVED theorems in classical mathematics—assumptions only because
 their Lean proofs await Mathlib infrastructure.
 
-## Current Status (as of Task 11)
-- Total instance sorries: 92 (in this file) + 2 (in Development/)
+## Current Status (as of Task 15)
+- Total instance sorries: 58 (in this file) + 3 (in Development files)
 - Proved instances: 2 (ZeroConjZeroHyp, ZeroOneSubZeroHyp in ZeroCountingFunction.lean)
-- Theorem sorries fixed: 3 (ChebyshevFunctions.lean)
+- Proved theorems in Development/:
+  - trig_inequality, trig_identity (ZeroFreeRegion.lean)
+  - partial_sums_monotone, several wrapper lemmas (LandauLemma.lean)
+  - hardyZ_zero_iff (HardyTheorem.lean)
+- Theorem sorries fixed from Gauss: 3 (ChebyshevFunctions.lean)
+
+## Automation Attempt (Task 15)
+Tactics tried: exact?, apply?, simp?, decide, positivity, linarith, nlinarith, ring
+Result: All remaining sorries encode non-trivial mathematical theorems
+(explicit formulas, zero density, Landau lemma, etc.) that require
+substantial mathematical development, not simple automation.
 
 ## Organization
 Instances are organized by mathematical domain:
