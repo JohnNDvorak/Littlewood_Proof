@@ -142,6 +142,108 @@ theorem sign_change_implies_zero (t₁ t₂ : ℝ) (ht : t₁ < t₂)
   sorry
 
 -- ============================================================
+-- SECTION 4.5: Building toward sign changes (Task 17)
+-- ============================================================
+
+/-
+## Strategy: From hardyZ_zero_iff to Hardy's Theorem
+
+We have: hardyZ_zero_iff: Z(t) = 0 ↔ ζ(1/2 + it) = 0
+
+The key steps are:
+1. Z(t) is real for real t (requires functional equation)
+2. Z(t) is continuous (follows from continuity of ζ and exp)
+3. Z(t) changes sign infinitely often (the hard part)
+4. By IVT, sign changes give zeros
+-/
+
+/-- Z(t) is real for all real t.
+
+This follows from the functional equation ξ(s) = ξ(1-s) where
+ξ(s) = π^(-s/2) Γ(s/2) ζ(s) is the completed zeta function.
+The phase θ(t) is chosen precisely to make this true.
+-/
+theorem hardyZ_is_real (t : ℝ) : (hardyZ t).im = 0 := by
+  -- The proof uses: ξ(1/2 + it) = ξ(1/2 - it) (functional equation)
+  -- and the definition of θ(t) to make exp(iθ(t)) ξ(1/2 + it) real
+  sorry
+
+/-- Consequence: Z(t) equals its real part -/
+lemma hardyZ_eq_re (t : ℝ) : hardyZ t = (hardyZ t).re := by
+  rw [Complex.ext_iff]
+  simp [hardyZ_is_real t]
+
+/-- Z is continuous (inherits from ζ and exp) -/
+theorem hardyZ_continuous : Continuous hardyZ := by
+  unfold hardyZ
+  -- exp is continuous, riemannSiegelTheta is continuous, ζ is continuous on ℂ\{1}
+  -- The composition is continuous
+  sorry
+
+/-- Z is continuous as a real-valued function on ℝ -/
+theorem hardyZ_real_val_continuous : Continuous hardyZ_real_val := by
+  unfold hardyZ_real_val
+  exact continuous_re.comp hardyZ_continuous
+
+/-- Z(t) is not identically zero -/
+theorem hardyZ_not_zero : ∃ t : ℝ, hardyZ t ≠ 0 := by
+  -- ζ(1/2 + it) ≠ 0 for small t (no zeros below t ≈ 14.13)
+  use 1
+  intro hz
+  rw [hardyZ_zero_iff] at hz
+  -- ζ(1/2 + i) ≠ 0 because there are no zeros with imaginary part < 14.13
+  sorry
+
+/-- Growth bound: |Z(t)| = O(t^ε) for any ε > 0 (crude Lindelöf-type bound) -/
+theorem hardyZ_growth_bound :
+    ∀ ε > 0, ∃ C : ℝ, ∀ t : ℝ, |t| ≥ 1 → ‖hardyZ t‖ ≤ C * |t| ^ ε := by
+  -- Follows from Lindelöf hypothesis type bounds on ζ
+  intro ε hε
+  sorry
+
+/-- The key oscillation lemma: Z changes sign in [T, 2T] for large T.
+
+Hardy's proof uses an integral representation of Z(t) and shows that
+the integral of Z(t)² over [T, 2T] is O(T), while if Z didn't change
+sign it would be Ω(T log T), giving a contradiction.
+-/
+theorem hardyZ_sign_change_in_interval :
+    ∃ T₀ : ℝ, ∀ T ≥ T₀, ∃ t₁ t₂ : ℝ,
+      t₁ ∈ Set.Icc T (2*T) ∧ t₂ ∈ Set.Icc T (2*T) ∧
+      hardyZ_real_val t₁ > 0 ∧ hardyZ_real_val t₂ < 0 := by
+  sorry
+
+/-- Using IVT: sign change implies zero -/
+theorem sign_change_gives_zero (t₁ t₂ : ℝ) (ht : t₁ < t₂)
+    (h_pos : hardyZ_real_val t₁ > 0) (h_neg : hardyZ_real_val t₂ < 0) :
+    ∃ t ∈ Set.Ioo t₁ t₂, hardyZ t = 0 := by
+  -- By intermediate value theorem for continuous real functions
+  have hcont : ContinuousOn hardyZ_real_val (Set.Icc t₁ t₂) :=
+    hardyZ_real_val_continuous.continuousOn
+  -- Z(t₁) > 0, Z(t₂) < 0, so by IVT there exists t with Z(t) = 0
+  have h1 : hardyZ_real_val t₁ ∈ Set.Icc (hardyZ_real_val t₂) (hardyZ_real_val t₁) := by
+    constructor <;> linarith
+  have h0_mem : (0 : ℝ) ∈ Set.Icc (hardyZ_real_val t₂) (hardyZ_real_val t₁) := by
+    constructor <;> linarith
+  -- Apply IVT
+  sorry
+
+/-- Combining sign change detection with hardyZ_zero_iff gives Hardy's theorem -/
+theorem hardy_from_sign_changes :
+    (∃ T₀ : ℝ, ∀ T ≥ T₀, ∃ t ∈ Set.Icc T (2*T), hardyZ t = 0) →
+    ∀ T : ℝ, ∃ t : ℝ, t > T ∧ riemannZeta (1/2 + t * I) = 0 := by
+  intro hsc T
+  -- For large enough T' ≥ max(T, T₀), get a zero in [T', 2T']
+  -- That zero is > T
+  obtain ⟨T₀, hT₀⟩ := hsc
+  specialize hT₀ (max (T + 1) T₀) (le_max_right _ _)
+  obtain ⟨t, ht_mem, ht_zero⟩ := hT₀
+  refine ⟨t, ?_, ?_⟩
+  · have : t ≥ max (T + 1) T₀ := ht_mem.1
+    linarith [le_max_left (T + 1) T₀]
+  · rwa [← hardyZ_zero_iff]
+
+-- ============================================================
 -- SECTION 5: Hardy's theorem (stub)
 -- ============================================================
 
