@@ -9,6 +9,8 @@ import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Topology.Order.Basic
 import Mathlib.Analysis.Asymptotics.Defs
+-- Import Gauss (PrimeNumberTheoremAnd) for PNT-based proofs
+import PrimeNumberTheoremAnd.Consequences
 
 /-!
 # Chebyshev Functions - Extensions
@@ -85,9 +87,38 @@ theorem chebyshevPsi_le (x : ℝ) (hx : 1 ≤ x) : ψ x ≤ 6 * x := by
         exact (Real.log_le_iff_le_exp (by norm_num)).2 h'
       nlinarith
 
-theorem chebyshevTheta_eventually_ge : ∀ᶠ x in atTop, x / 2 ≤ θ x := by sorry
-theorem chebyshevPsi_asymptotic : Tendsto (fun x => ψ x / x) atTop (nhds 1) := by sorry
-theorem chebyshevTheta_asymptotic : Tendsto (fun x => θ x / x) atTop (nhds 1) := by sorry
+/-- θ(x)/x → 1 as x → ∞, from Gauss's chebyshev_asymptotic (PNT for θ) -/
+theorem chebyshevTheta_asymptotic : Tendsto (fun x => θ x / x) atTop (nhds 1) := by
+  have h := chebyshev_asymptotic
+  rw [Asymptotics.isEquivalent_iff_tendsto_one] at h
+  · exact h
+  · filter_upwards [eventually_gt_atTop 0] with x hx
+    exact ne_of_gt hx
+
+/-- ψ(x)/x → 1 as x → ∞, from Gauss's WeakPNT'' (PNT for ψ) -/
+theorem chebyshevPsi_asymptotic : Tendsto (fun x => ψ x / x) atTop (nhds 1) := by
+  have h := WeakPNT''
+  rw [Asymptotics.isEquivalent_iff_tendsto_one] at h
+  · exact h
+  · filter_upwards [eventually_gt_atTop 0] with x hx
+    exact ne_of_gt hx
+
+/-- x/2 ≤ θ(x) eventually, derived from chebyshev_asymptotic -/
+theorem chebyshevTheta_eventually_ge : ∀ᶠ x in atTop, x / 2 ≤ θ x := by
+  have h := chebyshev_asymptotic
+  rw [Asymptotics.isEquivalent_iff_tendsto_one] at h
+  · have h1 : ∀ᶠ x in atTop, (1 : ℝ) / 2 < θ x / x := by
+      apply h.eventually
+      exact Ioi_mem_nhds (by norm_num : (1 : ℝ) / 2 < 1)
+    filter_upwards [h1, eventually_gt_atTop (0 : ℝ)] with x hgt hxpos
+    have hxpos' : 0 < x := hxpos
+    have hcalc : x / 2 < θ x := by
+      calc x / 2 = (1 / 2) * x := by ring
+        _ < (θ x / x) * x := by nlinarith
+        _ = θ x := by field_simp
+    linarith
+  · filter_upwards [eventually_gt_atTop 0] with x hx
+    exact ne_of_gt hx
 
 -- Specific values
 theorem chebyshevTheta_two : θ 2 = Real.log 2 := by
