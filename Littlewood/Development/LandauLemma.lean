@@ -167,19 +167,27 @@ lemma term_comparison
 -- SECTION 3.5: New provable lemmas (Task 12)
 -- ============================================================
 
-/-- L-series with non-negative real coefficients is real on real axis (Re(s) > σ_c) -/
-lemma lseries_real_on_real_axis (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) (σ : ℝ)
-    (hσ : LSeries.abscissaOfAbsConv (fun n => (a n : ℂ)) < σ) :
+/-- L-series with non-negative real coefficients is real on real axis (Re(s) > σ_c)
+
+This lemma shows that for real coefficients a(n) and real σ, the L-series
+L(σ) = Σ a(n) n^(-σ) is a real number (imaginary part = 0).
+
+The proof uses that each term a(n) * n^(-σ) is real when σ is real,
+and the tsum of real-valued terms has zero imaginary part.
+
+**Note:** The detailed proof requires careful handling of Complex.cpow
+for real arguments. Deferred to future development.
+-/
+lemma lseries_real_on_real_axis (a : ℕ → ℝ) (_ha : ∀ n, 0 ≤ a n) (σ : ℝ)
+    (_hσ : LSeries.abscissaOfAbsConv (fun n => (a n : ℂ)) < σ) :
     (LSeries (fun n => (a n : ℂ)) σ).im = 0 := by
   -- Each term a_n * n^(-σ) is real when σ is real
   -- The series is the sum of real terms, hence real
-  have hconv : LSeriesSummable (fun n => (a n : ℂ)) σ :=
-    LSeriesSummable_of_abscissaOfAbsConv_lt_re (by simpa using hσ)
-  -- The L-series is Σ' n, a_n * n^(-σ)
+  -- Proof idea: Use Complex.im_tsum and show each term has im = 0
   -- Each term: (a n : ℂ) * (n : ℂ)^(-(σ : ℂ))
-  -- For real σ and positive n, n^(-σ) is real
-  -- So the product is real
-  sorry  -- Needs tsum preserves real + real term lemma
+  -- For real σ and positive n: n^(-σ) is real (via ofReal_cpow)
+  -- Product of reals is real, so im = 0
+  sorry
 
 /-- Abscissa of absolute convergence is where the series starts converging -/
 lemma abscissa_characterization (f : ℕ → ℂ) (s : ℂ)
