@@ -8,9 +8,9 @@ Each represents a classical theorem from analytic number theory not yet in Mathl
 These are PROVED theorems in classical mathematics—assumptions only because
 their Lean proofs await Mathlib infrastructure.
 
-## Current Status (as of Gauss integration)
-- Total instance sorries: 94
-- Proved from Gauss: 0 (hypothesis instance level)
+## Current Status (as of Task 11)
+- Total instance sorries: 92 (in this file) + 2 (in Development/)
+- Proved instances: 2 (ZeroConjZeroHyp, ZeroOneSubZeroHyp in ZeroCountingFunction.lean)
 - Theorem sorries fixed: 3 (ChebyshevFunctions.lean)
 
 ## Organization
@@ -24,15 +24,12 @@ Instances are organized by mathematical domain:
 7. Landau Lemma Family
 
 ## Note on Instance Location
-Currently, instances are ALSO defined in their respective module files:
-- Littlewood/CoreLemmas/LandauLemma.lean (9 instances)
-- Littlewood/CoreLemmas/WeightedAverageFormula.lean (7 instances)
-- Littlewood/ZetaZeros/SupremumRealPart.lean (4 instances)
-- Littlewood/ZetaZeros/ZeroCountingFunction.lean (2 instances)
-- Littlewood/ExplicitFormulas/ConversionFormulas.lean (2 instances)
-- Littlewood/Oscillation/SchmidtTheorem.lean (9 instances)
+Instances with REAL PROOFS (no sorry):
+- Littlewood/ZetaZeros/ZeroCountingFunction.lean:
+  - ZeroConjZeroHyp (proved via riemannZeta_conj)
+  - ZeroOneSubZeroHyp (proved via riemannZeta_one_sub functional equation)
 
-This file provides a CENTRALIZED view but is not currently imported.
+This file provides a CENTRALIZED view of remaining assumptions.
 
 ## References
 - [IK] Iwaniec & Kowalski, Analytic Number Theory
@@ -318,15 +315,11 @@ instance : ZetaZeros.ZeroGapsLowerBoundHyp := by
   refine ⟨?_⟩
   sorry
 
-instance : ZetaZeros.ZeroConjZeroHyp := by
-  refine ⟨?_⟩
-  intro ρ hρ
-  sorry
+-- NOTE: ZetaZeros.ZeroConjZeroHyp is PROVED in ZeroCountingFunction.lean
+-- (instance zeroConjZeroHyp_of_riemannZeta)
 
-instance : ZetaZeros.ZeroOneSubZeroHyp := by
-  refine ⟨?_⟩
-  intro ρ hρ
-  sorry
+-- NOTE: ZetaZeros.ZeroOneSubZeroHyp is PROVED in ZeroCountingFunction.lean
+-- (instance zeroOneSubZeroHyp_of_riemannZeta)
 
 -- ============================================================
 -- SECTION 7: Landau Lemma Hypotheses
