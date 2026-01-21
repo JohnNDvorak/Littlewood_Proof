@@ -259,6 +259,57 @@ theorem zetaLogDeriv_vonMangoldt (s : ℂ) (hs : 1 < s.re) :
 end ZetaApplication
 
 -- ============================================================
+-- SECTION: LSeries-Based Hypotheses (Task 42)
+-- ============================================================
+-- These hypotheses use Mathlib's LSeries infrastructure instead of
+-- the custom dirichletIntegral. This leverages:
+-- - LSeries_eq_mul_integral (Abel summation)
+-- - LSeries_analyticOnNhd (analyticity)
+-- - abscissaOfAbsConv (convergence abscissa)
+-- ============================================================
+
+/--
+LSeries-based Landau lemma hypothesis.
+For non-negative arithmetic functions, the L-series has a singularity
+at its abscissa of convergence.
+
+This is equivalent to LandauLemmaHyp but uses Mathlib's LSeries.
+-/
+class LandauLemmaLSeriesHyp : Prop where
+  singularity : ∀ (a : ℕ → ℝ), (∀ n, 0 ≤ a n) →
+    (∃ σ_c : ℝ, (∀ s : ℂ, σ_c < s.re → LSeriesSummable (fun n => (a n : ℂ)) s) ∧
+                (∀ s : ℂ, s.re < σ_c → ¬LSeriesSummable (fun n => (a n : ℂ)) s)) →
+    ∀ σ_c : ℝ, (∀ s : ℂ, σ_c < s.re → LSeriesSummable (fun n => (a n : ℂ)) s) →
+              (∀ s : ℂ, s.re < σ_c → ¬LSeriesSummable (fun n => (a n : ℂ)) s) →
+    ¬AnalyticAt ℂ (LSeries (fun n => (a n : ℂ))) σ_c
+
+/--
+For LSeries, analyticity in the convergence half-plane is FREE from Mathlib!
+-/
+theorem lseries_analytic_in_half_plane (f : ℕ → ℂ) :
+    AnalyticOnNhd ℂ (LSeries f) {s | LSeries.abscissaOfAbsConv f < s.re} :=
+  LSeries_analyticOnNhd f
+
+/--
+The abscissa of absolute convergence from Mathlib.
+-/
+noncomputable def lseriesAbscissa (a : ℕ → ℂ) : EReal :=
+  LSeries.abscissaOfAbsConv a
+
+/--
+Key connection: For arithmetic functions like von Mangoldt, we get analyticity
+directly from Mathlib without needing our dirichletIntegral hypotheses.
+-/
+theorem vonMangoldt_lseries_analytic (s : ℂ) (hs : 1 < s.re) :
+    AnalyticAt ℂ (LSeries (fun n => (ArithmeticFunction.vonMangoldt n : ℂ))) s := by
+  apply lseries_analytic_in_half_plane
+  simp only [Set.mem_setOf_eq]
+  -- The abscissa of abs convergence for von Mangoldt is 1
+  have h : LSeries.abscissaOfAbsConv (fun n => (ArithmeticFunction.vonMangoldt n : ℂ)) ≤ 1 := by
+    sorry -- This follows from vonMangoldt being bounded by log
+  exact lt_of_le_of_lt h (by exact_mod_cast hs)
+
+-- ============================================================
 -- INSTANCES (Documented Assumptions)
 -- ============================================================
 
