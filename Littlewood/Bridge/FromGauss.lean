@@ -69,15 +69,41 @@ theorem chebyshevTheta_eventually_ge_from_gauss :
 
 /-! ## Hypothesis Class Instances -/
 
--- Note: Most hypothesis classes in Littlewood require mathematical machinery
--- not yet available in Gauss. The following documents what would be needed:
+/-
+## Blocker Analysis for Hypothesis Instances
 
--- ZeroFreeRegionHyp: Gauss has riemannZeta.classicalZeroFree but the
--- definition structure differs slightly from Littlewood's ZeroFreeRegionHyp.
--- A wrapper would be needed to adapt the Gauss definition.
+The following hypotheses were identified as potentially derivable from Gauss,
+but detailed analysis reveals they cannot be derived at this time:
 
--- ChebyshevErrorBoundZeroFreeHyp: Gauss's MediumPNT provides
--- ∃ c > 0, (ψ - id) =O[atTop] (x * exp(-c * log^(1/10) x))
--- This is weaker than the exp(-c * sqrt(log x)) bound requested.
+### ZeroFreeRegionHyp
+- **Littlewood needs:** ∃ c > 0, ∀ ρ ∈ zetaNontrivialZeros, ρ.re < 1 - c / log(|ρ.im| + 2)
+- **Gauss provides:** riemannZeta.classicalZeroFree (R : ℝ) as a predicate, not existence
+- **Gauss status:** ZeroInequality theorem has `sorry`, MT_theorem_1 has `sorry`
+- **BLOCKED:** Definition mismatch + Gauss zero-free theorems unproven
+
+### ChebyshevErrorBoundZeroFreeHyp
+- **Littlewood needs:** |ψ(x) - x| ≤ C * x * exp(-c * √(log x))
+- **Gauss provides:** (ψ - id) =O[atTop] (x * exp(-c * log^(1/10) x)) via MediumPNT
+- **BLOCKED:** Gauss bound is WEAKER (1/10 < 1/2); cannot derive stronger from weaker
+
+### ChebyshevErrorBoundThetaHyp
+- **Littlewood needs:** |ψ(x) - x| ≤ 10 * x^Θ * log x (uses supremum Θ)
+- **BLOCKED:** Requires explicit formula + detailed zero analysis not in Gauss
+
+### ThetaPsiFirstCorrectionHyp
+- **Littlewood needs:** θ(x) = ψ(x) - ψ(√x) + E with |E| ≤ x^(1/3)
+- **Gauss provides:** ψ - θ = O(√x * log x) only as asymptotic
+- **BLOCKED:** Gauss gives asymptotic, not the exact formula structure
+
+### Summary
+- Derivable hypotheses: 0 (all blocked)
+- Theorem sorries fixed: 3 (chebyshevPsi_asymptotic, chebyshevTheta_asymptotic, chebyshevTheta_eventually_ge)
+- Instance sorries fixed: 0
+
+Future work would need:
+1. Complete Gauss's ZeroInequality proof
+2. Prove stronger PNT error bound in Gauss
+3. Add explicit formula machinery to Gauss
+-/
 
 end Littlewood.Bridge
