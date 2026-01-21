@@ -8,6 +8,9 @@ import Mathlib.NumberTheory.LSeries.Basic
 import Mathlib.NumberTheory.LSeries.Convergence
 import Mathlib.NumberTheory.LSeries.Deriv
 import Mathlib.Analysis.Normed.Field.Basic
+import Mathlib.Analysis.SpecialFunctions.Complex.Arg
+import Mathlib.Analysis.SpecialFunctions.Pow.Complex
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 /-!
 # Landau Lemma Development
@@ -167,6 +170,70 @@ lemma term_comparison
 -- SECTION 3.5: New provable lemmas (Task 12)
 -- ============================================================
 
+/-- For positive real x, x ^ real y has zero imaginary part (is real).
+
+The proof uses that log(x) for x > 0 has arg = 0, hence im(log x) = 0,
+so log(x) * y is real, and exp of a real is real.
+-/
+lemma cpow_ofReal_ofReal_im (x : ℝ) (hx : 0 < x) (y : ℝ) : ((x : ℂ) ^ (y : ℂ)).im = 0 := by
+  rw [Complex.cpow_def]
+  have hx_ne : (x : ℂ) ≠ 0 := by
+    simp only [ne_eq, Complex.ofReal_eq_zero]
+    linarith
+  simp only [hx_ne, ↓reduceIte]
+  have hlog_im : (Complex.log (x : ℂ)).im = 0 := by
+    rw [Complex.log_im]
+    exact Complex.arg_ofReal_of_nonneg (le_of_lt hx)
+  have hmul_im : (Complex.log (x : ℂ) * (y : ℂ)).im = 0 := by
+    rw [Complex.mul_im]
+    simp [hlog_im, Complex.ofReal_im]
+  have heq : Complex.log (x : ℂ) * (y : ℂ) = ↑((Complex.log (x : ℂ) * (y : ℂ)).re) := by
+    apply Complex.ext
+    · simp
+    · simp [hmul_im]
+  rw [heq]
+  exact Complex.exp_ofReal_im _
+
+/-- Each term of an L-series with real coefficients at real s has zero imaginary part. -/
+lemma lseries_term_im_eq_zero (a : ℕ → ℝ) (σ : ℝ) (n : ℕ) :
+    (LSeries.term (fun k => (a k : ℂ)) (σ : ℂ) n).im = 0 := by
+  unfold LSeries.term
+  split_ifs with h
+  · simp
+  · have hn : 0 < n := Nat.pos_of_ne_zero h
+    have hn_cpow_im : ((n : ℂ) ^ (σ : ℂ)).im = 0 := by
+      have : (n : ℂ) = ((n : ℝ) : ℂ) := by norm_cast
+      rw [this]
+      exact cpow_ofReal_ofReal_im n (Nat.cast_pos.mpr hn) σ
+    have hn_cpow_real : (n : ℂ) ^ (σ : ℂ) = ↑(((n : ℂ) ^ (σ : ℂ)).re) := by
+      apply Complex.ext <;> simp [hn_cpow_im]
+    have hre_pos : 0 < ((n : ℂ) ^ (σ : ℂ)).re := by
+      have heq : ((n : ℂ) ^ (σ : ℂ)).re = (n : ℝ) ^ σ := by
+        have h1 : (n : ℂ) = ((n : ℝ) : ℂ) := by norm_cast
+        rw [h1, ← Complex.ofReal_cpow (Nat.cast_nonneg n) σ]
+        simp
+      rw [heq]
+      exact Real.rpow_pos_of_pos (Nat.cast_pos.mpr hn) σ
+    have _hre_ne : ((n : ℂ) ^ (σ : ℂ)).re ≠ 0 := ne_of_gt hre_pos
+    rw [hn_cpow_real]
+    rw [div_eq_mul_inv]
+    have hinv_im : (↑(((n : ℂ) ^ (σ : ℂ)).re) : ℂ)⁻¹.im = 0 := by
+      rw [Complex.inv_def, Complex.normSq_ofReal, Complex.conj_ofReal]
+      simp
+    rw [Complex.mul_im]
+    simp [hinv_im]
+
+/-- Tsum of complex terms with zero imaginary part has zero imaginary part (when summable). -/
+lemma tsum_im_eq_zero_of_forall_im_eq_zero {f : ℕ → ℂ}
+    (hsum : Summable f) (him : ∀ n, (f n).im = 0) :
+    (∑' n, f n).im = 0 := by
+  have hhs := hsum.hasSum
+  rw [Complex.hasSum_iff] at hhs
+  have him' : (fun n => (f n).im) = (fun _ => 0) := funext him
+  rw [him'] at hhs
+  have h0 : HasSum (fun _ : ℕ => (0 : ℝ)) 0 := hasSum_zero
+  exact hhs.2.unique h0
+
 /-- L-series with non-negative real coefficients is real on real axis (Re(s) > σ_c)
 
 This lemma shows that for real coefficients a(n) and real σ, the L-series
@@ -179,15 +246,13 @@ and the tsum of real-valued terms has zero imaginary part.
 for real arguments. Deferred to future development.
 -/
 lemma lseries_real_on_real_axis (a : ℕ → ℝ) (_ha : ∀ n, 0 ≤ a n) (σ : ℝ)
-    (_hσ : LSeries.abscissaOfAbsConv (fun n => (a n : ℂ)) < σ) :
+    (hσ : LSeries.abscissaOfAbsConv (fun n => (a n : ℂ)) < σ) :
     (LSeries (fun n => (a n : ℂ)) σ).im = 0 := by
-  -- Each term a_n * n^(-σ) is real when σ is real
-  -- The series is the sum of real terms, hence real
-  -- Proof idea: Use Complex.im_tsum and show each term has im = 0
-  -- Each term: (a n : ℂ) * (n : ℂ)^(-(σ : ℂ))
-  -- For real σ and positive n: n^(-σ) is real (via ofReal_cpow)
-  -- Product of reals is real, so im = 0
-  sorry
+  -- LSeries f s = tsum (LSeries.term f s)
+  unfold LSeries
+  have hsum : Summable (LSeries.term (fun n => (a n : ℂ)) (σ : ℂ)) :=
+    LSeriesSummable_of_abscissaOfAbsConv_lt_re hσ
+  exact tsum_im_eq_zero_of_forall_im_eq_zero hsum (lseries_term_im_eq_zero a σ)
 
 /-- Abscissa of absolute convergence is where the series starts converging -/
 lemma abscissa_characterization (f : ℕ → ℂ) (s : ℂ)
