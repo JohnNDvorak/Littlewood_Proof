@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib.NumberTheory.LSeries.RiemannZeta
 import Mathlib.NumberTheory.LSeries.Nonvanishing
+import Mathlib.NumberTheory.LSeries.Dirichlet
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 
 /-!
@@ -38,22 +39,39 @@ open Complex Real Topology
 #check riemannZeta_ne_zero_of_one_lt_re
 -- ζ(s) ≠ 0 for Re(s) > 1 (Euler product region)
 
+#check riemannZeta_ne_zero_of_one_le_re
+-- ζ(s) ≠ 0 for Re(s) ≥ 1 (non-vanishing on critical line!)
+
 #check differentiableAt_riemannZeta
 -- ζ is differentiable away from s = 1
 
+#check riemannZeta_residue_one
+-- (s - 1) * ζ(s) → 1 as s → 1
+
+#check riemannZeta_eulerProduct
+-- Euler product formula
+
+#check ArithmeticFunction.LSeries_vonMangoldt_eq_deriv_riemannZeta_div
+-- L(Λ, s) = -ζ'/ζ(s)
+
 /-
-## What Mathlib Provides:
+## What Mathlib Provides (Updated Task 46):
 
 1. **Basic zeta function:** `riemannZeta : ℂ → ℂ`
 2. **Non-vanishing for Re(s) > 1:** `riemannZeta_ne_zero_of_one_lt_re`
-3. **Functional equation:** `riemannZeta_one_sub`
-4. **Differentiability:** `differentiableAt_riemannZeta`
+3. **Non-vanishing for Re(s) ≥ 1:** `riemannZeta_ne_zero_of_one_le_re` ✓ NEW!
+4. **Functional equation:** `riemannZeta_one_sub`
+5. **Differentiability:** `differentiableAt_riemannZeta`
+6. **Residue at 1:** `riemannZeta_residue_one` ✓ USEFUL!
+7. **Euler product:** `riemannZeta_eulerProduct`, `riemannZeta_eulerProduct_exp_log` ✓ NEW!
+8. **Product bound:** `DirichletCharacter.norm_LSeries_product_ge_one` ✓ NEW!
+9. **3-4-1 inequality:** `DirichletCharacter.re_log_comb_nonneg` ✓ NEW!
+10. **Log derivative:** `ArithmeticFunction.LSeries_vonMangoldt_eq_deriv_riemannZeta_div` ✓ NEW!
 
-## What's Missing:
+## What's Still Missing:
 
-1. **Logarithmic derivative:** No `-ζ'/ζ` infrastructure
-2. **Euler product expansion:** Limited in critical strip
-3. **Zero-free region bounds:** No de la Vallée Poussin theorem
+1. **Quantitative zero-free region:** σ > 1 - c/log|t| (de la Vallée Poussin)
+   - We have Re(s) = 1 non-vanishing, but not the interior region
 -/
 
 -- ============================================================
@@ -80,6 +98,50 @@ theorem trig_inequality (θ : ℝ) : 3 + 4 * Real.cos θ + Real.cos (2 * θ) ≥
 theorem trig_identity (θ : ℝ) : 3 + 4 * Real.cos θ + Real.cos (2 * θ) = 2 * (1 + Real.cos θ) ^ 2 := by
   have h : Real.cos (2 * θ) = 2 * Real.cos θ ^ 2 - 1 := Real.cos_two_mul θ
   rw [h]; ring
+
+-- ============================================================
+-- SECTION 2.5: Mathlib-derived non-vanishing results (Task 46)
+-- ============================================================
+
+/-- **PROVED FROM MATHLIB**: ζ(s) ≠ 0 for Re(s) ≥ 1.
+
+This is the KEY result that was missing! Mathlib now has this via
+the 3-4-1 inequality applied to Dirichlet L-functions.
+-/
+theorem zeta_ne_zero_on_one_line (s : ℂ) (hs : 1 ≤ s.re) : riemannZeta s ≠ 0 :=
+  riemannZeta_ne_zero_of_one_le_re hs
+
+/-- **PROVED FROM MATHLIB**: ζ(1 + it) ≠ 0 for all t ∈ ℝ.
+
+This is the critical line non-vanishing that's crucial for PNT.
+-/
+theorem zeta_ne_zero_on_critical_line (t : ℝ) : riemannZeta (1 + t * I) ≠ 0 := by
+  apply zeta_ne_zero_on_one_line
+  simp [Complex.add_re, Complex.one_re, Complex.mul_re, Complex.I_re, Complex.I_im]
+
+/-- **PROVED FROM MATHLIB**: The residue of ζ at s = 1 is 1.
+
+(s - 1) * ζ(s) → 1 as s → 1.
+-/
+theorem zeta_residue_at_one : Filter.Tendsto (fun s => (s - 1) * riemannZeta s)
+    (nhdsWithin 1 {(1 : ℂ)}ᶜ) (nhds 1) :=
+  riemannZeta_residue_one
+
+/-- **PROVED FROM MATHLIB**: The Euler product formula for ζ(s), Re(s) > 1. -/
+theorem zeta_euler_product (s : ℂ) (hs : 1 < s.re) :
+    riemannZeta s = ∏' p : Nat.Primes, (1 - (p : ℂ) ^ (-s))⁻¹ :=
+  (riemannZeta_eulerProduct_tprod hs).symm
+
+/-- **PROVED FROM MATHLIB**: The log of Euler product. -/
+theorem zeta_euler_product_log (s : ℂ) (hs : 1 < s.re) :
+    Complex.exp (∑' p : Nat.Primes, -Complex.log (1 - (p : ℂ) ^ (-s))) = riemannZeta s :=
+  riemannZeta_eulerProduct_exp_log hs
+
+/-- **PROVED FROM MATHLIB**: The von Mangoldt identity -ζ'/ζ = L(Λ, s). -/
+theorem neg_zeta_logderiv_eq_vonMangoldt (s : ℂ) (hs : 1 < s.re) :
+    LSeries (fun n => (ArithmeticFunction.vonMangoldt n : ℂ)) s =
+    -deriv riemannZeta s / riemannZeta s :=
+  ArithmeticFunction.LSeries_vonMangoldt_eq_deriv_riemannZeta_div hs
 
 -- ============================================================
 -- SECTION 3: The classical argument (outline)
@@ -128,20 +190,41 @@ noncomputable def zetaLogDeriv (s : ℂ) : ℂ :=
 for σ > 1.
 
 This is the key non-negativity that implies the zero-free region.
+
+**NOTE (Task 46):** Mathlib has `DirichletCharacter.re_log_comb_nonneg` which proves
+this for Dirichlet L-functions. The proof uses this to derive non-vanishing on Re(s) = 1.
+We inherit the result via `riemannZeta_ne_zero_of_one_le_re`.
 -/
 theorem mertens_inequality_stub (σ : ℝ) (t : ℝ) (hσ : 1 < σ) :
     3 * (zetaLogDeriv σ).re + 4 * (zetaLogDeriv (σ + t * I)).re +
     (zetaLogDeriv (σ + 2 * t * I)).re ≥ 0 := by
-  sorry
+  -- This follows from DirichletCharacter.re_log_comb_nonneg for trivial character
+  -- The key insight is that Mathlib already uses this to prove non-vanishing
+  -- See DirichletCharacter.norm_LSeries_product_ge_one
+  sorry -- BLOCKED: Need to extract from Dirichlet character framework
 
 /-- Stub: Zero-free region.
 
 There exists c > 0 such that ζ(s) ≠ 0 for Re(s) > 1 - c/log(|Im(s)|+2).
+
+**NOTE (Task 46):** Mathlib proves ζ(s) ≠ 0 for Re(s) ≥ 1 via `riemannZeta_ne_zero_of_one_le_re`.
+This is STRONGER than the boundary case but does not give the quantitative interior region.
+The de la Vallée Poussin region σ > 1 - c/log|t| requires additional analysis.
 -/
 theorem zero_free_region_stub :
     ∃ c : ℝ, 0 < c ∧ ∀ s : ℂ, s.re > 1 - c / Real.log (|s.im| + 2) →
     riemannZeta s ≠ 0 := by
-  sorry
+  -- For the boundary case Re(s) = 1, we have Mathlib's result
+  -- For the interior region, we need quantitative bounds from the 3-4-1 argument
+  -- The qualitative version is: use riemannZeta_ne_zero_of_one_le_re for Re(s) ≥ 1
+  use 0.001 -- placeholder
+  constructor
+  · norm_num
+  · intro s hs
+    by_cases h : 1 ≤ s.re
+    · exact riemannZeta_ne_zero_of_one_le_re h
+    · -- Interior region: need de la Vallée Poussin analysis
+      sorry -- BLOCKED: quantitative zero-free region
 
 -- ============================================================
 -- SECTION 4.5: Building from trig_inequality (Task 16)
@@ -167,15 +250,21 @@ This means: |ζ(σ)|³ |ζ(σ+it)|⁴ |ζ(σ+2it)| ≥ 1
 For σ > 1 and any t, we have: |ζ(σ)|³ |ζ(σ+it)|⁴ |ζ(σ+2it)| ≥ 1
 
 This is the key inequality that prevents zeros near σ = 1.
+
+**NOTE (Task 46):** Mathlib has `DirichletCharacter.norm_LSeries_product_ge_one` for
+L-functions of Dirichlet characters. For trivial character N=1, this gives exactly
+this inequality for the Riemann zeta function!
 -/
 theorem zeta_product_lower_bound (σ : ℝ) (t : ℝ) (hσ : 1 < σ) :
     ‖riemannZeta σ‖ ^ 3 * ‖riemannZeta (σ + t * I)‖ ^ 4 *
     ‖riemannZeta (σ + 2 * t * I)‖ ≥ 1 := by
-  -- The proof uses log of both sides and trig_inequality
-  -- log LHS = 3 log|ζ(σ)| + 4 log|ζ(σ+it)| + log|ζ(σ+2it)|
-  -- Each log|ζ| term expands via Euler product
-  -- The trig inequality ensures the sum is ≥ 0
-  sorry
+  -- Mathlib's DirichletCharacter.norm_LSeries_product_ge_one gives:
+  -- ‖L(χ^0, 1+x)^3 * L(χ, 1+x+iy)^4 * L(χ², 1+x+2iy)‖ ≥ 1
+  -- For trivial character, L(1, s) = ζ(s)
+  -- Setting x = σ - 1, y = t gives our result
+  have hx : 0 < σ - 1 := by linarith
+  -- The issue is converting from Mathlib's L-function notation
+  sorry -- BLOCKED: needs extraction from Dirichlet character framework
 
 /-- Consequence: If ζ(σ + it) = 0 with t ≠ 0, then |ζ(σ)| → ∞ as σ → 1+.
 
@@ -201,17 +290,33 @@ More precisely: (σ-1)|ζ(σ)| → 1 as σ → 1+.
 lemma zeta_pole_behavior :
     Filter.Tendsto (fun σ : ℝ => (σ - 1) * ‖riemannZeta σ‖)
     (nhdsWithin 1 (Set.Ioi 1)) (nhds 1) := by
-  sorry
+  -- Use Mathlib's riemannZeta_residue_one and restrict to reals
+  -- The key is that for real σ > 1, ζ(σ) is real and positive
+  -- so ‖ζ(σ)‖ = ζ(σ) and (σ-1)ζ(σ) → 1
+  have hres := riemannZeta_residue_one
+  -- Need to convert from complex to real
+  -- This requires showing ζ(σ) is real and positive for real σ > 1
+  sorry -- BLOCKED: needs ζ real-valued on reals > 1
 
 /-- The logarithmic derivative has a simple pole at s = 1.
 
 -ζ'(s)/ζ(s) = 1/(s-1) + holomorphic part
+
+**NOTE (Task 46):** Mathlib has `riemannZeta_residue_one` which gives (s-1)ζ(s) → 1.
+Combined with differentiability, this implies -ζ'/ζ has a simple pole at 1.
+The residue is -1 (from the logarithmic derivative of (s-1) factor).
 -/
 lemma neg_zeta_logderiv_expansion :
     ∃ f : ℂ → ℂ, AnalyticAt ℂ f 1 ∧
     ∀ᶠ s in nhdsWithin (1 : ℂ) {(1 : ℂ)}ᶜ,
       zetaLogDeriv s = 1 / (s - 1) + f s := by
-  sorry
+  -- From riemannZeta_residue_one: (s-1)ζ(s) → 1
+  -- So ζ(s) ~ 1/(s-1) + g(s) where g is analytic
+  -- Then ζ'(s) ~ -1/(s-1)² + g'(s)
+  -- And -ζ'/ζ = -(-1/(s-1)² + g') / (1/(s-1) + g)
+  --           = (1/(s-1)² - g') · (s-1)/(1 + (s-1)g)
+  --           = 1/(s-1) + ... (after expansion)
+  sorry -- BLOCKED: needs Laurent expansion extraction
 
 /-- The bound on -Re(ζ'/ζ) for σ > 1.
 
@@ -233,51 +338,78 @@ Combining the product inequality with the pole behavior, we get:
 3. As σ → 1+: |ζ(σ)| ~ 1/(σ-1), bounded |ζ(σ+2iγ)|
 4. Get: 1/(σ-1)³ · M ≥ 1, so (σ-1)³ ≤ M
 5. The zero β pushes this bound, giving β ≤ 1 - c/log|γ|
+
+**NOTE (Task 46):** Mathlib proves the BOUNDARY case ζ(s) ≠ 0 for Re(s) ≥ 1.
+The quantitative interior region requires extracting the constant c from the
+3-4-1 argument. This is the remaining gap for zero-free regions.
 -/
 theorem de_la_vallee_poussin_zero_free :
     ∃ c : ℝ, 0 < c ∧ ∀ s : ℂ, 0 < s.im →
       s.re ≥ 1 - c / Real.log (s.im + 2) →
       riemannZeta s ≠ 0 := by
-  sorry
+  -- For s.re ≥ 1, use Mathlib's riemannZeta_ne_zero_of_one_le_re
+  -- For 1 - c/log(t) < s.re < 1, need quantitative analysis
+  use 0.001 -- placeholder for actual constant
+  constructor
+  · norm_num
+  · intro s hpos hre
+    by_cases h : 1 ≤ s.re
+    · exact riemannZeta_ne_zero_of_one_le_re h
+    · sorry -- BLOCKED: quantitative interior region
 
 -- ============================================================
--- SECTION 5: Gap Analysis
+-- SECTION 5: Gap Analysis (Updated Task 46)
 -- ============================================================
 
 /-
-## Gap Analysis for Zero-Free Region
+## Gap Analysis for Zero-Free Region (Updated Task 46)
 
-### What We Can Prove Now:
+### What We CAN Prove Now (from Mathlib):
 1. ✓ Trigonometric inequality (proved above)
 2. ✓ ζ(s) ≠ 0 for Re(s) > 1 (from Mathlib)
-3. ✓ Differentiability of ζ (from Mathlib)
+3. ✓ ζ(s) ≠ 0 for Re(s) ≥ 1 (NEW! `riemannZeta_ne_zero_of_one_le_re`)
+4. ✓ ζ(1 + it) ≠ 0 for all t (NEW! `zeta_ne_zero_on_critical_line`)
+5. ✓ Euler product formula (from Mathlib)
+6. ✓ Euler product log form (from Mathlib)
+7. ✓ -ζ'/ζ = L(Λ,s) identity (from Mathlib)
+8. ✓ Residue at s=1 (from Mathlib)
+9. ✓ Product bound |ζ|³|ζ|⁴|ζ| ≥ 1 (in Mathlib as DirichletCharacter theorem)
+10. ✓ 3-4-1 inequality (in Mathlib as re_log_comb_nonneg)
+11. ✓ Differentiability of ζ (from Mathlib)
 
-### What Needs Development:
+### NEW THEOREMS PROVED (Task 46):
+- `zeta_ne_zero_on_one_line` - Direct wrapper for Mathlib result
+- `zeta_ne_zero_on_critical_line` - ζ(1+it) ≠ 0 for all t
+- `zeta_residue_at_one` - Residue wrapper
+- `zeta_euler_product` - Euler product wrapper
+- `zeta_euler_product_log` - Log Euler product wrapper
+- `neg_zeta_logderiv_eq_vonMangoldt` - Log derivative identity wrapper
 
-1. **Euler Product in Critical Strip:**
-   - Mathlib has Euler product for Re(s) > 1
-   - Need extension/bounds for 0 < Re(s) ≤ 1
+### What's Still Blocked:
 
-2. **Logarithmic Derivative Expansion:**
-   - Need: -ζ'/ζ(s) = Σ Λ(n) n^(-s) for Re(s) > 1
-   - Need: pole structure at s = 1
+1. **Quantitative Zero-Free Region:**
+   - Mathlib proves Re(s) = 1 non-vanishing (boundary)
+   - Missing: σ > 1 - c/log|t| (interior region with explicit c)
 
-3. **Mertens-Type Bounds:**
-   - Need: -Re(ζ'/ζ(σ)) ≤ 1/(σ-1) + O(1) as σ → 1+
-   - Need: bounds on -ζ'/ζ(σ+it) for t ≠ 0
+2. **Extraction from Dirichlet Framework:**
+   - Mathlib's results are in DirichletCharacter namespace
+   - Need to specialize `norm_LSeries_product_ge_one` to riemannZeta
 
-4. **Zero-Free Region Derivation:**
-   - Combine above with trig inequality
-   - Careful asymptotic analysis
+3. **Real-Valued Zeta on Reals:**
+   - For σ > 1, ζ(σ) is real and positive
+   - Blocks converting residue to norm form
 
-### Difficulty: HARD
-This requires substantial development beyond current Mathlib.
-The trigonometric inequality is the easy part; the analysis is hard.
+### Summary of Sorries (8 total, down from needing full proofs):
+- mertens_inequality_stub: BLOCKED (Dirichlet extraction)
+- zero_free_region_stub: PARTIAL (boundary OK, interior blocked)
+- zeta_product_lower_bound: BLOCKED (Dirichlet extraction)
+- zero_forces_zeta_large: BLOCKED (depends on above)
+- zeta_pole_behavior: BLOCKED (real-valued zeta)
+- neg_zeta_logderiv_expansion: BLOCKED (Laurent extraction)
+- neg_zeta_logderiv_re_bound: BLOCKED
+- de_la_vallee_poussin_zero_free: PARTIAL (boundary OK, interior blocked)
 
-### Potential Shortcuts:
-1. Assume logarithmic derivative properties as hypotheses
-2. Focus on the logical structure, not the analysis
-3. Use existing Gauss project work if available
+### Progress: 6 new theorems proved from Mathlib! Key result: ζ(1+it) ≠ 0 ∀t
 -/
 
 end Littlewood.Development.ZeroFreeRegion
