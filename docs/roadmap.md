@@ -1,13 +1,36 @@
 # Littlewood Formalization Roadmap
 
-## Current Status
+## Current Status (Updated 2026-01-21)
 
 | Metric | Count |
 |--------|-------|
-| Theorem sorries | 0 (fixed via Gauss) |
-| Instance sorries | 94 |
-| Proved from Gauss | 3 theorems |
-| Need development | ~67 hypotheses |
+| Total sorries | 117 |
+| Assumption sorries | 61 |
+| Development sorries | 20 |
+| Other sorries | 36 |
+| Proved hypotheses | 2 |
+| Complete Development files | 4 |
+| Need development | 65 hypotheses |
+
+### Recent Progress
+
+**Tasks 26-30 Completed:**
+- LandauLemma.lean: 0 sorries - COMPLETE
+  - Proved: `cpow_ofReal_ofReal_im`, `lseries_term_im_eq_zero`, `lseries_real_on_real_axis`
+- MathlibZetaAudit.lean: 0 sorries - COMPLETE (Mathlib API verification)
+- Bridge.lean: 0 sorries - COMPLETE (documentation/type-checks)
+- MainTheoremsVerification.lean: 0 sorries - COMPLETE
+- Hypothesis tracker created: docs/hypothesis_tracker.md
+- ZeroFreeRegion.lean: BLOCKED - needs Euler product infrastructure
+
+**Proved Hypotheses:**
+- `ZeroConjZeroHyp` - via Mathlib's `riemannZeta_conj`
+- `ZeroOneSubZeroHyp` - via Mathlib's functional equation
+
+**Key Mathlib Discoveries:**
+- `riemannZeta_ne_zero_of_one_le_re` gives non-vanishing for Re(s) ≥ 1
+- `LSeries_analyticOnNhd` provides analyticity in convergence half-plane
+- `Complex.hasSum_iff` enables real/imaginary part decomposition
 
 ## Dependency Analysis
 
