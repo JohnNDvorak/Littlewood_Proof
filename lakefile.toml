@@ -7,5 +7,10 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "master"
 
+[[require]]
+name = "PrimeNumberTheoremAnd"
+git = "https://github.com/AlexKontorovich/PrimeNumberTheoremAnd"
+rev = "main"
+
 [[lean_lib]]
 name = "Littlewood"
