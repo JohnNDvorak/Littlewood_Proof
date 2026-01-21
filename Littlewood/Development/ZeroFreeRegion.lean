@@ -100,6 +100,58 @@ theorem trig_identity (θ : ℝ) : 3 + 4 * Real.cos θ + Real.cos (2 * θ) = 2 *
   rw [h]; ring
 
 -- ============================================================
+-- SECTION 2.3: Connection to Mathlib's re_log_comb_nonneg (Task 47)
+-- ============================================================
+
+/-
+## Connection: trig_inequality ↔ Mathlib's re_log_comb_nonneg
+
+Our `trig_inequality`: 3 + 4cos(θ) + cos(2θ) ≥ 0
+
+Mathlib's `re_log_comb_nonneg'` (private, but we explain the connection):
+  0 ≤ 3·Re(-log(1-a)) + 4·Re(-log(1-az)) + Re(-log(1-az²))
+
+**Key Insight:**
+Using the Taylor series -log(1-x) = Σₙ xⁿ/n for |x| < 1:
+  -log(1-a) = a + a²/2 + a³/3 + ...
+  -log(1-az) = az + (az)²/2 + ...
+  -log(1-az²) = az² + (az²)²/2 + ...
+
+Taking the combination with coefficients 3, 4, 1:
+  3·(-log(1-a)) + 4·(-log(1-az)) + (-log(1-az²))
+  = Σₙ (aⁿ/n) · [3 + 4·Re(zⁿ) + Re(z²ⁿ)]
+
+When z = e^(iθ), we get Re(zⁿ) = cos(nθ), so the bracket becomes:
+  3 + 4·cos(nθ) + cos(2nθ) ≥ 0  (by trig_inequality with argument nθ)
+
+Since each term in the sum is non-negative, the sum is non-negative.
+This is exactly how Mathlib proves `re_log_comb_nonneg'`!
+
+**Public Access:**
+While `re_log_comb_nonneg'` is private in Mathlib, its consequence
+`DirichletCharacter.norm_LSeries_product_ge_one` is public and gives:
+  ‖L(χ⁰, 1+x)³ · L(χ, 1+x+iy)⁴ · L(χ², 1+x+2iy)‖ ≥ 1
+
+This is the product bound that implies non-vanishing on Re(s) = 1.
+-/
+
+/-- The coefficients 3, 4, 1 in trig_inequality come from Mertens's insight:
+    using (1+z)² = 1 + 2z + z² expands as:
+    (3 + 4cos(θ) + cos(2θ)) = 2(1 + cos(θ))² ≥ 0.
+
+    This same pattern appears in Mathlib's non-vanishing proof. -/
+theorem trig_coefficients_explanation (θ : ℝ) :
+    3 + 4 * Real.cos θ + Real.cos (2 * θ) =
+    2 * (1 + Real.cos θ) ^ 2 := trig_identity θ
+
+/-- For completeness: another proof of trig_inequality using norm bound.
+    If |z| = 1, then |1 + z|² = (1 + Re(z))·2 when z = e^(iθ). -/
+theorem trig_inequality_via_norm (θ : ℝ) : 3 + 4 * Real.cos θ + Real.cos (2 * θ) ≥ 0 := by
+  rw [trig_identity θ]
+  apply mul_nonneg (by norm_num : (2 : ℝ) ≥ 0)
+  exact sq_nonneg _
+
+-- ============================================================
 -- SECTION 2.5: Mathlib-derived non-vanishing results (Task 46)
 -- ============================================================
 
