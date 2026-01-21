@@ -158,7 +158,10 @@ lemma term_comparison
     a n * (n : ℝ)^(-σ₂) ≤ a n * (n : ℝ)^(-σ₁) := by
   -- Key insight: for x ≥ 1 and y ≤ z, we have x^y ≤ x^z
   -- Here x = n ≥ 1, y = -σ₂ < -σ₁ = z
-  sorry  -- Requires careful case split on n = 1 vs n > 1
+  apply mul_le_mul_of_nonneg_left _ (ha n)
+  have hn_ge_one : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  have hexp : -σ₂ ≤ -σ₁ := neg_le_neg_iff.mpr (le_of_lt hσ)
+  exact Real.rpow_le_rpow_of_exponent_le hn_ge_one hexp
 
 -- ============================================================
 -- SECTION 3.5: New provable lemmas (Task 12)
