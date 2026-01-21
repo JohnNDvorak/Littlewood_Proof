@@ -253,7 +253,8 @@ theorem mertens_inequality_stub (σ : ℝ) (t : ℝ) (hσ : 1 < σ) :
   -- This follows from DirichletCharacter.re_log_comb_nonneg for trivial character
   -- The key insight is that Mathlib already uses this to prove non-vanishing
   -- See DirichletCharacter.norm_LSeries_product_ge_one
-  sorry -- BLOCKED: Need to extract from Dirichlet character framework
+  sorry -- BLOCKED: Need to specialize DirichletCharacter.norm_LSeries_product_ge_one to trivial char
+         -- Mathlib PR needed: Trivial character specialization (MEDIUM complexity)
 
 /-- Stub: Zero-free region.
 
@@ -316,7 +317,8 @@ theorem zeta_product_lower_bound (σ : ℝ) (t : ℝ) (hσ : 1 < σ) :
   -- Setting x = σ - 1, y = t gives our result
   have hx : 0 < σ - 1 := by linarith
   -- The issue is converting from Mathlib's L-function notation
-  sorry -- BLOCKED: needs extraction from Dirichlet character framework
+  sorry -- BLOCKED: Same as mertens_inequality_stub - needs Dirichlet char specialization
+         -- Depends on: DirichletCharacter.norm_LSeries_product_ge_one
 
 /-- Consequence: If ζ(σ + it) = 0 with t ≠ 0, then |ζ(σ)| → ∞ as σ → 1+.
 
