@@ -304,10 +304,86 @@ theorem vonMangoldt_lseries_analytic (s : ℂ) (hs : 1 < s.re) :
     AnalyticAt ℂ (LSeries (fun n => (ArithmeticFunction.vonMangoldt n : ℂ))) s := by
   apply lseries_analytic_in_half_plane
   simp only [Set.mem_setOf_eq]
-  -- The abscissa of abs convergence for von Mangoldt is 1
-  have h : LSeries.abscissaOfAbsConv (fun n => (ArithmeticFunction.vonMangoldt n : ℂ)) ≤ 1 := by
-    sorry -- This follows from vonMangoldt being bounded by log
-  exact lt_of_le_of_lt h (by exact_mod_cast hs)
+  -- The abscissa of abs convergence for von Mangoldt is ≤ 1
+  -- because it's summable for any Re(s) > 1
+  have habscissa : LSeries.abscissaOfAbsConv
+      (fun n => (ArithmeticFunction.vonMangoldt n : ℂ)) ≤ 1 := by
+    apply LSeries.abscissaOfAbsConv_le_of_forall_lt_LSeriesSummable
+    intro y hy
+    exact ArithmeticFunction.LSeriesSummable_vonMangoldt hy
+  exact lt_of_le_of_lt habscissa (by exact_mod_cast hs)
+
+/--
+The von Mangoldt L-series is summable for Re(s) > 1. This is FREE from Mathlib!
+-/
+theorem vonMangoldt_lseries_summable (s : ℂ) (hs : 1 < s.re) :
+    LSeriesSummable (fun n => (ArithmeticFunction.vonMangoldt n : ℂ)) s :=
+  ArithmeticFunction.LSeriesSummable_vonMangoldt hs
+
+-- ============================================================
+-- SECTION: VonMangoldt Identity and Gap #1 Connection (Task 43)
+-- ============================================================
+-- The key identity from Mathlib:
+--   L ↗Λ s = -deriv riemannZeta s / riemannZeta s
+-- This is `ArithmeticFunction.LSeries_vonMangoldt_eq_deriv_riemannZeta_div`
+--
+-- IMPLICATIONS FOR GAP #1 (Euler Product):
+-- The identity -ζ'/ζ = Σ Λ(n)/n^s is proved in Mathlib for Re(s) > 1.
+-- This is the KEY CONNECTION between:
+--   - Dirichlet series world (Landau lemma, LSeries)
+--   - Zeta function world (zeros, poles, analytic properties)
+--
+-- What remains for Gap #1:
+-- 1. Euler product: ζ(s) = Π_p (1 - p^{-s})^{-1} for Re(s) > 1
+--    → Mathlib has this implicitly via product formulas
+-- 2. Log of Euler product: log ζ(s) = Σ_p Σ_k p^{-ks}/k
+--    → Not directly in Mathlib
+-- 3. Zero-free region via 3-4-1 inequality
+--    → Requires log ζ infrastructure
+-- ============================================================
+
+/--
+PROVED FROM MATHLIB: The connection between von Mangoldt LSeries and
+the logarithmic derivative of zeta. This is the bridge between
+Landau lemma world and zeta zero analysis.
+
+This identity is what makes Landau's lemma relevant to the zeta function:
+if ζ(ρ) = 0, then -ζ'/ζ has a pole at ρ, which (by this identity) means
+the von Mangoldt series has a singularity there.
+-/
+theorem vonMangoldt_eq_neg_zeta_logderiv (s : ℂ) (hs : 1 < s.re) :
+    LSeries (fun n => (ArithmeticFunction.vonMangoldt n : ℂ)) s =
+    -deriv riemannZeta s / riemannZeta s := by
+  -- Mathlib's statement uses ↗Λ which is definitionally equal
+  exact ArithmeticFunction.LSeries_vonMangoldt_eq_deriv_riemannZeta_div hs
+
+/--
+For the Chebyshev function connection: ψ(x) = Σ_{n ≤ x} Λ(n)
+The Mellin transform of ψ gives the von Mangoldt L-series.
+-/
+noncomputable def chebyshevPsi (x : ℝ) : ℝ :=
+  ∑ n ∈ Finset.Icc 1 (Nat.floor x), ArithmeticFunction.vonMangoldt n
+
+/--
+Connection to ZetaLogDerivPoleHyp: the key use of Landau's lemma
+for zeta zeros is that:
+1. L(Λ, s) = -ζ'/ζ(s) for Re(s) > 1
+2. Λ(n) ≥ 0 for all n
+3. By Landau's lemma, L(Λ, s) has a singularity at its abscissa of convergence
+4. If ζ(ρ) = 0 with 0 < Re(ρ) < 1, then -ζ'/ζ has a pole at ρ
+5. Therefore, the abscissa of convergence of L(Λ, s) is ≥ Re(ρ)
+
+This is the structural connection between Landau lemma and ZetaLogDerivPoleHyp.
+-/
+theorem zeta_zero_implies_vonMangoldt_singularity (ρ : ℂ) (hρ : riemannZeta ρ = 0)
+    (hρ_re : 0 < ρ.re) (hρ_re' : ρ.re < 1) [ZetaLogDerivPoleHyp] :
+    ¬AnalyticAt ℂ (LSeries (fun n => (ArithmeticFunction.vonMangoldt n : ℂ))) ρ := by
+  intro hanalytic
+  -- The von Mangoldt LSeries equals -ζ'/ζ for Re(s) > 1
+  -- If analytic at ρ, it would need to match -ζ'/ζ which has a pole there
+  have hpole := ZetaLogDerivPoleHyp.pole_at_zero ρ hρ
+  -- The proof requires analytic continuation arguments
+  sorry -- BLOCKED: Need analytic continuation from Re(s) > 1 to ρ
 
 -- ============================================================
 -- INSTANCES (Documented Assumptions)
