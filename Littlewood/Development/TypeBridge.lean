@@ -319,9 +319,77 @@ This requires showing partial sums are unbounded, which needs:
 - Monotone convergence for non-negative terms
 - Connection between series divergence and sum divergence to +∞
 
-## Status: BLOCKED
-Needs theorem: For f : ℕ → ℝ≥0, ¬Summable f ↔ ∑ f(n) → +∞
+## Status: PARTIALLY ADDRESSED (Task 48)
+Needs theorem: For f : ℕ → ℝ≥0, ¬Summable f → partial sums → +∞
 -/
+
+-- ============================================================
+-- SECTION 10: Divergent Non-Negative Series (Task 48)
+-- ============================================================
+
+/--
+For non-negative real sequences, partial sums are monotone increasing.
+-/
+theorem partial_sums_monotone (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) :
+    Monotone (fun N => ∑ n ∈ Finset.range N, a n) := by
+  intro n m hnm
+  -- Sum over larger range ≥ sum over smaller range for non-negative terms
+  have hsub := Finset.range_subset.mpr hnm
+  calc ∑ i ∈ Finset.range n, a i
+      ≤ ∑ i ∈ Finset.range n, a i + ∑ i ∈ Finset.range m \ Finset.range n, a i := by
+        apply le_add_of_nonneg_right
+        apply Finset.sum_nonneg
+        intro i _
+        exact ha i
+    _ = ∑ i ∈ Finset.range m, a i := by
+        rw [← Finset.sum_union (Finset.disjoint_sdiff)]
+        congr 1
+        exact (Finset.union_sdiff_of_subset hsub).symm
+
+/--
+**KEY LEMMA (Task 48):** Non-negative divergent series have partial sums → +∞.
+
+This is the missing piece for the Landau boundary theorem.
+
+**Proof Strategy:**
+1. Partial sums are monotone (adding non-negative terms)
+2. If bounded above, would be Cauchy, hence convergent
+3. But series diverges, so must be unbounded
+4. Monotone + unbounded ⟹ tends to +∞
+
+Uses `tendsto_atTop_atTop_of_monotone` from Mathlib.
+-/
+theorem nonneg_divergent_partial_sums_tendsto_top
+    (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) (hdiv : ¬Summable a) :
+    Filter.Tendsto (fun N => ∑ n ∈ Finset.range N, a n) Filter.atTop Filter.atTop := by
+  -- Use Mathlib's tendsto_atTop_atTop_of_monotone: monotone + unbounded ⟹ tends to atTop
+  apply Filter.tendsto_atTop_atTop_of_monotone
+  · -- Monotone: adding non-negative terms
+    exact partial_sums_monotone a ha
+  · -- Unbounded: if bounded, would be summable (contrapositive)
+    intro b
+    by_contra h
+    push_neg at h
+    -- h : ∀ N, ∑ n ∈ range N, a n ≤ b
+    -- Bounded monotone ⟹ convergent ⟹ summable
+    have hsummable : Summable a := by
+      -- For non-negative series, bounded partial sums implies summability
+      sorry -- BLOCKED: Need Mathlib's summable_of_nonneg_of_le or similar
+    exact hdiv hsummable
+
+/--
+Corollary: For complex-valued functions with non-negative real parts on reals,
+divergent series have LSeries values tending to infinity.
+-/
+theorem lseries_real_tendsto_top_of_nonneg_divergent
+    (f : ℕ → ℝ) (hf : ∀ n, 0 ≤ f n) (σ_c : ℝ)
+    (hdiv : ¬LSeriesSummable (fun n => (f n : ℂ)) σ_c) :
+    Filter.Tendsto (fun σ : ℝ => (LSeries (fun n => (f n : ℂ)) σ).re)
+      (nhdsWithin σ_c (Set.Ioi σ_c)) Filter.atTop := by
+  -- As σ → σ_c⁺, the series L(σ) = ∑ f(n)/n^σ increases to +∞
+  -- because f(n)/n^σ ≥ f(n)/n^(σ_c) and the latter diverges
+  sorry -- BLOCKED: needs L-series monotonicity in σ for nonneg coeffs
+
 theorem landau_lseries_not_analytic_at_boundary
     (f : ℕ → ℝ) (hf : ∀ n, 0 ≤ f n) (σ_c : ℝ)
     (hconv : ∀ s : ℂ, σ_c < s.re → LSeriesSummable (fun n => (f n : ℂ)) s)
