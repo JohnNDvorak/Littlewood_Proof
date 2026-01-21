@@ -143,12 +143,16 @@ lemma summatory_const_on_Ico (a : ℕ → ℂ) (n : ℕ) (x : ℝ) (hx : x ∈ I
   have hfloor : Nat.floor x = n := Nat.floor_eq_on_Ico n x hx
   rw [hfloor]
 
-/-- Summatory step: S(n+1) - S(n) = a(n+1) for n ≥ 1 -/
+/-- Summatory step: S(n+1) - S(n) = a(n+1) for n ≥ 1
+
+NOTE: This is a basic Finset.Icc manipulation that should be provable but
+requires careful handling of the ℕ → ℝ coercion and Nat.floor.
+The proof strategy is: Icc 1 (n+1) = insert (n+1) (Icc 1 n), then use sum_insert.
+-/
 lemma summatory_step (a : ℕ → ℂ) (n : ℕ) (hn : 1 ≤ n) :
     summatory a (n + 1) - summatory a n = a (n + 1) := by
   simp only [summatory, Nat.floor_natCast]
-  -- Proof: Finset.Icc 1 (n+1) = insert (n+1) (Finset.Icc 1 n), then use sum_insert
-  sorry
+  sorry -- NEEDS WORK: Finset.Icc insert lemma + sum_insert
 
 /-- Our summatory equals Mathlib's partial sum form -/
 lemma summatory_eq_mathlib_form (a : ℕ → ℂ) (x : ℝ) :
