@@ -167,4 +167,36 @@ removing sorries from the Development theorems.
 -/
 theorem development_compatible_with_hypotheses : True := trivial
 
+/-! ## Type Mismatch Documentation (Task 31)
+
+### LandauLemma Development vs Hypotheses
+
+**Development/LandauLemma.lean proves:**
+- `lseries_real_on_real_axis`: LSeries with real coefficients is real on real axis
+- `partial_sums_monotone`: Partial sums monotone for non-negative coefficients
+- `cpow_ofReal_ofReal_im`: Complex power of reals is real
+
+These work with `LSeries` from Mathlib:
+```
+LSeries : (ℕ → ℂ) → ℂ → ℂ
+LSeries f s = ∑' n, f n * n^(-s)
+```
+
+**CoreLemmas/LandauLemma.lean hypotheses expect:**
+- `LandauLemmaHyp A σ_c`: About `dirichletIntegral`
+- `DirichletIntegralAnalyticHyp A σ_c`: About `dirichletIntegral`
+
+These work with `dirichletIntegral`:
+```
+dirichletIntegral : (ℝ → ℝ) → ℂ → ℂ
+dirichletIntegral A s = ∫ x in Ioi 1, A x * x^(-s)
+```
+
+**Gap:** No bridge theorem connecting LSeries to dirichletIntegral.
+Such a theorem would require showing that for A(x) = Σ_{n≤x} a(n):
+  LSeries a s ≈ dirichletIntegral A' s (under suitable conditions)
+
+This is a Tauberian-type result not currently in Mathlib.
+-/
+
 end Littlewood.Development.Bridge
