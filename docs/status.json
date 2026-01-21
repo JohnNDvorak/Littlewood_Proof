@@ -1,0 +1,35 @@
+{
+  "last_updated": "2025-01-21",
+  "build": "green",
+  "sorries": {
+    "total": 117,
+    "assumptions": 61,
+    "development": 23,
+    "other": 33
+  },
+  "hypotheses": {
+    "total": 67,
+    "proved": 2,
+    "proved_names": ["ZeroConjZeroHyp", "ZeroOneSubZeroHyp"],
+    "need_work": 65
+  },
+  "development_lemmas": {
+    "total": 36,
+    "files": {
+      "ZeroFreeRegion.lean": {"sorries": 8, "proved": ["trig_inequality", "trig_identity"]},
+      "HardyTheorem.lean": {"sorries": 11, "proved": ["hardyZ_zero_iff", "hardyZ_eq_re", "hardyZ_real_val_continuous", "hardy_from_sign_changes"]},
+      "LandauLemma.lean": {"sorries": 1, "proved": ["partial_sums_monotone", "term_comparison", "abscissa_characterization", "lseries_analytic_on_half_plane", "lseries_smooth"]},
+      "Bridge.lean": {"sorries": 0, "proved": ["hardy_implies_infinite_critical_zeros", "development_compatible_with_hypotheses"]},
+      "MainTheoremsVerification.lean": {"sorries": 0, "proved": ["main_theorems_compile"]},
+      "MathlibZetaAudit.lean": {"sorries": 0, "proved": []}
+    }
+  },
+  "main_theorems": {
+    "littlewood_psi": "compiles",
+    "littlewood_pi_li": "compiles",
+    "pi_gt_li_infinitely_often": "compiles",
+    "pi_lt_li_infinitely_often": "compiles",
+    "pi_minus_li_sign_changes": "compiles"
+  },
+  "notes": "Main theorems type-check with hypothesis instances from Assumptions.lean. Development files provide the path toward proving those hypotheses."
+}
