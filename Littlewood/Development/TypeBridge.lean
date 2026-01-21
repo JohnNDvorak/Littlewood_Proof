@@ -300,7 +300,7 @@ theorem lseries_analytic_from_mathlib (f : ℕ → ℂ) (s : ℂ)
     simp only [Set.mem_setOf_eq]; exact hs
   exact h s hmem
 
-/--
+/-
 The main remaining content of Landau's lemma for LSeries:
 If f(n) ≥ 0 for n > 0 and σ_c is the abscissa of convergence,
 then LSeries f is NOT analytic at σ_c.
@@ -333,18 +333,11 @@ For non-negative real sequences, partial sums are monotone increasing.
 theorem partial_sums_monotone (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) :
     Monotone (fun N => ∑ n ∈ Finset.range N, a n) := by
   intro n m hnm
-  -- Sum over larger range ≥ sum over smaller range for non-negative terms
-  have hsub := Finset.range_subset.mpr hnm
-  calc ∑ i ∈ Finset.range n, a i
-      ≤ ∑ i ∈ Finset.range n, a i + ∑ i ∈ Finset.range m \ Finset.range n, a i := by
-        apply le_add_of_nonneg_right
-        apply Finset.sum_nonneg
-        intro i _
-        exact ha i
-    _ = ∑ i ∈ Finset.range m, a i := by
-        rw [← Finset.sum_union (Finset.disjoint_sdiff)]
-        congr 1
-        exact (Finset.union_sdiff_of_subset hsub).symm
+  -- Use Finset.sum_le_sum_of_subset_of_nonneg with range_mono
+  apply Finset.sum_le_sum_of_subset_of_nonneg
+  · exact Finset.range_mono hnm
+  · intro i _ _
+    exact ha i
 
 /--
 **KEY LEMMA (Task 48):** Non-negative divergent series have partial sums → +∞.
@@ -370,11 +363,12 @@ theorem nonneg_divergent_partial_sums_tendsto_top
     intro b
     by_contra h
     push_neg at h
-    -- h : ∀ N, ∑ n ∈ range N, a n ≤ b
+    -- h : ∀ N, ∑ n ∈ range N, a n < b (strictly less)
     -- Bounded monotone ⟹ convergent ⟹ summable
     have hsummable : Summable a := by
-      -- For non-negative series, bounded partial sums implies summability
-      sorry -- BLOCKED: Need Mathlib's summable_of_nonneg_of_le or similar
+      apply summable_of_sum_range_le ha
+      intro n
+      exact le_of_lt (h n)
     exact hdiv hsummable
 
 /--
