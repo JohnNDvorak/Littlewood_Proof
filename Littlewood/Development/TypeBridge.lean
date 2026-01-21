@@ -404,6 +404,97 @@ theorem landau_lseries_not_analytic_at_boundary
   -- BLOCKED: Need to prove L(σ) → +∞ for non-negative divergent series
   sorry
 
+-- ============================================================
+-- SECTION 11: Euler Product ↔ PNT Connection (Task 49)
+-- ============================================================
+
+/-!
+## Euler Product ↔ Prime Number Theorem Connection
+
+### Overview
+
+The Euler product formula connects the Riemann zeta function to primes:
+  ζ(s) = ∏_{p prime} (1 - p^{-s})^{-1}
+
+This is the fundamental bridge between ζ(s) and the distribution of primes.
+
+### Mathlib Infrastructure (discovered Task 43-49)
+
+**Euler Product Theorems:**
+```
+riemannZeta_eulerProduct : 1 < s.re →
+    HasProd (fun p : Primes ↦ (1 - (p : ℂ) ^ (-s))⁻¹) (riemannZeta s)
+
+riemannZeta_eulerProduct_tprod : 1 < s.re →
+    ∏' p : Primes, (1 - (p : ℂ) ^ (-s))⁻¹ = riemannZeta s
+
+riemannZeta_eulerProduct_exp_log : 1 < s.re →
+    exp (∑' p : Nat.Primes, -Complex.log (1 - p ^ (-s))) = riemannZeta s
+```
+
+**Von Mangoldt ↔ Zeta Logarithmic Derivative:**
+```
+LSeries_vonMangoldt_eq_deriv_riemannZeta_div : 1 < s.re →
+    L ↗Λ s = - deriv riemannZeta s / riemannZeta s
+
+-- Which says: ∑_{n≥1} Λ(n)/n^s = -ζ'(s)/ζ(s)
+```
+
+**Key Convolution Identity:**
+```
+vonMangoldt_mul_zeta : Λ * ζ = log
+-- Where ζ is the arithmetic zeta function, and * is Dirichlet convolution
+-- This says: ∑_{d|n} Λ(d) = log(n)
+```
+
+### Connection to Prime Number Theorem
+
+The PNT states: π(x) ~ x/log(x), equivalently ψ(x) ~ x where ψ(x) = ∑_{n≤x} Λ(n).
+
+**Path through Euler product:**
+1. **Euler product** ⟹ ζ(s) ≠ 0 for Re(s) ≥ 1 (from log form)
+2. **Log derivative** ⟹ -ζ'/ζ(s) = L(Λ, s) is analytic for Re(s) > 1
+3. **Non-vanishing** ⟹ -ζ'/ζ extends to Re(s) ≥ 1 except simple pole at s = 1
+4. **Perron's formula** ⟹ ψ(x) = (residue at s=1) + (error from zeros)
+5. **Zero-free region** ⟹ Error is o(x), so ψ(x) ~ x
+
+**What Mathlib provides:**
+- Steps 1-3: COMPLETE (Euler product, log derivative, non-vanishing on Re = 1)
+- Step 4: MISSING (Perron's formula, contour integration)
+- Step 5: PARTIAL (non-vanishing on Re = 1, but not quantitative region)
+
+### Key Theorem Available in This Project
+
+From ZeroFreeRegion.lean:
+```
+theorem neg_zeta_logderiv_eq_vonMangoldt (s : ℂ) (hs : 1 < s.re) :
+    -deriv riemannZeta s / riemannZeta s = LSeries (↗vonMangoldt) s
+```
+
+This bridges ZeroFreeRegion.lean's work with Mathlib's LSeries infrastructure.
+
+### What's Still Needed for Full PNT Path
+
+1. **Perron's formula:** ψ(x) = (1/2πi) ∫ -ζ'/ζ(s) · x^s/s ds
+   Status: NOT IN MATHLIB
+
+2. **Quantitative zero-free region:** σ > 1 - c/log(|t|)
+   Status: NOT IN MATHLIB (only Re = 1 boundary)
+
+3. **Contour shifting:** Move integration contour left
+   Status: NOT IN MATHLIB (basic residue theory exists)
+
+### Connection to Littlewood Oscillation Theorem
+
+Littlewood's theorem says π(x) - li(x) changes sign infinitely often.
+This requires:
+- PNT: π(x) ~ li(x) (baseline)
+- Critical zeros: ζ(ρ) = 0 with Re(ρ) = 1/2 contribute oscillations
+- These oscillations don't cancel ⟹ sign changes
+
+The Euler product provides the PNT part; Hardy's theorem provides the critical zeros.
+-/
+
 /-!
 ## Gap #5 Final Status
 
