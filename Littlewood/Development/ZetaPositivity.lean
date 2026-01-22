@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib.NumberTheory.LSeries.RiemannZeta
 import Mathlib.NumberTheory.LSeries.Nonvanishing
-import Littlewood.Development.DirichletReal
 
 /-!
 # Zeta Function Positivity
@@ -13,13 +12,15 @@ For real σ > 1, the Riemann zeta function is positive: ζ(σ) > 0.
 
 ## Main Results
 
+* `riemannZeta_im_zero_of_real` : Im(ζ(σ)) = 0 for real σ > 1
 * `riemannZeta_pos_of_real_gt_one` : ζ(σ) > 0 for real σ > 1
+* `riemannZeta_real_and_pos` : Combined result
 
 ## Strategy
 
-ζ(σ) = ∑_{n=1}^∞ n^{-σ} for σ > 1 (absolutely convergent series).
-Each term n^{-σ} is positive for σ > 0.
-Sum of positive terms is positive.
+ζ(σ) = ∑_{n=1}^∞ 1/n^σ for σ > 1 (absolutely convergent series).
+Each term 1/n^σ is a positive real for σ real.
+Sum of positive reals is positive.
 
 ## References
 
@@ -30,31 +31,110 @@ open Complex Real
 
 namespace Littlewood.Development.ZetaPositivity
 
-/-- For real σ > 1, the Riemann zeta function is positive.
+/-! ## Auxiliary lemmas -/
 
-Proof strategy:
-- ζ(σ) = ∑ n^{-σ} with all positive terms
-- Sum of positives is positive
+/-- For summable nonneg series with at least one positive term, the sum is positive. -/
+lemma tsum_pos_of_nonneg_of_pos {f : ℕ → ℝ} (hf : Summable f)
+    (hnonneg : ∀ n, 0 ≤ f n) (k : ℕ) (hk : 0 < f k) :
+    0 < ∑' n, f n := by
+  obtain ⟨a, ha⟩ := hf
+  have hsum_eq : ∑' n, f n = a := ha.tsum_eq
+  rw [hsum_eq]
+  have hpartial : ∀ s : Finset ℕ, k ∈ s → f k ≤ ∑ i ∈ s, f i := by
+    intro s hks
+    exact Finset.single_le_sum (fun i _ => hnonneg i) hks
+  have h_eventually : ∀ᶠ s in (SummationFilter.unconditional ℕ).filter, k ∈ s := by
+    rw [Filter.eventually_iff_exists_mem]
+    use {s : Finset ℕ | {k} ⊆ s}
+    constructor
+    · apply Filter.mem_atTop_sets.mpr
+      use {k}
+      intro s hs
+      simp only [Set.mem_setOf_eq] at hs ⊢
+      exact hs
+    · intro s hs
+      simp only [Set.mem_setOf_eq, Finset.singleton_subset_iff] at hs
+      exact hs
+  have h_le : f k ≤ a := by
+    apply ge_of_tendsto ha
+    apply Filter.Eventually.mono h_eventually
+    intro s hks
+    exact hpartial s hks
+  linarith
 
-Blocked on: Connection between riemannZeta and explicit series in Mathlib.
-Mathlib has `zeta_nat_eq_tsum_of_gt_one` for natural k but not real σ.
--/
-theorem riemannZeta_pos_of_real_gt_one (σ : ℝ) (hσ : 1 < σ) :
-    0 < (riemannZeta σ).re := by
-  -- Known: riemannZeta σ ≠ 0 by riemannZeta_ne_zero_of_one_lt_re
-  -- Need: ζ(σ) is a sum of positive real terms, hence positive
-  -- This requires the series representation which isn't directly available for real σ
-  sorry -- BLOCKED: Need ζ(σ) = ∑ n^{-σ} for real σ > 1
+/-- The imaginary part of 1/n^σ is zero for real σ. -/
+lemma one_div_nat_cpow_im_zero (n : ℕ) (σ : ℝ) : (1 / (n : ℂ) ^ (σ : ℂ)).im = 0 := by
+  by_cases hn : n = 0
+  · subst hn
+    by_cases hσ : σ = 0
+    · simp [hσ]
+    · simp [Complex.zero_cpow (ofReal_ne_zero.mpr hσ)]
+  · have hn_pos : (0 : ℝ) < n := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn)
+    rw [← ofReal_natCast n]
+    rw [← ofReal_cpow hn_pos.le σ]
+    simp only [one_div]
+    rw [← ofReal_inv]
+    simp only [ofReal_im]
 
-/-- The imaginary part of ζ(σ) is zero for real σ > 1.
+/-- The real part of 1/n^σ is nonnegative for real σ. -/
+lemma one_div_nat_cpow_re_nonneg (n : ℕ) (σ : ℝ) :
+    0 ≤ (1 / (n : ℂ) ^ (σ : ℂ)).re := by
+  by_cases hn : n = 0
+  · subst hn
+    by_cases hσ : σ = 0
+    · simp [hσ]
+    · simp [Complex.zero_cpow (ofReal_ne_zero.mpr hσ)]
+  · have hn_pos : (0 : ℝ) < n := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn)
+    rw [← ofReal_natCast n]
+    rw [← ofReal_cpow hn_pos.le σ]
+    simp only [one_div]
+    rw [← ofReal_inv]
+    simp only [ofReal_re]
+    exact le_of_lt (inv_pos.mpr (Real.rpow_pos_of_pos hn_pos σ))
 
-This follows because ζ(σ) = ∑ n^{-σ} where each term n^{-σ} is real.
+/-- Summability of real parts follows from summability of complex. -/
+lemma summable_re_of_summable {f : ℕ → ℂ} (hf : Summable f) :
+    Summable (fun n => (f n).re) := by
+  obtain ⟨a, ha⟩ := hf
+  have ha_re : HasSum (fun n => (f n).re) a.re := hasSum_re ha
+  exact ha_re.summable
+
+/-! ## Main results -/
+
+/-- For real σ > 1, the imaginary part of ζ(σ) is zero.
+
+This follows because ζ(σ) = ∑ 1/n^σ where each term 1/n^σ is real.
 -/
 theorem riemannZeta_im_zero_of_real (σ : ℝ) (hσ : 1 < σ) :
     (riemannZeta σ).im = 0 := by
-  -- Each term n^{-σ} for real σ has im = 0
-  -- Sum of reals has im = 0
-  sorry -- BLOCKED: Same as above
+  have hre : 1 < (σ : ℂ).re := by simp [hσ]
+  rw [zeta_eq_tsum_one_div_nat_cpow hre]
+  have hsumm : Summable (fun n : ℕ => 1 / (n : ℂ) ^ (σ : ℂ)) :=
+    summable_one_div_nat_cpow.mpr hre
+  rw [im_tsum hsumm]
+  simp_rw [one_div_nat_cpow_im_zero]
+  simp
+
+/-- For real σ > 1, the Riemann zeta function is positive.
+
+Proof strategy:
+- ζ(σ) = ∑ 1/n^σ with all positive terms
+- Sum of positives is positive
+-/
+theorem riemannZeta_pos_of_real_gt_one (σ : ℝ) (hσ : 1 < σ) :
+    0 < (riemannZeta σ).re := by
+  have hre : 1 < (σ : ℂ).re := by simp [hσ]
+  rw [zeta_eq_tsum_one_div_nat_cpow hre]
+  have hsumm : Summable (fun n : ℕ => 1 / (n : ℂ) ^ (σ : ℂ)) :=
+    summable_one_div_nat_cpow.mpr hre
+  rw [re_tsum hsumm]
+  have hsumm_re : Summable (fun n : ℕ => (1 / (n : ℂ) ^ (σ : ℂ)).re) :=
+    summable_re_of_summable hsumm
+  refine tsum_pos_of_nonneg_of_pos hsumm_re ?_ 1 ?_
+  · intro n
+    exact one_div_nat_cpow_re_nonneg n σ
+  · simp only [Nat.cast_one, one_cpow, div_one, one_re]
+    exact one_pos
 
 /-- Combining: ζ(σ) is a positive real number for real σ > 1 -/
 theorem riemannZeta_real_and_pos (σ : ℝ) (hσ : 1 < σ) :
