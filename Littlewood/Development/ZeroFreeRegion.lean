@@ -331,11 +331,8 @@ lemma zero_forces_zeta_large (σ : ℝ) (t : ℝ) (hσ : 1 < σ) (ht : t ≠ 0)
     ‖riemannZeta σ‖ ^ 3 * ‖riemannZeta (σ + 2 * t * I)‖ ≥ 1 := by
   have h := zeta_product_lower_bound σ t hσ
   simp only [hzero, map_zero, zero_pow (by norm_num : 4 ≠ 0), mul_zero] at h
-  -- This gives a contradiction if we had |ζ(σ)|³ |ζ(σ+2it)| < 1
-  -- But wait, the premise has ζ(σ+it) = 0, so the product is 0, not ≥ 1
-  -- This means ζ(σ+it) ≠ 0 for σ > 1! (which we already know)
-  -- The real power comes from the limit σ → 1+
-  sorry
+  -- h : 0 ≥ 1 which is false
+  norm_num at h
 
 /-- The pole behavior: |ζ(σ)| ~ 1/(σ-1) as σ → 1+.
 
