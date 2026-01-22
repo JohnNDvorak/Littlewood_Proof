@@ -26,6 +26,20 @@ open Complex
 
 namespace Littlewood.Development.LaurentExpansion
 
+/-!
+## Available from Mathlib
+
+`riemannZeta_residue_one : Tendsto (fun s ↦ (s - 1) * riemannZeta s) (𝓝[≠] 1) (𝓝 1)`
+
+This establishes that ζ(s) has a simple pole at s = 1 with residue 1.
+Consequently, -ζ'/ζ(s) = -d/ds[log ζ(s)] has a simple pole at s = 1 with residue 1.
+
+The full Laurent expansion -ζ'/ζ(s) = 1/(s-1) + γ + O(|s-1|) requires
+extracting the Euler-Mascheroni constant γ, which needs more infrastructure.
+-/
+
+#check riemannZeta_residue_one
+
 /-- Laurent expansion of -ζ'/ζ near s = 1.
 
 The pole at s = 1 with residue 1 comes from the simple pole of ζ(s) at s = 1.
