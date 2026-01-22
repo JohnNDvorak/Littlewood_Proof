@@ -141,4 +141,22 @@ theorem riemannZeta_real_and_pos (σ : ℝ) (hσ : 1 < σ) :
     (riemannZeta σ).im = 0 ∧ 0 < (riemannZeta σ).re :=
   ⟨riemannZeta_im_zero_of_real σ hσ, riemannZeta_pos_of_real_gt_one σ hσ⟩
 
+/-! ## Zero location from Mathlib non-vanishing -/
+
+/-- If ζ(ρ) = 0, then Re(ρ) < 1.
+
+This follows directly from Mathlib's `riemannZeta_ne_zero_of_one_le_re`.
+Note: This applies to ANY zero, not just nontrivial zeros.
+-/
+theorem zeta_zero_re_lt_one (ρ : ℂ) (hzero : riemannZeta ρ = 0) : ρ.re < 1 := by
+  by_contra h
+  push_neg at h  -- h : 1 ≤ ρ.re
+  have hne := riemannZeta_ne_zero_of_one_le_re h
+  exact hne hzero
+
+/-- If ζ(ρ) = 0 and Re(ρ) > 0, then 0 < Re(ρ) < 1 -/
+theorem zeta_zero_re_in_strip (ρ : ℂ) (hzero : riemannZeta ρ = 0) (hpos : 0 < ρ.re) :
+    0 < ρ.re ∧ ρ.re < 1 :=
+  ⟨hpos, zeta_zero_re_lt_one ρ hzero⟩
+
 end Littlewood.Development.ZetaPositivity
