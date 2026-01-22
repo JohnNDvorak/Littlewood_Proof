@@ -151,8 +151,16 @@ The proof strategy is: Icc 1 (n+1) = insert (n+1) (Icc 1 n), then use sum_insert
 -/
 lemma summatory_step (a : ℕ → ℂ) (n : ℕ) (hn : 1 ≤ n) :
     summatory a (n + 1) - summatory a n = a (n + 1) := by
-  simp only [summatory, Nat.floor_natCast]
-  sorry -- NEEDS WORK: Finset.Icc insert lemma + sum_insert
+  -- Key floor simplification: ⌊↑n + 1⌋₊ = n + 1
+  have hfloor : Nat.floor ((n : ℝ) + 1) = n + 1 := by
+    rw [Nat.floor_add_one (Nat.cast_nonneg n), Nat.floor_natCast]
+  -- Establish the key facts
+  have hnotin : n + 1 ∉ Finset.Icc 1 n := by simp only [Finset.mem_Icc]; omega
+  have hIcc : Finset.Icc 1 (n + 1) = insert (n + 1) (Finset.Icc 1 n) := by
+    ext k; simp only [Finset.mem_insert, Finset.mem_Icc]; omega
+  -- Unfold summatory and simplify
+  simp only [summatory, Nat.floor_natCast, hfloor, hIcc, Finset.sum_insert hnotin]
+  abel
 
 /-- Our summatory equals Mathlib's partial sum form -/
 lemma summatory_eq_mathlib_form (a : ℕ → ℂ) (x : ℝ) :
