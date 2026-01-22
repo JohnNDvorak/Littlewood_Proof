@@ -97,15 +97,17 @@ theorem lseries_term_re_nonneg (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) (σ : �
     simp only [ofReal_re]
     exact div_nonneg (ha n) (le_of_lt hpow_pos)
 
-/-- L-series with non-negative real coefficients has non-negative real part for real σ > 1 -/
-theorem lseries_nonneg_coeff_re_nonneg (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) (σ : ℝ) (hσ : 1 < σ) :
+/-- L-series with non-negative real coefficients has non-negative real part for real σ > 1,
+assuming the series is summable. -/
+theorem lseries_nonneg_coeff_re_nonneg (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) (σ : ℝ) (hσ : 1 < σ)
+    (hsumm : LSeriesSummable (fun n => (a n : ℂ)) σ) :
     0 ≤ (LSeries (fun n => (a n : ℂ)) σ).re := by
   unfold LSeries
   have h_re : ∀ n, 0 ≤ (LSeries.term (fun n => (a n : ℂ)) σ n).re :=
     lseries_term_re_nonneg a ha σ (by linarith : 0 < σ)
   rw [Complex.re_tsum]
   · exact tsum_nonneg h_re
-  · -- Need summability - this requires the abscissa condition
-    sorry
+  · -- Summability from hypothesis
+    exact hsumm
 
 end Littlewood.Development.DirichletReal

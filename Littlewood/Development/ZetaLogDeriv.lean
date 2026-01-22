@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import Mathlib.NumberTheory.LSeries.RiemannZeta
 import Mathlib.NumberTheory.LSeries.Nonvanishing
 import Mathlib.NumberTheory.ArithmeticFunction.VonMangoldt
+import Littlewood.CoreLemmas.LandauLemma
 
 /-!
 # Logarithmic Derivative of Zeta
@@ -40,26 +41,40 @@ lemma vonMangoldt_nonneg' (n : ℕ) : 0 ≤ Λ n := by
     positivity
   · linarith
 
+/-- Λ(2) = log 2 > 0 since 2 is a prime power -/
+lemma vonMangoldt_two_pos : 0 < Λ 2 := by
+  simp only [vonMangoldt_apply]
+  have h2prime : IsPrimePow 2 := Nat.Prime.isPrimePow Nat.prime_two
+  simp only [h2prime, ↓reduceIte]
+  exact Real.log_pos (by norm_num : (1 : ℝ) < 2)
+
 /-- For real σ > 1, the logarithmic derivative -ζ'/ζ is positive.
 
 Proof strategy:
-- -ζ'/ζ(σ) = ∑ Λ(n) n^{-σ}
+- -ζ'/ζ(σ) = ∑ Λ(n) n^{-σ} via vonMangoldt_eq_neg_zeta_logderiv from LandauLemma
 - Λ(n) ≥ 0 for all n
 - Λ(2) = log(2) > 0, so at least one term is strictly positive
 - Sum of non-negatives with at least one positive is positive
-
-Blocked on: Connection between logderiv and Dirichlet series in Mathlib.
 -/
 theorem neg_zeta_logderiv_pos_real (σ : ℝ) (hσ : 1 < σ) :
     0 < -(deriv riemannZeta (σ : ℂ) / riemannZeta (σ : ℂ)).re := by
-  -- -ζ'/ζ = ∑ Λ(n) n^(-σ) where Λ is von Mangoldt
-  -- This requires the Dirichlet series representation
-  sorry -- BLOCKED: Need -ζ'/ζ = ∑ Λ(n) n^{-σ} for real σ > 1
+  -- Use the identity: -ζ'/ζ = L(Λ, s) from LandauLemma
+  have hre : 1 < (σ : ℂ).re := by simp [hσ]
+  have hid := Landau.vonMangoldt_eq_neg_zeta_logderiv (σ : ℂ) hre
+  -- The L-series is ∑' n, Λ(n) / n^σ
+  -- For real σ, each term Λ(n) * n^{-σ} is a non-negative real
+  -- LSeries Λ σ has positive real part since Λ(2) = log 2 > 0
+  -- This requires showing the LSeries has positive real part
+  sorry -- BLOCKED: Need to show LSeries Λ σ > 0 for real σ > 1
 
 /-- The real part of -ζ'/ζ(σ) equals the series for real σ > 1 -/
 theorem neg_zeta_logderiv_eq_vonMangoldt_series (σ : ℝ) (hσ : 1 < σ) :
     (-(deriv riemannZeta (σ : ℂ)) / riemannZeta (σ : ℂ)).re = ∑' n : ℕ, Λ n * (n : ℝ) ^ (-σ) := by
-  -- The standard identity for the logarithmic derivative
-  sorry -- BLOCKED: Same series representation issue
+  -- Use the identity from LandauLemma
+  have hre : 1 < (σ : ℂ).re := by simp [hσ]
+  have hid := Landau.vonMangoldt_eq_neg_zeta_logderiv (σ : ℂ) hre
+  -- The LSeries for real σ has real part equal to the real series
+  -- LSeries Λ σ = ∑' n, Λ(n) / n^σ where the RHS is a real number for real σ
+  sorry -- BLOCKED: Need real-part extraction for LSeries at real argument
 
 end Littlewood.Development.ZetaLogDeriv
