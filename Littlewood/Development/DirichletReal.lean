@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import Mathlib.NumberTheory.LSeries.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Littlewood.Development.PowerLemmas
+import Littlewood.Development.SumLemmas
 
 /-!
 # Real Part Properties of Dirichlet Series
@@ -74,15 +76,36 @@ theorem cpow_neg_real_eq_rpow (n : ℕ) (hn : n ≠ 0) (σ : ℝ) :
 
 /-! ## Main Theorem -/
 
+/-- Each term of LSeries.term has non-negative real part for non-negative real coefficients -/
+theorem lseries_term_re_nonneg (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) (σ : ℝ) (_hσ : 0 < σ) (n : ℕ) :
+    0 ≤ (LSeries.term (fun n => (a n : ℂ)) σ n).re := by
+  simp only [LSeries.term]
+  split_ifs with hn
+  · simp
+  · -- a(n) / n^σ for n ≠ 0
+    have hn_pos : (0 : ℝ) < n := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn)
+    have hne : (n : ℂ) ≠ 0 := ofReal_ne_zero.mpr (ne_of_gt hn_pos)
+    -- Key: (n : ℂ)^(σ : ℂ) is a positive real for real n > 0 and real σ
+    have hlog : Complex.log (n : ℂ) = (Real.log n : ℂ) := (ofReal_log hn_pos.le).symm
+    have hpow_real : (n : ℂ) ^ (σ : ℂ) = ((n : ℝ) ^ σ : ℝ) := by
+      simp only [cpow_def_of_ne_zero hne, hlog]
+      have h1 : (Real.log (n : ℝ) : ℂ) * (σ : ℂ) = ((Real.log n * σ) : ℝ) := by simp only [ofReal_mul]
+      rw [h1, ← ofReal_exp, Real.rpow_def_of_pos hn_pos]
+    rw [hpow_real]
+    have hpow_pos : 0 < (n : ℝ) ^ σ := Real.rpow_pos_of_pos hn_pos σ
+    rw [div_ofReal (a n) ((n : ℝ) ^ σ)]
+    simp only [ofReal_re]
+    exact div_nonneg (ha n) (le_of_lt hpow_pos)
+
 /-- L-series with non-negative real coefficients has non-negative real part for real σ > 1 -/
 theorem lseries_nonneg_coeff_re_nonneg (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) (σ : ℝ) (hσ : 1 < σ) :
     0 ≤ (LSeries (fun n => (a n : ℂ)) σ).re := by
-  -- LSeries is ∑ a(n) * n^(-σ)
-  -- Each term: a(n) * n^(-σ) is real and non-negative
-  -- Sum of non-negatives is non-negative
   unfold LSeries
-  -- Need: re of tsum = tsum of re when summable
-  -- Then: each term's re is non-negative
-  sorry
+  have h_re : ∀ n, 0 ≤ (LSeries.term (fun n => (a n : ℂ)) σ n).re :=
+    lseries_term_re_nonneg a ha σ (by linarith : 0 < σ)
+  rw [Complex.re_tsum]
+  · exact tsum_nonneg h_re
+  · -- Need summability - this requires the abscissa condition
+    sorry
 
 end Littlewood.Development.DirichletReal
