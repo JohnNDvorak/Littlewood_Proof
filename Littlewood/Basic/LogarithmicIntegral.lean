@@ -247,8 +247,8 @@ theorem logarithmicIntegral_integration_by_parts {x : ℝ} (hx : 2 < x) :
   have hint_u' : IntervalIntegrable u' volume (2 : ℝ) x :=
     (ContinuousOn.intervalIntegrable_of_Icc (a := (2 : ℝ)) (b := x) hxle hcont_u')
   have hint_v' : IntervalIntegrable v' volume (2 : ℝ) x := by
-    simpa [v'] using
-      (intervalIntegrable_const (μ := volume) (a := (2 : ℝ)) (b := x) (c := (1 : ℝ)))
+    simp only [v']
+    exact intervalIntegrable_const (μ := volume) (a := (2 : ℝ)) (b := x) (c := (1 : ℝ))
   have hparts :
       ∫ t in (2 : ℝ)..x, u t * v' t =
         u x * v x - u 2 * v 2 - ∫ t in (2 : ℝ)..x, u' t * v t := by
@@ -716,9 +716,8 @@ theorem logarithmicIntegral_sub_divLog_tendsto :
         (d := x) hx2 (by linarith) le_rfl hnonneg hfi
     have hconst_le :
         ∫ t in (x / 2)..x, (1 / (log x)^2) ≤ ∫ t in (x / 2)..x, 1 / (log t)^2 := by
-      have hconst : IntervalIntegrable (fun _ => 1 / (log x)^2) volume (x / 2) x := by
-        simpa using (intervalIntegrable_const (μ := volume) (a := x / 2) (b := x)
-          (c := (1 / (log x)^2)))
+      have hconst : IntervalIntegrable (fun _ => 1 / (log x)^2) volume (x / 2) x :=
+        intervalIntegrable_const (μ := volume) (a := x / 2) (b := x) (c := (1 / (log x)^2))
       have hle : ∀ t ∈ Icc (x / 2) x, 1 / (log x)^2 ≤ 1 / (log t)^2 := by
         intro t ht
         have ht1 : (1 : ℝ) < t := by linarith [ht.1, hx2]
