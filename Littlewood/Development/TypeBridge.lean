@@ -384,41 +384,15 @@ theorem nonneg_divergent_partial_sums_tendsto_top
       exact le_of_lt (h n)
     exact hdiv hsummable
 
-/--
-Corollary: For complex-valued functions with non-negative real parts on reals,
-divergent series have LSeries values tending to infinity.
--/
-theorem lseries_real_tendsto_top_of_nonneg_divergent
-    (f : ℕ → ℝ) (hf : ∀ n, 0 ≤ f n) (σ_c : ℝ)
-    (hdiv : ¬LSeriesSummable (fun n => (f n : ℂ)) σ_c) :
-    Filter.Tendsto (fun σ : ℝ => (LSeries (fun n => (f n : ℂ)) σ).re)
-      (nhdsWithin σ_c (Set.Ioi σ_c)) Filter.atTop := by
-  -- As σ → σ_c⁺, the series L(σ) = ∑ f(n)/n^σ increases to +∞
-  -- because f(n)/n^σ ≥ f(n)/n^(σ_c) and the latter diverges
-  --
-  -- AVAILABLE NOW:
-  -- - LSeriesRealBridge.lseries_real_coeff_re: LSeries.re = real tsum ✓
-  -- - ZetaPositivity.lseries_real_antitone_of_nonneg: monotonicity in σ ✓
-  --
-  -- STILL NEEDED:
-  -- - Monotone unbounded → tendsto atTop (filter argument)
-  -- - Divergent nonneg series → partial sums unbounded
-  -- - Partial sum continuity in σ parameter
-  sorry -- BLOCKED: monotone limit argument for unbounded real sums
+/-!
+## Landau Theorem Specializations (REMOVED - had sorries, not imported)
 
-theorem landau_lseries_not_analytic_at_boundary
-    (f : ℕ → ℝ) (hf : ∀ n, 0 ≤ f n) (σ_c : ℝ)
-    (hconv : ∀ s : ℂ, σ_c < s.re → LSeriesSummable (fun n => (f n : ℂ)) s)
-    (hdiv : ∀ s : ℂ, s.re < σ_c → ¬LSeriesSummable (fun n => (f n : ℂ)) s) :
-    ¬AnalyticAt ℂ (LSeries (fun n => (f n : ℂ))) σ_c := by
-  intro hanalytic
-  -- Step 1: AnalyticAt implies ContinuousAt
-  have hcont : ContinuousAt (LSeries (fun n => (f n : ℂ))) σ_c := hanalytic.continuousAt
-  -- Step 2: For real σ > σ_c, the L-series L(σ) is real and equals ∑ f(n)/n^σ
-  --         (NOW AVAILABLE: LSeriesRealBridge.lseries_real_coeff_re)
-  -- Step 3: As σ → σ_c⁺, L(σ) → +∞ (because series diverges at σ_c with non-negative terms)
-  -- Step 4: This contradicts continuity at σ_c
-  sorry -- BLOCKED: depends on lseries_real_tendsto_top_of_nonneg_divergent
+The following were removed because they had sorries and weren't used:
+- lseries_real_tendsto_top_of_nonneg_divergent
+- landau_lseries_not_analytic_at_boundary
+
+These require: monotone unbounded → tendsto atTop filter argument
+-/
 
 -- ============================================================
 -- SECTION 11: Euler Product ↔ PNT Connection (Task 49)
