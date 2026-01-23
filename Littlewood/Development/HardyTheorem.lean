@@ -130,17 +130,6 @@ theorem hardyZ_zero_iff (t : ℝ) :
   · intro hζ
     simp only [hardyZ, hζ, mul_zero]
 
-/-- Sign changes of Z(t) correspond to zeros on the critical line.
-
-If Z(t₁) > 0 and Z(t₂) < 0 (or vice versa), then there exists
-t ∈ (t₁, t₂) such that ζ(1/2 + it) = 0.
--/
-theorem sign_change_implies_zero (t₁ t₂ : ℝ) (ht : t₁ < t₂)
-    (h1 : hardyZ_real_val t₁ * hardyZ_real_val t₂ < 0) :
-    ∃ t ∈ Set.Ioo t₁ t₂, riemannZeta (1/2 + t * I) = 0 := by
-  -- By intermediate value theorem + hardyZ_zero_iff
-  sorry
-
 -- ============================================================
 -- SECTION 4.5: Building toward sign changes (Task 17)
 -- ============================================================
@@ -238,6 +227,53 @@ theorem sign_change_gives_zero (t₁ t₂ : ℝ) (ht : t₁ < t₂)
   -- ht_zero : hardyZ_real_val t = 0, i.e., (hardyZ t).re = 0
   simp only [hardyZ_real_val] at ht_zero
   simp only [ht_zero, Complex.ofReal_zero]
+
+/-- Sign changes of Z(t) correspond to zeros on the critical line.
+
+If Z(t₁) > 0 and Z(t₂) < 0 (or vice versa), then there exists
+t ∈ (t₁, t₂) such that ζ(1/2 + it) = 0.
+-/
+theorem sign_change_implies_zero (t₁ t₂ : ℝ) (ht : t₁ < t₂)
+    (h1 : hardyZ_real_val t₁ * hardyZ_real_val t₂ < 0) :
+    ∃ t ∈ Set.Ioo t₁ t₂, riemannZeta (1/2 + t * I) = 0 := by
+  -- From h1: a * b < 0 means one positive, one negative
+  have hne1 : hardyZ_real_val t₁ ≠ 0 := fun h => by simp [h] at h1
+  -- Case split on sign of hardyZ_real_val t₁
+  rcases lt_trichotomy (hardyZ_real_val t₁) 0 with h1_neg | h1_eq | h1_pos
+  · -- Case 1: hardyZ_real_val t₁ < 0
+    -- Then hardyZ_real_val t₂ > 0 (since product < 0)
+    have h2_pos : hardyZ_real_val t₂ > 0 := by
+      by_contra h
+      push_neg at h
+      have ha' : 0 ≤ -(hardyZ_real_val t₁) := neg_nonneg.mpr (le_of_lt h1_neg)
+      have hb' : 0 ≤ -(hardyZ_real_val t₂) := neg_nonneg.mpr h
+      have hprod : 0 ≤ (-(hardyZ_real_val t₁)) * (-(hardyZ_real_val t₂)) := mul_nonneg ha' hb'
+      have : hardyZ_real_val t₁ * hardyZ_real_val t₂ ≥ 0 := by linarith [hprod]
+      linarith
+    -- Use IVT: 0 ∈ (f(t₁), f(t₂)) since f(t₁) < 0 < f(t₂)
+    have hcont : ContinuousOn hardyZ_real_val (Set.Icc t₁ t₂) :=
+      hardyZ_real_val_continuous.continuousOn
+    have h0_mem : (0 : ℝ) ∈ Set.Ioo (hardyZ_real_val t₁) (hardyZ_real_val t₂) := ⟨h1_neg, h2_pos⟩
+    have hivt := intermediate_value_Ioo (le_of_lt ht) hcont h0_mem
+    obtain ⟨t, ht_mem, ht_zero⟩ := hivt
+    refine ⟨t, ht_mem, ?_⟩
+    rw [← hardyZ_zero_iff, hardyZ_eq_re t]
+    simp only [hardyZ_real_val] at ht_zero
+    simp only [ht_zero, Complex.ofReal_zero]
+  · -- Case 2: hardyZ_real_val t₁ = 0 (contradiction)
+    exact (hne1 h1_eq).elim
+  · -- Case 3: hardyZ_real_val t₁ > 0
+    -- Then hardyZ_real_val t₂ < 0 (since product < 0)
+    have h2_neg : hardyZ_real_val t₂ < 0 := by
+      by_contra h
+      push_neg at h
+      have : hardyZ_real_val t₁ * hardyZ_real_val t₂ ≥ 0 :=
+        mul_nonneg (le_of_lt h1_pos) h
+      linarith
+    -- Use sign_change_gives_zero directly
+    have hsz := sign_change_gives_zero t₁ t₂ ht h1_pos h2_neg
+    obtain ⟨t, ht_mem, ht_zero⟩ := hsz
+    exact ⟨t, ht_mem, (hardyZ_zero_iff t).mp ht_zero⟩
 
 /-- Combining sign change detection with hardyZ_zero_iff gives Hardy's theorem -/
 theorem hardy_from_sign_changes :
