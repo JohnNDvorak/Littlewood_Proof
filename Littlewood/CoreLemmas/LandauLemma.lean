@@ -386,54 +386,11 @@ theorem zeta_zero_implies_vonMangoldt_singularity (ρ : ℂ) (hρ : riemannZeta 
   -- The proof requires analytic continuation arguments
   sorry -- BLOCKED: Need analytic continuation from Re(s) > 1 to ρ
 
--- ============================================================
--- INSTANCES (Documented Assumptions)
--- ============================================================
+/-!
+## Hypothesis Instances
 
-instance (A : ℝ → ℝ) (σ_c : ℝ) : LandauLemmaHyp A σ_c where
-  analytic_right := by
-    intro s hs
-    sorry
-  not_analytic_at := by
-    sorry
-
-instance (A : ℝ → ℝ) (σ_c : ℝ) : DirichletIntegralConvergesHyp A σ_c where
-  converges := by
-    intro s hs
-    sorry
-
-instance (A : ℝ → ℝ) (σ_c : ℝ) : DirichletIntegralAnalyticHyp A σ_c where
-  analytic := by
-    intro s hs
-    sorry
-
-instance (A : ℝ → ℝ) (σ_c : ℝ) : DirichletIntegralDerivHyp A σ_c where
-  deriv := by
-    intro s hs k
-    sorry
-
-instance (A : ℝ → ℝ) (σ_c : ℝ) : DirichletIntegralPowerSeriesHyp A σ_c where
-  powerSeries := by
-    intro hσ
-    sorry
-
-instance (A : ℝ → ℝ) (σ_c : ℝ) : RadiusExceedsAbscissaHyp A σ_c where
-  radius_exceeds := by
-    intro hσ hanalytic
-    sorry
-
-instance (A : ℝ → ℝ) (σ₀ : ℝ) : LandauExtensionHyp A σ₀ where
-  extension := by
-    intro hanalytic
-    sorry
-
-instance (a : ℕ → ℂ) (σ_c : ℂ) : LandauLemmaSeriesHyp a σ_c where
-  not_analytic := by
-    sorry
-
-instance : ZetaLogDerivPoleHyp where
-  pole_at_zero := by
-    intro ρ hρ
-    sorry
+All hypothesis class instances (LandauLemmaHyp, DirichletIntegralConvergesHyp, etc.)
+are provided in Assumptions.lean (the single source of truth for axioms).
+-/
 
 end Landau
