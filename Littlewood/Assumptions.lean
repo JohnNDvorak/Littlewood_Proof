@@ -8,17 +8,20 @@ Each represents a classical theorem from analytic number theory not yet in Mathl
 These are PROVED theorems in classical mathematics—assumptions only because
 their Lean proofs await Mathlib infrastructure.
 
-## Current Status (as of Task 140)
-- Total instance sorries: 60 (in this file)
+## Current Status (as of Task 160)
+- Total instance sorries: 61 (in this file)
 - Proved instances: 2 (ZeroConjZeroHyp, ZeroOneSubZeroHyp in ZeroCountingFunction.lean)
 - Proved theorems in Development/:
   - trig_inequality, trig_identity (ZeroFreeRegion.lean)
   - partial_sums_monotone, several wrapper lemmas (LandauLemma.lean)
   - hardyZ_zero_iff (HardyTheorem.lean)
-  - neg_zeta_logderiv_pos_real (ZetaLogDeriv.lean) - NEW
-  - Real axis specializations (RealAxisSpecializations.lean) - NEW
-  - L-series term bounds (LSeriesTerms.lean) - NEW
+  - neg_zeta_logderiv_pos_real (ZetaLogDeriv.lean)
+  - neg_zeta_logderiv_eq_vonMangoldt_series (ZetaLogDeriv.lean) - NEW Task 149
+  - Real axis specializations (RealAxisSpecializations.lean)
+  - L-series term bounds (LSeriesTerms.lean)
+  - LSeries-to-real-tsum bridge (LSeriesRealBridge.lean) - NEW Task 146
 - Theorem sorries fixed from Gauss: 3 (ChebyshevFunctions.lean)
+- Total sorry count project-wide: 120 (down from 121)
 
 ## Class Organization Rationale
 Classes are kept separate (not merged) because:
