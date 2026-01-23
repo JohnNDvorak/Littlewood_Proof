@@ -159,4 +159,43 @@ theorem zeta_zero_re_in_strip (ρ : ℂ) (hzero : riemannZeta ρ = 0) (hpos : 0 
     0 < ρ.re ∧ ρ.re < 1 :=
   ⟨hpos, zeta_zero_re_lt_one ρ hzero⟩
 
+/-! ## L-series monotonicity for non-negative coefficients -/
+
+/-- For n ≥ 1 and real σ₁ ≤ σ₂, we have n^σ₁ ≤ n^σ₂ -/
+lemma nat_rpow_le_of_le {n : ℕ} (hn : 1 ≤ n) {σ₁ σ₂ : ℝ} (hσ : σ₁ ≤ σ₂) :
+    (n : ℝ) ^ σ₁ ≤ (n : ℝ) ^ σ₂ := by
+  have hn' : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  exact Real.rpow_le_rpow_of_exponent_le hn' hσ
+
+/-- For n ≥ 1 and real σ₁ ≤ σ₂, we have n^(-σ₂) ≤ n^(-σ₁) -/
+lemma one_div_nat_rpow_antitone {n : ℕ} (hn : 1 ≤ n) {σ₁ σ₂ : ℝ} (hσ : σ₁ ≤ σ₂) :
+    (n : ℝ) ^ (-σ₂) ≤ (n : ℝ) ^ (-σ₁) := by
+  have hn' : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  exact Real.rpow_le_rpow_of_exponent_le hn' (neg_le_neg hσ)
+
+/-- Key monotonicity: for non-negative f, the real L-series value decreases as σ increases.
+
+More precisely: for 0 < σ₁ ≤ σ₂ both above the abscissa of convergence,
+∑ f(n)/n^σ₂ ≤ ∑ f(n)/n^σ₁
+
+This is the fundamental monotonicity property used in Landau's theorem.
+Note: The condition σ₁ > 0 ensures 0^(-σ) = 0 for all terms.
+-/
+theorem lseries_real_antitone_of_nonneg (f : ℕ → ℝ) (hf : ∀ n, 0 ≤ f n)
+    {σ₁ σ₂ : ℝ} (hσ₁_pos : 0 < σ₁) (hσ : σ₁ ≤ σ₂)
+    (h₁ : Summable (fun n => f n * (n : ℝ) ^ (-σ₁)))
+    (h₂ : Summable (fun n => f n * (n : ℝ) ^ (-σ₂))) :
+    ∑' n, f n * (n : ℝ) ^ (-σ₂) ≤ ∑' n, f n * (n : ℝ) ^ (-σ₁) := by
+  refine h₂.tsum_le_tsum ?_ h₁
+  intro n
+  by_cases hn : n = 0
+  · -- n = 0: 0^(-σ) = 0 for σ > 0, so f(0) * 0^(-σ) = 0
+    subst hn
+    simp only [Nat.cast_zero]
+    have hσ₂_pos : 0 < σ₂ := lt_of_lt_of_le hσ₁_pos hσ
+    simp [Real.zero_rpow (neg_ne_zero.mpr hσ₁_pos.ne'), Real.zero_rpow (neg_ne_zero.mpr hσ₂_pos.ne')]
+  · have hn' : 1 ≤ n := Nat.one_le_iff_ne_zero.mpr hn
+    apply mul_le_mul_of_nonneg_left _ (hf n)
+    exact one_div_nat_rpow_antitone hn' hσ
+
 end Littlewood.Development.ZetaPositivity
