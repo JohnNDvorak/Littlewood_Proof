@@ -185,49 +185,11 @@ theorem theta_oscillation_RH (hRH : ZetaZeros.RiemannHypothesis) [ThetaOscillati
     (fun x => chebyshevTheta x - x) =Ω±[fun x => Real.sqrt x] := by
   simpa using (ThetaOscillationRHHyp.oscillation hRH)
 
--- ============================================================
--- INSTANCES (Documented Assumptions)
--- ============================================================
+/-!
+## Hypothesis Instances
 
-instance : SchmidtPsiOscillationHyp where
-  oscillation := by
-    intro ε hε
-    sorry
-
-instance : PsiOscillationSqrtHyp where
-  oscillation := by
-    sorry
-
-instance : MellinPsiIdentityHyp where
-  identity := by
-    intro s hs
-    sorry
-
-instance : OmegaMinusNecessityHyp where
-  necessity := by
-    intro ε hε hcontra
-    sorry
-
-instance : OmegaPlusNecessityHyp where
-  necessity := by
-    intro ε hε hcontra
-    sorry
-
-instance : HardyCriticalLineZerosHyp where
-  infinite := by
-    sorry
-
-instance : PsiOscillationFromCriticalZerosHyp where
-  oscillation := by
-    sorry
-
-instance : ThetaOscillationMinusHyp where
-  oscillation := by
-    sorry
-
-instance : ThetaOscillationRHHyp where
-  oscillation := by
-    intro hRH
-    sorry
+All Schmidt hypothesis instances are provided in Assumptions.lean
+(the single source of truth for axioms).
+-/
 
 end Schmidt
