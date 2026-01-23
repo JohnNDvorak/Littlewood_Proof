@@ -23,9 +23,32 @@ theorem dirichlet_series_eq_tsum_real
     (a : ℕ → ℝ) (σ : ℝ)
     (hs : Summable (fun n => a n * (n : ℝ)^(-σ))) :
     (∑' n, (a n : ℂ) * (n : ℂ)^(-(σ : ℂ))).re = ∑' n, a n * (n : ℝ)^(-σ) := by
-  -- BLOCKED: Requires Complex.re_tsum + cpow_natCast manipulation
-  -- See LSeriesRealBridge.lean for similar proof pattern
-  sorry
+  -- Per-term: ((a n : ℂ) * (n : ℂ)^(-σ)).re = a n * n^(-σ)
+  have hterm : ∀ n, ((a n : ℂ) * (n : ℂ)^(-(σ : ℂ))).re = a n * (n : ℝ)^(-σ) := by
+    intro n
+    have hn' : (0 : ℝ) ≤ n := by exact_mod_cast Nat.zero_le n
+    have key1 : (n : ℂ) = ((n : ℝ) : ℂ) := by norm_cast
+    have key2 : (-(σ : ℂ) : ℂ) = ((-σ : ℝ) : ℂ) := (Complex.ofReal_neg σ).symm
+    rw [key1, key2, ← Complex.ofReal_cpow hn' (-σ)]
+    simp only [← Complex.ofReal_mul, Complex.ofReal_re]
+  -- First show the complex series is summable
+  have hsc : Summable (fun n => (a n : ℂ) * (n : ℂ)^(-(σ : ℂ))) := by
+    apply Summable.of_norm
+    have hnorm : ∀ n, ‖(a n : ℂ) * (n : ℂ)^(-(σ : ℂ))‖ = |a n * (n : ℝ)^(-σ)| := by
+      intro n
+      rw [Complex.norm_mul]
+      have hn' : (0 : ℝ) ≤ n := by exact_mod_cast Nat.zero_le n
+      have key1 : (n : ℂ) = ((n : ℝ) : ℂ) := by norm_cast
+      have key2 : (-(σ : ℂ) : ℂ) = ((-σ : ℝ) : ℂ) := (Complex.ofReal_neg σ).symm
+      rw [key1, key2, ← Complex.ofReal_cpow hn' (-σ)]
+      rw [Complex.norm_real, Complex.norm_real, Real.norm_eq_abs, Real.norm_eq_abs, abs_mul]
+    simp_rw [hnorm]
+    exact hs.abs
+  -- Now use Complex.re_tsum
+  rw [Complex.re_tsum hsc]
+  congr 1
+  ext n
+  exact hterm n
 
 theorem analyticAt_bounded_on_compact
     {f : ℂ → ℂ} {z₀ : ℂ} (hf : AnalyticAt ℂ f z₀) :
