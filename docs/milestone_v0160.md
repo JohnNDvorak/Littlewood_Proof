@@ -111,12 +111,12 @@ theorem neg_zeta_logderiv_eq_vonMangoldt_series (σ : ℝ) (hσ : 1 < σ) :
 | 152 | Clean imports in Development/ | All 16 files build successfully |
 | 153 | Verify total sorry count | 120 total (down from 121) |
 | 154 | Document clean files | 24 sorry-free files |
-| 155 | Verify build system | All files compile |
-| 156 | Check Oscillation/ status | [pending] |
-| 157 | Check ExplicitFormulas/ status | [pending] |
-| 158 | Update Assumptions.lean status | [pending] |
-| 159 | Create session summary | [pending] |
-| 160 | Update milestone document | This document |
+| 155 | Verify build system | SUCCESS (3584 jobs) |
+| 156 | Check Oscillation/ status | 1 clean, 1 with 9 hyp sorries |
+| 157 | Check ExplicitFormulas/ status | 3 clean, 1 with 2 sorries |
+| 158 | Update Assumptions.lean status | Updated to Task 160 |
+| 159 | Create session summary | This document |
+| 160 | Update milestone document | COMPLETE |
 
 ## Build Status
 ```
@@ -148,4 +148,30 @@ All files compile with only `sorry` warnings (no errors).
 [BUILD] Task 152: Development/ imports verified
 [DOCS] Task 153: Sorry count verified
 [DOCS] Task 154: Clean files documented
+[DOCS] Tasks 155-158: Status verification complete
+[MILESTONE] Tasks 159-160: Session complete
 ```
+
+## Session Summary
+
+### Proofs Added: 7
+1. `nat_cpow_eq_rpow` - ℕ cpow equals rpow for real exponent
+2. `nat_cpow_im_zero` - imaginary part is zero
+3. `nat_cpow_re` - real part equals rpow
+4. `lseries_term_re_real_coeff` - LSeries term real part extraction
+5. `lseries_real_coeff_re` - LSeries.re = real tsum (division form)
+6. `lseries_real_coeff_re'` - LSeries.re = real tsum (multiplication form)
+7. `neg_zeta_logderiv_eq_vonMangoldt_series` - -ζ'/ζ equals von Mangoldt series
+
+### Sorries Eliminated: 1
+- `neg_zeta_logderiv_eq_vonMangoldt_series` in ZetaLogDeriv.lean
+
+### Files Created: 1
+- `LSeriesRealBridge.lean` (6 fully proved lemmas)
+
+### Total Sorry Count: 120 (was 121)
+
+### Key Achievement
+The LSeries-to-real-tsum bridge enables converting complex L-series real parts
+to real infinite sums for real coefficients. This unblocks several proofs in
+the project that need to work with real-valued Dirichlet series.
