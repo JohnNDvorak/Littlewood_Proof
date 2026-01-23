@@ -7,6 +7,7 @@ import Mathlib.NumberTheory.LSeries.Nonvanishing
 import Mathlib.NumberTheory.ArithmeticFunction.VonMangoldt
 import Littlewood.CoreLemmas.LandauLemma
 import Littlewood.Development.ZetaPositivity
+import Littlewood.Development.LSeriesRealBridge
 
 /-!
 # Logarithmic Derivative of Zeta
@@ -144,8 +145,11 @@ theorem neg_zeta_logderiv_eq_vonMangoldt_series (σ : ℝ) (hσ : 1 < σ) :
   -- Use the identity from LandauLemma
   have hre : 1 < (σ : ℂ).re := by simp [hσ]
   have hid := Landau.vonMangoldt_eq_neg_zeta_logderiv (σ : ℂ) hre
-  -- The LSeries for real σ has real part equal to the real series
-  -- LSeries Λ σ = ∑' n, Λ(n) / n^σ where the RHS is a real number for real σ
-  sorry -- BLOCKED: Need real-part extraction for LSeries at real argument
+  -- From hid: LSeries Λ σ = -ζ'/ζ(σ), so their real parts are equal
+  rw [← hid]
+  -- Apply the LSeries-to-real bridge
+  have hsumm : LSeriesSummable (fun n => (Λ n : ℂ)) (σ : ℂ) :=
+    ArithmeticFunction.LSeriesSummable_vonMangoldt hre
+  exact LSeriesRealBridge.lseries_real_coeff_re' (fun n => Λ n) σ hσ hsumm
 
 end Littlewood.Development.ZetaLogDeriv
