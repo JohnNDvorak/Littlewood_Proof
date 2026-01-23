@@ -382,10 +382,24 @@ lemma neg_zeta_logderiv_expansion :
 /-- The bound on -Re(ζ'/ζ) for σ > 1.
 
 -Re(ζ'/ζ(σ)) ≤ 1/(σ-1) + C for some constant C.
+
+### What's Known (from ZetaLogDeriv.lean):
+- neg_zeta_logderiv_pos_real: 0 < -Re(ζ'/ζ(σ)) for real σ > 1
+
+### What's Needed:
+- Laurent expansion: -ζ'/ζ(s) = 1/(s-1) + γ + O(|s-1|) where γ is Euler-Mascheroni
+- This gives the upper bound as σ → 1+
+
+### Dependencies:
+- neg_zeta_logderiv_laurent (LaurentExpansion.lean) - BLOCKED on MeromorphicAt
+- riemannZeta_residue_one gives pole structure but not full expansion
 -/
 lemma neg_zeta_logderiv_re_bound :
     ∃ C : ℝ, ∀ σ : ℝ, 1 < σ → σ ≤ 2 →
       (zetaLogDeriv σ).re ≤ 1 / (σ - 1) + C := by
+  -- BLOCKED: Requires Laurent expansion -ζ'/ζ = 1/(s-1) + γ + O(|s-1|)
+  -- The pole term 1/(s-1) dominates as σ → 1+
+  -- The constant C = γ (Euler-Mascheroni) + error bound
   sorry
 
 /-- The classical de la Vallée Poussin zero-free region.
