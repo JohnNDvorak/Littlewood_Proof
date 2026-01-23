@@ -5,12 +5,12 @@
 - Task 100: ~107 sorries
 - Task 130: ~130 sorries (infrastructure bloat)
 - Task 190: ~106 sorries (cleanup)
-- Task 205: **93 sorries** (current)
+- Task 205: **82 sorries** (current, accurate count)
 
 ## Current State
-- **Total sorries: 93**
-- **Assumptions.lean: 62** (intentional axioms)
-- **Other files: 31** (actual gaps)
+- **Total sorries: 82** (code statements only, excludes doc comments)
+- **Assumptions.lean: 58** (intentional axioms)
+- **Other files: 24** (actual gaps)
 - **Clean files: 32** (sorry-free)
 
 ## Tasks 191-205 Summary
@@ -36,13 +36,13 @@
 
 | Location | Count | Type |
 |----------|-------|------|
-| Assumptions.lean | 62 | Intentional axioms |
+| Assumptions.lean | 58 | Intentional axioms |
 | Development/HardyTheorem.lean | 11 | Deep ANT |
-| Development/ZeroFreeRegion.lean | 7 | Dirichlet char |
+| Development/ZeroFreeRegion.lean | 6 | Dirichlet char |
 | Aristotle/LandauLemma.lean | 3 | New infrastructure |
 | Aristotle/LaurentExpansion.lean | 3 | New infrastructure |
 | CoreLemmas/LandauLemma.lean | 1 | Analytic continuation |
-| Other | 6 | Various |
+| **Total** | **82** | |
 
 ## Clean Files (32 total)
 
@@ -88,19 +88,18 @@
 
 ## What Remains
 
-### In Assumptions.lean (62 - will be filled by Mathlib/Gauss)
+### In Assumptions.lean (58 - will be filled by Mathlib/Gauss)
 - Explicit formula instances
 - Weighted average formula instances
 - Schmidt oscillation instances
 - Zero density instances
 - Landau lemma instances
 
-### In Other Files (31)
+### In Other Files (24)
 - **HardyTheorem (11)**: ξ functional equation, Complex.arg continuity
-- **ZeroFreeRegion (7)**: Dirichlet character specialization
+- **ZeroFreeRegion (6)**: Dirichlet character specialization
 - **Aristotle (6)**: New infrastructure proofs
 - **LandauLemma (1)**: Analytic continuation
-- **Other (6)**: Various deep proofs
 
 ## Git Tags
 - v0.190: Cleanup and honest count
