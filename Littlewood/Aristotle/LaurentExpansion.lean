@@ -36,7 +36,30 @@ theorem neg_zeta_logDeriv_principal_part :
 /-- zetaMulSubOne is continuous at s = 1 -/
 theorem zetaMulSubOne_continuousAt_one : ContinuousAt zetaMulSubOne 1 := by
   -- Use riemannZeta_residue_one: (s-1)*ζ(s) → 1 as s → 1
-  -- BLOCKED: Need to connect nhdsWithin to full nhds for continuity
-  sorry
+  -- Strategy: zetaMulSubOne 1 = 1, and on {1}ᶜ it equals (s-1)*ζ(s) which → 1
+  rw [ContinuousAt]
+  have hval : zetaMulSubOne 1 = 1 := by simp [zetaMulSubOne]
+  rw [hval]
+  -- Need: Tendsto zetaMulSubOne (nhds 1) (nhds 1)
+  -- Key: on punctured nhds, zetaMulSubOne = (s-1)*ζ(s), which → 1
+  have hres := riemannZeta_residue_one
+  -- Use tendsto_nhds_iff_forall_eventually
+  rw [Metric.tendsto_nhds]
+  intro ε hε
+  -- From riemannZeta_residue_one, we know (s-1)*ζ(s) → 1
+  rw [Metric.tendsto_nhds] at hres
+  specialize hres ε hε
+  rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at hres
+  obtain ⟨δ, hδ_pos, hball⟩ := hres
+  rw [Filter.Eventually, Metric.mem_nhds_iff]
+  use δ, hδ_pos
+  intro s hs
+  by_cases h : s = 1
+  · simp [h, hval, hε]
+  · have hs' : s ∈ Metric.ball (1 : ℂ) δ ∩ {(1 : ℂ)}ᶜ := ⟨hs, h⟩
+    have hdist := hball hs'
+    simp only [Set.mem_setOf_eq] at hdist
+    simp only [zetaMulSubOne, if_neg h, Set.mem_setOf_eq]
+    exact hdist
 
 end

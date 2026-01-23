@@ -226,13 +226,18 @@ theorem sign_change_gives_zero (t₁ t₂ : ℝ) (ht : t₁ < t₂)
   -- By intermediate value theorem for continuous real functions
   have hcont : ContinuousOn hardyZ_real_val (Set.Icc t₁ t₂) :=
     hardyZ_real_val_continuous.continuousOn
-  -- Z(t₁) > 0, Z(t₂) < 0, so by IVT there exists t with Z(t) = 0
-  have h1 : hardyZ_real_val t₁ ∈ Set.Icc (hardyZ_real_val t₂) (hardyZ_real_val t₁) := by
-    constructor <;> linarith
-  have h0_mem : (0 : ℝ) ∈ Set.Icc (hardyZ_real_val t₂) (hardyZ_real_val t₁) := by
-    constructor <;> linarith
-  -- Apply IVT
-  sorry
+  -- 0 ∈ (hardyZ_real_val t₂, hardyZ_real_val t₁) since f(t₂) < 0 < f(t₁)
+  have h0_mem : (0 : ℝ) ∈ Set.Ioo (hardyZ_real_val t₂) (hardyZ_real_val t₁) := ⟨h_neg, h_pos⟩
+  -- Apply IVT (the ' version handles f(b) < y < f(a) case)
+  have hivt := intermediate_value_Ioo' (le_of_lt ht) hcont h0_mem
+  -- hivt : 0 ∈ hardyZ_real_val '' Ioo t₁ t₂
+  obtain ⟨t, ht_mem, ht_zero⟩ := hivt
+  refine ⟨t, ht_mem, ?_⟩
+  -- hardyZ_real_val t = 0, and hardyZ t = (hardyZ t).re since hardyZ is real-valued
+  rw [hardyZ_eq_re t]
+  -- ht_zero : hardyZ_real_val t = 0, i.e., (hardyZ t).re = 0
+  simp only [hardyZ_real_val] at ht_zero
+  simp only [ht_zero, Complex.ofReal_zero]
 
 /-- Combining sign change detection with hardyZ_zero_iff gives Hardy's theorem -/
 theorem hardy_from_sign_changes :
