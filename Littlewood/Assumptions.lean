@@ -60,8 +60,7 @@ This file provides a CENTRALIZED view of remaining assumptions.
 - [T] Titchmarsh, Theory of the Riemann Zeta Function
 -/
 
-import Littlewood.Main.LittlewoodPsi
-import Littlewood.Main.LittlewoodPi
+-- Only import files that DEFINE hypothesis classes, not files that USE them
 import Littlewood.ExplicitFormulas.ExplicitFormulaPsi
 import Littlewood.ExplicitFormulas.ConversionFormulas
 import Littlewood.CoreLemmas.WeightedAverageFormula
