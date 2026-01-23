@@ -176,8 +176,14 @@ lemma hardyZ_eq_re (t : ℝ) : hardyZ t = (hardyZ t).re := by
 /-- Z is continuous (inherits from ζ and exp) -/
 theorem hardyZ_continuous : Continuous hardyZ := by
   unfold hardyZ
-  -- exp is continuous, riemannSiegelTheta is continuous, ζ is continuous on ℂ\{1}
-  -- The composition is continuous
+  -- Needs:
+  -- 1. Continuity of exp (DONE in Mathlib)
+  -- 2. Continuity of t ↦ I * riemannSiegelTheta t
+  --    - Requires: Complex.arg continuous where Gamma ≠ 0 and not on negative real axis
+  --    - Gamma(1/4 + it/2) has Re > 0, so Gamma is continuous and nonzero there
+  --    - Need: Gamma(1/4 + it/2) doesn't hit negative real axis for real t
+  -- 3. Continuity of riemannZeta at 1/2 + it (DONE: zeta differentiable away from 1)
+  -- BLOCKED: Need continuity of Complex.arg ∘ Gamma on {1/4 + it/2 : t ∈ ℝ}
   sorry
 
 /-- Z is continuous as a real-valued function on ℝ -/
