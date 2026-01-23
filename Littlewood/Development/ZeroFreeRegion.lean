@@ -377,9 +377,40 @@ lemma zeta_pole_behavior :
   -- Step 2: Restrict riemannZeta_residue_one to real line
   -- (s-1)*ζ(s) → 1 as s → 1 in ℂ\{1} implies it tends to 1 along reals > 1
   have hres := riemannZeta_residue_one
-  -- The real part of (σ-1)*ζ(σ) tends to 1
-  -- Since ζ(σ) is real for real σ > 1, this gives (σ-1)*ζ(σ) → 1
-  sorry -- BLOCKED: filter coercion from ℝ to ℂ nhdsWithin
+  -- Step 2a: Show coe : ℝ → ℂ maps nhdsWithin 1 (Ioi 1) into nhdsWithin 1 {1}ᶜ
+  have hmap : Filter.Tendsto (fun σ : ℝ => (σ : ℂ))
+      (nhdsWithin 1 (Set.Ioi 1)) (nhdsWithin 1 {(1 : ℂ)}ᶜ) := by
+    rw [tendsto_nhdsWithin_iff]
+    constructor
+    · exact Complex.continuous_ofReal.continuousAt.tendsto.mono_left nhdsWithin_le_nhds
+    · apply eventually_nhdsWithin_of_forall
+      intro σ hσ
+      simp only [Set.mem_compl_iff, Set.mem_singleton_iff]
+      intro h
+      exact ne_of_gt hσ (Complex.ofReal_injective h)
+  -- Step 2b: Restrict hres to real line
+  have hres_real : Filter.Tendsto (fun σ : ℝ => ((σ : ℂ) - 1) * riemannZeta σ)
+      (nhdsWithin 1 (Set.Ioi 1)) (nhds 1) := hres.comp hmap
+  -- Step 3: Take real part (since limit is real)
+  have hres_re : Filter.Tendsto (fun σ : ℝ => (((σ : ℂ) - 1) * riemannZeta σ).re)
+      (nhdsWithin 1 (Set.Ioi 1)) (nhds (1 : ℂ).re) :=
+    (Complex.continuous_re.tendsto 1).comp hres_real
+  -- Step 4: Simplify ((σ - 1) * ζ(σ)).re = (σ - 1) * (ζ(σ)).re
+  have hsimpl : ∀ σ : ℝ, (((σ : ℂ) - 1) * riemannZeta σ).re = (σ - 1) * (riemannZeta σ).re := by
+    intro σ
+    rw [Complex.mul_re]
+    simp only [Complex.sub_re, Complex.ofReal_re, Complex.one_re,
+               Complex.sub_im, Complex.ofReal_im, Complex.one_im, sub_zero, zero_mul, sub_zero]
+  -- Step 5: For σ > 1, (ζ(σ)).re = ‖ζ(σ)‖, so the functions are equal eventually
+  have heq : (fun σ : ℝ => (((σ : ℂ) - 1) * riemannZeta σ).re) =ᶠ[nhdsWithin 1 (Set.Ioi 1)]
+             (fun σ : ℝ => (σ - 1) * ‖riemannZeta σ‖) := by
+    apply eventually_nhdsWithin_of_forall
+    intro σ hσ
+    simp only
+    rw [hsimpl, ← hzeta_real σ hσ]
+  -- Step 6: Combine
+  simp only [Complex.one_re] at hres_re
+  exact hres_re.congr' heq
 
 /-- The logarithmic derivative has a simple pole at s = 1.
 
