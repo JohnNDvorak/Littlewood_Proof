@@ -339,41 +339,9 @@ theorem aligned_sum_large (M : ℕ) (hM : 2 ≤ M) (n : ℕ) (hn : 1 ≤ n)
 
 end WeightedAverage
 
--- ============================================================
--- INSTANCES (Documented Assumptions)
--- ============================================================
+/-!
+## Hypothesis Instances
 
-instance : WeightedAverage.WeightedAverageFormulaRHHyp where
-  formula := by
-    intro x hx δ hδ_lower hδ_upper hRH
-    sorry
-
-instance : WeightedAverage.IntegralPsiMinusXHyp where
-  formula := by
-    intro x hx
-    sorry
-
-instance : WeightedAverage.RhoToGammaErrorHyp where
-  summable := by
-    intro hRH
-    sorry
-
-instance : WeightedAverage.SumOverPositiveOrdinatesHyp where
-  formula := by
-    intro f hf
-    sorry
-
-instance : WeightedAverage.ZeroSumTailHyp where
-  bound := by
-    intro x T hT
-    sorry
-
-instance : WeightedAverage.MainSumBoundHyp where
-  bound := by
-    intro x M hM
-    sorry
-
-instance : WeightedAverage.AlignedSumLargeHyp where
-  large := by
-    intro M hM n hn halign x hx
-    sorry
+All WeightedAverage hypothesis instances are provided in Assumptions.lean
+(the single source of truth for axioms).
+-/
