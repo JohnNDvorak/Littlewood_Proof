@@ -6,6 +6,7 @@ import Mathlib.NumberTheory.LSeries.RiemannZeta
 import Mathlib.NumberTheory.LSeries.Nonvanishing
 import Mathlib.NumberTheory.LSeries.Dirichlet
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
+import Littlewood.Development.ZetaPositivity
 
 /-!
 # Zero-Free Region Development
@@ -341,13 +342,22 @@ More precisely: (σ-1)|ζ(σ)| → 1 as σ → 1+.
 lemma zeta_pole_behavior :
     Filter.Tendsto (fun σ : ℝ => (σ - 1) * ‖riemannZeta σ‖)
     (nhdsWithin 1 (Set.Ioi 1)) (nhds 1) := by
-  -- Use Mathlib's riemannZeta_residue_one and restrict to reals
-  -- The key is that for real σ > 1, ζ(σ) is real and positive
-  -- so ‖ζ(σ)‖ = ζ(σ) and (σ-1)ζ(σ) → 1
+  -- Strategy: Use riemannZeta_residue_one plus the fact that ζ(σ) is positive real for σ > 1
+  -- Step 1: For σ > 1, ‖ζ(σ)‖ = (ζ(σ)).re since ζ(σ) is positive real
+  have hzeta_real : ∀ σ : ℝ, 1 < σ → ‖riemannZeta σ‖ = (riemannZeta σ).re := by
+    intro σ hσ
+    have him := ZetaPositivity.riemannZeta_im_zero_of_real σ hσ
+    have hpos := ZetaPositivity.riemannZeta_pos_of_real_gt_one σ hσ
+    -- |z.re| = ‖z‖ when z.im = 0
+    rw [← Complex.abs_re_eq_norm.mpr him]
+    -- |z.re| = z.re when z.re > 0
+    exact abs_of_pos hpos
+  -- Step 2: Restrict riemannZeta_residue_one to real line
+  -- (s-1)*ζ(s) → 1 as s → 1 in ℂ\{1} implies it tends to 1 along reals > 1
   have hres := riemannZeta_residue_one
-  -- Need to convert from complex to real
-  -- This requires showing ζ(σ) is real and positive for real σ > 1
-  sorry -- BLOCKED: needs ζ real-valued on reals > 1
+  -- The real part of (σ-1)*ζ(σ) tends to 1
+  -- Since ζ(σ) is real for real σ > 1, this gives (σ-1)*ζ(σ) → 1
+  sorry -- BLOCKED: filter coercion from ℝ to ℂ nhdsWithin
 
 /-- The logarithmic derivative has a simple pole at s = 1.
 
