@@ -23,7 +23,9 @@ theorem dirichlet_series_eq_tsum_real
     (a : ℕ → ℝ) (σ : ℝ)
     (hs : Summable (fun n => a n * (n : ℝ)^(-σ))) :
     (∑' n, (a n : ℂ) * (n : ℂ)^(-(σ : ℂ))).re = ∑' n, a n * (n : ℝ)^(-σ) := by
-  sorry -- Aristotle proof needs exact? resolution
+  -- BLOCKED: Requires Complex.re_tsum + cpow_natCast manipulation
+  -- See LSeriesRealBridge.lean for similar proof pattern
+  sorry
 
 theorem analyticAt_bounded_on_compact
     {f : ℂ → ℂ} {z₀ : ℂ} (hf : AnalyticAt ℂ f z₀) :
