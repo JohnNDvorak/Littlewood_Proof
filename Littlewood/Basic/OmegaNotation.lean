@@ -250,4 +250,33 @@ theorem IsOmegaPlusMinus.div_const (h : f =Ω±[g]) (c : ℝ) (hc : 0 < c) :
 
 end Scaling
 
+section Transfer
+
+/--
+If f =Ω₊[g] and h = o(g), then f + h =Ω₊[g].
+The little-o error is eventually negligible compared to the Ω₊ behavior.
+
+BLOCKED: Requires careful filter manipulation.
+-/
+theorem IsOmegaPlus.add_isLittleO (hf : f =Ω₊[g]) (hh : h =o[atTop] g)
+    (hg : ∀ᶠ x in atTop, 0 < g x) : (fun x => f x + h x) =Ω₊[g] := by
+  sorry -- BLOCKED: Filter.Frequently.and_eventually combination
+
+/--
+If f =Ω₋[g] and h = o(g), then f + h =Ω₋[g].
+-/
+theorem IsOmegaMinus.add_isLittleO (hf : f =Ω₋[g]) (hh : h =o[atTop] g)
+    (hg : ∀ᶠ x in atTop, 0 < g x) : (fun x => f x + h x) =Ω₋[g] := by
+  sorry -- BLOCKED: Filter.Frequently.and_eventually combination
+
+/--
+If f =Ω±[g] and h = o(g), then f + h =Ω±[g].
+This is the key transfer lemma for explicit formula applications.
+-/
+theorem IsOmegaPlusMinus.add_isLittleO (hf : f =Ω±[g]) (hh : h =o[atTop] g)
+    (hg : ∀ᶠ x in atTop, 0 < g x) : (fun x => f x + h x) =Ω±[g] :=
+  ⟨hf.1.add_isLittleO hh hg, hf.2.add_isLittleO hh hg⟩
+
+end Transfer
+
 end Asymptotics
