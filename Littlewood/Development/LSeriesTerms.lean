@@ -55,4 +55,37 @@ theorem lseries_term_re_eq (a : ℝ) (n : ℕ) (hn : n ≠ 0) (σ : ℝ) :
   have him : ((n : ℂ) ^ (-(σ : ℂ))).im = 0 := PowerLemmas.cpow_neg_real_im_zero n hn σ
   simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, him, mul_zero, sub_zero, hre]
 
+/-- Norm bound: |a * n^(-σ)| = |a| * n^(-σ) for real σ and n > 0 -/
+theorem lseries_term_norm (a : ℝ) (n : ℕ) (hn : n ≠ 0) (σ : ℝ) :
+    ‖(a : ℂ) * (n : ℂ) ^ (-(σ : ℂ))‖ = |a| * (n : ℝ) ^ (-σ) := by
+  have hn_pos : (0 : ℝ) < n := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn)
+  have hpow : ‖(n : ℂ) ^ (-(σ : ℂ))‖ = (n : ℝ) ^ (-σ) := by
+    -- Convert ℕ → ℂ to ℕ → ℝ → ℂ
+    rw [show (n : ℂ) = ((n : ℝ) : ℂ) from ofReal_natCast n]
+    rw [norm_cpow_eq_rpow_re_of_pos hn_pos]
+    simp only [neg_re, ofReal_re]
+  rw [norm_mul, hpow, norm_real, Real.norm_eq_abs]
+
+/-- For bounded coefficients |a(n)| ≤ M, term bound |a(n) * n^(-σ)| ≤ M * n^(-σ) -/
+theorem lseries_term_bound (a : ℕ → ℝ) (M : ℝ) (hM : ∀ n, |a n| ≤ M)
+    (n : ℕ) (hn : n ≠ 0) (σ : ℝ) :
+    ‖(a n : ℂ) * (n : ℂ) ^ (-(σ : ℂ))‖ ≤ M * (n : ℝ) ^ (-σ) := by
+  rw [lseries_term_norm (a n) n hn σ]
+  have hn_pos : (0 : ℝ) < n := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn)
+  apply mul_le_mul_of_nonneg_right (hM n)
+  exact le_of_lt (Real.rpow_pos_of_pos hn_pos (-σ))
+
+/-- For non-negative bounded coefficients, norm equals term value -/
+theorem lseries_term_norm_nonneg (a : ℝ) (ha : 0 ≤ a) (n : ℕ) (hn : n ≠ 0) (σ : ℝ) :
+    ‖(a : ℂ) * (n : ℂ) ^ (-(σ : ℂ))‖ = a * (n : ℝ) ^ (-σ) := by
+  rw [lseries_term_norm a n hn σ, abs_of_nonneg ha]
+
+/-- Term comparison: for σ₁ ≤ σ₂ and n ≥ 1, a * n^(-σ₂) ≤ a * n^(-σ₁) when a ≥ 0 -/
+theorem lseries_term_antitone (a : ℝ) (ha : 0 ≤ a) (n : ℕ) (hn : 1 ≤ n)
+    {σ₁ σ₂ : ℝ} (hσ : σ₁ ≤ σ₂) :
+    a * (n : ℝ) ^ (-σ₂) ≤ a * (n : ℝ) ^ (-σ₁) := by
+  apply mul_le_mul_of_nonneg_left _ ha
+  have hn' : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  exact Real.rpow_le_rpow_of_exponent_le hn' (neg_le_neg hσ)
+
 end Littlewood.Development.LSeriesTerms
