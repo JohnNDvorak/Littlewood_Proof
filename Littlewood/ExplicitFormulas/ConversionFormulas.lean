@@ -238,11 +238,21 @@ theorem omega_psi_to_pi_li [OmegaPsiToThetaHyp] [OmegaThetaToPiLiHyp] (f : ℝ �
 instance : OmegaPsiToThetaHyp where
   property := by
     intro f hf h
+    -- θ = ψ + E where |E| ≤ 2√x log x (from theta_psi_simple)
+    -- If ψ - x =Ω±[f] with f ≥ √x, need to show θ - x =Ω±[f]
+    -- θ - x = (ψ - x) + (θ - ψ) = (ψ - x) + O(√x log x)
+    -- Since f ≥ √x, we have f log x ≥ √x log x eventually
+    -- BLOCKED: Need Ω± addition lemma: if g =Ω±[f] and |h| = o(f), then g + h =Ω±[f]
     sorry
 
 instance : OmegaThetaToPiLiHyp where
   property := by
     intro f hf h
+    -- π - li = (θ - x)/log x + E where |E| ≤ √x/log²x (from pi_li_from_theta)
+    -- If θ - x =Ω±[f] with f ≥ √x, need to show π - li =Ω±[f/log x]
+    -- (θ - x)/log x =Ω±[f/log x] by division property
+    -- Error √x/log²x = o(f/log x) when f ≥ √x
+    -- BLOCKED: Need Ω± division and addition lemmas for asymptotic transfer
     sorry
 
 end Conversion
