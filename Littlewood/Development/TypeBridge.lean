@@ -394,7 +394,9 @@ theorem lseries_real_tendsto_top_of_nonneg_divergent
       (nhdsWithin σ_c (Set.Ioi σ_c)) Filter.atTop := by
   -- As σ → σ_c⁺, the series L(σ) = ∑ f(n)/n^σ increases to +∞
   -- because f(n)/n^σ ≥ f(n)/n^(σ_c) and the latter diverges
-  sorry -- BLOCKED: needs L-series monotonicity in σ for nonneg coeffs
+  -- NOTE: lseries_real_antitone_of_nonneg (ZetaPositivity) gives monotonicity
+  -- Still need: LSeries ↔ real tsum bridge + monotone convergence for unboundedness
+  sorry -- BLOCKED: needs LSeries-to-real-tsum bridge + monotone limit argument
 
 theorem landau_lseries_not_analytic_at_boundary
     (f : ℕ → ℝ) (hf : ∀ n, 0 ≤ f n) (σ_c : ℝ)
@@ -407,8 +409,8 @@ theorem landau_lseries_not_analytic_at_boundary
   -- Step 2: For real σ > σ_c, the L-series L(σ) is real and equals ∑ f(n)/n^σ
   -- Step 3: As σ → σ_c⁺, L(σ) → +∞ (because series diverges at σ_c with non-negative terms)
   -- Step 4: This contradicts continuity at σ_c
-  -- BLOCKED: Need to prove L(σ) → +∞ for non-negative divergent series
-  sorry
+  -- BLOCKED: Depends on lseries_real_tendsto_top_of_nonneg_divergent above
+  sorry -- BLOCKED: depends on lseries_real_tendsto_top_of_nonneg_divergent
 
 -- ============================================================
 -- SECTION 11: Euler Product ↔ PNT Connection (Task 49)
