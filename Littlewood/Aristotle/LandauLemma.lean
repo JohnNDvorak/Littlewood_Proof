@@ -35,4 +35,36 @@ theorem analyticAt_bounded_on_compact
   exact ⟨δ / 2, half_pos hδ_pos, ‖f z₀‖ + 1, fun z hz => by
     linarith [norm_sub_norm_le (f z) (f z₀), hδ z (lt_of_le_of_lt hz (by linarith))]⟩
 
+/-! ## Main Landau Theorems -/
+
+/-- As σ → σ_c⁺, the Dirichlet series tends to +∞ for non-negative coefficients
+    when the series diverges at σ_c. -/
+theorem dirichlet_series_tendsto_atTop
+    (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) (σ_c : ℝ)
+    (hconv : ∀ σ : ℝ, σ_c < σ → Summable (fun n => a n * (n : ℝ)^(-σ)))
+    (hdiv : ¬ Summable (fun n => a n * (n : ℝ)^(-σ_c))) :
+    Filter.Tendsto (fun σ => ∑' n, a n * (n : ℝ)^(-σ))
+                   (nhdsWithin σ_c (Set.Ioi σ_c)) Filter.atTop := by
+  -- BLOCKED: Complex proof requiring:
+  -- 1. Monotonicity of partial sums in σ
+  -- 2. Filter limit argument for nhdsWithin
+  -- 3. Tsum continuity near boundary
+  sorry
+
+/-- Landau's Theorem: A Dirichlet series with non-negative coefficients that converges
+    for Re(s) > σ_c but diverges at σ_c has a singularity at σ_c on the real axis. -/
+theorem landau_dirichlet_singularity
+    (a : ℕ → ℝ) (ha_nonneg : ∀ n, 0 ≤ a n) (σ_c : ℝ)
+    (hconv : ∀ σ : ℝ, σ_c < σ → Summable (fun n => a n * (n : ℝ)^(-σ)))
+    (hdiv : ¬ Summable (fun n => a n * (n : ℝ)^(-σ_c))) :
+    ¬ AnalyticAt ℂ (fun s => ∑' n, (a n : ℂ) * (n : ℂ)^(-s)) (σ_c : ℂ) := by
+  intro hanalytic
+  -- If analytic at σ_c, the function is bounded near σ_c
+  obtain ⟨r, hr_pos, M, hM⟩ := analyticAt_bounded_on_compact hanalytic
+  -- But on the real axis, the series tends to +∞ as σ → σ_c⁺
+  have htends := dirichlet_series_tendsto_atTop a ha_nonneg σ_c hconv hdiv
+  -- This contradicts boundedness
+  -- BLOCKED: Need to connect complex function on real axis to real tsum
+  sorry
+
 end
