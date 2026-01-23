@@ -312,14 +312,36 @@ this inequality for the Riemann zeta function!
 theorem zeta_product_lower_bound (σ : ℝ) (t : ℝ) (hσ : 1 < σ) :
     ‖riemannZeta σ‖ ^ 3 * ‖riemannZeta (σ + t * I)‖ ^ 4 *
     ‖riemannZeta (σ + 2 * t * I)‖ ≥ 1 := by
-  -- Mathlib's DirichletCharacter.norm_LSeries_product_ge_one gives:
-  -- ‖L(χ^0, 1+x)^3 * L(χ, 1+x+iy)^4 * L(χ², 1+x+2iy)‖ ≥ 1
-  -- For trivial character, L(1, s) = ζ(s)
+  -- Use Mathlib's DirichletCharacter.norm_LFunction_product_ge_one for N = 1
+  -- For N = 1: LFunctionTrivChar 1 s = riemannZeta s (since 1 has no prime factors)
   -- Setting x = σ - 1, y = t gives our result
   have hx : 0 < σ - 1 := by linarith
-  -- The issue is converting from Mathlib's L-function notation
-  sorry -- BLOCKED: Same as mertens_inequality_stub - needs Dirichlet char specialization
-         -- Depends on: DirichletCharacter.norm_LSeries_product_ge_one
+  -- Get the product bound from Mathlib
+  have hbound := DirichletCharacter.norm_LFunction_product_ge_one (N := 1) (χ := 1) hx t
+  -- Key: 1 + ↑(σ - 1) = ↑σ (in ℂ)
+  have hconv : (1 : ℂ) + ((σ - 1 : ℝ) : ℂ) = (σ : ℂ) := by
+    push_cast; ring
+  -- For N = 1: LFunctionTrivChar 1 s = riemannZeta s (1 has no prime factors)
+  have hσ_ne : (1 : ℂ) + (σ - 1 : ℝ) ≠ 1 := by
+    rw [hconv]
+    intro h
+    have : σ = 1 := by exact_mod_cast h
+    linarith
+  rw [DirichletCharacter.LFunctionTrivChar_eq_mul_riemannZeta hσ_ne,
+      Nat.primeFactors_one, Finset.prod_empty, one_mul] at hbound
+  -- LFunction 1 for N=1 equals riemannZeta by LFunction_modOne_eq
+  -- Note: 1^2 = 1, so (1^2 : DirichletCharacter ℂ 1) = 1
+  simp only [one_pow, DirichletCharacter.LFunction_modOne_eq] at hbound
+  -- Convert the arguments: 1 + (σ-1) → σ, 1 + (σ-1) + I*t → σ + t*I, etc.
+  -- Also: ‖a * b * c‖ = ‖a‖ * ‖b‖ * ‖c‖ and ‖a^n‖ = ‖a‖^n
+  rw [hconv] at hbound
+  -- Fix argument order: I * t = t * I
+  have ht_comm : (I : ℂ) * t = t * I := mul_comm I t
+  have ht_comm2 : (2 : ℂ) * I * t = 2 * t * I := by ring
+  simp only [ht_comm, ht_comm2] at hbound
+  -- Now use norm properties
+  rw [norm_mul, norm_mul, norm_pow, norm_pow] at hbound
+  exact hbound
 
 /-- Consequence: If ζ(σ + it) = 0 with t ≠ 0, then |ζ(σ)| → ∞ as σ → 1+.
 
