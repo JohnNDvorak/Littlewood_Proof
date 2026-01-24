@@ -7,6 +7,7 @@ import Mathlib.NumberTheory.LSeries.Nonvanishing
 import Mathlib.NumberTheory.LSeries.Dirichlet
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 import Littlewood.Development.ZetaPositivity
+import Littlewood.Aristotle.LaurentExpansion
 
 /-!
 # Zero-Free Region Development
@@ -436,23 +437,19 @@ lemma neg_zeta_logderiv_expansion :
 
 -Re(ζ'/ζ(σ)) ≤ 1/(σ-1) + C for some constant C.
 
-### What's Known (from ZetaLogDeriv.lean):
-- neg_zeta_logderiv_pos_real: 0 < -Re(ζ'/ζ(σ)) for real σ > 1
+### What's Known (from LaurentExpansion.lean):
+- neg_zeta_logDeriv_principal_part: |(s-1)*(-ζ'/ζ(s)) - 1| ≤ M for |s-1| < r
+  This gives Re(-ζ'/ζ(σ)) ≤ (1+M)/(σ-1) (multiplicative bound)
 
-### What's Needed:
+### What's Needed for the additive form:
 - Laurent expansion: -ζ'/ζ(s) = 1/(s-1) + γ + O(|s-1|) where γ is Euler-Mascheroni
-- This gives the upper bound as σ → 1+
-
-### Dependencies:
-- neg_zeta_logderiv_laurent (LaurentExpansion.lean) - BLOCKED on MeromorphicAt
-- riemannZeta_residue_one gives pole structure but not full expansion
+- Requires proving analyticity of (s-1)*(-ζ'/ζ(s)) at s = 1
 -/
 lemma neg_zeta_logderiv_re_bound :
     ∃ C : ℝ, ∀ σ : ℝ, 1 < σ → σ ≤ 2 →
       (zetaLogDeriv σ).re ≤ 1 / (σ - 1) + C := by
-  -- BLOCKED: Requires Laurent expansion -ζ'/ζ = 1/(s-1) + γ + O(|s-1|)
-  -- The pole term 1/(s-1) dominates as σ → 1+
-  -- The constant C = γ (Euler-Mascheroni) + error bound
+  -- The additive form requires proving that (s-1)*(-ζ'/ζ(s)) - 1 = O(|s-1|)
+  -- which needs analyticity, stronger than the principal part bound.
   sorry
 
 /-- The classical de la Vallée Poussin zero-free region.

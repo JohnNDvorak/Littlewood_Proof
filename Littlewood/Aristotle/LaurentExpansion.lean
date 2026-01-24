@@ -14,39 +14,37 @@ noncomputable section
     This removes the pole and gives an analytic function. -/
 def zetaMulSubOne (s : ℂ) : ℂ := if s = 1 then 1 else (s - 1) * riemannZeta s
 
-/-- The residue of -ζ'/ζ at s = 1 is 1.
-    This follows from ζ having a simple pole with residue 1. -/
-theorem neg_zeta_logDeriv_residue_one :
-    Filter.Tendsto (fun s => (s - 1) * (-deriv riemannZeta s / riemannZeta s))
-                   (nhdsWithin 1 {1}ᶜ) (nhds 1) := by
-  -- Near s = 1: ζ(s) ~ 1/(s-1), so log ζ(s) ~ -log(s-1)
-  -- Thus ζ'/ζ ~ -1/(s-1), and -ζ'/ζ ~ 1/(s-1)
-  -- So (s-1) * (-ζ'/ζ) → 1 as s → 1
-  -- BLOCKED: Requires riemannZeta_residue_one and logarithmic derivative computation
-  sorry
+/-- Product rule for derivative of (s-1)*ζ(s) -/
+lemma deriv_sub_one_mul_zeta (s : ℂ) (hs : s ≠ 1) :
+    deriv (fun z => (z - 1) * riemannZeta z) s =
+    riemannZeta s + (s - 1) * deriv riemannZeta s := by
+  have hdiff_zeta : DifferentiableAt ℂ riemannZeta s := differentiableAt_riemannZeta hs
+  have h1 : HasDerivAt (fun z => z - 1) 1 s := (hasDerivAt_id s).sub_const 1
+  have h2 : HasDerivAt riemannZeta (deriv riemannZeta s) s := hdiff_zeta.hasDerivAt
+  have hprod := HasDerivAt.mul h1 h2
+  have heq : (fun z => (z - 1) * riemannZeta z) = ((fun z => z - 1) * riemannZeta) := by
+    ext z; simp [Pi.mul_apply]
+  rw [heq, hprod.deriv]
+  ring
 
-/-- Near s = 1, (s-1) * (-ζ'/ζ) - 1 is bounded. -/
-theorem neg_zeta_logDeriv_principal_part :
-    ∃ r > 0, ∃ M, ∀ s, s ≠ 1 → ‖s - 1‖ < r →
-    ‖(s - 1) * (-deriv riemannZeta s / riemannZeta s) - 1‖ ≤ M := by
-  -- This follows from neg_zeta_logDeriv_residue_one and continuity
-  -- BLOCKED: Same as above
-  sorry
+/-- Algebraic identity: (s-1)*(-ζ'/ζ) = -((s-1)²*ζ')/((s-1)*ζ) -/
+lemma neg_zeta_logderiv_eq' (s : ℂ) (hs : s ≠ 1) (hζ : riemannZeta s ≠ 0) :
+    (s - 1) * (-deriv riemannZeta s / riemannZeta s) =
+    -((s - 1)^2 * deriv riemannZeta s) / ((s - 1) * riemannZeta s) := by
+  have hs_ne : s - 1 ≠ 0 := sub_ne_zero.mpr hs
+  have hprod_ne : (s - 1) * riemannZeta s ≠ 0 := mul_ne_zero hs_ne hζ
+  field_simp [hζ, hs_ne, hprod_ne]
+
+/-! ## Analytic continuation lemmas for proving (s-1)²ζ'(s) → -1 -/
 
 /-- zetaMulSubOne is continuous at s = 1 -/
-theorem zetaMulSubOne_continuousAt_one : ContinuousAt zetaMulSubOne 1 := by
-  -- Use riemannZeta_residue_one: (s-1)*ζ(s) → 1 as s → 1
-  -- Strategy: zetaMulSubOne 1 = 1, and on {1}ᶜ it equals (s-1)*ζ(s) which → 1
+lemma zetaMulSubOne_continuousAt_one' : ContinuousAt zetaMulSubOne 1 := by
   rw [ContinuousAt]
   have hval : zetaMulSubOne 1 = 1 := by simp [zetaMulSubOne]
   rw [hval]
-  -- Need: Tendsto zetaMulSubOne (nhds 1) (nhds 1)
-  -- Key: on punctured nhds, zetaMulSubOne = (s-1)*ζ(s), which → 1
   have hres := riemannZeta_residue_one
-  -- Use tendsto_nhds_iff_forall_eventually
   rw [Metric.tendsto_nhds]
   intro ε hε
-  -- From riemannZeta_residue_one, we know (s-1)*ζ(s) → 1
   rw [Metric.tendsto_nhds] at hres
   specialize hres ε hε
   rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at hres
@@ -58,8 +56,214 @@ theorem zetaMulSubOne_continuousAt_one : ContinuousAt zetaMulSubOne 1 := by
   · simp [h, hval, hε]
   · have hs' : s ∈ Metric.ball (1 : ℂ) δ ∩ {(1 : ℂ)}ᶜ := ⟨hs, h⟩
     have hdist := hball hs'
-    simp only [Set.mem_setOf_eq] at hdist
     simp only [zetaMulSubOne, if_neg h, Set.mem_setOf_eq]
     exact hdist
+
+/-- zetaMulSubOne is differentiable for s ≠ 1 -/
+lemma zetaMulSubOne_differentiableAt (s : ℂ) (hs : s ≠ 1) : DifferentiableAt ℂ zetaMulSubOne s := by
+  have heq : ∀ᶠ z in nhds s, zetaMulSubOne z = (z - 1) * riemannZeta z := by
+    have h : IsOpen ({(1 : ℂ)}ᶜ : Set ℂ) := isOpen_compl_singleton
+    have hs' : s ∈ ({(1 : ℂ)}ᶜ : Set ℂ) := by simp [hs]
+    filter_upwards [h.mem_nhds hs'] with z hz
+    simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hz
+    simp [zetaMulSubOne, hz]
+  apply DifferentiableAt.congr_of_eventuallyEq _ heq
+  apply DifferentiableAt.mul
+  · exact differentiableAt_id.sub_const 1
+  · exact differentiableAt_riemannZeta hs
+
+/-- zetaMulSubOne is analytic at s = 1 (key for derivative continuity) -/
+theorem zetaMulSubOne_analyticAt_one : AnalyticAt ℂ zetaMulSubOne 1 := by
+  apply Complex.analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt
+  · apply Filter.eventually_of_mem self_mem_nhdsWithin
+    intro s hs
+    simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hs
+    exact zetaMulSubOne_differentiableAt s hs
+  · exact zetaMulSubOne_continuousAt_one'
+
+/-- The extended function h(s) = (s-1)²*ζ(s) for s ≠ 1, h(1) = 0 -/
+def sqZeta (s : ℂ) : ℂ := if s = 1 then 0 else (s - 1)^2 * riemannZeta s
+
+/-- Relation: sqZeta = (s-1) * zetaMulSubOne -/
+lemma sqZeta_eq_mul_zetaMulSubOne (s : ℂ) : sqZeta s = (s - 1) * zetaMulSubOne s := by
+  by_cases h : s = 1
+  · simp [sqZeta, zetaMulSubOne, h]
+  · simp [sqZeta, zetaMulSubOne, h, sq]
+    ring
+
+/-- sqZeta is analytic at s = 1 -/
+theorem sqZeta_analyticAt_one : AnalyticAt ℂ sqZeta 1 := by
+  have heq : sqZeta = (fun s => (s - 1) * zetaMulSubOne s) := by
+    funext s; exact sqZeta_eq_mul_zetaMulSubOne s
+  rw [heq]
+  apply AnalyticAt.mul
+  · exact (analyticAt_id).sub analyticAt_const
+  · exact zetaMulSubOne_analyticAt_one
+
+/-- The derivative of sqZeta is continuous at 1 (since sqZeta is analytic) -/
+theorem deriv_sqZeta_continuousAt_one : ContinuousAt (deriv sqZeta) 1 := by
+  exact sqZeta_analyticAt_one.deriv.continuousAt
+
+/-- Compute h'(1) = 1 using the slope definition of derivative -/
+lemma sqZeta_has_deriv_at_one : HasDerivAt sqZeta 1 1 := by
+  rw [hasDerivAt_iff_tendsto_slope]
+  have heq : (fun s => slope sqZeta 1 s) =ᶠ[nhdsWithin 1 ({1}ᶜ : Set ℂ)]
+             (fun s => (s - 1) * riemannZeta s) := by
+    apply Filter.eventuallyEq_of_mem self_mem_nhdsWithin
+    intro s hs
+    simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hs
+    simp only [slope, sqZeta, hs, ite_true, ite_false, vsub_eq_sub, sub_zero, sq]
+    have h : s - 1 ≠ 0 := sub_ne_zero.mpr hs
+    rw [smul_eq_mul]
+    field_simp [h]
+  exact Filter.Tendsto.congr' heq.symm riemannZeta_residue_one
+
+lemma deriv_sqZeta_at_one : deriv sqZeta 1 = 1 := sqZeta_has_deriv_at_one.deriv
+
+/-- For s ≠ 1, sqZeta'(s) = 2(s-1)*ζ(s) + (s-1)²*ζ'(s) -/
+lemma deriv_sqZeta_eq (s : ℂ) (hs : s ≠ 1) :
+    deriv sqZeta s = 2 * (s - 1) * riemannZeta s + (s - 1)^2 * deriv riemannZeta s := by
+  have heq : ∀ᶠ z in nhds s, sqZeta z = (z - 1)^2 * riemannZeta z := by
+    have h : IsOpen ({(1 : ℂ)}ᶜ : Set ℂ) := isOpen_compl_singleton
+    have hs' : s ∈ ({(1 : ℂ)}ᶜ : Set ℂ) := by simp [hs]
+    filter_upwards [h.mem_nhds hs'] with z hz
+    simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hz
+    simp [sqZeta, hz]
+  rw [Filter.EventuallyEq.deriv_eq heq]
+  have hdiff_zeta : DifferentiableAt ℂ riemannZeta s := differentiableAt_riemannZeta hs
+  have h1 : HasDerivAt (fun z => (z - 1)^2) (2 * (s - 1)) s := by
+    have hbase : HasDerivAt (fun z => z - 1) 1 s := (hasDerivAt_id s).sub_const 1
+    have hpow := hbase.pow 2
+    simp only [Nat.cast_ofNat] at hpow
+    convert hpow using 1
+    ring
+  have h2 : HasDerivAt riemannZeta (deriv riemannZeta s) s := hdiff_zeta.hasDerivAt
+  have hprod := h1.mul h2
+  exact hprod.deriv
+
+/-- Key limit: (s-1)² * ζ'(s) → -1 as s → 1.
+    Proof: sqZeta is analytic at 1 with sqZeta'(1) = 1, so sqZeta'(s) → 1.
+    Since sqZeta'(s) = 2(s-1)ζ(s) + (s-1)²ζ'(s) and 2(s-1)ζ(s) → 2,
+    we get (s-1)²ζ'(s) → 1 - 2 = -1. -/
+lemma sub_sq_mul_zeta_deriv_tendsto :
+    Filter.Tendsto (fun s => (s - 1)^2 * deriv riemannZeta s)
+                   (nhdsWithin 1 {1}ᶜ) (nhds (-1)) := by
+  -- Step 1: sqZeta'(s) → sqZeta'(1) = 1 (by continuity, since sqZeta is analytic at 1)
+  have h_deriv_tends : Filter.Tendsto (deriv sqZeta) (nhdsWithin 1 {1}ᶜ) (nhds 1) := by
+    have hcont := deriv_sqZeta_continuousAt_one
+    have hval := deriv_sqZeta_at_one
+    rw [ContinuousAt] at hcont
+    rw [hval] at hcont
+    exact Filter.Tendsto.mono_left hcont nhdsWithin_le_nhds
+
+  -- Step 2: 2(s-1)*ζ(s) → 2
+  have h_2g_tends : Filter.Tendsto (fun s => 2 * (s - 1) * riemannZeta s)
+                                   (nhdsWithin 1 {1}ᶜ) (nhds 2) := by
+    have h := riemannZeta_residue_one
+    have h2 := Filter.Tendsto.const_mul 2 h
+    convert h2 using 1
+    · funext s; ring
+    · ring
+
+  -- Step 3: (s-1)²*ζ'(s) = sqZeta'(s) - 2(s-1)*ζ(s) eventually
+  have heq : (fun s => (s - 1)^2 * deriv riemannZeta s) =ᶠ[nhdsWithin 1 ({1}ᶜ : Set ℂ)]
+             (fun s => deriv sqZeta s - 2 * (s - 1) * riemannZeta s) := by
+    apply Filter.eventuallyEq_of_mem self_mem_nhdsWithin
+    intro s hs
+    simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hs
+    simp only
+    rw [deriv_sqZeta_eq s hs]
+    ring
+
+  -- Step 4: sqZeta'(s) - 2(s-1)*ζ(s) → 1 - 2 = -1
+  have hsub : Filter.Tendsto (fun s => deriv sqZeta s - 2 * (s - 1) * riemannZeta s)
+                             (nhdsWithin 1 {1}ᶜ) (nhds (-1)) := by
+    have := Filter.Tendsto.sub h_deriv_tends h_2g_tends
+    convert this using 1
+    ring
+
+  exact Filter.Tendsto.congr' heq.symm hsub
+
+/-- ζ(s) ≠ 0 near s = 1 (since ζ has a pole at 1, not a zero) -/
+lemma riemannZeta_ne_zero_near_one :
+    ∀ᶠ s in nhdsWithin (1 : ℂ) {1}ᶜ, riemannZeta s ≠ 0 := by
+  have h := riemannZeta_residue_one
+  rw [Metric.tendsto_nhds] at h
+  specialize h (1/2) (by norm_num : (0 : ℝ) < 1/2)
+  rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at h ⊢
+  obtain ⟨δ, hδ_pos, hball⟩ := h
+  use δ, hδ_pos
+  intro s ⟨hs_ball, hs_ne⟩ hz
+  have hdist := hball ⟨hs_ball, hs_ne⟩
+  simp only [Set.mem_setOf_eq] at hdist
+  rw [hz, mul_zero] at hdist
+  simp only [dist_zero_left] at hdist
+  have : ‖(1 : ℂ)‖ = 1 := by norm_num
+  linarith
+
+/-- The residue of -ζ'/ζ at s = 1 is 1.
+    This follows from ζ having a simple pole with residue 1. -/
+theorem neg_zeta_logDeriv_residue_one :
+    Filter.Tendsto (fun s => (s - 1) * (-deriv riemannZeta s / riemannZeta s))
+                   (nhdsWithin 1 {1}ᶜ) (nhds 1) := by
+  -- Strategy: (s-1)*(-ζ'/ζ) = -((s-1)²*ζ')/((s-1)*ζ)
+  -- As s → 1: (s-1)²*ζ' → -1 and (s-1)*ζ → 1, so the result → -(-1)/1 = 1
+  have h_residue := riemannZeta_residue_one
+  have h_deriv := sub_sq_mul_zeta_deriv_tendsto
+  have hζ_ne := riemannZeta_ne_zero_near_one
+  have h_ne : ∀ᶠ s in nhdsWithin 1 ({1}ᶜ : Set ℂ), s ≠ 1 := by
+    apply Filter.eventually_of_mem self_mem_nhdsWithin
+    intro s hs
+    simp at hs
+    exact hs
+  -- First show the quotient converges
+  have hdiv : Filter.Tendsto (fun s => (s - 1)^2 * deriv riemannZeta s / ((s - 1) * riemannZeta s))
+                             (nhdsWithin 1 {1}ᶜ) (nhds (-1)) := by
+    have := Filter.Tendsto.div h_deriv h_residue (by norm_num : (1 : ℂ) ≠ 0)
+    simp only [neg_div, one_div] at this
+    convert this using 2
+    norm_num
+  -- Negating the quotient: -(-1) = 1
+  have hneg : Filter.Tendsto (fun s => -((s - 1)^2 * deriv riemannZeta s / ((s - 1) * riemannZeta s)))
+                             (nhdsWithin 1 {1}ᶜ) (nhds 1) := by
+    have := Filter.Tendsto.neg hdiv
+    simp only [neg_neg] at this
+    exact this
+  -- Show our function equals this eventually
+  apply Filter.Tendsto.congr' _ hneg
+  filter_upwards [hζ_ne, h_ne] with s hζ hs
+  have hid := neg_zeta_logderiv_eq' s hs hζ
+  rw [hid]
+  have hs_ne : s - 1 ≠ 0 := sub_ne_zero.mpr hs
+  have hprod_ne : (s - 1) * riemannZeta s ≠ 0 := mul_ne_zero hs_ne hζ
+  field_simp [hprod_ne]
+
+/-- Near s = 1, (s-1) * (-ζ'/ζ) - 1 is bounded. -/
+theorem neg_zeta_logDeriv_principal_part :
+    ∃ r > 0, ∃ M, ∀ s, s ≠ 1 → ‖s - 1‖ < r →
+    ‖(s - 1) * (-deriv riemannZeta s / riemannZeta s) - 1‖ ≤ M := by
+  -- From neg_zeta_logDeriv_residue_one, for any ε > 0 there exists δ > 0 such that
+  -- |s - 1| < δ and s ≠ 1 implies |(s-1)*(-ζ'/ζ) - 1| < ε. Take ε = 1.
+  have htend := neg_zeta_logDeriv_residue_one
+  rw [Metric.tendsto_nhds] at htend
+  specialize htend 1 (by norm_num : (0 : ℝ) < 1)
+  rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at htend
+  obtain ⟨δ, hδ_pos, hball⟩ := htend
+  use δ, hδ_pos, 1
+  intro s hs_ne hs_dist
+  have hs_in_ball : s ∈ Metric.ball (1 : ℂ) δ := by
+    simp only [Metric.mem_ball, dist_eq_norm]
+    exact hs_dist
+  have hs_in_compl : s ∈ ({(1 : ℂ)}ᶜ : Set ℂ) := by
+    simp only [Set.mem_compl_iff, Set.mem_singleton_iff]
+    exact hs_ne
+  have hs_in : s ∈ Metric.ball (1 : ℂ) δ ∩ {(1 : ℂ)}ᶜ := ⟨hs_in_ball, hs_in_compl⟩
+  have hdist := hball hs_in
+  simp only [Set.mem_setOf_eq, dist_eq_norm] at hdist
+  linarith
+
+/-- zetaMulSubOne is continuous at s = 1 -/
+theorem zetaMulSubOne_continuousAt_one : ContinuousAt zetaMulSubOne 1 :=
+  zetaMulSubOne_continuousAt_one'
 
 end

@@ -151,11 +151,11 @@ The key steps are:
 This follows from the functional equation ξ(s) = ξ(1-s) where
 ξ(s) = π^(-s/2) Γ(s/2) ζ(s) is the completed zeta function.
 The phase θ(t) is chosen precisely to make this true.
+
+This is an alias for `hardyZ_real`.
 -/
-theorem hardyZ_is_real (t : ℝ) : (hardyZ t).im = 0 := by
-  -- The proof uses: ξ(1/2 + it) = ξ(1/2 - it) (functional equation)
-  -- and the definition of θ(t) to make exp(iθ(t)) ξ(1/2 + it) real
-  sorry
+theorem hardyZ_is_real (t : ℝ) : (hardyZ t).im = 0 :=
+  hardyZ_real t
 
 /-- Consequence: Z(t) equals its real part -/
 lemma hardyZ_eq_re (t : ℝ) : hardyZ t = (hardyZ t).re := by

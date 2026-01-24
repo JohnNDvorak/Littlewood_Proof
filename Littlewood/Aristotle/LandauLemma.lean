@@ -58,26 +58,97 @@ theorem analyticAt_bounded_on_compact
   exact ⟨δ / 2, half_pos hδ_pos, ‖f z₀‖ + 1, fun z hz => by
     linarith [norm_sub_norm_le (f z) (f z₀), hδ z (lt_of_le_of_lt hz (by linarith))]⟩
 
+/-! ## Helper Lemmas for Landau -/
+
+/-- ContinuousAt for finite sums -/
+lemma continuousAt_finset_sum' {α : Type*} [TopologicalSpace α] {β : Type*} [AddCommMonoid β]
+    [TopologicalSpace β] [ContinuousAdd β] (f : ℕ → α → β) (s : Finset ℕ) (x : α)
+    (hf : ∀ n ∈ s, ContinuousAt (f n) x) :
+    ContinuousAt (fun y => ∑ n ∈ s, f n y) x := by
+  induction s using Finset.induction_on with
+  | empty => simp only [Finset.sum_empty]; exact continuousAt_const
+  | @insert a s' ha IH =>
+    simp only [Finset.sum_insert ha]
+    apply ContinuousAt.add
+    · exact hf a (Finset.mem_insert_self a s')
+    · exact IH (fun n hn => hf n (Finset.mem_insert_of_mem hn))
+
+/-- For σ ≠ 0, the function σ ↦ 0^(-σ) is continuous (constantly 0) -/
+lemma zero_rpow_neg_continuousAt (σ₀ : ℝ) (hσ₀ : σ₀ ≠ 0) :
+    ContinuousAt (fun σ : ℝ => (0 : ℝ)^(-σ)) σ₀ := by
+  have heq : ∀ᶠ σ in nhds σ₀, (0 : ℝ)^(-σ) = 0 := by
+    have h : ∀ᶠ σ in nhds σ₀, σ ≠ 0 := (isOpen_compl_singleton).mem_nhds hσ₀
+    filter_upwards [h] with σ hσ
+    exact Real.zero_rpow (neg_ne_zero.mpr hσ)
+  have hval : (0 : ℝ)^(-σ₀) = 0 := Real.zero_rpow (neg_ne_zero.mpr hσ₀)
+  rw [ContinuousAt, hval]
+  apply Filter.Tendsto.congr'
+  · exact Filter.EventuallyEq.symm heq
+  · exact tendsto_const_nhds
+
+/-- When series diverges at σ_c, partial sums are unbounded -/
+lemma unbounded_partial_sums (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) (σ_c : ℝ)
+    (hdiv : ¬ Summable (fun n => a n * (n : ℝ)^(-σ_c))) :
+    ∀ M : ℝ, ∃ N : ℕ, M < ∑ n ∈ Finset.range N, a n * (n : ℝ)^(-σ_c) := by
+  have h := not_summable_iff_tendsto_nat_atTop_of_nonneg (fun n => mul_nonneg (ha n)
+    (Real.rpow_nonneg (Nat.cast_nonneg n) (-σ_c))) |>.mp hdiv
+  rw [Filter.tendsto_atTop] at h
+  intro M
+  specialize h (M + 1)
+  obtain ⟨N, hN⟩ := h.exists
+  exact ⟨N, lt_of_lt_of_le (lt_add_one M) hN⟩
+
+/-- Partial sums of Dirichlet series are continuous in σ when σ ≠ 0 -/
+lemma partial_sum_continuousAt (a : ℕ → ℝ) (N : ℕ) (σ : ℝ) (hσ : σ ≠ 0) :
+    ContinuousAt (fun σ : ℝ => ∑ n ∈ Finset.range N, a n * (n : ℝ)^(-σ)) σ := by
+  apply continuousAt_finset_sum'
+  intro n _
+  apply ContinuousAt.mul continuousAt_const
+  by_cases hn : n = 0
+  · subst hn
+    simp only [Nat.cast_zero]
+    exact zero_rpow_neg_continuousAt σ hσ
+  · have hn' : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hn
+    apply ContinuousAt.rpow continuousAt_const continuousAt_neg (Or.inl hn')
+
 /-! ## Main Landau Theorems -/
 
 /-- As σ → σ_c⁺, the Dirichlet series tends to +∞ for non-negative coefficients
-    when the series diverges at σ_c. -/
+    when the series diverges at σ_c. Note: requires σ_c ≠ 0 for continuity of n=0 term. -/
 theorem dirichlet_series_tendsto_atTop
-    (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) (σ_c : ℝ)
+    (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) (σ_c : ℝ) (hσ_c : σ_c ≠ 0)
     (hconv : ∀ σ : ℝ, σ_c < σ → Summable (fun n => a n * (n : ℝ)^(-σ)))
     (hdiv : ¬ Summable (fun n => a n * (n : ℝ)^(-σ_c))) :
     Filter.Tendsto (fun σ => ∑' n, a n * (n : ℝ)^(-σ))
                    (nhdsWithin σ_c (Set.Ioi σ_c)) Filter.atTop := by
-  -- BLOCKED: Complex proof requiring:
-  -- 1. Monotonicity of partial sums in σ
-  -- 2. Filter limit argument for nhdsWithin
-  -- 3. Tsum continuity near boundary
-  sorry
+  rw [Filter.tendsto_atTop]
+  intro M
+  obtain ⟨N, hN⟩ := unbounded_partial_sums a ha σ_c hdiv (M + 1)
+  have hcont := partial_sum_continuousAt a N σ_c hσ_c
+  rw [Metric.continuousAt_iff] at hcont
+  specialize hcont 1 (by norm_num : (0 : ℝ) < 1)
+  obtain ⟨δ, hδ_pos, hball⟩ := hcont
+  rw [Filter.Eventually, Metric.mem_nhdsWithin_iff]
+  use δ, hδ_pos
+  intro σ ⟨hσ_ball, hσ_pos⟩
+  simp only [Set.mem_Ioi] at hσ_pos
+  simp only [Metric.mem_ball, Real.dist_eq] at hσ_ball
+  simp only [Set.mem_setOf_eq]
+  have hdist := hball hσ_ball
+  simp only [Real.dist_eq] at hdist
+  have hpartial : M < ∑ n ∈ Finset.range N, a n * (n : ℝ)^(-σ) := by
+    have h1 : |(∑ n ∈ Finset.range N, a n * (n : ℝ)^(-σ)) -
+              (∑ n ∈ Finset.range N, a n * (n : ℝ)^(-σ_c))| < 1 := hdist
+    linarith [abs_sub_lt_iff.mp h1]
+  have hsumm := hconv σ hσ_pos
+  have hle := hsumm.sum_le_tsum (Finset.range N) (fun n _ => mul_nonneg (ha n)
+    (Real.rpow_nonneg (Nat.cast_nonneg n) (-σ)))
+  linarith
 
 /-- Landau's Theorem: A Dirichlet series with non-negative coefficients that converges
     for Re(s) > σ_c but diverges at σ_c has a singularity at σ_c on the real axis. -/
 theorem landau_dirichlet_singularity
-    (a : ℕ → ℝ) (ha_nonneg : ∀ n, 0 ≤ a n) (σ_c : ℝ)
+    (a : ℕ → ℝ) (ha_nonneg : ∀ n, 0 ≤ a n) (σ_c : ℝ) (hσ_c : σ_c ≠ 0)
     (hconv : ∀ σ : ℝ, σ_c < σ → Summable (fun n => a n * (n : ℝ)^(-σ)))
     (hdiv : ¬ Summable (fun n => a n * (n : ℝ)^(-σ_c))) :
     ¬ AnalyticAt ℂ (fun s => ∑' n, (a n : ℂ) * (n : ℂ)^(-s)) (σ_c : ℂ) := by
@@ -85,9 +156,119 @@ theorem landau_dirichlet_singularity
   -- If analytic at σ_c, the function is bounded near σ_c
   obtain ⟨r, hr_pos, M, hM⟩ := analyticAt_bounded_on_compact hanalytic
   -- But on the real axis, the series tends to +∞ as σ → σ_c⁺
-  have htends := dirichlet_series_tendsto_atTop a ha_nonneg σ_c hconv hdiv
-  -- This contradicts boundedness
-  -- BLOCKED: Need to connect complex function on real axis to real tsum
-  sorry
+  have htends := dirichlet_series_tendsto_atTop a ha_nonneg σ_c hσ_c hconv hdiv
+  -- Get a contradiction: for σ near σ_c, the real tsum exceeds M, but the complex norm is ≤ M
+  rw [Filter.tendsto_atTop] at htends
+  specialize htends (M + 1)
+  rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at htends
+  obtain ⟨δ, hδ_pos, hball⟩ := htends
+  -- Pick σ in (σ_c, σ_c + min(r, δ))
+  set ε := min r δ / 2 with hε_def
+  have hε_pos : 0 < ε := by positivity
+  set σ := σ_c + ε with hσ_def
+  have hσ_gt : σ_c < σ := by linarith
+  have hσ_in_ball : σ ∈ Metric.ball σ_c δ ∩ Set.Ioi σ_c := by
+    constructor
+    · simp only [Metric.mem_ball, Real.dist_eq, hσ_def]
+      rw [add_sub_cancel_left]
+      have : ε < δ := by
+        rw [hε_def]
+        have := min_le_right r δ
+        linarith
+      simp [abs_of_pos hε_pos, this]
+    · simp only [Set.mem_Ioi, hσ_def]
+      linarith
+  have hσ_large := hball hσ_in_ball
+  simp only [Set.mem_setOf_eq] at hσ_large
+  -- The complex tsum evaluated at real σ has norm ≤ M
+  have hσ_in_r : ‖(σ : ℂ) - (σ_c : ℂ)‖ ≤ r := by
+    simp only [← Complex.ofReal_sub, Complex.norm_real, hσ_def, add_sub_cancel_left]
+    rw [Real.norm_eq_abs, abs_of_pos hε_pos, hε_def]
+    have := min_le_left r δ
+    linarith
+  have hbound := hM (σ : ℂ) hσ_in_r
+  -- The real tsum equals the real part of the complex tsum
+  have hsumm := hconv σ hσ_gt
+  have hreal := dirichlet_series_eq_tsum_real a σ hsumm
+  -- For non-negative series, tsum = Re(complex tsum) ≤ |complex tsum| ≤ M
+  have hle : ∑' n, a n * (n : ℝ)^(-σ) ≤ M := by
+    rw [← hreal]
+    calc (∑' n, (a n : ℂ) * (n : ℂ)^(-(σ : ℂ))).re
+        ≤ ‖∑' n, (a n : ℂ) * (n : ℂ)^(-(σ : ℂ))‖ := Complex.re_le_norm _
+      _ ≤ M := hbound
+  linarith
+
+/-! ## Additional Landau Infrastructure -/
+
+/-- Landau's theorem for analytic continuations: If a Dirichlet series with non-negative
+    coefficients converges for σ > σ_c and diverges at σ_c, then any function f that
+    agrees with the series for Re(s) > σ_c cannot be analytic at σ_c. -/
+theorem landau_singularity_of_continuation
+    (a : ℕ → ℝ)
+    (ha_nonneg : ∀ n, 0 ≤ a n)
+    (σ_c : ℝ)
+    (hσ_c : σ_c ≠ 0)
+    (hconv : ∀ σ : ℝ, σ_c < σ → Summable (fun n => a n * (n : ℝ)^(-σ)))
+    (hdiv : ¬ Summable (fun n => a n * (n : ℝ)^(-σ_c)))
+    (f : ℂ → ℂ)
+    (h_eq : ∀ s : ℂ, s.re > σ_c → f s = ∑' n, (a n : ℂ) * (n : ℂ)^(-s)) :
+    ¬ AnalyticAt ℂ f (σ_c : ℂ) := by
+  intro h_analytic
+  -- If f is analytic at σ_c, it's bounded near σ_c
+  obtain ⟨r, hr_pos, M, hM⟩ := analyticAt_bounded_on_compact h_analytic
+  -- But on the real axis for σ > σ_c, f σ = Dirichlet series → +∞
+  have htends := dirichlet_series_tendsto_atTop a ha_nonneg σ_c hσ_c hconv hdiv
+  rw [Filter.tendsto_atTop] at htends
+  specialize htends (M + 1)
+  rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at htends
+  obtain ⟨δ, hδ_pos, hball⟩ := htends
+  -- Pick σ ∈ (σ_c, σ_c + min(r, δ))
+  set ε := min r δ / 2 with hε_def
+  have hε_pos : 0 < ε := by positivity
+  set σ := σ_c + ε with hσ_def
+  have hσ_gt : σ_c < σ := by linarith
+  have hσ_in_ball : σ ∈ Metric.ball σ_c δ ∩ Set.Ioi σ_c := by
+    constructor
+    · simp only [Metric.mem_ball, Real.dist_eq, hσ_def, add_sub_cancel_left]
+      rw [abs_of_pos hε_pos, hε_def]
+      have := min_le_right r δ
+      linarith
+    · simp only [Set.mem_Ioi, hσ_def]; linarith
+  have hσ_large := hball hσ_in_ball
+  simp only [Set.mem_setOf_eq] at hσ_large
+  -- f(σ) is bounded by M
+  have hσ_in_r : ‖(σ : ℂ) - (σ_c : ℂ)‖ ≤ r := by
+    simp only [← Complex.ofReal_sub, Complex.norm_real, hσ_def, add_sub_cancel_left]
+    rw [Real.norm_eq_abs, abs_of_pos hε_pos, hε_def]
+    have := min_le_left r δ
+    linarith
+  have hbound := hM (σ : ℂ) hσ_in_r
+  -- But f(σ) = Dirichlet series at σ
+  have hf_eq := h_eq (σ : ℂ) (by simp; linarith)
+  -- The real sum equals the real part of the complex sum
+  have hsumm := hconv σ hσ_gt
+  have hreal := dirichlet_series_eq_tsum_real a σ hsumm
+  -- Sum > M + 1 but ‖f(σ)‖ ≤ M, contradiction
+  have hle : ∑' n, a n * (n : ℝ)^(-σ) ≤ M := by
+    rw [← hreal, ← hf_eq]
+    calc (f (σ : ℂ)).re ≤ ‖f (σ : ℂ)‖ := Complex.re_le_norm _
+      _ ≤ M := hbound
+  linarith
+
+/-- The Riemann zeta function has a singularity at s = 1. This follows from
+    Landau's theorem since ζ(s) = Σ 1/n^s converges for Re(s) > 1 but
+    the harmonic series diverges at s = 1. -/
+theorem riemann_zeta_singularity_at_one : ¬AnalyticAt ℂ riemannZeta 1 := by
+  have h := landau_singularity_of_continuation (fun _ => 1) (fun _ => zero_le_one) 1 one_ne_zero
+    (fun σ hσ => by simpa using Real.summable_nat_rpow_inv.2 hσ)
+    (by simp only [Real.rpow_neg_one, one_mul]; exact Real.not_summable_natCast_inv)
+    riemannZeta
+    (fun s hs => by
+      rw [zeta_eq_tsum_one_div_nat_cpow hs]
+      simp only [one_div, Complex.cpow_neg]
+      refine tsum_congr fun n => ?_
+      norm_cast
+      rw [one_mul])
+  exact h
 
 end

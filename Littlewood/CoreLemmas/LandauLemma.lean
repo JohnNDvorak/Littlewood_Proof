@@ -380,11 +380,19 @@ theorem zeta_zero_implies_vonMangoldt_singularity (ρ : ℂ) (hρ : riemannZeta 
     (hρ_re : 0 < ρ.re) (hρ_re' : ρ.re < 1) [ZetaLogDerivPoleHyp] :
     ¬AnalyticAt ℂ (LSeries (fun n => (ArithmeticFunction.vonMangoldt n : ℂ))) ρ := by
   intro hanalytic
-  -- The von Mangoldt LSeries equals -ζ'/ζ for Re(s) > 1
-  -- If analytic at ρ, it would need to match -ζ'/ζ which has a pole there
+  -- The key fact is that -ζ'/ζ is NOT analytic at ρ (from ZetaLogDerivPoleHyp axiom)
   have hpole := ZetaLogDerivPoleHyp.pole_at_zero ρ hρ
-  -- The proof requires analytic continuation arguments
-  sorry -- BLOCKED: Need analytic continuation from Re(s) > 1 to ρ
+  -- The von Mangoldt LSeries equals -ζ'/ζ for Re(s) > 1
+  -- By identity theorem, if LSeries were analytic at ρ and agreed with -ζ'/ζ
+  -- for Re(s) > 1, then it would have to be an analytic continuation of -ζ'/ζ
+  -- But -ζ'/ζ has a pole at ρ, so no such analytic continuation exists
+  --
+  -- The technical gap here is connecting the LSeries function to -ζ'/ζ via
+  -- identity theorem/analytic continuation. For Re(s) > 1:
+  --   LSeries Λ s = -ζ'/ζ(s)
+  -- If both were analytic at ρ, they would agree on the connected region
+  -- containing Re(s) > 1, which contradicts the pole of -ζ'/ζ at ρ.
+  sorry -- REMAINING GAP: Identity theorem argument for analytic continuation
 
 /-!
 ## Hypothesis Instances
