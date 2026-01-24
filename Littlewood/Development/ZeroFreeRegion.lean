@@ -413,43 +413,201 @@ lemma zeta_pole_behavior :
   simp only [Complex.one_re] at hres_re
   exact hres_re.congr' heq
 
+-- ============================================================
+-- SECTION 4.4: Multiplicative bounds from LaurentExpansion (Task 47)
+-- ============================================================
+
+/-- For σ ∈ (1, 1+r), the product (σ-1)*Re(-ζ'/ζ(σ)) is bounded and near 1.
+    This uses neg_zeta_logDeriv_principal_part from LaurentExpansion.lean. -/
+theorem sigma_times_neg_logderiv_bounded :
+    ∃ r > 0, ∃ M : ℝ, 0 ≤ M ∧ ∀ σ : ℝ, 1 < σ → σ < 1 + r →
+      |(σ - 1) * (-deriv riemannZeta σ / riemannZeta σ).re - 1| ≤ M := by
+  obtain ⟨r, hr_pos, M, hM⟩ := neg_zeta_logDeriv_principal_part
+  use r, hr_pos, M
+  constructor
+  · -- Show M ≥ 0
+    by_contra h
+    push_neg at h
+    -- Pick some σ ∈ (1, 1+r)
+    have hσ := (Set.nonempty_Ioo.mpr (by linarith : 1 < 1 + r)).some_mem
+    set σ := (Set.nonempty_Ioo.mpr (by linarith : 1 < 1 + r)).some
+    have hσ_gt : 1 < σ := hσ.1
+    have hσ_lt : σ < 1 + r := hσ.2
+    have hσ_ne : (σ : ℂ) ≠ 1 := by
+      intro heq; exact ne_of_gt hσ_gt (Complex.ofReal_injective heq)
+    have hdist : ‖(σ : ℂ) - 1‖ < r := by
+      have h1 : (σ : ℂ) - 1 = ((σ - 1 : ℝ) : ℂ) := by push_cast; ring
+      rw [h1, Complex.norm_real, Real.norm_eq_abs, abs_of_pos (by linarith : σ - 1 > 0)]
+      linarith
+    have hbound := hM σ hσ_ne hdist
+    have hpos : 0 ≤ ‖((σ : ℂ) - 1) * (-deriv riemannZeta ↑σ / riemannZeta ↑σ) - 1‖ := norm_nonneg _
+    linarith
+  · intro σ hσ_gt hσ_lt
+    have hσ_ne : (σ : ℂ) ≠ 1 := by
+      intro heq; exact ne_of_gt hσ_gt (Complex.ofReal_injective heq)
+    have hdist : ‖(σ : ℂ) - 1‖ < r := by
+      have h1 : (σ : ℂ) - 1 = ((σ - 1 : ℝ) : ℂ) := by push_cast; ring
+      rw [h1, Complex.norm_real, Real.norm_eq_abs, abs_of_pos (by linarith : σ - 1 > 0)]
+      linarith
+    have hbound := hM σ hσ_ne hdist
+    -- Extract real part bound from norm bound
+    -- For real σ, ((σ-1)*f).re = (σ-1)*f.re
+    have hre : ((↑σ - 1 : ℂ) * (-deriv riemannZeta ↑σ / riemannZeta ↑σ)).re =
+               (σ - 1) * (-deriv riemannZeta ↑σ / riemannZeta ↑σ).re := by
+      rw [Complex.mul_re]
+      simp only [Complex.sub_re, Complex.ofReal_re, Complex.one_re,
+                 Complex.sub_im, Complex.ofReal_im, Complex.one_im, sub_zero]
+      ring
+    calc |(σ - 1) * (-deriv riemannZeta ↑σ / riemannZeta ↑σ).re - 1|
+        = |((↑σ - 1 : ℂ) * (-deriv riemannZeta ↑σ / riemannZeta ↑σ) - 1).re| := by
+          rw [Complex.sub_re, hre, Complex.one_re]
+      _ ≤ ‖((↑σ : ℂ) - 1) * (-deriv riemannZeta ↑σ / riemannZeta ↑σ) - 1‖ := Complex.abs_re_le_norm _
+      _ ≤ M := hbound
+
+/-- Upper bound: Re(-ζ'/ζ(σ)) ≤ (1+M)/(σ-1) for σ near 1.
+    This is the multiplicative form of the bound. -/
+theorem neg_zeta_logderiv_re_upper :
+    ∃ r > 0, ∃ C : ℝ, 0 ≤ C ∧ ∀ σ : ℝ, 1 < σ → σ < 1 + r →
+      (-deriv riemannZeta σ / riemannZeta σ).re ≤ (1 + C) / (σ - 1) := by
+  obtain ⟨r, hr_pos, M, hM_nonneg, hM⟩ := sigma_times_neg_logderiv_bounded
+  use r, hr_pos, M, hM_nonneg
+  intro σ hσ_gt hσ_lt
+  have hσ_pos : 0 < σ - 1 := by linarith
+  have hbound := hM σ hσ_gt hσ_lt
+  -- From |x - 1| ≤ M, we get x ≤ 1 + M (since h.1 gives x - 1 ≤ M)
+  have h := abs_sub_le_iff.mp hbound
+  have hupper : (σ - 1) * (-deriv riemannZeta ↑σ / riemannZeta ↑σ).re ≤ 1 + M := by linarith [h.1]
+  rw [le_div_iff₀ hσ_pos]
+  linarith
+
+/-- Lower bound: Re(-ζ'/ζ(σ)) ≥ (1-M)/(σ-1) for σ near 1 -/
+theorem neg_zeta_logderiv_re_lower :
+    ∃ r > 0, ∃ C : ℝ, ∀ σ : ℝ, 1 < σ → σ < 1 + r →
+      (1 - C) / (σ - 1) ≤ (-deriv riemannZeta σ / riemannZeta σ).re := by
+  obtain ⟨r, hr_pos, M, _, hM⟩ := sigma_times_neg_logderiv_bounded
+  use r, hr_pos, M
+  intro σ hσ_gt hσ_lt
+  have hσ_pos : 0 < σ - 1 := by linarith
+  have hbound := hM σ hσ_gt hσ_lt
+  have h := abs_sub_le_iff.mp hbound
+  -- h.2 gives 1 - x ≤ M, so x ≥ 1 - M
+  have hlower : 1 - M ≤ (σ - 1) * (-deriv riemannZeta ↑σ / riemannZeta ↑σ).re := by linarith [h.2]
+  rw [div_le_iff₀ hσ_pos]
+  linarith
+
+-- ============================================================
+-- SECTION 4.45: Analyticity of (s-1)*(-ζ'/ζ) at s = 1 (Task 47)
+-- ============================================================
+
+/-- The function (s-1)²ζ'(s) extended analytically to s = 1.
+    This equals deriv sqZeta s - 2*zetaMulSubOne s, which is analytic. -/
+noncomputable def subSqMulZetaDeriv (s : ℂ) : ℂ :=
+  deriv sqZeta s - 2 * zetaMulSubOne s
+
+/-- subSqMulZetaDeriv is analytic at s = 1. -/
+theorem subSqMulZetaDeriv_analyticAt_one : AnalyticAt ℂ subSqMulZetaDeriv 1 := by
+  unfold subSqMulZetaDeriv
+  apply AnalyticAt.sub
+  · exact sqZeta_analyticAt_one.deriv
+  · exact analyticAt_const.mul zetaMulSubOne_analyticAt_one
+
+/-- subSqMulZetaDeriv equals (s-1)²*ζ'(s) for s ≠ 1. -/
+theorem subSqMulZetaDeriv_eq (s : ℂ) (hs : s ≠ 1) :
+    subSqMulZetaDeriv s = (s - 1)^2 * deriv riemannZeta s := by
+  unfold subSqMulZetaDeriv
+  rw [deriv_sqZeta_eq s hs]
+  simp only [zetaMulSubOne, if_neg hs, mul_comm 2, two_mul]
+  ring
+
+/-- subSqMulZetaDeriv(1) = -1. -/
+theorem subSqMulZetaDeriv_at_one : subSqMulZetaDeriv 1 = -1 := by
+  unfold subSqMulZetaDeriv
+  rw [deriv_sqZeta_at_one]
+  simp only [zetaMulSubOne, ↓reduceIte]
+  norm_num
+
+/-- The function (s-1)*(-ζ'/ζ(s)) extended analytically to s = 1.
+    This equals -subSqMulZetaDeriv s / zetaMulSubOne s. -/
+noncomputable def negLogDerivTimesSubOne (s : ℂ) : ℂ :=
+  -subSqMulZetaDeriv s / zetaMulSubOne s
+
+/-- negLogDerivTimesSubOne is analytic at s = 1 (key result!). -/
+theorem negLogDerivTimesSubOne_analyticAt_one : AnalyticAt ℂ negLogDerivTimesSubOne 1 := by
+  unfold negLogDerivTimesSubOne
+  apply AnalyticAt.div
+  · exact subSqMulZetaDeriv_analyticAt_one.neg
+  · exact zetaMulSubOne_analyticAt_one
+  · simp only [zetaMulSubOne, if_pos rfl]
+    exact one_ne_zero
+
+/-- negLogDerivTimesSubOne(1) = 1. -/
+theorem negLogDerivTimesSubOne_at_one : negLogDerivTimesSubOne 1 = 1 := by
+  unfold negLogDerivTimesSubOne
+  rw [subSqMulZetaDeriv_at_one]
+  simp only [zetaMulSubOne, ↓reduceIte, neg_neg, div_one]
+
+/-- negLogDerivTimesSubOne equals (s-1)*(-ζ'/ζ(s)) for s ≠ 1 where ζ(s) ≠ 0. -/
+theorem negLogDerivTimesSubOne_eq (s : ℂ) (hs : s ≠ 1) (hζ : riemannZeta s ≠ 0) :
+    negLogDerivTimesSubOne s = (s - 1) * (-deriv riemannZeta s / riemannZeta s) := by
+  unfold negLogDerivTimesSubOne
+  rw [subSqMulZetaDeriv_eq s hs]
+  simp only [zetaMulSubOne, if_neg hs]
+  have hs_ne : s - 1 ≠ 0 := sub_ne_zero.mpr hs
+  have hprod_ne : (s - 1) * riemannZeta s ≠ 0 := mul_ne_zero hs_ne hζ
+  field_simp [hζ, hs_ne, hprod_ne]
+
 /-- The logarithmic derivative has a simple pole at s = 1.
 
 -ζ'(s)/ζ(s) = 1/(s-1) + holomorphic part
 
-**NOTE (Task 46):** Mathlib has `riemannZeta_residue_one` which gives (s-1)ζ(s) → 1.
-Combined with differentiability, this implies -ζ'/ζ has a simple pole at 1.
-The residue is -1 (from the logarithmic derivative of (s-1) factor).
+### Infrastructure (PROVED above):
+- `negLogDerivTimesSubOne_analyticAt_one`: (s-1)*(-ζ'/ζ(s)) is analytic at s = 1
+- `negLogDerivTimesSubOne_at_one`: Value at s = 1 is 1
+
+### Proof Strategy:
+1. h(s) = negLogDerivTimesSubOne(s) - 1 is analytic at 1 with h(1) = 0.
+2. By `AnalyticAt.exists_eventuallyEq_pow_smul_nonzero_iff`, h(s) = (s-1)*k(s)
+   for some analytic k (since h(1) = 0, the order of vanishing is ≥ 1).
+3. So negLogDerivTimesSubOne(s) = 1 + (s-1)*k(s).
+4. For s ≠ 1: -ζ'/ζ(s) = negLogDerivTimesSubOne(s)/(s-1) = 1/(s-1) + k(s).
+5. Take f = k (analytic at 1).
 -/
 lemma neg_zeta_logderiv_expansion :
     ∃ f : ℂ → ℂ, AnalyticAt ℂ f 1 ∧
     ∀ᶠ s in nhdsWithin (1 : ℂ) {(1 : ℂ)}ᶜ,
       zetaLogDeriv s = 1 / (s - 1) + f s := by
-  -- From riemannZeta_residue_one: (s-1)ζ(s) → 1
-  -- So ζ(s) ~ 1/(s-1) + g(s) where g is analytic
-  -- Then ζ'(s) ~ -1/(s-1)² + g'(s)
-  -- And -ζ'/ζ = -(-1/(s-1)² + g') / (1/(s-1) + g)
-  --           = (1/(s-1)² - g') · (s-1)/(1 + (s-1)g)
-  --           = 1/(s-1) + ... (after expansion)
-  sorry -- BLOCKED: needs Laurent expansion extraction
+  -- Infrastructure is in place (negLogDerivTimesSubOne_analyticAt_one, etc.)
+  -- Requires extracting the zero factorization: h = (s-1)*k for analytic k.
+  sorry
 
 /-- The bound on -Re(ζ'/ζ) for σ > 1.
 
 -Re(ζ'/ζ(σ)) ≤ 1/(σ-1) + C for some constant C.
 
-### What's Known (from LaurentExpansion.lean):
-- neg_zeta_logDeriv_principal_part: |(s-1)*(-ζ'/ζ(s)) - 1| ≤ M for |s-1| < r
-  This gives Re(-ζ'/ζ(σ)) ≤ (1+M)/(σ-1) (multiplicative bound)
+### Infrastructure (PROVED above):
+- `negLogDerivTimesSubOne_analyticAt_one`: (s-1)*(-ζ'/ζ(s)) is analytic at s = 1
+- `negLogDerivTimesSubOne_at_one`: Value at s = 1 is 1
+- `negLogDerivTimesSubOne_eq`: Equals (s-1)*(-ζ'/ζ(s)) for s ≠ 1
 
-### What's Needed for the additive form:
-- Laurent expansion: -ζ'/ζ(s) = 1/(s-1) + γ + O(|s-1|) where γ is Euler-Mascheroni
-- Requires proving analyticity of (s-1)*(-ζ'/ζ(s)) at s = 1
+### Proof Strategy:
+1. Since negLogDerivTimesSubOne is analytic at 1 with value 1, the function
+   h(s) = negLogDerivTimesSubOne(s) - 1 is analytic with h(1) = 0.
+2. By `AnalyticAt.exists_eventuallyEq_pow_smul_nonzero_iff`, h(s) = (s-1)^n * g(s)
+   for some n ≥ 1 and analytic g with g(1) ≠ 0.
+3. For s near 1: negLogDerivTimesSubOne(s) = 1 + (s-1)*k(s) for analytic k.
+4. Hence (s-1)*|Re(-ζ'/ζ(σ))| - 1 ≤ (σ-1)*|k(σ)| ≤ K*(σ-1).
+5. This gives Re(-ζ'/ζ(σ)) ≤ 1/(σ-1) + K for σ near 1.
+6. For σ ∈ [1+δ, 2], use continuity on compact set.
+
+### What Remains:
+- Extract the factorization from analyticity
+- Combine near-1 and away-from-1 bounds
 -/
 lemma neg_zeta_logderiv_re_bound :
     ∃ C : ℝ, ∀ σ : ℝ, 1 < σ → σ ≤ 2 →
       (zetaLogDeriv σ).re ≤ 1 / (σ - 1) + C := by
-  -- The additive form requires proving that (s-1)*(-ζ'/ζ(s)) - 1 = O(|s-1|)
-  -- which needs analyticity, stronger than the principal part bound.
+  -- Infrastructure is in place (negLogDerivTimesSubOne_analyticAt_one, etc.)
+  -- Full proof requires extracting the zero factorization from analyticity.
   sorry
 
 /-- The classical de la Vallée Poussin zero-free region.
