@@ -633,11 +633,80 @@ lemma neg_zeta_logderiv_re_bound :
       (zetaLogDeriv σ).re ≤ 1 / (σ - 1) + C := by
   -- From neg_zeta_logderiv_expansion: zetaLogDeriv s = 1/(s-1) + f(s)
   -- where f is analytic (hence continuous, hence bounded on compact neighborhoods).
-  -- The bound follows by showing Re(f) is bounded for σ ∈ (1, 2].
-  -- For σ near 1: use continuity of f at 1.
-  -- For σ away from 1: use continuity of zetaLogDeriv on compact set.
-  -- BLOCKED: Extracting pointwise bound from eventually-equal expansion
-  sorry
+  -- Get the Laurent expansion
+  obtain ⟨f, hf_analytic, hf_eq⟩ := neg_zeta_logderiv_expansion
+  -- f is continuous at 1, hence bounded in some ball around 1
+  have hf_cont : ContinuousAt f 1 := hf_analytic.continuousAt
+  -- Extract explicit ball where f is bounded
+  obtain ⟨δ, hδ_pos, hf_bound⟩ : ∃ δ > 0, ∀ s : ℂ, ‖s - 1‖ < δ → ‖f s‖ ≤ ‖f 1‖ + 1 := by
+    obtain ⟨δ', hδ'_pos, hδ'⟩ := Metric.continuousAt_iff.mp hf_cont 1 one_pos
+    use δ', hδ'_pos
+    intro s hs
+    have hfs : ‖f s - f 1‖ < 1 := hδ' (by rwa [dist_eq_norm])
+    calc ‖f s‖ = ‖(f s - f 1) + f 1‖ := by ring_nf
+      _ ≤ ‖f s - f 1‖ + ‖f 1‖ := norm_add_le _ _
+      _ ≤ 1 + ‖f 1‖ := by linarith
+      _ = ‖f 1‖ + 1 := by ring
+  -- Extract explicit ball where the expansion holds
+  rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at hf_eq
+  obtain ⟨δ', hδ'_pos, hδ'_eq⟩ := hf_eq
+  -- Take δ₀ = min(δ, δ') / 2
+  set δ₀ := min δ δ' / 2 with hδ₀_def
+  have hδ₀_pos : 0 < δ₀ := by
+    rw [hδ₀_def]
+    have h1 : 0 < min δ δ' := lt_min hδ_pos hδ'_pos
+    linarith
+  have hδ₀_lt_δ : δ₀ < δ := by
+    rw [hδ₀_def]
+    have h1 : min δ δ' ≤ δ := min_le_left _ _
+    linarith
+  have hδ₀_lt_δ' : δ₀ < δ' := by
+    rw [hδ₀_def]
+    have h1 : min δ δ' ≤ δ' := min_le_right _ _
+    linarith
+  -- For σ ∈ (1, 1 + δ₀]: use expansion zetaLogDeriv σ = 1/(σ-1) + f(σ)
+  -- For σ ∈ [1 + δ₀, 2]: bound zetaLogDeriv directly (it's continuous)
+  use ‖f 1‖ + 2  -- C = ‖f 1‖ + 2 (to cover both cases)
+  intro σ hσ_gt hσ_le
+  by_cases hσ_near : σ < 1 + δ₀
+  · -- Case: σ close to 1, use expansion
+    have hσ_sub_pos : 0 < σ - 1 := by linarith
+    have hdist : dist (σ : ℂ) 1 < δ' := by
+      rw [dist_eq_norm]
+      have h1 : (σ : ℂ) - 1 = ((σ - 1 : ℝ) : ℂ) := by push_cast; ring
+      rw [h1, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hσ_sub_pos]
+      linarith
+    have hdist_δ : ‖(σ : ℂ) - 1‖ < δ := by
+      have h1 : (σ : ℂ) - 1 = ((σ - 1 : ℝ) : ℂ) := by push_cast; ring
+      rw [h1, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hσ_sub_pos]
+      linarith
+    have hσ_in : (σ : ℂ) ∈ Metric.ball (1 : ℂ) δ' ∩ ({(1 : ℂ)}ᶜ : Set ℂ) := by
+      constructor
+      · exact hdist
+      · simp only [Set.mem_compl_iff, Set.mem_singleton_iff]
+        exact fun h => ne_of_gt hσ_gt (Complex.ofReal_injective h)
+    have heq := hδ'_eq hσ_in
+    rw [heq]
+    -- (1/(σ-1) + f(σ)).re = 1/(σ-1) + Re(f(σ))
+    have hone_div_re : (1 / ((σ : ℂ) - 1)).re = 1 / (σ - 1) := by
+      have h1 : ((σ : ℂ) - 1) = ((σ - 1 : ℝ) : ℂ) := by push_cast; ring
+      rw [h1, one_div, ← Complex.ofReal_inv, Complex.ofReal_re, one_div]
+    rw [Complex.add_re, hone_div_re]
+    have hf_bdd := hf_bound σ hdist_δ
+    have hre_le : (f σ).re ≤ ‖f σ‖ := Complex.re_le_norm (f σ)
+    linarith
+  · -- Case: σ away from 1
+    push_neg at hσ_near
+    have hσ_pos : 0 < σ - 1 := by linarith
+    have hpos : 0 < 1 / (σ - 1) := by positivity
+    -- For σ ∈ [1 + δ₀, 2], zetaLogDeriv is bounded
+    -- This requires showing continuity on compact; for now use sorry
+    have hbdd : (zetaLogDeriv σ).re ≤ ‖f 1‖ + 2 := by
+      -- BLOCKED: Need to show zetaLogDeriv is bounded on [1 + δ₀, 2]
+      -- This follows from continuity (ζ differentiable and nonzero for Re(s) > 1)
+      -- Technical to set up in Lean
+      sorry
+    linarith
 
 /-- The classical de la Vallée Poussin zero-free region.
 

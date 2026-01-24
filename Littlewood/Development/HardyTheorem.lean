@@ -300,7 +300,52 @@ More precisely: For all T > 0, there exists t > T such that ζ(1/2 + it) = 0.
 -/
 theorem hardy_infinitely_many_zeros_stub :
     ∀ T : ℝ, ∃ t : ℝ, t > T ∧ riemannZeta (1/2 + t * I) = 0 := by
-  sorry
+  -- This follows from hardyZ_sign_change_in_interval via the already-proved machinery
+  -- Step 1: hardyZ_sign_change_in_interval → sign changes in each [T, 2T]
+  -- Step 2: sign changes → zeros via sign_change_implies_zero (PROVED)
+  -- Step 3: Combine using hardy_from_sign_changes (PROVED)
+  apply hardy_from_sign_changes
+  -- Need: ∃ T₀, ∀ T ≥ T₀, ∃ t ∈ [T, 2T], hardyZ t = 0
+  -- This follows from hardyZ_sign_change_in_interval via IVT
+  obtain ⟨T₀, hT₀⟩ := hardyZ_sign_change_in_interval
+  use T₀
+  intro T hT
+  obtain ⟨t₁, t₂, ht₁_mem, ht₂_mem, h_pos, h_neg⟩ := hT₀ T hT
+  -- Have sign change: t₁, t₂ ∈ [T, 2T] with opposite signs
+  -- By sign_change_implies_zero, there's a zero between them
+  have hprod : hardyZ_real_val t₁ * hardyZ_real_val t₂ < 0 := by
+    have hp : 0 < hardyZ_real_val t₁ := h_pos
+    have hn : hardyZ_real_val t₂ < 0 := h_neg
+    nlinarith
+  -- Need t₁ < t₂ or t₂ < t₁
+  rcases lt_trichotomy t₁ t₂ with h_lt | h_eq | h_gt
+  · -- t₁ < t₂
+    obtain ⟨t, ht_in, ht_zero⟩ := sign_change_implies_zero t₁ t₂ h_lt hprod
+    use t
+    constructor
+    · -- t ∈ [T, 2T]: since t ∈ (t₁, t₂) ⊆ [T, 2T]
+      constructor
+      · have h1 : T ≤ t₁ := ht₁_mem.1
+        linarith [ht_in.1]
+      · have h2 : t₂ ≤ 2*T := ht₂_mem.2
+        linarith [ht_in.2]
+    · exact (hardyZ_zero_iff t).mpr ht_zero
+  · -- t₁ = t₂: contradiction since they have opposite signs
+    subst h_eq
+    -- hprod : hardyZ_real_val t₁ * hardyZ_real_val t₁ < 0, but x * x ≥ 0
+    have hsq : 0 ≤ hardyZ_real_val t₁ * hardyZ_real_val t₁ := mul_self_nonneg _
+    linarith
+  · -- t₁ > t₂
+    have hprod' : hardyZ_real_val t₂ * hardyZ_real_val t₁ < 0 := by linarith
+    obtain ⟨t, ht_in, ht_zero⟩ := sign_change_implies_zero t₂ t₁ h_gt hprod'
+    use t
+    constructor
+    · constructor
+      · have h1 : T ≤ t₂ := ht₂_mem.1
+        linarith [ht_in.1]
+      · have h2 : t₁ ≤ 2*T := ht₁_mem.2
+        linarith [ht_in.2]
+    · exact (hardyZ_zero_iff t).mpr ht_zero
 
 /-- Stronger form: The number of zeros on the critical line up to height T
 grows at least like c·T for some c > 0. -/
