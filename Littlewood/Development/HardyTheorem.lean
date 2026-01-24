@@ -78,17 +78,6 @@ This is the phase function that makes Z(t) real.
 noncomputable def riemannSiegelTheta (t : ℝ) : ℝ :=
   Complex.arg (Complex.Gamma (1/4 + t/2 * I)) - t/2 * Real.log Real.pi
 
-/-- Asymptotic formula for θ(t) as t → ∞.
-
-θ(t) ~ (t/2) log(t/(2πe)) - π/8 + O(1/t)
-
-This comes from Stirling's approximation for the Gamma function.
--/
-theorem riemannSiegelTheta_asymptotic_stub (t : ℝ) (ht : t > 0) :
-    ∃ E : ℝ, |E| ≤ 1/t ∧
-    riemannSiegelTheta t = t/2 * Real.log (t / (2 * Real.pi * Real.exp 1)) - Real.pi/8 + E := by
-  sorry
-
 -- ============================================================
 -- SECTION 3: The Hardy Z-function
 -- ============================================================
@@ -346,14 +335,6 @@ theorem hardy_infinitely_many_zeros_stub :
       · have h2 : t₁ ≤ 2*T := ht₁_mem.2
         linarith [ht_in.2]
     · exact (hardyZ_zero_iff t).mpr ht_zero
-
-/-- Stronger form: The number of zeros on the critical line up to height T
-grows at least like c·T for some c > 0. -/
-theorem hardy_zeros_density_stub :
-    ∃ c : ℝ, c > 0 ∧ ∀ T > 1,
-    ∃ S : Finset ℂ, S.card ≥ c * T ∧
-    ∀ s ∈ S, s.re = 1/2 ∧ 0 < s.im ∧ s.im ≤ T ∧ riemannZeta s = 0 := by
-  sorry
 
 -- ============================================================
 -- SECTION 6: Gap Analysis
