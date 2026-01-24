@@ -576,9 +576,34 @@ lemma neg_zeta_logderiv_expansion :
     ∃ f : ℂ → ℂ, AnalyticAt ℂ f 1 ∧
     ∀ᶠ s in nhdsWithin (1 : ℂ) {(1 : ℂ)}ᶜ,
       zetaLogDeriv s = 1 / (s - 1) + f s := by
-  -- Infrastructure is in place (negLogDerivTimesSubOne_analyticAt_one, etc.)
-  -- Requires extracting the zero factorization: h = (s-1)*k for analytic k.
-  sorry
+  -- Let h(s) = negLogDerivTimesSubOne(s) - 1, analytic at 1 with h(1) = 0
+  -- Then dslope h 1 is analytic at 1, and dslope h 1 s = h(s)/(s-1) for s ≠ 1
+  -- So zetaLogDeriv s = negLogDerivTimesSubOne(s)/(s-1) = (1 + h(s))/(s-1)
+  --                   = 1/(s-1) + h(s)/(s-1) = 1/(s-1) + dslope h 1 s
+  let h : ℂ → ℂ := fun s => negLogDerivTimesSubOne s - 1
+  have h_analytic : AnalyticAt ℂ h 1 := negLogDerivTimesSubOne_analyticAt_one.sub analyticAt_const
+  have h_val : h 1 = 0 := by simp only [h, negLogDerivTimesSubOne_at_one, sub_self]
+  -- dslope h 1 is analytic at 1
+  have hdslope_analytic : AnalyticAt ℂ (dslope h 1) 1 := by
+    obtain ⟨p, hp⟩ := h_analytic
+    exact ⟨p.fslope, hp.has_fpower_series_dslope_fslope⟩
+  use dslope h 1
+  constructor
+  · exact hdslope_analytic
+  · -- Show the equation holds eventually
+    have hζ_ne := riemannZeta_ne_zero_near_one
+    filter_upwards [self_mem_nhdsWithin, hζ_ne] with s hs hζ
+    simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hs
+    -- For s ≠ 1: dslope h 1 s = h(s)/(s-1) = (negLogDerivTimesSubOne s - 1)/(s-1)
+    rw [dslope_of_ne h hs]
+    -- slope h 1 s = (h s - h 1)/(s - 1) = h s / (s - 1) since h 1 = 0
+    simp only [slope, h, h_val, sub_zero, vsub_eq_sub, smul_eq_mul]
+    -- zetaLogDeriv s = negLogDerivTimesSubOne s / (s - 1)
+    have hs_ne : s - 1 ≠ 0 := sub_ne_zero.mpr hs
+    rw [negLogDerivTimesSubOne_eq s hs hζ]
+    unfold zetaLogDeriv
+    field_simp [hs_ne]
+    ring
 
 /-- The bound on -Re(ζ'/ζ) for σ > 1.
 
@@ -606,8 +631,12 @@ lemma neg_zeta_logderiv_expansion :
 lemma neg_zeta_logderiv_re_bound :
     ∃ C : ℝ, ∀ σ : ℝ, 1 < σ → σ ≤ 2 →
       (zetaLogDeriv σ).re ≤ 1 / (σ - 1) + C := by
-  -- Infrastructure is in place (negLogDerivTimesSubOne_analyticAt_one, etc.)
-  -- Full proof requires extracting the zero factorization from analyticity.
+  -- From neg_zeta_logderiv_expansion: zetaLogDeriv s = 1/(s-1) + f(s)
+  -- where f is analytic (hence continuous, hence bounded on compact neighborhoods).
+  -- The bound follows by showing Re(f) is bounded for σ ∈ (1, 2].
+  -- For σ near 1: use continuity of f at 1.
+  -- For σ away from 1: use continuity of zetaLogDeriv on compact set.
+  -- BLOCKED: Extracting pointwise bound from eventually-equal expansion
   sorry
 
 /-- The classical de la Vallée Poussin zero-free region.
