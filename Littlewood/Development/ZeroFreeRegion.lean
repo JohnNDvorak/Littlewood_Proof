@@ -587,28 +587,50 @@ lemma neg_zeta_logderiv_expansion :
     field_simp [hs_ne]
     ring
 
+/-- zetaLogDeriv is bounded on any compact subset of (1, ∞).
+    For σ ∈ [a, b] with a > 1, ‖zetaLogDeriv σ‖ ≤ M for some M. -/
+lemma zetaLogDeriv_bounded_on_compact {a b : ℝ} (ha : 1 < a) (_ : a ≤ b) :
+    ∃ M : ℝ, ∀ σ : ℝ, a ≤ σ → σ ≤ b → ‖zetaLogDeriv σ‖ ≤ M := by
+  -- zetaLogDeriv = -ζ'/ζ is analytic (hence continuous) on {Re(s) > 1}
+  -- because riemannZeta is analytic there and nonzero
+  -- For [a, b] ⊂ (1, ∞), the function σ ↦ zetaLogDeriv σ is continuous
+  have hcont : ContinuousOn (fun σ : ℝ => zetaLogDeriv (σ : ℂ)) (Set.Icc a b) := by
+    -- riemannZeta is differentiable on {Re(s) > 1}, hence analytic
+    have h_diff_on : DifferentiableOn ℂ riemannZeta {s | 1 < s.re} := by
+      intro s hs
+      have hs_ne : s ≠ 1 := by
+        intro h
+        rw [h] at hs
+        simp at hs
+      exact (differentiableAt_riemannZeta hs_ne).differentiableWithinAt
+    have h_open : IsOpen {s : ℂ | 1 < s.re} := isOpen_lt continuous_const continuous_re
+    have h_analyticNhd : AnalyticOnNhd ℂ riemannZeta {s | 1 < s.re} := h_diff_on.analyticOnNhd h_open
+    -- zetaLogDeriv = -deriv ζ / ζ is analytic where ζ ≠ 0 (i.e., Re > 1)
+    have h_cont_at : ∀ σ ∈ Set.Icc a b, ContinuousAt (fun σ : ℝ => zetaLogDeriv (σ : ℂ)) σ := by
+      intro σ hσ
+      have hσ_in : (σ : ℂ) ∈ {s : ℂ | 1 < s.re} := by simp; linarith [hσ.1]
+      have hζ_analytic : AnalyticAt ℂ riemannZeta (σ : ℂ) := h_analyticNhd (σ : ℂ) hσ_in
+      have hζ_ne : riemannZeta σ ≠ 0 := riemannZeta_ne_zero_of_one_le_re (by simp; linarith [hσ.1])
+      -- zetaLogDeriv = -deriv ζ / ζ is analytic (hence continuous) at σ
+      have hlogderiv_analytic : AnalyticAt ℂ zetaLogDeriv (σ : ℂ) := by
+        unfold zetaLogDeriv
+        exact (hζ_analytic.deriv.neg).div hζ_analytic hζ_ne
+      exact hlogderiv_analytic.continuousAt.comp continuous_ofReal.continuousAt
+    exact fun σ hσ => (h_cont_at σ hσ).continuousWithinAt
+  -- Continuous on compact implies bounded
+  obtain ⟨M, hM⟩ := isCompact_Icc.exists_bound_of_continuousOn hcont
+  use M
+  intro σ hσ_lo hσ_hi
+  exact hM σ ⟨hσ_lo, hσ_hi⟩
+
 /-- The bound on -Re(ζ'/ζ) for σ > 1.
 
 -Re(ζ'/ζ(σ)) ≤ 1/(σ-1) + C for some constant C.
 
-### Infrastructure (PROVED above):
-- `negLogDerivTimesSubOne_analyticAt_one`: (s-1)*(-ζ'/ζ(s)) is analytic at s = 1
-- `negLogDerivTimesSubOne_at_one`: Value at s = 1 is 1
-- `negLogDerivTimesSubOne_eq`: Equals (s-1)*(-ζ'/ζ(s)) for s ≠ 1
-
-### Proof Strategy:
-1. Since negLogDerivTimesSubOne is analytic at 1 with value 1, the function
-   h(s) = negLogDerivTimesSubOne(s) - 1 is analytic with h(1) = 0.
-2. By `AnalyticAt.exists_eventuallyEq_pow_smul_nonzero_iff`, h(s) = (s-1)^n * g(s)
-   for some n ≥ 1 and analytic g with g(1) ≠ 0.
-3. For s near 1: negLogDerivTimesSubOne(s) = 1 + (s-1)*k(s) for analytic k.
-4. Hence (s-1)*|Re(-ζ'/ζ(σ))| - 1 ≤ (σ-1)*|k(σ)| ≤ K*(σ-1).
-5. This gives Re(-ζ'/ζ(σ)) ≤ 1/(σ-1) + K for σ near 1.
-6. For σ ∈ [1+δ, 2], use continuity on compact set.
-
-### What Remains:
-- Extract the factorization from analyticity
-- Combine near-1 and away-from-1 bounds
+### Proof Strategy (Simplified):
+1. For σ ∈ (1, 1.5]: Use Laurent expansion near s=1
+2. For σ ∈ [1.5, 2]: Use compactness (zetaLogDeriv bounded on compact set)
+3. Take C = max of the two bounds
 -/
 lemma neg_zeta_logderiv_re_bound :
     ∃ C : ℝ, ∀ σ : ℝ, 1 < σ → σ ≤ 2 →
@@ -646,9 +668,22 @@ lemma neg_zeta_logderiv_re_bound :
     rw [hδ₀_def]
     have h1 : min δ δ' ≤ δ' := min_le_right _ _
     linarith
+  -- Get bound for far case using compactness (only if interval is nonempty)
+  have hmin_pos : 0 < min δ δ' := lt_min hδ_pos hδ'_pos
+  -- If min δ δ' ≤ 1, the far case [1 + min δ δ', 2] is nonempty, get bound
+  -- If min δ δ' > 1, far case never applies (since σ ≤ 2 < 1 + min δ δ')
+  -- We can always use min 1 (min δ δ') to ensure the interval is well-formed
+  set ε := min 1 (min δ δ') with hε_def
+  have hε_pos : 0 < ε := lt_min one_pos hmin_pos
+  have hε_le_one : ε ≤ 1 := min_le_left _ _
+  have hε_le_min : ε ≤ min δ δ' := min_le_right _ _
+  have h_far_bound := zetaLogDeriv_bounded_on_compact
+    (by linarith : 1 < 1 + ε) (by linarith : 1 + ε ≤ 2)
+  obtain ⟨M_far, hM_far⟩ := h_far_bound
   -- For σ ∈ (1, 1 + δ₀]: use expansion zetaLogDeriv σ = 1/(σ-1) + f(σ)
   -- For σ ∈ [1 + δ₀, 2]: bound zetaLogDeriv directly (it's continuous)
-  use ‖f 1‖ + 2  -- C = ‖f 1‖ + 2 (to cover both cases)
+  -- Choose C = max(‖f 1‖ + 1, M_far) to cover both cases
+  use max (‖f 1‖ + 1) M_far
   intro σ hσ_gt hσ_le
   by_cases hσ_near : σ < 1 + δ₀
   · -- Case: σ close to 1, use expansion
@@ -676,19 +711,57 @@ lemma neg_zeta_logderiv_re_bound :
     rw [Complex.add_re, hone_div_re]
     have hf_bdd := hf_bound σ hdist_δ
     have hre_le : (f σ).re ≤ ‖f σ‖ := Complex.re_le_norm (f σ)
+    have h_max : ‖f 1‖ + 1 ≤ max (‖f 1‖ + 1) M_far := le_max_left _ _
     linarith
   · -- Case: σ away from 1 (σ ≥ 1 + δ₀)
     push_neg at hσ_near
     have hσ_pos : 0 < σ - 1 := by linarith
-    have hpos : 0 < 1 / (σ - 1) := by positivity
-    -- For σ ∈ [1 + δ₀, 2], zetaLogDeriv is bounded (continuous on compact set)
-    -- The bound is some constant independent of σ
-    have hbdd : (zetaLogDeriv σ).re ≤ ‖f 1‖ + 2 := by
-      -- BLOCKED: Need to show zetaLogDeriv is bounded on [1 + δ₀, 2]
-      -- This follows from continuity (ζ differentiable and nonzero for Re(s) > 1)
-      -- and compactness of [1 + δ₀, 2]
-      sorry
-    linarith
+    -- Key insight: 1/(σ-1) ≥ 1 for σ ≤ 2
+    have h_one_div_bound : 1 ≤ 1 / (σ - 1) := by
+      rw [one_le_div hσ_pos]
+      linarith
+    -- For σ ∈ [1+δ₀, 2], we use the Laurent expansion if possible
+    -- σ is in the expansion ball if σ - 1 < min(δ, δ')
+    -- Since σ < 1 + δ₀ is false, we have σ - 1 ≥ δ₀ = min(δ, δ')/2
+    -- Case split: is σ still close enough to use the expansion?
+    by_cases hσ_small : σ - 1 < min δ δ'
+    · -- Case: σ still in both δ and δ' balls
+      have hdist : dist (σ : ℂ) 1 < δ' := by
+        rw [dist_eq_norm]
+        have h1 : (σ : ℂ) - 1 = ((σ - 1 : ℝ) : ℂ) := by push_cast; ring
+        rw [h1, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hσ_pos]
+        calc σ - 1 < min δ δ' := hσ_small
+          _ ≤ δ' := min_le_right _ _
+      have hdist_δ : ‖(σ : ℂ) - 1‖ < δ := by
+        have h1 : (σ : ℂ) - 1 = ((σ - 1 : ℝ) : ℂ) := by push_cast; ring
+        rw [h1, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hσ_pos]
+        calc σ - 1 < min δ δ' := hσ_small
+          _ ≤ δ := min_le_left _ _
+      have hσ_in : (σ : ℂ) ∈ Metric.ball (1 : ℂ) δ' ∩ ({(1 : ℂ)}ᶜ : Set ℂ) := by
+        constructor
+        · exact hdist
+        · simp only [Set.mem_compl_iff, Set.mem_singleton_iff]
+          exact fun h => ne_of_gt hσ_gt (Complex.ofReal_injective h)
+      have heq := hδ'_eq hσ_in
+      rw [heq]
+      have hone_div_re : (1 / ((σ : ℂ) - 1)).re = 1 / (σ - 1) := by
+        have h1 : ((σ : ℂ) - 1) = ((σ - 1 : ℝ) : ℂ) := by push_cast; ring
+        rw [h1, one_div, ← Complex.ofReal_inv, Complex.ofReal_re, one_div]
+      rw [Complex.add_re, hone_div_re]
+      have hf_bdd := hf_bound σ hdist_δ
+      have hre_le : (f σ).re ≤ ‖f σ‖ := Complex.re_le_norm (f σ)
+      have h_max : ‖f 1‖ + 1 ≤ max (‖f 1‖ + 1) M_far := le_max_left _ _
+      linarith
+    · -- Case: σ - 1 ≥ min(δ, δ') (far from 1)
+      push_neg at hσ_small
+      -- σ ∈ [1 + min δ δ', 2] ⊆ [1 + ε, 2], use compactness bound M_far
+      -- Note: ε = min 1 (min δ δ') ≤ min δ δ', so σ - 1 ≥ min δ δ' ≥ ε
+      have hσ_lo : 1 + ε ≤ σ := by linarith [hε_le_min]
+      have h_bound := hM_far σ hσ_lo hσ_le
+      have hre_le_norm : (zetaLogDeriv σ).re ≤ ‖zetaLogDeriv σ‖ := Complex.re_le_norm _
+      have h_max : M_far ≤ max (‖f 1‖ + 1) M_far := le_max_right _ _
+      have h_one_div_pos : 0 < 1 / (σ - 1) := by positivity
+      linarith
 
 /-- The classical de la Vallée Poussin zero-free region.
 
