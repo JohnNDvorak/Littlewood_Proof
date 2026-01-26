@@ -75,9 +75,13 @@ theorem dirichlet_simultaneous_approximation (n : ℕ) (α : Fin n → ℝ) (N :
           have hk_j : |(q₁ - q₂) * α j - k_j| < 1 / (N : ℝ) := by
             simp +zetaDelta at *;
             exact abs_lt.mpr ⟨ by linarith [ Int.fract_add_floor ( ( q₁ : ℝ ) * α j ), Int.fract_add_floor ( ( q₂ : ℝ ) * α j ), hf.2.2 j ], by linarith [ Int.fract_add_floor ( ( q₁ : ℝ ) * α j ), Int.fract_add_floor ( ( q₂ : ℝ ) * α j ), hf.2.2 j ] ⟩;
-          -- round(x) minimizes |x - n| over integers n, so |x - round(x)| ≤ |x - k_j| < 1/N
-          -- The Mathlib API has abs_sub_round_eq_min but not the optimality lemma directly
-          sorry
+          have h_opt := round_le ((↑q₁ - ↑q₂ : ℝ) * α j) k_j
+          rw [round_eq] at h_opt
+          simp only [one_div] at h_opt
+          have h1 := lt_of_le_of_lt h_opt hk_j
+          have hN_pos : (0 : ℝ) < ↑N := Nat.cast_pos.mpr hN
+          exact lt_of_lt_of_le (mul_lt_mul_of_pos_right h1 hN_pos)
+            (le_of_eq (one_div_mul_cancel (Nat.cast_ne_zero.mpr (Nat.pos_iff_ne_zero.mp hN))))
 
 /-
 Given frequencies γ_j, we can find x arbitrarily large such that cos(γ_j log x) is close to ±1 (simultaneously for all j). This corresponds to the phases being close to integers (modulo π).
