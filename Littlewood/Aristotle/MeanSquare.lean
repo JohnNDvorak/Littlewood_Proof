@@ -5,7 +5,7 @@ Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
 
 import Mathlib
 
-set_option maxHeartbeats 0
+set_option maxHeartbeats 1600000
 set_option maxRecDepth 4000
 
 noncomputable section
@@ -23,14 +23,34 @@ noncomputable def chi (s : ℂ) : ℂ :=
     - Γ((1/2-it)/2) = conj(Γ((1/2+it)/2)), so the ratio has norm 1 -/
 lemma norm_chi_critical_line (t : ℝ) : ‖chi (1/2 + I * t)‖ = 1 := by
   unfold chi
-  -- At s = 1/2 + it:
-  -- s - 1/2 = it (pure imaginary)
-  -- (1-s)/2 = (1/2 - it)/2 = 1/4 - it/2
-  -- s/2 = (1/2 + it)/2 = 1/4 + it/2
-  -- The key is that (1/4 - it/2) = conj(1/4 + it/2)
-  -- and Γ(conj z) = conj(Γ z), so the Γ ratio has norm 1
-  -- Also π^{it} has norm 1
-  sorry
+  -- Simplify at s = 1/2 + it
+  have h1 : (1/2 + I * (t : ℂ) : ℂ) - 1/2 = I * ↑t := by ring
+  have h2 : ((1/2 + I * (t : ℂ)) : ℂ) / 2 = 1/4 + I * ↑t / 2 := by ring
+  have h3 : (1 - (1/2 + I * (t : ℂ) : ℂ)) / 2 = 1/4 - I * ↑t / 2 := by ring
+  rw [h1, h2, h3]
+  -- Γ(1/4 - it/2) = star(Γ(1/4 + it/2)) via Schwarz reflection
+  have h_conj : (1:ℂ)/4 - I * ↑t / 2 = star ((1:ℂ)/4 + I * ↑t / 2) := by
+    apply Complex.ext
+    · simp [add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im, div_ofNat_re]
+    · simp [add_im, ofReal_im, mul_im, I_re, I_im, ofReal_re, div_ofNat_im]; ring
+  have h_gc : Gamma ((1:ℂ)/4 - I * ↑t / 2) = star (Gamma ((1:ℂ)/4 + I * ↑t / 2)) := by
+    rw [h_conj]; exact Gamma_conj _
+  -- Γ(1/4 + it/2) ≠ 0 since Re(1/4 + it/2) = 1/4 > 0
+  have h_gne : Gamma ((1:ℂ)/4 + I * ↑t / 2) ≠ 0 := by
+    apply Gamma_ne_zero_of_re_pos
+    simp only [add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im, div_ofNat_re,
+               mul_zero, zero_mul, sub_zero]
+    norm_num
+  -- |conj(Γ)/Γ| = 1 and |π^(it)| = 1
+  rw [norm_div, norm_mul, h_gc, norm_star, mul_div_cancel_right₀ _ (norm_ne_zero_iff.mpr h_gne)]
+  -- ‖π^(I*t)‖ = 1: positive real to purely imaginary power
+  have hpi_ne : (Real.pi : ℂ) ≠ 0 := ofReal_ne_zero.mpr Real.pi_ne_zero
+  rw [cpow_def_of_ne_zero hpi_ne, norm_exp]
+  have : (Complex.log ↑Real.pi * (I * ↑t)).re = 0 := by
+    rw [(Complex.ofReal_log (le_of_lt Real.pi_pos)).symm]
+    simp only [mul_re, ofReal_re, ofReal_im, I_re, I_im]
+    ring
+  rw [this, Real.exp_zero]
 
 /-- Partial sums of the zeta Dirichlet series -/
 noncomputable def partialZeta (x : ℝ) (s : ℂ) : ℂ :=

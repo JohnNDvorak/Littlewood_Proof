@@ -123,7 +123,38 @@ open Asymptotics Filter Complex Topology
 lemma binet_integrand_limit_infinity :
     Tendsto binetIntegrand atTop (𝓝 0) := by
   -- binetIntegrand t = (1/2 - 1/t + 1/(e^t-1))/t → (1/2)/∞ = 0
-  sorry
+  -- Strategy: bound |binetIntegrand t| ≤ 3/t for t ≥ 1, and 3/t → 0
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  refine ⟨max 1 (3 / ε), fun t ht => ?_⟩
+  rw [Real.dist_eq, sub_zero]
+  have ht1 : (1 : ℝ) ≤ t := le_trans (le_max_left 1 (3 / ε)) ht
+  have ht_pos : (0 : ℝ) < t := lt_of_lt_of_le one_pos ht1
+  -- Bound the numerator of binetIntegrand
+  have h_exp_pos : Real.exp t - 1 > 0 := by
+    have := Real.add_one_le_exp t
+    linarith [Real.exp_pos t]
+  have h_inv_t : 0 ≤ 1 / t := by positivity
+  have h_inv_t_le : 1 / t ≤ 1 := by rw [div_le_one ht_pos]; linarith
+  have h_inv_exp : 0 < 1 / (Real.exp t - 1) := by positivity
+  have h_inv_exp_le : 1 / (Real.exp t - 1) ≤ 1 := by
+    rw [div_le_one h_exp_pos]
+    have := Real.add_one_le_exp t
+    linarith
+  have h_num_abs : |1 / 2 - 1 / t + 1 / (Real.exp t - 1)| ≤ 3 / 2 := by
+    apply abs_le.mpr
+    constructor
+    · linarith
+    · linarith
+  unfold binetIntegrand
+  rw [abs_div, abs_of_pos ht_pos]
+  calc |1 / 2 - 1 / t + 1 / (Real.exp t - 1)| / t
+      ≤ (3 / 2) / t := by gcongr
+    _ < ε := by
+        rw [div_lt_iff₀ ht_pos]
+        have h3e : 3 / ε ≤ t := le_trans (le_max_right 1 (3 / ε)) ht
+        have h3 : 3 ≤ t * ε := (div_le_iff₀ hε).mp h3e
+        linarith [mul_comm t ε]
 
 /-
 The Binet integrand is continuous on (0, ∞).

@@ -5,7 +5,7 @@ Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
 
 import Mathlib
 
-set_option maxHeartbeats 0
+set_option maxHeartbeats 1600000
 set_option maxRecDepth 4000
 
 noncomputable section
