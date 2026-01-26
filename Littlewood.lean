@@ -18,6 +18,22 @@ import Littlewood.CoreLemmas.LandauLemma
 import Littlewood.CoreLemmas.DirichletApproximation
 import Littlewood.CoreLemmas.WeightedAverageFormula
 
+-- Aristotle proofs (from Harmonic)
+import Littlewood.Aristotle.HardyZReal
+import Littlewood.Aristotle.MeanSquare
+import Littlewood.Aristotle.FunctionalEquation
+import Littlewood.Aristotle.ThreeFourOne
+import Littlewood.Aristotle.PerronFormula
+import Littlewood.Aristotle.ZeroCounting
+import Littlewood.Aristotle.DirichletSeries
+import Littlewood.Aristotle.LandauLemma
+import Littlewood.Aristotle.LaurentExpansion
+import Littlewood.Aristotle.PhragmenLindelof
+import Littlewood.Aristotle.SchmidtOscillation
+import Littlewood.Aristotle.CriticalZeros
+import Littlewood.Aristotle.SchmidtOscillationInfinite
+import Littlewood.Aristotle.DirichletApprox
+
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
 
