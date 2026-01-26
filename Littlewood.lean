@@ -36,6 +36,7 @@ import Littlewood.Aristotle.DirichletApprox
 import Littlewood.Aristotle.ZetaZeroInfrastructure
 import Littlewood.Aristotle.PhaseAlignment
 import Littlewood.Aristotle.PartialSummation
+import Littlewood.Aristotle.BinetStirling
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
