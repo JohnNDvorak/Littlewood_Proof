@@ -35,6 +35,7 @@ import Littlewood.Aristotle.SchmidtOscillationInfinite
 import Littlewood.Aristotle.DirichletApprox
 import Littlewood.Aristotle.ZetaZeroInfrastructure
 import Littlewood.Aristotle.PhaseAlignment
+import Littlewood.Aristotle.PartialSummation
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
