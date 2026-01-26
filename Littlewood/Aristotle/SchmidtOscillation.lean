@@ -19,7 +19,7 @@ open scoped Nat
 open scoped Classical
 open scoped Pointwise
 
-set_option maxHeartbeats 0
+set_option maxHeartbeats 1600000
 set_option maxRecDepth 4000
 set_option synthInstance.maxHeartbeats 20000
 set_option synthInstance.maxSize 128
@@ -103,9 +103,35 @@ lemma trigPoly_zero_iff_coeffs_zero (S : Finset ℝ) (c ph : ℝ → ℝ)
               intro T; rw [ intervalIntegral.integral_comp_mul_add ( fun t => Real.cos t ^ 2 ) ] <;> norm_num ; ring;
               · rw [ show γ * T * 2 + ph γ * 2 = 2 * ( γ * T + ph γ ) by ring, show ph γ * 2 = 2 * ph γ by ring ] ; rw [ Real.sin_two_mul, Real.sin_two_mul ] ; rw [ mul_inv_cancel₀ ( ne_of_gt ( h_freq_pos γ hγ ) ) ] ; ring;
               · linarith [ h_freq_pos γ hγ ];
-            -- The sin oscillation / (4γ) divided by T → 0 as T → ∞
-            -- (bounded numerator, linearly growing denominator)
-            sorry;
+            -- The sin oscillation / (4γT) → 0 as T → ∞
+            have h_sin_zero : Filter.Tendsto (fun T : ℝ => (Real.sin (2 * γ * T + 2 * ph γ) - Real.sin (2 * ph γ)) / (4 * γ * T)) Filter.atTop (nhds 0) := by
+              rw [Metric.tendsto_atTop]
+              intro ε hε
+              have h4g : (0 : ℝ) < 4 * γ := by linarith [h_freq_pos γ hγ]
+              refine ⟨2 / (4 * γ * ε) + 1, fun T hT => ?_⟩
+              have hT_pos : (0 : ℝ) < T := lt_of_lt_of_le (by positivity) hT
+              have h4gT : (0 : ℝ) < 4 * γ * T := mul_pos h4g hT_pos
+              rw [Real.dist_eq, sub_zero, abs_div, abs_of_pos h4gT]
+              have h_sin_bdd : |Real.sin (2 * γ * T + 2 * ph γ) - Real.sin (2 * ph γ)| ≤ 2 := by
+                have h := norm_sub_le (Real.sin (2 * γ * T + 2 * ph γ)) (Real.sin (2 * ph γ))
+                simp only [Real.norm_eq_abs] at h
+                linarith [Real.abs_sin_le_one (2 * γ * T + 2 * ph γ), Real.abs_sin_le_one (2 * ph γ)]
+              calc |Real.sin (2 * γ * T + 2 * ph γ) - Real.sin (2 * ph γ)| / (4 * γ * T)
+                  ≤ 2 / (4 * γ * T) := by gcongr
+                _ < ε := by
+                  rw [div_lt_iff₀ h4gT, show ε * (4 * γ * T) = (4 * γ * ε) * T from by ring]
+                  have h4ge := mul_pos h4g hε
+                  calc (4 * γ * ε) * T ≥ (4 * γ * ε) * (2 / (4 * γ * ε) + 1) :=
+                        mul_le_mul_of_nonneg_left hT h4ge.le
+                    _ > 2 := by
+                        rw [mul_add, mul_div_cancel₀ _ (ne_of_gt h4ge), mul_one]; linarith
+            -- 1/2 + sin_diff/(4γT) → 1/2
+            suffices h_lim : Filter.Tendsto (fun T : ℝ => (1 : ℝ) / 2 + (Real.sin (2 * γ * T + 2 * ph γ) - Real.sin (2 * ph γ)) / (4 * γ * T)) Filter.atTop (nhds (1 / 2)) by
+              refine Filter.Tendsto.congr' ?_ h_lim
+              filter_upwards [Filter.eventually_gt_atTop (0 : ℝ)] with T hT
+              rw [h_integral_cos_sq_eval T]
+              field_simp [ne_of_gt hT, ne_of_gt (h_freq_pos γ hγ)]
+            simpa only [add_zero] using (tendsto_const_nhds (x := (1 : ℝ) / 2)).add h_sin_zero;
           exact h_integral_cos_sq_eval.congr' ( by filter_upwards [ Filter.eventually_gt_atTop 0 ] with T hT using by rw [ intervalIntegral.integral_of_le hT.le ] );
         have := h_integral_zero_gamma_eval.sub ( h_integral_cos_sq.mul_const ( c γ ) ) ; ring_nf at *; aesop;
       · aesop

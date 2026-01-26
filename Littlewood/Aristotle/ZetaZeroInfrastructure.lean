@@ -166,7 +166,24 @@ def criticalBox (T : ℝ) : Set ℂ :=
   {s | 0 ≤ s.re ∧ s.re ≤ 1 ∧ |s.im| ≤ T}
 
 lemma criticalBox_compact (T : ℝ) : IsCompact (criticalBox T) := by
-  sorry
+  have h_eq : criticalBox T =
+      (fun p : ℝ × ℝ => (↑p.1 : ℂ) + ↑p.2 * Complex.I) '' (Set.Icc 0 1 ×ˢ Set.Icc (-T) T) := by
+    ext s
+    simp only [criticalBox, Set.mem_setOf_eq, Set.mem_image, Set.mem_prod, Set.mem_Icc,
+      Prod.exists, abs_le]
+    constructor
+    · intro ⟨h1, h2, h3, h4⟩
+      exact ⟨s.re, s.im, ⟨⟨h1, h2⟩, ⟨h3, h4⟩⟩, Complex.re_add_im s⟩
+    · rintro ⟨a, b, ⟨⟨ha1, ha2⟩, ⟨hb1, hb2⟩⟩, hab⟩
+      have hre : s.re = a := by
+        have := congr_arg Complex.re hab; simp at this; exact this.symm
+      have him : s.im = b := by
+        have := congr_arg Complex.im hab; simp at this; exact this.symm
+      rw [hre, him]; exact ⟨ha1, ha2, hb1, hb2⟩
+  rw [h_eq]
+  exact (isCompact_Icc.prod isCompact_Icc).image
+    ((Complex.continuous_ofReal.comp continuous_fst).add
+      ((Complex.continuous_ofReal.comp continuous_snd).mul continuous_const))
 
 /-
 The Riemann zeta function is non-zero for complex numbers with real part 0 or 1.
@@ -193,8 +210,7 @@ A compact set with the discrete topology is finite.
 open Complex Real Topology Filter
 
 lemma finite_subset_of_compact_discrete {X : Type*} [TopologicalSpace X] {S : Set X} (h_compact : IsCompact S) (h_discrete : DiscreteTopology S) : Set.Finite S := by
-  -- Compact + discrete ⟹ finite (standard topology fact)
-  sorry
+  exact h_compact.finite ⟨h_discrete⟩
 
 /-
 The set of non-trivial zeros up to T is equal to the intersection of the zero set of the zeta function and the closed critical box.
