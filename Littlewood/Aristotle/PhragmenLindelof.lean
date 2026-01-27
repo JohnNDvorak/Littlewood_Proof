@@ -189,11 +189,22 @@ theorem hardyZ_growth :
 theorem zeta_near_one_bound (σ : ℝ) (hσ : 1 < σ) (hσ2 : σ < 2) :
     ∃ C : ℝ, 0 < C ∧ ∀ t : ℝ, 2 ≤ |t| →
       ‖riemannZeta (σ + t * I)‖ ≤ C * Real.log |t| := by
-  -- For σ > 1, the Dirichlet series converges absolutely
-  -- |ζ(σ+it)| ≤ ζ(σ) ≤ 1 + 1/(σ-1)
-  -- But this doesn't give logarithmic dependence on t
-  -- The log bound requires more careful analysis
-  sorry
+  -- For σ > 1, |ζ(σ+it)| ≤ 1 + 1/(σ-1) (constant independent of t).
+  -- For |t| ≥ 2, log|t| ≥ log 2 > 0, so the constant bound implies a log bound.
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos one_lt_two
+  have hbound : 0 < 1 + 1 / (σ - 1) := by
+    have : 0 < σ - 1 := by linarith
+    positivity
+  refine ⟨(1 + 1 / (σ - 1)) / Real.log 2, div_pos hbound hlog2, ?_⟩
+  intro t ht
+  have hlog_le : Real.log 2 ≤ Real.log |t| :=
+    Real.log_le_log (by norm_num) ht
+  calc ‖riemannZeta (↑σ + ↑t * I)‖
+      ≤ 1 + 1 / (σ - 1) := zeta_bound_gt_one σ t hσ
+    _ = ((1 + 1 / (σ - 1)) / Real.log 2) * Real.log 2 :=
+        (div_mul_cancel₀ _ (ne_of_gt hlog2)).symm
+    _ ≤ ((1 + 1 / (σ - 1)) / Real.log 2) * Real.log |t| :=
+        mul_le_mul_of_nonneg_left hlog_le (le_of_lt (div_pos hbound hlog2))
 
 /-- Bound on zeta away from the critical strip -/
 theorem zeta_large_sigma_bound (σ : ℝ) (hσ : 2 ≤ σ) (t : ℝ) :
