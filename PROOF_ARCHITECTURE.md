@@ -115,11 +115,11 @@ Littlewood/
 |-- Aristotle/               # Aristotle-generated proofs (18 files)
 |   |-- SchmidtOscillation   # Finite sum version (0 sorries)
 |   |-- SchmidtOscInfinite   # Infinite series version (1 sorry)
-|   |-- DirichletApprox      # Pigeonhole approximation (1 sorry)
+|   |-- DirichletApprox      # Pigeonhole approximation (0 sorries)
 |   |-- PartialSummation     # Abel summation (3 sorries)
-|   |-- BinetStirling        # Gamma asymptotics (7 sorries)
+|   |-- BinetStirling        # Gamma asymptotics (6 sorries)
 |   |-- PhragmenLindelof     # Convexity bounds (7 sorries)
-|   |-- MeanSquare           # Mean value estimates (8 sorries)
+|   |-- MeanSquare           # Mean value estimates (7 sorries)
 |   +-- [10 more files]      # Supporting infrastructure
 |
 |-- Development/             # Work-in-progress toward filling axioms
@@ -181,34 +181,34 @@ formalization (estimated 1-3 person-years for full proofs from first principles)
 | Category | Sorries | Files | Notes |
 |----------|---------|-------|-------|
 | Assumptions.lean | 57 | 1 | Intentional placeholders for unproved classical theorems |
-| Aristotle/ | 56 | 18 | Generated proofs with remaining gaps (7 files sorry-free) |
+| Aristotle/ | 50 | 18 | Generated proofs with remaining gaps (7 files sorry-free) |
 | Development/ | 5 | 3 | Work-in-progress proofs |
 | CoreLemmas/ | 1 | 1 | Identity theorem for analytic continuation |
 | Basic/, ZetaZeros/, ExplicitFormulas/, Oscillation/, Main/, Mertens/, Tests/ | 0 | -- | Clean |
-| **Total** | **119** | **18** | 129 grep hits; some lines serve a single logical gap |
+| **Total** | **~113** | **18** | 6 Aristotle sorries fixed since initial generation |
 
 ### Aristotle File Detail
 
 | File | Sorries | Contents |
 |------|---------|----------|
-| BinetStirling.lean | 7 | Binet/Stirling asymptotics (dependency chain) |
-| MeanSquare.lean | 8 | Mean square of zeta on critical line |
+| MeanSquare.lean | 7 | Mean square of zeta on critical line |
 | ThreeFourOne.lean | 7 | 3-4-1 inequality for zero-free region |
 | PerronFormula.lean | 7 | Perron formula implementation |
-| ZeroCounting.lean | 7 | Zero counting function N(T) |
 | PhragmenLindelof.lean | 7 | Phragmen-Lindelof principle |
+| BinetStirling.lean | 6 | Binet/Stirling asymptotics (dependency chain) |
+| ZeroCounting.lean | 5 | Zero counting function N(T) |
 | FunctionalEquation.lean | 4 | Functional equation properties |
 | PartialSummation.lean | 3 | Partial summation (Abel) |
 | HardyZReal.lean | 2 | Hardy Z-function, critical line zeros |
-| DirichletApprox.lean | 1 | Dirichlet approximation (pigeonhole) |
-| ZetaZeroInfrastructure.lean | 1 | Zeta zero infrastructure |
 | PhaseAlignment.lean | 1 | Phase alignment for cos(gamma log x) |
 | SchmidtOscillationInfinite.lean | 1 | Schmidt oscillation (infinite series) |
+| CriticalZeros.lean | 0 | Critical line zero structure |
+| DirichletApprox.lean | 0 | Dirichlet approximation (pigeonhole) |
 | DirichletSeries.lean | 0 | Dirichlet series convergence |
 | LandauLemma.lean | 0 | Landau lemma |
 | LaurentExpansion.lean | 0 | Laurent expansion of zeta at s=1 |
 | SchmidtOscillation.lean | 0 | Schmidt oscillation (finite sum) |
-| CriticalZeros.lean | 0 | Critical line zero structure |
+| ZetaZeroInfrastructure.lean | 0 | Zeta zero infrastructure |
 
 ## Aristotle Integration
 
@@ -219,23 +219,31 @@ Files in `Aristotle/` were generated against:
 
 ### Aristotle Prompt Queue
 
-See `aristotle_prompts.md` for 4 ready-to-submit prompts covering:
-1. DirichletApprox round optimality (1 sorry)
-2. ZetaZeroInfrastructure sum_split (1 sorry)
-3. PhaseAlignment cos_alignment (1 sorry)
-4. BinetStirling asymptotics (7 sorries)
+See `aristotle_prompts.md` for remaining prompts. Recently resolved:
+- DirichletApprox round optimality - PROVED (round_le)
+- ZetaZeroInfrastructure sum_split - PROVED (Summable.tsum_union_disjoint)
+
+Still open:
+1. PhaseAlignment cos_alignment (1 sorry) - needs Dirichlet approximation import
+2. BinetStirling asymptotics (6 sorries)
 
 ### Tractable Sorries (potential quick wins for Aristotle)
 
-HIGH tractability -- proof outlines exist, standard Mathlib tactics likely suffice:
+FIXED (no longer sorry):
+- ~~`BinetStirling.lean:126`~~ -- Binet integrand limit at infinity - PROVED
+- ~~`MeanSquare.lean:33`~~ -- chi factor norm on critical line - PROVED
+- ~~`ZeroCounting.lean` xi_Mathlib_zeros_eq_zeta_zeros~~ - PROVED
+- ~~`ZeroCounting.lean` completedRiemannZeta_eq_Gammaℝ_mul_riemannZeta~~ - PROVED
+- ~~`DirichletApprox.lean` round optimality~~ - PROVED
+- ~~`ZetaZeroInfrastructure.lean` sum_split~~ - PROVED
+
+REMAINING HIGH tractability -- proof outlines exist, standard Mathlib tactics likely suffice:
 
 - `BinetStirling.lean:47` -- log(1+z)-z = O(z^2) near 0 (Taylor series)
 - `BinetStirling.lean:57` -- Composition of asymptotic expansions
 - `BinetStirling.lean:67` -- log multiplicativity for large t
 - `BinetStirling.lean:79` -- Combining three asymptotic lemmas
 - `BinetStirling.lean:116` -- Binet integrand limit at 0 (Taylor expansion)
-- `BinetStirling.lean:126` -- Binet integrand limit at infinity
-- `MeanSquare.lean:33` -- chi factor norm on critical line
 - `MeanSquare.lean:55` -- Harmonic sum bounds (integral comparison)
 - `MeanSquare.lean:63` -- Integral of log(sqrt(t/2pi)) (calculus)
 - `MeanSquare.lean:86` -- Oscillatory integral bound
@@ -281,8 +289,10 @@ synthInstance.maxSize: 128
 | Axioms in Assumptions.lean | 57 |
 | Aristotle-contributed files | 18 |
 | Sorry-free Aristotle files | 7 |
-| Sorries total (non-comment) | 129 |
-| Logical gaps (deduplicated) | ~119 |
+| Aristotle sorries remaining | 50 |
+| Sorries fixed (this session) | 6 |
+| Sorries total (non-comment) | ~113 |
+| Logical gaps (deduplicated) | ~113 |
 
 ## References
 

@@ -312,6 +312,13 @@ lemma sum_split (T : ℝ) (f : ℂ → ℂ) :
       have h_disjoint : Disjoint (criticalLineZeros T) (offCriticalZeros T) :=
         Set.disjoint_left.mpr fun x hx₁ hx₂ => hx₂.2.1 hx₁.2.1
       -- Since the set is finite, all tsum are really finite sums
-      sorry
+      have hcrit_finite := h_finite.subset (h_split ▸ Set.subset_union_left)
+      have hoff_finite := h_finite.subset (h_split ▸ Set.subset_union_right)
+      haveI := hcrit_finite.fintype
+      haveI := hoff_finite.fintype
+      have hs : Summable (f ∘ (↑) : ↥(criticalLineZeros T) → ℂ) := ⟨_, hasSum_fintype _⟩
+      have ht : Summable (f ∘ (↑) : ↥(offCriticalZeros T) → ℂ) := ⟨_, hasSum_fintype _⟩
+      rw [show (zetaZerosUpTo T) = criticalLineZeros T ∪ offCriticalZeros T from h_split]
+      exact hs.tsum_union_disjoint h_disjoint ht
 
 end
