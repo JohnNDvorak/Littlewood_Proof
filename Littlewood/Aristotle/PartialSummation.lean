@@ -180,7 +180,7 @@ lemma pi_sub_li_decomposition (x : ℝ) (hx : x ≥ 2) :
               · exact Measurable.stronglyMeasurable ( by exact Measurable.mul ( measurable_id' ) ( Measurable.inv ( measurable_id'.mul ( Real.measurable_log.pow_const 2 ) ) ) ) |> fun h => h.stronglyMeasurableAtFilter;
               · exact ContinuousAt.div continuousAt_id ( ContinuousAt.mul continuousAt_id <| ContinuousAt.pow ( Real.continuousAt_log <| by cases Set.mem_uIcc.mp ht <;> linarith ) _ ) <| ne_of_gt <| mul_pos ( by cases Set.mem_uIcc.mp ht <;> linarith ) <| sq_pos_of_pos <| Real.log_pos <| by cases Set.mem_uIcc.mp ht <;> linarith;
             convert HasDerivAt.add ( HasDerivAt.div ( hasDerivAt_id t ) ( Real.hasDerivAt_log ( show t ≠ 0 by cases Set.mem_uIcc.mp ht <;> linarith ) ) ( ne_of_gt ( Real.log_pos ( show t > 1 by cases Set.mem_uIcc.mp ht <;> linarith ) ) ) ) h_ftc using 1 ; ring;
-            sorry;
+            simp only [id]; field_simp [ne_of_gt (Real.log_pos (show t > 1 by cases Set.mem_uIcc.mp ht <;> linarith)), show t ≠ 0 by cases Set.mem_uIcc.mp ht <;> linarith]; ring;
           · apply_rules [ ContinuousOn.intervalIntegrable ];
             exact continuousOn_of_forall_continuousAt fun t ht => ContinuousAt.div continuousAt_const ( Real.continuousAt_log ( by cases Set.mem_uIcc.mp ht <;> linarith ) ) ( ne_of_gt ( Real.log_pos ( by cases Set.mem_uIcc.mp ht <;> linarith ) ) );
         convert h_li_integral using 1;

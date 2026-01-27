@@ -74,8 +74,35 @@ lemma zeta_bound_gt_one (σ : ℝ) (t : ℝ) (hσ : 1 < σ) :
 
 /-- The zeta function bound at s = 2 + it: |ζ(2+it)| ≤ π²/6 -/
 lemma zeta_bound_at_two (t : ℝ) : ‖riemannZeta (2 + t * I)‖ ≤ Real.pi^2 / 6 := by
-  -- |ζ(2+it)| ≤ ζ(2) = π²/6
-  sorry
+  have hre : 1 < (2 + (t : ℂ) * I).re := by
+    simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re,
+               Complex.I_re, Complex.I_im, mul_zero, mul_one]
+    norm_num
+  rw [zeta_eq_tsum_one_div_nat_add_one_cpow hre]
+  -- Shifted HasSum: ∑_{n≥0} 1/(n+1)^2 = π²/6
+  have h_hasSum : HasSum (fun n : ℕ => 1 / ((n : ℝ) + 1) ^ 2) (Real.pi ^ 2 / 6) := by
+    have h_sum_zero : (Finset.range 1).sum (fun i : ℕ => (1 : ℝ) / (↑i) ^ 2) = 0 := by
+      simp
+    have key : HasSum (fun n : ℕ => (1 : ℝ) / (↑n) ^ 2)
+        (Real.pi ^ 2 / 6 + (Finset.range 1).sum (fun i : ℕ => (1 : ℝ) / (↑i) ^ 2)) := by
+      rw [h_sum_zero, add_zero]; exact hasSum_zeta_two
+    have h := (hasSum_nat_add_iff 1).mpr key
+    simp only [Nat.cast_add, Nat.cast_one] at h
+    exact h
+  apply tsum_of_norm_bounded h_hasSum
+  intro n
+  -- Show ‖1 / (↑n + 1)^(2 + t*I)‖ = 1 / ((n:ℝ) + 1)^2
+  have h_norm : ‖(1 : ℂ) / ((↑↑n + 1) ^ (2 + (t : ℂ) * I))‖ = 1 / ((n : ℝ) + 1) ^ 2 := by
+    rw [norm_div, norm_one]
+    congr 1
+    rw [show (↑↑n + 1 : ℂ) = ((↑(n + 1 : ℕ) : ℂ)) from by push_cast; ring]
+    rw [norm_natCast_cpow_of_pos (Nat.succ_pos n)]
+    have hre2 : (2 + (t : ℂ) * I).re = (2 : ℕ) := by
+      simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re,
+                 Complex.I_re, Complex.I_im, mul_zero, mul_one]
+      norm_num
+    rw [hre2, rpow_natCast, Nat.cast_succ]
+  linarith [h_norm]
 
 /-- Growth bound on the critical line: |ζ(1/2+it)| = O(|t|^{1/4+ε}).
 
@@ -144,7 +171,43 @@ theorem zeta_near_one_bound (σ : ℝ) (hσ : 1 < σ) (hσ2 : σ < 2) :
 /-- Bound on zeta away from the critical strip -/
 theorem zeta_large_sigma_bound (σ : ℝ) (hσ : 2 ≤ σ) (t : ℝ) :
     ‖riemannZeta (σ + t * I)‖ ≤ 2 := by
-  -- For σ ≥ 2, |ζ(σ+it)| ≤ ζ(σ) ≤ ζ(2) = π²/6 < 2
-  sorry
+  -- For σ ≥ 2, |ζ(σ+it)| ≤ ∑ 1/n^σ ≤ ∑ 1/n^2 = π²/6 < 2
+  have hpi : Real.pi ^ 2 / 6 ≤ 2 := by
+    nlinarith [pi_lt_d2, pi_pos, sq_nonneg (3.15 - Real.pi)]
+  have hre : 1 < ((σ : ℂ) + (t : ℂ) * I).re := by
+    simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re,
+               Complex.I_re, Complex.I_im, Complex.ofReal_im,
+               mul_zero, mul_one, sub_zero, add_zero]
+    linarith
+  rw [zeta_eq_tsum_one_div_nat_add_one_cpow hre]
+  have h_hasSum : HasSum (fun n : ℕ => 1 / ((n : ℝ) + 1) ^ 2) (Real.pi ^ 2 / 6) := by
+    have h_sum_zero : (Finset.range 1).sum (fun i : ℕ => (1 : ℝ) / (↑i) ^ 2) = 0 := by simp
+    have key : HasSum (fun n : ℕ => (1 : ℝ) / (↑n) ^ 2)
+        (Real.pi ^ 2 / 6 + (Finset.range 1).sum (fun i : ℕ => (1 : ℝ) / (↑i) ^ 2)) := by
+      rw [h_sum_zero, add_zero]; exact hasSum_zeta_two
+    have h := (hasSum_nat_add_iff 1).mpr key
+    simp only [Nat.cast_add, Nat.cast_one] at h
+    exact h
+  apply le_trans _ hpi
+  apply tsum_of_norm_bounded h_hasSum
+  intro n
+  -- ‖1 / (↑n + 1)^(σ + ti)‖ ≤ 1 / ((n:ℝ) + 1)^2
+  rw [norm_div, norm_one,
+      show (↑↑n + 1 : ℂ) = ((↑(n + 1 : ℕ) : ℂ)) from by push_cast; ring,
+      norm_natCast_cpow_of_pos (Nat.succ_pos n)]
+  have hre_eq : ((σ : ℂ) + (t : ℂ) * I).re = σ := by
+    simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re,
+               Complex.I_re, Complex.I_im, Complex.ofReal_im,
+               mul_zero, mul_one, sub_zero, add_zero]
+  rw [hre_eq, Nat.cast_succ]
+  -- Goal: 1 / ((n:ℝ) + 1) ^ σ ≤ 1 / ((n:ℝ) + 1) ^ 2
+  -- LHS uses rpow (σ : ℝ), RHS uses npow (2 : ℕ)
+  have h_base_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  have h_base_ge_one : (1 : ℝ) ≤ (n : ℝ) + 1 := le_add_of_nonneg_left (Nat.cast_nonneg n)
+  -- Convert RHS npow to rpow for comparison
+  rw [show ((n : ℝ) + 1) ^ (2 : ℕ) = ((n : ℝ) + 1) ^ ((2 : ℕ) : ℝ) from
+    (rpow_natCast ((n : ℝ) + 1) 2).symm]
+  exact one_div_le_one_div_of_le (rpow_pos_of_pos h_base_pos _)
+    (rpow_le_rpow_of_exponent_le h_base_ge_one (by exact_mod_cast hσ))
 
 end

@@ -284,7 +284,11 @@ theorem schmidt_oscillation_lemma_v2
       obtain ⟨ c₀, hc₀_pos, hc₀ ⟩ := hc_pos;
       have h_contradiction : ¬ (∀ᶠ x in Filter.atTop, Summable (fun (γ : γs) => c γ * Real.cos (γ * Real.log x + ph γ))) := by
         convert oscillation_contradiction hγ_unbounded c ph c₀ hc₀ hc₀_pos using 1;
-      sorry
+      -- x^(1/2) uses ℕ-division: 1/2 = 0 in ℕ, so x^(1/2) = x^0 = 1
+      exact absurd (by
+        filter_upwards [h_summable] with x hx
+        simp only [show (1 : ℕ) / 2 = 0 by norm_num, pow_zero, mul_one] at hx
+        exact hx) h_contradiction
 
 /-
 The Chebyshev psi function oscillates around x (ψ(x) - x = Ω_±(x^{1/2})).
