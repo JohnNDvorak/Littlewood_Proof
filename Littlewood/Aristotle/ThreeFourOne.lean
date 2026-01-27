@@ -44,14 +44,42 @@ lemma three_four_one_tight : 3 + 4 * Real.cos Real.pi + Real.cos (2 * Real.pi) =
 /-- Re(-log(1-z)) = Σ_{n≥1} Re(z^n)/n for |z| < 1 -/
 lemma neg_log_one_sub_re_eq_tsum (z : ℂ) (hz : ‖z‖ < 1) :
     (-Complex.log (1 - z)).re = ∑' n : ℕ, (z ^ (n + 1)).re / (n + 1) := by
-  sorry
+  -- Step 1: -log(1-z) = Σ z^n/n (power series, n=0 term is 0)
+  have h := hasSum_taylorSeries_neg_log hz
+  -- Step 2: Shift index to start from n+1 (n=0 term z^0/0 = 0)
+  have h1 : HasSum (fun n : ℕ => z ^ (n + 1) / (↑(n + 1) : ℂ)) (-Complex.log (1 - z)) :=
+    (hasSum_nat_add_iff (f := fun n => z ^ n / (↑n : ℂ)) 1).mpr
+      (by simp only [Finset.sum_range_one, pow_zero, Nat.cast_zero, div_zero, add_zero]; exact h)
+  -- Step 3: Map through Re (continuous linear map preserves HasSum)
+  have h2 := h1.mapL reCLM
+  -- Step 4: Pointwise rewrite (z^(n+1)/↑(n+1)).re = (z^(n+1)).re/(n+1)
+  have h3 : (fun n : ℕ => reCLM (z ^ (n + 1) / (↑(n + 1) : ℂ))) =
+      fun n : ℕ => (z ^ (n + 1)).re / ((n : ℝ) + 1) := by
+    ext n; simp only [reCLM_apply]
+    rw [show (↑(n + 1) : ℂ) = ↑((n : ℝ) + 1) from by push_cast; ring]
+    exact div_ofReal_re _ _
+  rw [h3] at h2
+  exact h2.tsum_eq.symm
 
 /-- For z = r·e^{iθ} with 0 ≤ r < 1:
     Re(-log(1 - r·e^{iθ})) = Σ_{n≥1} r^n cos(nθ) / n -/
 lemma real_part_log_series (r θ : ℝ) (hr : 0 ≤ r) (hr1 : r < 1) :
     (-Complex.log (1 - ↑r * Complex.exp (↑θ * Complex.I))).re =
     ∑' n : ℕ, r ^ (n + 1) / (n + 1) * Real.cos ((n + 1) * θ) := by
-  sorry
+  have hz : ‖(↑r : ℂ) * exp (↑θ * I)‖ < 1 := by
+    simp only [norm_mul, norm_exp_ofReal_mul_I, mul_one]
+    rwa [Complex.norm_of_nonneg hr]
+  rw [neg_log_one_sub_re_eq_tsum _ hz]
+  congr 1; ext n
+  -- Goal: ((↑r * exp(↑θ * I))^(n+1)).re / (↑n+1) = r^(n+1) / (↑n+1) * cos((n+1)*θ)
+  have h_re : ((↑r * exp (↑θ * I)) ^ (n + 1)).re = r ^ (n + 1) * Real.cos ((n + 1) * θ) := by
+    rw [mul_pow, ← Complex.exp_nat_mul,
+        show (↑(n + 1) : ℂ) * (↑θ * I) = ↑(((n : ℝ) + 1) * θ) * I from by push_cast; ring,
+        exp_mul_I, ← ofReal_pow]
+    simp only [mul_re, add_re, ofReal_re, ofReal_im, cos_ofReal_re,
+               sin_ofReal_re, sin_ofReal_im, mul_re, I_re, I_im]
+    ring
+  rw [h_re]; ring
 
 /-- Summability of r^(n+1)/(n+1) · cos(k(n+1)θ) series for |r| < 1 -/
 lemma summable_r_pow_div_mul_cos (r θ k : ℝ) (hr : |r| < 1) :
@@ -78,7 +106,41 @@ lemma log_combination_eq_sum (r θ : ℝ) (hr : 0 ≤ r) (hr1 : r < 1) :
     4 * (-Complex.log (1 - ↑r * Complex.exp (↑θ * Complex.I))).re +
     (-Complex.log (1 - ↑r * Complex.exp (2 * ↑θ * Complex.I))).re =
     ∑' n : ℕ, (r ^ (n + 1) / (n + 1)) * (3 + 4 * Real.cos ((n + 1) * θ) + Real.cos (2 * (n + 1) * θ)) := by
-  sorry
+  -- Rewrite each log term as a power series using real_part_log_series
+  have h0 : (-Complex.log (1 - (↑r : ℂ))).re =
+      ∑' n : ℕ, r ^ (n + 1) / (↑n + 1) := by
+    have := real_part_log_series r 0 hr hr1
+    simp only [mul_zero, Complex.ofReal_zero, zero_mul, Complex.exp_zero, mul_one,
+               Real.cos_zero] at this
+    exact this
+  have hθ := real_part_log_series r θ hr hr1
+  have h2θ : (-Complex.log (1 - ↑r * Complex.exp (2 * ↑θ * Complex.I))).re =
+      ∑' n : ℕ, r ^ (n + 1) / (↑n + 1) * Real.cos ((↑n + 1) * (2 * θ)) := by
+    have := real_part_log_series r (2 * θ) hr hr1
+    rw [show (↑(2 * θ) : ℂ) * Complex.I = 2 * ↑θ * Complex.I from by push_cast; ring] at this
+    exact this
+  rw [h0, hθ, h2θ]
+  -- Summability
+  have hr_abs : |r| < 1 := by rwa [abs_of_nonneg hr]
+  have hs1 : Summable (fun n : ℕ => r ^ (n + 1) / (↑n + 1)) := by
+    have := summable_r_pow_div_mul_cos r θ 0 hr_abs
+    simp only [zero_mul, Real.cos_zero, mul_one] at this
+    exact this
+  have hs2 : Summable (fun n : ℕ => r ^ (n + 1) / (↑n + 1) * Real.cos ((↑n + 1) * θ)) := by
+    have := summable_r_pow_div_mul_cos r θ 1 hr_abs
+    simp only [one_mul] at this
+    exact this
+  have hs3 : Summable (fun n : ℕ => r ^ (n + 1) / (↑n + 1) * Real.cos ((↑n + 1) * (2 * θ))) := by
+    have := summable_r_pow_div_mul_cos r (2 * θ) 1 hr_abs
+    simp only [one_mul] at this
+    exact this
+  -- Combine: 3*∑f + 4*∑g + ∑h = ∑(3f + 4g + h)
+  simp only [← tsum_mul_left]
+  rw [← (hs1.mul_left 3).tsum_add (hs2.mul_left 4),
+      ← ((hs1.mul_left 3).add (hs2.mul_left 4)).tsum_add hs3]
+  congr 1; ext n
+  have : (↑n + 1) * (2 * θ) = 2 * (↑n + 1) * θ := by ring
+  rw [this]; ring
 
 /-- KEY THEOREM: For 0 ≤ r < 1, the 3-4-1 combination of log terms is non-negative.
 
@@ -90,7 +152,13 @@ theorem real_part_log_euler_product_term_ge_zero (r θ : ℝ) (hr : 0 ≤ r) (hr
     0 ≤ 3 * (-Complex.log (1 - r)).re +
         4 * (-Complex.log (1 - ↑r * Complex.exp (↑θ * Complex.I))).re +
         (-Complex.log (1 - ↑r * Complex.exp (2 * ↑θ * Complex.I))).re := by
-  sorry
+  rw [log_combination_eq_sum r θ hr hr1]
+  apply tsum_nonneg
+  intro n
+  apply mul_nonneg
+  · exact div_nonneg (pow_nonneg hr _) (by positivity)
+  · have := three_four_one_inequality ((↑n + 1) * θ)
+    rwa [show 2 * ((↑n + 1) * θ) = 2 * (↑n + 1) * θ from by ring] at this
 
 /-- log‖ζ(s)‖ as sum over primes (Euler product) -/
 lemma log_norm_zeta_eq_sum_re_log (s : ℂ) (hs : 1 < s.re) :
