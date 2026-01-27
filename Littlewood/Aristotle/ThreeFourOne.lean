@@ -56,7 +56,21 @@ lemma real_part_log_series (r θ : ℝ) (hr : 0 ≤ r) (hr1 : r < 1) :
 /-- Summability of r^(n+1)/(n+1) · cos(k(n+1)θ) series for |r| < 1 -/
 lemma summable_r_pow_div_mul_cos (r θ k : ℝ) (hr : |r| < 1) :
     Summable (fun n : ℕ => r ^ (n + 1) / (n + 1) * Real.cos (k * (n + 1) * θ)) := by
-  sorry
+  -- Bounding series: |r|^(n+1) is summable (shifted geometric series)
+  have h_shifted : Summable (fun n : ℕ => |r| ^ (n + 1)) :=
+    (summable_nat_add_iff 1).mpr (summable_geometric_of_abs_lt_one (by rw [abs_abs]; exact hr))
+  apply Summable.of_norm_bounded h_shifted
+  intro i
+  simp only [Real.norm_eq_abs, abs_mul, abs_div, abs_pow]
+  have h_pos : (0 : ℝ) < (↑i : ℝ) + 1 := by positivity
+  rw [abs_of_pos h_pos]
+  calc |r| ^ (i + 1) / ((↑i : ℝ) + 1) * |Real.cos (k * ((↑i : ℝ) + 1) * θ)|
+      ≤ |r| ^ (i + 1) / ((↑i : ℝ) + 1) * 1 := by
+        gcongr; exact Real.abs_cos_le_one _
+    _ ≤ |r| ^ (i + 1) := by
+        rw [mul_one]
+        exact div_le_self (pow_nonneg (abs_nonneg r) _)
+          (le_add_of_nonneg_left (Nat.cast_nonneg i))
 
 /-- Linear combination of log terms for 3-4-1 -/
 lemma log_combination_eq_sum (r θ : ℝ) (hr : 0 ≤ r) (hr1 : r < 1) :
