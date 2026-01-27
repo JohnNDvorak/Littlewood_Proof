@@ -40,6 +40,9 @@ import Littlewood.Aristotle.BinetStirling
 import Littlewood.Aristotle.ZetaMoments
 import Littlewood.Aristotle.PerronFormulaV2
 import Littlewood.Aristotle.ZeroCountingV2
+import Littlewood.Aristotle.HardyZRealV2
+import Littlewood.Aristotle.PhragmenLindelofV2
+import Littlewood.Aristotle.ThreeFourOneV2
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst

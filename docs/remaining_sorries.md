@@ -87,11 +87,30 @@ All remaining sorries require substantial mathematical infrastructure:
 - Domination arguments for oscillation transfer (psi → pi-li)
 - Fixed: h_li_integral derivative subgoal (field_simp)
 
+### HardyZRealV2.lean (4 sorries)
+- Hardy Z function real-valuedness (Gamma phase argument)
+- Gamma duplication formula at 1/4+it/2
+- Continuity of Z(t) (arg(Γ) continuity)
+- Sign constancy between zeros (IVT)
+- Proved: identity_theorem_extension_v2, hardyZV2_zero_iff_zeta_zero, hardyZV2_abs_eq_zeta_abs
+
+### PhragmenLindelofV2.lean (3 sorries)
+- (s-1)ζ(s) differentiability at s=1 (removable singularity)
+- Polynomial-to-exponential growth condition
+- Zeta growth estimate in critical strip
+- Proved: phragmen_lindelof_convexity_v2 (Hadamard three-lines), polynomial_growth_implies_bounded_of_boundary_bounded_v2
+
+### ThreeFourOneV2.lean (3 sorries)
+- log‖ζ(s)‖ as Euler product tsum
+- 3-4-1 log combination non-negativity
+- ζ(1+it) ≠ 0 (limit argument)
+- Proved: trig_ineq_v2 (nlinarith), three_four_one_v2 (conditional on log combination)
+
 ## SUMMARY
 | Category | Count | Action |
 |----------|-------|--------|
 | Sorry-free files | 12 | None needed |
 | False theorems | 3 | Fix hypotheses |
 | Possibly tractable | 0 | -- |
-| Needs Aristotle | 40 | Submit prompts |
-| **Total remaining sorries** | **43** | |
+| Needs Aristotle | 50 | Submit prompts |
+| **Total remaining sorries** | **53** | |

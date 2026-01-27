@@ -182,11 +182,11 @@ formalization (estimated 1-3 person-years for full proofs from first principles)
 | Category | Sorries | Files | Notes |
 |----------|---------|-------|-------|
 | Assumptions.lean | 57 | 1 | Intentional placeholders for unproved classical theorems |
-| Aristotle/ | 43 | 21 | Generated proofs with remaining gaps (12 files sorry-free) |
+| Aristotle/ | 53 | 24 | Generated proofs with remaining gaps (12 files sorry-free) |
 | Development/ | 5 | 3 | Work-in-progress proofs |
 | CoreLemmas/ | 1 | 1 | Identity theorem for analytic continuation |
 | Basic/, ZetaZeros/, ExplicitFormulas/, Oscillation/, Main/, Mertens/, Tests/ | 0 | -- | Clean |
-| **Total** | **~106** | **21** | 13 Aristotle sorries fixed since initial generation |
+| **Total** | **~116** | **24** | 13 Aristotle sorries fixed since initial generation |
 
 ### Aristotle File Detail
 
@@ -213,6 +213,9 @@ formalization (estimated 1-3 person-years for full proofs from first principles)
 | ZetaZeroInfrastructure.lean | 0 | Zeta zero infrastructure |
 | PerronFormulaV2.lean | 0 | Perron formula + zero finiteness (genuine proof) |
 | ZeroCountingV2.lean | 0 | Zero counting N(T), S(T) bound (genuine proof) |
+| HardyZRealV2.lean | 4 | Hardy Z function, identity theorem, sign constancy |
+| PhragmenLindelofV2.lean | 3 | Phragmén-Lindelöf convexity, (s-1)ζ(s) entire |
+| ThreeFourOneV2.lean | 3 | 3-4-1 inequality, trig identity, ζ(1+it)≠0 |
 
 ## Aristotle Integration
 
@@ -298,16 +301,16 @@ synthInstance.maxSize: 128
 
 | Metric | Value |
 |--------|-------|
-| Total .lean files | 61 |
-| Formal declarations | ~650 |
+| Total .lean files | 64 |
+| Formal declarations | ~700 |
 | Sorries in main proof chain | 0 |
 | Axioms in Assumptions.lean | 57 |
-| Aristotle-contributed files | 21 |
+| Aristotle-contributed files | 24 |
 | Sorry-free Aristotle files | 12 |
-| Aristotle sorries remaining | 43 |
+| Aristotle sorries remaining | 53 |
 | Sorries fixed (all sessions) | 13 |
-| Sorries total (non-comment) | ~106 |
-| Logical gaps (deduplicated) | ~106 |
+| Sorries total (non-comment) | ~116 |
+| Logical gaps (deduplicated) | ~116 |
 
 ## References
 
