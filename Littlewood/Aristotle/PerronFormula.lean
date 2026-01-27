@@ -46,7 +46,34 @@ lemma vertical_segment_limit (c : ℝ) (hc : 0 < c) (y : ℝ) (hy : 0 < y) :
 /-- Integral of odd function is zero: ∫_{-R}^R (odd part) = 0 -/
 lemma integral_odd_part_zero (f : ℝ → ℂ) (hf : ∀ t, f (-t) = -f t) (R : ℝ) :
     ∫ t in Set.Icc (-R) R, f t = 0 := by
-  sorry
+  by_cases hR : 0 ≤ R
+  · -- Convert set integral (Icc) to interval integral via Ioc
+    have hle : -R ≤ R := by linarith
+    rw [show ∫ t in Set.Icc (-R) R, f t = ∫ t in (-R)..R, f t from by
+      rw [intervalIntegral.integral_of_le hle]
+      exact (setIntegral_congr_set Ioc_ae_eq_Icc).symm]
+    -- Show I = -I using oddness and substitution
+    have h_eq_neg : ∫ t in (-R)..R, f t = -(∫ t in (-R)..R, f t) := by
+      -- Substitution t → -t: ∫ f(-t) = ∫ f(t)
+      have h_subst : (∫ t in (-R)..R, f (-t)) = ∫ t in (-R)..R, f t := by
+        have := intervalIntegral.integral_comp_neg f (a := -R) (b := R)
+        simp only [neg_neg] at this; exact this
+      -- Oddness: f(-t) = -f(t), so ∫ f(-t) = ∫ -f(t)
+      have h_odd : (∫ t in (-R)..R, f (-t)) = ∫ t in (-R)..R, -f t :=
+        intervalIntegral.integral_congr (fun t _ => hf t)
+      -- Combine: ∫ f(t) = ∫ f(-t) = ∫ -f(t) = -(∫ f(t))
+      have h3 : (∫ t in (-R)..R, f t) = ∫ t in (-R)..R, -f t := by
+        rw [← h_subst, h_odd]
+      nth_rw 1 [h3]; rw [intervalIntegral.integral_neg]
+    -- I = -I implies I = 0 (char zero)
+    set I := ∫ t in (-R)..R, f t with hI_def
+    have h_sum : I + I = 0 := by nth_rw 2 [h_eq_neg]; exact add_neg_cancel I
+    have h2 : (2 : ℂ) * I = 0 := by rw [two_mul]; exact h_sum
+    exact (mul_eq_zero.mp h2).resolve_left (by norm_num)
+  · -- R < 0: Icc(-R, R) is empty
+    push_neg at hR
+    have h_empty : Set.Icc (-R) R = ∅ := Set.Icc_eq_empty (by linarith)
+    rw [h_empty, setIntegral_empty]
 
 /-- ∫ Im(1/(c+it)) dt = arctan(t/c) -/
 lemma integral_imag_part_arctan (c : ℝ) (hc : 0 < c) (R : ℝ) (hR : 0 < R) :
