@@ -26,7 +26,38 @@ theorem poisson_theta (t : ℝ) (ht : 0 < t) :
     Γ((1-s)/2) Γ((s+1)/2) cos(πs/2) = π -/
 lemma gamma_identity_aux (s : ℂ) (hs : ∀ n : ℤ, s ≠ n) :
     Complex.Gamma ((1 - s) / 2) * Complex.Gamma ((s + 1) / 2) * Complex.cos (Real.pi * s / 2) = Real.pi := by
-  sorry
+  -- Step 1: Reflection formula with w = (1-s)/2
+  have h_refl := Complex.Gamma_mul_Gamma_one_sub ((1 - s) / 2)
+  rw [show (1 : ℂ) - (1 - s) / 2 = (s + 1) / 2 from by ring] at h_refl
+  -- Step 2: sin(π(1-s)/2) = cos(πs/2)
+  have h_sin_eq : Complex.sin (↑Real.pi * ((1 - s) / 2)) = Complex.cos (↑Real.pi * s / 2) := by
+    rw [show (↑Real.pi : ℂ) * ((1 - s) / 2) = ↑(Real.pi / 2 : ℝ) - ↑Real.pi * s / 2 from by
+      push_cast; ring]
+    rw [Complex.sin_sub,
+        show Complex.sin ↑(Real.pi / 2 : ℝ) = 1 from by
+          rw [← Complex.ofReal_sin, Real.sin_pi_div_two, Complex.ofReal_one],
+        show Complex.cos ↑(Real.pi / 2 : ℝ) = 0 from by
+          rw [← Complex.ofReal_cos, Real.cos_pi_div_two, Complex.ofReal_zero]]
+    ring
+  rw [h_sin_eq] at h_refl
+  -- Step 3: cos(πs/2) ≠ 0 (since s is not an integer)
+  have h_cos_ne : Complex.cos (↑Real.pi * s / 2) ≠ 0 := by
+    intro h_eq
+    rw [Complex.cos_eq_zero_iff] at h_eq
+    obtain ⟨k, hk⟩ := h_eq
+    -- hk : ↑π * s / 2 = (2 * ↑k + 1) * ↑π / 2, so s = 2k+1
+    have hpi : (↑Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
+    have h_s_eq : s = ↑(2 * k + 1 : ℤ) := by
+      have h1 : ↑Real.pi * s / 2 * (2 / ↑Real.pi) = s := by field_simp
+      have h2 : (2 * ↑k + 1) * ↑Real.pi / 2 * (2 / ↑Real.pi) = (2 * (↑k : ℂ) + 1) := by
+        field_simp
+      calc s = ↑Real.pi * s / 2 * (2 / ↑Real.pi) := h1.symm
+        _ = (2 * ↑k + 1) * ↑Real.pi / 2 * (2 / ↑Real.pi) := by rw [hk]
+        _ = (2 * (↑k : ℂ) + 1) := h2
+        _ = ↑(2 * k + 1 : ℤ) := by push_cast; ring
+    exact hs (2 * k + 1) h_s_eq
+  -- Step 4: Multiply reflection formula by cos to cancel denominator
+  rw [h_refl, div_mul_cancel₀ _ h_cos_ne]
 
 /-- The symmetric functional equation for the completed zeta function:
     π^(-s/2) Γ(s/2) ζ(s) = π^(-(1-s)/2) Γ((1-s)/2) ζ(1-s) -/
