@@ -281,20 +281,74 @@ lemma completedRiemannZeta_conj (s : ℂ) :
   -- Part 2: Extend to all s using identity theorem
   by_cases hs_re : 1 < s.re
   · exact h_dirichlet s hs_re
-  · -- For s with Re(s) ≤ 1, use identity theorem
-    -- Define f(s) = completedRiemannZeta s, g(s) = star(completedRiemannZeta(star s))
-    -- Both are meromorphic on ℂ with poles at {0, 1}
-    -- They agree on {Re > 1}, so by identity theorem they agree on ℂ \ {0, 1}
-    --
-    -- Part 2: Extend to all s using identity theorem on ℂ \ {0, 1}
-    -- The proof follows the same pattern as riemannZeta_conj:
-    -- both sides are analytic on ℂ \ {0, 1} (connected domain),
-    -- agree on {Re > 1}, hence by identity theorem agree everywhere.
-    -- At {0, 1}, continuity/limit arguments give equality.
-    --
-    -- API note: Some set/topology lemmas changed names in newer Mathlib.
-    -- The mathematical content is identical to the riemannZeta_conj proof above.
-    sorry
+  · -- APPROACH: Decompose via entire function completedRiemannZeta₀.
+    -- ξ(s) = ξ₀(s) - 1/s - 1/(1-s) where ξ₀ is entire.
+    -- Step 1: Show ξ₀(star z) = star(ξ₀ z) for Re(z) > 1 (from h_dirichlet)
+    have h₀_re : ∀ z : ℂ, 1 < z.re →
+        completedRiemannZeta₀ (star z) = star (completedRiemannZeta₀ z) := by
+      intro z hz
+      have h := h_dirichlet z hz
+      rw [completedRiemannZeta_eq, completedRiemannZeta_eq] at h
+      simp only [star_sub, star_div₀, star_one] at h
+      -- h : ξ₀(⋆z) - 1/⋆z - 1/(1-⋆z) = ⋆(ξ₀ z) - 1/⋆z - 1/(1-⋆z)
+      -- Cancel equal subtracted terms
+      linear_combination h
+    -- Step 2: Define g(z) = star(ξ₀(star z)), which is entire holomorphic.
+    -- By h₀_re, g = ξ₀ on {Re > 1}. By identity theorem on ℂ, g = ξ₀ everywhere.
+    set g := fun z => star (completedRiemannZeta₀ (star z)) with hg_def
+    have hg_eq_re : ∀ z : ℂ, 1 < z.re → g z = completedRiemannZeta₀ z := by
+      intro z hz; simp only [hg_def]; rw [h₀_re z hz, star_star]
+    -- g is entire (anti ∘ holo ∘ anti = holo)
+    have hg_diff : Differentiable ℂ g := by
+      intro z
+      have := (differentiable_completedZeta₀.differentiableAt (x := star z)).star_star
+      simp only [star_star] at this
+      exact this
+    -- Both g and ξ₀ are analytic on Set.univ (= ℂ)
+    have hg_analytic : AnalyticOnNhd ℂ g Set.univ :=
+      hg_diff.differentiableOn.analyticOnNhd isOpen_univ
+    have hξ₀_analytic : AnalyticOnNhd ℂ completedRiemannZeta₀ Set.univ :=
+      differentiable_completedZeta₀.differentiableOn.analyticOnNhd isOpen_univ
+    -- 2 ∈ closure({z | (g - ξ₀)(z) = 0} \ {2})
+    have h_in_closure : (2 : ℂ) ∈ closure ({z | (g - completedRiemannZeta₀) z = 0} \ {2}) := by
+      rw [Metric.mem_closure_iff]
+      intro ε hε
+      set δ := min (ε / 2) (1 / 2) with hδ_def
+      have hδ_pos : 0 < δ := lt_min (by linarith) (by norm_num)
+      use 2 + δ
+      refine ⟨⟨?_, ?_⟩, ?_⟩
+      · simp only [Set.mem_setOf_eq, Pi.sub_apply, sub_eq_zero]
+        exact hg_eq_re (2 + δ) (by
+          simp only [Complex.add_re, Complex.ofReal_re, Complex.ofReal_re]; norm_num; linarith)
+      · simp only [Set.mem_singleton_iff]
+        intro h; have := congrArg Complex.re h
+        simp only [Complex.add_re, Complex.ofReal_re] at this; linarith
+      · rw [dist_comm]
+        calc dist ((2 : ℂ) + δ) 2 = ‖((2 : ℂ) + δ - 2)‖ := by rw [dist_eq_norm]
+          _ = ‖(δ : ℂ)‖ := by congr 1; ring
+          _ = |δ| := Complex.norm_real δ
+          _ = δ := abs_of_pos hδ_pos
+          _ ≤ ε / 2 := min_le_left _ _
+          _ < ε := by linarith
+    -- Identity theorem: g - ξ₀ = 0 on ℂ
+    have h_eq_on : Set.EqOn (g - completedRiemannZeta₀) 0 Set.univ :=
+      (hg_analytic.sub hξ₀_analytic).eqOn_zero_of_preconnected_of_mem_closure
+        isPreconnected_univ (Set.mem_univ 2) h_in_closure
+    -- Therefore star(ξ₀(star z)) = ξ₀(z) for all z
+    -- Taking star of both sides: ξ₀(star z) = star(ξ₀ z)
+    have h₀_all : ∀ z : ℂ,
+        completedRiemannZeta₀ (star z) = star (completedRiemannZeta₀ z) := by
+      intro z
+      have hgz := h_eq_on (Set.mem_univ z)
+      simp only [Pi.sub_apply, Pi.zero_apply, sub_eq_zero, hg_def] at hgz
+      -- hgz : star(ξ₀(star z)) = ξ₀(z)
+      -- Apply star: ξ₀(star z) = star(ξ₀(z))
+      have h' := congrArg star hgz
+      simp only [star_star] at h'
+      exact h'
+    -- Step 3: Conclude using the decomposition ξ(s) = ξ₀(s) - 1/s - 1/(1-s)
+    rw [completedRiemannZeta_eq, completedRiemannZeta_eq, h₀_all s]
+    simp only [star_sub, star_div₀, star_one]
 
 /-- On critical line, completedRiemannZeta(s) is real -/
 lemma completedRiemannZeta_real_on_critical_line (t : ℝ) :
