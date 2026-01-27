@@ -82,7 +82,11 @@ theorem identity_theorem_extension_v2 {f g : ℂ → ℂ} {U : Set ℂ}
 lemma gamma_duplication_hardy_v2 (t : ℝ) :
     Complex.Gamma (1/4 + Complex.I * t / 2) * Complex.Gamma (3/4 + Complex.I * t / 2) =
     Complex.Gamma (1/2 + Complex.I * t) * 2 ^ (1/2 - Complex.I * t) * Real.sqrt Real.pi := by
-  sorry
+  have h := Complex.Gamma_mul_Gamma_add_half (1/4 + Complex.I * (t : ℂ) / 2)
+  rw [show (1/4 : ℂ) + Complex.I * ↑t / 2 + 1/2 = 3/4 + Complex.I * ↑t / 2 from by ring] at h
+  rw [show 2 * ((1/4 : ℂ) + Complex.I * ↑t / 2) = 1/2 + Complex.I * ↑t from by ring] at h
+  rw [show (1 : ℂ) - (1/2 + Complex.I * ↑t) = 1/2 - Complex.I * ↑t from by ring] at h
+  exact h
 
 /-- Reflection formula for Γ at Hardy Z function arguments. -/
 lemma gamma_reflection_hardy_v2 (t : ℝ) :

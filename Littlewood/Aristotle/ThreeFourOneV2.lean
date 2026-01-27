@@ -42,9 +42,21 @@ lemma trig_ineq_v2 (θ : ℝ) : 3 + 4 * Real.cos θ + Real.cos (2 * θ) ≥ 0 :=
 lemma log_norm_zeta_eq_tsum_v2 (s : ℂ) (hs : 1 < s.re) :
     Real.log ‖riemannZeta s‖ = ∑' p : Nat.Primes, Real.log ‖(1 - (p : ℂ) ^ (-s))⁻¹‖ := by
   have h_prod := riemannZeta_eulerProduct_exp_log hs
-  rw [← h_prod, Complex.norm_exp]
-  -- Need to show that re(Σ -log(1-p^{-s})) = Σ re(-log(1-p^{-s})) = Σ log‖(1-p^{-s})⁻¹‖
-  sorry
+  rw [← h_prod, Complex.norm_exp, Real.log_exp]
+  -- Goal: (∑' p, -log (1 - ↑↑p ^ (-s))).re = ∑' p, Real.log ‖(1 - ↑↑p ^ (-s))⁻¹‖
+  -- Summability of the Euler factor logarithms
+  have h_summ : Summable (fun p : Nat.Primes => -log (1 - (p : ℂ) ^ (-s))) := by
+    have h := DirichletCharacter.summable_neg_log_one_sub_mul_prime_cpow
+      (1 : DirichletCharacter ℂ 1) hs
+    simp only [MulChar.one_apply (isUnit_of_subsingleton _), one_mul] at h
+    exact h
+  -- Commute Re with tsum via the continuous linear map reCLM
+  rw [show (∑' p : Nat.Primes, -log (1 - (p : ℂ) ^ (-s))).re =
+      ∑' p : Nat.Primes, (-log (1 - (p : ℂ) ^ (-s))).re from
+    Complex.reCLM.map_tsum h_summ]
+  -- Pointwise equality: (-log(1-p^{-s})).re = log ‖(1-p^{-s})⁻¹‖
+  congr 1; ext ⟨p, hp⟩
+  rw [neg_re, log_re, norm_inv, Real.log_inv]
 
 /-! ## Term-by-Term Analysis -/
 
@@ -59,9 +71,34 @@ lemma term_nonneg_v2 (r : ℝ) (hr : 0 ≤ r) (θ : ℝ) :
 lemma log_zeta_combination_nonneg_v2 (σ : ℝ) (hσ : 1 < σ) (t : ℝ) :
     3 * Real.log ‖riemannZeta σ‖ + 4 * Real.log ‖riemannZeta (σ + I * t)‖ +
       Real.log ‖riemannZeta (σ + 2 * I * t)‖ ≥ 0 := by
-  -- The proof uses the Euler product to convert to a double sum over primes and powers,
-  -- then applies trig_ineq_v2 term by term.
-  sorry
+  -- Use Mathlib's LFunction product inequality for trivial character mod 1
+  have hx : 0 < σ - 1 := by linarith
+  have h := DirichletCharacter.norm_LFunction_product_ge_one (1 : DirichletCharacter ℂ 1) hx t
+  -- Convert LFunction to riemannZeta (LFunction_modOne_eq : LFunction χ = riemannZeta for level 1)
+  simp only [DirichletCharacter.LFunction_modOne_eq, one_pow] at h
+  -- Simplify arguments: 1 + ↑(σ - 1) = ↑σ
+  rw [show (1 : ℂ) + ↑(σ - 1) = (σ : ℂ) from by push_cast; ring] at h
+  -- Distribute norms over products and powers
+  rw [norm_mul, norm_mul, norm_pow, norm_pow] at h
+  -- h : ‖riemannZeta ↑σ‖ ^ 3 * ‖riemannZeta (↑σ + I * ↑t)‖ ^ 4 * ‖riemannZeta (↑σ + 2 * I * ↑t)‖ ≥ 1
+  -- All zeta values nonzero for Re > 1
+  have hne1 : riemannZeta (σ : ℂ) ≠ 0 :=
+    riemannZeta_ne_zero_of_one_lt_re (by simpa using hσ)
+  have hne2 : riemannZeta (↑σ + I * ↑t) ≠ 0 :=
+    riemannZeta_ne_zero_of_one_lt_re (by simp [add_re, mul_re, I_re, I_im]; linarith)
+  have hne3 : riemannZeta (↑σ + 2 * I * ↑t) ≠ 0 :=
+    riemannZeta_ne_zero_of_one_lt_re (by simp [add_re, mul_re, I_re, I_im]; linarith)
+  have hp1 := norm_pos_iff.mpr hne1
+  have hp2 := norm_pos_iff.mpr hne2
+  have hp3 := norm_pos_iff.mpr hne3
+  -- Take log: product ≥ 1 implies log(product) ≥ 0
+  have h_log := Real.log_nonneg h
+  -- Expand log(a^3 * b^4 * c) = 3*log(a) + 4*log(b) + log(c)
+  rw [Real.log_mul (ne_of_gt (mul_pos (pow_pos hp1 3) (pow_pos hp2 4))) (ne_of_gt hp3)] at h_log
+  rw [Real.log_mul (ne_of_gt (pow_pos hp1 3)) (ne_of_gt (pow_pos hp2 4))] at h_log
+  rw [Real.log_pow, Real.log_pow] at h_log
+  push_cast at h_log ⊢
+  linarith
 
 /-- **The 3-4-1 inequality**: |ζ(σ)|³ · |ζ(σ+it)|⁴ · |ζ(σ+2it)| ≥ 1 for σ > 1. -/
 theorem three_four_one_v2 (σ : ℝ) (hσ : 1 < σ) (t : ℝ) :
@@ -89,26 +126,7 @@ theorem three_four_one_v2 (σ : ℝ) (hσ : 1 < σ) (t : ℝ) :
 
 /-- **ζ(1+it) ≠ 0 for t ≠ 0**: The Riemann zeta function has no zeros on the line Re(s) = 1.
 This is a key ingredient in the Prime Number Theorem. The proof uses the 3-4-1 inequality. -/
-theorem zeta_ne_zero_re_one_v2 (t : ℝ) (ht : t ≠ 0) : riemannZeta (1 + I * t) ≠ 0 := by
-  by_contra h_contra
-  -- If ζ(1+it) = 0, then as σ → 1⁺:
-  -- · (σ-1)ζ(σ) → 1 (residue)
-  -- · ζ(σ+it)/(σ-1) → ζ'(1+it) (derivative, since ζ(1+it) = 0)
-  -- · ζ(σ+2it) → ζ(1+2it) (continuous)
-  -- So the product ζ(σ)³·ζ(σ+it)⁴·ζ(σ+2it) behaves like:
-  -- [1/(σ-1)]³ · [(σ-1)·ζ'(1+it)]⁴ · ζ(1+2it)
-  -- = (σ-1)·[ζ'(1+it)]⁴·ζ(1+2it) → 0
-  -- contradicting the 3-4-1 bound ≥ 1.
-
-  -- The proof uses the 3-4-1 inequality:
-  -- If ζ(1+it) = 0, then as σ → 1⁺:
-  --   (σ-1)·ζ(σ) → 1 (simple pole, residue 1)
-  --   ζ(σ+it)/(σ-1) → ζ'(1+it) (since ζ(1+it) = 0)
-  --   ζ(σ+2it) → ζ(1+2it) (continuous)
-  -- So ‖ζ(σ)‖³·‖ζ(σ+it)‖⁴·‖ζ(σ+2it)‖
-  --   = [(σ-1)·‖ζ(σ)‖]³ · [‖ζ(σ+it)‖/(σ-1)]⁴ · ‖ζ(σ+2it)‖ · (σ-1)
-  --   → 1 · ‖ζ'(1+it)‖⁴ · ‖ζ(1+2it)‖ · 0 = 0
-  -- But three_four_one says the product ≥ 1 for all σ > 1. Contradiction.
-  sorry
+theorem zeta_ne_zero_re_one_v2 (t : ℝ) (ht : t ≠ 0) : riemannZeta (1 + I * t) ≠ 0 :=
+  riemannZeta_ne_zero_of_one_le_re (by simp [add_re, mul_re, I_re, I_im, ofReal_re, ofReal_im])
 
 end
