@@ -10,6 +10,7 @@ Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
 -/
 
 import Mathlib
+import Littlewood.Aristotle.DirichletApprox
 
 set_option linter.mathlibStandardSet false
 
@@ -57,8 +58,43 @@ such that cos(γ * log x) is close to 1 for all γ in γs simultaneously.
 -/
 lemma cos_alignment (γs : Finset ℝ) (ε : ℝ) (hε : ε > 0) (M : ℝ) :
     ∃ x > M, ∀ γ ∈ γs, |Real.cos (γ * Real.log x) - 1| < ε := by
-  -- Phase alignment gives t > 0 with all phases near integers mod 2π
-  -- Then x = exp(2πN/t) for large N gives the result
-  sorry
+  -- Strategy: use double-angle formula cos(2θ) = 2cos²(θ) - 1
+  -- If |cos(θ)| > 1 - δ, then cos²(θ) > (1-δ)², so
+  -- cos(2θ) > 2(1-δ)² - 1 = 1 - 4δ + 2δ², hence |cos(2θ) - 1| < 4δ
+  -- Apply oscillation_alignment with half-frequencies and δ = min(ε/4, 1/2)
+  set δ := min (ε / 4) (1 / 2) with hδ_def
+  have hδ_pos : 0 < δ := by positivity
+  -- Convert Finset to indexed form
+  set l := γs.toList with hl_def
+  -- Apply oscillation_alignment with half-frequencies
+  obtain ⟨x, hxM, hx_cos⟩ := oscillation_alignment l.length
+    (fun i => l.get i / 2) δ hδ_pos M
+  refine ⟨x, hxM, ?_⟩
+  intro γ hγ
+  -- Find the index of γ in l
+  have hγl : γ ∈ l := Finset.mem_toList.mpr hγ
+  obtain ⟨j, hj⟩ : ∃ j : Fin l.length, l.get j = γ := List.mem_iff_get.mp hγl
+  -- From oscillation_alignment: |cos(γ/2 * log x)| > 1 - δ
+  have hcos_half := hx_cos j
+  simp only at hcos_half
+  rw [hj] at hcos_half
+  -- cos(γ * log x) = 2cos²(γ/2 * log x) - 1
+  set θ := γ / 2 * Real.log x with hθ_def
+  have h_double : γ * Real.log x = 2 * θ := by rw [hθ_def]; ring
+  rw [h_double, Real.cos_two_mul]
+  -- Now goal: |2 * cos(θ)² - 1 - 1| < ε, i.e., |2cos²(θ) - 2| < ε
+  -- = 2|cos²(θ) - 1| = 2(1 - cos²(θ)) since cos²(θ) ≤ 1
+  -- = 2(1 - cos(θ))(1 + cos(θ))
+  -- Since |cos(θ)| > 1 - δ, we have cos²(θ) > (1-δ)²
+  -- So 1 - cos²(θ) < 1 - (1-δ)² = 2δ - δ²
+  -- Hence |2cos²(θ) - 2| = 2(1-cos²(θ)) < 2(2δ - δ²) = 4δ - 2δ² ≤ 4δ ≤ ε
+  have hcos_sq : Real.cos θ ^ 2 > (1 - δ) ^ 2 := by
+    -- |cos θ| > 1-δ ≥ 0, so cos²(θ) = |cos θ|² > (1-δ)²
+    nlinarith [sq_abs (Real.cos θ), abs_nonneg (Real.cos θ),
+               min_le_right (ε / 4) (1 / 2 : ℝ)]
+  have h1 : (2 * Real.cos θ ^ 2 - 1) ≤ 1 := by nlinarith [Real.cos_sq_le_one θ]
+  have h2 : (2 * Real.cos θ ^ 2 - 1) > 1 - ε := by nlinarith [min_le_left (ε / 4) (1 / 2 : ℝ)]
+  rw [abs_lt]
+  constructor <;> linarith
 
 end
