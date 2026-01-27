@@ -41,10 +41,8 @@ Asymptotic behavior of log(1+z) - z near 0 is O(z^2).
 open Asymptotics Filter Complex Topology
 
 lemma log_one_add_sub_self_asymptotic :
-    (fun z : ℂ => log (1 + z) - z) =O[𝓝 0] (fun z => z ^ 2) := by
-  -- log(1+z) = z - z²/2 + z³/3 - ..., so log(1+z) - z = O(z²) near 0
-  -- Proof via HasDerivAt showing f(0) = 0 and f'(0) = 0
-  sorry
+    (fun z : ℂ => log (1 + z) - z) =O[𝓝 0] (fun z => z ^ 2) :=
+  log_sub_self_isBigO
 
 /-
 Asymptotic behavior of log(1 + 1/(2it)) - 1/(2it) as t → ∞ is O(1/t^2).

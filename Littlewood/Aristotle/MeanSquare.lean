@@ -71,8 +71,15 @@ lemma harmonic_sum_bound :
   rw [Asymptotics.isBigO_iff]
   use 2
   filter_upwards [Filter.eventually_ge_atTop (1 : ℝ)] with x hx
-  -- The proof is technical but standard - harmonic sum vs logarithm
-  sorry
+  simp only [Real.norm_eq_abs, norm_one, mul_one, one_div]
+  -- Convert sum to harmonic number
+  have h_eq : ∑ i ∈ Finset.Icc 1 ⌊x⌋₊, (↑i : ℝ)⁻¹ = ↑(harmonic ⌊x⌋₊) := by
+    rw [harmonic_eq_sum_Icc]; push_cast; rfl
+  rw [h_eq]
+  -- Use Mathlib's harmonic number bounds
+  have h_lo := log_le_harmonic_floor x (by linarith)
+  have h_hi := harmonic_floor_le_one_add_log x hx
+  rw [abs_le]; constructor <;> linarith
 
 /-- The integral of log(√(t/2π)) is Θ(T log T).
     Explicit: ∫₁ᵀ log(√(t/2π)) dt = (1/2) ∫₁ᵀ (log t - log 2π) dt
