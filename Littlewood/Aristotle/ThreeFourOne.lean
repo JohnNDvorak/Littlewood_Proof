@@ -95,13 +95,28 @@ theorem real_part_log_euler_product_term_ge_zero (r θ : ℝ) (hr : 0 ≤ r) (hr
 /-- log‖ζ(s)‖ as sum over primes (Euler product) -/
 lemma log_norm_zeta_eq_sum_re_log (s : ℂ) (hs : 1 < s.re) :
     Real.log ‖riemannZeta s‖ = ∑' p : Nat.Primes, (-Complex.log (1 - (p : ℂ) ^ (-s))).re := by
-  sorry
+  have h_prod := riemannZeta_eulerProduct_exp_log hs
+  rw [← h_prod, norm_exp, Real.log_exp]
+  have h_summ : Summable (fun p : Nat.Primes => -log (1 - (p : ℂ) ^ (-s))) := by
+    have h := DirichletCharacter.summable_neg_log_one_sub_mul_prime_cpow
+      (1 : DirichletCharacter ℂ 1) hs
+    simp only [MulChar.one_apply (isUnit_of_subsingleton _), one_mul] at h
+    exact h
+  exact reCLM.map_tsum h_summ
 
 /-- The de la Vallée Poussin zero-free region follows from 3-4-1:
     |ζ(σ)³ ζ(σ+it)⁴ ζ(σ+2it)| ≥ 1 for σ > 1
     This prevents zeros near Re(s) = 1. -/
 theorem zeta_product_ge_one (σ : ℝ) (t : ℝ) (hσ : 1 < σ) :
     1 ≤ ‖riemannZeta σ‖^3 * ‖riemannZeta (σ + t * I)‖^4 * ‖riemannZeta (σ + 2 * t * I)‖ := by
-  sorry
+  have hx : 0 < σ - 1 := by linarith
+  have h := DirichletCharacter.norm_LFunction_product_ge_one (1 : DirichletCharacter ℂ 1) hx t
+  simp only [DirichletCharacter.LFunction_modOne_eq, one_pow] at h
+  rw [show (1 : ℂ) + ↑(σ - 1) = (σ : ℂ) from by push_cast; ring] at h
+  rw [norm_mul, norm_mul, norm_pow, norm_pow] at h
+  -- Convert I * t to t * I (commutativity)
+  rw [show (↑σ : ℂ) + I * ↑t = ↑σ + ↑t * I from by ring] at h
+  rw [show (↑σ : ℂ) + 2 * I * ↑t = ↑σ + 2 * ↑t * I from by ring] at h
+  exact h
 
 end
