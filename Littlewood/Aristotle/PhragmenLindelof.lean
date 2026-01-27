@@ -69,8 +69,35 @@ lemma convexity_exponent_zero : convexity_exponent 0 = 1/2 := by
     For σ > 1: |ζ(σ+it)| ≤ ζ(σ) ≤ 1 + 1/(σ-1) -/
 lemma zeta_bound_gt_one (σ : ℝ) (t : ℝ) (hσ : 1 < σ) :
     ‖riemannZeta (σ + t * I)‖ ≤ 1 + 1 / (σ - 1) := by
-  -- For σ > 1, |ζ(σ+it)| ≤ ζ(σ) ≤ 1 + ∫₁^∞ x^{-σ} dx = 1 + 1/(σ-1)
-  sorry
+  have hre : 1 < (↑σ + ↑t * I).re := by
+    simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re,
+               Complex.ofReal_im, Complex.I_re, Complex.I_im,
+               mul_zero, mul_one, sub_zero, add_zero]
+    linarith
+  rw [zeta_eq_tsum_one_div_nat_add_one_cpow hre]
+  -- Summability of real majorant series
+  have h_summ : Summable (fun n : ℕ => 1 / ((n : ℝ) + 1) ^ σ) := by
+    convert (summable_nat_add_iff (G := ℝ) 1).mpr (summable_one_div_nat_rpow.mpr hσ) using 1
+    ext n; simp [Nat.cast_succ]
+  -- Step 1: ‖Σ 1/(n+1)^s‖ ≤ Σ 1/(n+1)^σ via comparison test
+  have h_norm_bound : ‖∑' n : ℕ, (1 : ℂ) / (↑↑n + 1) ^ ((↑σ : ℂ) + ↑t * I)‖ ≤
+      ∑' n : ℕ, 1 / ((n : ℝ) + 1) ^ σ := by
+    apply tsum_of_norm_bounded h_summ.hasSum
+    intro n
+    simp only [norm_div, norm_one]
+    rw [show (↑↑n + 1 : ℂ) = ((↑(n + 1 : ℕ) : ℂ)) from by push_cast; ring,
+        norm_natCast_cpow_of_pos (Nat.succ_pos n),
+        show ((↑σ : ℂ) + ↑t * I).re = σ from by
+          simp [Complex.add_re, Complex.ofReal_re, Complex.mul_re,
+                Complex.ofReal_im, Complex.I_re, Complex.I_im],
+        Nat.cast_succ]
+  -- Step 2: Σ 1/(n+1)^σ ≤ 1 + 1/(σ-1) via zeta_limit_aux1
+  have h_tsum_bound : ∑' n : ℕ, 1 / ((n : ℝ) + 1) ^ σ ≤ 1 + 1 / (σ - 1) := by
+    have h_aux := ZetaAsymptotics.zeta_limit_aux1 hσ
+    have h_tt_nonneg : 0 ≤ ZetaAsymptotics.term_tsum σ :=
+      tsum_nonneg (fun n => ZetaAsymptotics.term_nonneg (n + 1) σ)
+    linarith [mul_nonneg (le_of_lt (lt_trans zero_lt_one hσ)) h_tt_nonneg]
+  linarith
 
 /-- The zeta function bound at s = 2 + it: |ζ(2+it)| ≤ π²/6 -/
 lemma zeta_bound_at_two (t : ℝ) : ‖riemannZeta (2 + t * I)‖ ≤ Real.pi^2 / 6 := by
