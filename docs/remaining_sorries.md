@@ -30,6 +30,7 @@ Worth another attempt with Aristotle or interactive Lean:
 - **h_li_integral derivative** (PartialSummation.lean) - PROVED (field_simp)
 - **zeta_bound_at_two** (PhragmenLindelof.lean) - PROVED (tsum_of_norm_bounded + hasSum_zeta_two)
 - **zeta_large_sigma_bound** (PhragmenLindelof.lean) - PROVED (rpow monotonicity + pi_lt_d2)
+- **summable_r_pow_div_mul_cos** (ThreeFourOne.lean) - PROVED (geometric comparison + abs_cos_le_one)
 - **sum_split** (ZetaZeroInfrastructure.lean) - PROVED via `Summable.tsum_union_disjoint`
 
 ## NEEDS ARISTOTLE (deep analytic number theory)
@@ -52,11 +53,12 @@ All remaining sorries require substantial mathematical infrastructure:
 - Perron's formula main statement
 - Requires: complex contour integration (not in Mathlib)
 
-### ThreeFourOne.lean (7 sorries)
+### ThreeFourOne.lean (6 sorries)
 - Complex logarithm series representations
 - Euler product for log|zeta(s)|
 - 3-4-1 inequality application to zeta product
 - Requires: Euler product, series manipulation
+- Fixed: summable_r_pow_div_mul_cos (geometric comparison)
 
 ### PhragmenLindelof.lean (5 sorries)
 - Zeta bounds for sigma > 1 and on critical line
@@ -90,5 +92,5 @@ All remaining sorries require substantial mathematical infrastructure:
 | Sorry-free files | 8 | None needed |
 | False theorems | 3 | Fix hypotheses |
 | Possibly tractable | 1 | Try with Aristotle |
-| Needs Aristotle | 42 | Submit prompts |
-| **Total remaining sorries** | **46** | |
+| Needs Aristotle | 41 | Submit prompts |
+| **Total remaining sorries** | **45** | |

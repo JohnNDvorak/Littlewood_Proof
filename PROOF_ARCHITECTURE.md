@@ -181,18 +181,18 @@ formalization (estimated 1-3 person-years for full proofs from first principles)
 | Category | Sorries | Files | Notes |
 |----------|---------|-------|-------|
 | Assumptions.lean | 57 | 1 | Intentional placeholders for unproved classical theorems |
-| Aristotle/ | 46 | 18 | Generated proofs with remaining gaps (8 files sorry-free) |
+| Aristotle/ | 45 | 18 | Generated proofs with remaining gaps (8 files sorry-free) |
 | Development/ | 5 | 3 | Work-in-progress proofs |
 | CoreLemmas/ | 1 | 1 | Identity theorem for analytic continuation |
 | Basic/, ZetaZeros/, ExplicitFormulas/, Oscillation/, Main/, Mertens/, Tests/ | 0 | -- | Clean |
-| **Total** | **~109** | **18** | 12 Aristotle sorries fixed since initial generation |
+| **Total** | **~108** | **18** | 11 Aristotle sorries fixed since initial generation |
 
 ### Aristotle File Detail
 
 | File | Sorries | Contents |
 |------|---------|----------|
 | MeanSquare.lean | 7 | Mean square of zeta on critical line |
-| ThreeFourOne.lean | 7 | 3-4-1 inequality for zero-free region |
+| ThreeFourOne.lean | 6 | 3-4-1 inequality for zero-free region |
 | PerronFormula.lean | 7 | Perron formula implementation |
 | PhragmenLindelof.lean | 5 | Phragmen-Lindelof principle |
 | BinetStirling.lean | 6 | Binet/Stirling asymptotics (dependency chain) |
@@ -226,12 +226,14 @@ See `aristotle_prompts.md` for remaining prompts. Recently resolved:
 - PartialSummation h_li_integral derivative subgoal - PROVED (field_simp)
 - PhragmenLindelof zeta_bound_at_two - PROVED (triangle inequality + hasSum_zeta_two)
 - PhragmenLindelof zeta_large_sigma_bound - PROVED (rpow monotonicity + pi_lt_d2)
+- ThreeFourOne summable_r_pow_div_mul_cos - PROVED (geometric comparison + abs_cos_le_one)
 
 Still open:
 1. PhaseAlignment cos_alignment (1 sorry) - needs Dirichlet approximation import
 2. BinetStirling asymptotics (6 sorries)
 3. PartialSummation psi_oscillation_implies_pi_li_oscillation (2 sorries) - needs error term bounds
 4. PhragmenLindelof remaining (5 sorries) - convexity bounds, Stirling, functional equation
+5. ThreeFourOne remaining (6 sorries) - complex series, Euler product
 
 ### Tractable Sorries (potential quick wins for Aristotle)
 
@@ -246,6 +248,7 @@ FIXED (no longer sorry):
 - ~~`PartialSummation.lean:183` derivative subgoal~~ - PROVED (field_simp)
 - ~~`PhragmenLindelof.lean:78` zeta_bound_at_two~~ - PROVED (tsum_of_norm_bounded + hasSum_zeta_two)
 - ~~`PhragmenLindelof.lean:148` zeta_large_sigma_bound~~ - PROVED (rpow_le_rpow_of_exponent_le + pi_lt_d2)
+- ~~`ThreeFourOne.lean:59` summable_r_pow_div_mul_cos~~ - PROVED (geometric comparison + Real.abs_cos_le_one)
 
 REMAINING HIGH tractability -- proof outlines exist, standard Mathlib tactics likely suffice:
 
@@ -296,10 +299,10 @@ synthInstance.maxSize: 128
 | Axioms in Assumptions.lean | 57 |
 | Aristotle-contributed files | 18 |
 | Sorry-free Aristotle files | 8 |
-| Aristotle sorries remaining | 46 |
-| Sorries fixed (all sessions) | 10 |
-| Sorries total (non-comment) | ~109 |
-| Logical gaps (deduplicated) | ~109 |
+| Aristotle sorries remaining | 45 |
+| Sorries fixed (all sessions) | 11 |
+| Sorries total (non-comment) | ~108 |
+| Logical gaps (deduplicated) | ~108 |
 
 ## References
 
