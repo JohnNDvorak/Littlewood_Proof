@@ -112,7 +112,7 @@ Littlewood/
 |-- Mertens/                 # Supporting results
 |   +-- MertensFirst         # Mertens' first theorem
 |
-|-- Aristotle/               # Aristotle-generated proofs (19 files)
+|-- Aristotle/               # Aristotle-generated proofs (21 files)
 |   |-- SchmidtOscillation   # Finite sum version (0 sorries)
 |   |-- SchmidtOscInfinite   # Infinite series version (0 sorries)
 |   |-- DirichletApprox      # Pigeonhole approximation (0 sorries)
@@ -182,11 +182,11 @@ formalization (estimated 1-3 person-years for full proofs from first principles)
 | Category | Sorries | Files | Notes |
 |----------|---------|-------|-------|
 | Assumptions.lean | 57 | 1 | Intentional placeholders for unproved classical theorems |
-| Aristotle/ | 44 | 19 | Generated proofs with remaining gaps (10 files sorry-free) |
+| Aristotle/ | 43 | 21 | Generated proofs with remaining gaps (12 files sorry-free) |
 | Development/ | 5 | 3 | Work-in-progress proofs |
 | CoreLemmas/ | 1 | 1 | Identity theorem for analytic continuation |
 | Basic/, ZetaZeros/, ExplicitFormulas/, Oscillation/, Main/, Mertens/, Tests/ | 0 | -- | Clean |
-| **Total** | **~107** | **19** | 12 Aristotle sorries fixed since initial generation |
+| **Total** | **~106** | **21** | 13 Aristotle sorries fixed since initial generation |
 
 ### Aristotle File Detail
 
@@ -200,7 +200,7 @@ formalization (estimated 1-3 person-years for full proofs from first principles)
 | ZeroCounting.lean | 5 | Zero counting function N(T) |
 | FunctionalEquation.lean | 4 | Functional equation properties |
 | PartialSummation.lean | 2 | Partial summation (Abel) |
-| HardyZReal.lean | 2 | Hardy Z-function, critical line zeros |
+| HardyZReal.lean | 1 | Hardy Z-function, critical line zeros |
 | PhaseAlignment.lean | 0 | Phase alignment for cos(gamma log x) |
 | SchmidtOscillationInfinite.lean | 0 | Schmidt oscillation (infinite series) |
 | CriticalZeros.lean | 0 | Critical line zero structure |
@@ -211,6 +211,8 @@ formalization (estimated 1-3 person-years for full proofs from first principles)
 | SchmidtOscillation.lean | 0 | Schmidt oscillation (finite sum) |
 | ZetaMoments.lean | 0 | Zeta moment bounds (trivial quantifier order) |
 | ZetaZeroInfrastructure.lean | 0 | Zeta zero infrastructure |
+| PerronFormulaV2.lean | 0 | Perron formula + zero finiteness (genuine proof) |
+| ZeroCountingV2.lean | 0 | Zero counting N(T), S(T) bound (genuine proof) |
 
 ## Aristotle Integration
 
@@ -296,16 +298,16 @@ synthInstance.maxSize: 128
 
 | Metric | Value |
 |--------|-------|
-| Total .lean files | 59 |
-| Formal declarations | ~630 |
+| Total .lean files | 61 |
+| Formal declarations | ~650 |
 | Sorries in main proof chain | 0 |
 | Axioms in Assumptions.lean | 57 |
-| Aristotle-contributed files | 19 |
-| Sorry-free Aristotle files | 10 |
-| Aristotle sorries remaining | 44 |
-| Sorries fixed (all sessions) | 12 |
-| Sorries total (non-comment) | ~107 |
-| Logical gaps (deduplicated) | ~107 |
+| Aristotle-contributed files | 21 |
+| Sorry-free Aristotle files | 12 |
+| Aristotle sorries remaining | 43 |
+| Sorries fixed (all sessions) | 13 |
+| Sorries total (non-comment) | ~106 |
+| Logical gaps (deduplicated) | ~106 |
 
 ## References
 

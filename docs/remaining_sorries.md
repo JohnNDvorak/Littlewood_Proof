@@ -1,14 +1,16 @@
 # Remaining Sorries - Categorized by Difficulty
 
-## SORRY-FREE FILES (10 total, no action needed)
+## SORRY-FREE FILES (12 total, no action needed)
 - CriticalZeros.lean
 - DirichletApprox.lean
 - DirichletSeries.lean
 - LandauLemma.lean
 - LaurentExpansion.lean
+- PerronFormulaV2.lean
 - PhaseAlignment.lean
 - SchmidtOscillation.lean
 - SchmidtOscillationInfinite.lean
+- ZeroCountingV2.lean
 - ZetaMoments.lean
 - ZetaZeroInfrastructure.lean
 
@@ -23,6 +25,7 @@ See docs/FALSE_THEOREMS.md for details.
 No currently identified tractable targets. All remaining sorries require deep infrastructure.
 
 ### Recently Fixed
+- **completedRiemannZeta_conj** (HardyZReal.lean) - PROVED (identity theorem for entire functions via completedRiemannZeta₀)
 - **cos_alignment** (PhaseAlignment.lean) - PROVED (double-angle + oscillation_alignment, file now sorry-free)
 - **schmidt_oscillation_lemma_v2** (SchmidtOscillationInfinite.lean) - PROVED (ℕ-div 1/2=0, file now sorry-free)
 - **h_li_integral derivative** (PartialSummation.lean) - PROVED (field_simp)
@@ -76,8 +79,8 @@ All remaining sorries require substantial mathematical infrastructure:
 - Riemann-von Mangoldt formula
 - 1 false theorem (see above)
 
-### HardyZReal.lean (2 sorries)
-- Completed zeta conjugation (identity theorem)
+### HardyZReal.lean (1 sorry)
+- ~~Completed zeta conjugation~~ - PROVED (identity theorem for entire functions)
 - Hardy Z function phase calculation
 
 ### PartialSummation.lean (2 sorries)
@@ -87,8 +90,8 @@ All remaining sorries require substantial mathematical infrastructure:
 ## SUMMARY
 | Category | Count | Action |
 |----------|-------|--------|
-| Sorry-free files | 10 | None needed |
+| Sorry-free files | 12 | None needed |
 | False theorems | 3 | Fix hypotheses |
 | Possibly tractable | 0 | -- |
-| Needs Aristotle | 41 | Submit prompts |
-| **Total remaining sorries** | **44** | |
+| Needs Aristotle | 40 | Submit prompts |
+| **Total remaining sorries** | **43** | |
