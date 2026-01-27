@@ -112,14 +112,15 @@ Littlewood/
 |-- Mertens/                 # Supporting results
 |   +-- MertensFirst         # Mertens' first theorem
 |
-|-- Aristotle/               # Aristotle-generated proofs (18 files)
+|-- Aristotle/               # Aristotle-generated proofs (19 files)
 |   |-- SchmidtOscillation   # Finite sum version (0 sorries)
-|   |-- SchmidtOscInfinite   # Infinite series version (1 sorry)
+|   |-- SchmidtOscInfinite   # Infinite series version (0 sorries)
 |   |-- DirichletApprox      # Pigeonhole approximation (0 sorries)
-|   |-- PartialSummation     # Abel summation (3 sorries)
+|   |-- PartialSummation     # Abel summation (2 sorries)
 |   |-- BinetStirling        # Gamma asymptotics (6 sorries)
-|   |-- PhragmenLindelof     # Convexity bounds (7 sorries)
+|   |-- PhragmenLindelof     # Convexity bounds (5 sorries)
 |   |-- MeanSquare           # Mean value estimates (7 sorries)
+|   |-- ZetaMoments          # Zeta moment bounds (0 sorries)
 |   +-- [10 more files]      # Supporting infrastructure
 |
 |-- Development/             # Work-in-progress toward filling axioms
@@ -181,11 +182,11 @@ formalization (estimated 1-3 person-years for full proofs from first principles)
 | Category | Sorries | Files | Notes |
 |----------|---------|-------|-------|
 | Assumptions.lean | 57 | 1 | Intentional placeholders for unproved classical theorems |
-| Aristotle/ | 45 | 18 | Generated proofs with remaining gaps (8 files sorry-free) |
+| Aristotle/ | 44 | 19 | Generated proofs with remaining gaps (10 files sorry-free) |
 | Development/ | 5 | 3 | Work-in-progress proofs |
 | CoreLemmas/ | 1 | 1 | Identity theorem for analytic continuation |
 | Basic/, ZetaZeros/, ExplicitFormulas/, Oscillation/, Main/, Mertens/, Tests/ | 0 | -- | Clean |
-| **Total** | **~108** | **18** | 11 Aristotle sorries fixed since initial generation |
+| **Total** | **~107** | **19** | 12 Aristotle sorries fixed since initial generation |
 
 ### Aristotle File Detail
 
@@ -200,7 +201,7 @@ formalization (estimated 1-3 person-years for full proofs from first principles)
 | FunctionalEquation.lean | 4 | Functional equation properties |
 | PartialSummation.lean | 2 | Partial summation (Abel) |
 | HardyZReal.lean | 2 | Hardy Z-function, critical line zeros |
-| PhaseAlignment.lean | 1 | Phase alignment for cos(gamma log x) |
+| PhaseAlignment.lean | 0 | Phase alignment for cos(gamma log x) |
 | SchmidtOscillationInfinite.lean | 0 | Schmidt oscillation (infinite series) |
 | CriticalZeros.lean | 0 | Critical line zero structure |
 | DirichletApprox.lean | 0 | Dirichlet approximation (pigeonhole) |
@@ -208,6 +209,7 @@ formalization (estimated 1-3 person-years for full proofs from first principles)
 | LandauLemma.lean | 0 | Landau lemma |
 | LaurentExpansion.lean | 0 | Laurent expansion of zeta at s=1 |
 | SchmidtOscillation.lean | 0 | Schmidt oscillation (finite sum) |
+| ZetaMoments.lean | 0 | Zeta moment bounds (trivial quantifier order) |
 | ZetaZeroInfrastructure.lean | 0 | Zeta zero infrastructure |
 
 ## Aristotle Integration
@@ -227,10 +229,10 @@ See `aristotle_prompts.md` for remaining prompts. Recently resolved:
 - PhragmenLindelof zeta_bound_at_two - PROVED (triangle inequality + hasSum_zeta_two)
 - PhragmenLindelof zeta_large_sigma_bound - PROVED (rpow monotonicity + pi_lt_d2)
 - ThreeFourOne summable_r_pow_div_mul_cos - PROVED (geometric comparison + abs_cos_le_one)
+- PhaseAlignment cos_alignment - PROVED (double-angle + oscillation_alignment, file now sorry-free)
 
 Still open:
-1. PhaseAlignment cos_alignment (1 sorry) - needs Dirichlet approximation import
-2. BinetStirling asymptotics (6 sorries)
+1. BinetStirling asymptotics (6 sorries)
 3. PartialSummation psi_oscillation_implies_pi_li_oscillation (2 sorries) - needs error term bounds
 4. PhragmenLindelof remaining (5 sorries) - convexity bounds, Stirling, functional equation
 5. ThreeFourOne remaining (6 sorries) - complex series, Euler product
@@ -249,6 +251,7 @@ FIXED (no longer sorry):
 - ~~`PhragmenLindelof.lean:78` zeta_bound_at_two~~ - PROVED (tsum_of_norm_bounded + hasSum_zeta_two)
 - ~~`PhragmenLindelof.lean:148` zeta_large_sigma_bound~~ - PROVED (rpow_le_rpow_of_exponent_le + pi_lt_d2)
 - ~~`ThreeFourOne.lean:59` summable_r_pow_div_mul_cos~~ - PROVED (geometric comparison + Real.abs_cos_le_one)
+- ~~`PhaseAlignment.lean:62` cos_alignment~~ - PROVED (double-angle formula + oscillation_alignment)
 
 REMAINING HIGH tractability -- proof outlines exist, standard Mathlib tactics likely suffice:
 
@@ -293,16 +296,16 @@ synthInstance.maxSize: 128
 
 | Metric | Value |
 |--------|-------|
-| Total .lean files | 58 |
-| Formal declarations | ~620 |
+| Total .lean files | 59 |
+| Formal declarations | ~630 |
 | Sorries in main proof chain | 0 |
 | Axioms in Assumptions.lean | 57 |
-| Aristotle-contributed files | 18 |
-| Sorry-free Aristotle files | 8 |
-| Aristotle sorries remaining | 45 |
-| Sorries fixed (all sessions) | 11 |
-| Sorries total (non-comment) | ~108 |
-| Logical gaps (deduplicated) | ~108 |
+| Aristotle-contributed files | 19 |
+| Sorry-free Aristotle files | 10 |
+| Aristotle sorries remaining | 44 |
+| Sorries fixed (all sessions) | 12 |
+| Sorries total (non-comment) | ~107 |
+| Logical gaps (deduplicated) | ~107 |
 
 ## References
 
