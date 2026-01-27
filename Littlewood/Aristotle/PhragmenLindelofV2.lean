@@ -118,9 +118,84 @@ lemma g_growth_condition_v2 (g : ℂ → ℂ) (a b : ℝ) (hab : a < b)
     (hg_poly : ∃ k C, ∀ z, a ≤ z.re → z.re ≤ b → ‖g z‖ ≤ C * (1 + ‖z‖) ^ k) :
     ∃ c < Real.pi / (b - a), ∃ B, g =O[Filter.comap (_root_.abs ∘ im) Filter.atTop ⊓
       Filter.principal (re ⁻¹' Set.Ioo a b)] fun z => Real.exp (B * Real.exp (c * |z.im|)) := by
-  -- Polynomial growth is dominated by any exponential growth condition
-  -- Choose c = π/(2(b-a)) < π/(b-a) and B large enough
-  sorry
+  obtain ⟨k, C, hC⟩ := hg_poly
+  have hba : 0 < b - a := sub_pos.mpr hab
+  -- Choose c = π/(2(b-a)) < π/(b-a) and B = 1
+  refine ⟨Real.pi / (2 * (b - a)), ?_, 1, ?_⟩
+  · -- c < π/(b-a)
+    exact div_lt_div_of_pos_left Real.pi_pos hba (by linarith)
+  · -- Big-O: polynomial growth ≤ exp(exp(c·|Im z|))
+    set c := Real.pi / (2 * (b - a))
+    have hc : 0 < c := div_pos Real.pi_pos (by positivity)
+    -- Key: x^k = o(exp(c·x)), so eventually |t|^k ≤ exp(c·t)
+    have h_po := (isLittleO_pow_exp_pos_mul_atTop k hc).def one_pos
+    simp only [one_mul, norm_pow, Real.norm_eq_abs] at h_po
+    rw [Filter.eventually_atTop] at h_po
+    obtain ⟨R₀, hR₀⟩ := h_po
+    -- Strip width constant
+    set A := 1 + max (|a|) (|b|) with hA_def
+    have hA_pos : 0 < A := by positivity
+    -- Construct the big-O bound
+    rw [Asymptotics.isBigO_iff]
+    refine ⟨max 1 (|C| * (2 : ℝ) ^ k), ?_⟩
+    rw [Filter.Eventually, Filter.mem_inf_principal, Filter.mem_comap]
+    refine ⟨Set.Ici (max R₀ A), Filter.Ici_mem_atTop _, ?_⟩
+    intro z hz hz_strip
+    simp only [Set.mem_preimage, Function.comp_apply, Set.mem_Ici] at hz
+    simp only [Set.mem_preimage, Set.mem_Ioo] at hz_strip
+    have h_R : R₀ ≤ |z.im| := le_trans (le_max_left _ _) hz
+    have h_A : A ≤ |z.im| := le_trans (le_max_right _ _) hz
+    -- Bound |z.re| in the strip
+    have h_re_abs : |z.re| ≤ max (|a|) (|b|) := by
+      rw [abs_le]; constructor
+      · linarith [neg_abs_le a, le_max_left (|a|) (|b|)]
+      · linarith [le_abs_self b, le_max_right (|a|) (|b|)]
+    -- Bound 1 + ‖z‖ ≤ 2·|z.im|
+    have h_norm_bound : 1 + ‖z‖ ≤ 2 * |z.im| := by
+      have h1 : ‖z‖ ≤ |z.re| + |z.im| := norm_le_abs_re_add_abs_im z
+      have h2 : |z.re| ≤ A - 1 := by linarith [hA_def]
+      linarith
+    -- Bound |z.im|^k ≤ exp(c · |z.im|)
+    have h_pow_exp : |z.im| ^ k ≤ Real.exp (c * |z.im|) := by
+      have := hR₀ |z.im| h_R
+      rwa [abs_abs, abs_of_pos (Real.exp_pos _)] at this
+    -- Bound exp(c·|t|) ≤ exp(exp(c·|t|)) since c·t ≤ exp(c·t)
+    have h_exp_mono : Real.exp (c * |z.im|) ≤ Real.exp (1 * Real.exp (c * |z.im|)) := by
+      apply Real.exp_le_exp.mpr
+      rw [one_mul]
+      linarith [Real.add_one_le_exp (c * |z.im|)]
+    -- Case split: C ≥ 0 or C < 0
+    by_cases hC_nn : 0 ≤ C
+    · -- C ≥ 0: use the polynomial bound chain
+      have h_gbound := hC z (le_of_lt hz_strip.1) (le_of_lt hz_strip.2)
+      -- (1+‖z‖)^k ≤ (2|z.im|)^k = 2^k · |z.im|^k
+      have h1 : (1 + ‖z‖) ^ k ≤ (2 * |z.im|) ^ k :=
+        pow_le_pow_left₀ (by linarith [norm_nonneg z]) h_norm_bound k
+      rw [mul_pow] at h1
+      -- Chain: ‖g z‖ ≤ C · 2^k · |z.im|^k ≤ C · 2^k · exp(c·|z.im|) ≤ ... · exp(exp(c·|z.im|))
+      have h2 : C * (1 + ‖z‖) ^ k ≤ |C| * (2 : ℝ) ^ k * Real.exp (1 * Real.exp (c * |z.im|)) := by
+        rw [abs_of_nonneg hC_nn]
+        calc C * (1 + ‖z‖) ^ k
+            ≤ C * ((2 : ℝ) ^ k * |z.im| ^ k) := by gcongr
+          _ = C * (2 : ℝ) ^ k * |z.im| ^ k := by ring
+          _ ≤ C * (2 : ℝ) ^ k * Real.exp (c * |z.im|) := by gcongr
+          _ ≤ C * (2 : ℝ) ^ k * Real.exp (1 * Real.exp (c * |z.im|)) := by gcongr
+      calc ‖g z‖ ≤ C * (1 + ‖z‖) ^ k := h_gbound
+        _ ≤ |C| * (2 : ℝ) ^ k * Real.exp (1 * Real.exp (c * |z.im|)) := h2
+        _ ≤ max 1 (|C| * (2 : ℝ) ^ k) * Real.exp (1 * Real.exp (c * |z.im|)) := by
+            gcongr; exact le_max_right _ _
+        _ = max 1 (|C| * (2 : ℝ) ^ k) * ‖Real.exp (1 * Real.exp (c * |z.im|))‖ := by
+            rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+    · -- C < 0: the polynomial bound gives ‖g z‖ ≤ C·(...) ≤ 0, so ‖g z‖ = 0
+      push_neg at hC_nn
+      have h_gbound := hC z (le_of_lt hz_strip.1) (le_of_lt hz_strip.2)
+      have h_base_nn : (0 : ℝ) ≤ 1 + ‖z‖ := by linarith [norm_nonneg z]
+      have h_nonpos : C * (1 + ‖z‖) ^ k ≤ 0 :=
+        mul_nonpos_of_nonpos_of_nonneg (le_of_lt hC_nn) (pow_nonneg h_base_nn k)
+      have h_zero : ‖g z‖ = 0 := le_antisymm (by linarith) (norm_nonneg _)
+      simp only [Set.mem_setOf_eq]
+      rw [h_zero]
+      exact mul_nonneg (le_trans zero_le_one (le_max_left _ _)) (norm_nonneg _)
 
 /-- Phragmén-Lindelöf for functions of polynomial growth:
     if f has polynomial growth in a strip and is bounded on the boundary,
