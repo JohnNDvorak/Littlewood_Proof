@@ -1,12 +1,13 @@
 # Remaining Sorries - Categorized by Difficulty
 
-## SORRY-FREE FILES (7 total, no action needed)
+## SORRY-FREE FILES (8 total, no action needed)
 - CriticalZeros.lean
 - DirichletApprox.lean
 - DirichletSeries.lean
 - LandauLemma.lean
 - LaurentExpansion.lean
 - SchmidtOscillation.lean
+- SchmidtOscillationInfinite.lean
 - ZetaZeroInfrastructure.lean
 
 ## FALSE THEOREMS (cannot be proved as stated)
@@ -24,10 +25,11 @@ Worth another attempt with Aristotle or interactive Lean:
    - `align_phases` only gives small t > 0; need import of DirichletApprox or reproof
    - Proof sketch in comments
 
-2. **schmidt_oscillation_lemma_v2** (SchmidtOscillationInfinite.lean, 1 sorry)
-   - Proof structure exists, partially complete
-
 ### Recently Fixed
+- **schmidt_oscillation_lemma_v2** (SchmidtOscillationInfinite.lean) - PROVED (ℕ-div 1/2=0, file now sorry-free)
+- **h_li_integral derivative** (PartialSummation.lean) - PROVED (field_simp)
+- **zeta_bound_at_two** (PhragmenLindelof.lean) - PROVED (tsum_of_norm_bounded + hasSum_zeta_two)
+- **zeta_large_sigma_bound** (PhragmenLindelof.lean) - PROVED (rpow monotonicity + pi_lt_d2)
 - **sum_split** (ZetaZeroInfrastructure.lean) - PROVED via `Summable.tsum_union_disjoint`
 
 ## NEEDS ARISTOTLE (deep analytic number theory)
@@ -56,11 +58,12 @@ All remaining sorries require substantial mathematical infrastructure:
 - 3-4-1 inequality application to zeta product
 - Requires: Euler product, series manipulation
 
-### PhragmenLindelof.lean (7 sorries)
+### PhragmenLindelof.lean (5 sorries)
 - Zeta bounds for sigma > 1 and on critical line
 - Gamma function growth (Stirling's formula)
 - Convexity bounds (Phragmen-Lindelof principle)
-- Requires: Dirichlet series triangle inequality, Stirling
+- Requires: Stirling, functional equation, Phragmen-Lindelof interpolation
+- Fixed: zeta_bound_at_two (π²/6 bound), zeta_large_sigma_bound (σ≥2 bound)
 
 ### FunctionalEquation.lean (4 sorries, 2 are FALSE)
 - Poisson summation for theta
@@ -77,15 +80,15 @@ All remaining sorries require substantial mathematical infrastructure:
 - Completed zeta conjugation (identity theorem)
 - Hardy Z function phase calculation
 
-### PartialSummation.lean (3 sorries)
-- Integration by parts for Dirichlet series
-- Domination arguments for oscillation
+### PartialSummation.lean (2 sorries)
+- Domination arguments for oscillation transfer (psi → pi-li)
+- Fixed: h_li_integral derivative subgoal (field_simp)
 
 ## SUMMARY
 | Category | Count | Action |
 |----------|-------|--------|
-| Sorry-free files | 7 | None needed |
+| Sorry-free files | 8 | None needed |
 | False theorems | 3 | Fix hypotheses |
-| Possibly tractable | 2 | Try with Aristotle |
-| Needs Aristotle | 45 | Submit prompts |
-| **Total remaining sorries** | **50** | |
+| Possibly tractable | 1 | Try with Aristotle |
+| Needs Aristotle | 42 | Submit prompts |
+| **Total remaining sorries** | **46** | |
