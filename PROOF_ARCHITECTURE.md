@@ -182,11 +182,11 @@ formalization (estimated 1-3 person-years for full proofs from first principles)
 | Category | Sorries | Files | Notes |
 |----------|---------|-------|-------|
 | Assumptions.lean | 57 | 1 | Intentional placeholders for unproved classical theorems |
-| Aristotle/ | 53 | 24 | Generated proofs with remaining gaps (12 files sorry-free) |
+| Aristotle/ | 51 | 24 | Generated proofs with remaining gaps (12 files sorry-free) |
 | Development/ | 5 | 3 | Work-in-progress proofs |
 | CoreLemmas/ | 1 | 1 | Identity theorem for analytic continuation |
 | Basic/, ZetaZeros/, ExplicitFormulas/, Oscillation/, Main/, Mertens/, Tests/ | 0 | -- | Clean |
-| **Total** | **~116** | **24** | 13 Aristotle sorries fixed since initial generation |
+| **Total** | **~114** | **24** | 15 Aristotle sorries fixed since initial generation |
 
 ### Aristotle File Detail
 
@@ -213,8 +213,8 @@ formalization (estimated 1-3 person-years for full proofs from first principles)
 | ZetaZeroInfrastructure.lean | 0 | Zeta zero infrastructure |
 | PerronFormulaV2.lean | 0 | Perron formula + zero finiteness (genuine proof) |
 | ZeroCountingV2.lean | 0 | Zero counting N(T), S(T) bound (genuine proof) |
-| HardyZRealV2.lean | 4 | Hardy Z function, identity theorem, sign constancy |
-| PhragmenLindelofV2.lean | 3 | Phragmén-Lindelöf convexity, (s-1)ζ(s) entire |
+| HardyZRealV2.lean | 3 | Hardy Z function, identity theorem, sign constancy |
+| PhragmenLindelofV2.lean | 2 | Phragmén-Lindelöf convexity, (s-1)ζ(s) entire |
 | ThreeFourOneV2.lean | 3 | 3-4-1 inequality, trig identity, ζ(1+it)≠0 |
 
 ## Aristotle Integration
@@ -227,6 +227,8 @@ Files in `Aristotle/` were generated against:
 ### Aristotle Prompt Queue
 
 See `aristotle_prompts.md` for remaining prompts. Recently resolved:
+- PhragmenLindelofV2 zeta_entire_analytic_v2 - PROVED (removable singularity + riemannZeta_residue_one)
+- HardyZRealV2 hardyZV2_constant_sign_between_zeros - PROVED (IVT via IsPreconnected.intermediate_value₂)
 - DirichletApprox round optimality - PROVED (round_le)
 - ZetaZeroInfrastructure sum_split - PROVED (Summable.tsum_union_disjoint)
 - SchmidtOscillationInfinite schmidt_oscillation_lemma_v2 - PROVED (x^(1/2) uses ℕ div = 0)
@@ -257,6 +259,8 @@ FIXED (no longer sorry):
 - ~~`PhragmenLindelof.lean:148` zeta_large_sigma_bound~~ - PROVED (rpow_le_rpow_of_exponent_le + pi_lt_d2)
 - ~~`ThreeFourOne.lean:59` summable_r_pow_div_mul_cos~~ - PROVED (geometric comparison + Real.abs_cos_le_one)
 - ~~`PhaseAlignment.lean:62` cos_alignment~~ - PROVED (double-angle formula + oscillation_alignment)
+- ~~`PhragmenLindelofV2.lean` zeta_entire_analytic_v2~~ - PROVED (removable singularity + riemannZeta_residue_one)
+- ~~`HardyZRealV2.lean` hardyZV2_constant_sign_between_zeros~~ - PROVED (IVT via IsPreconnected.intermediate_value₂)
 
 REMAINING HIGH tractability -- proof outlines exist, standard Mathlib tactics likely suffice:
 
@@ -307,10 +311,10 @@ synthInstance.maxSize: 128
 | Axioms in Assumptions.lean | 57 |
 | Aristotle-contributed files | 24 |
 | Sorry-free Aristotle files | 12 |
-| Aristotle sorries remaining | 53 |
-| Sorries fixed (all sessions) | 13 |
-| Sorries total (non-comment) | ~116 |
-| Logical gaps (deduplicated) | ~116 |
+| Aristotle sorries remaining | 51 |
+| Sorries fixed (all sessions) | 15 |
+| Sorries total (non-comment) | ~114 |
+| Logical gaps (deduplicated) | ~114 |
 
 ## References
 

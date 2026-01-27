@@ -69,11 +69,40 @@ noncomputable def zeta_entire_v2 (s : ℂ) : ℂ :=
 lemma zeta_entire_analytic_v2 : Differentiable ℂ zeta_entire_v2 := by
   intro s
   by_cases hs : s = 1
-  · -- At s = 1, use the residue: lim_{s→1} (s-1)ζ(s) = 1
+  · -- At s = 1: removable singularity, using riemannZeta_residue_one
     subst hs
-    -- Need to show differentiability at the removable singularity
-    -- The function (s-1)ζ(s) has a removable singularity at s=1 with value 1
-    sorry
+    have h_diff_punct : ∀ᶠ z in nhdsWithin (1 : ℂ) {(1 : ℂ)}ᶜ,
+        DifferentiableAt ℂ zeta_entire_v2 z := by
+      apply Filter.eventually_of_mem self_mem_nhdsWithin
+      intro z hz
+      simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hz
+      exact DifferentiableAt.congr_of_eventuallyEq
+        ((differentiableAt_id.sub (differentiableAt_const 1)).mul
+          (differentiableAt_riemannZeta hz))
+        (Filter.eventuallyEq_of_mem (isOpen_compl_singleton.mem_nhds
+          (Set.mem_compl_singleton_iff.mpr hz)) fun w hw => by
+          simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hw
+          show zeta_entire_v2 w = (w - 1) * riemannZeta w
+          simp only [zeta_entire_v2, if_neg hw])
+    have h_cont : ContinuousAt zeta_entire_v2 1 := by
+      rw [ContinuousAt]
+      have hval : zeta_entire_v2 1 = 1 := by simp [zeta_entire_v2]
+      rw [hval, Metric.tendsto_nhds]
+      intro ε hε
+      have hres := riemannZeta_residue_one
+      rw [Metric.tendsto_nhds] at hres
+      have hres' := hres ε hε
+      rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at hres'
+      obtain ⟨δ, hδ_pos, hball⟩ := hres'
+      rw [Filter.Eventually, Metric.mem_nhds_iff]
+      exact ⟨δ, hδ_pos, fun z hz => by
+        by_cases h : z = 1
+        · simp [h, hval, hε]
+        · have hz' : z ∈ Metric.ball (1 : ℂ) δ ∩ {(1 : ℂ)}ᶜ := ⟨hz, h⟩
+          simp only [zeta_entire_v2, if_neg h, Set.mem_setOf_eq]
+          exact hball hz'⟩
+    exact (Complex.analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt
+      h_diff_punct h_cont).differentiableAt
   · -- Away from 1, straightforward product
     exact DifferentiableAt.congr_of_eventuallyEq
       ((differentiableAt_id.sub (differentiableAt_const _)).mul

@@ -128,9 +128,36 @@ theorem hardyZV2_constant_sign_between_zeros (t₁ t₂ : ℝ) (h_lt : t₁ < t�
     (h_no_zero : ∀ t ∈ Set.Ioo t₁ t₂, hardyZV2 t ≠ 0) :
     (∀ t ∈ Set.Ioo t₁ t₂, 0 < (hardyZV2 t).re) ∨
     (∀ t ∈ Set.Ioo t₁ t₂, (hardyZV2 t).re < 0) := by
-  -- Since Z(t) is real-valued (hardyZV2_real) and continuous (continuous_hardyZV2),
-  -- and nonzero on (t₁, t₂), the intermediate value theorem implies
-  -- Z(t).re cannot change sign on this interval.
-  sorry
+  -- Z(t) is real-valued, so nonzero ↔ re ≠ 0
+  have h_re_ne : ∀ t ∈ Set.Ioo t₁ t₂, (hardyZV2 t).re ≠ 0 := by
+    intro t ht habs
+    exact h_no_zero t ht (Complex.ext_iff.mpr ⟨habs, hardyZV2_real t⟩)
+  -- re ∘ Z is continuous
+  have h_cont_re : Continuous (fun t : ℝ => (hardyZV2 t).re) :=
+    Complex.continuous_re.comp continuous_hardyZV2
+  -- Pick a reference point
+  obtain ⟨t₀, ht₀⟩ := Set.nonempty_Ioo.mpr h_lt
+  -- Its sign determines all signs via IVT on connected interval
+  rcases lt_or_gt_of_ne (h_re_ne t₀ ht₀) with h_neg | h_pos
+  · -- Reference point negative → all negative
+    right; intro t ht
+    by_contra h_not_neg; push_neg at h_not_neg
+    have h_pos_t : 0 < (hardyZV2 t).re :=
+      lt_of_le_of_ne h_not_neg (Ne.symm (h_re_ne t ht))
+    obtain ⟨c, hc, hc_eq⟩ := IsPreconnected.intermediate_value₂
+      isPreconnected_Ioo ht₀ ht
+      h_cont_re.continuousOn continuousOn_const
+      (le_of_lt h_neg) (le_of_lt h_pos_t)
+    exact h_re_ne c hc hc_eq
+  · -- Reference point positive → all positive
+    left; intro t ht
+    by_contra h_not_pos; push_neg at h_not_pos
+    have h_neg_t : (hardyZV2 t).re < 0 :=
+      lt_of_le_of_ne h_not_pos (h_re_ne t ht)
+    obtain ⟨c, hc, hc_eq⟩ := IsPreconnected.intermediate_value₂
+      isPreconnected_Ioo ht ht₀
+      h_cont_re.continuousOn continuousOn_const
+      (le_of_lt h_neg_t) (le_of_lt h_pos)
+    exact h_re_ne c hc hc_eq
 
 end

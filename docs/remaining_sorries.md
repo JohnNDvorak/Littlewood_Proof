@@ -25,6 +25,8 @@ See docs/FALSE_THEOREMS.md for details.
 No currently identified tractable targets. All remaining sorries require deep infrastructure.
 
 ### Recently Fixed
+- **zeta_entire_analytic_v2** (PhragmenLindelofV2.lean) - PROVED (removable singularity theorem + riemannZeta_residue_one)
+- **hardyZV2_constant_sign_between_zeros** (HardyZRealV2.lean) - PROVED (IVT via IsPreconnected.intermediate_value₂)
 - **completedRiemannZeta_conj** (HardyZReal.lean) - PROVED (identity theorem for entire functions via completedRiemannZeta₀)
 - **cos_alignment** (PhaseAlignment.lean) - PROVED (double-angle + oscillation_alignment, file now sorry-free)
 - **schmidt_oscillation_lemma_v2** (SchmidtOscillationInfinite.lean) - PROVED (ℕ-div 1/2=0, file now sorry-free)
@@ -87,18 +89,18 @@ All remaining sorries require substantial mathematical infrastructure:
 - Domination arguments for oscillation transfer (psi → pi-li)
 - Fixed: h_li_integral derivative subgoal (field_simp)
 
-### HardyZRealV2.lean (4 sorries)
+### HardyZRealV2.lean (3 sorries)
 - Hardy Z function real-valuedness (Gamma phase argument)
 - Gamma duplication formula at 1/4+it/2
 - Continuity of Z(t) (arg(Γ) continuity)
-- Sign constancy between zeros (IVT)
-- Proved: identity_theorem_extension_v2, hardyZV2_zero_iff_zeta_zero, hardyZV2_abs_eq_zeta_abs
+- ~~Sign constancy between zeros~~ - PROVED (IVT via IsPreconnected.intermediate_value₂)
+- Proved: identity_theorem_extension_v2, hardyZV2_zero_iff_zeta_zero, hardyZV2_abs_eq_zeta_abs, hardyZV2_constant_sign_between_zeros
 
-### PhragmenLindelofV2.lean (3 sorries)
-- (s-1)ζ(s) differentiability at s=1 (removable singularity)
+### PhragmenLindelofV2.lean (2 sorries)
 - Polynomial-to-exponential growth condition
 - Zeta growth estimate in critical strip
-- Proved: phragmen_lindelof_convexity_v2 (Hadamard three-lines), polynomial_growth_implies_bounded_of_boundary_bounded_v2
+- ~~(s-1)ζ(s) differentiability at s=1~~ - PROVED (removable singularity + riemannZeta_residue_one)
+- Proved: phragmen_lindelof_convexity_v2 (Hadamard three-lines), polynomial_growth_implies_bounded_of_boundary_bounded_v2, zeta_entire_analytic_v2
 
 ### ThreeFourOneV2.lean (3 sorries)
 - log‖ζ(s)‖ as Euler product tsum
@@ -112,5 +114,5 @@ All remaining sorries require substantial mathematical infrastructure:
 | Sorry-free files | 12 | None needed |
 | False theorems | 3 | Fix hypotheses |
 | Possibly tractable | 0 | -- |
-| Needs Aristotle | 50 | Submit prompts |
-| **Total remaining sorries** | **53** | |
+| Needs Aristotle | 48 | Submit prompts |
+| **Total remaining sorries** | **51** | |
