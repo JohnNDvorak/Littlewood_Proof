@@ -152,8 +152,64 @@ lemma zeta_entire_growth_v2
     (h_growth : ∃ k C, ∀ σ : ℝ, 0 ≤ σ → σ ≤ 1 → ∀ t : ℝ, 1 ≤ |t| →
       ‖riemannZeta (σ + I * t)‖ ≤ C * |t|^k) :
     ∃ k C, ∀ z, 0 ≤ z.re → z.re ≤ 1 → ‖zeta_entire_v2 z‖ ≤ C * (1 + ‖z‖) ^ k := by
-  -- Combines the bound on ‖z-1‖ with the assumed bound on ‖ζ(z)‖
-  -- for |Im(z)| ≥ 1, and uses compactness for |Im(z)| < 1
-  sorry
+  obtain ⟨k₀, C₀, hC₀⟩ := h_growth
+  -- Bound on compact region {z : ‖z‖ ≤ 2}
+  have hcont : Continuous zeta_entire_v2 := zeta_entire_analytic_v2.continuous
+  obtain ⟨M₀, hM₀⟩ := (isCompact_closedBall (0 : ℂ) 2).exists_bound_of_continuousOn
+    hcont.continuousOn
+  -- Choose k and C (ensure C ≥ 1 for monotonicity)
+  refine ⟨k₀ + 1, max 1 (max C₀ (M₀ + 1)), ?_⟩
+  intro z hz_re hz_re'
+  have h1p : 1 ≤ 1 + ‖z‖ := le_add_of_nonneg_right (norm_nonneg z)
+  have hC_ge : 0 < max 1 (max C₀ (M₀ + 1)) := lt_of_lt_of_le one_pos (le_max_left _ _)
+  by_cases him : 1 ≤ |z.im|
+  · -- Case: |Im(z)| ≥ 1. Use hypothesis to bound ζ, multiply by ‖z-1‖.
+    have hz_ne : z ≠ 1 := by intro heq; simp [heq] at him; linarith
+    -- Apply hypothesis with σ = Re(z), t = Im(z)
+    have h_zeta : ‖riemannZeta z‖ ≤ C₀ * |z.im| ^ k₀ := by
+      have h := hC₀ z.re hz_re hz_re' z.im him
+      have heq : (↑z.re : ℂ) + I * ↑z.im = z := by
+        rw [mul_comm]; exact re_add_im z
+      rwa [heq] at h
+    -- Derive C₀ ≥ 0 from the bound
+    have hC₀_nonneg : 0 ≤ C₀ := by
+      have h1 : 0 ≤ C₀ * |z.im| ^ k₀ := le_trans (norm_nonneg _) h_zeta
+      have h2 : (0 : ℝ) < |z.im| ^ k₀ := pow_pos (lt_of_lt_of_le zero_lt_one him) _
+      by_contra h; push_neg at h; linarith [mul_neg_of_neg_of_pos h h2]
+    -- zeta_entire_v2 z = (z - 1) * ζ(z) when z ≠ 1
+    have h_val : zeta_entire_v2 z = (z - 1) * riemannZeta z := if_neg hz_ne
+    rw [h_val, norm_mul]
+    -- Key estimates
+    have h_sub : ‖z - 1‖ ≤ 1 + ‖z‖ := by linarith [norm_sub_le z 1, norm_one (α := ℂ)]
+    have h_im : |z.im| ≤ 1 + ‖z‖ := by linarith [abs_im_le_norm z]
+    calc ‖z - 1‖ * ‖riemannZeta z‖
+        ≤ (1 + ‖z‖) * (C₀ * |z.im| ^ k₀) :=
+          mul_le_mul h_sub h_zeta (norm_nonneg _) (by linarith [norm_nonneg z])
+      _ = C₀ * ((1 + ‖z‖) * |z.im| ^ k₀) := by ring
+      _ ≤ C₀ * ((1 + ‖z‖) * (1 + ‖z‖) ^ k₀) := by
+          apply mul_le_mul_of_nonneg_left _ hC₀_nonneg
+          apply mul_le_mul_of_nonneg_left _ (by linarith [norm_nonneg z])
+          exact pow_le_pow_left₀ (abs_nonneg _) h_im k₀
+      _ = C₀ * (1 + ‖z‖) ^ (k₀ + 1) := by rw [← pow_succ']
+      _ ≤ max 1 (max C₀ (M₀ + 1)) * (1 + ‖z‖) ^ (k₀ + 1) := by
+          gcongr; exact le_max_of_le_right (le_max_left _ _)
+  · -- Case: |Im(z)| < 1. Compact region: use continuity bound.
+    push_neg at him
+    -- z ∈ closedBall 0 2 since |Re| ≤ 1 and |Im| < 1, so ‖z‖ ≤ |Re| + |Im| < 2
+    have hz_ball : z ∈ Metric.closedBall (0 : ℂ) 2 := by
+      simp only [Metric.mem_closedBall, dist_zero_right]
+      have hre_abs : |z.re| ≤ 1 := abs_le.mpr ⟨by linarith, by linarith⟩
+      have him_abs : |z.im| ≤ 1 := le_of_lt him
+      calc ‖z‖ ≤ |z.re| + |z.im| := norm_le_abs_re_add_abs_im z
+        _ ≤ 1 + 1 := by linarith
+        _ = 2 := by norm_num
+    calc ‖zeta_entire_v2 z‖
+        ≤ M₀ := hM₀ z hz_ball
+      _ ≤ M₀ + 1 := le_add_of_nonneg_right one_pos.le
+      _ ≤ max C₀ (M₀ + 1) := le_max_right _ _
+      _ ≤ max 1 (max C₀ (M₀ + 1)) := le_max_right _ _
+      _ = max 1 (max C₀ (M₀ + 1)) * 1 := (mul_one _).symm
+      _ ≤ max 1 (max C₀ (M₀ + 1)) * (1 + ‖z‖) ^ (k₀ + 1) := by
+          gcongr; exact one_le_pow₀ h1p
 
 end
