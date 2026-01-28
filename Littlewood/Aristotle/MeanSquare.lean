@@ -87,6 +87,15 @@ lemma harmonic_sum_bound :
             = (1/2) T log T + O(T) = Θ(T log T) -/
 lemma integral_log_sqrt_asymp :
     (fun T => ∫ t in (1:ℝ)..T, Real.log (Real.sqrt (t / (2 * Real.pi)))) =Θ[atTop] (fun T => T * Real.log T) := by
+  -- Proof outline:
+  -- 1. Simplify: log(√(t/2π)) = (1/2)(log t - log(2π))
+  -- 2. Compute: ∫₁ᵀ log t dt = T log T - T + 1 (via FTC with antiderivative t log t - t)
+  -- 3. Therefore: ∫₁ᵀ log(√(t/2π)) dt = (1/2)(T log T - T + 1) - (1/2)(T-1)log(2π)
+  --                                    = (1/2) T log T + O(T)
+  -- 4. This is Θ(T log T) since the leading coefficient 1/2 > 0
+  -- The bounds needed:
+  --   Upper: (1/2) T log T + O(T) ≤ C * T log T for C > 1/2
+  --   Lower: c * T log T ≤ (1/2) T log T + O(T) for c < 1/2 and large T
   sorry
 
 /-- The integral of harmonic sums is Θ(T log T).
