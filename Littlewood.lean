@@ -77,6 +77,7 @@ import Littlewood.Aristotle.PhragmenLindelof       -- 3 sorries (no conflict)
 import Littlewood.Aristotle.PartialSummation       -- 2 sorries (has chebyshevPsi but uses Basic import)
 -- import Littlewood.Aristotle.FunctionalEquation  -- DEPRECATED: use FunctionalEquationV2
 -- import Littlewood.Aristotle.PerronFormula       -- 6 sorries, redefines chebyshevPsi
+-- import Littlewood.Aristotle.PrimePowerSums      -- 4 sorries, redefines psi
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
