@@ -45,6 +45,7 @@ import Littlewood.Aristotle.ZetaZeroInfrastructure -- Zero infrastructure (0 sor
 import Littlewood.Aristotle.NAsymptotic            -- N(T) asymptotic (0 sorries) ✓
 import Littlewood.Aristotle.RiemannXi              -- Riemann Xi entire (1 sorry) ✓ NEW
 import Littlewood.Aristotle.ZetaMoments            -- Zeta moments (0 sorries) ✓
+import Littlewood.Aristotle.ZetaMeanSquare         -- Mean square estimates (0 sorries) ✓
 import Littlewood.Aristotle.CriticalZeros          -- Critical zeros (0 sorries) ✓
 
 -- Analysis infrastructure (no conflicts)
@@ -74,7 +75,7 @@ import Littlewood.Aristotle.MeanSquare             -- 5 sorries (no conflict)
 import Littlewood.Aristotle.ZeroCounting           -- 4 sorries (no conflict)
 import Littlewood.Aristotle.PhragmenLindelof       -- 3 sorries (no conflict)
 import Littlewood.Aristotle.PartialSummation       -- 2 sorries (has chebyshevPsi but uses Basic import)
-import Littlewood.Aristotle.FunctionalEquation     -- 1 sorry (deprecated, use V2)
+-- import Littlewood.Aristotle.FunctionalEquation  -- DEPRECATED: use FunctionalEquationV2
 -- import Littlewood.Aristotle.PerronFormula       -- 6 sorries, redefines chebyshevPsi
 
 -- Mertens' theorems
