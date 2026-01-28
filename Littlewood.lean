@@ -56,7 +56,7 @@ import Littlewood.Aristotle.HorizontalSegmentBounds -- Horizontal segment bounds
 import Littlewood.Aristotle.PerronContourIntegrals -- Perron contour integrals (0 sorries) ✓
 
 -- Analysis infrastructure (no conflicts)
-import Littlewood.Aristotle.PhragmenLindelofStrip  -- Phragmén-Lindelöf strip bounds (0 sorries) ✓
+import Littlewood.Aristotle.PhragmenLindelofStrip  -- Phragmén-Lindelöf strip bounds (1 sorry)
 import Littlewood.Aristotle.PhragmenLindelofV2     -- Phragmén-Lindelöf v2 (0 sorries) ✓
 import Littlewood.Aristotle.ThreeFourOneV2         -- 3-4-1 v2 (0 sorries) ✓
 import Littlewood.Aristotle.ThreeFourOne           -- 3-4-1 original (0 sorries) ✓
@@ -80,13 +80,13 @@ import Littlewood.Aristotle.IntegralLogSqrtAsymp  -- ∫log(√(1/4+t²)) = Θ(T
 -- import Littlewood.Aristotle.ExplicitFormulaV3   -- redefines chebyshevPsi
 -- import Littlewood.Aristotle.SchmidtOscillationInfinite -- uses local chebyshevPsi
 
--- Aristotle files with remaining sorries
+-- Aristotle files with remaining sorries (actual counts verified)
 import Littlewood.Aristotle.MeanSquare             -- 4 sorries (no conflict)
 import Littlewood.Aristotle.ZeroCounting           -- 4 sorries (no conflict)
 import Littlewood.Aristotle.PhragmenLindelof       -- 3 sorries (no conflict)
 import Littlewood.Aristotle.PartialSummation       -- 2 sorries (has chebyshevPsi but uses Basic import)
--- import Littlewood.Aristotle.FunctionalEquation  -- DEPRECATED: use FunctionalEquationV2
--- import Littlewood.Aristotle.PerronFormula       -- 6 sorries, redefines chebyshevPsi
+-- import Littlewood.Aristotle.FunctionalEquation  -- DEPRECATED: 1 sorry, use FunctionalEquationV2
+-- import Littlewood.Aristotle.PerronFormula       -- 5 sorries, redefines chebyshevPsi
 -- import Littlewood.Aristotle.PrimePowerSums      -- 4 sorries, redefines psi
 
 -- Mertens' theorems

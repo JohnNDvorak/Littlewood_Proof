@@ -7,14 +7,14 @@ UUID: e1da0632-5a24-49c2-92b6-b7529c278708
 
 Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
 
-KEY RESULTS:
+KEY RESULTS (ALL PROVED - 0 sorries):
 - hardyZV2: Hardy Z function definition
-- hardyZV2_real: Z(t) is real-valued (sorry)
-- identity_theorem_extension_v2: Analytic identity theorem (proved)
-- hardyZV2_constant_sign_between_zeros: Sign constancy (sorry)
-- continuous_hardyZV2: Z is continuous (sorry)
-- hardyZV2_zero_iff_zeta_zero: Z(t)=0 iff ζ(1/2+it)=0 (proved)
-- hardyZV2_abs_eq_zeta_abs: |Z(t)| = |ζ(1/2+it)| (proved)
+- hardyZV2_real: Z(t) is real-valued
+- identity_theorem_extension_v2: Analytic identity theorem
+- hardyZV2_constant_sign_between_zeros: Sign constancy between zeros
+- continuous_hardyZV2: Z is continuous
+- hardyZV2_zero_iff_zeta_zero: Z(t)=0 iff ζ(1/2+it)=0
+- hardyZV2_abs_eq_zeta_abs: |Z(t)| = |ζ(1/2+it)|
 
 NOTE: riemannZeta_conj is already proved in ZeroCountingFunction.lean.
 This file focuses on Hardy Z function infrastructure.
