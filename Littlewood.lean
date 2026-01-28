@@ -46,6 +46,9 @@ import Littlewood.Aristotle.ThreeFourOneV2
 import Littlewood.Aristotle.HardyZComplete
 import Littlewood.Aristotle.ExplicitFormulaV3
 import Littlewood.Aristotle.HardyAssumptions
+import Littlewood.Aristotle.HardyZRealV4
+import Littlewood.Aristotle.FunctionalEquationV2
+import Littlewood.Aristotle.TrigPolyIndependence
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
