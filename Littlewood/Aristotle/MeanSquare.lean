@@ -4,6 +4,8 @@ Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
 -/
 
 import Mathlib
+import Littlewood.Aristotle.HarmonicSumIntegral
+import Littlewood.Aristotle.OffDiagonalBound
 
 set_option maxHeartbeats 1600000
 set_option maxRecDepth 4000
@@ -59,6 +61,17 @@ noncomputable def partialZeta (x : ℝ) (s : ℂ) : ℂ :=
 /-- N(t) = floor(√(t/2π)) - the truncation point for the approximate functional equation -/
 noncomputable def N_t (t : ℝ) : ℕ := Nat.floor (Real.sqrt (t / (2 * Real.pi)))
 
+/-- N_t equals N_truncation from HarmonicSumIntegral -/
+lemma N_t_eq_N_truncation (t : ℝ) : N_t t = N_truncation t := rfl
+
+/-- The Icc sum equals harmonicSum -/
+lemma sum_Icc_eq_harmonicSum (n : ℕ) :
+    ∑ k ∈ Finset.Icc 1 n, (1:ℝ)/k = harmonicSum n := by
+  -- Use transitivity: Icc sum = harmonic n = harmonicSum n
+  rw [harmonicSum_eq_harmonic, harmonic_eq_sum_Icc]
+  push_cast
+  simp only [one_div]
+
 /-- The harmonic sum differs from log by O(1).
     This is the Euler-Mascheroni constant relationship:
     H_n = Σ_{k=1}^n 1/k = ln(n) + γ + O(1/n) where γ ≈ 0.5772... -/
@@ -104,7 +117,15 @@ lemma integral_log_sqrt_asymp :
     Integrating: ∫₁ᵀ H_{N(t)} dt = (1/2) ∫₁ᵀ log(t/2π) dt + O(T) = Θ(T log T) -/
 lemma integral_harmonic_sum_asymp :
     (fun T => ∫ t in (1:ℝ)..T, ∑ n ∈ Finset.Icc 1 (N_t t), (1:ℝ)/n) =Θ[atTop] (fun T => T * Real.log T) := by
-  sorry
+  -- Convert to harmonicSum and use the proved result from HarmonicSumIntegral
+  have h_eq : (fun T => ∫ t in (1:ℝ)..T, ∑ n ∈ Finset.Icc 1 (N_t t), (1:ℝ)/n) =
+              (fun T => ∫ t in (1:ℝ)..T, harmonicSum (N_truncation t)) := by
+    ext T
+    congr 1
+    ext t
+    rw [sum_Icc_eq_harmonicSum, N_t_eq_N_truncation]
+  rw [h_eq]
+  exact integral_harmonicSum_asymp
 
 /-- Off-diagonal part of |partial zeta|².
     When expanding |Σ n^{-1/2-it}|² = Σ_n Σ_m n^{-1/2-it} m^{-1/2+it},

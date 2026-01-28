@@ -79,7 +79,24 @@ lemma integral_odd_part_zero (f : ℝ → ℂ) (hf : ∀ t, f (-t) = -f t) (R : 
     Note: Re(1/(c+it)) = c/(c²+t²), whose integral is arctan(t/c)/c. -/
 lemma integral_real_part_arctan (c : ℝ) (hc : 0 < c) (R : ℝ) (hR : 0 < R) :
     ∫ t in Set.Icc (-R) R, (1 / (c + t * I)).re = 2 * Real.arctan (R / c) := by
-  sorry
+  -- Convert Set.Icc to interval integral (equivalent since -R ≤ R when R > 0)
+  have hle : -R ≤ R := by linarith
+  rw [show ∫ t in Set.Icc (-R) R, (1 / (c + t * I)).re = ∫ t in (-R)..R, (1 / (c + t * I)).re from by
+    rw [intervalIntegral.integral_of_le hle]
+    exact (setIntegral_congr_set Ioc_ae_eq_Icc).symm]
+  -- Now use FTC with antiderivative arctan(t/c)
+  norm_num [Complex.normSq, Complex.div_re]
+  rw [intervalIntegral.integral_deriv_eq_sub']
+  case f => exact fun t => Real.arctan (t / c)
+  · simpa [neg_div] using by ring
+  · funext t
+    field_simp [hc]; ring
+    rw [show deriv (fun t => Real.arctan (t * c⁻¹)) t = (1 + (t * c⁻¹)^2)⁻¹ * c⁻¹ by
+      norm_num [Real.differentiableAt_arctan]]
+    ring; field_simp
+  · norm_num
+  · exact continuousOn_of_forall_continuousAt fun t ht =>
+      ContinuousAt.div continuousAt_const (Continuous.continuousAt (by continuity)) (by nlinarith)
 
 /-- KEY: The residue of 1/s at s = 0 gives the Perron integral value. -/
 theorem residue_one_div_s (c R : ℝ) (hc : 0 < c) (hR : 0 < R) :
