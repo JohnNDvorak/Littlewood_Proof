@@ -36,6 +36,11 @@ noncomputable def RiemannXi (s : ℂ) : ℂ :=
 noncomputable def xi_Mathlib (s : ℂ) : ℂ :=
   (1/2) * s * (s - 1) * completedRiemannZeta s
 
+/-- The corrected xi function using completedRiemannZeta₀ (which is entire).
+    This is the proper formulation that IS differentiable everywhere. -/
+noncomputable def xi_Mathlib_corrected (s : ℂ) : ℂ :=
+  (1/2) * (s * (s - 1) * completedRiemannZeta₀ s + 1)
+
 /-- ξ(s) = ξ(1-s) from Mathlib's completed_zeta_symmetric -/
 theorem xi_Mathlib_functional_equation (s : ℂ) : xi_Mathlib s = xi_Mathlib (1 - s) := by
   unfold xi_Mathlib
@@ -78,14 +83,37 @@ theorem xi_Mathlib_zeros_eq_zeta_zeros (s : ℂ) (hs_re : 0 < s.re) (hs_re' : s.
       exact absurd (riemannZeta_def_of_ne_zero hs_ne ▸ h) (div_ne_zero hne hG)
     rw [h_completed, mul_zero]
 
-/-- xi_Mathlib is an entire function (the s(s-1) factor cancels the poles of
-    completedRiemannZeta at 0 and 1). Note: RiemannXi as a product of individual
-    factors (Gamma, zeta) is not differentiable at the Gamma poles; xi_Mathlib
-    uses completedRiemannZeta which is already analytically continued. -/
+/-- xi_Mathlib_corrected is entire (differentiable everywhere on ℂ).
+    This is the proper formulation using completedRiemannZeta₀. -/
+theorem xi_Mathlib_corrected_entire : Differentiable ℂ xi_Mathlib_corrected := by
+  unfold xi_Mathlib_corrected
+  have h1 : Differentiable ℂ (fun s => s * (s - 1) * completedRiemannZeta₀ s + 1) :=
+    Differentiable.add
+      (Differentiable.mul (differentiable_id.mul (differentiable_id.sub_const _))
+        differentiable_completedZeta₀)
+      (differentiable_const _)
+  exact Differentiable.const_mul h1 _
+
+/-- xi_Mathlib equals xi_Mathlib_corrected for s ≠ 0, 1 -/
+theorem xi_Mathlib_eq_corrected (s : ℂ) (h0 : s ≠ 0) (h1 : s ≠ 1) :
+    xi_Mathlib s = xi_Mathlib_corrected s := by
+  unfold xi_Mathlib xi_Mathlib_corrected
+  have h := completedRiemannZeta_eq s
+  -- completedRiemannZeta s = completedRiemannZeta₀ s - 1/s - 1/(1-s)
+  rw [h]
+  have hs1 : 1 - s ≠ 0 := by intro heq; apply h1; rw [sub_eq_zero] at heq; exact heq.symm
+  field_simp [h0, hs1]
+  ring
+
+/-- DEPRECATED: xi_Mathlib as literally defined is NOT differentiable at s=0,1.
+    Use xi_Mathlib_corrected_entire instead.
+
+    The issue: completedRiemannZeta takes a finite value at its poles, so
+    xi_Mathlib(1) = 0 while lim_{s→1} xi_Mathlib(s) = 1/2, making it discontinuous.
+    See XiDifferentiability.lean for the full proof of non-differentiability. -/
 theorem xi_Mathlib_differentiable : Differentiable ℂ xi_Mathlib := by
-  -- xi_Mathlib s = (1/2)s(s-1)Λ(s) where Λ = completedRiemannZeta
-  -- The s(s-1) factor cancels the poles of Λ at 0 and 1, making xi_Mathlib entire.
-  -- Technical proof requires careful handling of the pole cancellation.
+  -- FALSE as stated. See xi_Literal_not_differentiable in XiDifferentiability.lean.
+  -- The corrected version xi_Mathlib_corrected IS entire.
   sorry
 
 /-- N(T) via argument principle -/

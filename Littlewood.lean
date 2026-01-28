@@ -45,6 +45,7 @@ import Littlewood.Aristotle.ZetaZeroInfrastructure -- Zero infrastructure (0 sor
 import Littlewood.Aristotle.NAsymptotic            -- N(T) asymptotic (0 sorries) ✓
 import Littlewood.Aristotle.RiemannXi              -- Riemann Xi entire (1 sorry) ✓
 import Littlewood.Aristotle.RiemannXiEntire        -- RiemannXiAlt entire proof (0 sorries) ✓
+import Littlewood.Aristotle.XiDifferentiability    -- Xi differentiability analysis (0 sorries) ✓
 import Littlewood.Aristotle.ZetaMoments            -- Zeta moments (0 sorries) ✓
 import Littlewood.Aristotle.ZetaMeanSquare         -- Mean square estimates (0 sorries) ✓
 import Littlewood.Aristotle.PartialZetaNormSq      -- |partial zeta|² expansion (0 sorries) ✓
@@ -89,6 +90,11 @@ import Littlewood.Aristotle.PartialSummation       -- 2 sorries (has chebyshevPs
 -- import Littlewood.Aristotle.PerronFormula       -- 5 sorries, redefines chebyshevPsi
 -- import Littlewood.Aristotle.PrimePowerSums      -- 4 sorries, redefines psi
 
+-- Bridge lemmas (connect Aristotle proofs to hypothesis classes)
+import Littlewood.Bridge.AristotleBridges          -- Bridge lemmas (0 sorries) ✓
+import Littlewood.Bridge.HypothesisInstances       -- All proved instances (0 sorries) ✓
+import Littlewood.Bridge.AristotleHypothesisConnections  -- Documentation (0 sorries) ✓
+
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
 
@@ -121,9 +127,9 @@ The main theorems are proved assuming ~58 hypothesis classes (classical theorems
 not yet in Mathlib). See `Assumptions.lean` for the full list.
 
 ### Aristotle Files (from Harmonic)
-- Total: 49 files
-- Sorry-free: 39 files (80%)
-- With sorries: 10 files (~35 sorries total)
+- Total: 49 files (+ 3 deprecated)
+- Sorry-free: 42 files (86%)
+- With sorries: 7 files (16 sorries total)
 
 ## References
 

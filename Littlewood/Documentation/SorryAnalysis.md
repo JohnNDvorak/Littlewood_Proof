@@ -5,9 +5,9 @@
 |------|---------|------------|---------------------|
 | PartialSummation.lean | 2 | EASY | No (alternative path exists) |
 | FunctionalEquation.lean | 1 | DEPRECATED | No (use V2) |
-| ZeroCounting.lean | 4 | MEDIUM | Partially |
+| ZeroCounting.lean | 4 (1 FALSE) | MEDIUM | Partially |
 | PhragmenLindelof.lean | 3 | MEDIUM | No |
-| MeanSquare.lean | 5 | MEDIUM | No |
+| MeanSquare.lean | 4 | MEDIUM | No |
 | PerronFormula.lean | 6 | HARD | No (use PerronNew) |
 
 ## PartialSummation.lean (2 sorries)
@@ -48,16 +48,20 @@ theorem poisson_theta (t : ℝ) (ht : 0 < t) :
 
 ---
 
-## ZeroCounting.lean (4 sorries)
+## ZeroCounting.lean (4 sorries - 1 is FALSE)
 
-### Line 86: xi_Mathlib_differentiable
+### Line 114: xi_Mathlib_differentiable (FALSE AS STATED)
 ```lean
 theorem xi_Mathlib_differentiable : Differentiable ℂ xi_Mathlib
 ```
-**Needs**: Show s(s-1)completedZeta is entire
-**Difficulty**: EASY - follows from Mathlib's completedRiemannZeta theory
+**STATUS**: FALSE - See XiDifferentiability.lean for proof
+**Issue**: `completedRiemannZeta` returns finite value at pole s=1, so xi_Mathlib(1)=0
+but lim_{s→1} xi_Mathlib(s) = 1/2, making it discontinuous at 1.
+**Fix**: Use `xi_Mathlib_corrected` which uses `completedRiemannZeta₀`. Now proved:
+- `xi_Mathlib_corrected_entire` ✓
+- `xi_Mathlib_eq_corrected` ✓
 
-### Lines 92, 97, 103: Riemann-von Mangoldt machinery
+### Lines 118, 126, 131: Riemann-von Mangoldt machinery
 - `zetaZeroCount_via_argument` - argument principle
 - `riemann_von_mangoldt` - N(T) ~ (T/2π) log(T/2πe)
 - `zetaZeroCount_asymp` - asymptotic form
@@ -164,10 +168,11 @@ horizontal_segment_bound, vertical_segment_limit
 ## Priority Order for Proving
 
 ### High Priority (Easy wins)
-1. `integral_log_sqrt_asymp` - direct calculus
-2. `normSq_partialZeta_eq` - algebraic expansion
+1. `integral_log_sqrt_asymp` - direct calculus (ARISTOTLE HAS: 78ae017d-output.lean)
+2. `normSq_partialZeta_eq` - algebraic expansion (ARISTOTLE HAS: 78ae017d-output.lean)
 3. `integral_real_part_arctan` - direct calculation
-4. `xi_Mathlib_differentiable` - follows from Mathlib
+4. ~~`xi_Mathlib_differentiable`~~ - FALSE AS STATED (see ZeroCounting.lean:114)
+   - Use `xi_Mathlib_corrected_entire` instead (PROVED)
 
 ### Medium Priority (Would help)
 5. `integral_harmonic_sum_asymp` - uses harmonic bounds
