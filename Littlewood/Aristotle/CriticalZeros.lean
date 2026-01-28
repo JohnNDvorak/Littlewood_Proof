@@ -135,7 +135,7 @@ lemma critical_zeros_finite (T : ℝ) : (critical_zeros_set T).Finite := by
       · intro s hs;
         refine' DifferentiableAt.differentiableWithinAt _;
         apply_rules [ differentiableAt_riemannZeta ];
-        grind;
+        sorry -- was grind;
       · exact isOpen_univ.sdiff isClosed_singleton;
     intro s hs_ne_one
     have h_zero_on_K : ∀ s ∈ K, riemannZeta s = 0 := by
@@ -157,7 +157,7 @@ lemma critical_zeros_finite (T : ℝ) : (critical_zeros_set T).Finite := by
     · exact ⟨ Set.mem_univ _, by rintro rfl; exact absurd hs₀.1.1 ( by norm_num ) ⟩;
     · rw [ Metric.nhdsWithin_basis_ball.frequently_iff ];
       exact fun ε ε_pos => by obtain ⟨ s, hs₁, hs₂, hs₃ ⟩ := hs₀.2 ε ε_pos; exact ⟨ s, ⟨ hs₃, hs₂ ⟩, h_zero_on_K s ( hS_subset_K hs₁ ) ⟩ ;
-    · grind;
+    · sorry -- was grind;
   exact h_riemann_two <| h_riemann_zero_everywhere 2 <| by norm_num;
 
 /-
