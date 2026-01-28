@@ -42,7 +42,8 @@ import Littlewood.Aristotle.SchmidtNew             -- Schmidt oscillation (0 sor
 import Littlewood.Aristotle.ZeroCountingNew        -- Zero counting N(T) (0 sorries) ✓
 -- import Littlewood.Aristotle.ZeroCountingV2      -- conflicts with ZeroCountingNew (NZeros)
 import Littlewood.Aristotle.ZetaZeroInfrastructure -- Zero infrastructure (0 sorries) ✓
-import Littlewood.Aristotle.NAsymptotic            -- N(T) asymptotic (0 sorries) ✓ NEW
+import Littlewood.Aristotle.NAsymptotic            -- N(T) asymptotic (0 sorries) ✓
+import Littlewood.Aristotle.RiemannXi              -- Riemann Xi entire (1 sorry) ✓ NEW
 import Littlewood.Aristotle.ZetaMoments            -- Zeta moments (0 sorries) ✓
 import Littlewood.Aristotle.CriticalZeros          -- Critical zeros (0 sorries) ✓
 
