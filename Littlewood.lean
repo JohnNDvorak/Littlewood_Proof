@@ -68,6 +68,7 @@ import Littlewood.Aristotle.PhaseAlignment         -- Phase alignment (0 sorries
 import Littlewood.Aristotle.CosBound               -- Cos bounds (0 sorries) ✓
 import Littlewood.Aristotle.BinetStirling          -- Binet/Stirling (0 sorries) ✓
 import Littlewood.Aristotle.Definitions            -- Unified definitions (0 sorries) ✓
+import Littlewood.Aristotle.FunctionalEquationHyp  -- Functional equation hypothesis (0 sorries) ✓
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
@@ -79,7 +80,7 @@ import Littlewood.Aristotle.Definitions            -- Unified definitions (0 sor
 -- import Littlewood.Aristotle.SchmidtOscillationInfinite -- uses local chebyshevPsi
 
 -- Aristotle files with remaining sorries
-import Littlewood.Aristotle.MeanSquare             -- 5 sorries (no conflict)
+import Littlewood.Aristotle.MeanSquare             -- 4 sorries (no conflict)
 import Littlewood.Aristotle.ZeroCounting           -- 4 sorries (no conflict)
 import Littlewood.Aristotle.PhragmenLindelof       -- 3 sorries (no conflict)
 import Littlewood.Aristotle.PartialSummation       -- 2 sorries (has chebyshevPsi but uses Basic import)
