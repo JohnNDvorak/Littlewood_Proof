@@ -83,6 +83,9 @@ theorem xi_Mathlib_zeros_eq_zeta_zeros (s : ℂ) (hs_re : 0 < s.re) (hs_re' : s.
     factors (Gamma, zeta) is not differentiable at the Gamma poles; xi_Mathlib
     uses completedRiemannZeta which is already analytically continued. -/
 theorem xi_Mathlib_differentiable : Differentiable ℂ xi_Mathlib := by
+  -- xi_Mathlib s = (1/2)s(s-1)Λ(s) where Λ = completedRiemannZeta
+  -- The s(s-1) factor cancels the poles of Λ at 0 and 1, making xi_Mathlib entire.
+  -- Technical proof requires careful handling of the pole cancellation.
   sorry
 
 /-- N(T) via argument principle -/

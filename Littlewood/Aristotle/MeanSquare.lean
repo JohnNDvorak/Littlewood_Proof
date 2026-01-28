@@ -198,6 +198,13 @@ lemma norm_integral_offDiagSsq_le (T : ℝ) (hT : T ≥ 1) :
 lemma normSq_partialZeta_eq (t : ℝ) :
     Complex.normSq (partialZeta (Real.sqrt (t / (2 * Real.pi))) (1/2 + I * t)) =
     (∑ n ∈ Finset.Icc 1 (N_t t), (1:ℝ)/n) + (offDiagSsq t).re := by
+  -- Proof outline:
+  -- |Σ n^(-s)|² = (Σ n^(-s)) * conj(Σ m^(-s)) = Σ_n Σ_m n^(-s) * conj(m^(-s))
+  -- For s = 1/2 + it:
+  --   n^(-s) * conj(m^(-s)) = n^(-1/2-it) * m^(-1/2+it) = (nm)^(-1/2) * (n/m)^(-it)
+  -- Diagonal (n=m): n^(-1) (since (n/n)^(-it) = 1)
+  -- Off-diagonal (n≠m): (nm)^(-1/2) * (n/m)^(-it)
+  -- The key identity: normSq(Σ a_n) = Σ_n |a_n|² + Re(Σ_{n≠m} a_n * conj(a_m))
   sorry
 
 /-- MAIN RESULT: Mean square of partial zeta on critical line.

@@ -87,8 +87,12 @@ Relation between RiemannXi and completedRiemannZeta for s ≠ 0, 1.
 theorem RiemannXi_eq_completedRiemannZeta (s : ℂ) (hs : s ≠ 0) (hs' : s ≠ 1) :
     RiemannXi s = (1 / 2) * s * (s - 1) * completedRiemannZeta s := by
       -- By definition of $RiemannXi$, we can rewrite the goal using the previous result.
-      unfold RiemannXi;
-      rw [ show completedRiemannZeta s = completedRiemannZeta₀ s - ( 1 / s ) - ( 1 / ( 1 - s ) ) by exact? ] ; ring;
-      sorry -- was grind; algebraic simplification
+      unfold RiemannXi
+      rw [completedRiemannZeta_eq s]
+      -- Goal: (1/2) * s * (s-1) * Λ₀(s) + 1/2 = (1/2) * s * (s-1) * (Λ₀(s) - 1/s - 1/(1-s))
+      have h1 : s - 1 ≠ 0 := sub_ne_zero.mpr hs'
+      have h2 : 1 - s ≠ 0 := sub_ne_zero.mpr (Ne.symm hs')
+      field_simp
+      ring
 
 end RiemannXiModule

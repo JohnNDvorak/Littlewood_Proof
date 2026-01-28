@@ -1,6 +1,10 @@
 /-
 Functional equation for zeta - proved by Aristotle.
 Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
+
+DEPRECATED: Use FunctionalEquationV2.lean instead.
+This file has 1 sorry (poisson_theta - requires Poisson summation).
+FunctionalEquationV2.lean uses Mathlib's completedRiemannZeta directly.
 -/
 
 import Mathlib
