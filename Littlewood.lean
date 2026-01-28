@@ -52,6 +52,8 @@ import Littlewood.Aristotle.IntegralArctanFormula  -- ∫Re(1/(c+ti)) = 2arctan 
 import Littlewood.Aristotle.CriticalZeros          -- Critical zeros (0 sorries) ✓
 import Littlewood.Aristotle.OffDiagonalBound       -- Off-diagonal ≤ 8N² (0 sorries) ✓
 import Littlewood.Aristotle.HarmonicSumIntegral    -- ∫H_{N(t)} = Θ(T log T) (0 sorries) ✓
+import Littlewood.Aristotle.HorizontalSegmentBounds -- Horizontal segment bounds (0 sorries) ✓
+import Littlewood.Aristotle.PerronContourIntegrals -- Perron contour integrals (0 sorries) ✓
 
 -- Analysis infrastructure (no conflicts)
 import Littlewood.Aristotle.PhragmenLindelofStrip  -- Phragmén-Lindelöf strip bounds (0 sorries) ✓
@@ -117,8 +119,8 @@ The main theorems are proved assuming ~58 hypothesis classes (classical theorems
 not yet in Mathlib). See `Assumptions.lean` for the full list.
 
 ### Aristotle Files (from Harmonic)
-- Total: 47 files
-- Sorry-free: 37 files (79%)
+- Total: 49 files
+- Sorry-free: 39 files (80%)
 - With sorries: 10 files (~35 sorries total)
 
 ## References
