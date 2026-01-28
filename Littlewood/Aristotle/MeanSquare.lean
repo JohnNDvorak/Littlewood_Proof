@@ -110,7 +110,71 @@ noncomputable def offDiagSsq (t : ℝ) : ℂ :=
     The norm of the antiderivative difference is ≤ 2/|log(n/m)|. -/
 lemma integral_cpow_neg_mul_bound (n m : ℕ) (hn : n ≥ 1) (hm : m ≥ 1) (hnm : n ≠ m) (A B : ℝ) :
     ‖∫ t in A..B, ((n : ℂ) / m) ^ (-(I * t))‖ ≤ 2 / |Real.log ((n : ℝ) / m)| := by
-  sorry
+  -- Setup: α = log(n/m) ≠ 0, c = -Iα ≠ 0
+  have hn_pos : (0 : ℝ) < (n : ℝ) := Nat.cast_pos.mpr (by omega)
+  have hm_pos : (0 : ℝ) < (m : ℝ) := Nat.cast_pos.mpr (by omega)
+  have h_ratio_pos : (0 : ℝ) < (n : ℝ) / m := div_pos hn_pos hm_pos
+  have h_ratio_ne_one : (n : ℝ) / m ≠ 1 := by
+    intro h
+    exact hnm (Nat.cast_injective ((div_eq_one_iff_eq (ne_of_gt hm_pos)).mp h))
+  set α := Real.log ((n : ℝ) / m) with hα_def
+  have hα_ne : α ≠ 0 := Real.log_ne_zero_of_pos_of_ne_one h_ratio_pos h_ratio_ne_one
+  set c := -(I * (α : ℂ)) with hc_def
+  have hc_ne : c ≠ 0 := by
+    rw [hc_def, neg_ne_zero]
+    exact mul_ne_zero I_ne_zero (ofReal_ne_zero.mpr hα_ne)
+  -- Step 1: Rewrite integrand (n/m)^(-It) = exp(c * t)
+  have h_base_ne : (↑((n : ℝ) / m) : ℂ) ≠ 0 :=
+    ofReal_ne_zero.mpr (ne_of_gt h_ratio_pos)
+  have h_rewrite : ∀ t : ℝ, ((n : ℂ) / m) ^ (-(I * ↑t)) = exp (c * ↑t) := by
+    intro t
+    rw [show (n : ℂ) / m = ↑((n : ℝ) / m) from by push_cast; ring]
+    rw [cpow_def_of_ne_zero h_base_ne]
+    congr 1
+    rw [← Complex.ofReal_log (le_of_lt h_ratio_pos)]
+    rw [hc_def]; ring
+  -- Rewrite the integral
+  have h_int_eq : ∫ t in A..B, ((n : ℂ) / m) ^ (-(I * ↑t)) =
+      ∫ t in A..B, exp (c * ↑t) :=
+    intervalIntegral.integral_congr (fun t _ => h_rewrite t)
+  rw [h_int_eq]
+  -- Step 2: FTC with antiderivative F(t) = exp(c*t)/c
+  have h_deriv : ∀ t ∈ Set.uIcc A B,
+      HasDerivAt (fun u : ℝ => exp (c * ↑u) / c) (exp (c * ↑t)) t := by
+    intro t _
+    have h1 : HasDerivAt (fun u : ℝ => c * (↑u : ℂ)) c t := by
+      have h := (Complex.ofRealCLM.hasDerivAt (x := t)).const_mul c
+      simp only [Complex.ofRealCLM_apply, Complex.ofReal_one, mul_one] at h
+      exact h
+    have h2 := h1.cexp
+    have h3 := h2.div_const c
+    rwa [mul_div_cancel_right₀ _ hc_ne] at h3
+  have h_integrable : IntervalIntegrable (fun t => exp (c * ↑t)) MeasureTheory.volume A B :=
+    (continuous_exp.comp (continuous_const.mul continuous_ofReal)).continuousOn.intervalIntegrable
+  rw [intervalIntegral.integral_eq_sub_of_hasDerivAt h_deriv h_integrable]
+  -- Step 3: Bound ‖exp(c*B)/c - exp(c*A)/c‖ ≤ 2/|α|
+  rw [← sub_div, norm_div]
+  -- ‖c‖ = |α| since c = -Iα
+  have hc_norm : ‖c‖ = |α| := by
+    rw [hc_def, norm_neg, norm_mul, norm_I, one_mul, Complex.norm_real, Real.norm_eq_abs]
+  rw [hc_norm]
+  -- Numerator bound: ‖exp(c*B) - exp(c*A)‖ ≤ 2
+  -- Each exp has norm 1 since c*t is purely imaginary
+  have h_exp_norm : ∀ u : ℝ, ‖exp (c * ↑u)‖ = 1 := by
+    intro u
+    rw [Complex.norm_exp]
+    have : (c * ↑u).re = 0 := by
+      rw [hc_def]
+      simp only [neg_mul, mul_re, I_re, I_im, ofReal_re, ofReal_im,
+                  neg_re, mul_re, mul_im]
+      ring
+    rw [this, Real.exp_zero]
+  have h_numer_le : ‖exp (c * ↑B) - exp (c * ↑A)‖ ≤ 2 :=
+    calc ‖exp (c * ↑B) - exp (c * ↑A)‖
+        ≤ ‖exp (c * ↑B)‖ + ‖exp (c * ↑A)‖ := norm_sub_le _ _
+      _ = 1 + 1 := by rw [h_exp_norm B, h_exp_norm A]
+      _ = 2 := by norm_num
+  exact (div_le_div_iff_of_pos_right (abs_pos.mpr hα_ne)).mpr h_numer_le
 
 /-- The off-diagonal integral is bounded by O(N²).
     Each of the O(N²) off-diagonal terms contributes O(1) due to oscillation cancellation,

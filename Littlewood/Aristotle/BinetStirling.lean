@@ -51,8 +51,40 @@ open Asymptotics Filter Complex Topology
 
 lemma log_one_add_inv_im_asymptotic :
     (fun t : ℝ => log (1 + 1 / (2 * I * t)) - 1 / (2 * I * t)) =O[atTop] (fun t => 1 / t ^ 2) := by
-  -- Follows from log_one_add_sub_self_asymptotic composed with z = 1/(2it) → 0
-  sorry
+  -- Pointwise bound from norm_log_one_add_sub_self_le with z = 1/(2it)
+  rw [Asymptotics.isBigO_iff]
+  refine ⟨1, ?_⟩
+  filter_upwards [Filter.eventually_ge_atTop (1 : ℝ)] with t ht
+  have ht_pos : (0 : ℝ) < t := by linarith
+  set z : ℂ := 1 / (2 * I * ↑t) with hz_def
+  -- ‖z‖ = 1/(2t)
+  have hz_norm : ‖z‖ = 1 / (2 * t) := by
+    simp only [hz_def, norm_div, norm_one, norm_mul, norm_mul,
+               Complex.norm_two, Complex.norm_I, mul_one, Complex.norm_real,
+               Real.norm_eq_abs, abs_of_pos ht_pos]
+  have hz_lt : ‖z‖ < 1 := by
+    rw [hz_norm, div_lt_one (by positivity : (0:ℝ) < 2 * t)]; linarith
+  have hz_half : ‖z‖ ≤ 1 / 2 := by
+    rw [hz_norm, div_le_div_iff₀ (by positivity : (0:ℝ) < 2 * t) two_pos]; linarith
+  -- Apply the pointwise bound: ‖log(1+z) - z‖ ≤ ‖z‖² * (1-‖z‖)⁻¹ / 2
+  have hbound := norm_log_one_add_sub_self_le hz_lt
+  -- (1 - ‖z‖)⁻¹ ≤ 2 since ‖z‖ ≤ 1/2
+  have h_inv : (1 - ‖z‖)⁻¹ ≤ 2 := by
+    rw [inv_le_comm₀ (by linarith [norm_nonneg z]) (by positivity)]
+    linarith
+  -- Chain: ‖log(1+z) - z‖ ≤ ‖z‖² ≤ 1/t² = 1 * ‖1/t²‖
+  calc ‖log (1 + z) - z‖
+      ≤ ‖z‖ ^ 2 * (1 - ‖z‖)⁻¹ / 2 := hbound
+    _ ≤ ‖z‖ ^ 2 * 2 / 2 := by gcongr
+    _ = ‖z‖ ^ 2 := by ring
+    _ = (1 / (2 * t)) ^ 2 := by rw [hz_norm]
+    _ ≤ (1 / t) ^ 2 := by
+        apply pow_le_pow_left₀ (by positivity)
+        have : 1 / (2 * t) = 1 / 2 * (1 / t) := by ring
+        rw [this]; linarith [div_pos one_pos ht_pos]
+    _ = 1 / t ^ 2 := by rw [div_pow, one_pow]
+    _ = 1 * ‖(1 : ℝ) / t ^ 2‖ := by
+        rw [one_mul, Real.norm_eq_abs, abs_of_pos (div_pos one_pos (pow_pos ht_pos 2))]
 
 /-
 For large t, log(1/4 + it/2) = log(it/2) + log(1 + 1/(2it)).
@@ -61,8 +93,54 @@ open Asymptotics Filter Complex Topology
 
 lemma log_split_lemma :
     ∀ᶠ (t : ℝ) in atTop, log (1/4 + I * t / 2) = log (I * t / 2) + log (1 + 1 / (2 * I * t)) := by
-  -- For large t, 1/4 + it/2 = (it/2)(1 + 1/(2it)), then use log multiplicativity
-  sorry
+  filter_upwards [Filter.eventually_ge_atTop (1 : ℝ)] with t ht
+  have ht_pos : (0 : ℝ) < t := by linarith
+  have ht_ne : (↑t : ℂ) ≠ 0 := ofReal_ne_zero.mpr (ne_of_gt ht_pos)
+  have hIt_ne : (2 : ℂ) * I * ↑t ≠ 0 := mul_ne_zero (mul_ne_zero two_ne_zero I_ne_zero) ht_ne
+  -- it/2 ≠ 0
+  have hx_ne : I * (↑t : ℂ) / 2 ≠ 0 :=
+    div_ne_zero (mul_ne_zero I_ne_zero ht_ne) two_ne_zero
+  -- 1/(2it) has Re = 0 and Im = -1/(2t)
+  have h_inv_re : (1 / (2 * I * (↑t : ℂ))).re = 0 := by
+    rw [one_div, Complex.inv_re]
+    have : (2 * I * (↑t : ℂ)).re = 0 := by
+      simp only [mul_re, I_re, I_im, ofReal_re, ofReal_im]; norm_num
+    rw [this, zero_div]
+  have h_inv_im : (1 / (2 * I * (↑t : ℂ))).im = -(1 / (2 * t)) := by
+    rw [one_div, Complex.inv_im]
+    have h_im : (2 * I * (↑t : ℂ)).im = 2 * t := by
+      simp only [mul_im, mul_re, I_re, I_im, ofReal_re, ofReal_im]; norm_num
+    have h_ns : Complex.normSq (2 * I * (↑t : ℂ)) = (2 * t) ^ 2 := by
+      simp only [map_mul, Complex.normSq_ofNat, Complex.normSq_I, mul_one,
+                 Complex.normSq_ofReal]; ring
+    rw [h_im, h_ns]
+    have ht_ne' : (t : ℝ) ≠ 0 := ne_of_gt ht_pos
+    field_simp
+  have h_sum_re : (1 + 1 / (2 * I * (↑t : ℂ))).re = 1 := by
+    rw [add_re, one_re, h_inv_re, add_zero]
+  -- 1 + 1/(2it) ≠ 0 since Re = 1
+  have hy_ne : (1 : ℂ) + 1 / (2 * I * ↑t) ≠ 0 := by
+    intro h; rw [h] at h_sum_re; simp at h_sum_re
+  -- Im(1 + 1/(2it)) = -1/(2t) < 0
+  have h_sum_im : (1 + 1 / (2 * I * (↑t : ℂ))).im < 0 := by
+    rw [add_im, one_im, zero_add, h_inv_im]; linarith [div_pos one_pos (by positivity : (0:ℝ) < 2 * t)]
+  -- arg(it/2) = π/2
+  have h_arg_x : arg (I * ↑t / 2) = Real.pi / 2 := by
+    rw [show I * (↑t : ℂ) / 2 = (↑(t / 2 : ℝ) : ℂ) * I from by push_cast; ring]
+    rw [arg_real_mul I (show (0 : ℝ) < t / 2 from by positivity)]
+    exact arg_I
+  -- arg(1 + 1/(2it)) < 0, and > -π
+  have h_arg_y_neg : arg (1 + 1 / (2 * I * (↑t : ℂ))) < 0 := arg_neg_iff.mpr h_sum_im
+  -- arg sum ∈ (-π, π]
+  have h_arg_sum : arg (I * ↑t / 2) + arg (1 + 1 / (2 * I * (↑t : ℂ))) ∈ Set.Ioc (-Real.pi) Real.pi := by
+    rw [h_arg_x]
+    exact ⟨by linarith [neg_pi_lt_arg (1 + 1 / (2 * I * (↑t : ℂ))), Real.pi_pos],
+           by linarith [Real.pi_pos]⟩
+  -- Factor and apply log_mul
+  have h_factor : (1/4 : ℂ) + I * ↑t / 2 = (I * ↑t / 2) * (1 + 1 / (2 * I * ↑t)) := by
+    field_simp; ring
+  rw [h_factor]
+  exact Complex.log_mul hx_ne hy_ne h_arg_sum
 
 /-
 Asymptotic expansion of log(1/4 + it/2) is log(t/2) + i*pi/2 - i/(2t) + O(1/t^2).
@@ -72,9 +150,28 @@ open Asymptotics Filter Complex Topology
 lemma log_quarter_plus_it_half_asymptotic :
     (fun t : ℝ => log (1/4 + I * t / 2) - (log (t / 2) + I * (Real.pi / 2) - I / (2 * t)))
     =O[atTop] (fun t => 1 / t ^ 2) := by
-  -- Follows from log_split_lemma, log(i*t/2) = log(t/2) + iπ/2, and
-  -- log_one_add_inv_im_asymptotic
-  sorry
+  -- The LHS is eventually equal to log(1+1/(2it)) - 1/(2it)
+  have h_evt : ∀ᶠ (t : ℝ) in atTop,
+      log (1/4 + I * ↑t / 2) - (log (↑t / 2) + I * (↑Real.pi / 2) - I / (2 * ↑t)) =
+      log (1 + 1 / (2 * I * ↑t)) - 1 / (2 * I * ↑t) := by
+    filter_upwards [log_split_lemma, Filter.eventually_ge_atTop (1 : ℝ)] with t h_split ht
+    have ht_pos : (0 : ℝ) < t := by linarith
+    have ht_ne : (↑t : ℂ) ≠ 0 := ofReal_ne_zero.mpr (ne_of_gt ht_pos)
+    -- log(it/2) = Real.log(t/2) + (π/2)*I
+    have h_log_it : log (I * ↑t / 2) = ↑(Real.log (t / 2)) + ↑Real.pi / 2 * I := by
+      rw [show I * (↑t : ℂ) / 2 = ↑(t / 2 : ℝ) * I from by push_cast; ring]
+      rw [log_ofReal_mul (by positivity : (0:ℝ) < t / 2) I_ne_zero, log_I]
+    -- I/(2t) = -(1/(2it))
+    have h_inv : I / (2 * (↑t : ℂ)) = -(1 / (2 * I * ↑t)) := by
+      have : (2 : ℂ) * I * ↑t ≠ 0 := mul_ne_zero (mul_ne_zero two_ne_zero I_ne_zero) ht_ne
+      have : (2 : ℂ) * ↑t ≠ 0 := mul_ne_zero two_ne_zero ht_ne
+      field_simp; rw [I_sq]
+    rw [h_split, h_log_it]
+    rw [show (↑t : ℂ) / 2 = ↑(t / 2 : ℝ) from by push_cast; ring]
+    rw [(Complex.ofReal_log (le_of_lt (by positivity : (0:ℝ) < t / 2))).symm]
+    rw [h_inv]; ring
+  exact log_one_add_inv_im_asymptotic.congr' (h_evt.mono fun _ h => h.symm)
+    (Filter.Eventually.of_forall fun _ => rfl)
 
 /-
 The imaginary part of the Stirling approximation term has the asymptotic expansion (t/2) log(t/2) - t/2 - pi/8 + O(1/t).
@@ -86,8 +183,101 @@ noncomputable def stirlingApprox (t : ℝ) : ℂ :=
 
 lemma stirling_approx_im_asymptotic :
     (fun t => (stirlingApprox t).im - ((t / 2) * Real.log (t / 2) - t / 2 - Real.pi / 8)) =O[atTop] (fun t => 1 / t) := by
-  -- The proof follows from the log expansion and careful tracking of imaginary parts
-  sorry
+  obtain ⟨C₀, hC₀⟩ := log_quarter_plus_it_half_asymptotic.bound
+  apply Asymptotics.IsBigO.of_bound (C₀ + 1)
+  filter_upwards [hC₀, Filter.eventually_ge_atTop (1 : ℝ)] with t hEt ht
+  have ht_pos : (0 : ℝ) < t := by linarith
+  have ht_ne : (t : ℝ) ≠ 0 := ne_of_gt ht_pos
+  -- Abbreviations
+  set s : ℂ := 1/4 + I * ↑t / 2
+  set coeff : ℂ := s - 1/2
+  set L : ℂ := ↑(Real.log (t / 2)) + I * (↑Real.pi / 2) - I / (2 * ↑t)
+  set E : ℂ := Complex.log s - L
+  -- Express coeff in canonical ↑a + ↑b * I form for re/im extraction
+  have h_coeff_form : coeff = ↑(-1/4 : ℝ) + ↑(t/2) * I := by
+    simp only [coeff, s]; push_cast; ring
+  have h_s_form : s = ↑(1/4 : ℝ) + ↑(t/2) * I := by
+    simp only [s]; push_cast; ring
+  have h_L_form : L = ↑(Real.log (t / 2)) + ↑(Real.pi / 2 - 1 / (2 * t)) * I := by
+    simp only [L]; push_cast; field_simp; ring
+  -- Re/Im of coeff
+  have h_coeff_re : coeff.re = -1/4 := by
+    rw [h_coeff_form, add_re, ofReal_re, mul_re, ofReal_re, ofReal_im, I_re, I_im]; ring
+  have h_coeff_im : coeff.im = t / 2 := by
+    rw [h_coeff_form, add_im, ofReal_im, mul_im, ofReal_re, ofReal_im, I_re, I_im]; ring
+  -- Im of s
+  have h_s_im : s.im = t / 2 := by
+    rw [h_s_form, add_im, ofReal_im, mul_im, ofReal_re, ofReal_im, I_re, I_im]; ring
+  -- Re/Im of L
+  have h_L_re : L.re = Real.log (t / 2) := by
+    rw [h_L_form, add_re, ofReal_re, mul_re, ofReal_re, ofReal_im, I_re, I_im]; ring
+  have h_L_im : L.im = Real.pi / 2 - 1 / (2 * t) := by
+    rw [h_L_form, add_im, ofReal_im, mul_im, ofReal_re, ofReal_im, I_re, I_im]; ring
+  -- Convert Complex.log(↑t/2) = ↑(Real.log(t/2)) for matching with hEt
+  have h_log_cv : log ((↑t : ℂ) / 2) = ↑(Real.log (t / 2)) := by
+    rw [show (↑t : ℂ) / 2 = ↑(t / 2 : ℝ) from by push_cast; ring]
+    exact (ofReal_log (le_of_lt (by positivity : (0:ℝ) < t / 2))).symm
+  -- The key algebraic identity
+  have h_diff : (stirlingApprox t).im - ((t / 2) * Real.log (t / 2) - t / 2 - Real.pi / 8) =
+      1 / (8 * t) + (coeff * E).im := by
+    have h_log_2pi : log ((2 : ℂ) * ↑Real.pi) = ↑(Real.log (Real.pi * 2)) := by
+      rw [show (2 : ℂ) * ↑Real.pi = ↑(Real.pi * 2 : ℝ) from by push_cast; ring]
+      exact (ofReal_log (by positivity : (0:ℝ) ≤ Real.pi * 2)).symm
+    have h_stir_eq : stirlingApprox t = coeff * Complex.log s - s +
+        (1/2) * ↑(Real.log (Real.pi * 2)) := by
+      unfold stirlingApprox; simp only [coeff, s]; rw [h_log_2pi]
+    have h_log_eq : Complex.log s = L + E := by simp only [E]; ring
+    -- Express (stirlingApprox t).im in terms of pieces
+    have h1 : (stirlingApprox t).im = (coeff * L).im + (coeff * E).im - s.im := by
+      rw [h_stir_eq, h_log_eq, mul_add]
+      have : ((1/2 : ℂ) * ↑(Real.log (Real.pi * 2))).im = 0 := by
+        rw [show (1/2 : ℂ) * ↑(Real.log (Real.pi * 2)) =
+          ↑((1/2 : ℝ) * Real.log (Real.pi * 2)) from by push_cast; ring]
+        exact ofReal_im _
+      simp only [add_im, sub_im, this, add_zero]
+    -- Compute (coeff * L).im via mul_im
+    have h2 : (coeff * L).im =
+        (-1/4) * (Real.pi / 2 - 1 / (2 * t)) + (t / 2) * Real.log (t / 2) := by
+      rw [mul_im, h_coeff_re, h_coeff_im, h_L_re, h_L_im]
+    rw [h1, h2, h_s_im]; ring
+  -- Bound: |1/(8t) + Im(coeff*E)| ≤ (C₀+1) * |1/t|
+  rw [h_diff, Real.norm_eq_abs, Real.norm_eq_abs]
+  -- |(coeff * E).im| ≤ ‖coeff‖ * ‖E‖
+  have h_imE : |(coeff * E).im| ≤ ‖coeff‖ * ‖E‖ :=
+    le_trans (Complex.abs_im_le_norm _) (norm_mul_le coeff E)
+  -- ‖coeff‖ ≤ t
+  have h_coeff_norm : ‖coeff‖ ≤ t := by
+    rw [h_coeff_form]
+    have h1 : ‖(↑(-1/4 : ℝ) : ℂ)‖ = 1/4 := by
+      rw [norm_real, Real.norm_eq_abs]; norm_num
+    have h2 : ‖(↑(t/2 : ℝ) : ℂ) * I‖ = t/2 := by
+      rw [norm_mul, norm_real, Complex.norm_I, mul_one, Real.norm_eq_abs,
+          abs_of_pos (by positivity : (0:ℝ) < t/2)]
+    calc ‖↑(-1/4 : ℝ) + ↑(t/2) * I‖
+        ≤ ‖(↑(-1/4 : ℝ) : ℂ)‖ + ‖↑(t/2 : ℝ) * I‖ := norm_add_le _ _
+      _ = 1/4 + t/2 := by rw [h1, h2]
+      _ ≤ t := by linarith
+  -- ‖E‖ ≤ C₀/t²
+  have h_E_bound : ‖E‖ ≤ C₀ / t ^ 2 := by
+    have h_E_eq : ‖E‖ = ‖log s - (log (↑t / 2) + I * (↑Real.pi / 2) - I / (2 * ↑t))‖ := by
+      congr 1; simp only [E, L, h_log_cv]
+    rw [h_E_eq]
+    calc ‖log s - (log (↑t / 2) + I * (↑Real.pi / 2) - I / (2 * ↑t))‖
+        ≤ C₀ * ‖(1 : ℝ) / t ^ 2‖ := hEt
+      _ = C₀ / t ^ 2 := by
+          rw [Real.norm_eq_abs, abs_of_pos (by positivity : (0:ℝ) < 1 / t ^ 2)]; ring
+  -- Combine
+  calc |1 / (8 * t) + (coeff * E).im|
+      ≤ |1 / (8 * t)| + |(coeff * E).im| := abs_add_le _ _
+    _ ≤ 1 / (8 * t) + ‖coeff‖ * ‖E‖ :=
+        add_le_add (le_of_eq (abs_of_pos (by positivity))) h_imE
+    _ ≤ 1 / (8 * t) + t * (C₀ / t ^ 2) := by gcongr
+    _ = 1 / (8 * t) + C₀ / t := by congr 1; field_simp
+    _ ≤ 1 / t + C₀ / t := by
+        have : 1 / (8 * t) ≤ 1 / t := one_div_le_one_div_of_le ht_pos (by linarith)
+        linarith
+    _ = (C₀ + 1) * (1 / t) := by ring
+    _ = (C₀ + 1) * |1 / t| := by rw [abs_of_pos (by positivity)]
 
 /-
 Definitions of the Binet integrand and Binet integral.
@@ -107,11 +297,81 @@ open Asymptotics Filter Complex Topology
 
 lemma binet_integrand_limit_zero :
     Tendsto binetIntegrand (𝓝[>] 0) (𝓝 (1 / 12)) := by
-  -- The Binet integrand B(t) = (1/2 - 1/t + 1/(e^t-1))/t
-  -- has a removable singularity at t=0 with limit 1/12.
-  -- This follows from the Taylor expansion e^t = 1 + t + t²/2 + t³/6 + ...
-  -- giving B(t) = 1/12 + O(t) near 0.
-  sorry
+  -- Strategy: show |binetIntegrand t - 1/12| ≤ t for 0 < t ≤ 1 using Taylor bounds.
+  -- Key identity: binetIntegrand t - 1/12 = G/(12t²(e^t-1)) where
+  -- G = (6t-t²-12)(e^t-1)+12t = (6t-t²-12)·R + t⁴/2 - t⁵/6
+  -- with R = e^t - 1 - t - t²/2 - t³/6 (4th-order Taylor remainder).
+  -- Bound: |G| ≤ t⁴ and 12t²(e^t-1) ≥ 12t³, so the ratio ≤ t/12 ≤ t.
+  rw [Metric.tendsto_nhdsWithin_nhds]
+  intro ε hε
+  refine ⟨min 1 ε, by positivity, fun t ht_mem ht_dist => ?_⟩
+  simp only [Set.mem_Ioi] at ht_mem
+  rw [Real.dist_eq, sub_zero, abs_of_pos ht_mem] at ht_dist
+  rw [Real.dist_eq]
+  have ht1 : t ≤ 1 := le_of_lt (lt_of_lt_of_le ht_dist (min_le_left _ _))
+  have htε : t < ε := lt_of_lt_of_le ht_dist (min_le_right _ _)
+  have ht_pos : (0 : ℝ) < t := ht_mem
+  have ht_ne : t ≠ 0 := ne_of_gt ht_pos
+  have hexp_sub_pos : 0 < Real.exp t - 1 := by linarith [Real.add_one_le_exp t]
+  have hexp_sub_ne : Real.exp t - 1 ≠ 0 := ne_of_gt hexp_sub_pos
+  -- Suffices: |binetIntegrand t - 1/12| ≤ t < ε
+  suffices h : |binetIntegrand t - 1 / 12| ≤ t by linarith
+  -- Taylor remainder: R = exp t - (1 + t + t²/2 + t³/6)
+  set R := Real.exp t - (1 + t + t ^ 2 / 2 + t ^ 3 / 6) with hR_def
+  -- Evaluate ∑ i in range 4, t^i/i!
+  have h_sum4 : ∑ i ∈ Finset.range 4, t ^ i / ↑(Nat.factorial i) =
+      1 + t + t ^ 2 / 2 + t ^ 3 / 6 := by
+    simp only [Finset.sum_range_succ, Finset.sum_range_zero, Nat.factorial]
+    push_cast; ring
+  -- R ≥ 0 (Taylor partial sums are lower bounds for exp)
+  have hR_nonneg : 0 ≤ R := by
+    rw [hR_def, sub_nonneg, ← h_sum4]
+    exact Real.sum_le_exp_of_nonneg (le_of_lt ht_pos) 4
+  -- R ≤ 5t⁴/96 (Taylor remainder upper bound)
+  have hR_upper : R ≤ 5 / 96 * t ^ 4 := by
+    have h_bound := Real.exp_bound (show |t| ≤ 1 by rwa [abs_of_pos ht_pos])
+      (show (0 : ℕ) < 4 by norm_num)
+    rw [h_sum4, abs_of_pos ht_pos] at h_bound
+    have hR_abs : |R| ≤ t ^ 4 * (Nat.succ 4 / (↑(Nat.factorial 4) * 4)) := h_bound
+    rw [abs_of_nonneg hR_nonneg] at hR_abs
+    convert hR_abs using 1
+    simp [Nat.factorial]; ring
+  -- Algebraic identity: binetIntegrand t - 1/12 = G/(12t²(e^t-1))
+  have h_diff : binetIntegrand t - 1 / 12 =
+      ((6 * t - t ^ 2 - 12) * (Real.exp t - 1) + 12 * t) /
+        (12 * t ^ 2 * (Real.exp t - 1)) := by
+    unfold binetIntegrand; field_simp; ring
+  -- Rewrite G = (6t-t²-12)·R + t⁴/2 - t⁵/6
+  have h_G_eq : (6 * t - t ^ 2 - 12) * (Real.exp t - 1) + 12 * t =
+      (6 * t - t ^ 2 - 12) * R + (t ^ 4 / 2 - t ^ 5 / 6) := by
+    rw [show Real.exp t - 1 = t + t ^ 2 / 2 + t ^ 3 / 6 + R from by rw [hR_def]; ring]
+    ring
+  rw [h_diff, h_G_eq]
+  -- Goal: |G / (12t²(e^t-1))| ≤ t
+  rw [abs_div, abs_of_pos (show (0:ℝ) < 12 * t ^ 2 * (Real.exp t - 1) by positivity),
+      div_le_iff₀ (show (0:ℝ) < 12 * t ^ 2 * (Real.exp t - 1) by positivity)]
+  -- Goal: |G| ≤ t * (12t²(e^t-1))
+  -- Bound |G| ≤ t⁴
+  have h_coeff_neg : 6 * t - t ^ 2 - 12 ≤ 0 := by nlinarith [sq_nonneg t]
+  have h_G_upper : (6 * t - t ^ 2 - 12) * R + (t ^ 4 / 2 - t ^ 5 / 6) ≤ t ^ 4 := by
+    have : (6 * t - t ^ 2 - 12) * R ≤ 0 :=
+      mul_nonpos_of_nonpos_of_nonneg h_coeff_neg hR_nonneg
+    nlinarith [pow_nonneg (le_of_lt ht_pos) 4, pow_nonneg (le_of_lt ht_pos) 5]
+  have h_G_lower : -(t ^ 4) ≤ (6 * t - t ^ 2 - 12) * R + (t ^ 4 / 2 - t ^ 5 / 6) := by
+    have h_ge : -12 ≤ 6 * t - t ^ 2 - 12 := by nlinarith
+    have h_prod := mul_le_mul_of_nonneg_right h_ge hR_nonneg
+    -- h_prod : -12 * R ≤ (6*t - t^2 - 12) * R
+    have h_Rbd := mul_le_mul_of_nonpos_left hR_upper (show (-12 : ℝ) ≤ 0 by norm_num)
+    -- h_Rbd : -12 * (5/96 * t^4) ≤ -12 * R, i.e., -(5/8)*t^4 ≤ -12*R
+    nlinarith [pow_nonneg (le_of_lt ht_pos) 4]
+  -- Conclude: |G| ≤ t⁴ ≤ t * (12t²(e^t-1))
+  have h_G_abs : |(6 * t - t ^ 2 - 12) * R + (t ^ 4 / 2 - t ^ 5 / 6)| ≤ t ^ 4 :=
+    abs_le.mpr ⟨h_G_lower, h_G_upper⟩
+  have h_exp_ge_t : t ≤ Real.exp t - 1 := by linarith [Real.add_one_le_exp t]
+  have h_rhs : t ^ 4 ≤ t * (12 * t ^ 2 * (Real.exp t - 1)) := by
+    have := mul_le_mul_of_nonneg_left h_exp_ge_t (show (0:ℝ) ≤ 12 * t ^ 2 by positivity)
+    nlinarith [pow_nonneg (le_of_lt ht_pos) 4]
+  linarith
 
 /-
 The limit of the Binet integrand as t approaches infinity is 0.

@@ -21,6 +21,7 @@ This file focuses on Hardy Z function infrastructure.
 -/
 
 import Mathlib
+import Littlewood.Aristotle.HardyZReal
 
 set_option linter.mathlibStandardSet false
 
@@ -98,11 +99,89 @@ lemma gamma_reflection_hardy_v2 (t : ℝ) :
 
 /-- Z(t) is real-valued: Im(Z(t)) = 0. -/
 theorem hardyZV2_real (t : ℝ) : (hardyZV2 t).im = 0 := by
-  -- Proof sketch: Z(t) = exp(iθ(t)) · ζ(1/2+it)
-  -- The key is that θ(t) is chosen so that exp(iθ(t)) exactly cancels
-  -- the phase of ζ(1/2+it), using the functional equation and
-  -- conjugation symmetry ζ(conj(s)) = conj(ζ(s)).
-  sorry
+  -- Strategy: Show Z(t) = Λ(s)/‖Gammaℝ(s)‖ where Λ = completedRiemannZeta.
+  -- Since Λ(s) is real on the critical line and ‖Gammaℝ(s)‖ is real, Z(t) is real.
+  set s : ℂ := 1/2 + Complex.I * ↑t with hs_def
+  set w : ℂ := 1/4 + Complex.I * ↑t / 2 with hw_def
+  -- Basic facts
+  have hw_eq : s / 2 = w := by simp only [hs_def, hw_def]; push_cast; ring
+  have hs_re : s.re = 1/2 := by
+    simp only [hs_def, Complex.add_re, Complex.mul_re, Complex.I_re, Complex.I_im,
+                Complex.ofReal_re, Complex.ofReal_im]; norm_num
+  have hs_ne : s ≠ 0 := by
+    intro h; rw [h, Complex.zero_re] at hs_re; norm_num at hs_re
+  have hs_re_pos : 0 < s.re := by rw [hs_re]; norm_num
+  have hw_re_pos : 0 < w.re := by
+    simp only [hw_def, Complex.add_re, Complex.mul_re, Complex.I_re, Complex.I_im,
+                Complex.ofReal_re, Complex.ofReal_im]; norm_num
+  have hπ_pos : (0 : ℝ) < Real.pi := Real.pi_pos
+  have hπ_ne : (↑Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt hπ_pos)
+  have hΓw_ne : Complex.Gamma w ≠ 0 := Complex.Gamma_ne_zero_of_re_pos hw_re_pos
+  have hΓ_ne : Complex.Gammaℝ s ≠ 0 := Complex.Gammaℝ_ne_zero_of_re_pos hs_re_pos
+  have h_norm_w_ne : (↑‖Complex.Gamma w‖ : ℂ) ≠ 0 :=
+    Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr hΓw_ne)
+  have hπ_cpow_ne : (↑Real.pi : ℂ) ^ (-s / 2) ≠ 0 := by
+    intro h; rw [Complex.cpow_eq_zero_iff] at h; exact hπ_ne h.1
+  have h_norm_π_ne : (↑‖(↑Real.pi : ℂ) ^ (-s / 2)‖ : ℂ) ≠ 0 :=
+    Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr hπ_cpow_ne)
+  -- Step 1: Suffices to show Z(t) = Λ(s) / ↑‖Gammaℝ s‖
+  suffices h_eq : hardyZV2 t = completedRiemannZeta s / ↑‖Complex.Gammaℝ s‖ by
+    rw [h_eq, hs_def, Complex.div_ofReal_im,
+        completedRiemannZeta_real_on_critical_line t, zero_div]
+  -- Step 2: Unfold Z(t) = exp(I*θ(t)) * ζ(s) and use ζ(s) = Λ(s)/Gammaℝ(s)
+  unfold hardyZV2
+  change Complex.exp (Complex.I * ↑(hardyThetaV2 t)) * riemannZeta s =
+    completedRiemannZeta s / ↑‖Complex.Gammaℝ s‖
+  rw [riemannZeta_def_of_ne_zero hs_ne]
+  -- Goal: exp(I*θ(t)) * (Λ(s)/Gammaℝ(s)) = Λ(s)/↑‖Gammaℝ(s)‖
+  -- Key: exp(I*θ(t)) = Gammaℝ(s)/↑‖Gammaℝ(s)‖
+  suffices h_phase : Complex.exp (Complex.I * ↑(hardyThetaV2 t)) =
+      Complex.Gammaℝ s / ↑‖Complex.Gammaℝ s‖ by
+    rw [h_phase]; field_simp
+  -- Step 3: Prove the phase identity
+  -- θ(t) = arg(Γ(w)) - (t/2)*log(π), so exp(I*θ) = exp(I*arg(Γ(w))) * exp(-I*(t/2)*log(π))
+  unfold hardyThetaV2
+  change Complex.exp (Complex.I * ↑(Complex.arg (Complex.Gamma w) - t / 2 * Real.log Real.pi)) =
+    Complex.Gammaℝ s / ↑‖Complex.Gammaℝ s‖
+  rw [show Complex.I * ↑(Complex.arg (Complex.Gamma w) - t / 2 * Real.log Real.pi) =
+    Complex.I * ↑(Complex.arg (Complex.Gamma w)) +
+    (-(Complex.I * ↑(t / 2 * Real.log Real.pi))) from by push_cast; ring]
+  rw [Complex.exp_add]
+  -- Sub-step 3a: exp(I*arg(Γ(w))) = Γ(w) / ↑‖Γ(w)‖
+  have h_gamma_phase : Complex.exp (Complex.I * ↑(Complex.arg (Complex.Gamma w))) =
+      Complex.Gamma w / ↑‖Complex.Gamma w‖ := by
+    rw [eq_div_iff h_norm_w_ne, mul_comm]
+    have := Complex.norm_mul_exp_arg_mul_I (Complex.Gamma w)
+    rwa [show ↑(Complex.arg (Complex.Gamma w)) * Complex.I =
+      Complex.I * ↑(Complex.arg (Complex.Gamma w)) from mul_comm _ _] at this
+  -- Sub-step 3b: exp(-I*(t/2)*log(π)) = (↑π)^(-s/2) / ↑‖(↑π)^(-s/2)‖
+  have h_cpow : (↑Real.pi : ℂ) ^ (-s / 2) =
+      Complex.exp (↑(-Real.log Real.pi / 4 : ℝ)) *
+      Complex.exp (-(Complex.I * ↑(t / 2 * Real.log Real.pi))) := by
+    rw [Complex.cpow_def_of_ne_zero hπ_ne, ← Complex.ofReal_log (le_of_lt hπ_pos)]
+    rw [show ↑(Real.log Real.pi) * (-s / 2) =
+      ↑(-Real.log Real.pi / 4 : ℝ) + (-(Complex.I * ↑(t / 2 * Real.log Real.pi))) from by
+      simp only [hs_def]; push_cast; ring]
+    exact Complex.exp_add _ _
+  have h_norm_pi : (↑‖(↑Real.pi : ℂ) ^ (-s / 2)‖ : ℂ) =
+      Complex.exp (↑(-Real.log Real.pi / 4 : ℝ)) := by
+    rw [Complex.norm_cpow_eq_rpow_re_of_pos hπ_pos, Real.rpow_def_of_pos hπ_pos,
+        Complex.ofReal_exp]
+    congr 1; push_cast
+    have hre : (-s / 2).re = -1/4 := by
+      simp only [hs_def, Complex.neg_re, Complex.add_re, Complex.mul_re,
+                  Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+      norm_num
+    rw [hre]; push_cast; ring
+  have h_pi_phase : Complex.exp (-(Complex.I * ↑(t / 2 * Real.log Real.pi))) =
+      (↑Real.pi : ℂ) ^ (-s / 2) / ↑‖(↑Real.pi : ℂ) ^ (-s / 2)‖ := by
+    rw [eq_div_iff h_norm_π_ne, h_norm_pi, h_cpow, mul_comm]
+  -- Sub-step 3c: Combine to get Gammaℝ(s)/↑‖Gammaℝ(s)‖
+  rw [h_gamma_phase, h_pi_phase]
+  have h_GammaR : Complex.Gammaℝ s = (↑Real.pi : ℂ) ^ (-s / 2) * Complex.Gamma w := by
+    rw [Complex.Gammaℝ_def, hw_eq]
+  rw [h_GammaR, norm_mul, Complex.ofReal_mul]
+  field_simp
 
 /-- Z(t) = 0 iff ζ(1/2 + it) = 0. -/
 theorem hardyZV2_zero_iff_zeta_zero (t : ℝ) :
@@ -119,11 +198,87 @@ theorem hardyZV2_abs_eq_zeta_abs (t : ℝ) :
 
 /-- Z(t) is continuous. -/
 theorem continuous_hardyZV2 : Continuous hardyZV2 := by
-  -- Continuity of Z(t) = exp(iθ(t)) · ζ(1/2+it)
-  -- Requires continuity of θ(t) = arg(Γ(1/4+it/2)) - (t/2)log(π)
-  -- which needs arg(Γ(s)) continuous away from poles.
-  -- Since Γ has no poles at 1/4+it/2 for real t, this holds.
-  sorry
+  -- Key insight: exp(I * arg z) = z / ‖z‖ for z ≠ 0 (from Complex.norm_mul_exp_arg_mul_I)
+  -- This avoids the branch cut issue with arg. We rewrite:
+  --   Z(t) = (Γ(s)/‖Γ(s)‖) * exp(-I*(t/2)*log π) * ζ(1/2+it)
+  -- where s = 1/4 + I*t/2, and each factor is manifestly continuous.
+  -- Helper: Re(1/4 + I*t/2) > 0
+  have h_re_pos : ∀ t : ℝ, 0 < ((1/4 : ℂ) + Complex.I * ↑t / 2).re := by
+    intro t
+    have : (1/4 : ℂ) + Complex.I * ↑t / 2 = ↑(1/4 : ℝ) + ↑(t/2) * Complex.I := by push_cast; ring
+    rw [this, Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.ofReal_re,
+        Complex.ofReal_im, Complex.I_re, Complex.I_im]; norm_num
+  -- Helper: Γ(s) ≠ 0
+  have h_gamma_ne : ∀ t : ℝ, Complex.Gamma ((1/4 : ℂ) + Complex.I * ↑t / 2) ≠ 0 :=
+    fun t => Complex.Gamma_ne_zero_of_re_pos (h_re_pos t)
+  -- Helper: s not a non-positive integer
+  have h_not_neg_int : ∀ t : ℝ, ∀ m : ℕ, (1/4 : ℂ) + Complex.I * ↑t / 2 ≠ -↑m := by
+    intro t m h
+    have h1 := h_re_pos t; rw [h] at h1
+    have : (-(↑m : ℂ)).re = -(m : ℝ) := by
+      rw [Complex.neg_re, ← Complex.ofReal_natCast, Complex.ofReal_re]
+    rw [this] at h1; linarith [Nat.cast_nonneg (α := ℝ) m]
+  -- Gamma composed with inner map is continuous
+  have h_gamma_cont : Continuous (fun t : ℝ =>
+      Complex.Gamma ((1/4 : ℂ) + Complex.I * ↑t / 2)) := by
+    apply continuous_iff_continuousAt.mpr; intro t
+    exact ContinuousAt.comp
+      (g := Complex.Gamma) (f := fun t : ℝ => (1/4 : ℂ) + Complex.I * ↑t / 2)
+      (Complex.differentiableAt_Gamma _ (h_not_neg_int t)).continuousAt
+      (by fun_prop)
+  -- Step 1: Rewrite hardyZV2 into manifestly continuous form
+  have h_eq : ∀ t : ℝ, hardyZV2 t =
+      Complex.Gamma ((1/4 : ℂ) + Complex.I * ↑t / 2) /
+        ↑‖Complex.Gamma ((1/4 : ℂ) + Complex.I * ↑t / 2)‖ *
+      Complex.exp (-(Complex.I * ↑(t / 2 * Real.log Real.pi))) *
+      riemannZeta ((1/2 : ℂ) + Complex.I * ↑t) := by
+    intro t
+    unfold hardyZV2 hardyThetaV2
+    have h_norm_ne : (‖Complex.Gamma ((1/4 : ℂ) + Complex.I * ↑t / 2)‖ : ℂ) ≠ 0 := by
+      rw [Complex.ofReal_ne_zero, norm_ne_zero_iff]; exact h_gamma_ne t
+    -- exp(I * arg(Γ(s))) = Γ(s) / ‖Γ(s)‖
+    have h_exp_arg : Complex.exp (Complex.I * ↑(Complex.arg (Complex.Gamma
+        ((1/4 : ℂ) + Complex.I * ↑t / 2)))) =
+        Complex.Gamma ((1/4 : ℂ) + Complex.I * ↑t / 2) /
+        ↑‖Complex.Gamma ((1/4 : ℂ) + Complex.I * ↑t / 2)‖ := by
+      rw [eq_div_iff h_norm_ne, mul_comm]
+      convert Complex.norm_mul_exp_arg_mul_I
+        (Complex.Gamma ((1/4 : ℂ) + Complex.I * ↑t / 2)) using 1
+      congr 1; ring
+    -- Split the exponent and substitute
+    rw [show Complex.I * ↑(Complex.arg (Complex.Gamma ((1/4 : ℂ) + Complex.I * ↑t / 2)) -
+        t / 2 * Real.log Real.pi) =
+      Complex.I * ↑(Complex.arg (Complex.Gamma ((1/4 : ℂ) + Complex.I * ↑t / 2))) +
+      (-(Complex.I * ↑(t / 2 * Real.log Real.pi))) from by push_cast; ring]
+    rw [Complex.exp_add, h_exp_arg]
+  -- Step 2: Show the reformulated expression is continuous
+  suffices h_cont : Continuous (fun t : ℝ =>
+      Complex.Gamma ((1/4 : ℂ) + Complex.I * ↑t / 2) /
+        ↑‖Complex.Gamma ((1/4 : ℂ) + Complex.I * ↑t / 2)‖ *
+      Complex.exp (-(Complex.I * ↑(t / 2 * Real.log Real.pi))) *
+      riemannZeta ((1/2 : ℂ) + Complex.I * ↑t)) from
+    h_cont.congr (fun (t : ℝ) => (h_eq t).symm)
+  apply Continuous.mul
+  apply Continuous.mul
+  · -- Factor 1: Γ(s)/‖Γ(s)‖ is continuous
+    apply Continuous.div h_gamma_cont
+    · exact Complex.continuous_ofReal.comp (continuous_norm.comp h_gamma_cont)
+    · intro t; rw [Complex.ofReal_ne_zero, norm_ne_zero_iff]; exact h_gamma_ne t
+  · -- Factor 2: exp(-I*(t/2)*log π) is continuous
+    exact Complex.continuous_exp.comp ((continuous_const.mul
+      (Complex.continuous_ofReal.comp ((continuous_id.div_const 2).mul continuous_const))).neg)
+  · -- Factor 3: ζ(1/2+I*t) is continuous
+    apply continuous_iff_continuousAt.mpr; intro t
+    have h_ne : (1/2 : ℂ) + Complex.I * ↑t ≠ 1 := by
+      have h1 : ((1/2 : ℂ) + Complex.I * ↑t).re = 1/2 := by
+        have : (1/2 : ℂ) + Complex.I * ↑t = ↑(1/2 : ℝ) + ↑t * Complex.I := by push_cast; ring
+        rw [this, Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.ofReal_re,
+            Complex.ofReal_im, Complex.I_re, Complex.I_im]; ring
+      intro h; rw [h, Complex.one_re] at h1; norm_num at h1
+    exact ContinuousAt.comp
+      (g := riemannZeta) (f := fun t : ℝ => (1/2 : ℂ) + Complex.I * ↑t)
+      (differentiableAt_riemannZeta h_ne).continuousAt
+      (by fun_prop)
 
 /-! ## Sign Constancy -/
 

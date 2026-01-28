@@ -427,25 +427,74 @@ lemma gammaR_ne_zero_at_half (t : ℝ) : Gammaℝ ((1 : ℂ)/2 + t * I) ≠ 0 :=
     - Sum gives θ(t) = arg(Γ) - t/2 log(π) by definition -/
 lemma hardyZ_eq_completedZeta_div_norm (t : ℝ) :
     hardyZ' t = completedRiemannZeta ((1 : ℂ)/2 + t * I) / ‖Gammaℝ ((1 : ℂ)/2 + t * I)‖ := by
-  -- Set s = 1/2 + it for convenience
-  set s := (1 : ℂ)/2 + t * I with hs_def
-  -- Key facts we need
-  have hs_ne_zero : s ≠ 0 := half_plus_tI_ne_zero t
-  have hGamma_ne : Gammaℝ s ≠ 0 := gammaR_ne_zero_at_half t
-  -- From Mathlib: ζ(s) = ξ(s) / Gammaℝ(s) for s ≠ 0
-  have hζ_eq : riemannZeta s = completedRiemannZeta s / Gammaℝ s :=
-    riemannZeta_def_of_ne_zero hs_ne_zero
-  -- So hardyZ' t = exp(iθ) * ζ(s) = exp(iθ) * ξ(s) / Gammaℝ(s)
-  unfold hardyZ'
-  rw [hs_def, hζ_eq]
-  -- The key step is showing arg(Gammaℝ(s)) = θ(t), where θ is the
-  -- Riemann-Siegel theta function. This requires:
-  -- 1. arg(π^(-s/2)) = -t/2 * log(π) (phase of purely imaginary power)
-  -- 2. arg(Γ(s/2)) = arg(Γ(1/4 + it/2))
-  -- 3. arg of product = sum of args (when both in slit plane)
-  -- The phase calculation gives: exp(iθ) = Gammaℝ(s) / ‖Gammaℝ(s)‖
-  -- hence Z(t) = exp(iθ) * ξ(s)/Gammaℝ(s) = ξ(s)/‖Gammaℝ(s)‖
-  sorry
+  -- Strategy: Show exp(I*θ(t)) = Gammaℝ(s)/‖Gammaℝ(s)‖ via phase decomposition.
+  set s : ℂ := 1/2 + ↑t * I with hs_def
+  -- Basic facts
+  have hs_ne : s ≠ 0 := half_plus_tI_ne_zero t
+  have hs_re : s.re = 1/2 := by
+    simp only [hs_def, add_re, mul_re, ofReal_re, ofReal_im, I_re, I_im]; norm_num
+  have hs_re_pos : 0 < s.re := by rw [hs_re]; norm_num
+  have hw_re_pos : 0 < (s / 2).re := by
+    have : s / 2 = (1/4 : ℂ) + ↑t/2 * I := by
+      simp only [hs_def]; push_cast; ring
+    rw [this]; simp only [add_re, mul_re, ofReal_re, ofReal_im, I_re, I_im]; norm_num
+  have hπ_pos : (0 : ℝ) < Real.pi := Real.pi_pos
+  have hπ_ne : (↑Real.pi : ℂ) ≠ 0 := ofReal_ne_zero.mpr (ne_of_gt hπ_pos)
+  have hΓw_ne : Gamma (s / 2) ≠ 0 := Gamma_ne_zero_of_re_pos hw_re_pos
+  have hΓ_ne : Gammaℝ s ≠ 0 := Gammaℝ_ne_zero_of_re_pos hs_re_pos
+  have h_norm_w_ne : (↑‖Gamma (s / 2)‖ : ℂ) ≠ 0 :=
+    ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr hΓw_ne)
+  have hπ_cpow_ne : (↑Real.pi : ℂ) ^ (-s / 2) ≠ 0 := by
+    intro h; rw [cpow_eq_zero_iff] at h; exact hπ_ne h.1
+  have h_norm_π_ne : (↑‖(↑Real.pi : ℂ) ^ (-s / 2)‖ : ℂ) ≠ 0 :=
+    ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr hπ_cpow_ne)
+  -- Step 1: Suffices to show the phase identity
+  suffices h_phase : exp (I * ↑(riemannSiegelTheta' t)) = Gammaℝ s / ↑‖Gammaℝ s‖ by
+    unfold hardyZ'
+    rw [riemannZeta_def_of_ne_zero hs_ne, h_phase]
+    field_simp
+  -- Step 2: Decompose θ(t) = arg(Γ(s/2)) - t/2 * log(π)
+  have h_s_half : (1/4 : ℂ) + ↑t / 2 * I = s / 2 := by
+    simp only [hs_def]; push_cast; ring
+  unfold riemannSiegelTheta'
+  rw [h_s_half]
+  rw [show I * ↑(arg (Gamma (s / 2)) - t / 2 * Real.log Real.pi) =
+    I * ↑(arg (Gamma (s / 2))) + (-(I * ↑(t / 2 * Real.log Real.pi))) from by
+    push_cast; ring]
+  rw [exp_add]
+  -- Sub-step 2a: exp(I*arg(Γ(s/2))) = Γ(s/2)/↑‖Γ(s/2)‖
+  have h_gamma_phase : exp (I * ↑(arg (Gamma (s / 2)))) =
+      Gamma (s / 2) / ↑‖Gamma (s / 2)‖ := by
+    rw [eq_div_iff h_norm_w_ne, mul_comm]
+    have := norm_mul_exp_arg_mul_I (Gamma (s / 2))
+    rwa [show ↑(arg (Gamma (s / 2))) * I =
+      I * ↑(arg (Gamma (s / 2))) from mul_comm _ _] at this
+  -- Sub-step 2b: exp(-I*(t/2)*log(π)) = π^(-s/2)/↑‖π^(-s/2)‖
+  have h_cpow : (↑Real.pi : ℂ) ^ (-s / 2) =
+      exp (↑(-Real.log Real.pi / 4 : ℝ)) *
+      exp (-(I * ↑(t / 2 * Real.log Real.pi))) := by
+    rw [cpow_def_of_ne_zero hπ_ne, ← ofReal_log (le_of_lt hπ_pos)]
+    rw [show ↑(Real.log Real.pi) * (-s / 2) =
+      ↑(-Real.log Real.pi / 4 : ℝ) + (-(I * ↑(t / 2 * Real.log Real.pi))) from by
+      simp only [hs_def]; push_cast; ring]
+    exact exp_add _ _
+  have h_norm_pi : (↑‖(↑Real.pi : ℂ) ^ (-s / 2)‖ : ℂ) =
+      exp (↑(-Real.log Real.pi / 4 : ℝ)) := by
+    rw [norm_cpow_eq_rpow_re_of_pos hπ_pos, Real.rpow_def_of_pos hπ_pos, ofReal_exp]
+    congr 1; push_cast
+    have hre : (-s / 2).re = -1/4 := by
+      simp only [hs_def, neg_re, add_re, mul_re, ofReal_re, ofReal_im,
+                  I_re, I_im]; norm_num
+    rw [hre]; push_cast; ring
+  have h_pi_phase : exp (-(I * ↑(t / 2 * Real.log Real.pi))) =
+      (↑Real.pi : ℂ) ^ (-s / 2) / ↑‖(↑Real.pi : ℂ) ^ (-s / 2)‖ := by
+    rw [eq_div_iff h_norm_π_ne, h_norm_pi, h_cpow, mul_comm]
+  -- Sub-step 2c: Combine to get Gammaℝ(s)/↑‖Gammaℝ(s)‖
+  rw [h_gamma_phase, h_pi_phase]
+  have h_GammaR : Gammaℝ s = (↑Real.pi : ℂ) ^ (-s / 2) * Gamma (s / 2) := by
+    rw [Gammaℝ_def]
+  rw [h_GammaR, norm_mul, ofReal_mul]
+  field_simp
 
 /-- Z(t) is real for all real t.
     Proof: Z(t) = ξ(1/2 + it) / ‖Gammaℝ(1/2 + it)‖
