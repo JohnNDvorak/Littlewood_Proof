@@ -69,6 +69,7 @@ import Littlewood.Aristotle.CosBound               -- Cos bounds (0 sorries) ✓
 import Littlewood.Aristotle.BinetStirling          -- Binet/Stirling (0 sorries) ✓
 import Littlewood.Aristotle.Definitions            -- Unified definitions (0 sorries) ✓
 import Littlewood.Aristotle.FunctionalEquationHyp  -- Functional equation hypothesis (0 sorries) ✓
+import Littlewood.Aristotle.IntegralLogSqrtAsymp  -- ∫log(√(1/4+t²)) = Θ(T log T) (0 sorries) ✓
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
