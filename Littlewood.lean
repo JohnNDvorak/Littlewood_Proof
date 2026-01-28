@@ -71,6 +71,7 @@ import Littlewood.Aristotle.BinetStirling          -- Binet/Stirling (0 sorries)
 import Littlewood.Aristotle.Definitions            -- Unified definitions (0 sorries) ✓
 import Littlewood.Aristotle.FunctionalEquationHyp  -- Functional equation hypothesis (0 sorries) ✓
 import Littlewood.Aristotle.IntegralLogSqrtAsymp  -- ∫log(√(1/4+t²)) = Θ(T log T) (0 sorries) ✓
+import Littlewood.Aristotle.GammaGrowth           -- Gamma growth bounds, harmonic sums (0 sorries) ✓
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
@@ -127,8 +128,8 @@ The main theorems are proved assuming ~58 hypothesis classes (classical theorems
 not yet in Mathlib). See `Assumptions.lean` for the full list.
 
 ### Aristotle Files (from Harmonic)
-- Total: 49 files (+ 3 deprecated)
-- Sorry-free: 42 files (86%)
+- Total: 50 files (+ 3 deprecated)
+- Sorry-free: 43 files (86%)
 - With sorries: 7 files (16 sorries total)
 
 ## References
