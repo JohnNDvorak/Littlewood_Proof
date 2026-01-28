@@ -78,8 +78,11 @@ theorem xi_Mathlib_zeros_eq_zeta_zeros (s : ℂ) (hs_re : 0 < s.re) (hs_re' : s.
       exact absurd (riemannZeta_def_of_ne_zero hs_ne ▸ h) (div_ne_zero hne hG)
     rw [h_completed, mul_zero]
 
-/-- RiemannXi is an entire function (no poles) -/
-theorem RiemannXi_differentiable : Differentiable ℂ RiemannXi := by
+/-- xi_Mathlib is an entire function (the s(s-1) factor cancels the poles of
+    completedRiemannZeta at 0 and 1). Note: RiemannXi as a product of individual
+    factors (Gamma, zeta) is not differentiable at the Gamma poles; xi_Mathlib
+    uses completedRiemannZeta which is already analytically continued. -/
+theorem xi_Mathlib_differentiable : Differentiable ℂ xi_Mathlib := by
   sorry
 
 /-- N(T) via argument principle -/
@@ -116,9 +119,15 @@ lemma completedRiemannZeta_eq_Gammaℝ_mul_riemannZeta (s : ℂ) (hs : 0 < s.re)
   rw [riemannZeta_def_of_ne_zero hs_ne]
   field_simp [hG]
 
-/-- xi_Mathlib equals RiemannXi for s ≠ 0, 1 -/
-lemma xi_Mathlib_eq_RiemannXi (s : ℂ) (hs0 : s ≠ 0) (hs1 : s ≠ 1) :
+/-- xi_Mathlib equals RiemannXi when Re(s) > 0 (so Gammaℝ(s) ≠ 0).
+    For Re(s) ≤ 0, RiemannXi has spurious zeros from Gamma(s/2) = 0. -/
+lemma xi_Mathlib_eq_RiemannXi (s : ℂ) (hs0 : s ≠ 0) (hs1 : s ≠ 1) (hs_re : 0 < s.re) :
     xi_Mathlib s = RiemannXi s := by
-  sorry
+  have hG : Gammaℝ s ≠ 0 := Gammaℝ_ne_zero_of_re_pos hs_re
+  suffices h : completedRiemannZeta s =
+      (↑Real.pi : ℂ) ^ (-s / 2) * Gamma (s / 2) * riemannZeta s by
+    unfold xi_Mathlib RiemannXi; rw [h]; ring
+  rw [show (↑Real.pi : ℂ) ^ (-s / 2) * Gamma (s / 2) = Gammaℝ s from (Gammaℝ_def s).symm,
+      riemannZeta_def_of_ne_zero hs0, mul_div_cancel₀ _ hG]
 
 end

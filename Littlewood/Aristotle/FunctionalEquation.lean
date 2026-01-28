@@ -60,19 +60,39 @@ lemma gamma_identity_aux (s : ℂ) (hs : ∀ n : ℤ, s ≠ n) :
   rw [h_refl, div_mul_cancel₀ _ h_cos_ne]
 
 /-- The symmetric functional equation for the completed zeta function:
-    π^(-s/2) Γ(s/2) ζ(s) = π^(-(1-s)/2) Γ((1-s)/2) ζ(1-s) -/
-theorem zeta_functional_equation (s : ℂ) (hs : s ≠ 0) (hs1 : s ≠ 1) :
+    π^(-s/2) Γ(s/2) ζ(s) = π^(-(1-s)/2) Γ((1-s)/2) ζ(1-s)
+    in the critical strip (both Gammaℝ factors are nonzero). -/
+theorem zeta_functional_equation (s : ℂ) (hs : 0 < s.re) (hs1 : s.re < 1) :
     (Real.pi : ℂ)^(-s/2) * Complex.Gamma (s/2) * riemannZeta s =
     (Real.pi : ℂ)^(-(1-s)/2) * Complex.Gamma ((1-s)/2) * riemannZeta (1-s) := by
-  sorry
+  have hs_ne : s ≠ 0 := by intro h; rw [h, zero_re] at hs; linarith
+  have h1s_ne : (1 : ℂ) - s ≠ 0 := by
+    intro h; have := congr_arg Complex.re h; simp at this; linarith
+  have h1s_re : 0 < (1 - s).re := by simp [sub_re, one_re]; linarith
+  have hG_s : Gammaℝ s ≠ 0 := Gammaℝ_ne_zero_of_re_pos hs
+  have hG_1s : Gammaℝ (1 - s) ≠ 0 := Gammaℝ_ne_zero_of_re_pos h1s_re
+  -- Both sides equal completedRiemannZeta via Gammaℝ
+  rw [show (↑Real.pi : ℂ) ^ (-s / 2) * Complex.Gamma (s / 2) = Gammaℝ s from
+        (Gammaℝ_def s).symm,
+      show (↑Real.pi : ℂ) ^ (-(1 - s) / 2) * Complex.Gamma ((1 - s) / 2) = Gammaℝ (1 - s) from
+        (Gammaℝ_def (1 - s)).symm,
+      riemannZeta_def_of_ne_zero hs_ne, riemannZeta_def_of_ne_zero h1s_ne,
+      mul_div_cancel₀ _ hG_s, mul_div_cancel₀ _ hG_1s,
+      completedRiemannZeta_one_sub]
 
 /-- Symmetry of completed zeta: ξ(s) = ξ(1-s) -/
 theorem completed_zeta_symmetric (s : ℂ) : completedRiemannZeta s = completedRiemannZeta (1 - s) :=
   (completedRiemannZeta_one_sub s).symm
 
-/-- The completed zeta function has the same zeros as zeta in the critical strip -/
-theorem completed_zeta_zeros_eq_zeta_zeros (s : ℂ) (hs0 : s ≠ 0) (hs1 : s ≠ 1) :
+/-- The completed zeta function has the same zeros as zeta when Re(s) > 0.
+    (For Re(s) ≤ 0, the Gammaℝ factor introduces spurious zeros via division by zero.) -/
+theorem completed_zeta_zeros_eq_zeta_zeros (s : ℂ) (hs : 0 < s.re) (hs1 : s ≠ 1) :
     completedRiemannZeta s = 0 ↔ riemannZeta s = 0 := by
-  sorry
+  have hs_ne : s ≠ 0 := by intro h; rw [h, zero_re] at hs; linarith
+  have hG : Gammaℝ s ≠ 0 := Gammaℝ_ne_zero_of_re_pos hs
+  constructor
+  · intro h; rw [riemannZeta_def_of_ne_zero hs_ne, h, zero_div]
+  · intro h; by_contra hne
+    exact absurd h (by rw [riemannZeta_def_of_ne_zero hs_ne]; exact div_ne_zero hne hG)
 
 end

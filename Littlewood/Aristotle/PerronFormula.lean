@@ -75,9 +75,10 @@ lemma integral_odd_part_zero (f : ℝ → ℂ) (hf : ∀ t, f (-t) = -f t) (R : 
     have h_empty : Set.Icc (-R) R = ∅ := Set.Icc_eq_empty (by linarith)
     rw [h_empty, setIntegral_empty]
 
-/-- ∫ Im(1/(c+it)) dt = arctan(t/c) -/
-lemma integral_imag_part_arctan (c : ℝ) (hc : 0 < c) (R : ℝ) (hR : 0 < R) :
-    ∫ t in Set.Icc (-R) R, (1 / (c + t * I)).im = 2 * Real.arctan (R / c) := by
+/-- ∫ Re(1/(c+it)) dt = 2 arctan(R/c).
+    Note: Re(1/(c+it)) = c/(c²+t²), whose integral is arctan(t/c)/c. -/
+lemma integral_real_part_arctan (c : ℝ) (hc : 0 < c) (R : ℝ) (hR : 0 < R) :
+    ∫ t in Set.Icc (-R) R, (1 / (c + t * I)).re = 2 * Real.arctan (R / c) := by
   sorry
 
 /-- KEY: The residue of 1/s at s = 0 gives the Perron integral value. -/
