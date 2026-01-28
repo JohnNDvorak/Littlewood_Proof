@@ -46,6 +46,8 @@ import Littlewood.Aristotle.NAsymptotic            -- N(T) asymptotic (0 sorries
 import Littlewood.Aristotle.RiemannXi              -- Riemann Xi entire (1 sorry) ✓ NEW
 import Littlewood.Aristotle.ZetaMoments            -- Zeta moments (0 sorries) ✓
 import Littlewood.Aristotle.ZetaMeanSquare         -- Mean square estimates (0 sorries) ✓
+import Littlewood.Aristotle.PartialZetaNormSq      -- |partial zeta|² expansion (0 sorries) ✓
+import Littlewood.Aristotle.IntegralArctanFormula  -- ∫Re(1/(c+ti)) = 2arctan (0 sorries) ✓
 import Littlewood.Aristotle.CriticalZeros          -- Critical zeros (0 sorries) ✓
 
 -- Analysis infrastructure (no conflicts)
