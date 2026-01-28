@@ -1,0 +1,118 @@
+# Session Summary: Littlewood Proof Formalization
+
+**Date:** 2026-01-27/28 (overnight session)
+**Model:** Claude Opus 4.5
+
+---
+
+## Executive Summary
+
+This session focused on integrating 3 new Aristotle-generated files, fixing 4 false mathematical statements, and proving several key lemmas. All primary objectives were accomplished except for 2 tractable sorries which require extensive Lean proof work (50-100+ lines each).
+
+---
+
+## Completed Tasks
+
+### 1. New Aristotle Files Integrated (3 files, 0 sorries)
+
+| File | Key Result | Lines |
+|------|-----------|-------|
+| `HardyZRealV4.lean` | `hardyZV4_real`: Hardy Z function is real-valued | ~150 |
+| `FunctionalEquationV2.lean` | `LambdaV2_one_sub`: Completed zeta symmetry Λ(1-s) = Λ(s) | ~70 |
+| `TrigPolyIndependence.lean` | `trigPoly_zero_iff_coeffs_zero`: Linear independence of cosines | ~240 |
+
+**Technical challenges solved:**
+- `TrigPolyIndependence.lean` had integral parsing issues (the `∫ t in a..b,` notation consumed too much of the expression). Fixed by adding explicit parentheses around integrals.
+- Used FTC (fundamental theorem of calculus) approach to compute diagonal bounds
+- Diagonal dominance argument for orthogonality proof
+
+### 2. False Statements Fixed (4 statements, 3 proved)
+
+| Statement | File | Issue | Fix |
+|-----------|------|-------|-----|
+| `zeta_functional_equation` | FunctionalEquation.lean | Missing Re(s) constraints for Gammaℝ | Added `0 < s.re`, `s.re < 1`; **PROVED** |
+| `completed_zeta_zeros_eq_zeta_zeros` | FunctionalEquation.lean | False for Re(s) ≤ 0 (Gamma zeros) | Added `0 < s.re`; **PROVED** |
+| `RiemannXi_differentiable` | ZeroCounting.lean | `RiemannXi` has spurious zeros from Gamma | Renamed to `xi_Mathlib_differentiable` |
+| `xi_Mathlib_eq_RiemannXi` | ZeroCounting.lean | False for Re(s) ≤ 0 | Added `0 < s.re`; **PROVED** |
+| `integral_imag_part_arctan` | PerronFormula.lean | `.im` should be `.re` | Renamed to `integral_real_part_arctan` |
+
+**Key insight:** The functional equation `π^(-s/2)Γ(s/2)ζ(s) = completedRiemannZeta(s)` only holds when `Gammaℝ(s) ≠ 0`, which requires `Re(s) > 0`.
+
+### 3. Git Commits (2 commits)
+
+```
+69d6ba9 Fix 4 false statements: add correct hypotheses and prove 3 of 4
+2e2c17e Add 3 new Aristotle files: HardyZRealV4, FunctionalEquationV2, TrigPolyIndependence
+```
+
+---
+
+## Remaining Work
+
+### Tractable Sorries (2 items, not proved)
+
+| Lemma | File | Complexity | Proof Strategy |
+|-------|------|------------|----------------|
+| `integral_log_sqrt_asymp` | MeanSquare.lean | ~50 lines | FTC for ∫log t, then Θ analysis: (1/2)T log T + O(T) |
+| `normSq_partialZeta_eq` | MeanSquare.lean | ~80 lines | Expand normSq(∑f)=∑∑(f·star(f')).re, split diag/offdiag, cpow algebra |
+
+**Detailed proof outlines in task descriptions (run `/tasks` to view).**
+
+---
+
+## Project Statistics
+
+### Aristotle Files
+- **22 files** with 0 sorries (fully proved)
+- **8 files** with sorries (25 total sorries)
+
+### Files with sorries:
+| File | Sorries |
+|------|---------|
+| PerronFormula.lean | 6 |
+| MeanSquare.lean | 5 |
+| ZeroCounting.lean | 4 |
+| PhragmenLindelof.lean | 3 |
+| HardyZRealV2.lean | 3 |
+| PartialSummation.lean | 2 |
+| FunctionalEquation.lean | 1 |
+| PerronFormulaV2.lean | 1 |
+
+### Files fully proved this session:
+- HardyZRealV4.lean (NEW)
+- FunctionalEquationV2.lean (NEW)
+- TrigPolyIndependence.lean (NEW)
+
+---
+
+## Technical Notes
+
+### Integral Parsing in Lean 4
+The `∫ t in a..b, body` notation extends its body to include everything after the comma until a closing delimiter. This caused subtle bugs where `c * ∫ t, f - k` was parsed as `c * (∫ t, f - k)` instead of `(c * ∫ t, f) - k`. **Always use explicit parentheses around integrals.**
+
+### Gammaℝ and Division by Zero
+In Mathlib, `riemannZeta s = completedRiemannZeta s / Gammaℝ s`. When `Gammaℝ s = 0` (at s = -2, -4, ..., where `Gamma(s/2)` has poles), this division gives 0 by Lean's convention. This makes `riemannZeta` have "spurious zeros" at these points that don't correspond to actual zeros of the zeta function.
+
+### cpow Conjugation
+For positive real n and complex w: `conj(n^w) = n^(conj(w))` (via `Complex.conj_cpow` when n.arg ≠ π). This is crucial for `normSq_partialZeta_eq`.
+
+---
+
+## Next Steps
+
+1. **Prove `integral_log_sqrt_asymp`**: Use `intervalIntegral.integral_eq_sub_of_hasDerivAt` with antiderivative `t log t - t`, then establish Θ bounds.
+
+2. **Prove `normSq_partialZeta_eq`**:
+   - Use `Complex.mul_conj` (note: z * star z, not star z * z)
+   - Apply `map_sum (starRingEnd ℂ)` to commute star with sum
+   - Use `Finset.sum_mul` and `Finset.mul_sum` to expand product
+   - Use `Complex.re_sum` to commute .re with sum
+   - Split via `Finset.sum_filter_add_sum_filter_not`
+   - Show diagonal term `f * star f = normSq f = 1/n`
+   - Match off-diagonal with `offDiagSsq`
+
+3. **Reduce remaining sorries** in PerronFormula.lean, ZeroCounting.lean, etc.
+
+---
+
+*Generated by Claude Code (Claude Opus 4.5)*

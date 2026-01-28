@@ -1,9 +1,9 @@
 === Littlewood Formalization Status ===
-Generated: Wed Jan 28 08:03:32 CST 2026
+Generated: Wed Jan 28 08:23:49 CST 2026
 
 === File Counts ===
-  Total .lean files:    80
-  Aristotle files:      38
+  Total .lean files:    83
+  Aristotle files:      39
   Main/ files:          3
   Development/ files:   17
 
@@ -14,21 +14,21 @@ Generated: Wed Jan 28 08:03:32 CST 2026
   Assumptions.lean:     58
 
 === Aristotle File Detail ===
-  1 sorries: CriticalZeros.lean
   1 sorries: FunctionalEquation.lean
   5 sorries: MeanSquare.lean
   2 sorries: PartialSummation.lean
   6 sorries: PerronFormula.lean
   3 sorries: PhragmenLindelof.lean
+  1 sorries: RiemannXi.lean
   4 sorries: ZeroCounting.lean
 
 === Sorry-Free Aristotle Files ===
-  31 / 38 files are sorry-free
+  32 / 39 files are sorry-free
 
 === Build Status ===
 warning: Littlewood/Aristotle/FunctionalEquation.lean:21:8: declaration uses 'sorry'
 warning: Littlewood/Aristotle/FunctionalEquation.lean:89:68: unused variable `hs1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-Build completed successfully (7937 jobs).
+Build completed successfully (7938 jobs).
   Build completed
