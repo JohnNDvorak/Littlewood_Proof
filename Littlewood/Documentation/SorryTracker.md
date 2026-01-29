@@ -6,10 +6,10 @@ Updated: 2026-01-29
 
 | Category | Count | Status |
 |----------|-------|--------|
-| Aristotle sorries | 27 | In progress (Aristotle batch submitted) |
+| Aristotle sorries | 26 | In progress (-1: integral_log_sqrt_asymp wired) |
 | Assumptions.lean sorries | 62 | Waiting for Aristotle + wiring |
-| Other sorries | ~33 | Development/test files |
-| **TOTAL** | **~122** | |
+| Other sorries | ~61 | CoreLemmas (~46), Main (~9), other (~6) |
+| **TOTAL** | **~149** | |
 | **Proved hypothesis instances** | **4** | |
 
 ---
@@ -59,10 +59,9 @@ theorem HurwitzZeta_Lambda_0_conj
 ```
 **Priority**: LOW
 
-### MeanSquare (4 sorries)
+### MeanSquare (3 sorries, was 4)
 ```
-lemma integral_log_sqrt_asymp
-    -- integral log sqrt(t/2pi) = Theta(T log T)
+-- CLOSED: integral_log_sqrt_asymp (wired to IntegralLogAsymp.integral_log_sqrt_asymp)
 lemma norm_integral_offDiagSsq_le
     -- off-diagonal integral bound
 lemma normSq_partialZeta_eq
@@ -71,7 +70,6 @@ lemma mean_square_partial_zeta_asymp
     -- mean square asymptotic
 ```
 **Priority**: HIGH (mean square infrastructure)
-**Aristotle prompt**: integral_log_sqrt_asymp submitted
 
 ### PartialSummation (2 sorries)
 ```

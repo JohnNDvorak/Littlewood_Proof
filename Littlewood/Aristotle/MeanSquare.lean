@@ -6,6 +6,7 @@ Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
 import Mathlib
 import Littlewood.Aristotle.HarmonicSumIntegral
 import Littlewood.Aristotle.OffDiagonalBound
+import Littlewood.Aristotle.IntegralLogAsymp
 
 set_option maxHeartbeats 1600000
 set_option maxRecDepth 4000
@@ -109,7 +110,7 @@ lemma integral_log_sqrt_asymp :
   -- The bounds needed:
   --   Upper: (1/2) T log T + O(T) ≤ C * T log T for C > 1/2
   --   Lower: c * T log T ≤ (1/2) T log T + O(T) for c < 1/2 and large T
-  sorry
+  exact IntegralLogAsymp.integral_log_sqrt_asymp
 
 /-- The integral of harmonic sums is Θ(T log T).
     Since H_{N(t)} = log(N(t)) + O(1) and N(t) = √(t/2π),
