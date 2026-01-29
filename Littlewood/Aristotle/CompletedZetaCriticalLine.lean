@@ -17,6 +17,7 @@ The main result is `completedRiemannZeta_critical_line_real`.
 -/
 
 import Mathlib
+import Littlewood.Aristotle.HardyZConjugation
 
 set_option linter.mathlibStandardSet false
 
@@ -64,8 +65,8 @@ theorem mellin_conj_of_real_valued {f : ℝ → ℂ} (hf : ∀ x, star (f x) = f
 /-
 The completed Riemann zeta function satisfies the conjugation symmetry $\xi(\bar{s}) = \overline{\xi(s)}$.
 -/
-theorem completedRiemannZeta_conj (s : Complex) : completedRiemannZeta (star s) = star (completedRiemannZeta s) := by
-  sorry -- Conjugation symmetry via Mellin transform properties
+theorem completedRiemannZeta_conj (s : Complex) : completedRiemannZeta (star s) = star (completedRiemannZeta s) :=
+  HardyZConjugation.completedRiemannZeta_conj s
 
 /-
 The completed Riemann zeta function is real on the critical line.

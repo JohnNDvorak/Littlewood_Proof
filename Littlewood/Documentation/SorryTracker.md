@@ -6,23 +6,20 @@ Updated: 2026-01-29
 
 | Category | Count | Status |
 |----------|-------|--------|
-| Aristotle sorries | 26 | In progress (-1: integral_log_sqrt_asymp wired) |
+| Aristotle sorries | 23 | In progress (-4: integral_log_sqrt_asymp, completedRiemannZeta_conj, 2x ExplicitFormulaInfrastructure wired) |
 | Assumptions.lean sorries | 62 | Waiting for Aristotle + wiring |
 | Other sorries | ~61 | CoreLemmas (~46), Main (~9), other (~6) |
-| **TOTAL** | **~149** | |
+| **TOTAL** | **~146** | |
 | **Proved hypothesis instances** | **4** | |
 
 ---
 
-## Aristotle Sorries (27 across 14 files)
+## Aristotle Sorries (23 across 11 files)
 
-### CompletedZetaCriticalLine (1 sorry)
+### CompletedZetaCriticalLine (0 sorries) CLOSED
 ```
-theorem completedRiemannZeta_conj (s : Complex) :
-    completedRiemannZeta (star s) = star (completedRiemannZeta s)
+-- CLOSED: completedRiemannZeta_conj (wired to HardyZConjugation.completedRiemannZeta_conj)
 ```
-**Priority**: CRITICAL (blocks Hardy's theorem chain)
-**Aristotle prompt**: Submitted
 
 ### ChebyshevTheta (3 sorries) [commented out - conflicts]
 ```
@@ -36,15 +33,11 @@ lemma theta_diff_le_log_choose
 **Priority**: HIGH (core identities)
 **Aristotle prompt**: Submitted
 
-### ExplicitFormulaInfrastructure (2 sorries)
+### ExplicitFormulaInfrastructure (0 sorries) CLOSED
 ```
-lemma riemannZeta_ne_zero_near_one
-    -- zeta nonzero near s=1
-lemma zetaZerosBelow_finite_complex
-    -- finite zeros in compact region
+-- CLOSED: riemannZeta_ne_zero_near_one (wired via HurwitzZeta.hurwitzZetaEven_residue_one 0)
+-- CLOSED: zetaZerosBelow_finite_complex (wired via h_compact.finite h_discrete.isDiscrete)
 ```
-**Priority**: MEDIUM
-**Note**: zetaZerosBelow_finite_complex may be closeable via ZetaZerosFiniteBelow
 
 ### HardyZConjugation (1 sorry)
 ```
@@ -152,11 +145,11 @@ See HypothesisMapping.md for detailed breakdown by category:
 ## Closing Priority
 
 ### Phase 1: Current Aristotle batch (targeting -15 sorries)
-1. completedRiemannZeta_conj (1)
+1. ~~completedRiemannZeta_conj (1)~~ DONE
 2. ChebyshevTheta sorries (3)
 3. ThetaLinearBound sorries (2)
 4. PhragmenLindelof sorries (3)
-5. MeanSquare integral_log_sqrt_asymp (1)
+5. ~~MeanSquare integral_log_sqrt_asymp (1)~~ DONE
 6. RiemannVonMangoldtV2 N_eq_main_plus_S (1)
 7. Hardy's theorem (new file)
 

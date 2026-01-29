@@ -138,7 +138,7 @@ lemma riemannZeta_ne_zero_near_one : ∀ᶠ s in nhds 1, riemannZeta s ≠ 0 := 
   -- So zeta(s) is non-zero near 1.
   have h_lim : Filter.Tendsto (fun s : ℂ => (s - 1) * riemannZeta s) (nhdsWithin 1 {1}ᶜ) (nhds 1) := by
     -- The residue of zeta at s=1 is 1, so (s-1)*zeta(s) → 1
-    sorry
+    exact HurwitzZeta.hurwitzZetaEven_residue_one 0
   -- If $(s - 1) * \zeta(s)$ tends to $1$ as $s$ approaches $1$, then $\zeta(s)$ cannot be zero near $1$.
   have h_nonzero : ∀ᶠ s in nhdsWithin 1 {1}ᶜ, riemannZeta s ≠ 0 := by
     filter_upwards [ h_lim.eventually_ne one_ne_zero ] with s hs using fun h => hs <| by simp +decide [ h ] ;
@@ -213,8 +213,8 @@ lemma zetaZerosBelow_finite_complex (T : ℝ) : {s : ℂ | riemannZeta s = 0 ∧
       rw [ discreteTopology_iff_singleton_mem_nhds ] at *;
       simp_all +decide [ nhds_induced, Filter.mem_inf_principal ];
       exact fun a ha₁ ha₂ ha₃ ha₄ => by obtain ⟨ t, ht₁, ht₂ ⟩ := h_discrete a ha₁ ha₂ ha₃; exact ⟨ t, ht₁, fun b hb₁ hb₂ hb₃ hb₄ hb₅ => ht₂ b hb₁ hb₂ hb₃ hb₅ ⟩ ;
-    -- Compact + discrete implies finite (needs specific Mathlib lemma)
-    sorry
+    -- Compact + discrete implies finite
+    exact h_compact.finite h_discrete.isDiscrete
   exact h_finite.subset fun x hx => ⟨ hx.1, hx.2.1, hx.2.2.1, le_of_lt hx.2.2.2 ⟩
 
 /-

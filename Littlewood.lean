@@ -89,8 +89,8 @@ import Littlewood.Aristotle.TruncatedExplicitFormula -- Truncated explicit formu
 import Littlewood.Aristotle.StirlingArgGamma      -- Stirling arg Gamma bounds (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundsNorm        -- Zeta norm bounds, functional eq (0 sorries) ✓
 import Littlewood.Aristotle.HardyZConjugation     -- Hardy Z, completedZeta conjugation (1 sorry)
-import Littlewood.Aristotle.CompletedZetaCriticalLine -- Completed zeta real on critical line (1 sorry)
-import Littlewood.Aristotle.ExplicitFormulaInfrastructure -- Zeta zeros finite, explicit formula (2 sorries)
+import Littlewood.Aristotle.CompletedZetaCriticalLine -- Completed zeta real on critical line (0 sorries) ✓
+import Littlewood.Aristotle.ExplicitFormulaInfrastructure -- Zeta zeros finite, explicit formula (0 sorries) ✓
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
@@ -104,7 +104,7 @@ import Littlewood.Aristotle.ExplicitFormulaInfrastructure -- Zeta zeros finite, 
 -- import Littlewood.Aristotle.PartialSummationPiLi -- redefines chebyshevPsi, primeCountingReal, li
 
 -- Aristotle files with remaining sorries (actual counts verified)
-import Littlewood.Aristotle.MeanSquare             -- 4 sorries (no conflict)
+import Littlewood.Aristotle.MeanSquare             -- 3 sorries (no conflict)
 import Littlewood.Aristotle.ZeroCounting           -- 4 sorries (no conflict)
 import Littlewood.Aristotle.PhragmenLindelof       -- 3 sorries (no conflict)
 import Littlewood.Aristotle.PartialSummation       -- 2 sorries (has chebyshevPsi but uses Basic import)
