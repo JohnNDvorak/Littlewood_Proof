@@ -43,7 +43,7 @@ import Littlewood.Aristotle.ZeroCountingNew        -- Zero counting N(T) (0 sorr
 -- import Littlewood.Aristotle.ZeroCountingV2      -- conflicts with ZeroCountingNew (NZeros)
 import Littlewood.Aristotle.ZetaZeroInfrastructure -- Zero infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.NAsymptotic            -- N(T) asymptotic (0 sorries) ✓
-import Littlewood.Aristotle.RiemannXi              -- Riemann Xi entire (1 sorry) ✓
+import Littlewood.Aristotle.RiemannXi              -- Riemann Xi entire (0 sorries) ✓
 import Littlewood.Aristotle.RiemannXiEntire        -- RiemannXiAlt entire proof (0 sorries) ✓
 import Littlewood.Aristotle.XiDifferentiability    -- Xi differentiability analysis (0 sorries) ✓
 import Littlewood.Aristotle.ZetaMoments            -- Zeta moments (0 sorries) ✓

@@ -46,7 +46,7 @@ Prove that the Riemann Xi function is entire (differentiable everywhere on the c
 theorem RiemannXiAlt_entire : Differentiable ℂ RiemannXiAlt := by
   -- By definition of $RiemannXiAlt$, we know that it is a composition of differentiable functions.
   have h_comp : Differentiable ℂ (fun s : ℂ => (s * (s - 1) * completedRiemannZeta₀ s + 1) / 2) := by
-    exact Differentiable.div_const ( Differentiable.add ( Differentiable.mul ( differentiable_id.mul ( differentiable_id.sub_const _ ) ) ( by exact? ) ) ( differentiable_const _ ) ) _;
+    exact Differentiable.div_const ( Differentiable.add ( Differentiable.mul ( differentiable_id.mul ( differentiable_id.sub_const _ ) ) differentiable_completedZeta₀ ) ( differentiable_const _ ) ) _;
   convert h_comp using 1;
   exact funext fun s => by unfold RiemannXiAlt; ring;;
 
@@ -58,7 +58,7 @@ theorem RiemannXiAlt_eq_formula {s : ℂ} (h0 : s ≠ 0) (h1 : s ≠ 1) :
       have h_subst : (1 / 2 : ℂ) * s * (s - 1) * (completedRiemannZeta₀ s - 1 / s - 1 / (1 - s)) = (1 / 2 : ℂ) * (s * (s - 1) * completedRiemannZeta₀ s + 1) := by
         grind;
       have h_subst : completedRiemannZeta s = completedRiemannZeta₀ s - 1 / s - 1 / (1 - s) := by
-        exact?;
+        exact completedRiemannZeta_eq s;
       unfold RiemannXiAlt; aesop;
 
 end

@@ -57,7 +57,7 @@ noncomputable def xi_LiteralCorrected (s : ℂ) := s * (s - 1) * completedRieman
 theorem xi_LiteralCorrected_entire : Differentiable ℂ xi_LiteralCorrected := by
   -- The completed Riemann zeta function is entire, so its derivative is also entire.
   have h_completedRiemannZeta₀_diff : Differentiable ℂ completedRiemannZeta₀ := by
-    exact?;
+    exact differentiable_completedZeta₀;
   exact Differentiable.add ( Differentiable.mul ( differentiable_id.mul ( differentiable_id.sub_const _ ) ) h_completedRiemannZeta₀_diff ) ( differentiable_const _ )
 
 /-

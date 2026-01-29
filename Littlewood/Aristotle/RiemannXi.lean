@@ -58,10 +58,10 @@ Functional equation for the Riemann Xi function: ξ(1-s) = ξ(s).
 theorem RiemannXi_one_sub (s : ℂ) : RiemannXi (1 - s) = RiemannXi s := by
   -- We have ξ(s) = (1/2)s(s-1)Λ₀(s) + 1/2.
   have h1 : RiemannXi s = (1 / 2) * s * (s - 1) * (completedRiemannZeta₀ s) + 1 / 2 := by
-    exact?
+    rfl
   -- We also have ξ(1-s) = (1/2)(1-s)((1-s)-1)Λ₀(1-s) + 1/2.
   have h2 : RiemannXi (1 - s) = (1 / 2) * (1 - s) * ((1 - s) - 1) * (completedRiemannZeta₀ (1 - s)) + 1 / 2 := by
-    exact?
+    rfl
   -- Using Λ₀(1-s) = Λ₀(s), we can rewrite ξ(1-s) in terms of ξ(s).
   have h3 : RiemannXi (1 - s) = (1 / 2) * (1 - s) * (-s) * (completedRiemannZeta₀ s) + 1 / 2 := by
     rw [h2];
@@ -77,8 +77,7 @@ The Riemann Xi function is entire (differentiable on the whole complex plane).
 -/
 theorem differentiable_RiemannXi : Differentiable ℂ RiemannXi := by
   refine' Differentiable.add _ _;
-  · exact Differentiable.mul ( Differentiable.mul ( Differentiable.mul ( differentiable_const _ ) differentiable_id ) ( differentiable_id.sub_const _ ) ) ( by
-      exact? );
+  · exact Differentiable.mul ( Differentiable.mul ( Differentiable.mul ( differentiable_const _ ) differentiable_id ) ( differentiable_id.sub_const _ ) ) differentiable_completedZeta₀;
   · fun_prop
 
 /-
