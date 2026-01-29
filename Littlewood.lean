@@ -108,6 +108,7 @@ import Littlewood.Aristotle.PartialSummation       -- 2 sorries (has chebyshevPs
 import Littlewood.Bridge.AristotleBridges          -- Bridge lemmas (0 sorries) ✓
 import Littlewood.Bridge.HypothesisInstances       -- All proved instances (0 sorries) ✓
 import Littlewood.Bridge.AristotleHypothesisConnections  -- Documentation (0 sorries) ✓
+import Littlewood.Bridge.AristotleWiring           -- Master wiring file (0 sorries) ✓
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
