@@ -53,6 +53,7 @@ import Littlewood.Aristotle.PartialZetaNormSq      -- |partial zeta|² expansion
 import Littlewood.Aristotle.PartialZetaNormSqV2    -- General |partial zeta|² (0 sorries) ✓
 import Littlewood.Aristotle.IntegralArctanFormula  -- ∫Re(1/(c+ti)) = 2arctan (0 sorries) ✓
 import Littlewood.Aristotle.CriticalZeros          -- Critical zeros (0 sorries) ✓
+import Littlewood.Aristotle.ZetaZerosFiniteBelow   -- Finitely many zeros below T (0 sorries) ✓
 import Littlewood.Aristotle.OffDiagonalBound       -- Off-diagonal ≤ 8N² (0 sorries) ✓
 import Littlewood.Aristotle.OffDiagonalIntegralV2  -- Off-diagonal integral ≤ CN² (0 sorries) ✓
 import Littlewood.Aristotle.ThetaLinearBound       -- θ(x) = O(x) (2 sorries)
