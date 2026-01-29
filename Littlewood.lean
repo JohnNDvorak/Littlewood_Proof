@@ -85,6 +85,7 @@ import Littlewood.Aristotle.TruncatedExplicitFormula -- Truncated explicit formu
 import Littlewood.Aristotle.StirlingArgGamma      -- Stirling arg Gamma bounds (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundsNorm        -- Zeta norm bounds, functional eq (0 sorries) ✓
 import Littlewood.Aristotle.HardyZConjugation     -- Hardy Z, completedZeta conjugation (1 sorry)
+import Littlewood.Aristotle.CompletedZetaCriticalLine -- Completed zeta real on critical line (1 sorry)
 import Littlewood.Aristotle.ExplicitFormulaInfrastructure -- Zeta zeros finite, explicit formula (2 sorries)
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
