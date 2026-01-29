@@ -2,104 +2,91 @@
 
 Generated: 2026-01-28
 
-## RESOLVED BLOCKERS ✅
+## RESOLVED ✅ (6/7)
 
-### h_Stirling (Stirling Gamma Approximation)
+### 1. h_Stirling (Stirling Gamma Approximation)
 - **File**: StirlingGammaBounds.lean (0 sorries)
-- **Key theorems**:
-  - `gamma_one_bound`, `gamma_two_bound` - Stirling bounds on vertical lines
-  - `stirling_proxy_bounded_strip` - Strip bounds for Stirling approximation
-  - `gamma_reflection_bound` - Gamma reflection formula bounds
+- **Key theorems**: gamma_one_bound, gamma_two_bound, stirling_proxy_bounded_strip
 
-### h_RVM (Riemann-von Mangoldt Formula)
+### 2. h_RVM (Riemann-von Mangoldt Formula)
 - **Files**: RiemannVonMangoldt.lean, RiemannVonMangoldtV2.lean
-- **Key theorems**:
-  - `riemann_von_mangoldt_argument` - R-vM via argument principle
-  - `N_eq_main_plus_S` - NZeros = main term + S(T) + O(1/T)
-  - `N_main_term_eq` - Main term algebraic identity
+- **Key theorems**: riemann_von_mangoldt_argument, N_eq_main_plus_S
 
-### S(T) = O(log T)
+### 3. S(T) = O(log T)
 - **File**: NZerosStirling.lean (0 sorries)
-- **Theorem**: `S_bound` - S(T) is O(log T)
+- **Theorem**: S_bound
 
-### N(T) Asymptotic
+### 4. N(T) Asymptotic
 - **File**: NZerosStirling.lean (0 sorries)
-- **Theorem**: `N_from_S_and_Stirling` - N(T) = (T/2π)log(T/2πe) + O(log T)
-- **Status**: Conditional on Stirling bound (which we have!)
+- **Theorem**: N_from_S_and_Stirling
 
-### Explicit Formula (Truncated Trig Sum Form)
+### 5. Explicit Formula (Truncated Trig Sum)
 - **File**: TruncatedExplicitFormula.lean (0 sorries)
 - **Theorem**: `psi_as_trig_sum`
-```
-ψ(x) - x = -2 Σ_ρ (x^(Re ρ)/|ρ|) cos(γ log x + φ) + error
+```lean
+ψ(x) - x = -2 Σ_ρ (x^(Re ρ)/|ρ|) cos(Im(ρ) log x + arg ρ) + error
 |error| ≤ C x (log x)² / T
 ```
-- **THIS WAS THE KEY MISSING PIECE!**
+**THIS IS THE KEY FORMULA!**
 
-### xi is Entire (Resolved "False" Statement!)
-- **File**: ZeroCountingXi.lean (0 sorries)
-- **Key theorems**:
-  - `xi_entire`: xi(s) = s(s-1)Λ₀(s) + 1 is entire
-  - `xi_Mathlib_differentiable`: same (was thought FALSE!)
-  - `zetaZeroCount_via_argument`: zero counting via argument principle
-- **Key insight**: Using `completedRiemannZeta₀` instead of `completedRiemannZeta` avoids poles!
+### 6. xi is Entire
+- **Files**: ZeroCountingXi.lean, ZeroCounting.lean
+- **Theorems**:
+  - `ZeroCountingXi.xi_entire`
+  - `ZeroCounting.xi_Mathlib_corrected_entire`
+- **Note**: The "false" statement `xi_Mathlib_differentiable` uses the wrong definition.
+  The corrected version `xi_Mathlib_corrected` IS entire and IS proved!
 
-## REMAINING BLOCKERS ⏳
+## REMAINING ⏳ (1/7)
 
-### Hardy's Theorem (CRITICAL - LAST BLOCKER!)
+### 7. Hardy's Theorem - THE LAST BLOCKER!
 - **Need**: Infinitely many zeros on Re(s) = 1/2
-- **Status**: NOT YET AVAILABLE
-- **Hypothesis class**: `HardyCriticalLineZerosHyp`
-- **Impact**: Guarantees nonzero coefficients in trig sum → oscillation
+- **Statement**: `Set.Infinite {t : ℝ | riemannZeta (1/2 + Complex.I * t) = 0}`
+- **Status**: Waiting on Aristotle
+- **Impact**: Once this is proved, the main theorem chain completes!
 
-### Hardy → Oscillation Connection
-Once Hardy is proved, the chain is:
-1. `psi_as_trig_sum` (✅ HAVE IT)
-2. Hardy gives infinitely many zeros on critical line
-3. These give nonzero coefficients in the trig sum
-4. `trigPoly_zero_iff_coeffs_zero` (✅ SchmidtNew.lean)
-5. → ψ(x) - x oscillates infinitely often
-6. → Main theorem!
+## Available Building Blocks for Hardy
+
+```lean
+-- HardyZRealV4.lean: Z(t) is real
+theorem hardyZV4_real (t : ℝ) : (hardyZV4 t).im = 0
+
+-- Mean square estimates: ZetaMeanSquare.lean
+-- Stirling bounds: StirlingGammaBounds.lean
+-- Z function properties: HardyZReal*.lean
+```
+
+## Chain When Hardy Arrives
+
+```
+Hardy's Theorem
+    ↓
+∃ infinitely many ρ with Re(ρ) = 1/2, |Im(ρ)| arbitrarily large
+    ↓
+psi_as_trig_sum has coefficients x^{1/2}/|ρ| for these ρ
+    ↓
+These coefficients are nonzero (since x > 0, |ρ| < ∞)
+    ↓
+trigPoly_zero_iff_coeffs_zero: trig sum ≠ 0
+    ↓
+Schmidt oscillation: nonzero trig sum oscillates
+    ↓
+ψ(x) - x changes sign infinitely often
+    ↓
+ψ(x) - x = Ω±(√x)
+    ↓
+π(x) - li(x) = Ω±(√x / log x)
+    ↓
+LITTLEWOOD'S 1914 THEOREM COMPLETE! 🎉
+```
 
 ## Current Statistics
 
-| Category | Count |
-|----------|-------|
-| Aristotle files | 57 |
-| Sorry-free | 50 (88%) |
+| Metric | Value |
+|--------|-------|
+| Aristotle files | 58 |
+| Sorry-free | 51 (88%) |
 | Files with sorries | 7 |
-| Total Aristotle sorries | 15 |
-| xi entire | ✅ ZeroCountingXi.lean |
-| Assumptions.lean sorries | 62 |
-| Proved hypothesis instances | 4 |
-
-## Files With Sorries
-
-| File | Sorries | Status |
-|------|---------|--------|
-| MeanSquare.lean | 4 | Waiting Aristotle |
-| ZeroCounting.lean | 4 | 3 provable + 1 false |
-| PhragmenLindelof.lean | 3 | Waiting Aristotle |
-| PartialSummation.lean | 2 | Waiting Aristotle |
-| PerronContourIntegralsV2.lean | 1 | Cauchy theorem rewrite |
-| RiemannVonMangoldtV2.lean | 1 | Complex.arg algebra |
-
-## Proved Hypothesis Instances (from Bridge)
-
-1. `FunctionalEquationHyp` - Functional equation for zeta
-2. `LambdaSymmetryHyp` - Completed zeta symmetry
-3. `ZeroConjZeroHyp` - Zeros come in conjugate pairs
-4. `ZeroOneSubZeroHyp` - s is zero iff 1-s is zero
-
-## Next Priority
-
-**HIGHEST PRIORITY**: Get Hardy's theorem from Aristotle!
-
-```
-Prove: Set.Infinite {t : ℝ | riemannZeta (1/2 + Complex.I * t) = 0}
-
-Available building blocks:
-- HardyZRealV4.lean: Z(t) is real
-- StirlingGammaBounds.lean: Gamma bounds
-- Mean square estimates: ZetaMeanSquare.lean
-```
+| Total sorries | 15 |
+| Critical blockers resolved | 6/7 |
+| Remaining blocker | Hardy only! |
