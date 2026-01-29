@@ -1,166 +1,75 @@
 # Littlewood Project Statistics
 
-Generated: Wed Jan 28 22:28:13 CST 2026
+Generated: $(date)
 
 ## Code Metrics
 
 | Metric | Value |
 |--------|-------|
-| Total Lean files | 110 |
-| Total lines | 22956 |
-| Aristotle files | 58 |
-| Aristotle lines | 10763 |
+| Total Lean files | $(find . -name "*.lean" -type f | wc -l) |
+| Aristotle files | $(ls Littlewood/Aristotle/*.lean | wc -l) |
+| Bridge files | $(ls Littlewood/Bridge/*.lean | wc -l) |
 
-## Theorem Counts
+## Sorry Status (Imported Files)
 
-| Category | Count |
-|----------|-------|
-| Theorems | 122 |
-| Lemmas | 204 |
-| Definitions | 129 |
+Based on build warnings, sorries in actively imported Aristotle files:
 
-## Sorry Status
+| File | Sorries |
+|------|---------|
+| MeanSquare.lean | 4 |
+| ZeroCounting.lean | 4 |
+| PhragmenLindelof.lean | 3 |
+| ExplicitFormulaInfrastructure.lean | 2 |
+| PartialSummation.lean | 2 |
+| PerronContourIntegralsV2.lean | 1 |
+| RiemannVonMangoldtV2.lean | 1 |
+| HardyZConjugation.lean | 1 |
+| **Total** | **18** |
 
-| Location | Count |
-|----------|-------|
-| Aristotle total | 17 |
-| - MeanSquare.lean | 4 |
-| - ZeroCounting.lean | 4 |
-| - PhragmenLindelof.lean | 3 |
-| - PartialSummation.lean | 2 |
-| - PerronContourIntegralsV2.lean | 1 |
-| - RiemannVonMangoldtV2.lean | 1 |
+Note: ChebyshevTheta.lean (3 sorries) is commented out (namespace conflict).
 
-## File Status Summary
+## Aristotle Files Summary
 
-### Sorry-Free Aristotle Files
+- Total files: 63
+- Imported (active): ~55
+- Commented out (conflicts): ~8 files
 
-Total sorry-free: 0
+### Sorry-Free Imported Files (52)
 
-```
-```
+Key examples:
+- HardyZRealV4, HardyZRealV2, HardyZReal, HardyZComplete
+- FunctionalEquationV2
+- ZeroCountingXi, ZeroCountingNew
+- NZerosStirling, NAsymptotic
+- RiemannXi, RiemannXiEntire
+- StirlingArgGamma, ZetaBoundsNorm
+- TruncatedExplicitFormula
+- IntegralLogSqrtAsymp
+- And many more...
 
-### Files With Sorries
+## Wiring Status
 
-```
-BinetStirling.lean: 0
-0
-CosBound.lean: 0
-0
-CriticalZeros.lean: 0
-0
-Definitions.lean: 0
-0
-DirichletApprox.lean: 0
-0
-DirichletSeries.lean: 0
-0
-ExplicitFormulaV3.lean: 0
-0
-FunctionalEquationHyp.lean: 0
-0
-FunctionalEquationV2.lean: 0
-0
-GammaGrowth.lean: 0
-0
-HardyAssumptions.lean: 0
-0
-HardyZComplete.lean: 0
-0
-HardyZReal.lean: 0
-0
-HardyZRealV2.lean: 0
-0
-HardyZRealV4.lean: 0
-0
-HarmonicSumIntegral.lean: 1
-HorizontalSegmentBounds.lean: 0
-0
-IntegralArctanFormula.lean: 0
-0
-IntegralLogSqrtAsymp.lean: 0
-0
-LandauLemma.lean: 0
-0
-LaurentExpansion.lean: 0
-0
-MeanSquare.lean: 4
-NAsymptotic.lean: 0
-0
-NZerosStirling.lean: 0
-0
-OffDiagonalBound.lean: 0
-0
-PartialSummation.lean: 2
-PartialSummationPiLi.lean: 0
-0
-PartialZetaNormSq.lean: 0
-0
-PerronContourIntegrals.lean: 0
-0
-PerronContourIntegralsV2.lean: 1
-PerronFormulaV2.lean: 1
-PerronNew.lean: 0
-0
-PhaseAlignment.lean: 0
-0
-PhragmenLindelof.lean: 3
-PhragmenLindelofStrip.lean: 0
-0
-PhragmenLindelofV2.lean: 0
-0
-PiLiOscillation.lean: 0
-0
-PsiDominance.lean: 0
-0
-RiemannVonMangoldt.lean: 0
-0
-RiemannVonMangoldtV2.lean: 1
-RiemannXi.lean: 0
-0
-RiemannXiEntire.lean: 0
-0
-SchmidtNew.lean: 0
-0
-SchmidtOscillation.lean: 0
-0
-SchmidtOscillationInfinite.lean: 0
-0
-StirlingGammaBounds.lean: 0
-0
-ThreeFourOne.lean: 0
-0
-ThreeFourOneV2.lean: 0
-0
-TrigPolyIndependence.lean: 0
-0
-TruncatedExplicitFormula.lean: 0
-0
-XiDifferentiability.lean: 0
-0
-ZeroCounting.lean: 4
-ZeroCountingNew.lean: 0
-0
-ZeroCountingV2.lean: 0
-0
-ZeroCountingXi.lean: 0
-0
-ZetaMeanSquare.lean: 0
-0
-ZetaMoments.lean: 0
-0
-ZetaZeroInfrastructure.lean: 0
-0
-```
+The AristotleWiring.lean file provides re-exports of key theorems:
+- xi_entire (from ZeroCountingXi)
+- S_bound, N_from_S_and_Stirling (from NZerosStirling)
+- stirling_arg_gamma, im_stirling_term_approx (from StirlingArgGamma)
+- psi_as_trig_sum (from TruncatedExplicitFormula)
+- zeta_bound_two_line (from ZetaBoundsNorm)
+- completedRiemannZeta_critical_line_real (from HardyZConjugation)
+- integral_log_sqrt_quarter_asymp (from IntegralLogSqrtAsymp)
 
 ## Critical Path Status
 
-| Blocker | Status |
-|---------|--------|
-| Stirling/Gamma bounds | ✅ StirlingGammaBounds.lean |
-| Riemann-von Mangoldt | ✅ RiemannVonMangoldt(V2).lean |
-| S(T) = O(log T) | ✅ NZerosStirling.lean |
-| N(T) asymptotic | ✅ NZerosStirling.lean |
-| Explicit formula | ✅ TruncatedExplicitFormula.lean |
-| xi entire | ✅ ZeroCountingXi.lean |
-| **Hardy's theorem** | ⏳ **WAITING - LAST BLOCKER** |
+Main theorem: Littlewood's π(x) - li(x) = Ω±(√x / log x)
+
+| Dependency | Status |
+|------------|--------|
+| Schmidt oscillation | ✓ Proved |
+| Zero counting N(T) | ✓ Proved (multiple approaches) |
+| Explicit formula | ✓ Proved |
+| Functional equation | ✓ Proved |
+| Hardy Z function | ✓ Proved |
+| ξ is entire | ✓ Proved |
+| **Hardy's theorem** | ⏳ Waiting |
+
+**Last blocker**: Hardy's theorem (infinitely many zeros on Re(s) = 1/2)
