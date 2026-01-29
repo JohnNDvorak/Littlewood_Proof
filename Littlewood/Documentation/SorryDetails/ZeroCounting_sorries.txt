@@ -1,0 +1,43 @@
+/-- xi_Mathlib equals xi_Mathlib_corrected for s ≠ 0, 1 -/
+theorem xi_Mathlib_eq_corrected (s : ℂ) (h0 : s ≠ 0) (h1 : s ≠ 1) :
+    xi_Mathlib s = xi_Mathlib_corrected s := by
+  unfold xi_Mathlib xi_Mathlib_corrected
+  have h := completedRiemannZeta_eq s
+  -- completedRiemannZeta s = completedRiemannZeta₀ s - 1/s - 1/(1-s)
+  rw [h]
+  have hs1 : 1 - s ≠ 0 := by intro heq; apply h1; rw [sub_eq_zero] at heq; exact heq.symm
+  field_simp [h0, hs1]
+  ring
+
+/-- DEPRECATED: xi_Mathlib as literally defined is NOT differentiable at s=0,1.
+    Use xi_Mathlib_corrected_entire instead.
+
+    The issue: completedRiemannZeta takes a finite value at its poles, so
+    xi_Mathlib(1) = 0 while lim_{s→1} xi_Mathlib(s) = 1/2, making it discontinuous.
+    See XiDifferentiability.lean for the full proof of non-differentiability. -/
+theorem xi_Mathlib_differentiable : Differentiable ℂ xi_Mathlib := by
+  -- FALSE as stated. See xi_Literal_not_differentiable in XiDifferentiability.lean.
+  -- The corrected version xi_Mathlib_corrected IS entire.
+  sorry
+
+/-- N(T) via argument principle -/
+theorem zetaZeroCount_via_argument (T : ℝ) (hT : 0 < T) :
+    ∃ S : ℝ, |S| ≤ Real.log T ∧
+    (zetaZeroCount T : ℝ) = (1/Real.pi) * (Complex.arg (xi_Mathlib (1/2 + T * I))) + 1 + S := by
+  sorry
+
+/-- Riemann-von Mangoldt formula: N(T) ~ (T/2π) log(T/2πe) -/
+theorem riemann_von_mangoldt (T : ℝ) (hT : 1 < T) :
+    ∃ C : ℝ, |(zetaZeroCount T : ℝ) - (T / (2 * Real.pi)) * Real.log (T / (2 * Real.pi * Real.exp 1))| ≤ C * Real.log T := by
+  sorry
+
+/-- Asymptotic: N(T) = (T/2π) log T - (T/2π) log(2πe) + O(log T) -/
+theorem zetaZeroCount_asymp :
+    (fun T => (zetaZeroCount T : ℝ) - (T / (2 * Real.pi)) * Real.log T) =O[atTop]
+    (fun T => Real.log T) := by
+  sorry
+
+/-- The completed zeta equals Gammaℝ times zeta for Re(s) > 0 -/
+lemma completedRiemannZeta_eq_Gammaℝ_mul_riemannZeta (s : ℂ) (hs : 0 < s.re) (_hs1 : s ≠ 1) :
+    completedRiemannZeta s = Gammaℝ s * riemannZeta s := by
+  have hs_ne : s ≠ 0 := by intro h; rw [h] at hs; simp at hs
