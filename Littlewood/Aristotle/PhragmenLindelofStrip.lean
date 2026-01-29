@@ -104,7 +104,28 @@ theorem is_bounded_exp_eps_sq_mul {f : ℂ → ℂ} {a b ε : ℝ} (hab : a < b)
         intros z hz
         -- The key is that ‖z‖ ≤ √(max|a||b|² + z.im²) when z.re ∈ (a,b)
         -- Then (1+‖z‖)^k ≤ (1+√...)^k by monotonicity
-        sorry
+        have h_norm_le : ‖z‖ ≤ Real.sqrt ((max (|a|) (|b|)) ^ 2 + z.im ^ 2) := by
+          -- ‖z‖ = √(z.re² + z.im²) and z.re² ≤ max(|a|,|b|)² when a < z.re < b
+          have hre_bound : z.re ^ 2 ≤ (max (|a|) (|b|)) ^ 2 := by
+            have h1 : |z.re| ≤ max (|a|) (|b|) := by
+              rw [abs_le]
+              constructor
+              · nlinarith [le_max_left (|a|) (|b|), neg_abs_le a, le_of_lt hz.1]
+              · nlinarith [le_max_right (|a|) (|b|), le_abs_self b, le_of_lt hz.2]
+            nlinarith [sq_abs z.re, abs_nonneg z.re, abs_nonneg (max |a| |b|)]
+          calc ‖z‖ = Real.sqrt (z.re ^ 2 + z.im ^ 2) := by
+                rw [Complex.norm_def, Complex.normSq_apply]; ring_nf
+            _ ≤ Real.sqrt ((max |a| |b|) ^ 2 + z.im ^ 2) := by
+                apply Real.sqrt_le_sqrt; linarith
+        have h_mono : (1 + ‖z‖) ^ k ≤ (1 + Real.sqrt ((max (|a|) (|b|)) ^ 2 + z.im ^ 2)) ^ k := by
+          gcongr
+        calc ‖f z * Complex.exp (ε * z ^ 2)‖
+            ≤ (1 + ‖z‖) ^ k * Real.exp (ε * (max (|a|) (|b|)) ^ 2) * Real.exp (-ε * z.im ^ 2) := h_bound z hz
+          _ ≤ (1 + Real.sqrt ((max (|a|) (|b|)) ^ 2 + z.im ^ 2)) ^ k * Real.exp (ε * (max (|a|) (|b|)) ^ 2) * Real.exp (-ε * z.im ^ 2) := by
+              apply mul_le_mul_of_nonneg_right
+              apply mul_le_mul_of_nonneg_right h_mono
+              exact Real.exp_nonneg _
+              exact Real.exp_nonneg _
       -- Since $(1 + \sqrt{(max(|a|, |b|))^2 + (\Im z)^2})^k \exp(-ε (\Im z)^2)$ is bounded, we can conclude that $\|f(z) \exp(\varepsilon z^2)\|$ is bounded.
       have h_bounded : ∃ C : ℝ, ∀ z : ℝ, (1 + Real.sqrt ((max (|a|) (|b|)) ^ 2 + z ^ 2)) ^ k * Real.exp (-ε * z ^ 2) ≤ C := by
         -- We'll use the fact that $(1 + \sqrt{(max(|a|, |b|))^2 + z^2})^k \exp(-ε z^2)$ is bounded.

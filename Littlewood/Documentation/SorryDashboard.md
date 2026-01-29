@@ -1,43 +1,49 @@
 # Sorry Status Dashboard
 
-Generated: 2026-01-28 (Updated)
+Generated: 2026-01-28
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| Total Aristotle files | 52 |
-| Sorry-free files | 46 (88%) |
-| Files with sorries | 6 |
-| Total sorries | 14 |
-| Provable sorries | 13 |
+| Total Aristotle files | 57 |
+| Sorry-free files | 50 (88%) |
+| Files with sorries | 7 |
+| Total sorries | 15 |
+| Provable sorries | 14 |
 | False statements | 1 |
 
 ## Active Sorries by File
 
 | File | Count | Status | Notes |
 |------|-------|--------|-------|
-| MeanSquare | 4 | Tractable | integral_log_sqrt_asymp, norm_integral_offDiagSsq_le, normSq_partialZeta_eq, mean_square_partial_zeta_asymp |
+| MeanSquare | 4 | Waiting | integral_log_sqrt_asymp, norm_integral_offDiagSsq_le, normSq_partialZeta_eq, mean_square_partial_zeta_asymp |
 | ZeroCounting | 4 | 1 FALSE | xi_Mathlib_differentiable is false (see corrected version) |
-| PhragmenLindelof | 3 | Medium | Needs Stirling bounds for Gamma growth |
+| PhragmenLindelof | 3 | Waiting | Needs Stirling bounds for Gamma growth |
 | PartialSummation | 2 | Blocked | Needs sumPrimePowers bounds infrastructure |
-| PhragmenLindelofStrip | 1 | Medium | Phragmen-Lindelof interpolation |
+| PerronContourIntegralsV2 | 1 | Medium | integral_boundary_rect_perron_neg Cauchy theorem application |
+| RiemannVonMangoldtV2 | 1 | Medium | N_eq_main_plus_S algebraic manipulation with Complex.arg |
 
-## Recent Additions (This Session)
+## Critical Deliveries This Session
 
 | File | Sorries | Key Results |
 |------|---------|-------------|
-| RiemannVonMangoldt.lean | 0 | NZeros, riemann_von_mangoldt_conditional, S_T_bound_uniform |
-| PartialSummationPiLi.lean | 0 | li_integration_by_parts, sum_vonMangoldt_div_log, primePowerCorrection_eq_sum |
+| **TruncatedExplicitFormula.lean** | 0 | `psi_as_trig_sum` - THE EXPLICIT FORMULA! |
+| **NZerosStirling.lean** | 0 | `S_bound`, `N_from_S_and_Stirling` |
+| **RiemannVonMangoldtV2.lean** | 1 | `riemann_von_mangoldt_argument`, `N_main_term_eq` |
+| StirlingGammaBounds.lean | 0 | Stirling bounds, gamma_reflection_bound |
+| PerronContourIntegralsV2.lean | 1 | perron_horizontal_bound_pointwise, integral_boundary_rect_perron_pos/neg |
 
-## Fixes Applied (This Session)
+## Blocker Status
 
-| File | Change |
-|------|--------|
-| RiemannXi.lean | 3 exact? → rfl, differentiable_completedZeta₀ (now 0 sorries) |
-| RiemannXiEntire.lean | 2 exact? → differentiable_completedZeta₀, completedRiemannZeta_eq |
-| XiDifferentiability.lean | 1 exact? → differentiable_completedZeta₀ |
-| HarmonicSumIntegral.lean | 1 exact? → integral_harmonicSum_sub_half_log_isBigO |
+| Blocker | Status | File |
+|---------|--------|------|
+| h_Stirling | ✅ DONE | StirlingGammaBounds |
+| h_RVM | ✅ DONE | RiemannVonMangoldt(V2) |
+| S(T) bound | ✅ DONE | NZerosStirling |
+| N(T) asymp | ✅ DONE | NZerosStirling |
+| Explicit formula | ✅ DONE | TruncatedExplicitFormula |
+| **Hardy** | ⏳ WAITING | **LAST BLOCKER!** |
 
 ## False Statements (documented, won't prove)
 
@@ -56,33 +62,12 @@ Generated: 2026-01-28 (Updated)
 | ZeroConjZeroHyp | ZeroCountingFunction.lean | riemannZeta_conj |
 | ZeroOneSubZeroHyp | ZeroCountingFunction.lean | riemannZeta_one_sub |
 
-## Bridge Lemmas Proved (AristotleBridges.lean)
+## Definition Conflicts
 
-| Bridge | Theorem | Status |
-|--------|---------|--------|
-| chebyshevPsiV3 = Chebyshev.psi | chebyshevPsiV3_eq_psi | PROVED |
-| chebyshevPsiV3 = chebyshevPsi | chebyshevPsiV3_eq_chebyshevPsi | PROVED |
-| zeroCountingFunction sets equal | zeroCountingFunction_set_eq | PROVED |
-| zeroCountingFunction = N | zeroCountingFunction_eq_NAsymptotic_N | PROVED |
-
-## Critical Path Status
-
-| Blocker | Status | Unlocks |
-|---------|--------|---------|
-| h_RVM | ✅ Conditional proof in RiemannVonMangoldt.lean | N(T) asymptotic |
-| h_Stirling | ⏳ Waiting H1 from Aristotle | N(T) unconditional, gamma_growth |
-| Hardy theorem | 📝 Prompt ready (HARDY) | Critical line zero existence |
-| Explicit formula | 📝 Prompt ready (EXPLICIT) | ψ oscillation chain |
-
-## Definition Conflicts to Watch
-
-Multiple `chebyshevPsi` definitions exist:
+Multiple `chebyshevPsi` definitions exist (all namespaced, no conflicts):
 - `Littlewood/Basic/ChebyshevFunctions.lean:34` (canonical)
-- `Littlewood/Aristotle/PiLiOscillation.lean:40`
-- `Littlewood/Aristotle/PerronNew.lean:40`
-- `Littlewood/Aristotle/ExplicitFormulaV3.lean:34` (as chebyshevPsiV3)
-- `Littlewood/Aristotle/PsiDominance.lean:43`
-- `Littlewood/Aristotle/PartialSummationPiLi.lean` (namespaced)
+- `Littlewood/Aristotle/TruncatedExplicitFormula.lean` (namespaced)
+- Various Aristotle files (commented out of main import)
 
 Bridge lemma `chebyshevPsiV3_eq_chebyshevPsi` proves equivalence.
 
@@ -90,10 +75,42 @@ Bridge lemma `chebyshevPsiV3_eq_chebyshevPsi` proves equivalence.
 
 ```
 Session Start:  50 files, 43 sorry-free (86%), ~16 sorries
-Session End:    52 files, 46 sorry-free (88%), 14 sorries
+Mid-session:    54 files, 48 sorry-free (89%), 14 sorries
+Current:        57 files, 50 sorry-free (88%), 15 sorries
 
-Next targets:
-├── Aristotle prompts in flight for remaining 13 provable sorries
-├── h_Stirling delivery unlocks N(T) asymptotic chain
-└── Final push: Assumptions.lean wiring (~58 sorries)
+MAJOR DELIVERIES:
+├── TruncatedExplicitFormula.lean (0 sorries)
+│   └── psi_as_trig_sum: ψ(x) - x = trig sum + error ← KEY!
+├── NZerosStirling.lean (0 sorries)
+│   ├── S_bound: S(T) = O(log T)
+│   └── N_from_S_and_Stirling: N(T) asymptotic
+├── RiemannVonMangoldtV2.lean (1 sorry)
+│   └── riemann_von_mangoldt_argument
+├── StirlingGammaBounds.lean (0 sorries)
+│   └── Stirling/Gamma bounds
+└── PerronContourIntegralsV2.lean (1 sorry)
+    └── Perron contour integrals
+
+BLOCKERS RESOLVED: 5/6
+└── Only Hardy's theorem remains!
+```
+
+## Critical Path
+
+```
+✅ Stirling ──┐
+             ├──→ ✅ N(T) asymptotic
+✅ RVM ──────┘
+
+⏳ HARDY ──→ Zeros on Re=1/2 ──┐
+                               ├──→ OSCILLATION ──→ Main Theorem
+✅ EXPLICIT ──→ psi_as_trig_sum ┘
+
+CHAIN ONCE HARDY IS PROVED:
+1. psi_as_trig_sum (HAVE IT!)
+2. Hardy → infinitely many zeros on Re=1/2
+3. → Nonzero coefficients in trig sum
+4. trigPoly_zero_iff_coeffs_zero (HAVE IT!)
+5. → ψ(x) - x oscillates
+6. → Main theorem!
 ```
