@@ -56,6 +56,7 @@ import Littlewood.Aristotle.CriticalZeros          -- Critical zeros (0 sorries)
 import Littlewood.Aristotle.OffDiagonalBound       -- Off-diagonal ≤ 8N² (0 sorries) ✓
 import Littlewood.Aristotle.OffDiagonalIntegralV2  -- Off-diagonal integral ≤ CN² (0 sorries) ✓
 import Littlewood.Aristotle.ThetaLinearBound       -- θ(x) = O(x) (2 sorries)
+import Littlewood.Aristotle.PsiThetaBound          -- |ψ(x) - θ(x)| ≤ C√x (1 sorry)
 import Littlewood.Aristotle.HarmonicSumIntegral    -- ∫H_{N(t)} = Θ(T log T) (0 sorries) ✓
 import Littlewood.Aristotle.HorizontalSegmentBounds -- Horizontal segment bounds (0 sorries) ✓
 import Littlewood.Aristotle.PerronContourIntegrals -- Perron contour integrals (0 sorries) ✓
