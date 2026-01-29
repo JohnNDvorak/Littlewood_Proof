@@ -79,9 +79,14 @@ import Littlewood.Aristotle.RiemannVonMangoldt    -- Riemann-von Mangoldt N(T) f
 import Littlewood.Aristotle.RiemannVonMangoldtV2  -- R-vM formula v2 with xi, ImLogGamma (1 sorry)
 import Littlewood.Aristotle.NZerosStirling        -- N(T) from S(T) and Stirling (0 sorries) ✓
 import Littlewood.Aristotle.TruncatedExplicitFormula -- Truncated explicit formula for psi (0 sorries) ✓
+import Littlewood.Aristotle.StirlingArgGamma      -- Stirling arg Gamma bounds (0 sorries) ✓
+import Littlewood.Aristotle.ZetaBoundsNorm        -- Zeta norm bounds, functional eq (0 sorries) ✓
+import Littlewood.Aristotle.HardyZConjugation     -- Hardy Z, completedZeta conjugation (1 sorry)
+import Littlewood.Aristotle.ExplicitFormulaInfrastructure -- Zeta zeros finite, explicit formula (2 sorries)
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
+-- import Littlewood.Aristotle.ChebyshevTheta     -- redefines psi, theta (3 sorries) - KEY: psi_theta_bound, theta_le_linear
 -- import Littlewood.Aristotle.PiLiOscillation     -- redefines chebyshevPsi, li
 -- import Littlewood.Aristotle.PsiDominance        -- redefines chebyshevPsi
 -- import Littlewood.Aristotle.PerronNew           -- redefines chebyshevPsi
