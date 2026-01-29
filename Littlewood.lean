@@ -40,6 +40,7 @@ import Littlewood.Aristotle.SchmidtNew             -- Schmidt oscillation (0 sor
 
 -- Zeta infrastructure (no conflicts with Basic/)
 import Littlewood.Aristotle.ZeroCountingNew        -- Zero counting N(T) (0 sorries) ✓
+import Littlewood.Aristotle.ZeroCountingXi         -- xi entire, zero counting (0 sorries) ✓
 -- import Littlewood.Aristotle.ZeroCountingV2      -- conflicts with ZeroCountingNew (NZeros)
 import Littlewood.Aristotle.ZetaZeroInfrastructure -- Zero infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.NAsymptotic            -- N(T) asymptotic (0 sorries) ✓
@@ -135,8 +136,8 @@ The main theorems are proved assuming ~58 hypothesis classes (classical theorems
 not yet in Mathlib). See `Assumptions.lean` for the full list.
 
 ### Aristotle Files (from Harmonic)
-- Total: 57 files (+ 3 deprecated)
-- Sorry-free: 50 files (88%)
+- Total: 58 files (+ 3 deprecated)
+- Sorry-free: 51 files (88%)
 - With sorries: 7 files (15 sorries total)
 
 ## References

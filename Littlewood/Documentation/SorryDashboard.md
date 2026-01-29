@@ -6,12 +6,12 @@ Generated: 2026-01-28
 
 | Metric | Count |
 |--------|-------|
-| Total Aristotle files | 57 |
-| Sorry-free files | 50 (88%) |
+| Total Aristotle files | 58 |
+| Sorry-free files | 51 (88%) |
 | Files with sorries | 7 |
 | Total sorries | 15 |
 | Provable sorries | 14 |
-| False statements | 1 |
+| False statements | 1 (but see ZeroCountingXi for correct proof!) |
 
 ## Active Sorries by File
 
@@ -30,6 +30,7 @@ Generated: 2026-01-28
 |------|---------|-------------|
 | **TruncatedExplicitFormula.lean** | 0 | `psi_as_trig_sum` - THE EXPLICIT FORMULA! |
 | **NZerosStirling.lean** | 0 | `S_bound`, `N_from_S_and_Stirling` |
+| **ZeroCountingXi.lean** | 0 | `xi_entire`, `xi_Mathlib_differentiable` - xi is ENTIRE! |
 | **RiemannVonMangoldtV2.lean** | 1 | `riemann_von_mangoldt_argument`, `N_main_term_eq` |
 | StirlingGammaBounds.lean | 0 | Stirling bounds, gamma_reflection_bound |
 | PerronContourIntegralsV2.lean | 1 | perron_horizontal_bound_pointwise, integral_boundary_rect_perron_pos/neg |
