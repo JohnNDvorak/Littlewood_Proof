@@ -6,13 +6,21 @@ Generated: $(date)
 
 | Metric | Value |
 |--------|-------|
-| Total Lean files | $(find . -name "*.lean" -type f | wc -l) |
-| Aristotle files | $(ls Littlewood/Aristotle/*.lean | wc -l) |
-| Bridge files | $(ls Littlewood/Bridge/*.lean | wc -l) |
+| Total Lean files | $(find Littlewood -name "*.lean" | wc -l | tr -d ' ') |
+| Aristotle files | $(ls Littlewood/Aristotle/*.lean 2>/dev/null | wc -l | tr -d ' ') |
+| Bridge files | $(ls Littlewood/Bridge/*.lean 2>/dev/null | wc -l | tr -d ' ') |
+
+## Theorem Counts
+
+| Category | Count |
+|----------|-------|
+| Theorems | $(grep -r "^theorem" Littlewood/Aristotle/*.lean 2>/dev/null | wc -l | tr -d ' ') |
+| Lemmas | $(grep -r "^lemma" Littlewood/Aristotle/*.lean 2>/dev/null | wc -l | tr -d ' ') |
+| Definitions | $(grep -r "^def \|^noncomputable def " Littlewood/Aristotle/*.lean 2>/dev/null | wc -l | tr -d ' ') |
 
 ## Sorry Status (Imported Files)
 
-Based on build warnings, sorries in actively imported Aristotle files:
+Based on build warnings:
 
 | File | Sorries |
 |------|---------|
@@ -26,50 +34,40 @@ Based on build warnings, sorries in actively imported Aristotle files:
 | HardyZConjugation.lean | 1 |
 | **Total** | **18** |
 
-Note: ChebyshevTheta.lean (3 sorries) is commented out (namespace conflict).
+Note: ChebyshevTheta.lean (3 sorries) is commented out.
 
 ## Aristotle Files Summary
 
-- Total files: 63
-- Imported (active): ~55
-- Commented out (conflicts): ~8 files
+- Total: 64 files
+- Sorry-free (imported): ~53 (83%)
+- With sorries: 11 files
+- Commented out: ~8 files (namespace conflicts)
 
-### Sorry-Free Imported Files (52)
+## New Files This Session
 
-Key examples:
-- HardyZRealV4, HardyZRealV2, HardyZReal, HardyZComplete
-- FunctionalEquationV2
-- ZeroCountingXi, ZeroCountingNew
-- NZerosStirling, NAsymptotic
-- RiemannXi, RiemannXiEntire
-- StirlingArgGamma, ZetaBoundsNorm
-- TruncatedExplicitFormula
-- IntegralLogSqrtAsymp
-- And many more...
+- PartialZetaNormSqV2.lean (0 sorries) - |partial zeta|² expansion
 
-## Wiring Status
+## Bridge Files
 
-The AristotleWiring.lean file provides re-exports of key theorems:
-- xi_entire (from ZeroCountingXi)
-- S_bound, N_from_S_and_Stirling (from NZerosStirling)
-- stirling_arg_gamma, im_stirling_term_approx (from StirlingArgGamma)
-- psi_as_trig_sum (from TruncatedExplicitFormula)
-- zeta_bound_two_line (from ZetaBoundsNorm)
-- completedRiemannZeta_critical_line_real (from HardyZConjugation)
-- integral_log_sqrt_quarter_asymp (from IntegralLogSqrtAsymp)
+| File | Purpose |
+|------|---------|
+| AristotleBridges.lean | Connect Aristotle to hypotheses |
+| HypothesisInstances.lean | Proved instances |
+| AristotleHypothesisConnections.lean | Documentation |
+| AristotleWiring.lean | Master re-export file |
+| AllBridges.lean | Consolidated bridges |
+| HardyZUnified.lean | Unified Hardy Z exports |
 
 ## Critical Path Status
 
-Main theorem: Littlewood's π(x) - li(x) = Ω±(√x / log x)
-
 | Dependency | Status |
 |------------|--------|
-| Schmidt oscillation | ✓ Proved |
-| Zero counting N(T) | ✓ Proved (multiple approaches) |
-| Explicit formula | ✓ Proved |
-| Functional equation | ✓ Proved |
-| Hardy Z function | ✓ Proved |
-| ξ is entire | ✓ Proved |
-| **Hardy's theorem** | ⏳ Waiting |
+| Schmidt oscillation | ✓ |
+| Zero counting N(T) | ✓ |
+| Explicit formula | ✓ |
+| Functional equation | ✓ |
+| Hardy Z real | ✓ |
+| ξ entire | ✓ |
+| **Hardy's theorem** | ⏳ |
 
-**Last blocker**: Hardy's theorem (infinitely many zeros on Re(s) = 1/2)
+**Last blocker**: Hardy's theorem (infinitely many zeros on Re(s)=1/2)
