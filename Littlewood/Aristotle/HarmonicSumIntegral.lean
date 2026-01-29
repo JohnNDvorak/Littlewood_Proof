@@ -167,7 +167,7 @@ lemma integral_harmonicSum_asymp :
       have h_f_o : (fun T : ℝ => ∫ t in (1:ℝ)..T, (harmonicSum (N_truncation t) - 2⁻¹ * Real.log t)) =o[Filter.atTop] fun T => (T * Real.log T) := by
         -- Apply the theorem that states if a function is O(g) and g is o(h), then the function is o(h).
         have h_f_o : (fun T : ℝ => ∫ t in (1:ℝ)..T, (harmonicSum (N_truncation t) - 2⁻¹ * Real.log t)) =O[Filter.atTop] (fun T : ℝ => T) := by
-          exact?;
+          exact integral_harmonicSum_sub_half_log_isBigO
         exact h_f_o.trans_isLittleO ( T_isLittleO_T_log_T );
       -- The target integral is $f(T) + g(T)$.
       have h_target : (fun T : ℝ => ∫ t in (1:ℝ)..T, harmonicSum (N_truncation t)) = (fun T : ℝ => (∫ t in (1:ℝ)..T, (harmonicSum (N_truncation t) - 2⁻¹ * Real.log t)) + (∫ t in (1:ℝ)..T, 2⁻¹ * Real.log t)) := by
