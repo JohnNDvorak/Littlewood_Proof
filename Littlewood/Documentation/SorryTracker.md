@@ -6,15 +6,15 @@ Updated: 2026-01-29
 
 | Category | Count | Status |
 |----------|-------|--------|
-| Aristotle sorries | 23 | In progress (-4: integral_log_sqrt_asymp, completedRiemannZeta_conj, 2x ExplicitFormulaInfrastructure wired) |
+| Aristotle sorries | 22 | In progress (18 imported, 4 commented-out) |
 | Assumptions.lean sorries | 62 | Waiting for Aristotle + wiring |
 | Other sorries | ~61 | CoreLemmas (~46), Main (~9), other (~6) |
-| **TOTAL** | **~146** | |
+| **TOTAL** | **~145** | |
 | **Proved hypothesis instances** | **4** | |
 
 ---
 
-## Aristotle Sorries (23 across 11 files)
+## Aristotle Sorries (22 across 11 files, 18 imported + 4 commented-out)
 
 ### CompletedZetaCriticalLine (0 sorries) CLOSED
 ```
@@ -46,11 +46,10 @@ theorem HurwitzZeta_Lambda_0_conj
 ```
 **Priority**: MEDIUM (same technique as completedRiemannZeta_conj)
 
-### HarmonicSumIntegral (1 sorry)
+### HarmonicSumIntegral (0 sorries) CLOSED
 ```
--- harmonic sum integral bound
+-- No actual sorries (word "sorry" only in a comment)
 ```
-**Priority**: LOW
 
 ### MeanSquare (3 sorries, was 4)
 ```
