@@ -29,6 +29,7 @@ import Littlewood.Aristotle.HardyZRealV2           -- Hardy Z v2 (0 sorries) ✓
 import Littlewood.Aristotle.HardyZReal             -- Hardy Z original (0 sorries) ✓
 import Littlewood.Aristotle.HardyZComplete         -- Hardy Z complete (0 sorries) ✓
 import Littlewood.Aristotle.HardyAssumptions       -- Hardy assumptions (0 sorries) ✓
+import Littlewood.Aristotle.HardyInfrastructure    -- Hardy Z + hypotheses structure (0 sorries) ✓
 
 -- Functional equation (no conflicts)
 import Littlewood.Aristotle.FunctionalEquationV2   -- Functional equation (0 sorries) ✓
@@ -79,6 +80,7 @@ import Littlewood.Aristotle.BinetStirling          -- Binet/Stirling (0 sorries)
 import Littlewood.Aristotle.Definitions            -- Unified definitions (0 sorries) ✓
 import Littlewood.Aristotle.FunctionalEquationHyp  -- Functional equation hypothesis (0 sorries) ✓
 import Littlewood.Aristotle.IntegralLogSqrtAsymp  -- ∫log(√(1/4+t²)) = Θ(T log T) (0 sorries) ✓
+import Littlewood.Aristotle.IntegralLogAsymp     -- ∫log(√(t/2π)) = Θ(T log T) (0 sorries) ✓
 import Littlewood.Aristotle.GammaGrowth           -- Gamma growth bounds, harmonic sums (0 sorries) ✓
 import Littlewood.Aristotle.RiemannVonMangoldt    -- Riemann-von Mangoldt N(T) framework (0 sorries) ✓
 import Littlewood.Aristotle.RiemannVonMangoldtV2  -- R-vM formula v2 with xi, ImLogGamma (1 sorry)
