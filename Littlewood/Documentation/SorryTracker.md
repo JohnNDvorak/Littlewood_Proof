@@ -6,7 +6,7 @@ Updated: 2026-01-29
 
 | Category | Count | Status |
 |----------|-------|--------|
-| Aristotle sorries | 22 | In progress (18 imported, 4 commented-out) |
+| Aristotle sorries | 20 | In progress (16 imported, 4 commented-out) |
 | Assumptions.lean sorries | 62 | Waiting for Aristotle + wiring |
 | Other sorries | ~61 | CoreLemmas (~46), Main (~9), other (~6) |
 | **TOTAL** | **~145** | |
@@ -99,12 +99,10 @@ theorem N_eq_main_plus_S
 **Priority**: MEDIUM
 **Aristotle prompt**: Submitted
 
-### ThetaLinearBound (2 sorries)
+### ThetaLinearBound (0 sorries) CLOSED
 ```
-lemma prod_primes_divides_centralBinom
-    -- prod_{n<p<=2n} p | C(2n,n)
-lemma theta_two_mul_sub_theta_le
-    -- theta(2n) - theta(n) <= 2n*log(2)
+-- CLOSED: prod_primes_divides_centralBinom (wired via ThetaEquivalence bridge to V2)
+-- CLOSED: theta_two_mul_sub_theta_le (wired via ThetaEquivalence bridge to V2)
 ```
 **Priority**: HIGH (Chebyshev bound foundation)
 **Aristotle prompt**: Submitted
@@ -146,7 +144,7 @@ See HypothesisMapping.md for detailed breakdown by category:
 ### Phase 1: Current Aristotle batch (targeting -15 sorries)
 1. ~~completedRiemannZeta_conj (1)~~ DONE
 2. ChebyshevTheta sorries (3)
-3. ThetaLinearBound sorries (2)
+3. ~~ThetaLinearBound sorries (2)~~ DONE
 4. PhragmenLindelof sorries (3)
 5. ~~MeanSquare integral_log_sqrt_asymp (1)~~ DONE
 6. RiemannVonMangoldtV2 N_eq_main_plus_S (1)

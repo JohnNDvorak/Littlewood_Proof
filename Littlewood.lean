@@ -58,7 +58,7 @@ import Littlewood.Aristotle.ZetaZerosFiniteBelow   -- Finitely many zeros below 
 import Littlewood.Aristotle.ZetaZerosFiniteBelowV2 -- Finite zeros via isolated zeros principle (0 sorries) ✓
 import Littlewood.Aristotle.OffDiagonalBound       -- Off-diagonal ≤ 8N² (0 sorries) ✓
 import Littlewood.Aristotle.OffDiagonalIntegralV2  -- Off-diagonal integral ≤ CN² (0 sorries) ✓
-import Littlewood.Aristotle.ThetaLinearBound       -- θ(x) = O(x) (2 sorries)
+import Littlewood.Aristotle.ThetaLinearBound       -- θ(x) = O(x) (0 sorries) ✓
 import Littlewood.Aristotle.ThetaLinearBoundV2     -- θ(n) ≤ Cn via Chebyshev (0 sorries) ✓
 import Littlewood.Aristotle.ChebyshevThetaV2       -- ψ = Σ θ(n^{1/k}), θ diff ≤ log C(2n,n) (0 sorries) ✓
 import Littlewood.Aristotle.PsiThetaBound          -- |ψ(x) - θ(x)| ≤ C√x (1 sorry)
@@ -121,6 +121,8 @@ import Littlewood.Bridge.HypothesisInstances       -- All proved instances (0 so
 import Littlewood.Bridge.AristotleHypothesisConnections  -- Documentation (0 sorries) ✓
 import Littlewood.Bridge.AristotleWiring           -- Master wiring file (0 sorries) ✓
 import Littlewood.Bridge.ZeroCountingBridge        -- NZeros definition bridges (0 sorries) ✓
+import Littlewood.Bridge.ThetaEquivalence          -- theta ℝ→ℝ ↔ ℕ→ℝ equivalence (0 sorries) ✓
+import Littlewood.Bridge.WiringTests               -- Compilation tests for available theorems (0 sorries) ✓
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst

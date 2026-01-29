@@ -18,6 +18,7 @@ We conclude that $\theta(x) \le (4 \log 2) x$ for $x \ge 1$.
 -/
 
 import Mathlib
+import Littlewood.Aristotle.ThetaLinearBoundV2
 
 set_option linter.mathlibStandardSet false
 
@@ -88,13 +89,37 @@ lemma prod_primes_divides_centralBinom (n : ℕ) : ∏ p ∈ (Nat.primesBelow (2
       · exact h_div p hs.1.1 hs.1.2.1 hs.1.2.2;
       · assumption;
   convert h_prod_div _ _ using 1
-  sorry -- finset equality
+  -- membership: p ∈ primesBelow sdiff → Prime ∧ n < p ∧ p ≤ 2n
+  intro p hp
+  have hp' := Finset.mem_sdiff.mp hp
+  have ⟨hp_lt, hp_prime⟩ := Nat.mem_primesBelow.mp hp'.1
+  have hp_not := hp'.2
+  refine ⟨hp_prime, ?_, by omega⟩
+  by_contra h
+  push_neg at h
+  exact hp_not (Nat.mem_primesBelow.mpr ⟨by omega, hp_prime⟩)
 
 /-
 The difference theta(2n) - theta(n) is at most 2n log 2.
 -/
 lemma theta_two_mul_sub_theta_le (n : ℕ) : theta (2 * n) - theta n ≤ 2 * n * Real.log 2 := by
-  sorry -- Chebyshev's binomial coefficient argument
+  -- Use ThetaLinearBoundV2's sorry-free proof via definition equivalence
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · simp [theta, Nat.primesBelow]
+  · -- Bridge: theta(x) on ℝ = V2.theta on ℕ when x is a natural number
+    have h_eq : ∀ m : ℕ, theta (m : ℝ) = ThetaLinearBoundV2.theta m := by
+      intro m
+      unfold theta ThetaLinearBoundV2.theta
+      congr 1
+      have : ⌊(m : ℝ)⌋₊ = m := Nat.floor_natCast m
+      rw [this]
+      ext p
+      simp [Nat.primesBelow, Finset.mem_filter, Finset.mem_range]
+    rw [show (2 * (n : ℝ)) = ((2 * n : ℕ) : ℝ) from by push_cast; ring]
+    rw [h_eq, h_eq]
+    have := ThetaLinearBoundV2.theta_two_mul_sub_theta_le n hn
+    convert this using 1
+    push_cast; ring
 
 /-
 theta(2^k) is at most 2^(k+1) log 2.
