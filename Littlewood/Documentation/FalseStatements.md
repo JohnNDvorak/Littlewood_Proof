@@ -76,6 +76,37 @@ The file documents these as sorries, but they are actually provable:
 2. Update imports to use V2/V3/V4 versions
 3. Consider removing old files entirely after validation
 
+## 5. ZeroCounting.lean: xi_Mathlib_differentiable (FALSE)
+
+```lean
+theorem xi_Mathlib_differentiable : Differentiable ℂ xi_Mathlib
+-- where xi_Mathlib s = (1/2) * s * (s-1) * completedRiemannZeta s
+```
+
+**Why false**: `completedRiemannZeta` returns junk value at s=1, making
+`xi_Mathlib(1) = 0` while `lim_{s->1} xi_Mathlib(s) = 1/2` (discontinuous).
+
+**Already documented in file**: Lines 108-117 mark this as deprecated.
+`XiDifferentiability.lean` has proof of non-differentiability.
+
+**Correct version**: `ZeroCountingXi.xi_entire` uses `completedRiemannZeta₀`.
+Bridge via `xi_Mathlib_eq_corrected` (line 98) for s != 0, 1.
+
+## 6. PartialSummation.lean: psi_oscillation_implies_pi_li_oscillation (UNDERSPECIFIED)
+
+```lean
+theorem psi_oscillation_implies_pi_li_oscillation
+    (h_psi_pos : ∀ M, ∃ x > M, chebyshevPsi x - x > 0)
+    (h_psi_neg : ∀ M, ∃ x > M, chebyshevPsi x - x < 0) :
+    (∀ M, ∃ x > M, primeCountingReal x - li x > 0) ∧
+    (∀ M, ∃ x > M, primeCountingReal x - li x < 0)
+```
+
+**Issue**: Hypotheses only assert sign changes, not quantitative oscillation.
+Error terms T(x) and integral may dominate when ψ(x)-x is small.
+Needs Ω±(√x) bounds, not just sign change.
+Main proof path uses LittlewoodPi.lean's stronger Ω result instead.
+
 ## Version Guide
 
 | Definition/Theorem | Old File | New File | Notes |
