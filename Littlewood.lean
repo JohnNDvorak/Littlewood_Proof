@@ -161,9 +161,9 @@ The main theorems are proved assuming ~58 hypothesis classes (classical theorems
 not yet in Mathlib). See `Assumptions.lean` for the full list.
 
 ### Aristotle Files (from Harmonic)
-- Total: 58 files (+ 3 deprecated)
-- Sorry-free: 51 files (88%)
-- With sorries: 7 files (15 sorries total)
+- Total: 83 files (+ 3 deprecated)
+- Sorry-free: 72 files (86%)
+- With sorries: 11 files (21 sorries total, 1 false statement)
 
 ## References
 
