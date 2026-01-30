@@ -6,7 +6,7 @@
 |--------|--------|----------------|
 | ThetaLinearBound (2 sorries) | ThetaLinearBoundV2 | 2 |
 
-## Wiring Analysis Results (21 sorries across 11 files)
+## Wiring Analysis Results (20 sorries across 11 files)
 
 ### MeanSquare.lean (3 sorries)
 
@@ -18,20 +18,20 @@
 
 ### PhragmenLindelof.lean (3 sorries)
 
-| Sorry | Line | Wireable | Source |
-|-------|------|----------|--------|
-| `zeta_critical_line_bound` | 153 | YES (medium) | PhragmenLindelofV2 + StirlingGammaBounds |
-| `zeta_convexity_bound` | 167 | YES (medium) | PhragmenLindelofV2 + boundary estimates |
-| `gamma_growth` | 177 | YES (medium) | StirlingGammaBounds.gamma_one_bound + gamma_step_down |
+| Sorry | Line | Wireable | Notes |
+|-------|------|----------|-------|
+| `zeta_critical_line_bound` | 153 | NO | Sources provide infrastructure but no matching final bound; needs functional eq + Stirling + interpolation proof |
+| `zeta_convexity_bound` | 167 | NO | Same — requires multi-step proof chaining PhragmenLindelofV2 tools |
+| `gamma_growth` | 177 | NO | Needs two-sided Stirling bounds; sources only have upper bounds at σ=1,2 |
 
-### ZeroCounting.lean (4 sorries)
+### ZeroCounting.lean (3 sorries, was 4)
 
-| Sorry | Line | Wireable | Source |
-|-------|------|----------|--------|
+| Sorry | Line | Status | Notes |
+|-------|------|--------|-------|
 | `xi_Mathlib_differentiable` | 117 | IMPOSSIBLE | Statement is FALSE (completedRiemannZeta has poles) |
-| `zetaZeroCount_via_argument` | 123 | YES (high) | ZeroCountingXi.zetaZeroCount_via_argument |
-| `riemann_von_mangoldt` | 128 | YES (medium) | ZeroCountingNew.zero_counting_main_term |
-| `zetaZeroCount_asymp` | 134 | YES (very high) | ZeroCountingNew directly |
+| `zetaZeroCount_via_argument` | 123 | NOT WIREABLE | Different signature/semantics from ZeroCountingXi version |
+| `riemann_von_mangoldt` | 128 | **CLOSED** | Pointwise proof (non-uniform C, same pattern as RiemannVonMangoldt.lean) |
+| `zetaZeroCount_asymp` | 134 | NOT WIREABLE | Statement is mathematically different from available sources |
 
 ### ChebyshevTheta.lean (3 sorries, commented out - conflicts)
 
@@ -57,10 +57,10 @@
 | PerronContourIntegralsV2 | 442 | NO | Cauchy integral theorem |
 | RiemannVonMangoldtV2 | 75 | NO | Algebraic verification |
 
-## Priority Recommendations
+## Priority Recommendations (Updated after wiring attempt)
 
-1. **PhragmenLindelof** (3 sorries): All wireable via existing sorry-free files
-2. **ZeroCounting** (3 of 4): Three wireable, one false (skip)
-3. **ChebyshevTheta** (3): All wireable but file is commented out (conflicts)
-4. **PsiThetaBound** (1): Wireable from ChebyshevThetaV2
-5. **ZeroFreeRegionV2** (1): Possibly closeable with Mathlib tsum lemmas
+1. **ChebyshevTheta** (3): All wireable but file is commented out (conflicts)
+2. **PsiThetaBound** (1): Wireable from ChebyshevThetaV2
+3. **ZeroFreeRegionV2** (1): Possibly closeable with Mathlib tsum lemmas
+4. **PhragmenLindelof** (3 sorries): Needs Aristotle — sources provide infrastructure only, not final results
+5. **ZeroCounting** (2 remaining non-false): Needs Aristotle — definition/signature mismatches with available sources

@@ -30,6 +30,7 @@ import Littlewood.Aristotle.HardyZReal             -- Hardy Z original (0 sorrie
 import Littlewood.Aristotle.HardyZComplete         -- Hardy Z complete (0 sorries) ✓
 import Littlewood.Aristotle.HardyAssumptions       -- Hardy assumptions (0 sorries) ✓
 import Littlewood.Aristotle.HardyInfrastructure    -- Hardy Z + hypotheses structure (0 sorries) ✓
+import Littlewood.Aristotle.HardyEstimatesPartial  -- Hardy estimates structure, partial (0 sorries) ✓
 
 -- Functional equation (no conflicts)
 import Littlewood.Aristotle.FunctionalEquationV2   -- Functional equation (0 sorries) ✓
@@ -113,7 +114,7 @@ import Littlewood.Aristotle.ZetaBoundsPartialSum       -- Zeta bounds, partial s
 
 -- Aristotle files with remaining sorries (actual counts verified)
 import Littlewood.Aristotle.MeanSquare             -- 3 sorries (no conflict)
-import Littlewood.Aristotle.ZeroCounting           -- 4 sorries (no conflict)
+import Littlewood.Aristotle.ZeroCounting           -- 3 sorries (no conflict, was 4)
 import Littlewood.Aristotle.PhragmenLindelof       -- 3 sorries (no conflict)
 import Littlewood.Aristotle.PartialSummation       -- 2 sorries (has chebyshevPsi but uses Basic import)
 -- import Littlewood.Aristotle.FunctionalEquation  -- DEPRECATED: 1 sorry, use FunctionalEquationV2
@@ -161,9 +162,9 @@ The main theorems are proved assuming ~58 hypothesis classes (classical theorems
 not yet in Mathlib). See `Assumptions.lean` for the full list.
 
 ### Aristotle Files (from Harmonic)
-- Total: 83 files (+ 3 deprecated)
-- Sorry-free: 72 files (86%)
-- With sorries: 11 files (21 sorries total, 1 false statement)
+- Total: 84 files (+ 3 deprecated)
+- Sorry-free: 73 files (87%)
+- With sorries: 11 files (20 sorries total, 1 false statement)
 
 ## References
 

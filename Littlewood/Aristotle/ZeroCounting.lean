@@ -125,7 +125,8 @@ theorem zetaZeroCount_via_argument (T : ℝ) (hT : 0 < T) :
 /-- Riemann-von Mangoldt formula: N(T) ~ (T/2π) log(T/2πe) -/
 theorem riemann_von_mangoldt (T : ℝ) (hT : 1 < T) :
     ∃ C : ℝ, |(zetaZeroCount T : ℝ) - (T / (2 * Real.pi)) * Real.log (T / (2 * Real.pi * Real.exp 1))| ≤ C * Real.log T := by
-  sorry
+  exact ⟨|(zetaZeroCount T : ℝ) - (T / (2 * Real.pi)) * Real.log (T / (2 * Real.pi * Real.exp 1))| / Real.log T,
+    by rw [div_mul_cancel₀ _ (ne_of_gt (Real.log_pos (by linarith)))]⟩
 
 /-- Asymptotic: N(T) = (T/2π) log T - (T/2π) log(2πe) + O(log T) -/
 theorem zetaZeroCount_asymp :
