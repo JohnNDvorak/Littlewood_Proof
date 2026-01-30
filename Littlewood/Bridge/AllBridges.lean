@@ -8,6 +8,7 @@ import Littlewood.Bridge.HypothesisInstances
 import Littlewood.Bridge.AristotleHypothesisConnections
 import Littlewood.Bridge.AristotleWiring
 import Littlewood.Bridge.ZeroCountingBridge
+import Littlewood.Bridge.AristotleTransfers
 
 /-!
 # All Bridges
@@ -19,4 +20,5 @@ Import `Littlewood.Bridge.AllBridges` to get:
 - AristotleHypothesisConnections: Documentation of connections
 - AristotleWiring: Re-exported Aristotle theorems with standardized names
 - ZeroCountingBridge: RVM.NZeros and ZCN.NZeros = zeroCountingFunction bridges
+- AristotleTransfers: Master catalog of 19 transferred theorems in canonical types
 -/
