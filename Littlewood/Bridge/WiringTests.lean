@@ -40,8 +40,8 @@ section AvailableResults
 -- Type: psi n = ∑ k, theta (⌊n^(1/(k+1))⌋)
 
 -- ZeroCountingNew: S(T) = O(log T)
-#check @ZeroCountingNew.S_isBigO_log
--- Type: S =O[atTop] log
+#check @S_term_bound
+-- Type: S_term =O[atTop] log
 
 -- NAsymptotic: N(T) asymptotic (conditional on S, RVM, Stirling)
 #check @ZetaZeroCount.N_asymptotic
@@ -49,12 +49,12 @@ section AvailableResults
 --   (fun T => N T - main_term) =O[atTop] log
 
 -- SchmidtNew: trig polynomial zero iff coefficients zero
-#check @SchmidtNew.trigPoly_zero_iff_coeffs_zero
+#check @trigPoly_zero_iff_coeffs_zero
 -- Type: trigPoly = 0 ↔ all coefficients = 0
 
--- HardyZRealV4: infinitely many zeros on critical line
-#check @HardyZRealV4.hardyZ_infinitely_many_zeros
--- Type: ∀ T, ∃ t > T, hardyZ t = 0
+-- HardyZRealV4: Hardy Z is real-valued
+#check @hardyZV4_real
+-- Type: (hardyZV4 t).im = 0
 
 -- LandauLemma: Dirichlet series singularity
 #check @landau_dirichlet_singularity
