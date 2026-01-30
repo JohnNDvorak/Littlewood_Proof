@@ -96,6 +96,9 @@ import Littlewood.Aristotle.CompletedZetaCriticalLine -- Completed zeta real on 
 import Littlewood.Aristotle.ExplicitFormulaInfrastructure -- Zeta zeros finite, explicit formula (0 sorries) ✓
 import Littlewood.Aristotle.ZetaConjugation         -- Zeta/FE pair conjugation properties (0 sorries) ✓
 import Littlewood.Aristotle.DirichletSeriesConvergence -- Dirichlet series summability lemmas (0 sorries) ✓
+import Littlewood.Aristotle.HardyZContradiction       -- Hardy Z contradiction infrastructure (0 sorries) ✓
+import Littlewood.Aristotle.ZeroFreeRegionV2           -- Zero-free region / 3-4-1 infrastructure (1 sorry)
+import Littlewood.Aristotle.ZetaBoundsPartialSum       -- Zeta bounds, partial sums, harmonic bound (0 sorries) ✓
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
