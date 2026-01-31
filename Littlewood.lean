@@ -102,8 +102,8 @@ import Littlewood.Aristotle.ExplicitFormulaInfrastructure -- Zeta zeros finite, 
 import Littlewood.Aristotle.ZetaConjugation         -- Zeta/FE pair conjugation properties (0 sorries) ✓
 import Littlewood.Aristotle.DirichletSeriesConvergence -- Dirichlet series summability lemmas (0 sorries) ✓
 import Littlewood.Aristotle.HardyZContradiction       -- Hardy Z contradiction infrastructure (0 sorries) ✓
-import Littlewood.Aristotle.HardyZMeasurability       -- Hardy Z measurability/integrability (1 sorry)
-import Littlewood.Aristotle.ZetaConvexityStrip         -- Zeta PL convexity in critical strip (1 sorry)
+import Littlewood.Aristotle.HardyZMeasurability       -- Hardy Z measurability/integrability (0 sorries) ✓
+import Littlewood.Aristotle.ZetaConvexityStrip         -- Zeta PL convexity in critical strip (0 sorries) ✓
 import Littlewood.Aristotle.MeanSquarePartialSum       -- Mean square partial sum definitions (0 sorries) ✓
 import Littlewood.Aristotle.ZeroFreeRegionV2           -- Zero-free region / 3-4-1 infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundsPartialSum       -- Zeta bounds, partial sums, harmonic bound (0 sorries) ✓

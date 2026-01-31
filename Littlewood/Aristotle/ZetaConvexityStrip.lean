@@ -62,7 +62,7 @@ lemma zetaAuxG_cont_diff : DiffContOnCl ℂ zetaAuxG_cont (Complex.re ⁻¹' Set
     have h_cont_f : ContinuousOn zetaAuxF_cont (Complex.re ⁻¹' Set.Ioo 0 1 ∪ Complex.re ⁻¹' Set.Icc 0 1) := by
       have h_cont_f : ContinuousAt zetaAuxF_cont 1 := by
         have h_cont : Filter.Tendsto (fun s : ℂ => (s - 1) * riemannZeta s) (nhdsWithin 1 {1}ᶜ) (nhds 1) := by
-          sorry
+          exact riemannZeta_residue_one
         rw [ Metric.tendsto_nhdsWithin_nhds ] at h_cont;
         rw [ Metric.continuousAt_iff ];
         intro ε hε; rcases h_cont ε hε with ⟨ δ, hδ, H ⟩ ; use δ, hδ; intro x hx; by_cases hx' : x = 1 <;> simp_all +decide [ zetaAuxF_cont ] ;

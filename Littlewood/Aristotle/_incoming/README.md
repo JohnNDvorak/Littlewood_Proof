@@ -1,59 +1,51 @@
 # Aristotle Incoming Files
 
-When Aristotle returns a proof:
+*Updated 2026-01-31*
+
+## Intake Process
 
 1. Copy the output file here
-2. Check it compiles: `lake build` on the file
-3. Check for `sorry` count: `grep -c sorry filename.lean`
-4. If 0 sorries, move to main Aristotle directory
-5. Update Littlewood.lean imports
-6. Wire to existing sorries if applicable
-7. Update documentation
+2. Run `./intake.sh <filename>` for quick assessment
+3. Fix common issues:
+   - Add namespace if missing
+   - Resolve `exact?` calls (check if Mathlib has the theorem)
+   - Remove `#check`/`#print` debug lines
+   - Remove duplicate definitions (import from HardyEstimatesPartial etc.)
+4. Build: `lake env lean <file>`
+5. Move to `../` (main Aristotle directory)
+6. Add import to `Littlewood.lean` with sorry annotation
+7. Full build: `lake build`
+8. Wire to project (update bridges/instances)
+9. Commit with clear message and sorry count
 
-## Expected Returns
+## Priority Returns
 
-| Prompt | Target | Priority |
-|--------|--------|----------|
-| HARDY | Hardy's theorem | CRITICAL - Last blocker! |
-| M1-M4 | MeanSquare.lean sorries | High |
-| PL1-PL3 | PhragmenLindelof.lean sorries | High |
-| PS1-PS2 | PartialSummation.lean sorries | High |
-| Z1-Z3 | ZeroCounting.lean N(T) sorries | Medium |
-| RVM | RiemannVonMangoldtV2.lean | Medium |
-| PERRON | PerronContourIntegralsV2.lean | Low |
+| Prompt | Purpose | Priority | Impact |
+|--------|---------|----------|--------|
+| MeanSquareLowerBound | ∫\|Z\|² ≥ c·T·log T | CRITICAL | Fills BuildingBlocks field 4 |
+| HardyZIntegralBound | \|∫Z\| ≤ C·T^{1/2+ε} | CRITICAL | Fills BuildingBlocks field 5 |
+| HardyInfiniteZerosComplete | Final Hardy assembly | THE PRIZE | Closes HardyCriticalLineZerosHyp |
+| ZeroCountingArgument | N(T) arg principle | Medium | Closes ZeroCounting sorry |
+| ZetaResidueOne | (s-1)ζ(s) → 1 | DONE ✅ | Used Mathlib's riemannZeta_residue_one |
 
-## Integration Checklist
+## When Hardy Arrives
 
-For each incoming file:
+See `Documentation/HardyCompletionChecklist.md` for step-by-step.
 
-- [ ] File compiles with `lake build Littlewood.Aristotle.NewFile`
-- [ ] Sorry count: `grep -c sorry NewFile.lean`
-- [ ] No namespace conflicts with existing files
-- [ ] No definition conflicts (check DefinitionXRef.md)
-- [ ] Added to Littlewood.lean imports
-- [ ] Sorries wired where applicable
-- [ ] SorryDashboard.md updated
-- [ ] BlockerStatus.md updated if relevant
+Key: Verify it proves infinitely many sign changes of Z(t), then:
+1. Wire to BuildingBlocks (HardyBuildingBlocksInstance.lean)
+2. Close HardyCriticalLineZerosHyp (HardyCriticalLineWiring.lean)
+3. Cascade through dependent assumptions
 
-## Hardy Integration (When It Arrives)
+## Current Active Sorries (12 across 6 Aristotle files)
 
-Hardy's theorem is the LAST BLOCKER. When it arrives:
+| File | Sorries | Nature |
+|------|---------|--------|
+| MeanSquare.lean | 3 | Off-diagonal, normSq, main theorem |
+| ZeroCounting.lean | 3 | 1 DEPRECATED, 2 arg principle |
+| PhragmenLindelof.lean | 3 | Convexity, Stirling |
+| PartialSummation.lean | 1 | ψ → π-li transfer |
+| PerronContourIntegralsV2.lean | 1 | Cauchy integral |
+| HardyZConjugation.lean | 1 | Mellin identity |
 
-1. Verify it proves: `Set.Infinite {t : ℝ | riemannZeta (1/2 + Complex.I * t) = 0}`
-2. Check available building blocks:
-   - HardyZRealV4.lean: hardyZV4_real
-   - ZetaMeanSquare.lean: mean square estimates
-   - StirlingGammaBounds.lean: Stirling bounds
-3. After integration, the main theorem chain completes!
-
-## Current Sorries Summary
-
-| File | Sorries | Priority |
-|------|---------|----------|
-| MeanSquare.lean | 4 | High |
-| ZeroCounting.lean | 4 (1 FALSE) | Medium |
-| PhragmenLindelof.lean | 3 | High |
-| PartialSummation.lean | 2 | High |
-| RiemannVonMangoldtV2.lean | 1 | Medium |
-| PerronContourIntegralsV2.lean | 1 | Low |
-| **Total** | **15** | |
+Plus 1 in CoreLemmas/LandauLemma.lean and 58 in Assumptions.lean.
