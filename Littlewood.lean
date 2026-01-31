@@ -65,11 +65,12 @@ import Littlewood.Aristotle.OffDiagonalIntegralV2  -- Off-diagonal integral ≤ 
 import Littlewood.Aristotle.ThetaLinearBound       -- θ(x) = O(x) (0 sorries) ✓
 import Littlewood.Aristotle.ThetaLinearBoundV2     -- θ(n) ≤ Cn via Chebyshev (0 sorries) ✓
 import Littlewood.Aristotle.ChebyshevThetaV2       -- ψ = Σ θ(n^{1/k}), θ diff ≤ log C(2n,n) (0 sorries) ✓
-import Littlewood.Aristotle.PsiThetaBound          -- |ψ(x) - θ(x)| ≤ C√x (1 sorry)
+import Littlewood.Aristotle.PsiThetaBound          -- |ψ(x) - θ(x)| ≤ C√x (0 sorries) ✓
 import Littlewood.Aristotle.HarmonicSumIntegral    -- ∫H_{N(t)} = Θ(T log T) (0 sorries) ✓
 import Littlewood.Aristotle.HorizontalSegmentBounds -- Horizontal segment bounds (0 sorries) ✓
 import Littlewood.Aristotle.PerronContourIntegrals -- Perron contour integrals (0 sorries) ✓
 import Littlewood.Aristotle.PerronContourIntegralsV2 -- Perron contour integrals v2 (1 sorry)
+import Littlewood.Bridge.HardyAssemblyAttempt       -- Hardy assembly exploration (1 sorry)
 import Littlewood.Aristotle.StirlingGammaBounds  -- Stirling/Gamma bounds (0 sorries) ✓
 
 -- Analysis infrastructure (no conflicts)
@@ -90,7 +91,7 @@ import Littlewood.Aristotle.IntegralLogSqrtAsymp  -- ∫log(√(1/4+t²)) = Θ(T
 import Littlewood.Aristotle.IntegralLogAsymp     -- ∫log(√(t/2π)) = Θ(T log T) (0 sorries) ✓
 import Littlewood.Aristotle.GammaGrowth           -- Gamma growth bounds, harmonic sums (0 sorries) ✓
 import Littlewood.Aristotle.RiemannVonMangoldt    -- Riemann-von Mangoldt N(T) framework (0 sorries) ✓
-import Littlewood.Aristotle.RiemannVonMangoldtV2  -- R-vM formula v2 with xi, ImLogGamma (1 sorry)
+import Littlewood.Aristotle.RiemannVonMangoldtV2  -- R-vM formula v2 with xi, ImLogGamma (0 sorries) ✓
 import Littlewood.Aristotle.NZerosStirling        -- N(T) from S(T) and Stirling (0 sorries) ✓
 import Littlewood.Aristotle.TruncatedExplicitFormula -- Truncated explicit formula for psi (0 sorries) ✓
 import Littlewood.Aristotle.StirlingArgGamma      -- Stirling arg Gamma bounds (0 sorries) ✓
@@ -101,7 +102,7 @@ import Littlewood.Aristotle.ExplicitFormulaInfrastructure -- Zeta zeros finite, 
 import Littlewood.Aristotle.ZetaConjugation         -- Zeta/FE pair conjugation properties (0 sorries) ✓
 import Littlewood.Aristotle.DirichletSeriesConvergence -- Dirichlet series summability lemmas (0 sorries) ✓
 import Littlewood.Aristotle.HardyZContradiction       -- Hardy Z contradiction infrastructure (0 sorries) ✓
-import Littlewood.Aristotle.ZeroFreeRegionV2           -- Zero-free region / 3-4-1 infrastructure (1 sorry)
+import Littlewood.Aristotle.ZeroFreeRegionV2           -- Zero-free region / 3-4-1 infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundsPartialSum       -- Zeta bounds, partial sums, harmonic bound (0 sorries) ✓
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
@@ -115,11 +116,11 @@ import Littlewood.Aristotle.ZetaBoundsPartialSum       -- Zeta bounds, partial s
 -- import Littlewood.Aristotle.SchmidtOscillationInfinite -- uses local chebyshevPsi
 -- import Littlewood.Aristotle.PartialSummationPiLi -- redefines chebyshevPsi, primeCountingReal, li
 
--- Aristotle files with remaining sorries (actual counts verified)
-import Littlewood.Aristotle.MeanSquare             -- 3 sorries (no conflict)
-import Littlewood.Aristotle.ZeroCounting           -- 3 sorries (no conflict, was 4)
-import Littlewood.Aristotle.PhragmenLindelof       -- 3 sorries (no conflict)
-import Littlewood.Aristotle.PartialSummation       -- 2 sorries (has chebyshevPsi but uses Basic import)
+-- Aristotle files with remaining sorries (verified via lake build sorry warnings)
+import Littlewood.Aristotle.MeanSquare             -- 3 sorries: off-diag bound, normSq decomp, main thm
+import Littlewood.Aristotle.ZeroCounting           -- 3 sorries: xi diff (deprecated), arg principle, RvM
+import Littlewood.Aristotle.PhragmenLindelof       -- 3 sorries: critical line bound, convexity, Stirling
+import Littlewood.Aristotle.PartialSummation       -- 1 sorry: π(x)-li(x) sign changes from ψ(x)-x
 -- import Littlewood.Aristotle.FunctionalEquation  -- DEPRECATED: 1 sorry, use FunctionalEquationV2
 -- import Littlewood.Aristotle.PerronFormula       -- 5 sorries, redefines chebyshevPsi
 -- import Littlewood.Aristotle.PrimePowerSums      -- 4 sorries, redefines psi
@@ -166,9 +167,12 @@ The main theorems are proved assuming ~58 hypothesis classes (classical theorems
 not yet in Mathlib). See `Assumptions.lean` for the full list.
 
 ### Aristotle Files (from Harmonic)
-- Total: 84 files (+ 3 deprecated)
-- Sorry-free: 73 files (87%)
-- With sorries: 11 files (20 sorries total, 1 false statement)
+- Total: 87 files (+ 4 deprecated/templates)
+- Sorry-free: 80 active files (96%)
+- With sorries: 7 active files (13 sorry declarations)
+- Sorry breakdown: MeanSquare(3), ZeroCounting(3), PhragmenLindelof(3),
+  PartialSummation(1), PerronContourIntegralsV2(1), HardyZConjugation(1),
+  CoreLemmas/LandauLemma(1)
 
 ## References
 
