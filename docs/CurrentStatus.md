@@ -75,6 +75,7 @@ These files compile with 0 sorries and provide reusable infrastructure:
 - **HardyZRealV2.lean**: Hardy Z continuity and properties
 - **HardyZCauchySchwarz.lean**: Cauchy-Schwarz for integral estimates
 - **MeanSquareLowerBound.lean**: partial sum mean square lower bound
+- **L1LowerBound.lean**: mock proof of l1_lower_bound (Z(t)=t model, 0 sorries)
 
 ## Build Status
 

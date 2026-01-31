@@ -81,6 +81,6 @@ noncomputable instance : HardyInfiniteZeros.HardySetup where
   hardyZ_integrable := fun a b => hardyZ_continuous.intervalIntegrable a b
   mean_square_lower_bound := by sorry  -- NEEDS ARISTOTLE: approx functional equation
   first_moment_upper_bound := by sorry  -- NEEDS ARISTOTLE: convexity bound
-  l1_lower_bound := by sorry  -- NEEDS ARISTOTLE: mean_square + convexity
+  l1_lower_bound := by sorry  -- NEEDS ARISTOTLE: see L1LowerBound.lean for mock proof technique
 
 end HardySetupInstance
