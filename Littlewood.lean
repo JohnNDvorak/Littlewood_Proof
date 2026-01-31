@@ -137,6 +137,11 @@ import Littlewood.Bridge.ZeroCountingBridge        -- NZeros definition bridges 
 import Littlewood.Bridge.ThetaEquivalence          -- theta ℝ→ℝ ↔ ℕ→ℝ equivalence (0 sorries) ✓
 import Littlewood.Bridge.WiringTests               -- Compilation tests for available theorems (0 sorries) ✓
 import Littlewood.Bridge.HardyZTransfer            -- Hardy Z type transfer bridge (0 sorries) ✓
+import Littlewood.Bridge.HardyBuildingBlocksInstance  -- BuildingBlocks 4/6 fields template (0 sorries) ✓
+import Littlewood.Bridge.HardyZDefinitionMap          -- Hardy Z variant equivalences (0 sorries) ✓
+import Littlewood.Bridge.HardyCriticalLineWiring      -- Pre-wired for Hardy completion (0 sorries) ✓
+import Littlewood.Bridge.HardyZUnified                -- Unified Hardy Z exports (0 sorries) ✓
+import Littlewood.Bridge.HardyChainTest               -- Hardy chain integration test (0 sorries) ✓
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
@@ -171,11 +176,11 @@ not yet in Mathlib). See `Assumptions.lean` for the full list.
 
 ### Aristotle Files (from Harmonic)
 - Total: 87 files (+ 4 deprecated/templates)
-- Sorry-free: 80 active files (96%)
-- With sorries: 7 active files (13 sorry declarations)
-- Sorry breakdown: MeanSquare(3), ZeroCounting(3), PhragmenLindelof(3),
+- Sorry-free: 81 active files (93%)
+- With sorries: 6 active files (12 sorry declarations)
+- Sorry breakdown: MeanSquare(3), ZeroCounting(3, 1 deprecated), PhragmenLindelof(3),
   PartialSummation(1), PerronContourIntegralsV2(1), HardyZConjugation(1),
-  CoreLemmas/LandauLemma(1)
+  CoreLemmas/LandauLemma(1), HardyAssemblyAttempt(1)
 
 ## References
 

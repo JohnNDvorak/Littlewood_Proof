@@ -8,9 +8,10 @@
 |--------|-------|
 | Total Lean Files | ~148 |
 | Total Lines | ~29,000 |
-| Total Sorries (lake build) | 72 → **71** (closed ZetaConvexityStrip) |
+| Total Sorries (lake build) | **72** (58 assumptions + 14 other) |
 | Assumption Sorries | 58 |
-| Other Sorries | 13 |
+| Other Sorries | 14 (12 Aristotle + 1 Bridge + 1 CoreLemma) |
+| Dependency Sorries | 3 (PrimeNumberTheoremAnd/Wiener.lean, not ours) |
 
 ## Aristotle Files
 
@@ -86,6 +87,17 @@ See Assumptions.lean for the categorized list.
 | HardyBuildingBlocksInstance.lean | 0 | BuildingBlocks template |
 | HardyZDefinitionMap.lean | 0 | Definition equivalences |
 | HardyCriticalLineWiring.lean | 0 | Pre-wired for Hardy |
+| HardyZUnified.lean | 0 | Unified Hardy Z exports |
+| HardyChainTest.lean | 0 | Hardy chain integration test |
+
+## Wiring Analysis Results
+
+| Assumption | Investigated Source | Result |
+|------------|-------------------|--------|
+| ZetaLogDerivPoleHyp | LaurentExpansion.lean | NOT closeable (only s=1, need arbitrary zeros) |
+| ChebyshevErrorBoundThetaHyp | ThetaLinearBoundV2.lean | NOT closeable (θ vs ψ mismatch) |
+| ZeroCountingAsymptoticHyp | ZeroCountingNew.lean | Needs NZeros type bridge |
+| ZeroCountingTendstoHyp | ZeroCountingNew.lean | Same type mismatch |
 
 ## Pending Aristotle Returns
 
