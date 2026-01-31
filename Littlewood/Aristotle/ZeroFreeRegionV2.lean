@@ -114,7 +114,16 @@ lemma zeta_log_deriv_341 (σ t : ℝ) (hσ : 1 < σ) :
         intro s hs;
         convert zeta_log_deriv_eq_series_re s.re s.im hs using 1;
         norm_num [ mul_comm Complex.I ];
-      sorry -- 6 exact? calls in the Fubini argument for sum interchange
+      /- PROOF STRATEGY (not yet formalized):
+         1. dsimp only (unfold let)
+         2. rw [zeta_log_deriv_eq_series_re σ 0 hσ, ..σ t.., ..σ (2*t)..]
+            to convert each (L s).re to its tsum form
+         3. Extract real summability from summable_vonMangoldt_term via HasSum.re
+            Each cos series bounded by Λ(n)·n^(-σ) which is summable
+         4. Use tsum_mul_left, tsum_add to combine 3·Σ + 4·Σ + Σ = Σ(3·+4·+·)
+         5. Apply tsum_nonneg with term_nonneg
+         Note: This is proved differently (without series) in ThreeFourOneV2.three_four_one_v2 -/
+      sorry
 
 /-
 The function (z-1)ζ(z) extended to z=1 by continuity.
