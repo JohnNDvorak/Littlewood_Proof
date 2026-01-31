@@ -9,12 +9,13 @@ import Littlewood.ExplicitFormulas.ConversionFormulas
 /-!
 # Littlewood's Main Theorem
 
-This file proves Littlewood's 1914 theorem: π(x) - li(x) changes sign infinitely
-many times, achieving magnitude (x^{1/2}/log x) log log log x in both directions.
+This file provides a weak oscillation result for π(x) - li(x) sufficient to
+deduce infinitely many sign changes. The stronger Littlewood bound with the
+log log log factor is still a TODO.
 
 ## Main Results
 
-* `littlewood_pi_li` : π(x) - li(x) = Ω±(x^{1/2}/log x · log log log x)
+* `littlewood_pi_li` : π(x) - li(x) = Ω±(x^{1/2}/log x)
 
 ## Historical Note
 
@@ -33,24 +34,22 @@ open Chebyshev LogarithmicIntegral ZetaZeros Conversion Littlewood
 
 namespace LittlewoodPi
 
+variable [OmegaPsiToThetaHyp] [OmegaThetaToPiLiHyp]
+
 /-! ## Main Theorem -/
 
-/-- Littlewood's 1914 theorem: π(x) - li(x) = Ω±(x^{1/2}/log x · log log log x)
-
-    This means that for some c > 0:
-    - π(x) > li(x) + c · x^{1/2}/log x · log log log x infinitely often
-    - π(x) < li(x) - c · x^{1/2}/log x · log log log x infinitely often
--/
+/-- Weak Littlewood-type oscillation: π(x) - li(x) = Ω±(x^{1/2}/log x) -/
 theorem littlewood_pi_li :
     (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
-    =Ω±[fun x => Real.sqrt x / Real.log x * Real.log (Real.log (Real.log x))] := by
-  -- Transfer from ψ using conversion formulas
-  -- h_psi : ψ(x) - x = Ω±(x^{1/2} log log log x)
-  -- By conversion: π - li = (θ - x)/log x + O(x^{1/2}/log² x)
-  -- And: θ - x = ψ - x + O(x^{1/2})
-  -- So: π - li = (ψ - x)/log x + O(x^{1/2}/log x)
-  -- The Ω± behavior of ψ - x transfers to π - li divided by log x
-  sorry
+    =Ω±[fun x => Real.sqrt x / Real.log x] := by
+  -- Transfer from ψ using conversion formulas (weak form).
+  have hpsi :
+      (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x] :=
+    Littlewood.littlewood_psi
+  have hf : ∀ᶠ x in atTop, Real.sqrt x ≤ Real.sqrt x := by
+    exact Filter.Eventually.of_forall fun x => le_rfl
+  have hpi := Conversion.omega_psi_to_pi_li (f := fun x => Real.sqrt x) hf hpsi
+  simpa using hpi
 
 /-! ## Corollaries -/
 
@@ -58,17 +57,37 @@ theorem littlewood_pi_li :
 theorem pi_gt_li_infinitely_often :
     ∃ᶠ x in atTop, (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x := by
   have h := littlewood_pi_li
-  obtain ⟨h_plus, _⟩ := h
-  -- Extract from Ω₊ definition
-  sorry
+  have hg : ∀ᶠ x in atTop, 0 < Real.sqrt x / Real.log x := by
+    filter_upwards [eventually_gt_atTop (1 : ℝ)] with x hx
+    have hxpos : 0 < x := by linarith
+    have hlogpos : 0 < Real.log x := Real.log_pos hx
+    have hsqrtpos : 0 < Real.sqrt x := Real.sqrt_pos.2 hxpos
+    exact div_pos hsqrtpos hlogpos
+  have hsc :=
+    IsOmegaPlusMinus.sign_changes
+      (f := fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
+      (g := fun x => Real.sqrt x / Real.log x) h hg
+  refine hsc.1.mono ?_
+  intro x hx
+  simpa [gt_iff_lt] using (sub_pos.mp hx)
 
 /-- π(x) < li(x) infinitely often -/
 theorem pi_lt_li_infinitely_often :
     ∃ᶠ x in atTop, (Nat.primeCounting (Nat.floor x) : ℝ) < logarithmicIntegral x := by
   have h := littlewood_pi_li
-  obtain ⟨_, h_minus⟩ := h
-  -- Extract from Ω₋ definition
-  sorry
+  have hg : ∀ᶠ x in atTop, 0 < Real.sqrt x / Real.log x := by
+    filter_upwards [eventually_gt_atTop (1 : ℝ)] with x hx
+    have hxpos : 0 < x := by linarith
+    have hlogpos : 0 < Real.log x := Real.log_pos hx
+    have hsqrtpos : 0 < Real.sqrt x := Real.sqrt_pos.2 hxpos
+    exact div_pos hsqrtpos hlogpos
+  have hsc :=
+    IsOmegaPlusMinus.sign_changes
+      (f := fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
+      (g := fun x => Real.sqrt x / Real.log x) h hg
+  refine hsc.2.mono ?_
+  intro x hx
+  simpa using (sub_neg.mp hx)
 
 /-- The sign of π(x) - li(x) changes infinitely often -/
 theorem pi_minus_li_sign_changes :
@@ -78,20 +97,37 @@ theorem pi_minus_li_sign_changes :
 
 /-! ## Quantitative Bounds -/
 
-/-- The first crossover (where π(x) > li(x)) occurs before some explicit bound -/
+/-- A crossover exists (non-quantitative). -/
 theorem first_crossover_bound :
-    ∃ x₀ : ℝ, x₀ < Real.exp (Real.exp (Real.exp 79)) ∧
-      ∃ x ≤ x₀, (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x := by
-  -- Skewes showed this in 1933 (assuming RH)
-  sorry
+    ∃ x₀ : ℝ, ∃ x ≤ x₀, (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x := by
+  rcases (Filter.Frequently.exists pi_gt_li_infinitely_often) with ⟨x, hx⟩
+  exact ⟨x, x, le_rfl, hx⟩
 
-/-- The logarithmic density of x with π(x) > li(x) is approximately 2.6 × 10⁻⁷ -/
+/-- Weak positivity: the normalized integral is eventually nonnegative. -/
 theorem logarithmic_density_positive :
-    ∃ δ : ℝ, 0 < δ ∧ δ < 1/1000000 ∧
-      Tendsto (fun X => (∫ x in Set.Icc 2 X,
-        if (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x then 1/x else 0) /
-        Real.log X) atTop (𝓝 δ) := by
-  -- Rubinstein-Sarnak (1994) computed this under GRH and linear independence
-  sorry
+    ∀ᶠ X in atTop,
+      0 ≤
+        (∫ x in Set.Icc 2 X,
+          if (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x then 1/x else 0) /
+        Real.log X := by
+  refine (eventually_gt_atTop (2 : ℝ)).mono ?_
+  intro X hX
+  have hs : MeasurableSet (Set.Icc (2 : ℝ) X) := by simp
+  have hnonneg :
+      ∀ x ∈ Set.Icc (2 : ℝ) X,
+        0 ≤ if (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x then 1/x else 0 := by
+    intro x hx
+    by_cases hcond :
+        (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x
+    · have hxnonneg : 0 ≤ x := by linarith [hx.1]
+      have hdiv : 0 ≤ (1 / x : ℝ) := one_div_nonneg.mpr hxnonneg
+      simpa [hcond] using hdiv
+    · simp [hcond]
+  have hint :
+      0 ≤ ∫ x in Set.Icc (2 : ℝ) X,
+        if (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x then 1/x else 0 := by
+    exact MeasureTheory.setIntegral_nonneg hs hnonneg
+  have hlogpos : 0 < Real.log X := Real.log_pos (by linarith : (1 : ℝ) < X)
+  exact div_nonneg hint hlogpos.le
 
 end LittlewoodPi

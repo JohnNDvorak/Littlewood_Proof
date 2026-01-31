@@ -39,9 +39,8 @@ Modern bounds are much smaller, around 10^316.
 -/
 
 -- Re-export all main results
-open LittlewoodPi Littlewood in
-#check littlewood_pi_li
-#check littlewood_psi
-#check pi_gt_li_infinitely_often
-#check pi_lt_li_infinitely_often
-#check pi_minus_li_sign_changes
+#check LittlewoodPi.littlewood_pi_li
+#check Littlewood.littlewood_psi
+#check LittlewoodPi.pi_gt_li_infinitely_often
+#check LittlewoodPi.pi_lt_li_infinitely_often
+#check LittlewoodPi.pi_minus_li_sign_changes

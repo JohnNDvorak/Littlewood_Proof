@@ -1,0 +1,122 @@
+/-
+Copyright (c) 2025. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: [Your Name]
+-/
+import Littlewood.Main.LittlewoodPsi
+import Littlewood.ExplicitFormulas.ConversionFormulas
+
+/-!
+# Littlewood's Main Theorem
+
+This file proves Littlewood's 1914 theorem: π(x) - li(x) changes sign infinitely
+many times, achieving magnitude (x^{1/2}/log x) log log log x in both directions.
+
+## Main Results
+
+* `littlewood_pi_li` : π(x) - li(x) = Ω±(x^{1/2}/log x · log log log x)
+
+## Historical Note
+
+This was a landmark result. Gauss observed that li(x) > π(x) for all x up to
+3,000,000. The conjecture that this held for all x was widely believed until
+Littlewood's proof showed it must fail infinitely often.
+
+## References
+
+* J.E. Littlewood, "Sur la distribution des nombres premiers" (1914)
+* Montgomery-Vaughan, "Multiplicative Number Theory I", Chapter 15
+-/
+
+open Real Filter Topology Asymptotics
+open Chebyshev LogarithmicIntegral ZetaZeros Conversion Littlewood
+
+namespace LittlewoodPi
+
+/-! ## Main Theorem -/
+
+/-- Littlewood's 1914 theorem: π(x) - li(x) = Ω±(x^{1/2}/log x · log log log x)
+
+    This means that for some c > 0:
+    - π(x) > li(x) + c · x^{1/2}/log x · log log log x infinitely often
+    - π(x) < li(x) - c · x^{1/2}/log x · log log log x infinitely often
+-/
+theorem littlewood_pi_li :
+    (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
+    =Ω±[fun x => Real.sqrt x / Real.log x * Real.log (Real.log (Real.log x))] := by
+  -- Transfer from ψ using conversion formulas.
+  have hpsi :
+      (fun x => chebyshevPsi x - x) =Ω±
+        [fun x => Real.sqrt x * Real.log (Real.log (Real.log x))] :=
+    Littlewood.littlewood_psi
+  have hf :
+      ∀ᶠ x in atTop,
+        Real.sqrt x ≤ Real.sqrt x * Real.log (Real.log (Real.log x)) := by
+    filter_upwards [eventually_gt_atTop (Real.exp (Real.exp (Real.exp 1)))] with x hx
+    have hxle : Real.exp (Real.exp (Real.exp 1)) ≤ x := le_of_lt hx
+    have hxpos : 0 < x := lt_of_lt_of_le (Real.exp_pos (Real.exp (Real.exp 1))) hxle
+    have h1 : (1 : ℝ) ≤ Real.exp 1 := one_le_exp (by linarith)
+    have h2 : Real.exp 1 ≤ Real.exp (Real.exp 1) := exp_le_exp_of_le h1
+    have h3 : Real.exp (Real.exp 1) ≤ Real.exp (Real.exp (Real.exp 1)) := exp_le_exp_of_le h2
+    have hexp1_le_x : Real.exp (Real.exp 1) ≤ x := h3.trans hxle
+    have hexp1_le_logx : Real.exp 1 ≤ Real.log x :=
+      (Real.le_log_iff_exp_le hxpos).2 hexp1_le_x
+    have hlogx_pos : 0 < Real.log x := lt_of_lt_of_le (Real.exp_pos 1) hexp1_le_logx
+    have hexp1_le_loglog : Real.exp 1 ≤ Real.log (Real.log x) :=
+      (Real.le_log_iff_exp_le hlogx_pos).2 hexp1_le_logx
+    have hloglog_pos : 0 < Real.log (Real.log x) :=
+      lt_of_lt_of_le (Real.exp_pos 1) hexp1_le_loglog
+    have hlogloglog_ge : 1 ≤ Real.log (Real.log (Real.log x)) :=
+      (Real.le_log_iff_exp_le hloglog_pos).2 hexp1_le_loglog
+    have hmul :
+        Real.sqrt x * 1 ≤ Real.sqrt x * Real.log (Real.log (Real.log x)) := by
+      exact mul_le_mul_of_nonneg_left hlogloglog_ge (Real.sqrt_nonneg _)
+    simpa using hmul
+  have hpi :=
+    Conversion.omega_psi_to_pi_li
+      (f := fun x => Real.sqrt x * Real.log (Real.log (Real.log x))) hf hpsi
+  simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hpi
+
+/-! ## Corollaries -/
+
+/-- π(x) > li(x) infinitely often -/
+theorem pi_gt_li_infinitely_often :
+    ∃ᶠ x in atTop, (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x := by
+  have h := littlewood_pi_li
+  obtain ⟨h_plus, _⟩ := h
+  -- Extract from Ω₊ definition
+  sorry
+
+/-- π(x) < li(x) infinitely often -/
+theorem pi_lt_li_infinitely_often :
+    ∃ᶠ x in atTop, (Nat.primeCounting (Nat.floor x) : ℝ) < logarithmicIntegral x := by
+  have h := littlewood_pi_li
+  obtain ⟨_, h_minus⟩ := h
+  -- Extract from Ω₋ definition
+  sorry
+
+/-- The sign of π(x) - li(x) changes infinitely often -/
+theorem pi_minus_li_sign_changes :
+    (∃ᶠ x in atTop, (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x) ∧
+    (∃ᶠ x in atTop, (Nat.primeCounting (Nat.floor x) : ℝ) < logarithmicIntegral x) :=
+  ⟨pi_gt_li_infinitely_often, pi_lt_li_infinitely_often⟩
+
+/-! ## Quantitative Bounds -/
+
+/-- The first crossover (where π(x) > li(x)) occurs before some explicit bound -/
+theorem first_crossover_bound :
+    ∃ x₀ : ℝ, x₀ < Real.exp (Real.exp (Real.exp 79)) ∧
+      ∃ x ≤ x₀, (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x := by
+  -- Skewes showed this in 1933 (assuming RH)
+  sorry
+
+/-- The logarithmic density of x with π(x) > li(x) is approximately 2.6 × 10⁻⁷ -/
+theorem logarithmic_density_positive :
+    ∃ δ : ℝ, 0 < δ ∧ δ < 1/1000000 ∧
+      Tendsto (fun X => (∫ x in Set.Icc 2 X,
+        if (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x then 1/x else 0) /
+        Real.log X) atTop (𝓝 δ) := by
+  -- Rubinstein-Sarnak (1994) computed this under GRH and linear independence
+  sorry
+
+end LittlewoodPi

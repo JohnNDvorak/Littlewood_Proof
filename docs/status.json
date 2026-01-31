@@ -1,0 +1,36 @@
+{
+  "last_updated": "2026-01-21",
+  "build": "green",
+  "sorries": {
+    "total": 117,
+    "assumptions": 61,
+    "development": 20,
+    "other": 36
+  },
+  "hypotheses": {
+    "total": 67,
+    "proved": 2,
+    "proved_names": ["ZeroConjZeroHyp", "ZeroOneSubZeroHyp"],
+    "need_work": 65
+  },
+  "development_lemmas": {
+    "total": 36,
+    "complete_files": 4,
+    "files": {
+      "LandauLemma.lean": {"sorries": 0, "status": "COMPLETE", "proved": ["partial_sums_monotone", "term_comparison", "cpow_ofReal_ofReal_im", "lseries_term_im_eq_zero", "tsum_im_eq_zero_of_forall_im_eq_zero", "lseries_real_on_real_axis", "abscissa_characterization", "lseries_analytic_on_half_plane", "lseries_smooth"]},
+      "MathlibZetaAudit.lean": {"sorries": 0, "status": "COMPLETE", "proved": []},
+      "Bridge.lean": {"sorries": 0, "status": "COMPLETE", "proved": ["hardy_implies_infinite_critical_zeros", "development_compatible_with_hypotheses"]},
+      "MainTheoremsVerification.lean": {"sorries": 0, "status": "COMPLETE", "proved": ["main_theorems_compile"]},
+      "ZeroFreeRegion.lean": {"sorries": 8, "status": "blocked", "proved": ["trig_inequality", "trig_identity"]},
+      "HardyTheorem.lean": {"sorries": 12, "status": "in_progress", "proved": ["hardyZ_zero_iff", "hardyZ_eq_re", "hardyZ_real_val_continuous", "hardy_from_sign_changes"]}
+    }
+  },
+  "main_theorems": {
+    "littlewood_psi": "compiles",
+    "littlewood_pi_li": "compiles",
+    "pi_gt_li_infinitely_often": "compiles",
+    "pi_lt_li_infinitely_often": "compiles",
+    "pi_minus_li_sign_changes": "compiles"
+  },
+  "notes": "Main theorems type-check with hypothesis instances from Assumptions.lean. Development files provide the path toward proving those hypotheses."
+}

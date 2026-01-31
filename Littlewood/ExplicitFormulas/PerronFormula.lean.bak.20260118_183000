@@ -1,0 +1,24 @@
+/- 
+Copyright (c) 2025. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: [Your Name]
+-/
+import Mathlib.Analysis.Calculus.ContourIntegral
+import Mathlib.NumberTheory.LSeries.Basic
+
+/-!
+# Perron's Formula (Stub)
+
+This file was missing and has been regenerated as a minimal stub to unblock
+the build. Replace the statements below with full Perron formula development.
+
+Perron's formula relates Dirichlet series coefficients to contour integrals:
+  ∑_{n≤x} a_n = (1/2πi) ∫_{c-i∞}^{c+i∞} F(s) x^s/s ds
+-/
+
+namespace Littlewood.ExplicitFormulas.PerronFormula
+
+/-- Perron's formula (stub). -/
+theorem perronFormula : True := trivial
+
+end Littlewood.ExplicitFormulas.PerronFormula

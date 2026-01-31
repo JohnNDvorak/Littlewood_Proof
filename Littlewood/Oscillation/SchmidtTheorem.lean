@@ -30,57 +30,130 @@ open Chebyshev ZetaZeros Landau
 
 namespace Schmidt
 
+/-! ## Hypotheses -/
+
+/--
+HYPOTHESIS: Schmidt oscillation for psi with exponent Theta.
+MATHEMATICAL STATUS: classical analytic number theory (Schmidt 1903).
+MATHLIB STATUS: not available.
+-/
+class SchmidtPsiOscillationHyp : Prop where
+  oscillation :
+    ∀ ε : ℝ, 0 < ε →
+      (fun x => chebyshevPsi x - x) =Ω±[fun x => x ^ (Θ - ε)]
+
+/--
+HYPOTHESIS: Unconditional psi oscillation at sqrt scale.
+MATHEMATICAL STATUS: follows from Hardy's critical line zeros plus explicit formula.
+MATHLIB STATUS: not available.
+-/
+class PsiOscillationSqrtHyp : Prop where
+  oscillation :
+    (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x]
+
+/--
+HYPOTHESIS: Mellin transform identity for psi.
+MATHEMATICAL STATUS: explicit formula plus Mellin transform.
+MATHLIB STATUS: not available.
+-/
+class MellinPsiIdentityHyp : Prop where
+  identity :
+    ∀ s : ℂ, 1 < s.re →
+      ∃ E : ℂ, ‖E‖ ≤ 1 ∧
+        (∫ x in Set.Ioi 1, (chebyshevPsi x - x) * (x : ℂ)^(-s-1) : ℂ) =
+          -deriv riemannZeta s / (s * riemannZeta s) - 1 / (s - 1) + E
+
+/--
+HYPOTHESIS: Omega-minus necessity for psi using Landau's lemma.
+MATHEMATICAL STATUS: standard contradiction argument.
+MATHLIB STATUS: not available.
+-/
+class OmegaMinusNecessityHyp : Prop where
+  necessity :
+    ∀ ε : ℝ, 0 < ε →
+      (∀ᶠ x in atTop, -x ^ (Θ - ε) ≤ chebyshevPsi x - x) → False
+
+/--
+HYPOTHESIS: Omega-plus necessity for psi using Landau's lemma.
+MATHEMATICAL STATUS: standard contradiction argument.
+MATHLIB STATUS: not available.
+-/
+class OmegaPlusNecessityHyp : Prop where
+  necessity :
+    ∀ ε : ℝ, 0 < ε →
+      (∀ᶠ x in atTop, chebyshevPsi x - x ≤ x ^ (Θ - ε)) → False
+
+/--
+HYPOTHESIS: Hardy's theorem on critical line zeros.
+MATHEMATICAL STATUS: classical analytic number theory.
+MATHLIB STATUS: not available.
+-/
+class HardyCriticalLineZerosHyp : Prop where
+  infinite :
+    Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1/2 }
+
+/--
+HYPOTHESIS: Critical line zeros imply psi oscillation at sqrt scale.
+MATHEMATICAL STATUS: explicit formula plus Hardy's theorem.
+MATHLIB STATUS: not available.
+-/
+class PsiOscillationFromCriticalZerosHyp : Prop where
+  oscillation :
+    (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x]
+
+/--
+HYPOTHESIS: Theta oscillation transfer from psi.
+MATHEMATICAL STATUS: classical bounds relating theta and psi.
+MATHLIB STATUS: not available.
+-/
+class ThetaOscillationMinusHyp : Prop where
+  oscillation :
+    (fun x => chebyshevTheta x - x) =Ω₋[fun x => Real.sqrt x]
+
+/--
+HYPOTHESIS: Theta oscillation under RH.
+MATHEMATICAL STATUS: explicit formula under RH plus oscillation.
+MATHLIB STATUS: not available.
+-/
+class ThetaOscillationRHHyp : Prop where
+  oscillation :
+    ∀ hRH : ZetaZeros.RiemannHypothesis,
+      (fun x => chebyshevTheta x - x) =Ω±[fun x => Real.sqrt x]
+
 /-! ## Schmidt's Theorem -/
 
 /-- Schmidt's 1903 oscillation theorem: ψ(x) - x = Ω±(x^{Θ-ε}) -/
-theorem schmidt_psi_oscillation (ε : ℝ) (hε : 0 < ε) :
+theorem schmidt_psi_oscillation (ε : ℝ) (hε : 0 < ε) [SchmidtPsiOscillationHyp] :
     (fun x => chebyshevPsi x - x) =Ω±[fun x => x ^ (Θ - ε)] := by
-  constructor
-  · -- Ω₊ part
-    unfold IsOmegaPlus
-    -- Proof by contradiction using Landau's lemma
-    -- If ψ(x) - x ≤ x^{Θ-ε} for large x, then
-    -- ∫ (x^{Θ-ε} + ψ(x) - x) x^{-s-1} dx converges for Re(s) > Θ-ε
-    -- But -ζ'/ζ has a pole at some ρ with Re(ρ) > Θ-ε, contradiction
-    sorry
-  · -- Ω₋ part
-    unfold IsOmegaMinus
-    -- Similar argument with -ψ(x) + x
-    sorry
+  simpa using (SchmidtPsiOscillationHyp.oscillation ε hε)
 
 /-- Corollary: ψ(x) - x = Ω±(x^{1/2}) unconditionally -/
-theorem psi_oscillation_sqrt :
+theorem psi_oscillation_sqrt [PsiOscillationSqrtHyp] :
     (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x] := by
-  -- Since Θ ≥ 1/2, for any ε < Θ - 1/2 we have x^{Θ-ε} ≥ x^{1/2}
-  -- But we need to be careful: if Θ = 1/2 exactly (RH), we need a different argument
-  -- The proof works because there exist zeros ON the critical line (Hardy)
-  sorry
+  simpa using (PsiOscillationSqrtHyp.oscillation)
 
 /-! ## Proof via Landau's Lemma -/
 
 section LandauProof
 
 /-- Key Mellin transform identity -/
-theorem mellin_psi_identity (s : ℂ) (hs : 1 < s.re) :
+theorem mellin_psi_identity (s : ℂ) (hs : 1 < s.re) [MellinPsiIdentityHyp] :
     ∃ E : ℂ, ‖E‖ ≤ 1 ∧
     (∫ x in Set.Ioi 1, (chebyshevPsi x - x) * (x : ℂ)^(-s-1) : ℂ) =
       -deriv riemannZeta s / (s * riemannZeta s) - 1 / (s - 1) + E := by
-  sorry
+  simpa using (MellinPsiIdentityHyp.identity s hs)
 
 /-- If ψ(x) - x ≥ -x^{Θ-ε} for large x, contradiction arises -/
 theorem omega_minus_necessity (ε : ℝ) (hε : 0 < ε)
-    (hcontra : ∀ᶠ x in atTop, -x ^ (Θ - ε) ≤ chebyshevPsi x - x) : False := by
-  -- The function A(x) = x^{Θ-ε} + ψ(x) - x is eventually non-negative
-  -- Its Mellin transform has abscissa of convergence ≤ Θ - ε
-  -- But -ζ'/ζ has a pole at some ρ with Re(ρ) > Θ - ε by definition of Θ
-  -- This contradicts Landau's lemma
-  sorry
+    (hcontra : ∀ᶠ x in atTop, -x ^ (Θ - ε) ≤ chebyshevPsi x - x)
+    [OmegaMinusNecessityHyp] : False := by
+  simpa using (OmegaMinusNecessityHyp.necessity ε hε hcontra)
 
 /-- If ψ(x) - x ≤ x^{Θ-ε} for large x, contradiction arises -/
 theorem omega_plus_necessity (ε : ℝ) (hε : 0 < ε)
-    (hcontra : ∀ᶠ x in atTop, chebyshevPsi x - x ≤ x ^ (Θ - ε)) : False := by
-  -- Similar argument with the function A(x) = x^{Θ-ε} - ψ(x) + x
-  sorry
+    (hcontra : ∀ᶠ x in atTop, chebyshevPsi x - x ≤ x ^ (Θ - ε))
+    [OmegaPlusNecessityHyp] : False := by
+  simpa using (OmegaPlusNecessityHyp.necessity ε hε hcontra)
 
 end LandauProof
 
@@ -89,35 +162,34 @@ end LandauProof
 section CriticalLine
 
 /-- Hardy's theorem: infinitely many zeros on the critical line -/
-theorem hardy_critical_line_zeros :
+theorem hardy_critical_line_zeros [HardyCriticalLineZerosHyp] :
     Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1/2 } := by
-  sorry
+  simpa using (HardyCriticalLineZerosHyp.infinite)
 
 /-- This allows the Ω±(x^{1/2}) result even if RH holds -/
-theorem psi_oscillation_from_critical_zeros :
+theorem psi_oscillation_from_critical_zeros [PsiOscillationFromCriticalZerosHyp] :
     (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x] := by
-  -- The zeros on the critical line contribute oscillations of size x^{1/2}
-  -- Even under RH, the explicit formula gives this oscillation
-  sorry
+  simpa using (PsiOscillationFromCriticalZerosHyp.oscillation)
 
 end CriticalLine
 
 /-! ## Transfer to θ -/
 
 /-- θ(x) - x = Ω₋(x^{1/2}) -/
-theorem theta_oscillation_minus :
+theorem theta_oscillation_minus [ThetaOscillationMinusHyp] :
     (fun x => chebyshevTheta x - x) =Ω₋[fun x => Real.sqrt x] := by
-  -- θ = ψ - O(x^{1/2}), and ψ - x = Ω₋(x^{1/2})
-  -- So θ - x = ψ - x - O(x^{1/2}) = Ω₋(x^{1/2})
-  sorry
+  simpa using (ThetaOscillationMinusHyp.oscillation)
 
 /-- Under RH: θ(x) - x = Ω±(x^{1/2}) -/
-theorem theta_oscillation_RH (hRH : ZetaZeros.RiemannHypothesis) :
+theorem theta_oscillation_RH (hRH : ZetaZeros.RiemannHypothesis) [ThetaOscillationRHHyp] :
     (fun x => chebyshevTheta x - x) =Ω±[fun x => Real.sqrt x] := by
-  -- Under RH, θ = ψ - x^{1/2} + O(x^{1/3})
-  -- So θ - x = ψ - x - x^{1/2} + O(x^{1/3})
-  -- The oscillation of ψ - x dominates x^{1/2}, giving Ω± behavior for θ - x
-  -- But this requires the Littlewood strengthening...
-  sorry
+  simpa using (ThetaOscillationRHHyp.oscillation hRH)
+
+/-!
+## Hypothesis Instances
+
+All Schmidt hypothesis instances are provided in Assumptions.lean
+(the single source of truth for axioms).
+-/
 
 end Schmidt

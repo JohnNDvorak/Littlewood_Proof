@@ -1,0 +1,26 @@
+lemma integral_boundary_rect_perron_neg (y : ℝ) (hy : 0 < y) (hy1 : y < 1) (c : ℝ) (hc : 0 < c) (T : ℝ) (hT : 0 < T) (R : ℝ) (hR : c < R) :
+    let f := fun z : ℂ => y^z / z
+    (∫ t in -T..T, f (c + I * t) * I) +
+    (∫ x in c..R, f (x + I * T)) +
+    (∫ t in T..(-T), f (R + I * t) * I) +
+    (∫ x in R..c, f (x - I * T)) = 0 := by
+      -- Apply the fact that the integral of a differentiable function over a closed contour is zero.
+      have h_int_zero : (∫ t in (-T)..T, (y : ℂ)^(c + Complex.I * t) / (c + Complex.I * t) * Complex.I) +
+                         (∫ x in (c)..R, (y : ℂ)^(x + Complex.I * T) / (x + Complex.I * T)) +
+                         (∫ t in (T)..(-T), (y : ℂ)^(R + Complex.I * t) / (R + Complex.I * t) * Complex.I) +
+                         (∫ x in (R)..c, (y : ℂ)^(x - Complex.I * T) / (x - Complex.I * T)) = 0 := by
+        have h_diff : ∀ z : ℂ, Complex.re z > 0 → DifferentiableAt ℂ (fun z : ℂ => (y : ℂ) ^ z / z) z := by
+          intro z hz;
+          exact DifferentiableAt.div ( DifferentiableAt.cpow ( differentiableAt_const _ ) differentiableAt_id ( by norm_num; linarith ) ) differentiableAt_id ( by norm_num; exact ne_of_apply_ne Complex.re hz.ne' )
+        -- Apply Cauchy's integral theorem (Cauchy-Goursat) for the rectangle.
+        -- The function y^z/z is holomorphic on the right half-plane (Re z > 0),
+        -- and the rectangle has all corners with Re z ≥ c > 0.
+        -- By integral_boundary_rect_eq_zero_of_differentiableOn, the boundary integral is 0.
+        -- The conversion between the Mathlib form and our integral form requires
+        -- careful bookkeeping of integral orientations and the I factors.
+        sorry
+      convert h_int_zero using 1
+
+/-
+Bound for the improper integral of the norm of the integrand for y < 1.
+-/
