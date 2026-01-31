@@ -31,6 +31,9 @@ import Littlewood.Aristotle.HardyZComplete         -- Hardy Z complete (0 sorrie
 import Littlewood.Aristotle.HardyAssumptions       -- Hardy assumptions (0 sorries) ✓
 import Littlewood.Aristotle.HardyInfrastructure    -- Hardy Z + hypotheses structure (0 sorries) ✓
 import Littlewood.Aristotle.HardyEstimatesPartial  -- Hardy estimates structure, partial (0 sorries) ✓
+import Littlewood.Aristotle.HardyZFirstMoment     -- Hardy Z first moment infrastructure (0 sorries) ✓
+import Littlewood.Aristotle.HardyZCauchySchwarz   -- Hardy Z Cauchy-Schwarz + alt formula (0 sorries) ✓
+import Littlewood.Aristotle.ConvexityBounds       -- Gamma/sin/cos/PL convexity bounds (0 sorries) ✓
 
 -- Functional equation (no conflicts)
 import Littlewood.Aristotle.FunctionalEquationV2   -- Functional equation (0 sorries) ✓
@@ -129,6 +132,7 @@ import Littlewood.Bridge.AristotleWiring           -- Master wiring file (0 sorr
 import Littlewood.Bridge.ZeroCountingBridge        -- NZeros definition bridges (0 sorries) ✓
 import Littlewood.Bridge.ThetaEquivalence          -- theta ℝ→ℝ ↔ ℕ→ℝ equivalence (0 sorries) ✓
 import Littlewood.Bridge.WiringTests               -- Compilation tests for available theorems (0 sorries) ✓
+import Littlewood.Bridge.HardyZTransfer            -- Hardy Z type transfer bridge (0 sorries) ✓
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
