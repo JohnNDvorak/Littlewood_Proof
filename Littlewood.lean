@@ -108,6 +108,9 @@ import Littlewood.Aristotle.MeanSquarePartialSum       -- Mean square partial su
 import Littlewood.Aristotle.ZeroFreeRegionV2           -- Zero-free region / 3-4-1 infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundsPartialSum       -- Zeta bounds, partial sums, harmonic bound (0 sorries) ✓
 import Littlewood.Aristotle.MeanSquareLowerBound        -- Mean square lower bound for partial sum (0 sorries) ✓
+import Littlewood.Aristotle.DiagonalIntegralBound       -- Diagonal integral ≥ c·T·log T (4 sorries)
+import Littlewood.Aristotle.ContourInfrastructure       -- Contour defs, measure-zero segments (3 sorries)
+import Littlewood.Aristotle.HardyInfiniteZeros          -- Hardy's theorem: ∞ many critical line zeros (0 sorries) ✓
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
