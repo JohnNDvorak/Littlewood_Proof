@@ -105,7 +105,35 @@ lemma psi_eq_sum_log_p_mul_count (x : ℝ) :
         have h_double_sum : ∀ n : ℕ, ∑ k ∈ Finset.range (n + 1), (ArithmeticFunction.vonMangoldt k) = ∑ p ∈ Finset.filter Nat.Prime (Finset.range (n + 1)), ∑ v ∈ Finset.Ico 1 (Nat.log p n + 1), (ArithmeticFunction.vonMangoldt (p ^ v)) := by
           intro n
           have h_double_sum : Finset.filter (fun k => ArithmeticFunction.vonMangoldt k ≠ 0) (Finset.range (n + 1)) = Finset.biUnion (Finset.filter Nat.Prime (Finset.range (n + 1))) (fun p => Finset.image (fun v => p ^ v) (Finset.Ico 1 (Nat.log p n + 1))) := by
-            sorry -- Bijection between prime powers ≤ n and pairs (p,v)
+            ext k
+            simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_biUnion, Finset.mem_image, Finset.mem_Ico]
+            constructor
+            · intro ⟨hk_lt, hk_ne⟩
+              have hk_pp : IsPrimePow k := by
+                contrapose! hk_ne
+                simp [ArithmeticFunction.vonMangoldt_apply, hk_ne]
+              obtain ⟨p, e, hp, he, rfl⟩ := hk_pp
+              have hp' : Nat.Prime p := hp.irreducible
+              have hpge : 1 ≤ p := le_of_lt hp'.one_lt
+              refine ⟨p, ⟨?_, hp'⟩, e, ⟨he, ?_⟩, rfl⟩
+              · calc p ≤ p ^ e := le_self_pow₀ hpge he.ne'
+                  _ < n + 1 := hk_lt
+              · suffices h : e ≤ Nat.log p n by omega
+                by_contra hc; push_neg at hc
+                have h1 : n < p ^ (Nat.log p n + 1) := Nat.lt_pow_succ_log_self hp'.one_lt n
+                have h2 : p ^ (Nat.log p n + 1) ≤ p ^ e := Nat.pow_le_pow_right hp'.pos hc
+                omega
+            · intro ⟨p, ⟨hp_lt, hp⟩, e, ⟨he_lo, he_hi⟩, hpe⟩
+              subst hpe
+              have hplt : 1 < p := hp.one_lt
+              have hne : n ≠ 0 := by omega
+              have hle : e ≤ Nat.log p n := by omega
+              constructor
+              · have := Nat.pow_le_of_le_log hne hle; omega
+              · rw [ArithmeticFunction.vonMangoldt_apply,
+                     if_pos (hp.isPrimePow.pow (show e ≠ 0 by omega)),
+                     Nat.pow_minFac (show e ≠ 0 by omega), hp.minFac_eq]
+                exact ne_of_gt (Real.log_pos (show (1 : ℝ) < (p : ℝ) by exact_mod_cast hplt))
           have h_double_sum : ∑ k ∈ Finset.range (n + 1), (ArithmeticFunction.vonMangoldt k) = ∑ k ∈ Finset.biUnion (Finset.filter Nat.Prime (Finset.range (n + 1))) (fun p => Finset.image (fun v => p ^ v) (Finset.Ico 1 (Nat.log p n + 1))), (ArithmeticFunction.vonMangoldt k) := by
             rw [ ← h_double_sum, Finset.sum_filter_of_ne ] ; aesop;
           rw [ h_double_sum, Finset.sum_biUnion ];

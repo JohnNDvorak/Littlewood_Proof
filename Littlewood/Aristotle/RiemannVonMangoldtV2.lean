@@ -65,16 +65,6 @@ theorem riemann_von_mangoldt_argument (T : ℝ) (hT : 2 ≤ T) :
          exact Asymptotics.isBigO_zero _ _
 
 /-
-The asymptotic formula for `NZeros` in terms of `S` and the main term holds exactly (with 0 error) given our definitions.
--/
-theorem N_eq_main_plus_S (T : ℝ) (hT : 2 ≤ T) :
-    (fun T => NZeros T - ((T/(2*Real.pi)) * Real.log (T/(2*Real.pi)) - T/(2*Real.pi) + 7/8 + S T)) =O[atTop] (fun T => 1/T) := by
-      -- The proof shows this is O(1/T) by relating to riemann_von_mangoldt_argument
-      -- The algebraic manipulation requires unfolding Complex.arg which involves if-then-else
-      -- and careful handling of logarithm identities
-      sorry
-
-/-
 Helper lemma: The main term of the Riemann-von Mangoldt formula matches the algebraic expansion of `ImLogGamma`.
 -/
 lemma N_main_term_eq (T : ℝ) (hT : 2 ≤ T) :
@@ -83,5 +73,19 @@ lemma N_main_term_eq (T : ℝ) (hT : 2 ≤ T) :
       unfold ImLogGamma; norm_num; ring
       rw [show (Real.pi⁻¹ * T * (1 / 2)) = (T * (1 / 2)) / Real.pi by ring,
           Real.log_div (by positivity) (by positivity)]; norm_num; ring
+
+/-
+The asymptotic formula for `NZeros` in terms of `S` and the main term holds exactly (with 0 error) given our definitions.
+-/
+theorem N_eq_main_plus_S (T : ℝ) (hT : 2 ≤ T) :
+    (fun T => NZeros T - ((T/(2*Real.pi)) * Real.log (T/(2*Real.pi)) - T/(2*Real.pi) + 7/8 + S T)) =O[atTop] (fun T => 1/T) := by
+      -- The difference is identically 0: NZeros T = main_term + S T by definition + N_main_term_eq
+      have h_zero : ∀ T : ℝ, 2 ≤ T → NZeros T - (T / (2 * Real.pi) * Real.log (T / (2 * Real.pi)) - T / (2 * Real.pi) + 7 / 8 + S T) = 0 := by
+        intro T hT
+        simp only [NZeros, S]
+        linarith [N_main_term_eq T hT]
+      refine (Asymptotics.isBigO_zero _ _).congr' ?_ (Eventually.of_forall fun _ => rfl)
+      filter_upwards [Filter.eventually_ge_atTop 2] with T hT
+      exact (h_zero T hT).symm
 
 end RiemannVonMangoldtV2

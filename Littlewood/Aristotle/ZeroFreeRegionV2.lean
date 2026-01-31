@@ -96,6 +96,25 @@ lemma zeta_log_deriv_eq_series_re (σ t : ℝ) (hσ : 1 < σ) :
         simpa using hσ
 
 /-
+The real-valued von Mangoldt Dirichlet series is summable for σ > 1.
+-/
+lemma summable_vonMangoldt_real (σ : ℝ) (hσ : 1 < σ) :
+    Summable (fun n : ℕ => (ArithmeticFunction.vonMangoldt n : ℝ) * (n : ℝ) ^ (-σ)) := by
+      have h_log_summable : Summable (fun n : ℕ => (Real.log n : ℝ) * (n : ℝ) ^ (-σ)) := by
+        obtain ⟨ε, hε_pos, hε_lt⟩ : ∃ ε > 0, -σ + ε < -1 := ⟨ ( σ - 1 ) / 2, by linarith, by linarith ⟩
+        have hC : ∀ n : ℕ, n ≥ 2 → (Real.log n : ℝ) * (n : ℝ) ^ (-σ) ≤ (1/ε) * (n : ℝ) ^ (-σ + ε) := by
+          intro n hn
+          have hlog : Real.log n ≤ (1/ε) * (n : ℝ) ^ ε := by
+            have := Real.log_le_sub_one_of_pos ( by positivity : 0 < ( n : ℝ ) ^ ε )
+            rw [ Real.log_rpow ( by positivity ) ] at this
+            nlinarith [ Real.rpow_pos_of_pos ( by positivity : 0 < ( n : ℝ ) ) ε, mul_div_cancel₀ 1 hε_pos.ne' ]
+          convert mul_le_mul_of_nonneg_right hlog ( Real.rpow_nonneg ( Nat.cast_nonneg n ) ( -σ ) ) using 1
+          rw [ Real.rpow_add ( by positivity ) ] ; ring
+        rw [ ← summable_nat_add_iff 2 ]
+        exact Summable.of_nonneg_of_le ( fun n => mul_nonneg ( Real.log_nonneg ( by norm_cast; linarith ) ) ( Real.rpow_nonneg ( by positivity ) _ ) ) ( fun n => hC _ ( by linarith ) ) ( Summable.mul_left _ <| by simpa using summable_nat_add_iff 2 |>.2 <| Real.summable_nat_rpow.2 <| by linarith )
+      exact .of_nonneg_of_le ( fun n => mul_nonneg ( mod_cast ArithmeticFunction.vonMangoldt_nonneg ) ( Real.rpow_nonneg ( Nat.cast_nonneg n ) _ ) ) ( fun n => mul_le_mul_of_nonneg_right ( ArithmeticFunction.vonMangoldt_le_log ) ( Real.rpow_nonneg ( Nat.cast_nonneg n ) _ ) ) h_log_summable
+
+/-
 Each term Λ(n) n^(-σ) (3 + 4cos(t log n) + cos(2t log n)) is non-negative.
 -/
 lemma term_nonneg (n : ℕ) (σ t : ℝ) :
@@ -114,16 +133,41 @@ lemma zeta_log_deriv_341 (σ t : ℝ) (hσ : 1 < σ) :
         intro s hs;
         convert zeta_log_deriv_eq_series_re s.re s.im hs using 1;
         norm_num [ mul_comm Complex.I ];
-      /- PROOF STRATEGY (not yet formalized):
-         1. dsimp only (unfold let)
-         2. rw [zeta_log_deriv_eq_series_re σ 0 hσ, ..σ t.., ..σ (2*t)..]
-            to convert each (L s).re to its tsum form
-         3. Extract real summability from summable_vonMangoldt_term via HasSum.re
-            Each cos series bounded by Λ(n)·n^(-σ) which is summable
-         4. Use tsum_mul_left, tsum_add to combine 3·Σ + 4·Σ + Σ = Σ(3·+4·+·)
-         5. Apply tsum_nonneg with term_nonneg
-         Note: This is proved differently (without series) in ThreeFourOneV2.three_four_one_v2 -/
-      sorry
+      dsimp only
+      -- Step 1: Convert each Re(-ζ'/ζ) to tsum form
+      have e1 : (-(deriv riemannZeta ↑σ) / riemannZeta ↑σ).re =
+          ∑' n, (ArithmeticFunction.vonMangoldt n : ℝ) * (n : ℝ) ^ (-σ) * Real.cos (0 * Real.log n) := by
+        convert zeta_log_deriv_eq_series_re σ 0 hσ using 2 <;> push_cast <;> ring
+      have e2 := zeta_log_deriv_eq_series_re σ t hσ
+      have e3 : (-(deriv riemannZeta (↑σ + 2 * Complex.I * ↑t)) / riemannZeta (↑σ + 2 * Complex.I * ↑t)).re =
+          ∑' n, (ArithmeticFunction.vonMangoldt n : ℝ) * (n : ℝ) ^ (-σ) * Real.cos (2 * t * Real.log n) := by
+        convert zeta_log_deriv_eq_series_re σ (2 * t) hσ using 2 <;> push_cast <;> ring
+      rw [e1, e2, e3]
+      simp only [zero_mul, Real.cos_zero, mul_one]
+      -- Step 2: Establish summability of each cos-weighted series from base summability
+      have hbase := summable_vonMangoldt_real σ hσ
+      have hsc : ∀ u : ℝ, Summable (fun n : ℕ => (ArithmeticFunction.vonMangoldt n : ℝ) * (n : ℝ) ^ (-σ) * Real.cos (u * Real.log n)) := by
+        intro u
+        apply Summable.of_norm
+        exact Summable.of_nonneg_of_le (fun n => norm_nonneg _) (fun n => by
+          rw [Real.norm_eq_abs, abs_mul, abs_mul,
+              abs_of_nonneg (mod_cast ArithmeticFunction.vonMangoldt_nonneg : (0 : ℝ) ≤ _),
+              abs_of_nonneg (Real.rpow_nonneg (Nat.cast_nonneg n) _)]
+          exact mul_le_of_le_one_right
+            (mul_nonneg (mod_cast ArithmeticFunction.vonMangoldt_nonneg)
+              (Real.rpow_nonneg (Nat.cast_nonneg n) _))
+            (Real.abs_cos_le_one _)) hbase
+      -- Step 3: Combine via HasSum to form a single tsum, then apply tsum_nonneg
+      have hst := hsc t
+      have hs2t := hsc (2 * t)
+      have h_combined :=
+        ((hbase.mul_left 3).hasSum.add (hst.mul_left 4).hasSum).add hs2t.hasSum
+      rw [← tsum_mul_left, ← tsum_mul_left, ← h_combined.tsum_eq]
+      -- Step 4: Each term is nonneg by term_nonneg
+      apply tsum_nonneg
+      intro n
+      have := term_nonneg n σ t
+      linarith
 
 /-
 The function (z-1)ζ(z) extended to z=1 by continuity.
