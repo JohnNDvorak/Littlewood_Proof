@@ -10,8 +10,7 @@ Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
 Contour infrastructure: rectangular contour definition, rectangular integral definition,
 and measure-zero argument for integrals over line segments.
 
-Note: 3 `exact?` calls from budget-exceeded output replaced with `sorry`.
-These are all measure-preimage lemmas in `zeta_arg_bound_uniform`.
+Note: 3 measure-preimage sorries from budget-exceeded output have been closed with `congr 1`.
 
 WARNING: `zero_counting_argument_principle_vacuous` and `stirling_arg_gamma_vacuous`
 are VACUOUS — they prove ∃ C by choosing C := |LHS|/log T, so C depends on T.
@@ -103,7 +102,7 @@ lemma zeta_arg_bound_uniform :
             erw [ show { z : ℝ × ℝ | z.2 = 0 } = ( Set.univ : Set ℝ ) ×ˢ { 0 } by ext ; aesop, MeasureTheory.Measure.prod_prod ] ; norm_num;
           convert h_line using 1;
           erw [ ← Complex.volume_preserving_equiv_real_prod.measure_preimage ];
-          · sorry  -- was: exact?  (measure preimage of {z : ℂ | z.im = 0} under ℂ ≃ ℝ×ℝ)
+          · congr 1
           · exact measurableSet_eq_fun measurable_snd measurable_const |> MeasurableSet.nullMeasurableSet;
       · rw [ segment_eq_image ];
         refine' MeasureTheory.measure_mono_null _ _;
@@ -115,7 +114,7 @@ lemma zeta_arg_bound_uniform :
             erw [ show { z : ℝ × ℝ | z.1 = 3 / 2 } = ( { 3 / 2 } ×ˢ Set.univ ) by ext ; aesop, MeasureTheory.Measure.prod_prod ] ; norm_num;
           convert h_line using 1;
           erw [ ← Complex.volume_preserving_equiv_real_prod.measure_preimage ];
-          · sorry  -- was: exact?  (measure preimage of {z : ℂ | z.re = 3/2} under ℂ ≃ ℝ×ℝ)
+          · congr 1
           · exact measurableSet_eq_fun measurable_fst measurable_const |> MeasurableSet.nullMeasurableSet;
       · rw [ segment_eq_image ];
         refine' MeasureTheory.measure_mono_null _ _;
@@ -127,7 +126,7 @@ lemma zeta_arg_bound_uniform :
             erw [ show { z : ℝ × ℝ | z.2 = T } = ( Set.univ : Set ℝ ) ×ˢ { T } by ext ; aesop, MeasureTheory.Measure.prod_prod ] ; norm_num;
           convert h_line using 1;
           erw [ ← Complex.volume_preserving_equiv_real_prod.measure_preimage ];
-          · sorry  -- was: exact?  (measure preimage of {z : ℂ | z.im = T} under ℂ ≃ ℝ×ℝ)
+          · congr 1
           · exact measurableSet_eq_fun measurable_snd measurable_const |> MeasurableSet.nullMeasurableSet;
       · rw [ segment_eq_image ];
         refine' MeasureTheory.measure_mono_null _ _;

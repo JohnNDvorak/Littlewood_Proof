@@ -105,16 +105,13 @@ theorem xi_Mathlib_eq_corrected (s : ℂ) (h0 : s ≠ 0) (h1 : s ≠ 1) :
   field_simp [h0, hs1]
   ring
 
-/-- DEPRECATED: xi_Mathlib as literally defined is NOT differentiable at s=0,1.
-    Use xi_Mathlib_corrected_entire instead.
-
-    The issue: completedRiemannZeta takes a finite value at its poles, so
-    xi_Mathlib(1) = 0 while lim_{s→1} xi_Mathlib(s) = 1/2, making it discontinuous.
-    See XiDifferentiability.lean for the full proof of non-differentiability. -/
-theorem xi_Mathlib_differentiable : Differentiable ℂ xi_Mathlib := by
-  -- FALSE as stated. See xi_Literal_not_differentiable in XiDifferentiability.lean.
-  -- The corrected version xi_Mathlib_corrected IS entire.
-  sorry
+-- DEPRECATED AND FALSE: xi_Mathlib as literally defined is NOT differentiable at s=0,1.
+-- Use xi_Mathlib_corrected_entire instead.
+-- The issue: completedRiemannZeta takes a finite value at its poles, so
+-- xi_Mathlib(1) = 0 while lim_{s→1} xi_Mathlib(s) = 1/2, making it discontinuous.
+-- See xi_Literal_not_differentiable in XiDifferentiability.lean for the full proof.
+-- theorem xi_Mathlib_differentiable : Differentiable ℂ xi_Mathlib := by
+--   sorry  -- FALSE: See XiDifferentiability.lean
 
 /-- N(T) via argument principle -/
 theorem zetaZeroCount_via_argument (T : ℝ) (hT : 0 < T) :

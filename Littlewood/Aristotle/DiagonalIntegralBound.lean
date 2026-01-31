@@ -10,9 +10,10 @@ Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
 Proves that the diagonal integral of the partial zeta sum mean square is lower bounded
 by c * T * log T. This is a key ingredient for the Hardy Z function mean square lower bound.
 
-Note: 2 `exact?` calls from budget-exceeded output replaced with `sorry`.
-The main theorem `diagonal_integral_lower_bound` contains a complete proof structure
-but depends on these 2 measurability lemmas.
+The 4 original sorries (2 harmonic bounds, 2 measurability) have been closed:
+- Measurability: via `measurable_of_countable _` (ℕ has discrete topology)
+- Harmonic lower bound: induction + `Real.add_one_le_exp`
+- Harmonic upper bound: induction + `exp(x)(1-x) ≤ 1` via `Real.add_one_le_exp(-x)`
 -/
 
 import Mathlib
@@ -77,7 +78,20 @@ lemma diagonal_integral_lower_bound :
       have h_log_approx : ∀ t ≥ 8 * Real.pi, ∑ n ∈ Finset.Icc 1 (Nat.floor (Real.sqrt (t / (2 * Real.pi)))), (1 / (n : ℝ)) ≥ Real.log (Nat.floor (Real.sqrt (t / (2 * Real.pi))) + 1) := by
         -- We'll use the fact that the sum of the reciprocals of the first n natural numbers is ≥ log(n+1).
         have h_harmonic : ∀ n : ℕ, ∑ k ∈ Finset.Icc 1 n, (1 / (k : ℝ)) ≥ Real.log (n + 1) := by
-          sorry  -- harmonic sum lower bound: ∑_{k=1}^n 1/k ≥ log(n+1), uses Nat.Icc_succ_left (missing)
+          intro n; rw [ge_iff_le, Real.log_le_iff_le_exp (by positivity : (0 : ℝ) < ↑n + 1)]
+          induction n with
+          | zero => simp
+          | succ n ih =>
+            simp only [one_div] at ih ⊢
+            rw [Finset.sum_Icc_succ_top (by omega : 1 ≤ n + 1), Real.exp_add]
+            have hpos : (0 : ℝ) < ↑n + 1 := by positivity
+            have h_exp := Real.add_one_le_exp ((↑n + 1 : ℝ)⁻¹)
+            have h_inv := mul_inv_cancel₀ (ne_of_gt hpos)
+            have h_mul := mul_le_mul ih h_exp (by positivity) (Real.exp_nonneg _)
+            have h_lhs : (↑n + 1 : ℝ) * ((↑n + 1 : ℝ)⁻¹ + 1) = ↑n + 2 := by
+              rw [mul_add, h_inv]; ring
+            show (↑(n + 1) : ℝ) + 1 ≤ _
+            push_cast; linarith
         exact fun t ht => h_harmonic _;
       -- Now use the fact that log(√(t/2π)) = ½ log(t/2π) and log(2π) ≤ log(4) for t ≥ 8π.
       have h_log_simplify : ∀ t ≥ 8 * Real.pi, Real.log (Nat.floor (Real.sqrt (t / (2 * Real.pi))) + 1) ≥ (1 / 2) * Real.log t - Real.log 4 := by
@@ -104,8 +118,8 @@ lemma diagonal_integral_lower_bound :
               exact Measurable.nat_floor ( Measurable.sqrt ( measurable_id'.div_const _ ) );
             have h_sum_measurable : Measurable (fun t : ℝ => ∑ n ∈ Finset.Icc 1 (Nat.floor (Real.sqrt (t / (2 * Real.pi)))), (1 / n : ℝ)) := by
               have h_sum_measurable : Measurable (fun t : ℝ => ∑ n ∈ Finset.range (Nat.floor (Real.sqrt (t / (2 * Real.pi)))), (1 / (n + 1) : ℝ)) := by
-                have h_sum_measurable : Measurable (fun n : ℕ => ∑ k ∈ Finset.range n, (1 / (k + 1) : ℝ)) := by
-                  sorry  -- was: exact?  (measurability of partial harmonic sum as function of ℕ)
+                have h_sum_measurable : Measurable (fun n : ℕ => ∑ k ∈ Finset.range n, (1 / (k + 1) : ℝ)) :=
+                  measurable_of_countable _
                 exact h_sum_measurable.comp h_floor_measurable
               convert h_sum_measurable using 1;
               exact funext fun x => by erw [ Finset.sum_Ico_eq_sub _ _ ] <;> norm_num [ Finset.sum_range_succ' ] ;
@@ -115,7 +129,34 @@ lemma diagonal_integral_lower_bound :
             have h_sum_bound : ∀ t ≥ 8 * Real.pi, diagonalSum t ≤ Real.log (Real.sqrt (t / (2 * Real.pi))) + 1 := by
               intros t ht
               have h_sum_bound : ∀ n : ℕ, n ≥ 1 → ∑ k ∈ Finset.Icc 1 n, (1 / k : ℝ) ≤ Real.log n + 1 := by
-                sorry  -- harmonic sum upper bound: ∑_{k=1}^n 1/k ≤ log(n) + 1, uses Nat.Icc_succ_left (missing)
+                intro n hn; induction n with
+                | zero => omega
+                | succ n ih =>
+                  by_cases hn1 : n = 0
+                  · subst hn1; simp [Finset.Icc_self]
+                  · rw [Finset.sum_Icc_succ_top (by omega : 1 ≤ n + 1)]
+                    have ihn := ih (by omega)
+                    have hpos_n : (0 : ℝ) < ↑n := by positivity
+                    have hpos_n1 : (0 : ℝ) < ↑n + 1 := by positivity
+                    have h_sub := Real.add_one_le_exp (-(1 / (↑n + 1 : ℝ)))
+                    have h_prod : Real.exp (1 / (↑n + 1 : ℝ)) * (1 - 1 / (↑n + 1 : ℝ)) ≤ 1 := by
+                      calc Real.exp (1 / (↑n + 1 : ℝ)) * (1 - 1 / (↑n + 1 : ℝ))
+                          ≤ Real.exp (1 / (↑n + 1 : ℝ)) * Real.exp (-(1 / (↑n + 1 : ℝ))) := by
+                            gcongr; linarith
+                        _ = Real.exp (1 / (↑n + 1 : ℝ) + -(1 / (↑n + 1 : ℝ))) := (Real.exp_add _ _).symm
+                        _ = 1 := by simp
+                    have h_factor : (1 - 1 / (↑n + 1 : ℝ)) * (↑n + 1) = ↑n := by field_simp; ring
+                    have h_exp_n : Real.exp (1 / (↑n + 1 : ℝ)) * ↑n ≤ ↑n + 1 := by
+                      calc Real.exp (1 / (↑n + 1 : ℝ)) * ↑n
+                          = Real.exp (1 / (↑n + 1 : ℝ)) * (1 - 1 / (↑n + 1 : ℝ)) * (↑n + 1) := by
+                            rw [mul_assoc, h_factor]
+                        _ ≤ 1 * (↑n + 1) := by gcongr
+                        _ = ↑n + 1 := one_mul _
+                    have h_exp_bound : Real.exp (1 / (↑n + 1 : ℝ)) ≤ (↑n + 1) / ↑n := by
+                      rwa [le_div_iff₀ hpos_n]
+                    have h_log := Real.log_le_log (Real.exp_pos (1 / (↑n + 1 : ℝ))) h_exp_bound
+                    rw [Real.log_exp, Real.log_div (ne_of_gt hpos_n1) (ne_of_gt hpos_n)] at h_log
+                    push_cast at ihn h_log ⊢; linarith
               refine' le_trans ( h_sum_bound _ _ ) _;
               · exact Nat.floor_pos.mpr ( Real.le_sqrt_of_sq_le ( by rw [ le_div_iff₀ ( by positivity ) ] ; linarith [ Real.pi_gt_three ] ) );
               · gcongr;
@@ -136,8 +177,8 @@ lemma diagonal_integral_lower_bound :
           -- The floor function is measurable, and the sum of measurable functions is measurable.
           have h_floor_measurable : Measurable (fun t : ℝ => Nat.floor (Real.sqrt (t / (2 * Real.pi)))) := by
             exact Measurable.nat_floor ( Measurable.sqrt ( measurable_id'.div_const _ ) );
-          have h_sum_measurable : Measurable (fun n : ℕ => ∑ k ∈ Finset.Icc 1 n, (1 / k : ℝ)) := by
-            sorry  -- was: exact?  (measurability of partial harmonic sum as function of ℕ)
+          have h_sum_measurable : Measurable (fun n : ℕ => ∑ k ∈ Finset.Icc 1 n, (1 / k : ℝ)) :=
+            measurable_of_countable _
           convert h_sum_measurable.comp h_floor_measurable using 1;
         · filter_upwards [ MeasureTheory.ae_restrict_mem measurableSet_Ioc ] with t ht;
           refine' le_trans ( le_of_eq <| Real.norm_of_nonneg <| Finset.sum_nonneg fun _ _ => by positivity ) _;

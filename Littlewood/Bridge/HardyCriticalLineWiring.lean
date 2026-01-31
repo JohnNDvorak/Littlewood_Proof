@@ -4,21 +4,20 @@ Pre-wire HardyCriticalLineZerosHyp for when Hardy's theorem completes.
 Schmidt.HardyCriticalLineZerosHyp requires:
   infinite : Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1/2 }
 
-This will close once we have a complete proof that Z(t) has infinitely many zeros,
-which requires the mean square lower bound and first moment upper bound from Aristotle.
-
-STATUS: Template ready, waiting on Aristotle for mean square + first moment.
+STATUS: Conversion lemma proved. Instance depends on HardySetupInstance (3 Aristotle sorries).
+When those 3 sorries close, this file gives Hardy → HardyCriticalLineZerosHyp automatically.
 -/
 
 import Mathlib
 import Littlewood.Oscillation.SchmidtTheorem
-import Littlewood.Aristotle.HardyZRealV2
+import Littlewood.Aristotle.HardyInfiniteZeros
+import Littlewood.Bridge.HardySetupInstance
 
 set_option linter.mathlibStandardSet false
 
 open scoped BigOperators Real Nat Classical Pointwise
 
-set_option maxHeartbeats 0
+set_option maxHeartbeats 800000
 set_option maxRecDepth 4000
 set_option synthInstance.maxHeartbeats 20000
 set_option synthInstance.maxSize 128
@@ -30,46 +29,35 @@ noncomputable section
 
 namespace HardyCriticalLineWiring
 
-/-! ## What we need to close -/
+open Complex Set ZetaZeros
 
--- The hypothesis class:
-#check @Schmidt.HardyCriticalLineZerosHyp
+/-! ## Conversion: real zeros → nontrivial zeros on critical line -/
 
-/-! ## What we have -/
+/-- The map t ↦ 1/2 + it is injective. -/
+lemma critical_line_injective :
+    Function.Injective (fun t : ℝ => (1/2 : ℂ) + Complex.I * (t : ℂ)) := by
+  intro a b hab
+  have := congr_arg Complex.im hab
+  simp [Complex.add_im, Complex.mul_im, Complex.I_re, Complex.I_im, Complex.ofReal_re,
+        Complex.ofReal_im] at this
+  exact this
 
--- Z(t) = 0 ↔ ζ(1/2+it) = 0 (sorry-free)
-#check hardyZV2_zero_iff_zeta_zero
+/-- If {t : ℝ | ζ(1/2+it) = 0} is infinite, so is {ρ ∈ zetaNontrivialZeros | ρ.re = 1/2}. -/
+theorem hardy_zeros_to_nontrivial_zeros
+    (h : Set.Infinite {t : ℝ | riemannZeta (1/2 + Complex.I * t) = 0}) :
+    Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1/2 } := by
+  apply Set.Infinite.mono _
+    (h.image (fun (a : ℝ) _ (b : ℝ) _ hab => critical_line_injective hab))
+  intro ρ ⟨t, ht, hρ⟩
+  subst hρ
+  refine ⟨⟨ht, ?_, ?_⟩, ?_⟩ <;> simp [Complex.add_re, Complex.mul_re, Complex.ofReal_re,
+    Complex.I_re, Complex.I_im, Complex.ofReal_im] <;> norm_num
 
--- Z is continuous (sorry-free)
-#check continuous_hardyZV2
+/-! ## The instance (depends on HardySetupInstance having 0 sorries) -/
 
--- Z is real-valued (sorry-free)
-#check hardyZV2_real
-
-/-! ## What we're waiting on -/
-
--- 1. Mean square: ∫₀ᵀ |Z(t)|² dt ≥ c·T·log T (from Aristotle)
--- 2. First moment: |∫₀ᵀ Z(t) dt| ≤ C·T^{1/2+ε} (from Aristotle)
--- These together give Z(t) changes sign infinitely often (Cauchy-Schwarz argument)
--- Then hardyZV2_zero_iff_zeta_zero converts sign changes to zeta zeros
-
-/-! ## Chain of reasoning (when available):
-
-1. Mean square ≥ c·T·log T → Z is not eventually zero
-2. First moment ≤ C·T^{1/2+ε} → Z cannot be eventually one-signed
-3. Z continuous + changes sign → infinitely many zeros by IVT
-4. Z zeros = ζ critical zeros (by hardyZV2_zero_iff_zeta_zero)
-5. Therefore Set.Infinite {t | ζ(1/2+it) = 0}
-6. Convert to Set.Infinite {ρ ∈ zetaNontrivialZeros | ρ.re = 1/2}
--/
-
--- Template instance (uncomment when Aristotle completes):
-/-
+/-- Hardy's theorem: infinitely many zeros of ζ on the critical line.
+    This instance closes when HardySetupInstance's 3 Aristotle sorries are resolved. -/
 instance : Schmidt.HardyCriticalLineZerosHyp where
-  infinite := by
-    -- Use hardy_infinitely_many_zeros from completed Hardy proof
-    -- Then convert via the zero equivalence
-    sorry
--/
+  infinite := hardy_zeros_to_nontrivial_zeros HardyInfiniteZeros.hardy_infinitely_many_zeros
 
 end HardyCriticalLineWiring
