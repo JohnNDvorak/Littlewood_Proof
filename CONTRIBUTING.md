@@ -1,64 +1,66 @@
 # Contributing to Littlewood Formalization
 
-## Current Priority: Close Low-Hanging Sorries
+## Sorry Inventory (current)
 
-### Files to Review
+| File | Sorries | Topic |
+|------|---------|-------|
+| `Assumptions.lean` | 61 | Hypothesis class instances (classical results not in Mathlib) |
+| `Aristotle/MeanSquare.lean` | 3 | Mean square of partial zeta sums |
+| `Aristotle/ChebyshevTheta.lean` | 3 | Von Mangoldt / theta function identities |
+| `Aristotle/PhragmenLindelof.lean` | 3 | Convexity bounds, Gamma growth |
+| `Aristotle/PartialSummation.lean` | 2 | pi(x) - li(x) via partial summation |
+| `Aristotle/ZeroCounting.lean` | 2 | N(T) argument principle + asymptotic |
+| `Aristotle/PerronContourIntegralsV2.lean` | 1 | Cauchy integral theorem for Perron |
+| `Aristotle/HardyZConjugation.lean` | 1 | Mellin transform identity |
+| `Bridge/HardySetupInstance.lean` | 3 | Hardy setup fields (mean square, first moment, L1) |
+| `Bridge/HardyBuildingBlocksInstance.lean` | 2 | BuildingBlocks template |
+| `Bridge/HardyAssemblyAttempt.lean` | 1 | Hardy assembly exploration |
+| `Development/HardyTheorem.lean` | 2 | Hardy's theorem |
+| `Development/ZeroFreeRegion.lean` | 2 | Zero-free region |
+| `Development/LittlewoodTheorem.lean` | 1 | Direct approach |
+| `CoreLemmas/LandauLemma.lean` | 1 | Analytic continuation identity |
 
-1. **`Littlewood/Development/ZeroFreeRegion.lean`** - 8 sorries
-   - 6 new theorems already proved from Mathlib
-   - Remaining: Dirichlet character extraction, quantitative region
-   - See: [`docs/sorry_analysis/zerofreeregion_analysis.md`](docs/sorry_analysis/zerofreeregion_analysis.md)
+## Tractable Sorries (Easy)
 
-2. **`Littlewood/Development/TypeBridge.lean`** - 4 sorries
-   - LSeries infrastructure mostly complete
-   - Blocker: Landau boundary singularity theorem
+These are likely closeable with current Mathlib:
 
-3. **`Littlewood/CoreLemmas/LandauLemma.lean`** - 11 sorries
-   - 10 are parametric (architecture issue, not proof issue)
-   - 1 potentially provable: ZetaLogDerivPoleHyp
-   - See: [`docs/sorry_analysis/landaulemma_analysis.md`](docs/sorry_analysis/landaulemma_analysis.md)
+- **`PerronContourIntegralsV2.lean`** — Perron contour integral.
+  Mathlib has `Complex.integral_boundary_rect_eq_zero_of_differentiableOn`.
 
-### How to Help
+- **`DiagonalIntegralBound.lean`** — Harmonic sum bounds via induction;
+  measurability via `measurable_of_countable`.
 
-1. **Pick a sorry** from the files above
-2. **Check Mathlib** for the needed lemma:
-   - Search [mathlib4-docs](https://leanprover-community.github.io/mathlib4_docs/)
-   - Check `Mathlib.NumberTheory.LSeries.*`
-   - Check `Mathlib.NumberTheory.ZetaFunction.*`
-3. **If Mathlib has it**: Replace sorry with proof
-4. **If Mathlib doesn't**: Document precisely what's missing
+- **`ContourInfrastructure.lean`** — Measure preimage lemmas.
+  Try `congr 1` or `ext; simp [Complex.equivRealProd]`.
 
-### Example Contribution
+## Medium Difficulty
 
-```lean
--- Before (in ZeroFreeRegion.lean)
-theorem zeta_ne_zero_example (s : ℂ) (hs : 1 ≤ s.re) : riemannZeta s ≠ 0 := by
-  sorry
+See [`docs/mathlib_pr_specs/`](docs/mathlib_pr_specs/) for detailed specs.
 
--- After
-theorem zeta_ne_zero_example (s : ℂ) (hs : 1 ≤ s.re) : riemannZeta s ≠ 0 :=
-  riemannZeta_ne_zero_of_one_le_re hs
-```
+| Priority | PR Target | Unlocks |
+|----------|-----------|---------|
+| 1 | Quantitative zero-free region | ~8 sorries |
+| 2 | Perron's formula | ~25 sorries |
+| 3 | Zero counting (uniform Riemann-von Mangoldt) | ~15 sorries |
+| 4 | Hardy's theorem (approximate functional equation) | ~15 sorries |
 
-## Mathlib Contributions Needed
+## Hard — Aristotle-Level Proofs
 
-See [`docs/mathlib_pr_specs/`](docs/mathlib_pr_specs/) for detailed specifications.
+These require substantial analytic number theory formalization:
 
-### Priority Order
+- `MeanSquare.lean` sorries — off-diagonal bounds, norm-squared decomposition
+- `PhragmenLindelof.lean` sorries — Phragmen-Lindelof convexity, Stirling asymptotics
+- `ZeroCounting.lean` sorries — argument principle for N(T)
 
-| Priority | PR | Difficulty | Unlocks |
-|----------|-----|------------|---------|
-| 1 | Quantitative zero-free region | MEDIUM-HIGH | ~8 sorries |
-| 2 | Perron's formula | HIGH | ~25 sorries |
-| 3 | Zero counting | HIGH | ~15 sorries |
-| 4 | Hardy's theorem | VERY HIGH | ~15 sorries |
+## Workflow
 
-### Getting Started with Mathlib
-
-1. Read the specification in `docs/mathlib_pr_specs/`
-2. Check Zulip #number-theory for ongoing work
-3. Open a Mathlib issue referencing the spec
-4. Start with prerequisites (listed in each spec)
+1. Pick a sorry from the tables above
+2. Check [Mathlib docs](https://leanprover-community.github.io/mathlib4_docs/)
+   for the needed API (especially `Mathlib.NumberTheory.LSeries.*`,
+   `Mathlib.NumberTheory.ZetaFunction.*`)
+3. If Mathlib has the lemma: replace `sorry` with proof
+4. If Mathlib doesn't: document what's missing in an issue
+5. Run `lake build` to verify
 
 ## Code Style
 
@@ -66,6 +68,7 @@ See [`docs/mathlib_pr_specs/`](docs/mathlib_pr_specs/) for detailed specificatio
 - Use `sorry -- BLOCKED: [reason]` for documented blockers
 - Add references to Mathlib lemmas in comments
 - Keep proofs readable; prefer `exact` over `simp` when clear
+- Use `maxHeartbeats 800000` for Aristotle files (not 0)
 
 ## Testing
 
@@ -74,11 +77,14 @@ See [`docs/mathlib_pr_specs/`](docs/mathlib_pr_specs/) for detailed specificatio
 lake build
 
 # Specific file
-lake build Littlewood.Development.ZeroFreeRegion
+lake build Littlewood.Aristotle.MeanSquare
+
+# Count sorries
+lake build 2>&1 | grep "uses 'sorry'" | wc -l
 ```
 
 ## Questions?
 
 - Open an issue on this repository
-- Check the documentation in `docs/`
-- Reference the blocking analysis for why something might be hard
+- See [`docs/CurrentStatus.md`](docs/CurrentStatus.md) for the latest dashboard
+- See [`docs/blocking_analysis.md`](docs/blocking_analysis.md) for gap analysis

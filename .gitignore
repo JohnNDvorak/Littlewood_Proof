@@ -9,3 +9,9 @@ lake-packages/
 *.swp
 *.swo
 *~
+
+# Build logs and generated artifacts
+build_log*.txt
+build_audit.log
+warnings.txt
+import_graph.dot
