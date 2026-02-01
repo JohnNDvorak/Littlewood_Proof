@@ -20,9 +20,9 @@ classes filled incrementally with proofs co-authored by
 | Bridge/ | 4 across 2 files |
 | CoreLemmas/ | 1 |
 | Main theorem sorries | **0** |
-| Lines of Lean code | ~30,300 |
-| Total .lean files | 161 |
-| Sorry-free .lean files | 144 (89%) |
+| Lines of Lean code | ~30,400 |
+| Total .lean files | 162 |
+| Sorry-free .lean files | 145 (90%) |
 | Hardy chain status | 3 Aristotle sorries from completion |
 
 ## Main Theorems
@@ -82,7 +82,7 @@ Littlewood/
   Main/                       3 files — Littlewood, LittlewoodPsi, LittlewoodPi (0 sorries)
   Mertens/                    1 file  — Mertens' first theorem
   Assumptions.lean            1 file  — 58 hypothesis instances (all sorry)
-  Aristotle/                 92 files — AI-generated proofs (Harmonic), 11 active sorries
+  Aristotle/                 93 files — AI-generated proofs (Harmonic), 11 active sorries
   Bridge/                    20 files — Wiring Aristotle proofs to hypothesis classes
   Development/               18 files — WIP proofs (not imported by main build)
   Tests/                      7 files — Integration tests
@@ -123,7 +123,10 @@ Schmidt.HardyCriticalLineZerosHyp — instance auto-fires when chain closes
 
 Key files: `HardyZContradiction.lean` (BuildingBlocks structure),
 `HardyInfiniteZeros.lean` (main theorem), `HardySetupInstance.lean`
-(3 sorry fields), `Bridge/HardyCriticalLineWiring.lean` (conversion).
+(3 sorry fields), `Bridge/HardyCriticalLineWiring.lean` (conversion),
+`HardyApproxFunctionalEq.lean` (connects partial sum mean square to
+full Z(t) mean square — 0 sorries, bridges the diagonal bound to
+`mean_square_lower_bound`).
 
 ## Sorry Inventory
 

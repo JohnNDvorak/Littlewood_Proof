@@ -111,6 +111,7 @@ import Littlewood.Aristotle.MeanSquareLowerBound        -- Mean square lower bou
 import Littlewood.Aristotle.DiagonalIntegralBound       -- Diagonal integral ≥ c·T·log T (4 sorries)
 import Littlewood.Aristotle.ContourInfrastructure       -- Contour defs, measure-zero segments (3 sorries)
 import Littlewood.Aristotle.HardyInfiniteZeros          -- Hardy's theorem: ∞ many critical line zeros (0 sorries) ✓
+import Littlewood.Aristotle.HardyApproxFunctionalEq     -- Approx functional eq: ∫Z²≥k∫|S_N|²-CT (0 sorries) ✓
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
