@@ -1,21 +1,26 @@
 # Contributing to Littlewood Formalization
 
-## Sorry Inventory (audited 2026-01-31 from `lake build`)
+## Sorry Inventory (audited 2026-02-01 from `lake build`)
 
-**74 project sorry declarations** (+ 3 from PrimeNumberTheoremAnd dependency).
+**87 project sorry declarations** (+ 3 from PrimeNumberTheoremAnd dependency).
 
 ### Imported by build (produce warnings)
 
 | File | Declarations | Topic |
 |------|-------------|-------|
 | `Assumptions.lean` | 58 | Hypothesis class instances (classical results not in Mathlib) |
+| `Aristotle/HardyInfiniteZerosV2.lean` | 5 | Hardy's theorem V2 — contradiction argument structure |
 | `Aristotle/MeanSquare.lean` | 3 | Mean square of partial zeta sums |
 | `Aristotle/PhragmenLindelof.lean` | 3 | Convexity bounds, Gamma growth |
+| `Aristotle/StirlingBernoulli.lean` | 2 | Bernoulli B1/B2, Stirling remainder |
 | `Aristotle/ZeroCounting.lean` | 2 | N(T) argument principle + asymptotic |
 | `Aristotle/PartialSummation.lean` | 1 | pi(x) - li(x) via partial summation |
 | `Aristotle/PerronContourIntegralsV2.lean` | 1 | Cauchy integral theorem for Perron |
 | `Aristotle/HardyZConjugation.lean` | 1 | Mellin transform identity |
-| `Bridge/HardySetupInstance.lean` | 3 | Hardy setup fields (mean square, first moment, L1) |
+| `Aristotle/ContourRectangle.lean` | 1 | Rectangle contour integral = 0 |
+| `Bridge/HardySetupV2Instance.lean` | 3 | HardySetupV2 fields (mean square, first moment, convexity) |
+| `Bridge/HardySetupInstance.lean` | 3 | Hardy setup V1 fields (mean square, first moment, L1) |
+| `Bridge/MeanSquareBridge.lean` | 2 | Type transfer between hardyZ variants |
 | `Bridge/HardyAssemblyAttempt.lean` | 1 | Hardy assembly exploration |
 | `CoreLemmas/LandauLemma.lean` | 1 | Analytic continuation identity |
 
@@ -38,11 +43,14 @@ These are likely closeable with current Mathlib:
 - **`PerronContourIntegralsV2.lean`** — Perron contour integral.
   Mathlib has `Complex.integral_boundary_rect_eq_zero_of_differentiableOn`.
 
-- **`DiagonalIntegralBound.lean`** — Harmonic sum bounds via induction;
-  measurability via `measurable_of_countable`.
+- **`ContourRectangle.lean`** — Rectangle contour integral = 0.
+  Edge lemmas all proved; main theorem needs `I • ∫` vs `I * ∫` coercion fix.
 
-- **`ContourInfrastructure.lean`** — Measure preimage lemmas.
-  Try `congr 1` or `ext; simp [Complex.equivRealProd]`.
+- **`StirlingBernoulli.lean`** — `integral_B1_eq_B2_sub_const` needs
+  `∫_k^{k+1} B1 = 0` for integer k (floor-based telescoping).
+
+- **`MeanSquareBridge.lean`** — Type transfer `hardyZ_sq_eq` between
+  `HardyEstimatesPartial.hardyZ` and `HardyApproxFunctionalEq.Z`.
 
 ## Medium Difficulty
 
@@ -59,9 +67,28 @@ See [`docs/mathlib_pr_specs/`](docs/mathlib_pr_specs/) for detailed specs.
 
 These require substantial analytic number theory formalization:
 
-- `MeanSquare.lean` sorries — off-diagonal bounds, norm-squared decomposition
-- `PhragmenLindelof.lean` sorries — Phragmen-Lindelof convexity, Stirling asymptotics
-- `ZeroCounting.lean` sorries — argument principle for N(T)
+- `HardyInfiniteZerosV2.lean` — contradiction argument structure (constant sign,
+  mean square decomposition, sup × L1 bound)
+- `MeanSquare.lean` — off-diagonal bounds, norm-squared decomposition
+- `PhragmenLindelof.lean` — Phragmén-Lindelöf convexity, Stirling asymptotics
+- `ZeroCounting.lean` — argument principle for N(T)
+- `HardySetupV2Instance.lean` — `first_moment_upper` (connect OscillatorySumBound
+  to Hardy Z) and `Z_convexity_bound` (Phragmén-Lindelöf)
+
+## Hardy Chain (Critical Path)
+
+The most impactful work is closing the Hardy chain:
+
+```
+DiagonalIntegralBound (0 sorries) ✓
+  → HardyApproxFunctionalEq (0 sorries) ✓
+    → MeanSquarePartialSumAsymptotic (0 sorries) ✓
+      → OscillatorySumBound (0 sorries) ✓
+        → MeanSquareBridge (2 sorries)
+          → HardySetupV2Instance (3 sorries)
+            → HardyInfiniteZerosV2 (5 sorries)
+              → HardyCriticalLineWiring → Schmidt
+```
 
 ## Workflow
 
