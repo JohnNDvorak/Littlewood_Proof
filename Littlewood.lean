@@ -72,6 +72,7 @@ import Littlewood.Aristotle.PerronContourIntegrals -- Perron contour integrals (
 import Littlewood.Aristotle.PerronContourIntegralsV2 -- Perron contour integrals v2 (1 sorry)
 import Littlewood.Bridge.HardyAssemblyAttempt       -- Hardy assembly exploration (1 sorry)
 import Littlewood.Aristotle.StirlingGammaBounds  -- Stirling/Gamma bounds (0 sorries) ✓
+import Littlewood.Aristotle.StirlingBernoulli    -- Bernoulli B1/B2, continuity, ∫B1=B2/2-1/12 (1 sorry)
 
 -- Analysis infrastructure (no conflicts)
 import Littlewood.Aristotle.PhragmenLindelofStrip  -- Phragmén-Lindelöf strip bounds (0 sorries) ✓

@@ -9,20 +9,20 @@ classes filled incrementally with proofs co-authored by
 
 ## Status
 
-`lake build` reports **85** sorry-bearing declarations (+ 3 from the
+`lake build` reports **87** sorry-bearing declarations (+ 3 from the
 `PrimeNumberTheoremAnd` dependency).
 
 | Metric | Count |
 |--------|-------|
-| Sorry declarations (`lake build`, project only) | **85** |
+| Sorry declarations (`lake build`, project only) | **87** |
 | Assumptions.lean (hypothesis instances) | 58 |
-| Aristotle/ (active, imported) | 17 across 8 files |
+| Aristotle/ (active, imported) | 19 across 9 files |
 | Bridge/ | 9 across 4 files |
 | CoreLemmas/ | 1 |
 | Main theorem sorries | **0** |
-| Lines of Lean code | ~31,100 |
-| Total .lean files | 168 |
-| Sorry-free .lean files | 154 (92%) |
+| Lines of Lean code | ~31,300 |
+| Total .lean files | 169 |
+| Sorry-free .lean files | 155 (92%) |
 | Hardy chain status | V1 BUGGY (field signatures unsatisfiable); V2 created with correct architecture |
 
 ## Main Theorems
@@ -82,7 +82,7 @@ Littlewood/
   Main/                       3 files — Littlewood, LittlewoodPsi, LittlewoodPi (0 sorries)
   Mertens/                    1 file  — Mertens' first theorem
   Assumptions.lean            1 file  — 58 hypothesis instances (all sorry)
-  Aristotle/                 97 files — AI-generated proofs (Harmonic), 17 active sorries
+  Aristotle/                 98 files — AI-generated proofs (Harmonic), 19 active sorries
   Bridge/                    23 files — Wiring Aristotle proofs to hypothesis classes
   Development/               18 files — WIP proofs (not imported by main build)
   Tests/                      8 files — Integration tests
@@ -172,10 +172,10 @@ produce build warnings; Development/ files are on disk but not imported.
 | Location | Declarations | Files | Notes |
 |----------|-------------|-------|-------|
 | **Assumptions.lean** | 58 | 1 | Hypothesis instances for classical results not in Mathlib |
-| **Aristotle/** | 17 | 8 | HardyInfiniteZerosV2 (5), MeanSquare (3), PhragmenLindelof (3), ZeroCounting (2), PerronContourIntegralsV2 (1), PartialSummation (1), HardyZConjugation (1), ContourRectangle (1) |
+| **Aristotle/** | 19 | 9 | HardyInfiniteZerosV2 (5), MeanSquare (3), PhragmenLindelof (3), StirlingBernoulli (2), ZeroCounting (2), PerronContourIntegralsV2 (1), PartialSummation (1), HardyZConjugation (1), ContourRectangle (1) |
 | **Bridge/** | 9 | 4 | HardySetupV2Instance (3), HardySetupInstance (3), MeanSquareBridge (2), HardyAssemblyAttempt (1) |
 | **CoreLemmas/** | 1 | 1 | LandauLemma — analytic continuation identity |
-| **Total (project)** | **85** | **14** | Main proof chain: 0 sorries |
+| **Total (project)** | **87** | **15** | Main proof chain: 0 sorries |
 
 Additionally on disk but not imported by the build:
 - `Aristotle/_deprecated/`: 10 sorries across 3 files
