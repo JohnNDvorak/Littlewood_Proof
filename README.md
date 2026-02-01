@@ -9,16 +9,19 @@ classes filled incrementally with proofs co-authored by
 
 ## Status
 
+`lake build` reports **74** sorry-bearing declarations (+ 3 from the
+`PrimeNumberTheoremAnd` dependency).
+
 | Metric | Count |
 |--------|-------|
-| Total sorry declarations | **~102** |
-| Assumptions.lean (hypothesis instances) | 61 |
-| Aristotle active sorries | 15 |
-| Bridge sorries | 6 |
-| Development sorries | 5 |
-| CoreLemmas sorries | 1 |
-| Sorry-free files | ~85% of codebase |
+| Sorry declarations (`lake build`, project only) | **74** |
+| Assumptions.lean (hypothesis instances) | 58 |
+| Aristotle/ (active, imported) | 11 across 6 files |
+| Bridge/ | 4 across 2 files |
+| CoreLemmas/ | 1 |
 | Main theorem sorries | **0** |
+| Total .lean files | 161 |
+| Sorry-free .lean files | 144 (89%) |
 | Hardy chain status | 3 Aristotle sorries from completion |
 
 ## Main Theorems
@@ -56,7 +59,7 @@ from analytic content:
 2. **Main theorems** are proved assuming these classes — the full proof
    chain from Hardy's theorem through Schmidt oscillation to Littlewood
    compiles with 0 sorries
-3. **`Assumptions.lean`** provides `sorry`-backed instances for all 58 classes
+3. **`Assumptions.lean`** provides `sorry`-backed instances for all 58 hypothesis classes
 4. **Aristotle/ and Bridge/** work toward replacing those sorries with
    genuine proofs
 
@@ -70,28 +73,28 @@ already fully proved:
 
 ```
 Littlewood/
-  Basic/                     3 files — Omega-notation, Chebyshev psi/theta, li(x)
-  ZetaZeros/                 3 files — Zero counting N(T), density, sup real part
-  ExplicitFormulas/          3 files — Explicit formula for psi, smoothed, conversions
-  CoreLemmas/                3 files — Landau lemma (1 sorry), Dirichlet approx, weighted avg
-  Oscillation/               2 files — Schmidt oscillation theorem
-  Main/                      2 files — LittlewoodPsi, LittlewoodPi (0 sorries)
-  Mertens/                   1 file  — Mertens' first theorem
-  Assumptions.lean           1 file  — 58 hypothesis instances (all sorry)
-  Aristotle/                90 files — AI-generated proofs (Harmonic), ~15 active sorries
-  Bridge/                   19 files — Wiring Aristotle proofs to hypothesis classes
-  Development/               3 files — WIP proofs (5 sorries)
-  Tests/                     2 files — Integration tests
-  Documentation/            42 files — Status tracking, prompt logs
+  Basic/                      3 files — Omega-notation, Chebyshev psi/theta, li(x)
+  ZetaZeros/                  3 files — Zero counting N(T), density, sup real part
+  ExplicitFormulas/           4 files — Explicit formula for psi, Perron, smoothed, conversions
+  CoreLemmas/                 3 files — Landau lemma (1 sorry), Dirichlet approx, weighted avg
+  Oscillation/                2 files — Schmidt oscillation theorem
+  Main/                       3 files — Littlewood, LittlewoodPsi, LittlewoodPi (0 sorries)
+  Mertens/                    1 file  — Mertens' first theorem
+  Assumptions.lean            1 file  — 58 hypothesis instances (all sorry)
+  Aristotle/                 92 files — AI-generated proofs (Harmonic), 11 active sorries
+  Bridge/                    20 files — Wiring Aristotle proofs to hypothesis classes
+  Development/               18 files — WIP proofs (not imported by main build)
+  Tests/                      7 files — Integration tests
+  Documentation/             40 files — Status tracking, prompt logs
 docs/
-  CurrentStatus.md           Canonical status dashboard (updated each push)
-  blocking_analysis.md       Gap analysis
-  hypothesis_*.md            Hypothesis tracking and mapping
-  lemma_index.md             Lemma inventory
-  sorry_analysis/            Detailed sorry audits
-  mathlib_pr_specs/          Specifications for needed Mathlib PRs
-  roadmap.md                 Development roadmap
-  _archive/                  Historical milestones and old status files
+  CurrentStatus.md            Canonical status dashboard (updated each push)
+  blocking_analysis.md        Gap analysis
+  hypothesis_*.md             Hypothesis tracking and mapping
+  lemma_index.md              Lemma inventory
+  sorry_analysis/             Detailed sorry audits
+  mathlib_pr_specs/           Specifications for needed Mathlib PRs
+  roadmap.md                  Development roadmap
+  _archive/                   Historical milestones and old status files
 ```
 
 ## Hardy Chain (Critical Path)
@@ -123,14 +126,21 @@ Key files: `HardyZContradiction.lean` (BuildingBlocks structure),
 
 ## Sorry Inventory
 
-| Location | Sorries | Notes |
-|----------|---------|-------|
-| **Assumptions.lean** | 61 | Hypothesis instances for classical results not in Mathlib |
-| **Aristotle/** | 15 | Across 7 files (MeanSquare, PhragmenLindelof, ZeroCounting, PartialSummation, PerronContourIntegralsV2, HardyZConjugation, ChebyshevTheta) |
-| **Bridge/** | 6 | Hardy setup (3), building blocks (2), assembly (1) |
-| **Development/** | 5 | LittlewoodTheorem (1), HardyTheorem (2), ZeroFreeRegion (2) |
-| **CoreLemmas/** | 1 | Landau lemma analytic continuation |
-| **Total** | **~102** | Main proof chain: 0 sorries |
+Audited from `lake build` output (2026-01-31). Only imported files
+produce build warnings; Development/ files are on disk but not imported.
+
+| Location | Declarations | Files | Notes |
+|----------|-------------|-------|-------|
+| **Assumptions.lean** | 58 | 1 | Hypothesis instances for classical results not in Mathlib |
+| **Aristotle/** | 11 | 6 | MeanSquare (3), PhragmenLindelof (3), ZeroCounting (2), PartialSummation (1), PerronContourIntegralsV2 (1), HardyZConjugation (1) |
+| **Bridge/** | 4 | 2 | HardySetupInstance (3), HardyAssemblyAttempt (1) |
+| **CoreLemmas/** | 1 | 1 | LandauLemma — analytic continuation identity |
+| **Total (project)** | **74** | **10** | Main proof chain: 0 sorries |
+
+Additionally on disk but not imported by the build:
+- `Aristotle/_deprecated/`: 10 sorries across 3 files
+- `Aristotle/ChebyshevTheta.lean`: 3 sorries (redefines psi/theta)
+- `Development/`: 5 sorries across 3 files (HardyTheorem, ZeroFreeRegion, LittlewoodTheorem)
 
 ## Building
 

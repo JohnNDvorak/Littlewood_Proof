@@ -1,24 +1,35 @@
 # Contributing to Littlewood Formalization
 
-## Sorry Inventory (current)
+## Sorry Inventory (audited 2026-01-31 from `lake build`)
 
-| File | Sorries | Topic |
-|------|---------|-------|
-| `Assumptions.lean` | 61 | Hypothesis class instances (classical results not in Mathlib) |
+**74 project sorry declarations** (+ 3 from PrimeNumberTheoremAnd dependency).
+
+### Imported by build (produce warnings)
+
+| File | Declarations | Topic |
+|------|-------------|-------|
+| `Assumptions.lean` | 58 | Hypothesis class instances (classical results not in Mathlib) |
 | `Aristotle/MeanSquare.lean` | 3 | Mean square of partial zeta sums |
-| `Aristotle/ChebyshevTheta.lean` | 3 | Von Mangoldt / theta function identities |
 | `Aristotle/PhragmenLindelof.lean` | 3 | Convexity bounds, Gamma growth |
-| `Aristotle/PartialSummation.lean` | 2 | pi(x) - li(x) via partial summation |
 | `Aristotle/ZeroCounting.lean` | 2 | N(T) argument principle + asymptotic |
+| `Aristotle/PartialSummation.lean` | 1 | pi(x) - li(x) via partial summation |
 | `Aristotle/PerronContourIntegralsV2.lean` | 1 | Cauchy integral theorem for Perron |
 | `Aristotle/HardyZConjugation.lean` | 1 | Mellin transform identity |
 | `Bridge/HardySetupInstance.lean` | 3 | Hardy setup fields (mean square, first moment, L1) |
-| `Bridge/HardyBuildingBlocksInstance.lean` | 2 | BuildingBlocks template |
 | `Bridge/HardyAssemblyAttempt.lean` | 1 | Hardy assembly exploration |
-| `Development/HardyTheorem.lean` | 2 | Hardy's theorem |
-| `Development/ZeroFreeRegion.lean` | 2 | Zero-free region |
-| `Development/LittlewoodTheorem.lean` | 1 | Direct approach |
 | `CoreLemmas/LandauLemma.lean` | 1 | Analytic continuation identity |
+
+### On disk but not imported
+
+| File | Sorry tokens | Topic |
+|------|-------------|-------|
+| `Aristotle/ChebyshevTheta.lean` | 3 | Redefines psi/theta (conflict with Basic/) |
+| `Aristotle/_deprecated/PerronFormula.lean` | 5 | Deprecated, redefines chebyshevPsi |
+| `Aristotle/_deprecated/PrimePowerSums.lean` | 4 | Deprecated, redefines psi |
+| `Aristotle/_deprecated/FunctionalEquation.lean` | 1 | Deprecated |
+| `Development/HardyTheorem.lean` | 2 | Hardy's theorem (WIP) |
+| `Development/ZeroFreeRegion.lean` | 2 | Zero-free region (WIP) |
+| `Development/LittlewoodTheorem.lean` | 1 | Direct approach (WIP) |
 
 ## Tractable Sorries (Easy)
 
