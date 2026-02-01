@@ -147,6 +147,7 @@ import Littlewood.Bridge.HardyZDefinitionMap          -- Hardy Z variant equival
 import Littlewood.Bridge.HardyCriticalLineWiring      -- Pre-wired for Hardy completion (0 sorries) ✓
 import Littlewood.Bridge.HardyZUnified                -- Unified Hardy Z exports (0 sorries) ✓
 import Littlewood.Bridge.HardyChainTest               -- Hardy chain integration test (0 sorries) ✓
+import Littlewood.Bridge.MeanSquareBridge              -- Mean square bridge: DiagBound + ApproxFuncEq (2 sorries)
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
