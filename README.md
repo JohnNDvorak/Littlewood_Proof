@@ -20,6 +20,7 @@ classes filled incrementally with proofs co-authored by
 | Bridge/ | 4 across 2 files |
 | CoreLemmas/ | 1 |
 | Main theorem sorries | **0** |
+| Lines of Lean code | ~30,300 |
 | Total .lean files | 161 |
 | Sorry-free .lean files | 144 (89%) |
 | Hardy chain status | 3 Aristotle sorries from completion |
