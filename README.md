@@ -9,21 +9,21 @@ classes filled incrementally with proofs co-authored by
 
 ## Status
 
-`lake build` reports **76** sorry-bearing declarations (+ 3 from the
+`lake build` reports **85** sorry-bearing declarations (+ 3 from the
 `PrimeNumberTheoremAnd` dependency).
 
 | Metric | Count |
 |--------|-------|
-| Sorry declarations (`lake build`, project only) | **76** |
+| Sorry declarations (`lake build`, project only) | **85** |
 | Assumptions.lean (hypothesis instances) | 58 |
-| Aristotle/ (active, imported) | 11 across 6 files |
-| Bridge/ | 6 across 3 files |
+| Aristotle/ (active, imported) | 17 across 8 files |
+| Bridge/ | 9 across 4 files |
 | CoreLemmas/ | 1 |
 | Main theorem sorries | **0** |
-| Lines of Lean code | ~30,800 |
-| Total .lean files | 164 |
-| Sorry-free .lean files | 147 (90%) |
-| Hardy chain status | 3 HardySetupInstance sorries remain (field signature issue, see below) |
+| Lines of Lean code | ~31,100 |
+| Total .lean files | 168 |
+| Sorry-free .lean files | 154 (92%) |
+| Hardy chain status | V1 BUGGY (field signatures unsatisfiable); V2 created with correct architecture |
 
 ## Main Theorems
 
@@ -82,10 +82,10 @@ Littlewood/
   Main/                       3 files — Littlewood, LittlewoodPsi, LittlewoodPi (0 sorries)
   Mertens/                    1 file  — Mertens' first theorem
   Assumptions.lean            1 file  — 58 hypothesis instances (all sorry)
-  Aristotle/                 94 files — AI-generated proofs (Harmonic), 11 active sorries
-  Bridge/                    21 files — Wiring Aristotle proofs to hypothesis classes
+  Aristotle/                 97 files — AI-generated proofs (Harmonic), 17 active sorries
+  Bridge/                    23 files — Wiring Aristotle proofs to hypothesis classes
   Development/               18 files — WIP proofs (not imported by main build)
-  Tests/                      7 files — Integration tests
+  Tests/                      8 files — Integration tests
   Documentation/             40 files — Status tracking, prompt logs
 docs/
   CurrentStatus.md            Canonical status dashboard (updated each push)
@@ -101,42 +101,68 @@ docs/
 ## Hardy Chain (Critical Path)
 
 The Hardy chain proves infinitely many zeros on the critical line,
-which is the key input to the oscillation argument:
+which is the key input to the oscillation argument.
+
+### V1 (BUGGY — `HardyInfiniteZeros.lean`)
+
+The original `HardySetup` class has unsatisfiable field signatures:
+`mean_square_lower_bound` quantifies `∀ T₁ ∈ [0,T)`, requiring
+`∫_{T₁}^T Z² ≥ c·T·log T` for ALL T₁. For T₁ near T the integral
+vanishes, so the field is **mathematically false**. The `grind` proof
+of `hardy_infinitely_many_zeros` works **vacuously** from `sorry = False`.
+
+### V2 (CANONICAL — `HardyInfiniteZerosV2.lean`)
+
+Fixed architecture with correct field signatures:
 
 ```
-DiagonalIntegralBound: ∫|S_N|² ≥ c·T·log T           (0 sorries) ✓
+HardySetupV2 FIELDS (6 total):
+1. Z                    ✅ HardyEstimatesPartial.hardyZ
+2. Z_continuous          ✅ HardySetupInstance
+3. Z_zero_iff            ✅ HardySetupInstance
+4. mean_square_lower     ⚠️ MeanSquareBridge (2 sorries in chain)
+5. first_moment_upper    ❌ Needs Aristotle
+6. Z_convexity_bound     ❌ Needs Aristotle (Phragmén-Lindelöf)
+```
+
+All integrals use fixed lower endpoint 1 (not arbitrary T₁).
+The contradiction argument uses exponent 3/4 + ε₁ + ε₂ < 1
+for ε₁ + ε₂ < 1/4, giving T·log T vs T^α with α < 1.
+
+```
+DiagonalIntegralBound: ∫|S_N|² ≥ c·T·log T                          (0 sorries) ✓
   |
   v
-HardyApproxFunctionalEq: ∫Z² ≥ k·∫|S_N|² - C·T      (0 sorries) ✓
+HardyApproxFunctionalEq: ∫Z² ≥ k·∫|S_N|² - C·T                     (0 sorries) ✓
   |
   v
-MeanSquareBridge: ∫Z² ≥ c'·T·log T on [1,T]          (2 sorries — type transfer)
-  |
-  v  [BLOCKED: field signature issue]
-HardySetupInstance (3 sorries — see note below)
+MeanSquarePartialSumAsymptotic: ∫|S_N|² ≥ c₁·T·log T                (0 sorries) ✓
   |
   v
-HardyInfiniteZeros.hardy_infinitely_many_zeros         (0 sorries) ✓
+OscillatorySumBound: |∫ oscillatory| ≤ C·T^{1/2+ε}                  (0 sorries) ✓
+  |
+  v
+MeanSquareBridge: ∫Z² ≥ c'·T·log T on [1,T]                        (2 sorries)
+  |
+  v
+HardySetupV2Instance: fields 1-3 proved, 4-6 sorry                  (3 sorries)
+  |
+  v
+HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2                 (5 sorries)
   |
   v
 HardyCriticalLineWiring → Schmidt.HardyCriticalLineZerosHyp
 ```
 
-**Field signature issue:** The `HardySetup.mean_square_lower_bound` field
-universally quantifies over the lower integration limit T₁ ∈ [0,T),
-requiring `∫_{T₁}^T Z² ≥ c·T·log T` for ALL such T₁. This is
-unsatisfiable (for T₁ near T the integral vanishes). The field needs
-to be fixed to use a fixed lower endpoint before the bridge can wire
-through. The analytic content (∫₁ᵀ Z² ≥ c·T·log T) is now proved.
+**Remaining for Hardy:**
+1. Close MeanSquareBridge sorries (type transfer between hardyZ variants)
+2. `first_moment_upper` — connect OscillatorySumBound to Hardy Z
+3. `Z_convexity_bound` — |ζ(1/2+it)| ≤ C|t|^{1/4+ε} (Phragmén-Lindelöf)
 
-**3 HardySetupInstance sorries** (blocked on field signature fix):
-1. `mean_square_lower_bound` — analytic content proved, field signature mismatch
-2. `first_moment_upper_bound` — |∫ Z(t)| ≤ C T^(1/2+eps) (needs convexity)
-3. `l1_lower_bound` — ∫ |Z(t)| ≥ c T (may derive from mean square + Cauchy-Schwarz)
-
-Key files: `DiagonalIntegralBound.lean`, `HardyApproxFunctionalEq.lean`,
-`Bridge/MeanSquareBridge.lean`, `HardyInfiniteZeros.lean`,
-`Bridge/HardySetupInstance.lean`, `Bridge/HardyCriticalLineWiring.lean`.
+Key files: `HardyInfiniteZerosV2.lean`, `HardySetupV2Instance.lean`,
+`MeanSquareBridge.lean`, `DiagonalIntegralBound.lean`,
+`HardyApproxFunctionalEq.lean`, `MeanSquarePartialSumAsymptotic.lean`,
+`OscillatorySumBound.lean`, `ContourRectangle.lean`.
 
 ## Sorry Inventory
 
@@ -146,10 +172,10 @@ produce build warnings; Development/ files are on disk but not imported.
 | Location | Declarations | Files | Notes |
 |----------|-------------|-------|-------|
 | **Assumptions.lean** | 58 | 1 | Hypothesis instances for classical results not in Mathlib |
-| **Aristotle/** | 11 | 6 | MeanSquare (3), PhragmenLindelof (3), ZeroCounting (2), PartialSummation (1), PerronContourIntegralsV2 (1), HardyZConjugation (1) |
-| **Bridge/** | 6 | 3 | HardySetupInstance (3), MeanSquareBridge (2), HardyAssemblyAttempt (1) |
+| **Aristotle/** | 17 | 8 | HardyInfiniteZerosV2 (5), MeanSquare (3), PhragmenLindelof (3), ZeroCounting (2), PerronContourIntegralsV2 (1), PartialSummation (1), HardyZConjugation (1), ContourRectangle (1) |
+| **Bridge/** | 9 | 4 | HardySetupV2Instance (3), HardySetupInstance (3), MeanSquareBridge (2), HardyAssemblyAttempt (1) |
 | **CoreLemmas/** | 1 | 1 | LandauLemma — analytic continuation identity |
-| **Total (project)** | **76** | **11** | Main proof chain: 0 sorries |
+| **Total (project)** | **85** | **14** | Main proof chain: 0 sorries |
 
 Additionally on disk but not imported by the build:
 - `Aristotle/_deprecated/`: 10 sorries across 3 files
@@ -187,7 +213,7 @@ Build configuration: `maxHeartbeats 1600000`, `maxRecDepth 4000`.
 
 Pick a sorry from `Aristotle/` files and check if current Mathlib can fill it:
 - `PerronContourIntegralsV2.lean` (1 sorry) — Mathlib has `integral_boundary_rect_eq_zero_of_differentiableOn`
-- `ContourInfrastructure.lean` — measure preimage lemmas
+- `ContourRectangle.lean` (1 sorry) — same Mathlib API, needs argument matching
 - `DiagonalIntegralBound.lean` — harmonic sum bounds
 
 ### Medium — Small Mathlib PRs
@@ -201,6 +227,7 @@ See [`docs/mathlib_pr_specs/`](docs/mathlib_pr_specs/) for specifications:
 - Zero counting infrastructure (Riemann-von Mangoldt with uniform constants)
 - Hardy's theorem (approximate functional equation, mean value estimates)
 - Phragmen-Lindelof convexity bounds
+- Connect OscillatorySumBound to Hardy Z first moment
 
 ### Workflow
 

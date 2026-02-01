@@ -110,8 +110,12 @@ import Littlewood.Aristotle.ZetaBoundsPartialSum       -- Zeta bounds, partial s
 import Littlewood.Aristotle.MeanSquareLowerBound        -- Mean square lower bound for partial sum (0 sorries) ✓
 import Littlewood.Aristotle.DiagonalIntegralBound       -- Diagonal integral ≥ c·T·log T (4 sorries)
 import Littlewood.Aristotle.ContourInfrastructure       -- Contour defs, measure-zero segments (3 sorries)
-import Littlewood.Aristotle.HardyInfiniteZeros          -- Hardy's theorem: ∞ many critical line zeros (0 sorries) ✓
+import Littlewood.Aristotle.HardyInfiniteZeros          -- Hardy's theorem V1: BUGGY field signatures (grind works vacuously)
+import Littlewood.Aristotle.HardyInfiniteZerosV2        -- Hardy's theorem V2: FIXED field signatures (canonical path)
 import Littlewood.Aristotle.HardyApproxFunctionalEq     -- Approx functional eq: ∫Z²≥k∫|S_N|²-CT (0 sorries) ✓
+import Littlewood.Aristotle.MeanSquarePartialSumAsymptotic -- Mean square ∫|S_N|² ≥ c·T·log T (0 sorries) ✓
+import Littlewood.Aristotle.OscillatorySumBound          -- First moment: |∫ oscillatory| ≤ C·T^(1/2+ε) (0 sorries) ✓
+import Littlewood.Aristotle.ContourRectangle             -- Rectangle contour integrals, Cauchy (1 sorry)
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
@@ -148,6 +152,7 @@ import Littlewood.Bridge.HardyCriticalLineWiring      -- Pre-wired for Hardy com
 import Littlewood.Bridge.HardyZUnified                -- Unified Hardy Z exports (0 sorries) ✓
 import Littlewood.Bridge.HardyChainTest               -- Hardy chain integration test (0 sorries) ✓
 import Littlewood.Bridge.MeanSquareBridge              -- Mean square bridge: DiagBound + ApproxFuncEq (2 sorries)
+import Littlewood.Bridge.HardySetupV2Instance          -- HardySetupV2 instance: 3/6 proved, 3 sorry
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
