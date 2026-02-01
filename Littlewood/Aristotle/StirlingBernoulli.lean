@@ -131,12 +131,55 @@ theorem integral_B1_eq_B2_sub_const (x : ℝ) :
       exacts [ fun t => 1, Continuous.integrableOn_Icc <| by continuity, Measurable.aestronglyMeasurable <| by exact Measurable.sub ( measurable_fract ) measurable_const, Filter.Eventually.of_forall fun t => abs_le.mpr ⟨ by linarith [ Int.fract_nonneg t ], by linarith [ Int.fract_lt_one t ] ⟩ ];
     · refine' MeasureTheory.Integrable.mono' _ _ _;
       exacts [ fun t => 1, Continuous.integrableOn_Icc <| by continuity, Measurable.aestronglyMeasurable <| by exact Measurable.sub ( measurable_fract ) measurable_const, Filter.Eventually.of_forall fun t => abs_le.mpr ⟨ by linarith [ Int.fract_nonneg t ], by linarith [ Int.fract_lt_one t ] ⟩ ];
+  -- Integrability: fract t - 1/2 is bounded by 1 and measurable
+  have h_intble : ∀ a b : ℝ, IntervalIntegrable (fun t => Int.fract t - 1 / 2) volume a b := by
+    intro a b
+    apply MeasureTheory.IntegrableOn.intervalIntegrable
+    apply Measure.integrableOn_of_bounded
+    · rw [Real.volume_interval]; exact ENNReal.ofReal_ne_top
+    · exact (measurable_fract.sub measurable_const).aestronglyMeasurable
+    · exact ae_of_all _ fun t => by
+        rw [Real.norm_eq_abs]
+        exact abs_le.mpr ⟨by linarith [Int.fract_nonneg t], by linarith [Int.fract_lt_one t]⟩
   have h_floor : ∫ t in (0 : ℝ)..(Int.floor x), Int.fract t - 1 / 2 = 0 := by
-    -- ∫₀^⌊x⌋ B1 = Σ_{k=0}^{⌊x⌋-1} ∫_k^{k+1} B1 = Σ 0 = 0
-    -- Each unit interval integral is 0 by h_B1.
-    -- The decomposition into unit intervals involves nested Int.induction_on
-    -- which has variable shadowing issues in the full build context.
-    sorry;
+    -- Each unit interval integral is 0. Decompose by Nat induction.
+    -- Note: Lean elaborates 1/2 as 2⁻¹ in some contexts, so we use norm_num to unify.
+    have h_nat : ∀ m : ℕ, ∫ t in (0 : ℝ)..(m : ℝ), Int.fract t - 1 / 2 = 0 := by
+      intro m; induction m with
+      | zero => norm_num
+      | succ m ih =>
+        have hsplit : ∫ t in (0 : ℝ)..(↑(m + 1) : ℝ), Int.fract t - 1 / 2 =
+            (∫ t in (0 : ℝ)..(m : ℝ), Int.fract t - 1 / 2) +
+            ∫ t in (m : ℝ)..(↑(m + 1) : ℝ), Int.fract t - 1 / 2 := by
+          rw [show (↑(m + 1) : ℝ) = (↑m : ℝ) + 1 from by push_cast; ring]
+          exact (intervalIntegral.integral_add_adjacent_intervals (h_intble _ _) (h_intble _ _)).symm
+        rw [hsplit, ih, zero_add]
+        convert h_B1 (m : ℤ) using 2; push_cast; ring
+    have h_neg : ∀ m : ℕ, ∫ t in (-(m : ℝ))..(0 : ℝ), Int.fract t - 1 / 2 = 0 := by
+      intro m; induction m with
+      | zero => norm_num
+      | succ m ih =>
+        have hsplit : ∫ t in (-(↑(m + 1) : ℝ))..(0 : ℝ), Int.fract t - 1 / 2 =
+            (∫ t in (-(↑(m + 1) : ℝ))..(-(↑m : ℝ)), Int.fract t - 1 / 2) +
+            ∫ t in (-(↑m : ℝ))..(0 : ℝ), Int.fract t - 1 / 2 := by
+          exact (intervalIntegral.integral_add_adjacent_intervals (h_intble _ _) (h_intble _ _)).symm
+        rw [hsplit, ih, add_zero]
+        have : ∫ t in (-(↑(m + 1) : ℝ))..(-(↑m : ℝ)), Int.fract t - 1 / 2 =
+               ∫ t in ((-(m + 1 : ℤ) : ℤ) : ℝ)..((-(m + 1 : ℤ) : ℤ) : ℝ) + 1, Int.fract t - 1 / 2 := by
+          congr 1 <;> push_cast <;> ring
+        rw [this]; exact h_B1 _
+    by_cases h_nn : 0 ≤ ⌊x⌋
+    · have hcast : (⌊x⌋ : ℝ) = ((⌊x⌋.toNat : ℕ) : ℝ) := by
+        exact_mod_cast (Int.toNat_of_nonneg h_nn).symm
+      rw [hcast]; exact h_nat _
+    · push_neg at h_nn
+      rw [intervalIntegral.integral_symm]
+      have : ∫ t in (⌊x⌋ : ℝ)..(0 : ℝ), Int.fract t - 1 / 2 = 0 := by
+        have hcast : (⌊x⌋ : ℝ) = -(((-⌊x⌋).toNat : ℕ) : ℝ) := by
+          have h1 : ((-⌊x⌋).toNat : ℤ) = -⌊x⌋ := Int.toNat_of_nonneg (by omega)
+          exact_mod_cast show (⌊x⌋ : ℤ) = -((-⌊x⌋).toNat : ℤ) by omega
+        rw [hcast]; exact h_neg _
+      linarith
   have h_frac : ∫ t in (Int.floor x)..x, Int.fract t - 1 / 2 = ∫ t in (Int.floor x)..x, (t - Int.floor x - 1 / 2) := by
     field_simp;
     rw [ intervalIntegral.integral_of_le ( Int.floor_le x ), intervalIntegral.integral_of_le ( Int.floor_le x ) ];
@@ -159,7 +202,8 @@ theorem hasDerivWithinAt_B2_right (t : ℝ) :
             rw [ Filter.tendsto_congr' h_eq ] ; norm_num [ h ];
             exact tendsto_nhdsWithin_of_tendsto_nhds ( Continuous.tendsto' ( by continuity ) _ _ ( by norm_num [ show Int.fract t = 0 by obtain ⟨ n, rfl ⟩ := h; norm_num ] ) );
           aesop
-        sorry; -- exact? budget reached — needs Filter.Tendsto matching
+        have : (2 : ℝ) * B1 t = 2 * (t - ↑⌊t⌋ - 1 / 2) := by unfold B1; rw [Int.fract]
+        rw [this]; exact h_lim
       convert h_cont using 1;
     rw [ hasDerivWithinAt_iff_tendsto_slope ];
     convert h_cont.comp ( show Filter.Tendsto ( fun x : ℝ => x - t ) ( 𝓝[Set.Ioi t \ { t }] t ) ( 𝓝[>] 0 ) from ?_ ) using 2;

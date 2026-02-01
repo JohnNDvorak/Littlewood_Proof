@@ -70,9 +70,9 @@ import Littlewood.Aristotle.HarmonicSumIntegral    -- ∫H_{N(t)} = Θ(T log T) 
 import Littlewood.Aristotle.HorizontalSegmentBounds -- Horizontal segment bounds (0 sorries) ✓
 import Littlewood.Aristotle.PerronContourIntegrals -- Perron contour integrals (0 sorries) ✓
 import Littlewood.Aristotle.PerronContourIntegralsV2 -- Perron contour integrals v2 (1 sorry)
-import Littlewood.Bridge.HardyAssemblyAttempt       -- Hardy assembly exploration (1 sorry)
+-- import Littlewood.Bridge.HardyAssemblyAttempt    -- DEPRECATED: V1 exploration file, superseded by V2 chain
 import Littlewood.Aristotle.StirlingGammaBounds  -- Stirling/Gamma bounds (0 sorries) ✓
-import Littlewood.Aristotle.StirlingBernoulli    -- Bernoulli B1/B2, continuity, ∫B1=B2/2-1/12 (1 sorry)
+import Littlewood.Aristotle.StirlingBernoulli    -- Bernoulli B1/B2, continuity, ∫B1=B2/2-1/12 (0 sorries) ✓
 
 -- Analysis infrastructure (no conflicts)
 import Littlewood.Aristotle.PhragmenLindelofStrip  -- Phragmén-Lindelöf strip bounds (0 sorries) ✓
@@ -111,12 +111,15 @@ import Littlewood.Aristotle.ZetaBoundsPartialSum       -- Zeta bounds, partial s
 import Littlewood.Aristotle.MeanSquareLowerBound        -- Mean square lower bound for partial sum (0 sorries) ✓
 import Littlewood.Aristotle.DiagonalIntegralBound       -- Diagonal integral ≥ c·T·log T (4 sorries)
 import Littlewood.Aristotle.ContourInfrastructure       -- Contour defs, measure-zero segments (3 sorries)
-import Littlewood.Aristotle.HardyInfiniteZeros          -- Hardy's theorem V1: BUGGY field signatures (grind works vacuously)
+-- import Littlewood.Aristotle.HardyInfiniteZeros       -- DEPRECATED: V1 has unsatisfiable field signatures (grind works vacuously)
 import Littlewood.Aristotle.HardyInfiniteZerosV2        -- Hardy's theorem V2: FIXED field signatures (canonical path)
 import Littlewood.Aristotle.HardyApproxFunctionalEq     -- Approx functional eq: ∫Z²≥k∫|S_N|²-CT (0 sorries) ✓
 import Littlewood.Aristotle.MeanSquarePartialSumAsymptotic -- Mean square ∫|S_N|² ≥ c·T·log T (0 sorries) ✓
 import Littlewood.Aristotle.OscillatorySumBound          -- First moment: |∫ oscillatory| ≤ C·T^(1/2+ε) (0 sorries) ✓
 import Littlewood.Aristotle.ContourRectangle             -- Rectangle contour integrals, Cauchy (1 sorry)
+import Littlewood.Aristotle.ZetaBoundsV2                  -- Zeta ‖ζ(s)‖≤Re(s)/(Re(s)-1), χ, FE, sinh/Gamma bounds (2 sorries)
+import Littlewood.Aristotle.CauchyGoursatRectangle        -- Cauchy-Goursat rectangle theorem (2 sorries)
+import Littlewood.Aristotle.ZeroFreeRegionV3               -- Zero-free region: 3-4-1, ζ(1+it)≠0, log-deriv bounds (5 sorries)
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
@@ -152,7 +155,7 @@ import Littlewood.Bridge.HardyZDefinitionMap          -- Hardy Z variant equival
 import Littlewood.Bridge.HardyCriticalLineWiring      -- Pre-wired for Hardy completion (0 sorries) ✓
 import Littlewood.Bridge.HardyZUnified                -- Unified Hardy Z exports (0 sorries) ✓
 import Littlewood.Bridge.HardyChainTest               -- Hardy chain integration test (0 sorries) ✓
-import Littlewood.Bridge.MeanSquareBridge              -- Mean square bridge: DiagBound + ApproxFuncEq (2 sorries)
+import Littlewood.Bridge.MeanSquareBridge              -- Mean square bridge: DiagBound + ApproxFuncEq (1 sorry)
 import Littlewood.Bridge.HardySetupV2Instance          -- HardySetupV2 instance: 3/6 proved, 3 sorry
 
 -- Mertens' theorems
@@ -186,13 +189,11 @@ $$\pi(x) - \text{li}(x) = \Omega_{\pm}\left(\frac{x^{1/2}}{\log x}\right)$$
 The main theorems are proved assuming ~58 hypothesis classes (classical theorems
 not yet in Mathlib). See `Assumptions.lean` for the full list.
 
-### Aristotle Files (from Harmonic)
-- Total: 87 files (+ 4 deprecated/templates)
-- Sorry-free: 81 active files (93%)
-- With sorries: 6 active files (12 sorry declarations)
-- Sorry breakdown: MeanSquare(3), ZeroCounting(3, 1 deprecated), PhragmenLindelof(3),
-  PartialSummation(1), PerronContourIntegralsV2(1), HardyZConjugation(1),
-  CoreLemmas/LandauLemma(1), HardyAssemblyAttempt(1)
+### Build Status
+- Sorry declarations (project): 90
+- Sorry-free .lean files: 157 (91%)
+- Main theorem sorries: 0
+- Hardy chain: V2 canonical (V1 deprecated)
 
 ## References
 

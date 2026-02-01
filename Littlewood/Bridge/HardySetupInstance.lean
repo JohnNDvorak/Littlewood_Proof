@@ -1,16 +1,18 @@
 /-
-HardySetup instance: Connect existing sorry-free Hardy infrastructure
-to the HardySetup class in HardyInfiniteZeros.lean.
+Hardy Z transfer lemmas: Connect HardyEstimatesPartial.hardyZ (real-valued)
+to hardyZV2 (complex-valued) properties.
 
-STATUS: 6/9 fields proved from existing infrastructure, 3 need Aristotle.
+These lemmas are used by HardySetupV2Instance for the V2 Hardy chain.
+
+NOTE: The V1 HardySetup instance was removed — HardyInfiniteZeros.lean has
+unsatisfiable field signatures (∀ T₁ quantification). See HardyInfiniteZerosV2
+for the correct architecture.
 -/
 
 import Mathlib
-import Littlewood.Aristotle.HardyInfiniteZeros
 import Littlewood.Aristotle.HardyEstimatesPartial
 import Littlewood.Aristotle.HardyZRealV2
 import Littlewood.Bridge.HardyZTransfer
-import Littlewood.Aristotle.HardyZCauchySchwarz
 
 set_option linter.mathlibStandardSet false
 
@@ -62,25 +64,5 @@ theorem hardyZ_norm_eq (t : ℝ) :
     exact (Complex.norm_real _).symm
   rw [h_norm]
   exact hardyZV2_abs_eq_zeta_abs t
-
-/-! ## The instance -/
-
-noncomputable instance : HardyInfiniteZeros.HardySetup where
-  hardyZV2 := HardyEstimatesPartial.hardyZ
-  continuous_hardyZV2 := hardyZ_continuous
-  hardyZV2_zero_iff := hardyZ_zero_iff
-  norm_hardyZV2_eq_norm_zeta := hardyZ_norm_eq
-  Z_integral_cauchy_schwarz := fun a b hab => by
-    rcases eq_or_lt_of_le hab with rfl | hab'
-    · simp
-    · -- Convert interval integrals to set integrals on Ioc
-      rw [intervalIntegral.integral_of_le hab, intervalIntegral.integral_of_le hab]
-      exact HardyEstimatesPartial.integral_cauchy_schwarz _ a b hab'
-        (hardyZ_continuous.continuousOn.integrableOn_compact isCompact_Icc |>.mono_set Ioc_subset_Icc_self)
-        ((hardyZ_continuous.pow 2).continuousOn.integrableOn_compact isCompact_Icc |>.mono_set Ioc_subset_Icc_self)
-  hardyZ_integrable := fun a b => hardyZ_continuous.intervalIntegrable a b
-  mean_square_lower_bound := by sorry  -- NEEDS ARISTOTLE: approx functional equation
-  first_moment_upper_bound := by sorry  -- NEEDS ARISTOTLE: convexity bound
-  l1_lower_bound := by sorry  -- NEEDS ARISTOTLE: see L1LowerBound.lean for mock proof technique
 
 end HardySetupInstance

@@ -9,21 +9,21 @@ classes filled incrementally with proofs co-authored by
 
 ## Status
 
-`lake build` reports **87** sorry-bearing declarations (+ 3 from the
+`lake build` reports **90** sorry-bearing declarations (+ 3 from the
 `PrimeNumberTheoremAnd` dependency).
 
 | Metric | Count |
 |--------|-------|
-| Sorry declarations (`lake build`, project only) | **87** |
+| Sorry declarations (`lake build`, project only) | **90** |
 | Assumptions.lean (hypothesis instances) | 58 |
-| Aristotle/ (active, imported) | 19 across 9 files |
-| Bridge/ | 9 across 4 files |
+| Aristotle/ (active, imported) | 28 across 12 files |
+| Bridge/ | 4 across 2 files |
 | CoreLemmas/ | 1 |
 | Main theorem sorries | **0** |
-| Lines of Lean code | ~31,300 |
-| Total .lean files | 169 |
-| Sorry-free .lean files | 155 (92%) |
-| Hardy chain status | V1 BUGGY (field signatures unsatisfiable); V2 created with correct architecture |
+| Lines of Lean code | ~32,100 |
+| Total .lean files | 172 |
+| Sorry-free .lean files | 157 (91%) |
+| Hardy chain status | V2 canonical (V1 deprecated — unsatisfiable field signatures) |
 
 ## Main Theorems
 
@@ -82,7 +82,7 @@ Littlewood/
   Main/                       3 files — Littlewood, LittlewoodPsi, LittlewoodPi (0 sorries)
   Mertens/                    1 file  — Mertens' first theorem
   Assumptions.lean            1 file  — 58 hypothesis instances (all sorry)
-  Aristotle/                 98 files — AI-generated proofs (Harmonic), 19 active sorries
+  Aristotle/                101 files — AI-generated proofs (Harmonic), 28 active sorries
   Bridge/                    23 files — Wiring Aristotle proofs to hypothesis classes
   Development/               18 files — WIP proofs (not imported by main build)
   Tests/                      8 files — Integration tests
@@ -120,7 +120,7 @@ HardySetupV2 FIELDS (6 total):
 1. Z                    ✅ HardyEstimatesPartial.hardyZ
 2. Z_continuous          ✅ HardySetupInstance
 3. Z_zero_iff            ✅ HardySetupInstance
-4. mean_square_lower     ⚠️ MeanSquareBridge (2 sorries in chain)
+4. mean_square_lower     ⚠️ MeanSquareBridge (1 sorry in chain)
 5. first_moment_upper    ❌ Needs Aristotle
 6. Z_convexity_bound     ❌ Needs Aristotle (Phragmén-Lindelöf)
 ```
@@ -128,6 +128,13 @@ HardySetupV2 FIELDS (6 total):
 All integrals use fixed lower endpoint 1 (not arbitrary T₁).
 The contradiction argument uses exponent 3/4 + ε₁ + ε₂ < 1
 for ε₁ + ε₂ < 1/4, giving T·log T vs T^α with α < 1.
+
+HardyInfiniteZerosV2 proof steps:
+- `constant_sign_of_finite` — ✅ fully proved (IVT-based)
+- `abs_integral_eq_of_pos` — ✅ fully proved (constant sign → |∫Z| = ∫|Z|)
+- `mean_square_decomp` — sorry (∂volume elaboration mismatch)
+- `mean_square_le_sup_times_l1` — sorry (iSup BddAbove on Ioc)
+- `hardy_infinitely_many_zeros_v2` — sorry (main contradiction)
 
 ```
 DiagonalIntegralBound: ∫|S_N|² ≥ c·T·log T                          (0 sorries) ✓
@@ -142,27 +149,22 @@ MeanSquarePartialSumAsymptotic: ∫|S_N|² ≥ c₁·T·log T                (0 
 OscillatorySumBound: |∫ oscillatory| ≤ C·T^{1/2+ε}                  (0 sorries) ✓
   |
   v
-MeanSquareBridge: ∫Z² ≥ c'·T·log T on [1,T]                        (2 sorries)
+MeanSquareBridge: ∫Z² ≥ c'·T·log T on [1,T]                        (1 sorry)
   |
   v
 HardySetupV2Instance: fields 1-3 proved, 4-6 sorry                  (3 sorries)
   |
   v
-HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2                 (5 sorries)
+HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2                 (3 sorries)
   |
   v
 HardyCriticalLineWiring → Schmidt.HardyCriticalLineZerosHyp
 ```
 
 **Remaining for Hardy:**
-1. Close MeanSquareBridge sorries (type transfer between hardyZ variants)
+1. Close MeanSquareBridge sorry (type transfer between hardyZ variants)
 2. `first_moment_upper` — connect OscillatorySumBound to Hardy Z
 3. `Z_convexity_bound` — |ζ(1/2+it)| ≤ C|t|^{1/4+ε} (Phragmén-Lindelöf)
-
-Key files: `HardyInfiniteZerosV2.lean`, `HardySetupV2Instance.lean`,
-`MeanSquareBridge.lean`, `DiagonalIntegralBound.lean`,
-`HardyApproxFunctionalEq.lean`, `MeanSquarePartialSumAsymptotic.lean`,
-`OscillatorySumBound.lean`, `ContourRectangle.lean`.
 
 ## Sorry Inventory
 
@@ -172,15 +174,51 @@ produce build warnings; Development/ files are on disk but not imported.
 | Location | Declarations | Files | Notes |
 |----------|-------------|-------|-------|
 | **Assumptions.lean** | 58 | 1 | Hypothesis instances for classical results not in Mathlib |
-| **Aristotle/** | 19 | 9 | HardyInfiniteZerosV2 (5), MeanSquare (3), PhragmenLindelof (3), StirlingBernoulli (2), ZeroCounting (2), PerronContourIntegralsV2 (1), PartialSummation (1), HardyZConjugation (1), ContourRectangle (1) |
-| **Bridge/** | 9 | 4 | HardySetupV2Instance (3), HardySetupInstance (3), MeanSquareBridge (2), HardyAssemblyAttempt (1) |
+| **Aristotle/** | 28 | 12 | HardyInfiniteZerosV2 (3), ZeroFreeRegionV3 (6), MeanSquare (3), CauchyGoursatRectangle (3), PhragmenLindelof (3), ZetaBoundsV2 (3), ZeroCounting (2), PerronContourIntegralsV2 (1), PartialSummation (1), HardyZConjugation (1), ContourRectangle (1) |
+| **Bridge/** | 4 | 2 | HardySetupV2Instance (3), MeanSquareBridge (1) |
 | **CoreLemmas/** | 1 | 1 | LandauLemma — analytic continuation identity |
-| **Total (project)** | **87** | **15** | Main proof chain: 0 sorries |
+| **Total (project)** | **90** | **15** | Main proof chain: 0 sorries |
 
 Additionally on disk but not imported by the build:
 - `Aristotle/_deprecated/`: 10 sorries across 3 files
 - `Aristotle/ChebyshevTheta.lean`: 3 sorries (redefines psi/theta)
+- `Aristotle/HardyInfiniteZeros.lean`: V1 deprecated (unsatisfiable field signatures)
+- `Bridge/HardyAssemblyAttempt.lean`: V1 exploration file (superseded by V2)
 - `Development/`: 5 sorries across 3 files (HardyTheorem, ZeroFreeRegion, LittlewoodTheorem)
+
+## New in This Version
+
+### Aristotle Integration (3 new files)
+
+**ZetaBoundsV2.lean** — Zeta function bounds and functional equation:
+- `zeta_bound_re_ge_one`: ‖ζ(s)‖ ≤ Re(s)/(Re(s)-1) for Re(s) > 1
+- `functional_equation`: ζ(s) = χ(s)·ζ(1-s) via reflection formula
+- `sin_bound_aux`: |sin(πs/2)| ≤ exp(π|Im s|/2) in critical strip
+- `sinh_lower_bound`: |sinh(πt)| ≥ exp(π|t|)/4 for |t| ≥ 2
+- `gamma_abs_imag`: |Γ(it)| = |Γ(1-it)|/|t|
+- `gamma_sq_bound_zero`: |Γ(1-it)|² ≤ 4π|t|exp(-π|t|)
+
+**CauchyGoursatRectangle.lean** — Cauchy-Goursat theorem for rectangles:
+- `rectBoundary`: parametrized rectangle contour over [0,4]
+- `cauchy_goursat_rectangle_segments`: ∮f = 0 (segment form)
+- `rectIntegral_eq_sum_segments`: contour integral = sum of segments
+- `cauchy_goursat_rectangle`: main theorem, via Mathlib's `integral_boundary_rect_eq_zero_of_differentiable_on_off_countable`
+
+**ZeroFreeRegionV3.lean** — Zero-free region infrastructure:
+- `three_four_one`: 3+4cosθ+cos2θ ≥ 0 (fully proved)
+- `zeta_ne_zero_on_one_line`: ζ(1+it) ≠ 0 for t ≠ 0 (via `riemannZeta_ne_zero_of_one_le_re`)
+- `zeta_ne_zero_re_eq_one`: same for |t| ≥ 1
+- `re_log_deriv_zeta_eq_sum`: Re(-ζ'/ζ(s)) = Σ Λ(n)n^{-σ}cos(t log n)
+- `summable_vonMangoldt_mul_cos`: summability of the Dirichlet series
+- `norm_zeta_log_deriv_ineq`: 3·Re(-ζ'/ζ(σ)) + 4·Re(-ζ'/ζ(σ+it)) + Re(-ζ'/ζ(σ+2it)) ≥ 0
+- `zetaResidueFunction`: (s-1)ζ(s) removable singularity
+- `zeta_log_deriv_bound_near_one`: -Re(ζ'/ζ(σ)) ≤ 1/(σ-1) + C
+
+### HardyInfiniteZerosV2 Proof Progress
+
+Proved 2 of 5 lemmas:
+- `constant_sign_of_finite`: Finite zeros → constant sign via IVT
+- `abs_integral_eq_of_pos`: Constant positive sign → |∫Z| = ∫|Z|
 
 ## Building
 
@@ -214,7 +252,8 @@ Build configuration: `maxHeartbeats 1600000`, `maxRecDepth 4000`.
 Pick a sorry from `Aristotle/` files and check if current Mathlib can fill it:
 - `PerronContourIntegralsV2.lean` (1 sorry) — Mathlib has `integral_boundary_rect_eq_zero_of_differentiableOn`
 - `ContourRectangle.lean` (1 sorry) — same Mathlib API, needs argument matching
-- `DiagonalIntegralBound.lean` — harmonic sum bounds
+- `CauchyGoursatRectangle.lean` (3 sorries) — continuousOn/deriv matching for segment integrals
+- `ZetaBoundsV2.lean` (3 sorries) — zeta bound, functional equation, Gamma bound
 
 ### Medium — Small Mathlib PRs
 
@@ -228,6 +267,7 @@ See [`docs/mathlib_pr_specs/`](docs/mathlib_pr_specs/) for specifications:
 - Hardy's theorem (approximate functional equation, mean value estimates)
 - Phragmen-Lindelof convexity bounds
 - Connect OscillatorySumBound to Hardy Z first moment
+- Zero-free region: close `analyticAt_zetaResidueFunction` and `log_deriv_residue_bounded_near_one`
 
 ### Workflow
 

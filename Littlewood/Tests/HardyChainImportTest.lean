@@ -18,7 +18,7 @@ import Littlewood.Aristotle.HardyAssumptions
 import Littlewood.Aristotle.HardyEstimatesPartial
 import Littlewood.Aristotle.CompletedZetaCriticalLine
 import Littlewood.Bridge.HardyZTransfer
-import Littlewood.Bridge.HardyAssemblyAttempt
+-- import Littlewood.Bridge.HardyAssemblyAttempt  -- DEPRECATED: V1 exploration
 
 -- Verify key definitions are accessible
 #check HardyEstimatesPartial.hardyZ

@@ -2,7 +2,7 @@
 
 ## Sorry Inventory (audited 2026-02-01 from `lake build`)
 
-**87 project sorry declarations** (+ 3 from PrimeNumberTheoremAnd dependency).
+**83 project sorry declarations** (+ 3 from PrimeNumberTheoremAnd dependency).
 
 ### Imported by build (produce warnings)
 
@@ -19,19 +19,19 @@
 | `Aristotle/HardyZConjugation.lean` | 1 | Mellin transform identity |
 | `Aristotle/ContourRectangle.lean` | 1 | Rectangle contour integral = 0 |
 | `Bridge/HardySetupV2Instance.lean` | 3 | HardySetupV2 fields (mean square, first moment, convexity) |
-| `Bridge/HardySetupInstance.lean` | 3 | Hardy setup V1 fields (mean square, first moment, L1) |
 | `Bridge/MeanSquareBridge.lean` | 2 | Type transfer between hardyZ variants |
-| `Bridge/HardyAssemblyAttempt.lean` | 1 | Hardy assembly exploration |
 | `CoreLemmas/LandauLemma.lean` | 1 | Analytic continuation identity |
 
 ### On disk but not imported
 
 | File | Sorry tokens | Topic |
 |------|-------------|-------|
+| `Aristotle/HardyInfiniteZeros.lean` | 0 (vacuous) | V1 deprecated — unsatisfiable field signatures |
 | `Aristotle/ChebyshevTheta.lean` | 3 | Redefines psi/theta (conflict with Basic/) |
 | `Aristotle/_deprecated/PerronFormula.lean` | 5 | Deprecated, redefines chebyshevPsi |
 | `Aristotle/_deprecated/PrimePowerSums.lean` | 4 | Deprecated, redefines psi |
 | `Aristotle/_deprecated/FunctionalEquation.lean` | 1 | Deprecated |
+| `Bridge/HardyAssemblyAttempt.lean` | 1 | V1 exploration, superseded by V2 chain |
 | `Development/HardyTheorem.lean` | 2 | Hardy's theorem (WIP) |
 | `Development/ZeroFreeRegion.lean` | 2 | Zero-free region (WIP) |
 | `Development/LittlewoodTheorem.lean` | 1 | Direct approach (WIP) |

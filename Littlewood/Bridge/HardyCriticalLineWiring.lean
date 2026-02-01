@@ -4,14 +4,17 @@ Pre-wire HardyCriticalLineZerosHyp for when Hardy's theorem completes.
 Schmidt.HardyCriticalLineZerosHyp requires:
   infinite : Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1/2 }
 
-STATUS: Conversion lemma proved. Instance depends on HardySetupInstance (3 Aristotle sorries).
-When those 3 sorries close, this file gives Hardy → HardyCriticalLineZerosHyp automatically.
+STATUS: Conversion lemma proved. Instance depends on HardySetupV2Instance (3 sorry fields).
+When those sorries close, this file gives Hardy → HardyCriticalLineZerosHyp automatically.
+
+NOTE: Migrated from V1 (HardyInfiniteZeros) to V2 (HardyInfiniteZerosV2).
+V1 had unsatisfiable field signatures; its proof was vacuously true.
 -/
 
 import Mathlib
 import Littlewood.Oscillation.SchmidtTheorem
-import Littlewood.Aristotle.HardyInfiniteZeros
-import Littlewood.Bridge.HardySetupInstance
+import Littlewood.Aristotle.HardyInfiniteZerosV2
+import Littlewood.Bridge.HardySetupV2Instance
 
 set_option linter.mathlibStandardSet false
 
@@ -56,8 +59,8 @@ theorem hardy_zeros_to_nontrivial_zeros
 /-! ## The instance (depends on HardySetupInstance having 0 sorries) -/
 
 /-- Hardy's theorem: infinitely many zeros of ζ on the critical line.
-    This instance closes when HardySetupInstance's 3 Aristotle sorries are resolved. -/
+    This instance closes when HardySetupV2Instance's 3 sorry fields are proved. -/
 instance : Schmidt.HardyCriticalLineZerosHyp where
-  infinite := hardy_zeros_to_nontrivial_zeros HardyInfiniteZeros.hardy_infinitely_many_zeros
+  infinite := hardy_zeros_to_nontrivial_zeros HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2
 
 end HardyCriticalLineWiring

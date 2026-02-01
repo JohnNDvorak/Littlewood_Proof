@@ -12,11 +12,11 @@ CHAIN (all 0 sorries):
 
 RESULT (this file): ∫_{Ioc 1 T} Z² ≥ c'·T·log T for large T.
 
-STATUS: 1 sorry — type transfer between hardyZ variants.
-The sorry is `hardyZ_sq_eq`, showing that the .re-based and norm-based
-Hardy Z definitions give the same Z². This is mathematically immediate
-(both equal ‖ζ(1/2+it)‖²) but requires reconciling argument order
-(I*t vs t*I) and the .re vs norm route.
+STATUS: 1 sorry — `norm_hardyZ_mean_square_lower`.
+The type transfer `hardyZ_sq_eq` is proved (both Z² equal ‖ζ(1/2+it)‖²).
+The remaining sorry is the mean square chain combination: connecting
+approx_functional_eq (t-dependent truncation) with the diagonal integral
+bound (requires matching partial sum definitions across files).
 
 NOTE ON HardySetup FIELD SIGNATURE BUG:
 The HardySetup.mean_square_lower_bound field requires the bound for ALL
@@ -30,6 +30,7 @@ import Mathlib
 import Littlewood.Aristotle.DiagonalIntegralBound
 import Littlewood.Aristotle.HardyApproxFunctionalEq
 import Littlewood.Aristotle.HardyEstimatesPartial
+import Littlewood.Aristotle.HardyZRealV2
 import Littlewood.Bridge.HardyZTransfer
 
 set_option linter.mathlibStandardSet false
@@ -58,7 +59,26 @@ open Complex Real Set Filter Topology MeasureTheory
     Needs: I*t = t*I (commutativity) and ‖Re(exp(iθ)·z)‖ = ‖z‖ when |exp(iθ)|=1. -/
 theorem hardyZ_sq_eq (t : ℝ) :
     (HardyEstimatesPartial.hardyZ t)^2 = (HardyApproxFunctional.hardyZ t)^2 := by
-  sorry
+  -- Both Z² equal ‖ζ(1/2+it)‖².
+  -- EP.hardyZ = Re(exp(iθ)·ζ) where exp(iθ)·ζ is real, so Z² = ‖Z‖² = ‖ζ‖².
+  -- AF.hardyZ = ‖ζ‖, so Z² = ‖ζ‖².
+  -- Step 1: EP.hardyZ² = ‖hardyZV2 t‖² (via transfer + reality)
+  have h_re := HardyZTransfer.hardyZ_eq_hardyZV2_re t  -- EP.hardyZ t = (hardyZV2 t).re
+  have h_im := hardyZV2_real t  -- (hardyZV2 t).im = 0
+  have h_norm_v2 := hardyZV2_abs_eq_zeta_abs t  -- ‖hardyZV2 t‖ = ‖ζ(1/2+I*t)‖
+  -- When im = 0: ‖z‖ = |z.re| and z.re² = ‖z‖²
+  have h_re_sq : (HardyEstimatesPartial.hardyZ t)^2 = ‖hardyZV2 t‖^2 := by
+    rw [h_re]
+    have : hardyZV2 t = ((hardyZV2 t).re : ℂ) :=
+      Complex.ext rfl (by simp [h_im])
+    conv_rhs => rw [this, Complex.norm_real]
+    exact (sq_abs _).symm
+  -- Step 2: I*t = t*I
+  have h_comm : (1:ℂ)/2 + I * ↑t = (1:ℂ)/2 + ↑t * I := by ring
+  -- Combine: EP.hardyZ² = ‖hardyZV2‖² = ‖ζ(1/2+I*t)‖² = ‖ζ(1/2+t*I)‖² = AF.hardyZ²
+  rw [h_re_sq, h_norm_v2, h_comm]
+  -- Now goal: ‖ζ(1/2+t*I)‖^2 = (AF.hardyZ t)^2 where AF.hardyZ = ‖ζ(1/2+t*I)‖
+  unfold HardyApproxFunctional.hardyZ; rfl
 
 /-! ## Fixed-endpoint mean square lower bound -/
 

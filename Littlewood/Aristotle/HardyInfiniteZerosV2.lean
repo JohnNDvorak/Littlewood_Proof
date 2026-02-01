@@ -81,8 +81,52 @@ variable [inst : HardySetupV2]
 lemma constant_sign_of_finite (h : Set.Finite {t : ℝ | inst.Z t = 0 ∧ t > 0}) :
     ∃ T₀ : ℝ, T₀ > 0 ∧ ((∀ t : ℝ, t > T₀ → inst.Z t > 0) ∨
                            (∀ t : ℝ, t > T₀ → inst.Z t < 0)) := by
-  -- Finite zero set is bounded above; Z is continuous; IVT gives constant sign
-  sorry
+  -- Get an upper bound for the finite set of positive zeros
+  obtain ⟨M, hM⟩ : ∃ M : ℝ, ∀ t, inst.Z t = 0 ∧ t > 0 → t ≤ M := by
+    by_cases he : {t : ℝ | inst.Z t = 0 ∧ t > 0}.Nonempty
+    · exact ⟨sSup {t | inst.Z t = 0 ∧ t > 0}, fun t ht => le_csSup h.bddAbove ht⟩
+    · exact ⟨0, fun t ht => absurd ⟨t, ht⟩ he⟩
+  -- Take T₀ = max(M+1, 1), ensuring T₀ > 0
+  set T₀ := max (M + 1) 1 with hT₀_def
+  refine ⟨T₀, by positivity, ?_⟩
+  -- Z has no zeros on (T₀, ∞)
+  have h_nz : ∀ t, t > T₀ → inst.Z t ≠ 0 := by
+    intro t ht hzt
+    have h1 : t > M + 1 := lt_of_le_of_lt (le_max_left _ _) ht
+    have h2 : t > 0 := lt_trans (by positivity : T₀ > 0) ht
+    exact absurd (hM t ⟨hzt, h2⟩) (by linarith)
+  -- Z(T₀+1) ≠ 0, so it's positive or negative
+  have h_nz_ref := h_nz (T₀ + 1) (by linarith)
+  rcases lt_trichotomy (inst.Z (T₀ + 1)) 0 with h_neg | h_zero | h_pos
+  · right; intro t ht
+    by_contra h_not_neg; push_neg at h_not_neg
+    rcases eq_or_lt_of_le h_not_neg with h_eq | h_pos_t
+    · exact h_nz t ht h_eq.symm
+    · -- Z(T₀+1) < 0 and Z(t) > 0, IVT gives a zero between them
+      have h_ivt := intermediate_value_uIcc
+        (inst.Z_continuous.continuousOn (s := Set.uIcc (T₀ + 1) t))
+      have hmin : min (inst.Z (T₀ + 1)) (inst.Z t) ≤ 0 := min_le_of_left_le h_neg.le
+      have hmax : 0 ≤ max (inst.Z (T₀ + 1)) (inst.Z t) := le_max_of_le_right h_pos_t.le
+      obtain ⟨c, hc_mem, hc_zero⟩ := h_ivt ⟨hmin, hmax⟩
+      have hc_gt : c > T₀ := by
+        simp only [Set.uIcc_comm, Set.mem_uIcc] at hc_mem
+        rcases hc_mem with ⟨h1, _⟩ | ⟨h1, _⟩ <;> linarith
+      exact h_nz c hc_gt hc_zero
+  · exact absurd h_zero h_nz_ref
+  · left; intro t ht
+    by_contra h_not_pos; push_neg at h_not_pos
+    rcases eq_or_lt_of_le h_not_pos with h_eq | h_neg_t
+    · exact h_nz t ht h_eq
+    · -- Z(T₀+1) > 0 and Z(t) < 0, IVT gives a zero between them
+      have h_ivt := intermediate_value_uIcc
+        (inst.Z_continuous.continuousOn (s := Set.uIcc (T₀ + 1) t))
+      have hmin : min (inst.Z (T₀ + 1)) (inst.Z t) ≤ 0 := min_le_of_right_le h_neg_t.le
+      have hmax : 0 ≤ max (inst.Z (T₀ + 1)) (inst.Z t) := le_max_of_le_left h_pos.le
+      obtain ⟨c, hc_mem, hc_zero⟩ := h_ivt ⟨hmin, hmax⟩
+      have hc_gt : c > T₀ := by
+        simp only [Set.uIcc_comm, Set.mem_uIcc] at hc_mem
+        rcases hc_mem with ⟨h1, _⟩ | ⟨h1, _⟩ <;> linarith
+      exact h_nz c hc_gt hc_zero
 
 /-! ## Step 2: Constant sign implies |∫Z| = ∫|Z| -/
 
@@ -90,7 +134,11 @@ lemma constant_sign_of_finite (h : Set.Finite {t : ℝ | inst.Z t = 0 ∧ t > 0}
 lemma abs_integral_eq_of_pos (T₀ T : ℝ) (hT : T > T₀)
     (hsign : ∀ t : ℝ, t > T₀ → inst.Z t > 0) :
     |∫ t in Ioc T₀ T, inst.Z t| = ∫ t in Ioc T₀ T, |inst.Z t| := by
-  sorry
+  have h_nn : ∀ t ∈ Ioc T₀ T, (0 : ℝ) ≤ inst.Z t :=
+    fun t ht => le_of_lt (hsign t ht.1)
+  rw [abs_of_nonneg (MeasureTheory.setIntegral_nonneg measurableSet_Ioc h_nn)]
+  exact MeasureTheory.setIntegral_congr_fun measurableSet_Ioc
+    fun t ht => (abs_of_nonneg (h_nn t ht)).symm
 
 /-! ## Step 3: Decompose mean square integral -/
 
@@ -98,6 +146,15 @@ lemma abs_integral_eq_of_pos (T₀ T : ℝ) (hT : T > T₀)
 lemma mean_square_decomp (T₀ T : ℝ) (hT₀ : T₀ > 1) (hT : T > T₀) :
     ∫ t in Ioc 1 T, (inst.Z t)^2 =
     ∫ t in Ioc 1 T₀, (inst.Z t)^2 + ∫ t in Ioc T₀ T, (inst.Z t)^2 := by
+  have h_int : ∀ a b : ℝ, IntegrableOn (fun t => (inst.Z t)^2) (Set.Ioc a b) :=
+    fun a b => (inst.Z_continuous.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+      |>.mono_set Set.Ioc_subset_Icc_self
+  have h_split := MeasureTheory.setIntegral_union
+    (Set.Ioc_disjoint_Ioc_of_le (le_refl T₀)) measurableSet_Ioc (h_int 1 T₀) (h_int T₀ T)
+  rw [Set.Ioc_union_Ioc_eq_Ioc (by linarith : (1:ℝ) ≤ T₀) (by linarith : T₀ ≤ T)] at h_split
+  -- Lean elaboration issue: `∫ t in s, f t` vs `∫ t in s, f t ∂volume` are
+  -- not syntactically equal despite being semantically identical.
+  -- Work around via Eq.mpr with congrArg.
   sorry
 
 /-! ## Step 4: Bound ∫_{T₀}^T Z² using sup|Z| and ∫|Z| -/
