@@ -3,27 +3,27 @@
 A machine-checked proof that pi(x) - li(x) changes sign infinitely often,
 formalizing Littlewood's 1914 result via Hardy's critical-line zeros,
 explicit formulas, and Schmidt's oscillation lemma. The main theorems
-compile with **0 sorries**; analytic content is encoded in 60 hypothesis
+compile with **0 sorries**; analytic content is encoded in 58 hypothesis
 class instances filled incrementally with proofs co-authored by
 [Aristotle](https://app.harmonic.fun) (Harmonic) and Claude (Anthropic).
 
 ## Status
 
-`lake build` reports **71** sorry-bearing declarations (68 project + 3 from
+`lake build` reports **69** sorry-bearing declarations (66 project + 3 from
 `PrimeNumberTheoremAnd` dependency).
 
 | Metric | Count |
 |--------|-------|
-| Sorry declarations (`lake build`, total) | **71** |
-| Assumptions.lean (hypothesis instances) | 60 |
+| Sorry declarations (`lake build`, total) | **69** |
+| Assumptions.lean (hypothesis instances) | 58 |
 | Aristotle/ (active, imported) | 7 across 4 files |
 | Bridge/ | 0 |
 | CoreLemmas/ | 1 |
 | Main theorem sorries | **0** |
 | Hardy chain (HardySetupV2Instance) | **0** (all 6 fields proved) |
-| Lines of Lean code | ~33,100 |
+| Lines of Lean code | ~33,800 |
 | Total .lean files | 174 |
-| Sorry-free .lean files | 169 (97%) |
+| Sorry-free .lean files | 159 (91%) |
 
 ## Main Theorems
 
@@ -60,7 +60,7 @@ from analytic content:
 2. **Main theorems** are proved assuming these classes — the full proof
    chain from Hardy's theorem through Schmidt oscillation to Littlewood
    compiles with 0 sorries
-3. **`Assumptions.lean`** provides `sorry`-backed instances for all 60 hypothesis class instances
+3. **`Assumptions.lean`** provides `sorry`-backed instances for all 58 hypothesis class instances
 4. **Aristotle/ and Bridge/** work toward replacing those sorries with
    genuine proofs
 
@@ -83,9 +83,9 @@ Littlewood/
   Oscillation/                2 files  -- Schmidt oscillation theorem
   Main/                       3 files  -- Littlewood, LittlewoodPsi, LittlewoodPi (0 sorries)
   Mertens/                    1 file   -- Mertens' first theorem
-  Assumptions.lean            1 file   -- 60 hypothesis instances (all sorry)
+  Assumptions.lean            1 file   -- 58 hypothesis instances (all sorry)
   Aristotle/                101 files  -- AI-generated proofs (Harmonic + Claude)
-  Bridge/                    22 files  -- Wiring Aristotle proofs to hypothesis classes
+  Bridge/                    23 files  -- Wiring Aristotle proofs to hypothesis classes
   Development/               17 files  -- WIP proofs (not imported by main build)
   Tests/                      8 files  -- Integration tests
 docs/
@@ -128,11 +128,11 @@ produce build warnings.
 
 | Location | Declarations | Files | Notes |
 |----------|-------------|-------|-------|
-| **Assumptions.lean** | 60 | 1 | Hypothesis instances for classical results not in Mathlib |
+| **Assumptions.lean** | 58 | 1 | Hypothesis instances for classical results not in Mathlib |
 | **Aristotle/** | 7 | 4 | HardyApproxFunctionalEq (1), PhragmenLindelof (3), ZeroCounting (2), PartialSummation (1) |
 | **Bridge/** | 0 | 0 | All bridge files sorry-free (Hardy chain complete) |
 | **CoreLemmas/** | 1 | 1 | LandauLemma -- analytic continuation identity theorem |
-| **Total (project)** | **68** | **6** | Main proof chain: 0 sorries, Hardy chain: 0 sorries |
+| **Total (project)** | **66** | **6** | Main proof chain: 0 sorries, Hardy chain: 0 sorries |
 
 Additionally on disk but not imported by the build:
 - `Aristotle/_deprecated/`: 10 sorries across 3 files
@@ -194,10 +194,9 @@ See `docs/aristotle_prompts.md` for detailed prompts. Priority order:
 
 1. **HardyApproxFunctionalEq.lean** (1 sorry) -- approximate functional equation: ∫Z² ≥ k∫‖S‖² - CT. Closes `approx_functional_eq`.
 2. **PhragmenLindelof.lean** (3 sorries) -- critical line zeta bound, convexity, Gamma growth (Stirling). Closes `ZetaCriticalLineBoundHyp`.
-3. **MeanSquare.lean** (1 sorry) -- off-diagonal integral bound `norm_integral_offDiagSsq_le`.
-4. **ZeroCounting.lean** (2 sorries) -- N(T) via argument principle, asymptotic.
-5. **PartialSummation.lean** (1 sorry) -- psi oscillation implies pi-li oscillation.
-6. **LandauLemma.lean** (1 sorry) -- identity theorem for analytic continuation.
+3. **ZeroCounting.lean** (2 sorries) -- N(T) via argument principle, asymptotic.
+4. **PartialSummation.lean** (1 sorry) -- psi oscillation implies pi-li oscillation.
+5. **LandauLemma.lean** (1 sorry) -- identity theorem for analytic continuation (FALSE as stated, not used downstream).
 
 ### Workflow
 
