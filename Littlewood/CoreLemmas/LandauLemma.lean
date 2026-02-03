@@ -392,7 +392,10 @@ theorem zeta_zero_implies_vonMangoldt_singularity (ρ : ℂ) (hρ : riemannZeta 
   --   LSeries Λ s = -ζ'/ζ(s)
   -- If both were analytic at ρ, they would agree on the connected region
   -- containing Re(s) > 1, which contradicts the pole of -ζ'/ζ at ρ.
-  sorry -- REMAINING GAP: Identity theorem argument for analytic continuation
+  sorry -- FALSE AS STATED: LSeries Λ s = 0 for Re(s) < 1 (tsum returns 0 for
+         -- non-summable series), making LSeries Λ trivially analytic at ρ.
+         -- The correct approach needs -ζ'/ζ (the analytic continuation), not LSeries.
+         -- See docs/FALSE_THEOREMS.md for details.
 
 /-!
 ## Hypothesis Instances

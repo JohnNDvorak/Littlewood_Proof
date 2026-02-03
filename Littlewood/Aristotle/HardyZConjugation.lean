@@ -112,8 +112,8 @@ theorem HurwitzZeta_Λ₀_conj (a : UnitAddCircle) (s : ℂ) :
     (HurwitzZeta.hurwitzEvenFEPair (-a)).Λ₀ (starRingEnd ℂ s) = starRingEnd ℂ ((HurwitzZeta.hurwitzEvenFEPair a).Λ₀ s) := by
       rw [ WeakFEPair.Λ₀ ]
       have h_Λ₀_def : ∀ (a : UnitAddCircle) (s : ℂ), (HurwitzZeta.hurwitzEvenFEPair a).Λ₀ s = (∫ x in Set.Ioi 0, (HurwitzZeta.hurwitzEvenFEPair a).f_modif x * x ^ (s - 1)) := by
-        intro a s; rw [ WeakFEPair.Λ₀ ] ; norm_num [ mul_assoc, mul_comm, mul_left_comm ] ;
-        sorry -- Mellin transform identity
+        intro a s; rw [ WeakFEPair.Λ₀ ] ;
+        simp only [mellin, smul_eq_mul]; congr 1; ext t; ring
       simp +decide [ h_Λ₀_def, mellin ];
       rw [ ← integral_conj ];
       refine' MeasureTheory.setIntegral_congr_fun measurableSet_Ioi fun x hx => _;

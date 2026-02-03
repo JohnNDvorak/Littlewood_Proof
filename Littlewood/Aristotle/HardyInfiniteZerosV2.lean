@@ -144,26 +144,39 @@ lemma abs_integral_eq_of_pos (T₀ T : ℝ) (hT : T > T₀)
 
 /-- Decompose ∫₁ᵀ Z² = ∫₁^{T₀} Z² + ∫_{T₀}^T Z². -/
 lemma mean_square_decomp (T₀ T : ℝ) (hT₀ : T₀ > 1) (hT : T > T₀) :
-    ∫ t in Ioc 1 T, (inst.Z t)^2 =
-    ∫ t in Ioc 1 T₀, (inst.Z t)^2 + ∫ t in Ioc T₀ T, (inst.Z t)^2 := by
+    ∫ t in Ioc 1 T, (inst.Z t)^2 ∂volume =
+    ∫ t in Ioc 1 T₀, (inst.Z t)^2 ∂volume +
+    ∫ t in Ioc T₀ T, (inst.Z t)^2 ∂volume := by
   have h_int : ∀ a b : ℝ, IntegrableOn (fun t => (inst.Z t)^2) (Set.Ioc a b) :=
     fun a b => (inst.Z_continuous.pow 2).continuousOn.integrableOn_compact isCompact_Icc
       |>.mono_set Set.Ioc_subset_Icc_self
   have h_split := MeasureTheory.setIntegral_union
     (Set.Ioc_disjoint_Ioc_of_le (le_refl T₀)) measurableSet_Ioc (h_int 1 T₀) (h_int T₀ T)
   rw [Set.Ioc_union_Ioc_eq_Ioc (by linarith : (1:ℝ) ≤ T₀) (by linarith : T₀ ≤ T)] at h_split
-  -- Lean elaboration issue: `∫ t in s, f t` vs `∫ t in s, f t ∂volume` are
-  -- not syntactically equal despite being semantically identical.
-  -- Work around via Eq.mpr with congrArg.
-  sorry
+  exact h_split
 
 /-! ## Step 4: Bound ∫_{T₀}^T Z² using sup|Z| and ∫|Z| -/
 
-/-- ∫_{T₀}^T Z² ≤ sup|Z| · ∫_{T₀}^T |Z| -/
-lemma mean_square_le_sup_times_l1 (T₀ T : ℝ) (hT : T > T₀) :
-    ∫ t in Ioc T₀ T, (inst.Z t)^2 ≤
-    (⨆ t ∈ Ioc T₀ T, |inst.Z t|) * ∫ t in Ioc T₀ T, |inst.Z t| := by
-  sorry
+/-- ∫_{T₀}^T Z² ≤ M · ∫_{T₀}^T |Z| when |Z(t)| ≤ M on [T₀,T].
+    Pointwise: Z² = |Z|·|Z| ≤ M·|Z|, then integrate. -/
+lemma mean_square_le_sup_times_l1 (T₀ T : ℝ) (hT : T > T₀)
+    (M : ℝ) (hM_nn : 0 ≤ M) (hM : ∀ t ∈ Ioc T₀ T, |inst.Z t| ≤ M) :
+    ∫ t in Ioc T₀ T, (inst.Z t)^2 ≤ M * ∫ t in Ioc T₀ T, |inst.Z t| := by
+  have h_int_sq : IntegrableOn (fun t => (inst.Z t)^2) (Ioc T₀ T) :=
+    (inst.Z_continuous.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+      |>.mono_set Ioc_subset_Icc_self
+  have h_int_abs : IntegrableOn (fun t => |inst.Z t|) (Ioc T₀ T) :=
+    inst.Z_continuous.abs.continuousOn.integrableOn_compact isCompact_Icc
+      |>.mono_set Ioc_subset_Icc_self
+  calc ∫ t in Ioc T₀ T, (inst.Z t)^2
+      ≤ ∫ t in Ioc T₀ T, M * |inst.Z t| := by
+        apply MeasureTheory.setIntegral_mono_on h_int_sq (h_int_abs.const_mul M)
+          measurableSet_Ioc
+        intro t ht
+        rw [← sq_abs, sq]
+        exact mul_le_mul_of_nonneg_right (hM t ht) (abs_nonneg _)
+    _ = M * ∫ t in Ioc T₀ T, |inst.Z t| :=
+        MeasureTheory.integral_const_mul M _
 
 /-! ## Step 5: The contradiction -/
 
@@ -185,18 +198,135 @@ theorem hardy_infinitely_many_zeros_v2 :
   -- Use ε = 1/10 for both first moment and convexity
   obtain ⟨C_fm, hC_fm, T₂, hT₂, h_fm⟩ := inst.first_moment_upper (1/10) (by norm_num)
   obtain ⟨C_cv, hC_cv, h_cv⟩ := inst.Z_convexity_bound (1/10) (by norm_num)
-  -- For T ≥ max(T₀, T₁, T₂, 2):
-  -- (a) c·T·log T ≤ ∫₁ᵀ Z²                         [mean square lower]
-  -- (b) |∫₁ᵀ Z| ≤ C_fm·T^{6/10}                     [first moment upper]
-  -- (c) sup|Z| on [T₀,T] ≤ C_cv·T^{35/100}          [convexity]
-  -- (d) constant sign on [T₀,∞) → ∫_{T₀}^T |Z| = |∫_{T₀}^T Z|
-  --     ≤ |∫₁ᵀ Z| + |∫₁^{T₀} Z| ≤ C_fm·T^{6/10} + const
-  -- (e) ∫₁ᵀ Z² = ∫₁^{T₀} Z² + ∫_{T₀}^T Z²
-  --            ≤ const + sup|Z| · ∫_{T₀}^T |Z|
-  --            ≤ const + C_cv·T^{35/100} · (C_fm·T^{6/10} + const)
-  --            ≤ const + C'·T^{95/100}
-  -- (f) c·T·log T ≤ const + C'·T^{95/100}
-  --     But T·log T / T^{95/100} = T^{1/20}·log T → ∞. Contradiction!
-  sorry
+  -- Set T_min large enough for all bounds
+  set T_min := max (max T₀ T₁) (max T₂ 2) with hT_min_def
+  have hTm_T0 : T_min ≥ T₀ := le_trans (le_max_left _ _) (le_max_left _ _)
+  have hTm_T1 : T_min ≥ T₁ := le_trans (le_max_right _ _) (le_max_left _ _)
+  have hTm_T2 : T_min ≥ T₂ := le_trans (le_max_left _ _) (le_max_right _ _)
+  have hTm_2 : T_min ≥ 2 := le_trans (le_max_right _ _) (le_max_right _ _)
+  have hTm_gt1 : T_min > 1 := by linarith
+  -- Integrability helpers
+  have h_int_Z : ∀ a b : ℝ, IntegrableOn inst.Z (Ioc a b) :=
+    fun a b => inst.Z_continuous.continuousOn.integrableOn_compact isCompact_Icc
+      |>.mono_set Ioc_subset_Icc_self
+  -- Fixed constants
+  set K := ∫ t in Ioc 1 T_min, (inst.Z t)^2 ∂volume with hK_def
+  set K_fm := |∫ t in Ioc 1 T_min, inst.Z t| with hK_fm_def
+  have hK_nn : 0 ≤ K := setIntegral_nonneg measurableSet_Ioc (fun _ _ => sq_nonneg _)
+  set D := C_cv * (C_fm + K_fm) with hD_def
+  -- Main bound: for T > T_min, c * T * log T ≤ K + D * T
+  suffices h_bound : ∀ T, T > T_min → c * T * Real.log T ≤ K + D * T by
+    -- Contradiction: log T → ∞ but c * log T is bounded
+    obtain ⟨T', hT'⟩ := Filter.eventually_atTop.mp
+      (Real.tendsto_log_atTop.eventually_gt_atTop ((D + K) / c + 1))
+    set T'' := max T' (T_min + 1) with hT''_def
+    have hT''_ge : T'' ≥ T' := le_max_left _ _
+    have hT''_gt : T'' > T_min := by linarith [le_max_right T' (T_min + 1)]
+    have hT''_ge1 : T'' ≥ 1 := by linarith
+    have h1 : Real.log T'' > (D + K) / c + 1 := hT' T'' hT''_ge
+    -- c * log T'' > D + K + c
+    have h2 : c * Real.log T'' - D > K := by
+      have : c * ((D + K) / c + 1) = D + K + c := by field_simp
+      nlinarith [mul_lt_mul_of_pos_left h1 hc]
+    -- From h_bound: c * T'' * log T'' ≤ K + D * T'', i.e., T'' * (c * log T'' - D) ≤ K
+    have h3 := h_bound T'' hT''_gt
+    -- But T'' ≥ 1 and c * log T'' - D > K ≥ 0
+    have h4 : T'' * (c * Real.log T'' - D) ≥ c * Real.log T'' - D := by
+      nlinarith
+    -- K < c * log T'' - D ≤ T'' * (c * log T'' - D) ≤ K
+    linarith
+  -- Prove the main bound
+  intro T hT
+  have hT_pos : T > 0 := by linarith
+  have hT_ge1 : 1 ≤ T := by linarith
+  -- (a) Mean square lower bound
+  have ha : c * T * Real.log T ≤ ∫ t in Ioc 1 T, (inst.Z t)^2 :=
+    h_ms T (le_of_lt (lt_of_le_of_lt hTm_T1 hT))
+  -- (b) Decompose ∫₁ᵀ Z² = K + ∫_{Tm}^T Z²
+  have hb := mean_square_decomp T_min T hTm_gt1 hT
+  -- (c) Pointwise |Z(t)| ≤ C_cv * T^(7/20) on [Tm, T]
+  have h_cv_bd : ∀ t ∈ Ioc T_min T, |inst.Z t| ≤ C_cv * T ^ ((1:ℝ)/4 + 1/10) := by
+    intro t ht
+    have ht_pos : t > 0 := by linarith [ht.1]
+    calc |inst.Z t| ≤ C_cv * |t| ^ ((1:ℝ)/4 + 1/10) :=
+          h_cv t (by rw [abs_of_pos ht_pos]; linarith [ht.1])
+      _ ≤ C_cv * T ^ ((1:ℝ)/4 + 1/10) := by
+          apply mul_le_mul_of_nonneg_left _ hC_cv.le
+          exact rpow_le_rpow (abs_nonneg t)
+            (by rw [abs_of_pos ht_pos]; exact ht.2) (by norm_num)
+  -- (d) ∫_{Tm}^T Z² ≤ M * ∫_{Tm}^T |Z|
+  have hd := mean_square_le_sup_times_l1 T_min T hT
+    (C_cv * T ^ ((1:ℝ)/4 + 1/10)) (by positivity) h_cv_bd
+  -- (e) Bound ∫_{Tm}^T |Z| via constant sign + triangle + first moment
+  -- Integral splitting: ∫₁^T Z = ∫₁^{Tm} Z + ∫_{Tm}^T Z
+  have h_split_Z : ∫ t in Ioc 1 T, inst.Z t =
+      (∫ t in Ioc 1 T_min, inst.Z t) + (∫ t in Ioc T_min T, inst.Z t) := by
+    have h_union := setIntegral_union (Ioc_disjoint_Ioc_of_le (le_refl T_min))
+      measurableSet_Ioc (h_int_Z 1 T_min) (h_int_Z T_min T)
+    rw [Ioc_union_Ioc_eq_Ioc (by linarith : (1:ℝ) ≤ T_min) (by linarith : T_min ≤ T)] at h_union
+    exact h_union
+  -- Bound ∫_{Tm}^T |Z| ≤ C_fm * T^(6/10) + K_fm
+  have he : ∫ t in Ioc T_min T, |inst.Z t| ≤ C_fm * T ^ ((1:ℝ)/2 + 1/10) + K_fm := by
+    have h_fm_T : |∫ t in Ioc 1 T, inst.Z t| ≤ C_fm * T ^ ((1:ℝ)/2 + 1/10) :=
+      h_fm T (le_of_lt (lt_of_le_of_lt hTm_T2 hT))
+    -- Key: |∫_{Tm}^T Z| ≤ C_fm * T^... + K_fm via triangle inequality
+    have h_abs_int : |∫ t in Ioc T_min T, inst.Z t| ≤
+        C_fm * T ^ ((1:ℝ)/2 + 1/10) + K_fm := by
+      have hI_upper : ∫ t in Ioc 1 T, inst.Z t ≤ C_fm * T ^ ((1:ℝ)/2 + 1/10) :=
+        le_trans (le_abs_self _) h_fm_T
+      have hI_lower : -(C_fm * T ^ ((1:ℝ)/2 + 1/10)) ≤ ∫ t in Ioc 1 T, inst.Z t :=
+        le_trans (neg_le_neg h_fm_T) (neg_abs_le _)
+      have hJ_upper : ∫ t in Ioc 1 T_min, inst.Z t ≤ K_fm := le_abs_self _
+      have hJ_lower : -(K_fm) ≤ ∫ t in Ioc 1 T_min, inst.Z t := neg_abs_le _
+      -- linarith can't decompose ∫₁Tm + ∫_{Tm}T (treats it as one atom).
+      -- Use `set` to name each integral, then linarith sees simple ℝ variables.
+      set A := ∫ t in Ioc 1 T, inst.Z t with hA_def
+      set B := ∫ t in Ioc 1 T_min, inst.Z t with hB_def
+      set C_int := ∫ t in Ioc T_min T, inst.Z t with hC_def
+      -- h_split_Z now reads: A = B + C_int
+      rw [abs_le]
+      exact ⟨by linarith [h_split_Z], by linarith [h_split_Z]⟩
+    rcases hsign with h_pos | h_neg
+    · -- Z > 0: ∫ |Z| = ∫ Z ≤ |∫ Z| ≤ bound
+      have h_nn : ∀ t ∈ Ioc T_min T, (0:ℝ) ≤ inst.Z t :=
+        fun t ht => le_of_lt (h_pos t (lt_of_le_of_lt hTm_T0 ht.1))
+      calc ∫ t in Ioc T_min T, |inst.Z t|
+          = ∫ t in Ioc T_min T, inst.Z t :=
+            setIntegral_congr_fun measurableSet_Ioc
+              (fun t ht => abs_of_nonneg (h_nn t ht))
+        _ ≤ |∫ t in Ioc T_min T, inst.Z t| := le_abs_self _
+        _ ≤ C_fm * T ^ ((1:ℝ)/2 + 1/10) + K_fm := h_abs_int
+    · -- Z < 0: ∫ |Z| = -(∫ Z) = |∫ Z| ≤ bound
+      have h_np : ∀ t ∈ Ioc T_min T, inst.Z t ≤ 0 :=
+        fun t ht => le_of_lt (h_neg t (lt_of_le_of_lt hTm_T0 ht.1))
+      calc ∫ t in Ioc T_min T, |inst.Z t|
+          = -(∫ t in Ioc T_min T, inst.Z t) := by
+            rw [show -(∫ t in Ioc T_min T, inst.Z t) =
+              ∫ t in Ioc T_min T, (fun t => -inst.Z t) t from by simp only [integral_neg]]
+            exact setIntegral_congr_fun measurableSet_Ioc
+              (fun t ht => abs_of_nonpos (h_np t ht))
+        _ ≤ |∫ t in Ioc T_min T, inst.Z t| := neg_le_abs _
+        _ ≤ C_fm * T ^ ((1:ℝ)/2 + 1/10) + K_fm := h_abs_int
+  -- (f) Chain: c*T*log T ≤ K + C_cv*T^(7/20)*(C_fm*T^(6/10)+K_fm) ≤ K + D*T
+  have h_rpow_prod : T ^ ((1:ℝ)/4 + 1/10) * T ^ ((1:ℝ)/2 + 1/10) = T ^ ((19:ℝ)/20) := by
+    rw [← rpow_add (by linarith : (0:ℝ) < T)]; norm_num
+  have h_rpow_le1 : T ^ ((19:ℝ)/20) ≤ T :=
+    (rpow_le_rpow_of_exponent_le hT_ge1 (by norm_num : (19:ℝ)/20 ≤ 1)).trans (rpow_one T).le
+  have h_rpow_le2 : T ^ ((1:ℝ)/4 + 1/10) ≤ T :=
+    (rpow_le_rpow_of_exponent_le hT_ge1 (by norm_num : (1:ℝ)/4 + 1/10 ≤ 1)).trans (rpow_one T).le
+  calc c * T * Real.log T
+      ≤ ∫ t in Ioc 1 T, (inst.Z t)^2 := ha
+    _ = K + ∫ t in Ioc T_min T, (inst.Z t)^2 := hb
+    _ ≤ K + C_cv * T ^ ((1:ℝ)/4 + 1/10) * (∫ t in Ioc T_min T, |inst.Z t|) := by linarith [hd]
+    _ ≤ K + C_cv * T ^ ((1:ℝ)/4 + 1/10) * (C_fm * T ^ ((1:ℝ)/2 + 1/10) + K_fm) := by
+        nlinarith [he, show 0 ≤ C_cv * T ^ ((1:ℝ)/4 + 1/10) from by positivity]
+    _ = K + C_cv * C_fm * (T ^ ((1:ℝ)/4 + 1/10) * T ^ ((1:ℝ)/2 + 1/10)) +
+        C_cv * K_fm * T ^ ((1:ℝ)/4 + 1/10) := by ring
+    _ = K + C_cv * C_fm * T ^ ((19:ℝ)/20) + C_cv * K_fm * T ^ ((1:ℝ)/4 + 1/10) := by
+        rw [h_rpow_prod]
+    _ ≤ K + C_cv * C_fm * T + C_cv * K_fm * T := by
+        nlinarith [mul_le_mul_of_nonneg_left h_rpow_le1 (by positivity : 0 ≤ C_cv * C_fm),
+                   mul_le_mul_of_nonneg_left h_rpow_le2 (by positivity : 0 ≤ C_cv * K_fm)]
+    _ = K + D * T := by simp only [hD_def]; ring
 
 end HardyInfiniteZerosV2

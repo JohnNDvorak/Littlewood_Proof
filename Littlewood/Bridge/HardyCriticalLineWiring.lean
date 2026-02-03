@@ -15,6 +15,7 @@ import Mathlib
 import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.Aristotle.HardyInfiniteZerosV2
 import Littlewood.Bridge.HardySetupV2Instance
+import Littlewood.Bridge.HardyChainHyp
 
 set_option linter.mathlibStandardSet false
 
@@ -59,8 +60,10 @@ theorem hardy_zeros_to_nontrivial_zeros
 /-! ## The instance (depends on HardySetupInstance having 0 sorries) -/
 
 /-- Hardy's theorem: infinitely many zeros of ζ on the critical line.
-    This instance closes when HardySetupV2Instance's 3 sorry fields are proved. -/
-instance : Schmidt.HardyCriticalLineZerosHyp where
+    All 6 HardySetupV2 fields are proved, so this fires automatically
+    when ZetaCriticalLineBoundHyp and HardyFirstMomentUpperHyp instances are available. -/
+instance [ZetaCriticalLineBoundHyp] [HardyFirstMomentUpperHyp] :
+    Schmidt.HardyCriticalLineZerosHyp where
   infinite := hardy_zeros_to_nontrivial_zeros HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2
 
 end HardyCriticalLineWiring

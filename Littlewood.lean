@@ -109,17 +109,17 @@ import Littlewood.Aristotle.MeanSquarePartialSum       -- Mean square partial su
 import Littlewood.Aristotle.ZeroFreeRegionV2           -- Zero-free region / 3-4-1 infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundsPartialSum       -- Zeta bounds, partial sums, harmonic bound (0 sorries) ✓
 import Littlewood.Aristotle.MeanSquareLowerBound        -- Mean square lower bound for partial sum (0 sorries) ✓
-import Littlewood.Aristotle.DiagonalIntegralBound       -- Diagonal integral ≥ c·T·log T (4 sorries)
-import Littlewood.Aristotle.ContourInfrastructure       -- Contour defs, measure-zero segments (3 sorries)
+import Littlewood.Aristotle.DiagonalIntegralBound       -- Diagonal integral ≥ c·T·log T (0 sorries) ✓
+import Littlewood.Aristotle.ContourInfrastructure       -- Contour defs, measure-zero segments (0 sorries) ✓
 -- import Littlewood.Aristotle.HardyInfiniteZeros       -- DEPRECATED: V1 has unsatisfiable field signatures (grind works vacuously)
-import Littlewood.Aristotle.HardyInfiniteZerosV2        -- Hardy's theorem V2: FIXED field signatures (canonical path)
+import Littlewood.Aristotle.HardyInfiniteZerosV2        -- Hardy's theorem V2: 4/5 proved, main contradiction sorry (1 sorry)
 import Littlewood.Aristotle.HardyApproxFunctionalEq     -- Approx functional eq: ∫Z²≥k∫|S_N|²-CT (0 sorries) ✓
 import Littlewood.Aristotle.MeanSquarePartialSumAsymptotic -- Mean square ∫|S_N|² ≥ c·T·log T (0 sorries) ✓
 import Littlewood.Aristotle.OscillatorySumBound          -- First moment: |∫ oscillatory| ≤ C·T^(1/2+ε) (0 sorries) ✓
 import Littlewood.Aristotle.ContourRectangle             -- Rectangle contour integrals, Cauchy (1 sorry)
-import Littlewood.Aristotle.ZetaBoundsV2                  -- Zeta ‖ζ(s)‖≤Re(s)/(Re(s)-1), χ, FE, sinh/Gamma bounds (2 sorries)
-import Littlewood.Aristotle.CauchyGoursatRectangle        -- Cauchy-Goursat rectangle theorem (2 sorries)
-import Littlewood.Aristotle.ZeroFreeRegionV3               -- Zero-free region: 3-4-1, ζ(1+it)≠0, log-deriv bounds (5 sorries)
+import Littlewood.Aristotle.ZetaBoundsV2                  -- Zeta ‖ζ(s)‖≤Re(s)/(Re(s)-1), χ, FE, sinh/Gamma bounds (3 sorries)
+import Littlewood.Aristotle.CauchyGoursatRectangle        -- Cauchy-Goursat rectangle theorem (0 sorries) ✓
+import Littlewood.Aristotle.ZeroFreeRegionV3               -- Zero-free region: 3-4-1, ζ(1+it)≠0, log-deriv bounds (3 sorries)
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
@@ -134,7 +134,7 @@ import Littlewood.Aristotle.ZeroFreeRegionV3               -- Zero-free region: 
 
 -- Aristotle files with remaining sorries (verified via lake build sorry warnings)
 import Littlewood.Aristotle.MeanSquare             -- 3 sorries: off-diag bound, normSq decomp, main thm
-import Littlewood.Aristotle.ZeroCounting           -- 3 sorries: xi diff (deprecated), arg principle, RvM
+import Littlewood.Aristotle.ZeroCounting           -- 2 sorries: arg principle, RvM asymptotic
 import Littlewood.Aristotle.PhragmenLindelof       -- 3 sorries: critical line bound, convexity, Stirling
 import Littlewood.Aristotle.PartialSummation       -- 1 sorry: π(x)-li(x) sign changes from ψ(x)-x
 -- import Littlewood.Aristotle.FunctionalEquation  -- DEPRECATED: 1 sorry, use FunctionalEquationV2
@@ -155,8 +155,9 @@ import Littlewood.Bridge.HardyZDefinitionMap          -- Hardy Z variant equival
 import Littlewood.Bridge.HardyCriticalLineWiring      -- Pre-wired for Hardy completion (0 sorries) ✓
 import Littlewood.Bridge.HardyZUnified                -- Unified Hardy Z exports (0 sorries) ✓
 import Littlewood.Bridge.HardyChainTest               -- Hardy chain integration test (0 sorries) ✓
-import Littlewood.Bridge.MeanSquareBridge              -- Mean square bridge: DiagBound + ApproxFuncEq (1 sorry)
-import Littlewood.Bridge.HardySetupV2Instance          -- HardySetupV2 instance: 3/6 proved, 3 sorry
+import Littlewood.Bridge.HardyChainHyp                  -- Hardy chain hypothesis classes (0 sorries) ✓
+import Littlewood.Bridge.MeanSquareBridge              -- Mean square bridge: DiagBound + ApproxFuncEq (0 sorries) ✓
+import Littlewood.Bridge.HardySetupV2Instance          -- HardySetupV2 instance: all 6 fields proved (0 sorries) ✓
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
@@ -190,8 +191,8 @@ The main theorems are proved assuming ~58 hypothesis classes (classical theorems
 not yet in Mathlib). See `Assumptions.lean` for the full list.
 
 ### Build Status
-- Sorry declarations (project): 90
-- Sorry-free .lean files: 157 (91%)
+- Sorry declarations (project): 82
+- Sorry-free .lean files: 158 (92%)
 - Main theorem sorries: 0
 - Hardy chain: V2 canonical (V1 deprecated)
 

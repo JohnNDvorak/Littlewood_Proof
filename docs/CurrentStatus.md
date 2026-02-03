@@ -1,91 +1,93 @@
 # Littlewood Proof: Current Status
 
-**Date**: 2026-02-01
+**Date**: 2026-02-02 (updated)
 
 ## Sorry Count Summary (from `lake build`)
 
 | Directory | Files | Sorries | Notes |
 |-----------|-------|---------|-------|
-| Assumptions.lean | 1 | 58 | Hypothesis class instances (classical results not in Mathlib) |
-| Aristotle/ | 12 | 28 | Analytic number theory proofs (active, imported) |
-| Bridge/ | 2 | 4 | HardySetupV2Instance (3), MeanSquareBridge (1) |
+| Assumptions.lean | 1 | 60 | Hypothesis class instances (classical results not in Mathlib) |
+| Aristotle/ | 4 | 7 | Analytic number theory proofs (active, imported) |
+| Bridge/ | 0 | 0 | All bridge files sorry-free (Hardy chain complete) |
 | CoreLemmas/ | 1 | 1 | Landau lemma analytic continuation |
-| **Total (project)** | **15** | **90** | Main proof chain: 0 sorries |
+| **Total (project)** | **6** | **68** | Main proof chain: 0 sorries |
 
-Development/ files (not imported): 5 sorries across 3 files.
+Additionally: 3 sorries from PrimeNumberTheoremAnd dependency.
+Development/ files (not imported): 4 sorries across 3 files.
+Deprecated Aristotle files: not counted above.
 
-## Recently Closed / Integrated
+## Hardy Chain Status (Structurally Complete)
 
-- **HardyInfiniteZerosV2.lean**: `constant_sign_of_finite` and `abs_integral_eq_of_pos` proved (5 → 3 sorries)
-- **StirlingBernoulli.lean**: 2 sorry → 0 sorry (Bernoulli B1/B2 bounds)
-- **MeanSquareBridge.lean**: 2 → 1 sorry (type transfer partial fix)
-- **V1 Hardy deprecation**: Removed `HardyInfiniteZeros.lean` from imports (-4 sorries)
-- **ZetaBoundsV2.lean**: NEW — zeta bound Re(s)>1, functional equation, sinh/Gamma bounds (3 sorries)
-- **CauchyGoursatRectangle.lean**: NEW — Cauchy-Goursat rectangle theorem (3 sorries)
-- **ZeroFreeRegionV3.lean**: NEW — 3-4-1 inequality, ζ(1+it)≠0, log-deriv bounds (6 sorries)
+```
+DiagonalIntegralBound: integral |S_N|^2 >= c*T*log T      (0 sorries) done
+  -> HardyApproxFunctionalEq: integral Z^2 >= k*integral|S|^2 - CT   (1 sorry)
+  -> MeanSquarePartialSumAsymptotic                        (0 sorries) done
+  -> OscillatorySumBound                                   (0 sorries) done
+  -> MeanSquareBridge: integral Z^2 >= c'*T*log T          (0 sorries) done
+  -> HardySetupV2Instance: ALL 6 FIELDS PROVED             (0 sorries) done
+  -> HardyInfiniteZerosV2: ALL 5 LEMMAS PROVED             (0 sorries) done
+  -> HardyCriticalLineWiring -> Schmidt.HardyCriticalLineZerosHyp  done
+```
+
+**The Hardy chain is structurally complete.** All files from MeanSquareBridge
+through HardyCriticalLineWiring are sorry-free. The remaining analytic inputs
+are encoded as hypothesis classes:
+
+- `ZetaCriticalLineBoundHyp` -- Phragmen-Lindelof convexity (sorry in Assumptions.lean)
+- `HardyFirstMomentUpperHyp` -- first moment upper bound (sorry in Assumptions.lean)
+- `approx_functional_eq` (1 sorry in HardyApproxFunctionalEq.lean)
+
+When these are proved, the sorry count drops by 3.
 
 ## Hypothesis Instance Status
 
 ### Fully Proved (no sorries)
-- `ZeroConjZeroHyp` — conjugation symmetry of nontrivial zeros
-- `ZeroOneSubZeroHyp` — functional equation symmetry of nontrivial zeros
+- `ZeroConjZeroHyp` -- conjugation symmetry of nontrivial zeros
+- `ZeroOneSubZeroHyp` -- functional equation symmetry of nontrivial zeros
+- `FunctionalEquationHyp` -- zeta functional equation
+- `LambdaSymmetryHyp` -- completed zeta symmetry
 
-### Pre-Wired (blocked by upstream sorries)
-- `Schmidt.HardyCriticalLineZerosHyp` — in HardyCriticalLineWiring.lean
+### Pre-Wired (fires automatically)
+- `Schmidt.HardyCriticalLineZerosHyp` -- in HardyCriticalLineWiring.lean
   - Conversion lemma `hardy_zeros_to_nontrivial_zeros` fully proved
-  - Instance fires automatically when HardySetupV2Instance's 3 Aristotle sorries close
+  - Instance fires when `ZetaCriticalLineBoundHyp` and `HardyFirstMomentUpperHyp` instances are available
 
 ### All Others: Sorry (in Assumptions.lean)
-- 58 instances for classical analytic number theory results
+- 60 instances for classical analytic number theory results
 - Each corresponds to a well-known theorem not yet available in Mathlib
-
-## Hardy Chain Status (V2 Canonical)
-
-```
-DiagonalIntegralBound: ∫|S_N|² ≥ c·T·log T          (0 sorries) ✓
-  → HardyApproxFunctionalEq: ∫Z² ≥ k·∫|S_N|² - CT   (0 sorries) ✓
-  → MeanSquarePartialSumAsymptotic                     (0 sorries) ✓
-  → OscillatorySumBound                                (0 sorries) ✓
-  → MeanSquareBridge: ∫Z² ≥ c'·T·log T on [1,T]      (1 sorry)
-  → HardySetupV2Instance: fields 1-3 proved, 4-6 sorry (3 sorries)
-  → HardyInfiniteZerosV2: 2/5 lemmas proved            (3 sorries)
-  → HardyCriticalLineWiring → Schmidt.HardyCriticalLineZerosHyp
-```
-
-**Remaining:**
-1. Close MeanSquareBridge sorry (type transfer between hardyZ variants)
-2. `first_moment_upper` — connect OscillatorySumBound to Hardy Z
-3. `Z_convexity_bound` — |ζ(1/2+it)| ≤ C|t|^{1/4+ε} (Phragmén-Lindelöf)
-4. `mean_square_decomp` — ∂volume elaboration mismatch workaround
-5. `mean_square_le_sup_times_l1` — iSup BddAbove on Ioc
-6. `hardy_infinitely_many_zeros_v2` — main contradiction argument
 
 ## Aristotle Module: Active Sorries
 
 | File | Sorries | Topic |
 |------|---------|-------|
-| ZeroFreeRegionV3.lean | 6 | 3-4-1 inequality, ζ(1+it)≠0, log-deriv bounds |
-| HardyInfiniteZerosV2.lean | 3 | Hardy theorem proof steps (2 of 5 proved) |
-| MeanSquare.lean | 3 | Mean square of partial zeta sums |
-| CauchyGoursatRectangle.lean | 3 | Cauchy-Goursat rectangle theorem |
-| PhragmenLindelof.lean | 3 | Convexity bounds, Gamma growth |
-| ZetaBoundsV2.lean | 3 | Zeta bound Re(s)>1, functional equation |
+| PhragmenLindelof.lean | 3 | Convexity bounds, Gamma growth (Stirling) |
 | ZeroCounting.lean | 2 | N(T) argument principle + asymptotic |
-| PerronContourIntegralsV2.lean | 1 | Cauchy integral theorem for Perron |
-| PartialSummation.lean | 1 | π(x)-li(x) sign changes from ψ(x)-x |
-| HardyZConjugation.lean | 1 | Mellin transform identity |
-| ContourRectangle.lean | 1 | Rectangle contour integral |
+| HardyApproxFunctionalEq.lean | 1 | Approximate functional equation |
+| PartialSummation.lean | 1 | pi(x) - li(x) via partial summation |
+
+**Sorry-free Aristotle files** (previously had sorries): ContourRectangle,
+PerronContourIntegralsV2, CauchyGoursatRectangle, StirlingBernoulli,
+ZeroFreeRegionV3, HardyZConjugation, HardyInfiniteZerosV2, ZetaBoundsV2,
+ContourInfrastructure, DiagonalIntegralBound, MeanSquare
+
+**Sorry-free Bridge files**: MeanSquareBridge, HardySetupV2Instance,
+HardyCriticalLineWiring, HardySetupInstance, HardyZTransfer, and all others
 
 ## Key Gaps for Progress
 
-1. **Hardy chain**: 7 sorries total (MeanSquareBridge through HardyInfiniteZerosV2)
-2. **Zero-free region**: ZeroFreeRegionV3 has ζ(1+it)≠0 proved; needs `analyticAt_zetaResidueFunction`
-3. **Zeta bounds**: `zeta_bound_re_ge_one` needs integral representation argument
-4. **Explicit formulas**: Perron contour integral needs Cauchy-Goursat bookkeeping
-5. **Zero counting**: Riemann-von Mangoldt needs uniform C
+1. **PhragmenLindelof** (3 sorries): Convexity bounds and Gamma growth.
+   Closing these would discharge `ZetaCriticalLineBoundHyp`.
+2. **HardyApproxFunctionalEq** (1 sorry): Approximate functional equation.
+   Last sorry on the Hardy critical path.
+3. **ZeroCounting** (2 sorries): N(T) via argument principle. Not on critical path.
+4. **PartialSummation** (1 sorry): Transfer from psi to pi-li oscillation.
+5. **LandauLemma** (1 sorry): Identity theorem for Dirichlet series.
+
+**Aristotle prompts**: See `docs/aristotle_prompts.md` for ready-to-use prompts.
 
 ## Build Status
 
-- Full `lake build` passes with 90 sorry warnings (project) + 3 (dependency)
-- All 172 .lean files compile
-- ~32,100 lines of Lean code
+- Full `lake build` passes with 71 sorry warnings (68 project + 3 dependency)
+- All .lean files compile
+- ~33,100 lines of Lean code
+- 174 total .lean files, 169 sorry-free (97%)

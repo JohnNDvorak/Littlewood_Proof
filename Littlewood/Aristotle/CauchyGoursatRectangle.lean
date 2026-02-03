@@ -152,7 +152,7 @@ lemma integral_segment_2_eq_right (f : ℂ → ℂ) (a b c d : ℝ) (hcd : c ≤
   have h_rectBoundary_1_2 : ∀ t ∈ Set.Ioo 1 2, rectBoundary a b c d t = ⟨b, c + (t - 1) * (d - c)⟩ :=
     fun t ht => rectBoundary_eq_on_Icc_1_2 a b c d t ⟨ ht.1.le, ht.2.le ⟩
   have h_deriv_1_2 : ∀ t ∈ Set.Ioo 1 2, deriv (rectBoundary a b c d) t = (d - c) * Complex.I :=
-    sorry -- deriv_rectBoundary_on_Ioo_1_2 with exact type match
+    deriv_rectBoundary_on_Ioo_1_2 a b c d
   rw [ MeasureTheory.integral_Icc_eq_integral_Ioc, MeasureTheory.integral_Ioc_eq_integral_Ioo ]
   rw [ MeasureTheory.setIntegral_congr_fun measurableSet_Ioo fun t ht => by rw [ h_rectBoundary_1_2 t ht, h_deriv_1_2 t ht ] ]
   rw [ ← MeasureTheory.integral_Ioc_eq_integral_Ioo, ← intervalIntegral.integral_of_le ] <;> norm_num
@@ -177,7 +177,8 @@ lemma deriv_rectBoundary_on_Ioo_2_3 (a b c d : ℝ) :
     norm_num
   · filter_upwards [ Ioo_mem_nhds ht.1 ht.2 ] with u hu
     unfold rectBoundary
-    sorry -- grind (budget exhaustion)
+    norm_num [Complex.ext_iff, hu.1.le, hu.2.le]
+    split_ifs <;> norm_num <;> linarith [hu.1, hu.2]
 
 lemma integral_segment_3_change_vars (f : ℂ → ℂ) (a b d : ℝ) (hab : a ≤ b) :
     ∫ t in Icc 2 3, f ⟨b - (t - 2) * (b - a), d⟩ * (-(b - a)) = topIntegral f a b d := by
@@ -296,7 +297,7 @@ lemma maps_rectBoundary_2_3 (a b c d : ℝ) (hab : a ≤ b) (hcd : c ≤ d) :
 lemma continuousOn_rectBoundary_2_3 (a b c d : ℝ) :
     ContinuousOn (rectBoundary a b c d) (Icc 2 3) := by
   have h_eq : ∀ t ∈ Set.Icc 2 3, rectBoundary a b c d t = ⟨b - (t - 2) * (b - a), d⟩ :=
-    sorry -- rectBoundary_eq_on_Icc_2_3 with exact type match
+    rectBoundary_eq_on_Icc_2_3 a b c d
   refine' ContinuousOn.congr _ h_eq
   norm_num [ Complex.mk_eq_add_mul_I ]
   exact Continuous.continuousOn ( by continuity )

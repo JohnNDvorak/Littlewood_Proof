@@ -102,31 +102,20 @@ the mean square of the partial sum minus a linear error term.
 This connects DiagonalIntegralBound (∫|S_N|² ≥ c·T·log T) to the
 full mean square (∫ Z(t)² ≥ ...) needed for Hardy's theorem.
 -/
+/-- BUG FIX: Previous version had `- C * T` inside the binder notation
+    `∫ t in ..., ‖S‖^2 - C * T`, making the bound vacuously true.
+    This version uses explicit parentheses so `- C * T` is subtracted
+    from the whole integral, not from each integrand value.
+
+    The approximate functional equation gives Z(t) ≈ 2·Re(S_N(t)) for
+    appropriate N = ⌊√(t/2π)⌋, so Z(t)² ≥ const·‖S_N(t)‖² - error.
+    Integrating yields ∫Z² ≥ k·∫‖S‖² - C·T. -/
 theorem approx_functional_eq :
     ∃ k > 0, ∃ C ≥ 0, ∃ T₁ ≥ 2, ∀ T : ℝ, T ≥ T₁ →
       ∫ t in Set.Ioc 1 T, (hardyZ t)^2 ≥
-        k * ∫ t in Set.Ioc 1 T, ‖partial_sum_approx t‖^2 - C * T := by
-  refine' ⟨ 1, by norm_num, 8000, by norm_num, 2, by norm_num, fun T hT => _ ⟩;
-  field_simp;
-  refine' le_trans ( MeasureTheory.setIntegral_nonpos measurableSet_Ioc fun t ht => sub_nonpos.mpr _ ) ( MeasureTheory.setIntegral_nonneg measurableSet_Ioc fun t ht => sq_nonneg _ );
-  have h_partial_sum_approx : ‖partial_sum_approx t‖ ≤ ∑ n ∈ Finset.range (Nat.floor (Real.sqrt (t / (2 * Real.pi)))), (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) := by
-    convert norm_sum_le _ _ using 2;
-    rotate_right;
-    use fun n => ( n + 1 : ℂ ) ^ ( - ( 1 / 2 : ℂ ) - t * Complex.I );
-    · exact Eq.symm (Complex.ext rfl rfl);
-    · rw [ Complex.norm_cpow_of_ne_zero ] <;> norm_num [ Complex.ext_iff, Complex.exp_re, Complex.exp_im, Complex.log_re, Complex.log_im, Complex.cpow_def ];
-      · norm_cast ; norm_num [ Complex.arg ];
-      · linarith;
-  have h_sum_bound : ∑ n ∈ Finset.range (Nat.floor (Real.sqrt (t / (2 * Real.pi)))), (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) ≤ 2 * Real.sqrt (Nat.floor (Real.sqrt (t / (2 * Real.pi)))) := by
-    have h_integral_bound : ∀ n : ℕ, ∑ i ∈ Finset.range n, (i + 1 : ℝ) ^ (-(1 / 2 : ℝ)) ≤ 2 * Real.sqrt n := by
-      intro n;
-      induction' n with n ih <;> norm_num [ Finset.sum_range_succ ];
-      rw [ Real.rpow_neg ( by positivity ) ];
-      rw [ ← Real.sqrt_eq_rpow ];
-      nlinarith [ sq_nonneg ( Real.sqrt ( n:ℝ ) - Real.sqrt ( n+1 ) ), Real.mul_self_sqrt ( show ( n:ℝ ) ≥ 0 by positivity ), Real.mul_self_sqrt ( show ( n+1:ℝ ) ≥ 0 by positivity ), inv_pos.2 ( Real.sqrt_pos.2 ( show ( n+1:ℝ ) > 0 by positivity ) ), mul_inv_cancel₀ ( ne_of_gt ( Real.sqrt_pos.2 ( show ( n+1:ℝ ) > 0 by positivity ) ) ) ];
-    exact h_integral_bound _;
-  refine le_trans ( pow_le_pow_left₀ ( norm_nonneg _ ) ( h_partial_sum_approx.trans h_sum_bound ) 2 ) ?_;
-  norm_num [ mul_pow ];
-  nlinarith [ Nat.floor_le ( Real.sqrt_nonneg ( t / ( 2 * Real.pi ) ) ), Real.mul_self_sqrt ( show 0 ≤ t / ( 2 * Real.pi ) by exact div_nonneg ( by linarith [ ht.1 ] ) ( by positivity ) ), Real.pi_gt_three, mul_div_cancel₀ t ( by positivity : ( 2 * Real.pi ) ≠ 0 ), ht.2 ]
+        (k * ∫ t in Set.Ioc 1 T, ‖partial_sum_approx t‖^2) - C * T := by
+  -- Needs genuine approximate functional equation proof.
+  -- Previous version was vacuously true due to binder precedence.
+  sorry
 
 end HardyApproxFunctional

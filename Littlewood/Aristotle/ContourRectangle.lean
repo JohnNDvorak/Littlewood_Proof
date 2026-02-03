@@ -126,9 +126,32 @@ lemma rectIntegral_eq_zero_of_differentiable
     (hab : a < b) (hcd : c < d)
     (hg_diff : DifferentiableOn ℂ g (closedRectangle a b c d)) :
     rectIntegral g a b c d = 0 := by
-  -- Aristotle budget reached before closing this proof.
-  -- The strategy is to convert to Complex.integral_boundary_rect_eq_zero_of_differentiableOn
-  -- using the edge lemmas above. Needs: matching I•∫ vs I*∫ and argument order in g.
-  sorry
+  -- Convert Icc set integrals to interval integrals
+  have hconv : ∀ f : ℝ → ℂ, ∫ t in Icc (0 : ℝ) 1, f t = ∫ t in (0 : ℝ)..1, f t := fun f => by
+    rw [MeasureTheory.integral_Icc_eq_integral_Ioc, intervalIntegral.integral_of_le zero_le_one]
+  unfold rectIntegral
+  simp only [hconv]
+  -- Apply edge conversion lemmas
+  rw [rectIntegral_bottom_eq, rectIntegral_right_eq, rectIntegral_top_eq, rectIntegral_left_eq]
+  -- Apply Mathlib's Cauchy-Goursat for rectangles
+  have h_cauchy : (∫ x in a..b, g (↑x + ↑c * I)) - (∫ x in a..b, g (↑x + ↑d * I)) +
+      I * (∫ y in c..d, g (↑b + ↑y * I)) - I * (∫ y in c..d, g (↑a + ↑y * I)) = 0 := by
+    have := @Complex.integral_boundary_rect_eq_zero_of_differentiable_on_off_countable
+    convert this g (a + c * I) (b + d * I) ∅ (by norm_num) ?_ ?_ using 1 <;> norm_num
+    · exact hg_diff.continuousOn.mono fun x hx =>
+        ⟨by simpa [hab.le] using hx.1.1, by simpa [hab.le] using hx.1.2,
+         by simpa [hcd.le] using hx.2.1, by simpa [hcd.le] using hx.2.2⟩
+    · simp_all +decide [min_eq_left hab.le, max_eq_right hab.le,
+        min_eq_left hcd.le, max_eq_right hcd.le]
+      intro x hx
+      exact hg_diff.differentiableAt (Filter.mem_of_superset
+        (IsOpen.mem_nhds
+          ((isOpen_Ioi.preimage continuous_re).inter
+            ((isOpen_Iio.preimage continuous_re).inter
+              ((isOpen_Ioi.preimage continuous_im).inter
+                (isOpen_Iio.preimage continuous_im))))
+          ⟨hx.1.1, hx.1.2, hx.2.1, hx.2.2⟩)
+        fun z hz => ⟨hz.1.le, hz.2.1.le, hz.2.2.1.le, hz.2.2.2.le⟩)
+  linear_combination h_cauchy
 
 end ContourRectangle

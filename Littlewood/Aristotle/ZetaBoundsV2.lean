@@ -31,14 +31,43 @@ noncomputable section
 
 namespace ZetaBoundsV2
 
+open Complex Real
+
 /-
 Zeta bound for Re(s) > 1
 -/
 theorem zeta_bound_re_ge_one (s : ℂ) (hs : s.re > 1) :
     ‖riemannZeta s‖ ≤ s.re / (s.re - 1) := by
-  sorry
-
-open Complex Real
+  -- Decompose s into real and imaginary parts for the Dirichlet series approach
+  conv_lhs => rw [show s = ↑s.re + ↑s.im * I from (re_add_im s).symm]
+  set σ := s.re with hσ_def
+  set t := s.im with ht_def
+  rw [zeta_eq_tsum_one_div_nat_add_one_cpow (show 1 < (↑σ + ↑t * I).re by simp; linarith)]
+  -- Summability of real majorant series
+  have h_summ : Summable (fun n : ℕ => 1 / ((n : ℝ) + 1) ^ σ) := by
+    convert (summable_nat_add_iff (G := ℝ) 1).mpr (summable_one_div_nat_rpow.mpr hs) using 1
+    ext n; simp [Nat.cast_succ]
+  -- Step 1: ‖Σ 1/(n+1)^s‖ ≤ Σ 1/(n+1)^σ
+  have h1 : ‖∑' n : ℕ, (1 : ℂ) / (↑↑n + 1) ^ ((↑σ : ℂ) + ↑t * I)‖ ≤
+      ∑' n : ℕ, 1 / ((n : ℝ) + 1) ^ σ := by
+    apply tsum_of_norm_bounded h_summ.hasSum
+    intro n; simp only [norm_div, norm_one]
+    rw [show (↑↑n + 1 : ℂ) = ((↑(n + 1 : ℕ) : ℂ)) from by push_cast; ring,
+        norm_natCast_cpow_of_pos (Nat.succ_pos n),
+        show ((↑σ : ℂ) + ↑t * I).re = σ from by simp, Nat.cast_succ]
+  -- Step 2: Σ 1/(n+1)^σ ≤ σ/(σ-1)
+  have h2 : ∑' n : ℕ, 1 / ((n : ℝ) + 1) ^ σ ≤ σ / (σ - 1) := by
+    have h_aux := ZetaAsymptotics.zeta_limit_aux1 hs
+    have h_tt_nonneg : 0 ≤ ZetaAsymptotics.term_tsum σ :=
+      tsum_nonneg (fun n => ZetaAsymptotics.term_nonneg (n + 1) σ)
+    have h_σ_pos : (0 : ℝ) ≤ σ := le_of_lt (lt_trans zero_lt_one hs)
+    -- From h_aux: ∑' = 1/(σ-1) + 1 - σ·tt ≤ 1/(σ-1) + 1 = σ/(σ-1)
+    have h_le : ∑' n : ℕ, 1 / ((n : ℝ) + 1) ^ σ ≤ 1 / (σ - 1) + 1 := by
+      linarith [mul_nonneg h_σ_pos h_tt_nonneg]
+    have h_eq : 1 / (σ - 1) + 1 = σ / (σ - 1) := by
+      field_simp [ne_of_gt (show (0:ℝ) < σ - 1 by linarith)]; ring
+    linarith
+  linarith
 
 /-
 Functional equation for Zeta: ζ(s) = χ(s)·ζ(1-s)
@@ -47,7 +76,45 @@ noncomputable def chi (s : ℂ) : ℂ := 2^s * π^(s-1) * sin (π*s/2) * Gamma (
 
 lemma functional_equation (s : ℂ) (h : |s.im| ≥ 1) :
     riemannZeta s = chi s * riemannZeta (1 - s) := by
-  sorry
+  -- From |s.im| ≥ 1, derive conditions for riemannZeta_one_sub
+  have him : s.im ≠ 0 := by intro h0; simp [h0] at h; linarith
+  have h_ne_nat : ∀ n : ℕ, (1 - s) ≠ -(n : ℂ) := by
+    intro n h_eq
+    have := congr_arg Complex.im h_eq
+    simp at this; exact him this
+  have h_ne_one : (1 - s) ≠ 1 := by
+    intro h_eq
+    have := congr_arg Complex.im h_eq
+    simp at this; exact him this
+  -- Apply Mathlib's functional equation with substitution s ↦ 1-s
+  have h_fe := riemannZeta_one_sub h_ne_nat h_ne_one
+  simp only [sub_sub_cancel] at h_fe
+  rw [h_fe]; unfold chi
+  -- cos(π(1-s)/2) = sin(πs/2)
+  have h_cos_sin : Complex.cos (↑π * (1 - s) / 2) = Complex.sin (↑π * s / 2) := by
+    rw [show (↑π : ℂ) * (1 - s) / 2 = ↑(π / 2 : ℝ) - ↑π * s / 2 from by push_cast; ring,
+      Complex.cos_sub,
+      show Complex.cos ↑(π / 2 : ℝ) = 0 from by
+        rw [← Complex.ofReal_cos, Real.cos_pi_div_two, Complex.ofReal_zero],
+      show Complex.sin ↑(π / 2 : ℝ) = 1 from by
+        rw [← Complex.ofReal_sin, Real.sin_pi_div_two, Complex.ofReal_one]]
+    ring
+  -- Core power identity: 2*(2*↑π)^{s-1} = 2^s * ↑π^{s-1}
+  have h2 : (2 : ℂ) = ↑(2 : ℝ) := by norm_num
+  have h_pow_split : (2 : ℂ) * ((2 : ℂ) * ↑Real.pi) ^ (s - 1) =
+      (2 : ℂ) ^ s * (↑Real.pi) ^ (s - 1) := by
+    rw [h2, Complex.mul_cpow_ofReal_nonneg (by norm_num : (0:ℝ) ≤ 2) Real.pi_pos.le (s-1),
+      ← mul_assoc]
+    congr 1
+    -- ↑2 * ↑2^(s-1) = ↑2^s via exp/log
+    have h2ne : (↑(2:ℝ):ℂ) ≠ 0 := by norm_cast
+    rw [cpow_def_of_ne_zero h2ne, cpow_def_of_ne_zero h2ne]
+    -- LHS: ↑2 * exp((s-1) * log ↑2), RHS: exp(s * log ↑2)
+    -- Replace only the standalone ↑2 (not the one inside log)
+    conv_lhs => lhs; rw [show (↑(2:ℝ):ℂ) = exp (log (↑(2:ℝ):ℂ)) from (exp_log h2ne).symm]
+    rw [← Complex.exp_add]; congr 1; ring
+  rw [show (-(1 - s) : ℂ) = s - 1 from by ring, h_cos_sin, h_pow_split]
+  ring
 
 /-
 Bound for sine in the critical strip
@@ -90,7 +157,54 @@ Squared bound for Gamma on imaginary axis
 -/
 lemma gamma_sq_bound_zero (t : ℝ) (ht : |t| ≥ 2) :
     ‖Complex.Gamma (1 - I * t)‖^2 ≤ 4 * Real.pi * |t| * Real.exp (-Real.pi * |t|) := by
-  sorry
+  have ht_ne : t ≠ 0 := by intro h; simp [h] at ht; linarith
+  have ht_abs_pos : (0 : ℝ) < |t| := abs_pos.mpr ht_ne
+  have hsinh_pos : (0 : ℝ) < |Real.sinh (Real.pi * t)| := by
+    rw [abs_pos]; exact Real.sinh_ne_zero.mpr (mul_ne_zero (ne_of_gt Real.pi_pos) ht_ne)
+  -- Step 1: Gamma reflection formula at z = I*t
+  have h_refl := Complex.Gamma_mul_Gamma_one_sub (I * ↑t)
+  -- Γ(I*t) * Γ(1 - I*t) = π / sin(π * I*t)
+  -- Step 2: sin(π * I * t) = sinh(π*t) * I
+  have h_sin : Complex.sin (↑Real.pi * (I * ↑t)) = Complex.sinh (↑(Real.pi * t)) * I := by
+    rw [show (↑Real.pi : ℂ) * (I * ↑t) = ↑(Real.pi * t) * I from by push_cast; ring]
+    exact Complex.sin_mul_I _
+  -- Step 3: Norm of product = π / |sinh(πt)|
+  have h_norm_prod : ‖Complex.Gamma (I * ↑t)‖ * ‖Complex.Gamma (1 - I * ↑t)‖ =
+      Real.pi / |Real.sinh (Real.pi * t)| := by
+    rw [← norm_mul, h_refl, h_sin]
+    rw [norm_div, norm_mul, Complex.norm_I, mul_one]
+    -- ‖↑π‖ = π and ‖sinh(↑(πt))‖ = |sinh(πt)|
+    rw [Complex.norm_real, Real.norm_eq_abs, abs_of_pos Real.pi_pos]
+    congr 1
+    -- ‖Complex.sinh(↑(πt))‖ = |Real.sinh(πt)|
+    rw [show Complex.sinh (↑(Real.pi * t)) = ↑(Real.sinh (Real.pi * t)) from by
+      simp [Complex.ofReal_sinh]]
+    rw [Complex.norm_real, Real.norm_eq_abs]
+  -- Step 4: From gamma_abs_imag: ‖Γ(It)‖ = ‖Γ(1-It)‖ / |t|
+  have h_gai := gamma_abs_imag t ht_ne
+  -- Step 5: Derive ‖Γ(1-It)‖² = π * |t| / |sinh(πt)|
+  have h_sq : ‖Complex.Gamma (1 - I * ↑t)‖ ^ 2 =
+      Real.pi * |t| / |Real.sinh (Real.pi * t)| := by
+    set g := ‖Complex.Gamma (1 - I * ↑t)‖
+    have hg_nn : 0 ≤ g := norm_nonneg _
+    have : g / |t| * g = Real.pi / |Real.sinh (Real.pi * t)| := by
+      rw [← h_gai]; exact h_norm_prod
+    have h2 : g ^ 2 / |t| = Real.pi / |Real.sinh (Real.pi * t)| := by
+      rw [show g ^ 2 / |t| = g / |t| * g from by ring]; exact this
+    field_simp at h2 ⊢; linarith
+  -- Step 6: Apply sinh_lower_bound
+  have h_sinh := sinh_lower_bound t ht
+  -- |sinh(πt)| ≥ exp(π|t|)/4
+  rw [h_sq]
+  -- Goal: π * |t| / |sinh(πt)| ≤ 4 * π * |t| * exp(-π|t|)
+  rw [div_le_iff₀ hsinh_pos]
+  rw [show 4 * Real.pi * |t| * Real.exp (-Real.pi * |t|) * |Real.sinh (Real.pi * t)| =
+    Real.pi * |t| * (4 * Real.exp (-Real.pi * |t|) * |Real.sinh (Real.pi * t)|) from by ring]
+  have h_key : 4 * Real.exp (-Real.pi * |t|) * |Real.sinh (Real.pi * t)| ≥ 1 := by
+    have h_exp_inv : Real.exp (-Real.pi * |t|) * Real.exp (Real.pi * |t|) = 1 := by
+      rw [← Real.exp_add]; simp
+    nlinarith [Real.exp_pos (-Real.pi * |t|)]
+  nlinarith [mul_nonneg (le_of_lt Real.pi_pos) (le_of_lt ht_abs_pos)]
 
 /-
 Numerical bound for sqrt(4pi)

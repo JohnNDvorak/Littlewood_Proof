@@ -36,6 +36,27 @@ specifically at s = -2, -4, -6, ... where Gamma(s/2) has poles (and Lean's
     - `RiemannXi(-2) = (1/2)*(-2)*(-3)*pi^1*Gamma(-1)*zeta(-2)` = `...* 0 * 0` = 0
   - **Fix**: Add `Gamma_R s != 0` or `0 < s.re`
 
+### CoreLemmas/LandauLemma.lean
+
+- **`zeta_zero_implies_vonMangoldt_singularity`** (line 379-395)
+  - States: `¬AnalyticAt ℂ (LSeries (fun n => vonMangoldt n)) ρ` for a zeta zero ρ
+    with 0 < Re(ρ) < 1
+  - **The statement is FALSE.**
+  - **Reason**: `LSeries f s = ∑' n, LSeries.term f s n` uses Lean's `tsum`, which
+    returns 0 when the series is not summable (via `tsum_eq_zero_of_not_summable`).
+    The von Mangoldt Dirichlet series has abscissa of convergence at Re(s) = 1.
+    For Re(ρ) < 1, the series is not summable, so `LSeries Λ s = 0` for all s near ρ.
+    The constant zero function IS analytic, so `AnalyticAt ℂ (LSeries Λ) ρ` is TRUE,
+    making `¬AnalyticAt` FALSE.
+  - **Impact**: This sorry is isolated — not used by any other theorem in the project.
+  - **Fix**: The intended argument requires using the *analytic continuation* of the
+    Dirichlet series (which equals `-ζ'/ζ(s)` for Re(s) > 1) rather than the raw
+    `LSeries` function. This would need either:
+    1. A different function definition (e.g., `-deriv riemannZeta s / riemannZeta s`)
+    2. Or use Mathlib's `meromorphicAt` framework
+    The identity theorem argument would then show: if `-ζ'/ζ` were analytic at ρ
+    (contradicting `ZetaLogDerivPoleHyp`), derive False.
+
 ## Root Cause
 
 In Lean's Mathlib formalization:

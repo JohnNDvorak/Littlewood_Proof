@@ -108,7 +108,7 @@ lemma norm_zeta_log_deriv_eq_sum (σ t : ℝ) (hσ : 1 < σ) :
       refine' ⟨ _, _, _ ⟩
       · convert congr_arg ( fun x : ℝ => 3 * x ) ( re_log_deriv_zeta_eq_sum ( σ : ℂ ) ?_ ) using 1 <;> norm_num [ mul_assoc, mul_comm, mul_left_comm, tsum_mul_left ]
         · rw [ ← tsum_mul_left ] ; congr ; ext n ; ring
-        · sorry -- (σ : ℂ).re = σ > 1
+        · simpa [Complex.ofReal_re] using hσ
       · convert congr_arg ( fun x : ℝ => 4 * x ) ( re_log_deriv_zeta_eq_sum ( σ + Complex.I * t ) ?_ ) using 1
         · rw [ ← tsum_mul_left ] ; congr ; ext n ; norm_num ; ring
         · aesop
@@ -141,13 +141,19 @@ noncomputable def zetaResidueFunction (s : ℂ) : ℂ :=
 
 lemma continuousAt_zetaResidueFunction : ContinuousAt zetaResidueFunction 1 := by
   have h_cont : Filter.Tendsto (fun s : ℂ => (s - 1) * riemannZeta s) (nhdsWithin 1 {1}ᶜ) (nhds (1 : ℂ)) := by
-    sorry -- tendsto_sub_one_mul_zeta
+    exact riemannZeta_residue_one
   rw [ Metric.tendsto_nhdsWithin_nhds ] at h_cont
   rw [ Metric.continuousAt_iff ]
   intro ε hε; rcases h_cont ε hε with ⟨ δ, hδ, H ⟩ ; use δ, hδ; intro x hx; by_cases hx' : x = 1 <;> simp_all +decide [ zetaResidueFunction ]
 
 theorem analyticAt_zetaResidueFunction : AnalyticAt ℂ zetaResidueFunction 1 := by
-  sorry
+  exact analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt
+    (by filter_upwards [self_mem_nhdsWithin] with z hz
+        exact ((differentiableAt_id.sub (differentiableAt_const 1)).mul
+          (differentiableAt_riemannZeta hz)).congr_of_eventuallyEq
+          (Filter.eventuallyEq_iff_exists_mem.mpr ⟨{1}ᶜ, IsOpen.mem_nhds isOpen_ne hz,
+            fun w hw => by simp [zetaResidueFunction, Set.mem_compl_singleton_iff.mp hw]⟩))
+    continuousAt_zetaResidueFunction
 
 lemma deriv_zetaResidueFunction_eq {s : ℂ} (hs : s ≠ 1) :
     deriv zetaResidueFunction s = riemannZeta s + (s - 1) * deriv riemannZeta s := by
@@ -161,14 +167,56 @@ lemma deriv_zetaResidueFunction_eq {s : ℂ} (hs : s ≠ 1) :
 lemma log_deriv_zeta_eq_log_deriv_residue_sub_pole {s : ℂ} (hs : s ≠ 1) (hzeta : riemannZeta s ≠ 0) :
     deriv riemannZeta s / riemannZeta s = deriv zetaResidueFunction s / zetaResidueFunction s - 1 / (s - 1) := by
   have h_deriv_zetaResidueFunction : deriv zetaResidueFunction s = riemannZeta s + (s - 1) * deriv riemannZeta s :=
-    sorry -- deriv_zetaResidueFunction_eq hs
+    deriv_zetaResidueFunction_eq hs
   simp_all +decide [ div_eq_mul_inv, sub_mul, mul_add, add_mul, mul_assoc, mul_comm, mul_left_comm, zetaResidueFunction ]
   exact Or.inl ( by linear_combination mul_inv_cancel₀ ( sub_ne_zero_of_ne hs ) )
 
 lemma log_deriv_residue_bounded_near_one :
     ∃ C : ℝ, ∀ σ : ℝ, 1 ≤ σ → σ ≤ 2 →
     |(deriv zetaResidueFunction σ / zetaResidueFunction σ).re| ≤ C := by
-  sorry
+  -- Step 1: riemannZeta is analytic on {s | s ≠ 1} (open set)
+  have h_zeta_analytic_nhd : AnalyticOnNhd ℂ riemannZeta {s : ℂ | s ≠ 1} := by
+    apply DifferentiableOn.analyticOnNhd
+    · intro s hs
+      exact (differentiableAt_riemannZeta hs).differentiableWithinAt
+    · exact isOpen_ne
+  -- Step 2: zetaResidueFunction is analytic at each point of [1,2]
+  have h_analytic : ∀ σ : ℝ, σ ∈ Set.Icc 1 2 → AnalyticAt ℂ zetaResidueFunction (σ : ℂ) := by
+    intro σ ⟨hσ1, hσ2⟩
+    rcases eq_or_lt_of_le hσ1 with rfl | hσ_gt
+    · exact_mod_cast analyticAt_zetaResidueFunction
+    · have hne : (σ : ℂ) ≠ 1 := by exact_mod_cast ne_of_gt hσ_gt
+      have h_zeta_analytic : AnalyticAt ℂ riemannZeta (σ : ℂ) :=
+        h_zeta_analytic_nhd (σ : ℂ) hne
+      have h_prod : AnalyticAt ℂ (fun s => (s - 1) * riemannZeta s) (σ : ℂ) :=
+        (analyticAt_id.sub analyticAt_const).mul h_zeta_analytic
+      exact h_prod.congr
+        (Filter.eventuallyEq_iff_exists_mem.mpr ⟨{(1 : ℂ)}ᶜ,
+          IsOpen.mem_nhds isOpen_ne hne,
+          fun w hw => by
+            simp [zetaResidueFunction, Set.mem_compl_singleton_iff.mp hw]⟩)
+  -- Step 3: zetaResidueFunction is nonzero on [1,2]
+  have h_ne : ∀ σ : ℝ, σ ∈ Set.Icc 1 2 → zetaResidueFunction (σ : ℂ) ≠ 0 := by
+    intro σ ⟨hσ1, hσ2⟩
+    rcases eq_or_lt_of_le hσ1 with rfl | hσ_gt
+    · simp [zetaResidueFunction]
+    · have hne : (σ : ℂ) ≠ 1 := by exact_mod_cast ne_of_gt hσ_gt
+      simp only [zetaResidueFunction, hne, ite_false]
+      exact mul_ne_zero (sub_ne_zero.mpr hne)
+        (riemannZeta_ne_zero_of_one_le_re (by simp [Complex.ofReal_re]; linarith))
+  -- Step 4: log derivative is continuous on [1,2]
+  have h_cont : ContinuousOn
+      (fun σ : ℝ => (deriv zetaResidueFunction (σ : ℂ) / zetaResidueFunction (σ : ℂ)).re)
+      (Set.Icc 1 2) := by
+    intro σ hσ
+    exact (continuous_re.continuousAt.comp
+      (((h_analytic σ hσ).deriv.div (h_analytic σ hσ) (h_ne σ hσ)).continuousAt.comp
+        continuous_ofReal.continuousAt)).continuousWithinAt
+  -- Step 5: bounded by compactness
+  obtain ⟨M, hM⟩ := isCompact_Icc.exists_bound_of_continuousOn h_cont
+  exact ⟨M, fun σ hσ1 hσ2 => by
+    have := hM σ ⟨hσ1, hσ2⟩
+    rwa [Real.norm_eq_abs] at this⟩
 
 lemma zeta_log_deriv_bound_near_one :
     ∃ C : ℝ, ∀ σ : ℝ, 1 < σ → σ ≤ 2 →
@@ -179,7 +227,7 @@ lemma zeta_log_deriv_bound_near_one :
     have h_log_deriv : deriv riemannZeta (σ : ℂ) / riemannZeta (σ : ℂ) = deriv zetaResidueFunction (σ : ℂ) / zetaResidueFunction (σ : ℂ) - 1 / (σ - 1) := by
       apply log_deriv_zeta_eq_log_deriv_residue_sub_pole
       · norm_num [ Complex.ext_iff, hσ₁.ne' ]
-      · sorry -- riemannZeta_ne_zero_of_one_le_re
+      · exact riemannZeta_ne_zero_of_one_le_re (by simp [Complex.ofReal_re]; linarith)
     simp_all +decide [ neg_div, sub_eq_add_neg ]
     norm_num [ Complex.normSq, sq ]
   exact ⟨ C, fun σ hσ₁ hσ₂ => by linarith [ abs_le.mp ( hC σ hσ₁.le hσ₂ ), h_log_deriv σ hσ₁ hσ₂ ] ⟩

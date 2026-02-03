@@ -8,12 +8,15 @@ Each represents a classical theorem from analytic number theory not yet in Mathl
 These are PROVED theorems in classical mathematics—assumptions only because
 their Lean proofs await Mathlib infrastructure.
 
-## Current Status (overnight audit, 2026-01-30)
-- Total instance sorries: 58 (in this file)
-- Proved instances: 2 (ZeroConjZeroHyp, ZeroOneSubZeroHyp in ZeroCountingFunction.lean)
-- Active Aristotle sorries: 13 across 6 files + 1 in CoreLemmas/LandauLemma
-- Total sorry declarations project-wide: 72 (58 Assumptions + 14 elsewhere)
-  Note: Previous counts (~120) overcounted 'sorry' in comments.
+## Current Status (2026-02-02)
+- Total instance sorries: 58 (in this file), down from 60
+- Proved instances:
+  - ZeroConjZeroHyp, ZeroOneSubZeroHyp (in ZeroCountingFunction.lean)
+  - ZetaLogDerivPoleHyp (proved here via analyticOrderAt arithmetic)
+  - HardyCriticalLineZerosHyp (wired via HardyCriticalLineWiring bridge)
+- Active Aristotle sorries: 8 across 5 files + 1 in CoreLemmas/LandauLemma
+- Total sorry declarations project-wide: 66 (58 Assumptions + 8 Aristotle/CoreLemma)
+  Note: + 3 from PrimeNumberTheoremAnd dependency.
   Definitive count from `lake build` sorry warnings.
 
 ## Class Organization Rationale
@@ -62,10 +65,17 @@ import Littlewood.ZetaZeros.ZeroDensity
 import Littlewood.ZetaZeros.SupremumRealPart
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.CoreLemmas.LandauLemma
+import Littlewood.Bridge.HardyChainHyp
+import Littlewood.Bridge.HardyCriticalLineWiring
+import Mathlib.Analysis.Analytic.Order
+import Mathlib.Analysis.Analytic.IsolatedZeros
+import Mathlib.Analysis.Normed.Module.Connected
+import Mathlib.NumberTheory.LSeries.Nonvanishing
 
 namespace Littlewood.Assumptions
 
 open ExplicitFormula Conversion
+open scoped Topology
 
 -- ============================================================
 -- SECTION 1: Explicit Formula Hypotheses
@@ -201,7 +211,13 @@ instance : Schmidt.OmegaPlusNecessityHyp := by
   intro ε hε hcontra
   sorry
 
-instance : Schmidt.HardyCriticalLineZerosHyp := by
+-- HardyCriticalLineZerosHyp is now discharged automatically by the conditional
+-- instance in HardyCriticalLineWiring.lean, given the two hypotheses below.
+instance : ZetaCriticalLineBoundHyp := by
+  refine ⟨?_⟩
+  sorry
+
+instance : HardyFirstMomentUpperHyp := by
   refine ⟨?_⟩
   sorry
 
@@ -384,9 +400,101 @@ instance (a : ℕ → ℂ) (σ_c : ℂ) : Landau.LandauLemmaSeriesHyp a σ_c := 
   refine ⟨?_⟩
   sorry
 
+-- PROVED: The logarithmic derivative -ζ'/ζ has a pole at any zero of ζ.
+-- Proof: analyticOrderAt arithmetic + identity theorem for analytic functions.
 instance : Landau.ZetaLogDerivPoleHyp := by
   refine ⟨?_⟩
-  intro ρ hρ
-  sorry
+  intro ρ hρ hh
+  -- hρ : riemannZeta ρ = 0, hh : AnalyticAt ℂ (fun s => -deriv ζ s / ζ s) ρ, Goal: False
+  have hne1 : ρ ≠ 1 := fun h => riemannZeta_one_ne_zero (h ▸ hρ)
+  have hζ_diff_on : DifferentiableOn ℂ riemannZeta ({(1 : ℂ)}ᶜ) :=
+    fun z hz => (differentiableAt_riemannZeta (Set.mem_compl_singleton_iff.mp hz)).differentiableWithinAt
+  have hζ : AnalyticAt ℂ riemannZeta ρ :=
+    hζ_diff_on.analyticAt (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hne1))
+  have hζ' : AnalyticAt ℂ (deriv riemannZeta) ρ := hζ.deriv
+  -- analyticOrderAt riemannZeta ρ is positive (ζ(ρ) = 0) and finite (identity theorem)
+  have hord_pos : 0 < analyticOrderAt riemannZeta ρ := by
+    rw [pos_iff_ne_zero]; exact analyticOrderAt_ne_zero.mpr ⟨hζ, hρ⟩
+  have hord_ne_top : analyticOrderAt riemannZeta ρ ≠ ⊤ := by
+    have hζ_aon : AnalyticOnNhd ℂ riemannZeta ({(1 : ℂ)}ᶜ) :=
+      hζ_diff_on.analyticOnNhd isOpen_compl_singleton
+    have hconn : IsPreconnected ({(1 : ℂ)}ᶜ) :=
+      (isConnected_compl_singleton_of_one_lt_rank
+        (Complex.rank_real_complex ▸ Nat.one_lt_ofNat) 1).isPreconnected
+    exact hζ_aon.analyticOrderAt_ne_top_of_isPreconnected hconn
+      (Set.mem_compl_singleton_iff.mpr (by norm_num : (0 : ℂ) ≠ 1))
+      (Set.mem_compl_singleton_iff.mpr hne1)
+      (by rw [ne_eq, analyticOrderAt_eq_top]; intro h
+          exact absurd h.self_of_nhds (by rw [riemannZeta_zero]; norm_num))
+  -- On a punctured neighborhood, ζ(s) ≠ 0 (isolated zeros)
+  have hpunc : ∀ᶠ s in 𝓝[≠] ρ, riemannZeta s ≠ 0 := by
+    rcases hζ.eventually_eq_zero_or_eventually_ne_zero with h | h
+    · exact absurd (analyticOrderAt_eq_top.mpr h) hord_ne_top
+    · exact h
+  -- h * ζ agrees with -ζ' on punctured nhd (where ζ ≠ 0, (-ζ'/ζ)·ζ = -ζ')
+  have hprod_eq_punc : ∀ᶠ s in 𝓝[≠] ρ,
+      (fun s => -deriv riemannZeta s / riemannZeta s) s * riemannZeta s =
+      -deriv riemannZeta s := by
+    filter_upwards [hpunc] with s hs
+    rw [neg_div, neg_mul, neg_inj]
+    exact div_mul_cancel₀ (deriv riemannZeta s) hs
+  -- Their difference d = h·ζ - (-ζ') is analytic and vanishes on 𝓝[≠] ρ
+  have hd_an : AnalyticAt ℂ
+      (fun s => (fun s => -deriv riemannZeta s / riemannZeta s) s *
+        riemannZeta s - (-deriv riemannZeta s)) ρ :=
+    (hh.mul hζ).sub hζ'.neg
+  have hd_punc : ∀ᶠ s in 𝓝[≠] ρ,
+      (fun s => -deriv riemannZeta s / riemannZeta s) s *
+        riemannZeta s - (-deriv riemannZeta s) = 0 := by
+    filter_upwards [hprod_eq_punc] with s hs; rw [hs, sub_self]
+  -- By isolation of zeros: d ≡ 0 on full 𝓝 ρ
+  have hd_full : ∀ᶠ s in 𝓝 ρ,
+      (fun s => -deriv riemannZeta s / riemannZeta s) s *
+        riemannZeta s - (-deriv riemannZeta s) = 0 := by
+    rcases hd_an.eventually_eq_zero_or_eventually_ne_zero with h | h
+    · exact h
+    · exfalso
+      have : ∀ᶠ s in 𝓝[≠] ρ, False := by
+        filter_upwards [h, hd_punc] with s h1 h2; exact h1 h2
+      exact (this.exists).elim fun _ h => h
+  -- So h * ζ =ᶠ[𝓝 ρ] -ζ', hence their analytic orders agree
+  have hprod_full : (fun s => (fun s => -deriv riemannZeta s / riemannZeta s) s *
+      riemannZeta s) =ᶠ[𝓝 ρ] (fun s => -deriv riemannZeta s) := by
+    filter_upwards [hd_full] with s hs
+    exact sub_eq_zero.mp hs
+  have hord_eq : analyticOrderAt
+      (fun s => (fun s => -deriv riemannZeta s / riemannZeta s) s * riemannZeta s) ρ =
+      analyticOrderAt (fun s => -deriv riemannZeta s) ρ :=
+    analyticOrderAt_congr hprod_full
+  -- LHS = analyticOrderAt h + analyticOrderAt ζ (by analyticOrderAt_mul)
+  have hord_mul : analyticOrderAt
+      (fun s => (fun s => -deriv riemannZeta s / riemannZeta s) s * riemannZeta s) ρ =
+      analyticOrderAt (fun s => -deriv riemannZeta s / riemannZeta s) ρ +
+      analyticOrderAt riemannZeta ρ :=
+    analyticOrderAt_mul hh hζ
+  -- analyticOrderAt (-ζ') = analyticOrderAt ζ' (negation by unit doesn't change order)
+  have hord_neg : analyticOrderAt (fun s => -deriv riemannZeta s) ρ =
+      analyticOrderAt (deriv riemannZeta) ρ := by
+    have h1 : (fun s : ℂ => -deriv riemannZeta s) =
+        (fun _ : ℂ => (-1 : ℂ)) * deriv riemannZeta := by
+      ext s; simp [Pi.mul_apply, neg_one_mul]
+    have hconst : AnalyticAt ℂ (fun _ : ℂ => (-1 : ℂ)) ρ := analyticAt_const
+    rw [h1, analyticOrderAt_mul hconst hζ',
+      hconst.analyticOrderAt_eq_zero.mpr (by norm_num : (-1 : ℂ) ≠ 0), zero_add]
+  -- analyticOrderAt ζ' + 1 = analyticOrderAt ζ (derivative reduces order by 1)
+  have hord_deriv : analyticOrderAt (deriv riemannZeta) ρ + 1 =
+      analyticOrderAt riemannZeta ρ := by
+    have := hζ.analyticOrderAt_deriv_add_one
+    simp only [hρ, sub_zero] at this; exact this
+  -- Chain: ord(h) + ord(ζ) = ord(h·ζ) = ord(-ζ') = ord(ζ') and ord(ζ') + 1 = ord(ζ)
+  -- So (ord(h) + ord(ζ)) + 1 = ord(ζ), rewrite as (ord(h) + 1) + ord(ζ) = 0 + ord(ζ)
+  have hchain : analyticOrderAt (fun s => -deriv riemannZeta s / riemannZeta s) ρ +
+      analyticOrderAt riemannZeta ρ = analyticOrderAt (deriv riemannZeta) ρ := by
+    rw [← hord_mul, hord_eq, hord_neg]
+  have key : (analyticOrderAt (fun s => -deriv riemannZeta s / riemannZeta s) ρ + 1) +
+      analyticOrderAt riemannZeta ρ = 0 + analyticOrderAt riemannZeta ρ := by
+    rw [zero_add, add_assoc, add_comm 1, ← add_assoc, hchain, hord_deriv]
+  have cancel := WithTop.add_right_cancel hord_ne_top key
+  exact absurd cancel (ne_of_gt ENat.add_one_pos)
 
 end Littlewood.Assumptions

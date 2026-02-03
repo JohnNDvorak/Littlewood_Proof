@@ -433,13 +433,39 @@ lemma integral_boundary_rect_perron_neg (y : ℝ) (hy : 0 < y) (hy1 : y < 1) (c 
         have h_diff : ∀ z : ℂ, Complex.re z > 0 → DifferentiableAt ℂ (fun z : ℂ => (y : ℂ) ^ z / z) z := by
           intro z hz;
           exact DifferentiableAt.div ( DifferentiableAt.cpow ( differentiableAt_const _ ) differentiableAt_id ( by norm_num; linarith ) ) differentiableAt_id ( by norm_num; exact ne_of_apply_ne Complex.re hz.ne' )
-        -- Apply Cauchy's integral theorem (Cauchy-Goursat) for the rectangle.
-        -- The function y^z/z is holomorphic on the right half-plane (Re z > 0),
-        -- and the rectangle has all corners with Re z ≥ c > 0.
-        -- By integral_boundary_rect_eq_zero_of_differentiableOn, the boundary integral is 0.
-        -- The conversion between the Mathlib form and our integral form requires
-        -- careful bookkeeping of integral orientations and the I factors.
-        sorry
+        have hNT : (-T : ℝ) < T := by linarith
+        -- Apply Cauchy-Goursat for the rectangle [c,R] × [-T,T]
+        have hCG : (∫ x in c..R, (y : ℂ) ^ (↑x + ↑(-T : ℝ) * I) / (↑x + ↑(-T : ℝ) * I)) -
+                   (∫ x in c..R, (y : ℂ) ^ (↑x + ↑T * I) / (↑x + ↑T * I)) +
+                   I * (∫ t in (-T)..T, (y : ℂ) ^ (↑R + ↑t * I) / (↑R + ↑t * I)) -
+                   I * (∫ t in (-T)..T, (y : ℂ) ^ (↑c + ↑t * I) / (↑c + ↑t * I)) = 0 := by
+          have := @Complex.integral_boundary_rect_eq_zero_of_differentiable_on_off_countable
+          convert this (fun z => (y : ℂ) ^ z / z) (↑c + ↑(-T : ℝ) * I) (↑R + ↑T * I) ∅ (by norm_num) ?_ ?_ using 1 <;> norm_num
+          · intro z hz
+            simp only [Complex.reProdIm, Set.uIcc_of_le hR.le, Set.uIcc_of_le hNT.le,
+              Set.mem_prod, Set.mem_Icc] at hz
+            exact (h_diff z (by linarith [hz.1.1])).continuousAt.continuousWithinAt
+          · simp only [min_eq_left hR.le, max_eq_right hR.le,
+              min_eq_left hNT.le, max_eq_right hNT.le]
+            intro z hz
+            simp only [Set.mem_diff, Set.mem_empty_iff_false, not_false_eq_true, and_true,
+              Complex.reProdIm, Set.mem_setOf_eq, Set.mem_Ioo] at hz
+            exact h_diff z (by linarith [hz.1.1])
+        -- Rewrite goal integrands to canonical form: I*t → t*I, x-I*T → x+(-T)*I
+        simp_rw [show ∀ (a : ℂ) (b : ℝ), a + Complex.I * (↑b : ℂ) = a + (↑b : ℂ) * Complex.I from fun a b => by ring,
+                 show ∀ (a : ℂ) (b : ℝ), a - Complex.I * (↑b : ℂ) = a + ↑(-b : ℝ) * Complex.I from fun a b => by push_cast; ring]
+        -- Factor * I out of integrals 1 and 3
+        simp_rw [intervalIntegral.integral_mul_const]
+        -- Relate reversed-bound integrals to forward-bound integrals
+        -- integral_symm a b : ∫ x in b..a = -(∫ x in a..b)
+        have hS1 : ∫ t in (-T)..T, (↑y : ℂ) ^ ((↑R : ℂ) + ↑t * I) / ((↑R : ℂ) + ↑t * I) =
+            -(∫ t in T..(-T), (↑y : ℂ) ^ ((↑R : ℂ) + ↑t * I) / ((↑R : ℂ) + ↑t * I)) :=
+          intervalIntegral.integral_symm T (-T)
+        have hS2 : ∫ x in c..R, (↑y : ℂ) ^ ((↑x : ℂ) + ↑(-T : ℝ) * I) / ((↑x : ℂ) + ↑(-T : ℝ) * I) =
+            -(∫ x in R..c, (↑y : ℂ) ^ ((↑x : ℂ) + ↑(-T : ℝ) * I) / ((↑x : ℂ) + ↑(-T : ℝ) * I)) :=
+          intervalIntegral.integral_symm R c
+        -- Combine: goal = -hCG + I * hS1 + hS2
+        linear_combination -hCG + I * hS1 + hS2
       convert h_int_zero using 1
 
 /-
