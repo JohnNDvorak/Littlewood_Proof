@@ -129,6 +129,11 @@ instance : PsiErrorBoundRHHyp := by
   intro hRH x hx
   sorry
 
+-- WARNING: OmegaPsiToThetaHyp is FALSE as stated for f = sqrt(x).
+-- The Omega_plus direction fails because |psi-theta| ~ sqrt(x) absorbs the signal.
+-- See docs/CurrentStatus.md for analysis.
+-- Kept for backward compatibility but NOT USED by main theorems (replaced by
+-- ThetaOscillationSqrtHyp in the littlewood_pi_li chain).
 instance : OmegaPsiToThetaHyp := by
   refine ⟨?_⟩
   intro f hf h
@@ -232,6 +237,14 @@ instance : Schmidt.ThetaOscillationMinusHyp := by
 instance : Schmidt.ThetaOscillationRHHyp := by
   refine ⟨?_⟩
   intro hRH
+  sorry
+
+instance : Schmidt.ThetaOscillationSqrtHyp := by
+  refine ⟨?_⟩
+  sorry
+
+instance : Schmidt.PiLiOscillationSqrtHyp := by
+  refine ⟨?_⟩
   sorry
 
 -- ============================================================

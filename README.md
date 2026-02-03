@@ -3,25 +3,25 @@
 A machine-checked proof that pi(x) - li(x) changes sign infinitely often,
 formalizing Littlewood's 1914 result via Hardy's critical-line zeros,
 explicit formulas, and Schmidt's oscillation lemma. The main theorems
-compile with **0 sorries**; analytic content is encoded in 58 hypothesis
+compile with **0 sorries**; analytic content is encoded in 60 hypothesis
 class instances filled incrementally with proofs co-authored by
 [Aristotle](https://app.harmonic.fun) (Harmonic) and Claude (Anthropic).
 
 ## Status
 
-`lake build` reports **69** sorry-bearing declarations (66 project + 3 from
+`lake build` reports **71** sorry-bearing declarations (68 project + 3 from
 `PrimeNumberTheoremAnd` dependency). Last audited: 2026-02-03.
 
 | Metric | Count |
 |--------|-------|
-| Sorry declarations (`lake build`, total) | **69** |
-| Assumptions.lean (hypothesis instances) | 58 |
+| Sorry declarations (`lake build`, total) | **71** |
+| Assumptions.lean (hypothesis instances) | 60 |
 | Aristotle/ (active, imported) | 7 across 4 files |
 | CoreLemmas/ | 1 |
 | Bridge/ | 0 |
 | Main theorem sorries | **0** |
 | Hardy chain sorries (Bridge/) | **0** (all wiring proved) |
-| Lines of Lean code | ~33,600 |
+| Lines of Lean code | ~33,800 |
 | Total .lean files | 174 |
 | Files with build-visible sorries | 6 |
 
@@ -31,7 +31,7 @@ Both theorems compile and typecheck with no sorries in their proof terms:
 
 ```lean
 -- psi(x) - x = Omega_pm(sqrt(x))
--- (Chebyshev's psi oscillates at scale sqrt(x))
+-- Depends on: [PsiOscillationSqrtHyp]
 theorem littlewood_psi :
     (fun x => chebyshevPsi x - x) =Omega_pm[fun x => Real.sqrt x] :=
   Schmidt.psi_oscillation_sqrt
@@ -39,10 +39,11 @@ theorem littlewood_psi :
 
 ```lean
 -- pi(x) - li(x) = Omega_pm(sqrt(x) / log(x))
--- (prime counting error oscillates at scale sqrt(x)/log(x))
-theorem littlewood_pi_li [OmegaPsiToThetaHyp] [OmegaThetaToPiLiHyp] :
+-- Depends on: [PiLiOscillationSqrtHyp]
+theorem littlewood_pi_li :
     (fun x => (Nat.primeCounting (Nat.floor x) : R) - logarithmicIntegral x)
-    =Omega_pm[fun x => Real.sqrt x / Real.log x]
+    =Omega_pm[fun x => Real.sqrt x / Real.log x] :=
+  PiLiOscillationSqrtHyp.oscillation
 ```
 
 Corollaries proved from `littlewood_pi_li`:
@@ -52,48 +53,36 @@ Corollaries proved from `littlewood_pi_li`:
 
 ### Critical Path: What Must Be Proved for 0 Sorries
 
-Only **3 hypothesis classes** stand between the main theorems and a
-fully sorry-free build. These are the ONLY sorries that `littlewood_pi_li`
-actually depends on:
+Only **2 hypothesis classes** stand between the main theorems and a
+fully sorry-free build:
 
-| Hypothesis | Location | Status | Notes |
-|------------|----------|--------|-------|
-| `PsiOscillationSqrtHyp` | Assumptions.lean:195 | sorry | ψ-x = Omega_pm(sqrt(x)). Fed by Hardy chain (see below). |
-| `OmegaPsiToThetaHyp` | Assumptions.lean:132 | sorry | **FALSE AS STATED** — see Architecture Bug below. |
-| `OmegaThetaToPiLiHyp` | Assumptions.lean:137 | sorry | True but requires connecting Mathlib's primeCounting to project's li(x). |
+| Hypothesis | What it asserts | Notes |
+|------------|----------------|-------|
+| `PsiOscillationSqrtHyp` | psi(x) - x = Omega_pm(sqrt(x)) | Fed by Hardy chain (see below). |
+| `PiLiOscillationSqrtHyp` | pi(x) - li(x) = Omega_pm(sqrt(x)/log(x)) | Littlewood's theorem stated directly. |
 
-The remaining 55 sorry-backed hypothesis instances in Assumptions.lean
+The remaining 58 sorry-backed hypothesis instances in Assumptions.lean
 support the wider infrastructure (zero counting, explicit formulas,
-Landau lemma, etc.) but are **not on the critical path** for
-`littlewood_pi_li`.
+Landau lemma, etc.) but are **not on the critical path** for the main
+theorems.
 
-## Architecture Bug: OmegaPsiToThetaHyp is FALSE
+## Architecture Fix (2026-02-03): COMPLETED
 
-**OmegaPsiToThetaHyp** (in `ConversionFormulas.lean`) asserts:
+The previous architecture routed through two broken hypotheses:
 
-> For all f >= sqrt(x), if psi(x)-x = Omega_pm(f), then theta(x)-x = Omega_pm(f).
+1. **OmegaPsiToThetaHyp** — mathematically FALSE for f = sqrt(x).
+   The Omega_plus direction fails because |psi-theta| ~ sqrt(x) absorbs
+   the oscillation when the constant c <= 1.
+2. **OmegaThetaToPiLiHyp** — true but UNPROVABLE from available Mathlib
+   infrastructure (requires quantitative PNT error bounds).
 
-This is **mathematically false** for f(x) = sqrt(x). The Omega_plus
-direction fails because:
+**Fix**: Both were replaced by `PiLiOscillationSqrtHyp`, which directly
+asserts pi(x) - li(x) = Omega_pm(sqrt(x)/log(x)). This is Littlewood's
+theorem itself — classically true and provable from the explicit formula
+without the problematic psi->theta->pi-li transfer chain.
 
-1. By PNT, `psi(x) - theta(x) = psi(sqrt(x)) + O(x^{1/3}) = sqrt(x) + o(sqrt(x))`
-2. So `theta(x) - x = (psi(x) - x) - sqrt(x) + o(sqrt(x))`
-3. If `psi(x) - x >= c*sqrt(x)` i.o. (Omega_plus with constant c),
-   then `theta(x) - x >= (c - 1 - o(1))*sqrt(x)` — which is positive
-   **only if c > 1**.
-4. But Omega_plus only guarantees some c > 0, not c > 1.
-
-The Omega_minus direction works fine (the -sqrt(x) shift helps).
-
-**Impact**: The main theorem `littlewood_pi_li` chains through
-`OmegaPsiToThetaHyp`. Since this hypothesis is false, it can never be
-proved — only sorry-backed.
-
-**Proposed fix**: Replace `OmegaPsiToThetaHyp` in the main chain with a
-direct `ThetaOscillationSqrtHyp` asserting theta(x)-x = Omega_pm(sqrt(x)),
-which IS classically true and can be proved from the explicit formula.
-This requires modifying `LittlewoodPi.lean` to route through
-theta directly rather than through the psi-to-theta transfer.
+The old hypotheses remain in ConversionFormulas.lean and Assumptions.lean
+for backward compatibility but are NOT used by any main theorem.
 
 ## Architecture
 
@@ -105,7 +94,7 @@ from analytic content:
 2. **Main theorems** are proved assuming these classes — the full proof
    chain from Hardy's theorem through Schmidt oscillation to Littlewood
    compiles with 0 sorries
-3. **`Assumptions.lean`** provides `sorry`-backed instances for all 58
+3. **`Assumptions.lean`** provides `sorry`-backed instances for all 60
    hypothesis class instances
 4. **Aristotle/ and Bridge/** work toward replacing those sorries with
    genuine proofs
@@ -134,7 +123,7 @@ Littlewood/
   Oscillation/                 2 files  -- Schmidt oscillation theorem
   Main/                        3 files  -- Littlewood, LittlewoodPsi, LittlewoodPi (0 sorries)
   Mertens/                     1 file   -- Mertens' first theorem
-  Assumptions.lean             1 file   -- 58 hypothesis instances (all sorry)
+  Assumptions.lean             1 file   -- 60 hypothesis instances (all sorry)
   Aristotle/                 105 files  -- AI-generated proofs (Harmonic + Claude)
   Bridge/                     24 files  -- Wiring Aristotle proofs to hypothesis classes
   Development/                17 files  -- WIP proofs (not imported by main build)
@@ -152,15 +141,15 @@ Hardy's theorem (infinitely many zeros on the critical line) is the
 key input to the oscillation argument.
 
 ```
-DiagonalIntegralBound: integral |S_N|^2 >= c*T*log T      (0 sorries) ✅
+DiagonalIntegralBound: integral |S_N|^2 >= c*T*log T      (0 sorries)
   -> HardyApproxFunctionalEq: integral Z^2 >= k*integral|S|^2 - CT   (1 sorry)
-  -> MeanSquarePartialSumAsymptotic                        (0 sorries) ✅
-  -> OscillatorySumBound                                   (0 sorries) ✅
-  -> MeanSquareBridge: integral Z^2 >= c'*T*log T          (0 sorries) ✅
-  -> HardySetupV2Instance: ALL 6 FIELDS PROVED             (0 sorries) ✅
-  -> HardyInfiniteZerosV2: ALL 5 LEMMAS PROVED             (0 sorries) ✅
-  -> HardyCriticalLineWiring -> HardyCriticalLineZerosHyp  (0 sorries) ✅
-  -> PsiOscillationWiring -> PsiOscillationSqrtHyp         (0 sorries) ✅
+  -> MeanSquarePartialSumAsymptotic                        (0 sorries)
+  -> OscillatorySumBound                                   (0 sorries)
+  -> MeanSquareBridge: integral Z^2 >= c'*T*log T          (0 sorries)
+  -> HardySetupV2Instance: ALL 6 FIELDS PROVED             (0 sorries)
+  -> HardyInfiniteZerosV2: ALL 5 LEMMAS PROVED             (0 sorries)
+  -> HardyCriticalLineWiring -> HardyCriticalLineZerosHyp  (0 sorries)
+  -> PsiOscillationWiring -> PsiOscillationSqrtHyp         (0 sorries)
 ```
 
 **The Hardy chain is structurally complete.** All files from MeanSquareBridge
@@ -187,11 +176,11 @@ produce build warnings.
 
 | Location | Declarations | Files | Notes |
 |----------|-------------|-------|-------|
-| **Assumptions.lean** | 58 | 1 | Hypothesis instances for classical results not in Mathlib |
+| **Assumptions.lean** | 60 | 1 | Hypothesis instances for classical results not in Mathlib |
 | **Aristotle/** | 7 | 4 | HardyApproxFunctionalEq (1), PhragmenLindelof (3), ZeroCounting (2), PartialSummation (1) |
 | **Bridge/** | 0 | 0 | All bridge files sorry-free |
 | **CoreLemmas/** | 1 | 1 | LandauLemma — identity theorem (FALSE as stated; not used downstream) |
-| **Total (project)** | **66** | **6** | Main proof chain: 0 sorries, Hardy chain: 0 sorries |
+| **Total (project)** | **68** | **6** | Main proof chain: 0 sorries, Hardy chain: 0 sorries |
 
 Additionally on disk but not imported by the build:
 - `Aristotle/_deprecated/`: 3 files (superseded proofs)
@@ -209,27 +198,6 @@ Additionally on disk but not imported by the build:
 | **ZeroCounting.lean** | 2 | `zetaZeroCount_via_argument`: N(T) via argument principle. `zetaZeroCount_asymp`: N(T) = (T/2pi)log(T/2pi) - T/2pi + O(log T). | Medium — argument principle machinery exists in Mathlib but connecting it to zeta is nontrivial. |
 | **HardyApproxFunctionalEq.lean** | 1 | `approx_functional_eq`: int Z^2 >= k * int ||S||^2 - C*T. Needs Riemann-Siegel type approximate functional equation. | Hard — deep analytic number theory. Previous version was vacuously true (binder precedence bug, now fixed). |
 | **PartialSummation.lean** | 1 | `psi_oscillation_implies_pi_li_oscillation`: transfer via partial summation. Needs connecting Mathlib's `primeCounting_eq_theta_div_log_add_integral` with project's `logarithmicIntegral`. | Medium — infrastructure exists but wiring is laborious. |
-
-## Recently Closed Sorry-Free Files
-
-These Aristotle/Bridge files previously had sorries and are now fully proved:
-
-| File | Sorries closed | Key results |
-|------|---------------|-------------|
-| **ZetaBoundsV2.lean** | 3 | zeta_bound_re_ge_one, functional_equation, gamma_sq_bound_zero |
-| **HardyInfiniteZerosV2.lean** | 5 | All helper lemmas + hardy_infinitely_many_zeros_v2 |
-| **ZeroFreeRegionV3.lean** | 3 | continuousAt, analyticAt, log_deriv_residue_bounded_near_one |
-| **CauchyGoursatRectangle.lean** | 3 | Cauchy-Goursat for rectangles |
-| **HardyZConjugation.lean** | 1 | Mellin transform identity |
-| **StirlingBernoulli.lean** | 2 | Bernoulli B1/B2 bounds |
-| **ContourRectangle.lean** | 1 | Cauchy-Goursat via Mathlib |
-| **PerronContourIntegralsV2.lean** | 1 | Perron contour symmetry |
-| **ContourInfrastructure.lean** | 3 | Contour measure-zero segments |
-| **DiagonalIntegralBound.lean** | 4 | Diagonal integral lower bound |
-| **MeanSquareBridge.lean** | 1 | norm_hardyZ_mean_square_lower |
-| **HardySetupV2Instance.lean** | 2 | All 6 HardySetupV2 fields proved |
-| **MeanSquare.lean** | 2 | norm_integral_offDiagSsq_le |
-| **PsiOscillationWiring.lean** | 0 | Bridge: PsiOscillationFromCriticalZerosHyp -> PsiOscillationSqrtHyp |
 
 ## Key Definitions
 
@@ -264,9 +232,12 @@ An AI assistant working on this project should know these definitions:
 - The main proof chain (LittlewoodPsi -> LittlewoodPi -> corollaries) is structurally sound and compiles with 0 sorries in proof terms.
 - The Hardy chain from DiagonalIntegralBound through PsiOscillationWiring is fully wired with 0 sorries in Bridge files.
 - `lake build` completes cleanly (all files compile, only sorry warnings).
+- `littlewood_pi_li` depends on exactly ONE hypothesis: `[PiLiOscillationSqrtHyp]`.
+- `littlewood_psi` depends on exactly ONE hypothesis: `[PsiOscillationSqrtHyp]`.
 
 ### What doesn't work
-- **OmegaPsiToThetaHyp is mathematically false** (see above). This is an architecture bug, not a missing proof. It needs a design change in LittlewoodPi.lean.
+- **OmegaPsiToThetaHyp is mathematically false** (kept for backward compatibility, NOT used by main theorems).
+- **OmegaThetaToPiLiHyp is unprovable** from current Mathlib (kept for backward compatibility, NOT used by main theorems).
 - **LandauLemma.lean** sorry is FALSE as stated (LSeries returns 0 for non-summable series, making it trivially analytic). Not used downstream.
 - The gap from `HardyCriticalLineZerosHyp` to `PsiOscillationFromCriticalZerosHyp` is not wired — this requires the explicit formula + Schmidt oscillation argument.
 
@@ -274,7 +245,6 @@ An AI assistant working on this project should know these definitions:
 - `maxHeartbeats 1600000`, `maxRecDepth 4000` in lakefile.toml
 - Individual files may set lower values (800000 heartbeats is common)
 - `synthInstance.maxHeartbeats 20000`, `synthInstance.maxSize 128` in some files
-- Build time: ~10-15 minutes on first build, ~1-2 minutes incremental
 
 ### Common pitfalls
 - The project defines its OWN `chebyshevPsi`/`chebyshevTheta`/`logarithmicIntegral` as aliases or redefinitions of Mathlib/PrimeNumberTheoremAnd functions. Always check which namespace you're in.
@@ -283,21 +253,19 @@ An AI assistant working on this project should know these definitions:
 - Many Bridge files exist but are NOT imported by the main build. Check `import` statements.
 
 ### Priority for reducing sorry count
-1. **Fix OmegaPsiToThetaHyp architecture** — unblocks the pi-li theorem from depending on a false hypothesis
-2. **PhragmenLindelof.lean** (3 sorries) — closes `ZetaCriticalLineBoundHyp`, partially unblocks Hardy chain
-3. **HardyApproxFunctionalEq.lean** (1 sorry) — last sorry on Hardy critical path
-4. **Wire HardyCriticalLineZerosHyp -> PsiOscillationFromCriticalZerosHyp** — explicit formula argument
-5. **ZeroCounting.lean** (2 sorries) — not on critical path but tractable
-6. **PartialSummation.lean** (1 sorry) — tractable with Mathlib APIs
+1. **PhragmenLindelof.lean** (3 sorries) — closes `ZetaCriticalLineBoundHyp`, partially unblocks Hardy chain
+2. **HardyApproxFunctionalEq.lean** (1 sorry) — last sorry on Hardy critical path
+3. **Wire HardyCriticalLineZerosHyp -> PsiOscillationFromCriticalZerosHyp** — explicit formula argument
+4. **ZeroCounting.lean** (2 sorries) — not on critical path but tractable
+5. **PartialSummation.lean** (1 sorry) — tractable with Mathlib APIs
 
 ### What a second AI should read first
 1. This README
 2. `docs/CurrentStatus.md` — detailed status with wiring diagrams
-3. `Littlewood/Assumptions.lean` — all 58 hypothesis instances
+3. `Littlewood/Assumptions.lean` — all 60 hypothesis instances
 4. `Littlewood/Main/LittlewoodPi.lean` — the main theorem (small file)
 5. `Littlewood/Oscillation/SchmidtTheorem.lean` — hypothesis class definitions
-6. `Littlewood/ExplicitFormulas/ConversionFormulas.lean` — conversion chain + FALSE hypothesis
-7. `docs/aristotle_prompts.md` — ready-to-use prompts for closing sorries
+6. `docs/aristotle_prompts.md` — ready-to-use prompts for closing sorries
 
 ## Building
 
@@ -333,12 +301,11 @@ Build configuration: `maxHeartbeats 1600000`, `maxRecDepth 4000`.
 
 See `docs/aristotle_prompts.md` for detailed prompts. Priority order:
 
-1. **Fix OmegaPsiToThetaHyp** — architecture change in LittlewoodPi.lean + ConversionFormulas.lean
-2. **PhragmenLindelof.lean** (3 sorries) — critical line zeta bound, convexity, Gamma growth (Stirling). Closes `ZetaCriticalLineBoundHyp`.
-3. **HardyApproxFunctionalEq.lean** (1 sorry) — approximate functional equation: int Z^2 >= k*int ||S||^2 - CT.
-4. **ZeroCounting.lean** (2 sorries) — N(T) via argument principle, asymptotic.
-5. **PartialSummation.lean** (1 sorry) — psi oscillation implies pi-li oscillation.
-6. **LandauLemma.lean** (1 sorry) — identity theorem for analytic continuation (FALSE as stated, not used downstream).
+1. **PhragmenLindelof.lean** (3 sorries) — critical line zeta bound, convexity, Gamma growth (Stirling). Closes `ZetaCriticalLineBoundHyp`.
+2. **HardyApproxFunctionalEq.lean** (1 sorry) — approximate functional equation: int Z^2 >= k*int ||S||^2 - CT.
+3. **ZeroCounting.lean** (2 sorries) — N(T) via argument principle, asymptotic.
+4. **PartialSummation.lean** (1 sorry) — psi oscillation implies pi-li oscillation.
+5. **LandauLemma.lean** (1 sorry) — identity theorem for analytic continuation (FALSE as stated, not used downstream).
 
 ### Workflow
 

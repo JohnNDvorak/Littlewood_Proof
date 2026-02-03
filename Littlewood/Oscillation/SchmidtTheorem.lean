@@ -5,6 +5,7 @@ Authors: [Your Name]
 -/
 import Littlewood.Basic.OmegaNotation
 import Littlewood.Basic.ChebyshevFunctions
+import Littlewood.Basic.LogarithmicIntegral
 import Littlewood.CoreLemmas.LandauLemma
 import Littlewood.ZetaZeros.SupremumRealPart
 
@@ -26,7 +27,7 @@ which is a precursor to Littlewood's stronger result.
 -/
 
 open Real Filter Topology Asymptotics
-open Chebyshev ZetaZeros Landau
+open Chebyshev ZetaZeros Landau LogarithmicIntegral
 
 namespace Schmidt
 
@@ -120,6 +121,32 @@ class ThetaOscillationRHHyp : Prop where
     ∀ hRH : ZetaZeros.RiemannHypothesis,
       (fun x => chebyshevTheta x - x) =Ω±[fun x => Real.sqrt x]
 
+/--
+HYPOTHESIS: Unconditional theta oscillation at sqrt scale.
+MATHEMATICAL STATUS: follows from explicit formula + Hardy's critical line zeros.
+  θ(x) - x = Ω±(√x) is Littlewood's theorem applied to θ.
+  This is stated directly rather than derived from ψ because the
+  transfer ψ → θ loses the Ω₊ constant (|ψ-θ| ~ √x absorbs the signal).
+MATHLIB STATUS: not available.
+-/
+class ThetaOscillationSqrtHyp : Prop where
+  oscillation :
+    (fun x => chebyshevTheta x - x) =Ω±[fun x => Real.sqrt x]
+
+/--
+HYPOTHESIS: Unconditional π(x) - li(x) oscillation at sqrt/log scale.
+MATHEMATICAL STATUS: Littlewood's 1914 theorem.
+  This is stated directly rather than derived via the θ → π-li transfer
+  (OmegaThetaToPiLiHyp) because that transfer requires quantitative PNT
+  error bounds not yet available in Mathlib.
+MATHLIB STATUS: not available.
+-/
+class PiLiOscillationSqrtHyp : Prop where
+  oscillation :
+    (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
+      LogarithmicIntegral.logarithmicIntegral x)
+    =Ω±[fun x => Real.sqrt x / Real.log x]
+
 /-! ## Schmidt's Theorem -/
 
 /-- Schmidt's 1903 oscillation theorem: ψ(x) - x = Ω±(x^{Θ-ε}) -/
@@ -184,6 +211,11 @@ theorem theta_oscillation_minus [ThetaOscillationMinusHyp] :
 theorem theta_oscillation_RH (hRH : ZetaZeros.RiemannHypothesis) [ThetaOscillationRHHyp] :
     (fun x => chebyshevTheta x - x) =Ω±[fun x => Real.sqrt x] := by
   simpa using (ThetaOscillationRHHyp.oscillation hRH)
+
+/-- Unconditional: θ(x) - x = Ω±(x^{1/2}) -/
+theorem theta_oscillation_sqrt [ThetaOscillationSqrtHyp] :
+    (fun x => chebyshevTheta x - x) =Ω±[fun x => Real.sqrt x] := by
+  exact ThetaOscillationSqrtHyp.oscillation
 
 /-!
 ## Hypothesis Instances

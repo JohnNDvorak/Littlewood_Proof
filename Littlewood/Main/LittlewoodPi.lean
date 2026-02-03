@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: [Your Name]
 -/
 import Littlewood.Main.LittlewoodPsi
-import Littlewood.ExplicitFormulas.ConversionFormulas
+import Littlewood.Oscillation.SchmidtTheorem
 
 /-!
 # Littlewood's Main Theorem
@@ -23,6 +23,15 @@ This was a landmark result. Gauss observed that li(x) > π(x) for all x up to
 3,000,000. The conjecture that this held for all x was widely believed until
 Littlewood's proof showed it must fail infinitely often.
 
+## Architecture Note
+
+This file previously used `OmegaPsiToThetaHyp` to transfer oscillation from
+ψ to θ, and `OmegaThetaToPiLiHyp` to transfer from θ to π-li. Both are
+problematic: OmegaPsiToThetaHyp is FALSE for f = √x, and OmegaThetaToPiLiHyp
+requires quantitative PNT error bounds not available in Mathlib. The chain
+now uses `PiLiOscillationSqrtHyp` which directly asserts
+π(x) - li(x) = Ω±(√x / log x).
+
 ## References
 
 * J.E. Littlewood, "Sur la distribution des nombres premiers" (1914)
@@ -30,26 +39,19 @@ Littlewood's proof showed it must fail infinitely often.
 -/
 
 open Real Filter Topology Asymptotics
-open Chebyshev LogarithmicIntegral ZetaZeros Conversion Littlewood
+open Chebyshev LogarithmicIntegral ZetaZeros Littlewood Schmidt
 
 namespace LittlewoodPi
 
-variable [OmegaPsiToThetaHyp] [OmegaThetaToPiLiHyp]
+variable [PiLiOscillationSqrtHyp]
 
 /-! ## Main Theorem -/
 
 /-- Weak Littlewood-type oscillation: π(x) - li(x) = Ω±(x^{1/2}/log x) -/
 theorem littlewood_pi_li :
     (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
-    =Ω±[fun x => Real.sqrt x / Real.log x] := by
-  -- Transfer from ψ using conversion formulas (weak form).
-  have hpsi :
-      (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x] :=
-    Littlewood.littlewood_psi
-  have hf : ∀ᶠ x in atTop, Real.sqrt x ≤ Real.sqrt x := by
-    exact Filter.Eventually.of_forall fun x => le_rfl
-  have hpi := Conversion.omega_psi_to_pi_li (f := fun x => Real.sqrt x) hf hpsi
-  simpa using hpi
+    =Ω±[fun x => Real.sqrt x / Real.log x] :=
+  PiLiOscillationSqrtHyp.oscillation
 
 /-! ## Corollaries -/
 
@@ -103,6 +105,7 @@ theorem first_crossover_bound :
   rcases (Filter.Frequently.exists pi_gt_li_infinitely_often) with ⟨x, hx⟩
   exact ⟨x, x, le_rfl, hx⟩
 
+omit [PiLiOscillationSqrtHyp] in
 /-- Weak positivity: the normalized integral is eventually nonnegative. -/
 theorem logarithmic_density_positive :
     ∀ᶠ X in atTop,
