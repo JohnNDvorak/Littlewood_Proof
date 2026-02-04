@@ -8,14 +8,16 @@ Each represents a classical theorem from analytic number theory not yet in Mathl
 These are PROVED theorems in classical mathematics—assumptions only because
 their Lean proofs await Mathlib infrastructure.
 
-## Current Status (2026-02-02)
-- Total instance sorries: 58 (in this file), down from 60
-- Proved instances:
+## Current Status (2026-02-03)
+- Total instance sorries: 57 (in this file), down from 60
+- Proved/Wired instances:
   - ZeroConjZeroHyp, ZeroOneSubZeroHyp (in ZeroCountingFunction.lean)
   - ZetaLogDerivPoleHyp (proved here via analyticOrderAt arithmetic)
   - HardyCriticalLineZerosHyp (wired via HardyCriticalLineWiring bridge)
+  - PsiOscillationFromCriticalZerosHyp (wired via ExplicitFormulaOscillation bridge, 1 sorry)
+  - PsiOscillationSqrtHyp (wired via PsiOscillationWiring bridge, 0 sorries)
+  - PiLiOscillationSqrtHyp (wired via PsiToPiLiOscillation bridge, 0 sorries)
 - Active Aristotle sorries: 8 across 5 files + 1 in CoreLemmas/LandauLemma
-- Total sorry declarations project-wide: 66 (58 Assumptions + 8 Aristotle/CoreLemma)
   Note: + 3 from PrimeNumberTheoremAnd dependency.
   Definitive count from `lake build` sorry warnings.
 
@@ -67,6 +69,9 @@ import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.CoreLemmas.LandauLemma
 import Littlewood.Bridge.HardyChainHyp
 import Littlewood.Bridge.HardyCriticalLineWiring
+import Littlewood.Bridge.ExplicitFormulaOscillation
+import Littlewood.Bridge.PsiToPiLiOscillation
+import Littlewood.Bridge.PsiOscillationWiring
 import Mathlib.Analysis.Analytic.Order
 import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.Normed.Module.Connected
@@ -197,9 +202,9 @@ instance : Schmidt.SchmidtPsiOscillationHyp := by
   intro ε hε
   sorry
 
-instance : Schmidt.PsiOscillationSqrtHyp := by
-  refine ⟨?_⟩
-  sorry
+-- PsiOscillationSqrtHyp: discharged automatically by PsiOscillationWiring.lean
+-- (from PsiOscillationFromCriticalZerosHyp, which is provided by
+-- ExplicitFormulaOscillation.lean from HardyCriticalLineZerosHyp + ExplicitFormulaPsiHyp)
 
 instance : Schmidt.MellinPsiIdentityHyp := by
   refine ⟨?_⟩
@@ -226,9 +231,9 @@ instance : HardyFirstMomentUpperHyp := by
   refine ⟨?_⟩
   sorry
 
-instance : Schmidt.PsiOscillationFromCriticalZerosHyp := by
-  refine ⟨?_⟩
-  sorry
+-- PsiOscillationFromCriticalZerosHyp: discharged by Bridge/ExplicitFormulaOscillation.lean
+-- (from HardyCriticalLineZerosHyp + ExplicitFormulaPsiHyp, with 1 sorry for the
+-- oscillation extraction — the genuine analytic content)
 
 instance : Schmidt.ThetaOscillationMinusHyp := by
   refine ⟨?_⟩
@@ -243,9 +248,8 @@ instance : Schmidt.ThetaOscillationSqrtHyp := by
   refine ⟨?_⟩
   sorry
 
-instance : Schmidt.PiLiOscillationSqrtHyp := by
-  refine ⟨?_⟩
-  sorry
+-- PiLiOscillationSqrtHyp: discharged by Bridge/PsiToPiLiOscillation.lean
+-- (from ThetaOscillationSqrtHyp + OmegaThetaToPiLiHyp, with 0 sorries)
 
 -- ============================================================
 -- SECTION 4: Zero Density Hypotheses

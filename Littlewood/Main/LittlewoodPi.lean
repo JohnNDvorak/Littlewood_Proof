@@ -25,12 +25,15 @@ Littlewood's proof showed it must fail infinitely often.
 
 ## Architecture Note
 
-This file previously used `OmegaPsiToThetaHyp` to transfer oscillation from
-ψ to θ, and `OmegaThetaToPiLiHyp` to transfer from θ to π-li. Both are
-problematic: OmegaPsiToThetaHyp is FALSE for f = √x, and OmegaThetaToPiLiHyp
-requires quantitative PNT error bounds not available in Mathlib. The chain
-now uses `PiLiOscillationSqrtHyp` which directly asserts
-π(x) - li(x) = Ω±(√x / log x).
+The main theorem `littlewood_pi_li` uses `PiLiOscillationSqrtHyp`, which is
+provided automatically by the bridge chain:
+  ThetaOscillationSqrtHyp + OmegaThetaToPiLiHyp → PiLiOscillationSqrtHyp
+  (Bridge/PsiToPiLiOscillation.lean, 0 sorries)
+
+The previous architecture tried routing through OmegaPsiToThetaHyp (FALSE
+for f = √x) and direct OmegaThetaToPiLiHyp (unprovable from Mathlib).
+The bridge now decomposes the problem into two smaller, mathematically
+meaningful hypotheses.
 
 ## References
 
@@ -43,11 +46,13 @@ open Chebyshev LogarithmicIntegral ZetaZeros Littlewood Schmidt
 
 namespace LittlewoodPi
 
-variable [PiLiOscillationSqrtHyp]
-
 /-! ## Main Theorem -/
 
-/-- Weak Littlewood-type oscillation: π(x) - li(x) = Ω±(x^{1/2}/log x) -/
+/-- Weak Littlewood-type oscillation: π(x) - li(x) = Ω±(x^{1/2}/log x)
+
+    Instance resolution chain:
+    - PiLiOscillationSqrtHyp ← Bridge/PsiToPiLiOscillation.lean (0 sorries)
+      from ThetaOscillationSqrtHyp + OmegaThetaToPiLiHyp (both sorry in Assumptions.lean) -/
 theorem littlewood_pi_li :
     (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
     =Ω±[fun x => Real.sqrt x / Real.log x] :=
@@ -105,7 +110,6 @@ theorem first_crossover_bound :
   rcases (Filter.Frequently.exists pi_gt_li_infinitely_often) with ⟨x, hx⟩
   exact ⟨x, x, le_rfl, hx⟩
 
-omit [PiLiOscillationSqrtHyp] in
 /-- Weak positivity: the normalized integral is eventually nonnegative. -/
 theorem logarithmic_density_positive :
     ∀ᶠ X in atTop,
