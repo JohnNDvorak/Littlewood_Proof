@@ -230,7 +230,7 @@ imported by the main theorems and are scaffolding for future extensions.
 
 | File | Sorries | What each sorry needs | Difficulty |
 |------|---------|----------------------|------------|
-| **PhragmenLindelof.lean** | 1 | `zeta_critical_line_bound`: \|zeta(1/2+it)\| ≤ C\|t\|^{1/2} via Phragmen-Lindelof. (gamma_growth and zeta_convexity_bound now PROVED.) | Hard — Hadamard three-lines interpolation. |
+| **PhragmenLindelof.lean** | 1 | `zeta_convexity_bound`: three-lines interpolation between left/right boundary bounds (both proved). gamma_growth CLOSED. zeta_critical_line_bound + bridge wiring are written and will auto-close. | Medium — apply PhragmenLindelof.vertical_strip (same pattern as StirlingRatioPL). |
 | **ZeroCounting.lean** | 2 | `zetaZeroCount_via_argument`: N(T) via argument principle. `zetaZeroCount_asymp`: N(T) = (T/2pi)log(T/2pi) - T/2pi + O(log T). | Medium — argument principle machinery exists in Mathlib. |
 | **HardyApproxFunctionalEq.lean** | 1 | `approx_functional_eq`: int Z^2 >= k * int \|\|S\|\|^2 - C*T. Needs Riemann-Siegel type approximate functional equation. | Hard — deep analytic number theory. |
 | **PartialSummation.lean** | 1 | `psi_oscillation_implies_pi_li_oscillation`: transfer via partial summation. Alternative route (not on critical path). | Medium. |
@@ -255,7 +255,7 @@ imported by the main theorems and are scaffolding for future extensions.
   - `GammaGrowthComplete.lean` — HasGammaGrowth for all σ > 0
   - `GammaGrowthWiring.lean` — wires gamma growth to critical path
   - `StirlingRatioPL.lean` — Stirling ratio bounded via Phragmen-Lindelof
-- **PhragmenLindelof.lean** — reduced from 3 sorries to 1
+- **PhragmenLindelof.lean** — reduced from 3 sorries to 1 (gamma_growth closed; zeta_convexity_bound remains)
 - **ZetaBoundGtOne.lean** — |ζ(1+δ+it)| ≤ |ζ(1+δ)| (sorry-free)
 - **DirichletPhaseAlignment.lean** — Simultaneous Dirichlet approximation, phase alignment from critical zeros, oscillation extraction infrastructure (sorry-free)
 - **ZeroCountingRectangle.lean** — Rectangle contour integrals, N(T), zeta log deriv residue, (s-1)*ζ(s)→1, removable singularity (sorry-free)
@@ -326,7 +326,7 @@ imported by the main theorems and are scaffolding for future extensions.
 - `← rpow_zero` can rewrite the wrong `1` — use `calc` with `(rpow_zero _).symm` instead.
 
 ### Priority for reducing sorry count
-1. **PhragmenLindelof.lean** (1 sorry) — `zeta_critical_line_bound` via Hadamard three-lines. gamma_growth and zeta_convexity_bound are now PROVED.
+1. **PhragmenLindelof.lean** (1 sorry) — `zeta_convexity_bound`: apply `PhragmenLindelof.vertical_strip` with boundary bounds (both proved). Would auto-close `zeta_critical_line_bound` + `ZetaCriticalLineBoundHyp` (critical path 8→7).
 2. **ExplicitFormulaOscillation** (1 sorry) — ψ oscillation extraction from zeros + formula.
 3. **ThetaExplicitFormulaOscillation** (1 sorry) — θ oscillation extraction (same argument as ψ).
 4. **HardyApproxFunctionalEq.lean** (1 sorry) — approximate functional equation.
@@ -386,7 +386,7 @@ Build configuration: `maxHeartbeats 1600000`, `maxRecDepth 4000`.
 
 See `docs/aristotle_prompts.md` for detailed prompts. Priority order:
 
-1. **PhragmenLindelof.lean** (1 sorry) — Hadamard three-lines for |zeta(1/2+it)| bound. gamma_growth and zeta_convexity_bound are already proved.
+1. **PhragmenLindelof.lean** (1 sorry) — `zeta_convexity_bound`: three-lines interpolation via `PhragmenLindelof.vertical_strip`. Boundary bounds proved. Would cascade to close `ZetaCriticalLineBoundHyp`.
 2. **ExplicitFormulaOscillation.lean** (1 sorry) — show ∞ critical-line zeros + explicit formula → ψ oscillation.
 3. **ThetaExplicitFormulaOscillation.lean** (1 sorry) — same argument as #2 applied to θ.
 4. **HardyApproxFunctionalEq.lean** (1 sorry) — approximate functional equation.
