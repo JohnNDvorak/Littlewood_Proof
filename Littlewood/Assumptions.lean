@@ -9,13 +9,14 @@ These are PROVED theorems in classical mathematics—assumptions only because
 their Lean proofs await Mathlib infrastructure.
 
 ## Current Status (2026-02-03)
-- Total instance sorries: 57 (in this file), down from 60
+- Total instance sorries: 56 (in this file), down from 60
 - Proved/Wired instances:
   - ZeroConjZeroHyp, ZeroOneSubZeroHyp (in ZeroCountingFunction.lean)
   - ZetaLogDerivPoleHyp (proved here via analyticOrderAt arithmetic)
   - HardyCriticalLineZerosHyp (wired via HardyCriticalLineWiring bridge)
   - PsiOscillationFromCriticalZerosHyp (wired via ExplicitFormulaOscillation bridge, 1 sorry)
   - PsiOscillationSqrtHyp (wired via PsiOscillationWiring bridge, 0 sorries)
+  - ThetaOscillationSqrtHyp (wired via ThetaExplicitFormulaOscillation bridge, 1 sorry)
   - PiLiOscillationSqrtHyp (wired via PsiToPiLiOscillation bridge, 0 sorries)
 - Active Aristotle sorries: 8 across 5 files + 1 in CoreLemmas/LandauLemma
   Note: + 3 from PrimeNumberTheoremAnd dependency.
@@ -58,20 +59,15 @@ This file provides a CENTRALIZED view of remaining assumptions.
 - [T] Titchmarsh, Theory of the Riemann Zeta Function
 -/
 
--- Only import files that DEFINE hypothesis classes, not files that USE them
-import Littlewood.ExplicitFormulas.ExplicitFormulaPsi
-import Littlewood.ExplicitFormulas.ConversionFormulas
+-- Import critical path instances (4 sorry instances + bridge wiring)
+import Littlewood.CriticalAssumptions
+-- Import files that DEFINE non-critical hypothesis classes
 import Littlewood.CoreLemmas.WeightedAverageFormula
 import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.ZetaZeros.ZeroDensity
 import Littlewood.ZetaZeros.SupremumRealPart
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.CoreLemmas.LandauLemma
-import Littlewood.Bridge.HardyChainHyp
-import Littlewood.Bridge.HardyCriticalLineWiring
-import Littlewood.Bridge.ExplicitFormulaOscillation
-import Littlewood.Bridge.PsiToPiLiOscillation
-import Littlewood.Bridge.PsiOscillationWiring
 import Mathlib.Analysis.Analytic.Order
 import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.Normed.Module.Connected
@@ -89,10 +85,7 @@ open scoped Topology
 -- the representation of ψ(x) via contour integrals.
 -- Reference: [MV] Chapter 5, [IK] Chapter 5
 -- ============================================================
-instance : ExplicitFormulaPsiHyp := by
-  refine ⟨?_⟩
-  intro x hx
-  sorry
+-- ExplicitFormulaPsiHyp: provided by CriticalAssumptions.lean
 
 instance : ExplicitFormulaPsiSmoothedHyp := by
   refine ⟨?_⟩
@@ -144,10 +137,7 @@ instance : OmegaPsiToThetaHyp := by
   intro f hf h
   sorry
 
-instance : OmegaThetaToPiLiHyp := by
-  refine ⟨?_⟩
-  intro f hf h
-  sorry
+-- OmegaThetaToPiLiHyp: provided by CriticalAssumptions.lean
 
 -- ============================================================
 -- SECTION 2: Weighted Average Formula Hypotheses
@@ -221,15 +211,9 @@ instance : Schmidt.OmegaPlusNecessityHyp := by
   intro ε hε hcontra
   sorry
 
--- HardyCriticalLineZerosHyp is now discharged automatically by the conditional
--- instance in HardyCriticalLineWiring.lean, given the two hypotheses below.
-instance : ZetaCriticalLineBoundHyp := by
-  refine ⟨?_⟩
-  sorry
-
-instance : HardyFirstMomentUpperHyp := by
-  refine ⟨?_⟩
-  sorry
+-- ZetaCriticalLineBoundHyp: provided by CriticalAssumptions.lean
+-- HardyFirstMomentUpperHyp: provided by CriticalAssumptions.lean
+-- HardyCriticalLineZerosHyp: auto-wired via HardyCriticalLineWiring.lean
 
 -- PsiOscillationFromCriticalZerosHyp: discharged by Bridge/ExplicitFormulaOscillation.lean
 -- (from HardyCriticalLineZerosHyp + ExplicitFormulaPsiHyp, with 1 sorry for the
@@ -244,9 +228,10 @@ instance : Schmidt.ThetaOscillationRHHyp := by
   intro hRH
   sorry
 
-instance : Schmidt.ThetaOscillationSqrtHyp := by
-  refine ⟨?_⟩
-  sorry
+-- ThetaOscillationSqrtHyp: discharged by Bridge/ThetaExplicitFormulaOscillation.lean
+-- (from HardyCriticalLineZerosHyp + ExplicitFormulaThetaHyp, with 1 sorry for
+-- oscillation extraction. Same argument as ExplicitFormulaOscillation for ψ.
+-- PsiToThetaOscillation.lean is DEPRECATED — see ThetaExplicitFormulaOscillation.)
 
 -- PiLiOscillationSqrtHyp: discharged by Bridge/PsiToPiLiOscillation.lean
 -- (from ThetaOscillationSqrtHyp + OmegaThetaToPiLiHyp, with 0 sorries)

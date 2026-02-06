@@ -1,0 +1,46 @@
+# Littlewood Formalization: Sorry Manifest
+# Generated: 2026-02-05 (Tasks 48-52 update)
+# Build target: lake build Littlewood.Main.Littlewood
+# Total sorry warnings: 11 (8 project + 3 external)
+#
+# NOTE: PhragmenLindelof, ZeroCounting, PartialSummation are NOT transitively
+# imported by Littlewood.Main.Littlewood. Their sorries do not appear in build output.
+# They are listed separately below as NON-IMPORTED for reference.
+#
+# Format: FILE:LINE:DECLARATION:STATUS:NOTES
+#
+# STATUS values:
+#   CRITICAL      = on critical path, blocks main theorem
+#   BRIDGE        = bridge wiring sorry, blocks instance derivation
+#   ARISTOTLE     = in Aristotle proof file, blocks hypothesis closure
+#   NON-IMPORTED  = has sorries but NOT imported by main build
+#   EXTERNAL      = in external dependency, NOT on critical path
+#
+# === CriticalAssumptions Sorries (5) ===
+Littlewood/CriticalAssumptions.lean:70:ExplicitFormulaPsiHyp:CRITICAL:Explicit formula for psi via Perron's formula
+Littlewood/CriticalAssumptions.lean:93:ZetaCriticalLineBoundHyp:CRITICAL:Phragmen-Lindelof convexity bound |zeta(1/2+it)| <= C|t|^{1/4+eps}
+Littlewood/CriticalAssumptions.lean:116:HardyFirstMomentUpperHyp:CRITICAL:First moment upper bound for Hardy Z-function
+Littlewood/CriticalAssumptions.lean:141:OmegaThetaToPiLiHyp:CRITICAL:Theta oscillation implies pi-li oscillation transfer
+Littlewood/CriticalAssumptions.lean:163:ExplicitFormulaThetaHyp:CRITICAL:Explicit formula for theta with same zero sum as psi
+#
+# === Bridge Sorries (2) ===
+Littlewood/Bridge/ExplicitFormulaOscillation.lean:74:PsiOscillationFromCriticalZerosHyp:BRIDGE:Psi oscillation extraction from explicit formula + critical zeros
+Littlewood/Bridge/ThetaExplicitFormulaOscillation.lean:57:ThetaOscillationSqrtHyp:BRIDGE:Theta oscillation extraction from explicit formula + critical zeros
+#
+# === Aristotle Sorries (1, build-visible) ===
+Littlewood/Aristotle/HardyApproxFunctionalEq.lean:113:approx_functional_eq:ARISTOTLE:Approximate functional equation for Z(t)^2 integral lower bound
+#
+# === Non-Imported Sorries (not in build output, 7 total) ===
+Littlewood/Aristotle/PhragmenLindelof.lean:138:zeta_critical_line_bound:NON-IMPORTED:Zeta critical line bound via Phragmen-Lindelof
+Littlewood/Aristotle/PhragmenLindelof.lean:156:zeta_convexity_bound:NON-IMPORTED:Convexity bound for zeta
+Littlewood/Aristotle/PhragmenLindelof.lean:170:gamma_growth:NON-IMPORTED:Stirling-type Gamma growth bound
+Littlewood/Aristotle/ZeroCounting.lean:117:zetaZeroCount_via_argument:NON-IMPORTED:Zero counting via argument principle
+Littlewood/Aristotle/ZeroCounting.lean:129:zetaZeroCount_asymp:NON-IMPORTED:Zero counting asymptotic
+Littlewood/Aristotle/PartialSummation.lean:225:psi_oscillation_implies_pi_li_oscillation:NON-IMPORTED:Psi->pi-li oscillation transfer (alt route)
+Littlewood/Aristotle/ContourIntegrationV2.lean:0:n/a:NON-IMPORTED:FULLY PROVED (0 sorries, sorry closed by Claude)
+Littlewood/Aristotle/ZetaIntegralRep.lean:0:n/a:NON-IMPORTED:FULLY PROVED (0 sorries, 1 exact? sorry closed by Claude)
+#
+# === External Sorries (3, NOT on critical path) ===
+PrimeNumberTheoremAnd/Wiener.lean:320:prelim_decay_2:EXTERNAL:Fourier decay bound (dead code)
+PrimeNumberTheoremAnd/Wiener.lean:339:prelim_decay_3:EXTERNAL:Stronger Fourier decay (dead code)
+PrimeNumberTheoremAnd/Wiener.lean:3889:auto_cheby:EXTERNAL:Chebyshev property inference (unexported)

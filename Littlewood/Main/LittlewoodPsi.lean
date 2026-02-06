@@ -7,7 +7,7 @@ import Littlewood.Basic.OmegaNotation
 import Littlewood.CoreLemmas.WeightedAverageFormula
 import Littlewood.CoreLemmas.DirichletApproximation
 import Littlewood.Oscillation.SchmidtTheorem
-import Littlewood.Assumptions
+import Littlewood.CriticalAssumptions
 
 /-!
 # Littlewood's Theorem for ψ

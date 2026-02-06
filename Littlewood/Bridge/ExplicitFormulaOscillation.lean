@@ -27,6 +27,31 @@ SORRY COUNT: 1
   critical-line zeros does not cancel to o(√x). Standard references:
   Montgomery-Vaughan, "Multiplicative Number Theory I", Section 15.1.
 
+MATHEMATICAL CONTENT OF THE SORRY:
+  This is NOT pure wiring — it encodes the core oscillation extraction argument:
+  1. From the explicit formula, ψ₀(x) - x = -Σ_ρ x^ρ/ρ + O(log x)
+  2. Each critical-line zero ρ = 1/2 + iγ contributes x^{1/2} · e^{iγ log x} / ρ
+  3. Need: infinitely many such terms ⟹ the sum achieves |·| ≥ c√x i.o.
+  4. The key technique is Dirichlet's approximation / Kronecker's theorem:
+     choose x so that the phases e^{iγ log x} align constructively.
+  5. For Ω₊: choose x with all phases near 0 (constructive interference)
+  6. For Ω₋: choose x with all phases near π (destructive interference)
+  This requires: (a) a finite truncation argument for the zero sum,
+  (b) Dirichlet/Kronecker simultaneous approximation for the phases,
+  (c) bounds on the tail of the zero sum.
+
+DEPENDENCIES FOR CLOSING THIS SORRY:
+  - [x] HardyCriticalLineZerosHyp (auto-wired, 0 sorry in wiring)
+  - [x] ExplicitFormulaPsiHyp (sorry in CriticalAssumptions, Aristotle Prompts 6-9)
+  - [ ] Dirichlet simultaneous approximation (partially in CoreLemmas/DirichletApproximation)
+  - [ ] Truncation bounds on the zero sum tail
+  - [ ] Phase alignment argument (Montgomery-Vaughan §15.1)
+
+WHEN DEPENDENCIES ARE MET:
+  This sorry could be submitted to Aristotle as a dedicated prompt targeting
+  the oscillation extraction. It is independent of the ExplicitFormulaPsiHyp
+  sorry — both can be worked on in parallel.
+
 STATUS: Structurally complete, 1 sorry for the oscillation extraction.
 -/
 

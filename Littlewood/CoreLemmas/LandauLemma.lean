@@ -365,37 +365,11 @@ Note: This is `Landau.chebyshevPsiLocal` to avoid conflict with root-level defin
 noncomputable def chebyshevPsiLocal (x : ℝ) : ℝ :=
   ∑ n ∈ Finset.Icc 1 (Nat.floor x), ArithmeticFunction.vonMangoldt n
 
-/--
-Connection to ZetaLogDerivPoleHyp: the key use of Landau's lemma
-for zeta zeros is that:
-1. L(Λ, s) = -ζ'/ζ(s) for Re(s) > 1
-2. Λ(n) ≥ 0 for all n
-3. By Landau's lemma, L(Λ, s) has a singularity at its abscissa of convergence
-4. If ζ(ρ) = 0 with 0 < Re(ρ) < 1, then -ζ'/ζ has a pole at ρ
-5. Therefore, the abscissa of convergence of L(Λ, s) is ≥ Re(ρ)
-
-This is the structural connection between Landau lemma and ZetaLogDerivPoleHyp.
--/
-theorem zeta_zero_implies_vonMangoldt_singularity (ρ : ℂ) (hρ : riemannZeta ρ = 0)
-    (hρ_re : 0 < ρ.re) (hρ_re' : ρ.re < 1) [ZetaLogDerivPoleHyp] :
-    ¬AnalyticAt ℂ (LSeries (fun n => (ArithmeticFunction.vonMangoldt n : ℂ))) ρ := by
-  intro hanalytic
-  -- The key fact is that -ζ'/ζ is NOT analytic at ρ (from ZetaLogDerivPoleHyp axiom)
-  have hpole := ZetaLogDerivPoleHyp.pole_at_zero ρ hρ
-  -- The von Mangoldt LSeries equals -ζ'/ζ for Re(s) > 1
-  -- By identity theorem, if LSeries were analytic at ρ and agreed with -ζ'/ζ
-  -- for Re(s) > 1, then it would have to be an analytic continuation of -ζ'/ζ
-  -- But -ζ'/ζ has a pole at ρ, so no such analytic continuation exists
-  --
-  -- The technical gap here is connecting the LSeries function to -ζ'/ζ via
-  -- identity theorem/analytic continuation. For Re(s) > 1:
-  --   LSeries Λ s = -ζ'/ζ(s)
-  -- If both were analytic at ρ, they would agree on the connected region
-  -- containing Re(s) > 1, which contradicts the pole of -ζ'/ζ at ρ.
-  sorry -- FALSE AS STATED: LSeries Λ s = 0 for Re(s) < 1 (tsum returns 0 for
-         -- non-summable series), making LSeries Λ trivially analytic at ρ.
-         -- The correct approach needs -ζ'/ζ (the analytic continuation), not LSeries.
-         -- See docs/FALSE_THEOREMS.md for details.
+-- NOTE: `zeta_zero_implies_vonMangoldt_singularity` was removed.
+-- It was FALSE as stated: LSeries Λ s = 0 for Re(s) < 1 (tsum returns 0
+-- for non-summable series), making LSeries Λ trivially analytic at ρ.
+-- The correct approach needs -ζ'/ζ (the analytic continuation), not LSeries.
+-- No downstream code depended on this theorem.
 
 /-!
 ## Hypothesis Instances
