@@ -24,10 +24,10 @@ Last audited: 2026-02-05.
 | Aristotle/Bridge/ (wiring) | **0** (3 files, all sorry-free) |
 | Main theorem sorries | **0** |
 | Main theorem explicit typeclass params | **0** (all auto-resolved) |
-| Lines of Lean code | ~39,100 |
-| Total .lean files | 207 |
-| Active Aristotle files | 123 |
-| Budget-exhaustion sorries closed by Claude Code | 14/15 |
+| Lines of Lean code | ~39,600 |
+| Total .lean files | 209 |
+| Active Aristotle files | 125 |
+| Budget-exhaustion sorries closed by Claude Code | 18/19 |
 
 ## Main Theorems
 
@@ -147,7 +147,7 @@ Littlewood/
   Mertens/                     1 file   -- Mertens' first theorem
   CriticalAssumptions.lean     1 file   -- 5 critical path hypothesis instances (sorry)
   Assumptions.lean             1 file   -- ~54 infrastructure hypothesis instances (sorry)
-  Aristotle/                 123 files  -- AI-generated proofs (Harmonic + Claude)
+  Aristotle/                 125 files  -- AI-generated proofs (Harmonic + Claude)
     Bridge/                    3 files  -- Aristotle-side wiring (all sorry-free)
     _deprecated/               4 files  -- Superseded Aristotle files
   Bridge/                     29 files  -- Wiring Aristotle proofs to hypothesis classes
@@ -245,6 +245,9 @@ imported by the main theorems and are scaffolding for future extensions.
 | StirlingBernoulli.lean | `hasDerivWithinAt_B2_right` | Claude Code — budget exhaustion |
 | ContourIntegrationV2.lean | `crossing_upper` | Claude Code — budget exhaustion |
 | HardyApproxFunctionalEqV2.lean | `hardy_algebraic_bound`, `hardy_error_integral_bound` | Claude Code — budget exhaustion |
+| DirichletPhaseAlignment.lean | `abs_sin_le_abs`, `h_dirichlet` forwarding | Claude Code — abs_sin_le_abs + direct application |
+| ZeroCountingRectangle.lean | `limit_mul_zeta_sub_one` | Claude Code — via tendsto_riemannZeta_sub_one_div |
+| ZeroCountingRectangle.lean | `AnalyticAt ℂ g c` | Claude Code — removable singularity theorem |
 
 ### Sorry-Free Aristotle Achievements
 
@@ -254,6 +257,8 @@ imported by the main theorems and are scaffolding for future extensions.
   - `StirlingRatioPL.lean` — Stirling ratio bounded via Phragmen-Lindelof
 - **PhragmenLindelof.lean** — reduced from 3 sorries to 1
 - **ZetaBoundGtOne.lean** — |ζ(1+δ+it)| ≤ |ζ(1+δ)| (sorry-free)
+- **DirichletPhaseAlignment.lean** — Simultaneous Dirichlet approximation, phase alignment from critical zeros, oscillation extraction infrastructure (sorry-free)
+- **ZeroCountingRectangle.lean** — Rectangle contour integrals, N(T), zeta log deriv residue, (s-1)*ζ(s)→1, removable singularity (sorry-free)
 - **ZetaConvexityStrip.lean** — zeta convexity bounds (sorry-free)
 - **RiemannSiegelBound.lean** — Riemann-Siegel bounds (sorry-free)
 - 99+ Aristotle files compile sorry-free
@@ -285,6 +290,9 @@ imported by the main theorems and are scaffolding for future extensions.
 | `PhragmenLindelof.vertical_strip` | PL on vertical strips with growth bound |
 | `norm_cpow_of_ne_zero` | \|z^w\| = \|z\|^(Re w) / exp(arg z * Im w) |
 | `Complex.Gamma_mul_Gamma_one_sub` | Gamma reflection formula (no conditions) |
+| `abs_sin_le_abs` | \|sin x\| ≤ \|x\| for all real x |
+| `tendsto_riemannZeta_sub_one_div` | ζ(s) - 1/(s-1) → γ (Euler-Mascheroni) as s → 1 |
+| `analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt` | Removable singularity: diff on punctured nhds + continuous → analytic |
 
 ## Notes for AI Assistants
 
