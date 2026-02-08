@@ -33,6 +33,7 @@ import Littlewood.Aristotle.HardyInfrastructure    -- Hardy Z + hypotheses struc
 import Littlewood.Aristotle.HardyEstimatesPartial  -- Hardy estimates structure, partial (0 sorries) ✓
 import Littlewood.Aristotle.HardyZFirstMoment     -- Hardy Z first moment infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.HardyZCauchySchwarz   -- Hardy Z Cauchy-Schwarz + alt formula (0 sorries) ✓
+import Littlewood.Aristotle.HardyZIdentities      -- Hardy square bound, pointwise identity (0 sorries) ✓
 import Littlewood.Aristotle.ConvexityBounds       -- Gamma/sin/cos/PL convexity bounds (0 sorries) ✓
 
 -- Functional equation (no conflicts)
@@ -60,6 +61,7 @@ import Littlewood.Aristotle.IntegralArctanFormula  -- ∫Re(1/(c+ti)) = 2arctan 
 import Littlewood.Aristotle.CriticalZeros          -- Critical zeros (0 sorries) ✓
 import Littlewood.Aristotle.ZetaZerosFiniteBelow   -- Finitely many zeros below T (0 sorries) ✓
 import Littlewood.Aristotle.ZetaZerosFiniteBelowV2 -- Finite zeros via isolated zeros principle (0 sorries) ✓
+import Littlewood.Aristotle.ZetaAnalyticProperties -- Zero isolation, finiteness, analyticity (0 sorries) ✓
 import Littlewood.Aristotle.OffDiagonalBound       -- Off-diagonal ≤ 8N² (0 sorries) ✓
 import Littlewood.Aristotle.OffDiagonalIntegralV2  -- Off-diagonal integral ≤ CN² (0 sorries) ✓
 import Littlewood.Aristotle.ThetaLinearBound       -- θ(x) = O(x) (0 sorries) ✓
@@ -84,6 +86,7 @@ import Littlewood.Aristotle.DirichletSeries        -- Dirichlet series (0 sorrie
 import Littlewood.Aristotle.LandauLemma            -- Landau lemma (0 sorries) ✓
 import Littlewood.Aristotle.LaurentExpansion       -- Laurent at s=1 (0 sorries) ✓
 import Littlewood.Aristotle.PhaseAlignment         -- Phase alignment (0 sorries) ✓
+import Littlewood.Aristotle.OscillationInfraV2     -- sum_diverges_to_infinity technique (0 sorries) ✓
 import Littlewood.Aristotle.CosBound               -- Cos bounds (0 sorries) ✓
 import Littlewood.Aristotle.BinetStirling          -- Binet/Stirling (0 sorries) ✓
 import Littlewood.Aristotle.Definitions            -- Unified definitions (0 sorries) ✓
@@ -95,8 +98,10 @@ import Littlewood.Aristotle.RiemannVonMangoldt    -- Riemann-von Mangoldt N(T) f
 import Littlewood.Aristotle.RiemannVonMangoldtV2  -- R-vM formula v2 with xi, ImLogGamma (0 sorries) ✓
 import Littlewood.Aristotle.NZerosStirling        -- N(T) from S(T) and Stirling (0 sorries) ✓
 import Littlewood.Aristotle.TruncatedExplicitFormula -- Truncated explicit formula for psi (0 sorries) ✓
+import Littlewood.Aristotle.ExplicitFormulaPerron    -- Finite-sum explicit formula classes (0 sorries) ✓
 import Littlewood.Aristotle.StirlingArgGamma      -- Stirling arg Gamma bounds (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundsNorm        -- Zeta norm bounds, functional eq (0 sorries) ✓
+import Littlewood.Aristotle.ZetaBoundFunctionalEq -- Zeta bounded Re(s)≥1+δ, functional eq (0 sorries) ✓
 import Littlewood.Aristotle.HardyZConjugation     -- Hardy Z, completedZeta conjugation (1 sorry)
 import Littlewood.Aristotle.CompletedZetaCriticalLine -- Completed zeta real on critical line (0 sorries) ✓
 import Littlewood.Aristotle.ExplicitFormulaInfrastructure -- Zeta zeros finite, explicit formula (0 sorries) ✓
