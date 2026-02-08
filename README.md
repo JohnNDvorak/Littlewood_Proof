@@ -12,7 +12,7 @@ Claude (Anthropic).
 
 ## Status
 
-Last audited: 2026-02-07.
+Last audited: 2026-02-08.
 
 | Metric | Count |
 |--------|-------|
@@ -24,9 +24,9 @@ Last audited: 2026-02-07.
 | Main theorem sorries | **0** |
 | Main theorem explicit typeclass params | **0** (all auto-resolved) |
 | Lines of Lean code | ~42,300 |
-| Total .lean files | 217 |
-| Aristotle files (total) | 136 |
-| Aristotle files in build | 81 |
+| Total .lean files | 219 |
+| Aristotle files (total) | 138 |
+| Aristotle files in build | 104 |
 | Budget-exhaustion sorries closed by Claude Code | 22/22 |
 
 ## Main Theorems
@@ -55,7 +55,7 @@ Corollaries proved from `littlewood_pi_li`:
 
 ### Critical Path: Sorries the Main Theorems Depend On
 
-**For `littlewood_psi`** (4 sorries on critical path):
+**For `littlewood_psi`** (3 sorries on critical path):
 
 | Sorry | Location | Mathematical Content |
 |-------|----------|---------------------|
@@ -151,12 +151,13 @@ Littlewood/
   Mertens/                     1 file   -- Mertens' first theorem
   CriticalAssumptions.lean     1 file   -- 1 critical path hypothesis instance (sorry)
   Assumptions.lean             1 file   -- ~52 infrastructure hypothesis instances (sorry)
-  Aristotle/                 136 files  -- AI-generated proofs (Harmonic + Claude)
+  Aristotle/                 138 files  -- AI-generated proofs (Harmonic + Claude)
     Bridge/                    3 files  -- Aristotle-side wiring (all sorry-free)
     _deprecated/               4 files  -- Superseded Aristotle files
-  Bridge/                     30 files  -- Wiring Aristotle proofs to hypothesis classes
+    _templates/                1 file   -- Prompt/wiring templates
+  Bridge/                     31 files  -- Wiring Aristotle proofs to hypothesis classes
   Development/                17 files  -- WIP proofs (not imported by main build)
-  Tests/                       8 files  -- Integration tests
+  Tests/                      10 files  -- Integration tests
 scripts/
   verify_build.sh             Automated build verification
   status.sh                   Quick project metrics
