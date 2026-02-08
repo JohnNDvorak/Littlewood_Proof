@@ -59,7 +59,7 @@ This file provides a CENTRALIZED view of remaining assumptions.
 - [T] Titchmarsh, Theory of the Riemann Zeta Function
 -/
 
--- Import critical path instances (4 sorry instances + bridge wiring)
+-- Import critical path instances (1 critical sorry + bridge wiring)
 import Littlewood.CriticalAssumptions
 -- Import files that DEFINE non-critical hypothesis classes
 import Littlewood.CoreLemmas.WeightedAverageFormula
@@ -137,7 +137,7 @@ instance : OmegaPsiToThetaHyp := by
   intro f hf h
   sorry
 
--- OmegaThetaToPiLiHyp: provided by CriticalAssumptions.lean
+-- OmegaThetaToPiLiHyp: provided by Bridge/OmegaThetaToPiLiWiring.lean
 
 -- ============================================================
 -- SECTION 2: Weighted Average Formula Hypotheses

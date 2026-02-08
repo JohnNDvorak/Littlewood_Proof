@@ -80,7 +80,7 @@ theorem zeta_bound_two_line (t : ℝ) :
     · exact tsum_nonneg fun _ => by positivity;
   · -- We know that $\zeta(2) = \frac{\pi^2}{6}$.
     have h_zeta2 : riemannZeta 2 = Real.pi ^ 2 / 6 := by
-      exact?;
+      exact riemannZeta_two;
     norm_num [ h_zeta2 ];
     -- We know that $\pi \approx 3.14$, so we can estimate $\pi^2 \approx 9.86$.
     have h_pi_approx : Real.pi < 3.4 := by
@@ -186,7 +186,7 @@ lemma inv_sqrt_two_pi_le : 1 / Real.sqrt (2 * Real.pi) ≤ 0.4 := by
     simpa using le_of_pow_le_pow_left₀ ( by positivity ) ( by positivity ) h_sqr;
   -- We know that $\pi \approx 3.14$, so we can use this to approximate the value.
   have h_pi_approx : Real.pi > 3.14 := by
-    exact?;
+    exact Real.pi_gt_d2;
   field_simp;
   rw [ Real.sq_sqrt ] <;> norm_num at * <;> linarith
 

@@ -65,7 +65,7 @@ lemma landau_lemma_swap_sums (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) (s₀ δ 
               have h_fubini : ∀ {f : ℕ → ℕ → ℝ}, (∀ k, Summable (fun n => f k n)) → (∀ n, Summable (fun k => f k n)) → ∑ x ∈ u, ∑' k, f k x ≤ ∑' k, ∑ x ∈ u, f k x := by
                 intros f hf_summable_k hf_summable_n
                 have h_fubini : ∑ x ∈ u, ∑' k, f k x = ∑' k, ∑ x ∈ u, f k x := by
-                  exact?;
+                  exact Eq.symm (Summable.tsum_finsetSum fun i a => hf_summable_n i);
                 rw [h_fubini];
               apply h_fubini;
               · assumption;

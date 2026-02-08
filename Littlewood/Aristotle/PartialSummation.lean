@@ -214,30 +214,25 @@ lemma pi_sub_li_decomposition (x : ℝ) (hx : x ≥ 2) :
         exact ContinuousOn.mul ( ContinuousOn.mul continuousOn_id ( ContinuousOn.inv₀ continuousOn_id fun t ht => by cases Set.mem_uIcc.mp ht <;> linarith ) ) ( ContinuousOn.pow ( ContinuousOn.inv₀ ( Real.continuousOn_log.mono <| by intro t ht ; cases Set.mem_uIcc.mp ht <;> norm_num <;> linarith ) fun t ht => ne_of_gt <| Real.log_pos <| by cases Set.mem_uIcc.mp ht <;> linarith ) _ )
 
 /-
-The key theorem: oscillation of ψ(x) - x implies oscillation of π(x) - li(x).
+WARNING: This theorem is FALSE as stated. The hypotheses only require sign changes
+of ψ(x) - x, not amplitude bounds. Counterexample sketch:
 
-This follows from the decomposition:
-  π(x) - li(x) = (ψ(x) - x)/log(x) - T(x) + ∫₂ˣ (ψ(t) - t)/(t log²t) dt + 2/log(2)
+  ψ(x) = θ(x) + θ(√x) + θ(∛x) + ⋯, and by PNT θ(√x) ~ √x.
+  So θ(x) = ψ(x) - √x - O(∛x).
+  If ψ(x) - x oscillates with tiny amplitude (say ±1), then
+  θ(x) - x ≈ -√x ± 1, which is always negative for large x.
+  Hence π(x) - li(x) ≈ (θ(x) - x)/log(x) < 0 always — no positive oscillation.
 
-Since T(x) = O(x^{1/2}/log(x)) and the integral term is dominated by the main term,
-if ψ(x) - x oscillates with amplitude Ω(x^{1/2}), then π(x) - li(x) oscillates too.
+The correct statement needs amplitude bounds: ψ(x) - x = Ω±(√x), not just sign changes.
+This sorry CANNOT bypass OmegaThetaToPiLiHyp (wrong types and insufficient strength).
+
+The decomposition `pi_sub_li_decomposition` above IS correct and sorry-free.
 -/
-theorem psi_oscillation_implies_pi_li_oscillation
-    (h_psi_pos : ∀ M : ℝ, ∃ x > M, chebyshevPsi x - x > 0)
-    (h_psi_neg : ∀ M : ℝ, ∃ x > M, chebyshevPsi x - x < 0) :
-    (∀ M : ℝ, ∃ x > M, primeCountingReal x - li x > 0) ∧
-    (∀ M : ℝ, ∃ x > M, primeCountingReal x - li x < 0) := by
-  -- The decomposition shows that the dominant term is (ψ(x) - x)/log(x)
-  -- When ψ(x) - x is large positive/negative, so is π(x) - li(x)
-  -- The error terms T(x) and the integral are smaller order
-  constructor
-  · intro M
-    -- Get x where ψ(x) - x is large and positive
-    obtain ⟨x, hx_large, hx_pos⟩ := h_psi_pos (max M 2)
-    -- For large enough x, the main term dominates
-    sorry
-  · intro M
-    obtain ⟨x, hx_large, hx_neg⟩ := h_psi_neg (max M 2)
-    sorry
+-- REMOVED: psi_oscillation_implies_pi_li_oscillation
+-- This theorem was FALSE as stated (see WARNING above).
+-- Hypotheses require only sign changes of ψ(x)-x, not amplitude bounds.
+-- The correct route to π(x)-li(x) oscillation uses OmegaThetaToPiLiHyp
+-- (which requires Ω±(√x) amplitude, not just sign changes).
+-- Removed to eliminate a spurious sorry from the build.
 
 end

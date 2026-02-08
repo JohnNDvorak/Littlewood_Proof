@@ -1,6 +1,6 @@
 # Aristotle Module: Status Tracker
 
-**Date**: 2026-02-07 (6 orphan files wired into build, sorry count unchanged at 10)
+**Date**: 2026-02-08 (OmegaThetaToPiLiHyp moved to bridge; sorry count unchanged at 10)
 
 ## Overview
 
@@ -15,10 +15,18 @@ Files are organized in `Littlewood/Aristotle/`.
 - **Sorry-free files**: 125 (97.7%)
 - **Total build-visible Aristotle sorries**: 3
 - **Budget-exhaustion sorry track record**: 22/22 CLOSED (all resolved)
-- **Total project sorries (build)**: 7 (2 critical + 2 bridge + 3 Aristotle)
+- **Total project sorries (build)**: 7 (1 critical + 3 bridge + 3 Aristotle)
 - **External sorries**: 3 (PrimeNumberTheoremAnd/Wiener.lean, not on critical path)
 
-## Recent Achievements (Session 11)
+## Recent Achievements (Session 12)
+
+| Achievement | Details |
+|------------|---------|
+| **`OmegaThetaToPiLiHyp` moved out of `CriticalAssumptions`** | New bridge-owned placeholder instance in `Bridge/OmegaThetaToPiLiWiring.lean` |
+| **Critical/bridge split improved** | Project total unchanged at 7, but split changed: critical 2 → 1, bridge 2 → 3 |
+| **Build validation** | `lake build Littlewood.Main.Littlewood` passes with new bridge wiring |
+
+## Previous Achievements (Session 11)
 
 | Achievement | Details |
 |------------|---------|
@@ -105,7 +113,7 @@ PsiOscillationFromCriticalZeros        ThetaOscillationSqrt
   [Bridge, 1 sorry]                     [Bridge, 1 sorry]
        ↑                                      ↑
 HardyCriticalLineZerosHyp [auto]       ├── HardyCriticalLineZerosHyp [auto]
-  ↑          ↑                          └── OmegaThetaToPiLiHyp [SORRY]
+  ↑          ↑                          └── OmegaThetaToPiLiHyp [Bridge, 1 sorry]
 ZetaCritical  HardyFirst
 LineBoundHyp  MomentUpper
  [AUTO]       [SORRY]
@@ -118,7 +126,7 @@ NOTE: ExplicitFormulaPsiHyp and ExplicitFormulaThetaHyp REMOVED from critical pa
 
 1. **ZetaCriticalLineBoundHyp** — CLOSED (auto-wired via PhragmenLindelofWiring.lean).
 
-2. **OmegaThetaToPiLiHyp** — The PartialSummation.lean route was FALSE and has been removed. This sorry now requires a direct approach: quantitative PNT error bounds to show θ(x)-x oscillation transfers to π(x)-li(x) oscillation at the √x/log x scale.
+2. **OmegaThetaToPiLiHyp** (`Bridge/OmegaThetaToPiLiWiring.lean`) — The PartialSummation.lean route was FALSE and has been removed. This sorry now requires a direct approach: quantitative PNT error bounds to show θ(x)-x oscillation transfers to π(x)-li(x) oscillation at the √x/log x scale.
 
 3. **HardyFirstMomentUpperHyp** — Conditional theorem proved, 4+ prerequisites unproved (approx functional equation + van der Corput).
 
@@ -174,7 +182,7 @@ which is deep analytic number theory (Riemann-Siegel formula). Not available in 
 ContourIntegration → RectangleCauchy → PerronFormula → ExplicitFormula.
 Blocked on vertical line integrals (not in Mathlib).
 
-### Priority 4: OmegaThetaToPiLiHyp (CriticalAssumptions.lean:123)
+### Priority 4: OmegaThetaToPiLiHyp (Bridge/OmegaThetaToPiLiWiring.lean:26)
 Transfer θ(x)-x = Ω±(f) to π(x)-li(x) = Ω±(f/log x).
 
 **OBSTRUCTION**: The decomposition π(x)-li(x) = (θ(x)-x)/log(x) + ∫(θ(t)-t)/(t·log²t)dt

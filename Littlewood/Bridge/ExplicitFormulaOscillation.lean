@@ -1,19 +1,16 @@
 /-
-Bridge: Wire HardyCriticalLineZerosHyp + ExplicitFormulaPsiHyp
-         → PsiOscillationFromCriticalZerosHyp.
+Bridge: Wire HardyCriticalLineZerosHyp → PsiOscillationFromCriticalZerosHyp.
 
 This bridge encodes the mathematical argument:
-  "Infinitely many zeros on Re(s) = 1/2, combined with the explicit formula
-   ψ₀(x) = x - Σ_ρ x^ρ/ρ + O(log x), implies ψ(x) - x = Ω±(√x)."
+  "Infinitely many zeros on Re(s) = 1/2 implies ψ(x) - x = Ω±(√x)."
 
 Each critical-line zero ρ = 1/2 + iγ contributes a term x^{1/2} · e^{iγ log x} / ρ
-to the zero sum. With infinitely many such γ, this oscillating sum forces
-ψ(x) - x to achieve both positive and negative values of magnitude ≥ c√x
-infinitely often.
+to the zero sum in the explicit formula. With infinitely many such γ, phase
+alignment (Dirichlet approximation) forces the sum to achieve both positive
+and negative values of magnitude ≥ c√x infinitely often.
 
 DEPENDENCIES:
   - HardyCriticalLineZerosHyp  (Hardy 1914: ∞ many zeros on critical line)
-  - ExplicitFormulaPsiHyp       (Riemann-von Mangoldt explicit formula for ψ)
 
 OUTPUT:
   - PsiOscillationFromCriticalZerosHyp  (ψ(x) - x = Ω±(√x))
@@ -22,63 +19,56 @@ Combined with PsiOscillationWiring.lean (0 sorries), this gives:
   PsiOscillationSqrtHyp  (consumed by littlewood_psi)
 
 SORRY COUNT: 1
-  The extraction of oscillation from the zero sum is genuine analytic
-  number theory. The proof requires showing that the sum Σ_ρ x^ρ/ρ over
-  critical-line zeros does not cancel to o(√x). Standard references:
-  Montgomery-Vaughan, "Multiplicative Number Theory I", Section 15.1.
+  The sorry encapsulates the full oscillation extraction argument:
+  (a) the truncated explicit formula ψ(x) - x ≈ -(Σ_{|γ|≤T} x^ρ/ρ).re,
+  (b) Dirichlet simultaneous approximation for phase alignment (PROVED in
+      Aristotle/DirichletPhaseAlignment.lean),
+  (c) anti-alignment for the Ω₊ direction (inhomogeneous Dirichlet or
+      mean-value argument), and
+  (d) tail bounds for the zero sum truncation.
 
-MATHEMATICAL CONTENT OF THE SORRY:
-  This is NOT pure wiring — it encodes the core oscillation extraction argument:
-  1. From the explicit formula, ψ₀(x) - x = -Σ_ρ x^ρ/ρ + O(log x)
-  2. Each critical-line zero ρ = 1/2 + iγ contributes x^{1/2} · e^{iγ log x} / ρ
-  3. Need: infinitely many such terms ⟹ the sum achieves |·| ≥ c√x i.o.
-  4. The key technique is Dirichlet's approximation / Kronecker's theorem:
-     choose x so that the phases e^{iγ log x} align constructively.
-  5. For Ω₊: choose x with all phases near 0 (constructive interference)
-  6. For Ω₋: choose x with all phases near π (destructive interference)
-  This requires: (a) a finite truncation argument for the zero sum,
-  (b) Dirichlet/Kronecker simultaneous approximation for the phases,
-  (c) bounds on the tail of the zero sum.
+NOTE: ExplicitFormulaPsiHyp (which uses tsum) was REMOVED from the
+  dependencies because the tsum over zetaNontrivialZeros is not absolutely
+  convergent (∑ 1/|ρ| diverges for critical-line zeros), making tsum = 0
+  in Lean/Mathlib. The truncated explicit formula (finite sums) is folded
+  into this sorry instead.
 
-DEPENDENCIES FOR CLOSING THIS SORRY:
-  - [x] HardyCriticalLineZerosHyp (auto-wired, 0 sorry in wiring)
-  - [x] ExplicitFormulaPsiHyp (sorry in CriticalAssumptions, Aristotle Prompts 6-9)
-  - [ ] Dirichlet simultaneous approximation (partially in CoreLemmas/DirichletApproximation)
-  - [ ] Truncation bounds on the zero sum tail
-  - [ ] Phase alignment argument (Montgomery-Vaughan §15.1)
+REFERENCES:
+  - Montgomery-Vaughan, "Multiplicative Number Theory I", Section 15.1
+  - Aristotle/DirichletPhaseAlignment.lean (phase alignment infrastructure)
 
-WHEN DEPENDENCIES ARE MET:
-  This sorry could be submitted to Aristotle as a dedicated prompt targeting
-  the oscillation extraction. It is independent of the ExplicitFormulaPsiHyp
-  sorry — both can be worked on in parallel.
-
-STATUS: Structurally complete, 1 sorry for the oscillation extraction.
+STATUS: 1 sorry for the oscillation extraction (absorbs explicit formula).
 -/
 
 import Littlewood.Oscillation.SchmidtTheorem
-import Littlewood.ExplicitFormulas.ExplicitFormulaPsi
 
 noncomputable section
 
-open Schmidt ExplicitFormula
+open Schmidt
 
-/-- The explicit formula + infinitely many critical-line zeros
-    implies ψ(x) - x = Ω±(√x).
+/-- Infinitely many critical-line zeros implies ψ(x) - x = Ω±(√x).
 
     Mathematical argument:
-    1. By ExplicitFormulaPsiHyp: ψ₀(x) = x - Σ_ρ x^ρ/ρ + O(log x)
+    1. The truncated explicit formula gives
+       ψ(x) - x ≈ -(Σ_{|γ|≤T} x^ρ/ρ).re + O(√x log T/√T + log x)
     2. By HardyCriticalLineZerosHyp: infinitely many ρ have Re(ρ) = 1/2
     3. Each such ρ = 1/2 + iγ contributes x^{1/2} · e^{iγ log x} / (1/2 + iγ)
-    4. The oscillating contributions from infinitely many γ cannot cancel to o(√x)
-    5. Therefore ψ(x) - x = Ω±(√x). -/
-instance [HardyCriticalLineZerosHyp] [ExplicitFormulaPsiHyp] :
+    4. Phase alignment (Dirichlet): choose x with e^{iγ log x} ≈ 1 for all
+       critical-line zeros up to T. This makes Re(Σ x^ρ/ρ) ≥ c√x,
+       giving ψ(x) - x ≤ -c√x (Ω₋).
+    5. Anti-alignment: choose x with e^{iγ log x} ≈ -1, giving
+       Re(Σ x^ρ/ρ) ≤ -c√x, so ψ(x) - x ≥ c√x (Ω₊).
+    6. Both directions require Dirichlet approximation (proved in
+       DirichletPhaseAlignment.lean) and the truncated explicit formula. -/
+instance [HardyCriticalLineZerosHyp] :
     PsiOscillationFromCriticalZerosHyp where
   oscillation := by
     -- Infinitely many zeros on the critical line
     have h_zeros := HardyCriticalLineZerosHyp.infinite
-    -- Explicit formula: ψ₀(x) = x - Σ_ρ x^ρ/ρ + O(log x)
-    -- The critical-line zeros contribute oscillating terms at scale √x
-    -- that cannot cancel, giving Ω±(√x).
-    -- This is the content of Schmidt's oscillation theorem applied to
-    -- the explicit formula with critical-line zeros.
+    -- The proof combines:
+    -- (a) Truncated explicit formula: ψ(x) - x ≈ -(Σ x^ρ/ρ).re
+    -- (b) Phase alignment (Dirichlet approx): Re(Σ x^ρ/ρ) ≥ c√x → Ω₋
+    -- (c) Anti-alignment: Re(Σ x^ρ/ρ) ≤ -c√x → Ω₊
+    -- Phase alignment is proved in Aristotle/DirichletPhaseAlignment.lean.
+    -- The truncated explicit formula requires Perron's formula (not in Mathlib).
     sorry

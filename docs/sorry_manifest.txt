@@ -1,5 +1,5 @@
 # Littlewood Formalization: Sorry Manifest
-# Generated: 2026-02-07 (5 orphan files wired into build, sorry count unchanged at 10)
+# Generated: 2026-02-08 (OmegaThetaToPiLiHyp moved from CriticalAssumptions to bridge; total unchanged)
 # Build target: lake build
 # Total sorry warnings: 10 (7 project + 3 external)
 #
@@ -11,13 +11,13 @@
 #   ARISTOTLE     = in Aristotle proof file
 #   EXTERNAL      = in external dependency, NOT on critical path
 #
-# === CriticalAssumptions Sorries (2, was 4) ===
-Littlewood/CriticalAssumptions.lean:82:HardyFirstMomentUpperHyp:CRITICAL:First moment upper bound for Hardy Z-function
-Littlewood/CriticalAssumptions.lean:110:OmegaThetaToPiLiHyp:CRITICAL:Theta oscillation implies pi-li oscillation transfer
+# === CriticalAssumptions Sorries (1, was 4) ===
+Littlewood/CriticalAssumptions.lean:84:HardyFirstMomentUpperHyp:CRITICAL:First moment upper bound for Hardy Z-function
 #
-# === Bridge Sorries (2) ===
+# === Bridge Sorries (3) ===
 Littlewood/Bridge/ExplicitFormulaOscillation.lean:63:PsiOscillationFromCriticalZerosHyp:BRIDGE:Psi oscillation extraction from explicit formula + critical zeros (absorbs ExplicitFormulaPsiHyp)
 Littlewood/Bridge/ThetaExplicitFormulaOscillation.lean:63:ThetaOscillationSqrtHyp:BRIDGE:Theta oscillation extraction from explicit formula + critical zeros (absorbs ExplicitFormulaThetaHyp)
+Littlewood/Bridge/OmegaThetaToPiLiWiring.lean:26:OmegaThetaToPiLiHyp:BRIDGE:Theta oscillation implies pi-li oscillation transfer
 #
 # === Aristotle Sorries (3, build-visible) ===
 Littlewood/Aristotle/HardyApproxFunctionalEq.lean:113:approx_functional_eq:ARISTOTLE:Approximate functional equation for Z(t)^2 integral lower bound
@@ -25,6 +25,10 @@ Littlewood/Aristotle/ZeroCounting.lean:117:zetaZeroCount_via_argument:ARISTOTLE:
 Littlewood/Aristotle/ZeroCounting.lean:134:zetaZeroCount_asymp:ARISTOTLE:Zero counting asymptotic (statement FIXED: uses log(T/2πe))
 #
 # === REMOVED THIS SESSION ===
+# Littlewood/CriticalAssumptions.lean:OmegaThetaToPiLiHyp:MOVED
+#   Moved to Bridge/OmegaThetaToPiLiWiring.lean so critical assumptions file
+#   only owns non-bridge critical sorries. Project total unchanged (7), split:
+#   critical 2 -> 1, bridge 2 -> 3.
 # Littlewood/CriticalAssumptions.lean:ExplicitFormulaPsiHyp:REMOVED
 #   tsum formulation ∑' ρ : zetaNontrivialZeros, x^ρ/ρ is FALSE (not absolutely
 #   convergent → tsum = 0 in Lean/Mathlib). Content folded into bridge sorry

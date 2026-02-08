@@ -119,15 +119,21 @@ theorem zetaZeroCount_via_argument (T : ℝ) (hT : 0 < T) :
     (zetaZeroCount T : ℝ) = (1/Real.pi) * (Complex.arg (xi_Mathlib (1/2 + T * I))) + 1 + S := by
   sorry
 
-/-- Riemann-von Mangoldt formula: N(T) ~ (T/2π) log(T/2πe) -/
+/-- Riemann-von Mangoldt formula: N(T) ~ (T/2π) log(T/2πe).
+    WARNING: This proof is VACUOUS — C depends on T (C = |error|/log T).
+    For a genuine uniform bound, see RiemannVonMangoldt.lean:riemann_von_mangoldt_conditional. -/
 theorem riemann_von_mangoldt (T : ℝ) (hT : 1 < T) :
     ∃ C : ℝ, |(zetaZeroCount T : ℝ) - (T / (2 * Real.pi)) * Real.log (T / (2 * Real.pi * Real.exp 1))| ≤ C * Real.log T := by
   exact ⟨|(zetaZeroCount T : ℝ) - (T / (2 * Real.pi)) * Real.log (T / (2 * Real.pi * Real.exp 1))| / Real.log T,
     by rw [div_mul_cancel₀ _ (ne_of_gt (Real.log_pos (by linarith)))]⟩
 
-/-- Asymptotic: N(T) = (T/2π) log T - (T/2π) log(2πe) + O(log T) -/
+/-- Asymptotic: N(T) = (T/2π) log(T/2πe) + O(log T).
+    NOTE: The previous statement `N(T) - (T/2π)log(T) = O(log T)` was WRONG.
+    The difference N(T) - (T/2π)log(T) = -(T/2π)log(2πe) + O(log T) = Θ(T),
+    not O(log T). The correct asymptotic uses log(T/2πe). -/
 theorem zetaZeroCount_asymp :
-    (fun T => (zetaZeroCount T : ℝ) - (T / (2 * Real.pi)) * Real.log T) =O[atTop]
+    (fun T => (zetaZeroCount T : ℝ) - (T / (2 * Real.pi)) *
+      Real.log (T / (2 * Real.pi * Real.exp 1))) =O[atTop]
     (fun T => Real.log T) := by
   sorry
 

@@ -12,22 +12,22 @@ Claude (Anthropic).
 
 ## Status
 
-Last audited: 2026-02-05.
+Last audited: 2026-02-07.
 
 | Metric | Count |
 |--------|-------|
-| Sorry warnings (`lake build Littlewood.Main.Littlewood`) | **11** (8 project + 3 external) |
-| Sorry warnings (full `lake build`) | **15** (12 project + 3 external) |
-| CriticalAssumptions.lean (critical path hypotheses) | 5 |
-| Bridge/ (oscillation extraction) | 2 |
-| Aristotle/ (active, imported) | 5 across 4 files |
+| Sorry warnings (full `lake build`) | **10** (7 project + 3 external) |
+| CriticalAssumptions.lean (critical path hypotheses) | 1 |
+| Bridge/ (oscillation extraction + transfer) | 3 |
+| Aristotle/ (active, imported) | 3 across 2 files |
 | Aristotle/Bridge/ (wiring) | **0** (3 files, all sorry-free) |
 | Main theorem sorries | **0** |
 | Main theorem explicit typeclass params | **0** (all auto-resolved) |
-| Lines of Lean code | ~39,600 |
-| Total .lean files | 209 |
-| Active Aristotle files | 125 |
-| Budget-exhaustion sorries closed by Claude Code | 18/19 |
+| Lines of Lean code | ~42,300 |
+| Total .lean files | 217 |
+| Aristotle files (total) | 136 |
+| Aristotle files in build | 81 |
+| Budget-exhaustion sorries closed by Claude Code | 22/22 |
 
 ## Main Theorems
 
@@ -55,23 +55,25 @@ Corollaries proved from `littlewood_pi_li`:
 
 ### Critical Path: Sorries the Main Theorems Depend On
 
-**For `littlewood_psi`** (6 sorries on critical path):
+**For `littlewood_psi`** (4 sorries on critical path):
 
 | Sorry | Location | Mathematical Content |
 |-------|----------|---------------------|
-| Oscillation extraction (ψ) | Bridge/ExplicitFormulaOscillation.lean | ∞ critical-line zeros + explicit formula → ψ Ω±(√x) |
-| ZetaCriticalLineBoundHyp | CriticalAssumptions.lean | \|ζ(1/2+it)\| ≤ C\|t\|^{1/4+ε} |
+| Oscillation extraction (ψ) | Bridge/ExplicitFormulaOscillation.lean | ∞ critical-line zeros → ψ Ω±(√x) |
 | HardyFirstMomentUpperHyp | CriticalAssumptions.lean | \|∫₁ᵀ Z(t) dt\| ≤ C·T^{1/2+ε} |
-| ExplicitFormulaPsiHyp | CriticalAssumptions.lean | ψ₀(x) = x - Σ_ρ x^ρ/ρ + O(log x) |
 | approx_functional_eq | Aristotle/HardyApproxFunctionalEq.lean | ∫Z² ≥ k·∫\|S\|² - CT |
+| ~~ZetaCriticalLineBoundHyp~~ | ~~CriticalAssumptions.lean~~ | **AUTO-WIRED** via PhragmenLindelofWiring |
 
-**For `littlewood_pi_li`** (all ψ sorries above, plus 3):
+**For `littlewood_pi_li`** (all ψ sorries above, plus 2):
 
 | Sorry | Location | Mathematical Content |
 |-------|----------|---------------------|
-| ExplicitFormulaThetaHyp | CriticalAssumptions.lean | θ₀(x) = x - Σ_ρ x^ρ/ρ + O(√x) |
-| Oscillation extraction (θ) | Bridge/ThetaExplicitFormulaOscillation.lean | ∞ critical-line zeros + explicit formula → θ Ω±(√x) |
-| OmegaThetaToPiLiHyp | CriticalAssumptions.lean | θ oscillation → π-li oscillation |
+| Oscillation extraction (θ) | Bridge/ThetaExplicitFormulaOscillation.lean | ∞ critical-line zeros → θ Ω±(√x) |
+| OmegaThetaToPiLiHyp | Bridge/OmegaThetaToPiLiWiring.lean | θ oscillation → π-li oscillation |
+
+**Removed from critical path** (tsum formulation was FALSE):
+- `ExplicitFormulaPsiHyp` — tsum ∑' ρ x^ρ/ρ not absolutely convergent; folded into bridge sorry
+- `ExplicitFormulaThetaHyp` — same tsum issue; folded into bridge sorry
 
 ## Complete Dependency Tree
 
@@ -81,22 +83,21 @@ littlewood_psi
       └── PsiOscillationWiring.lean (0 sorry)
           └── [PsiOscillationFromCriticalZerosHyp] ← auto-resolved
               └── ExplicitFormulaOscillation.lean (1 SORRY)
-                  ├── [HardyCriticalLineZerosHyp] ← auto-resolved
-                  │   └── HardyCriticalLineWiring.lean (0 sorry)
-                  │       ├── [ZetaCriticalLineBoundHyp]     SORRY
-                  │       ├── [HardyFirstMomentUpperHyp]     SORRY
-                  │       └── HardyInfiniteZerosV2 (0 sorry)
-                  │           └── approx_functional_eq       SORRY (Aristotle)
-                  └── [ExplicitFormulaPsiHyp]                SORRY
+                  └── [HardyCriticalLineZerosHyp] ← auto-resolved
+                      └── HardyCriticalLineWiring.lean (0 sorry)
+                          ├── [ZetaCriticalLineBoundHyp]     AUTO (PhragmenLindelofWiring)
+                          ├── [HardyFirstMomentUpperHyp]     SORRY
+                          └── HardyInfiniteZerosV2 (0 sorry)
+                              └── approx_functional_eq       SORRY (Aristotle)
 
 littlewood_pi_li
   └── [PiLiOscillationSqrtHyp] ← auto-resolved
       └── PsiToPiLiOscillation.lean (0 sorry)
           ├── [ThetaOscillationSqrtHyp] ← auto-resolved
           │   └── ThetaExplicitFormulaOscillation.lean (1 SORRY)
-          │       ├── [HardyCriticalLineZerosHyp]  ← auto-resolved (full ψ chain above)
-          │       └── [ExplicitFormulaThetaHyp]     SORRY
-          └── [OmegaThetaToPiLiHyp]                 SORRY
+          │       └── [HardyCriticalLineZerosHyp]  ← auto-resolved (full ψ chain above)
+          └── [OmegaThetaToPiLiHyp]
+              └── OmegaThetaToPiLiWiring.lean (1 SORRY)
 ```
 
 No sorry in the tree says "assume Littlewood to prove Littlewood." Every sorry
@@ -113,25 +114,28 @@ from analytic content:
    chain from Hardy's theorem through Schmidt oscillation to Littlewood
    compiles with 0 sorries
 3. **`CriticalAssumptions.lean`** provides `sorry`-backed instances for the
-   5 critical path hypothesis classes
-4. **`Assumptions.lean`** provides `sorry`-backed instances for ~54
+   1 remaining critical path hypothesis class (was 5; 3 removed, 1 auto-wired, 1 moved to bridge)
+4. **`Assumptions.lean`** provides `sorry`-backed instances for ~52
    infrastructure hypothesis classes (not on critical path)
 5. **Aristotle/ and Bridge/** work toward replacing those sorries with
    genuine proofs
 
 When an assumption is proved, the `sorry` instance moves out and the
-hypothesis is discharged. Five instances are already fully proved:
+hypothesis is discharged. Six instances are already fully proved:
 - `FunctionalEquationHyp` — zeta functional equation (proved)
 - `LambdaSymmetryHyp` — completed zeta symmetry (proved)
 - `ZeroConjZeroHyp` — conjugation symmetry of nontrivial zeros (proved)
 - `ZeroOneSubZeroHyp` — functional equation symmetry (proved)
 - `ZetaLogDerivPoleHyp` — -zeta'/zeta has poles at zeros (proved)
+- `ZetaCriticalLineBoundHyp` — |ζ(1/2+it)| ≤ C|t|^{1/4+ε} (auto-wired via PhragmenLindelofWiring)
 
 Auto-wired (fire when dependencies are met):
+- `ZetaCriticalLineBoundHyp` — via `Bridge/PhragmenLindelofWiring.lean` (0 sorry)
 - `HardyCriticalLineZerosHyp` — via `HardyCriticalLineWiring.lean`
 - `PsiOscillationFromCriticalZerosHyp` — via `ExplicitFormulaOscillation.lean` (1 sorry)
 - `PsiOscillationSqrtHyp` — via `PsiOscillationWiring.lean`
 - `ThetaOscillationSqrtHyp` — via `ThetaExplicitFormulaOscillation.lean` (1 sorry)
+- `OmegaThetaToPiLiHyp` — via `OmegaThetaToPiLiWiring.lean` (1 sorry)
 - `PiLiOscillationSqrtHyp` — via `PsiToPiLiOscillation.lean`
 
 ## Project Structure
@@ -145,12 +149,12 @@ Littlewood/
   Oscillation/                 2 files  -- Schmidt oscillation theorem
   Main/                        3 files  -- Littlewood, LittlewoodPsi, LittlewoodPi (0 sorries)
   Mertens/                     1 file   -- Mertens' first theorem
-  CriticalAssumptions.lean     1 file   -- 5 critical path hypothesis instances (sorry)
-  Assumptions.lean             1 file   -- ~54 infrastructure hypothesis instances (sorry)
-  Aristotle/                 125 files  -- AI-generated proofs (Harmonic + Claude)
+  CriticalAssumptions.lean     1 file   -- 1 critical path hypothesis instance (sorry)
+  Assumptions.lean             1 file   -- ~52 infrastructure hypothesis instances (sorry)
+  Aristotle/                 136 files  -- AI-generated proofs (Harmonic + Claude)
     Bridge/                    3 files  -- Aristotle-side wiring (all sorry-free)
     _deprecated/               4 files  -- Superseded Aristotle files
-  Bridge/                     29 files  -- Wiring Aristotle proofs to hypothesis classes
+  Bridge/                     30 files  -- Wiring Aristotle proofs to hypothesis classes
   Development/                17 files  -- WIP proofs (not imported by main build)
   Tests/                       8 files  -- Integration tests
 scripts/
@@ -189,38 +193,27 @@ DiagonalIntegralBound: ∫|S_N|² ≥ c·T·log T                (0 sorries)
 **The Hardy chain is fully wired from inputs to main theorem.** The
 remaining analytic inputs are:
 
-- `ZetaCriticalLineBoundHyp` — Phragmen-Lindelof convexity: |zeta(1/2+it)| <= C|t|^{1/4+eps}
+- `ZetaCriticalLineBoundHyp` — **AUTO-WIRED** via PhragmenLindelofWiring (0 sorries)
 - `HardyFirstMomentUpperHyp` — first moment: |int_1^T Z(t) dt| <= C*T^{1/2+eps}
-- `ExplicitFormulaPsiHyp` — explicit formula: psi_0(x) = x - sum_rho x^rho/rho + O(log x)
 - `approx_functional_eq` (1 sorry) — approximate functional equation
 - Oscillation extraction (1 sorry in ExplicitFormulaOscillation.lean)
 
 ## Sorry Inventory
 
-Audited from `lake build` output (2026-02-05). Only imported files
+Audited from `lake build` output (2026-02-07). Only imported files
 produce build warnings.
 
-### Main target: `lake build Littlewood.Main.Littlewood` — 11 warnings
+### Full build: `lake build` — 10 warnings
 
 | Location | Sorries | Notes |
 |----------|---------|-------|
-| **CriticalAssumptions.lean** | 5 | Critical path hypotheses |
-| **Bridge/** | 2 | ExplicitFormulaOscillation + ThetaExplicitFormulaOscillation |
-| **Aristotle/** | 1 | HardyApproxFunctionalEq (approx_functional_eq) |
+| **CriticalAssumptions.lean** | 1 | HardyFirstMomentUpperHyp |
+| **Bridge/** | 3 | ExplicitFormulaOscillation + ThetaExplicitFormulaOscillation + OmegaThetaToPiLiWiring |
+| **Aristotle/** | 3 | HardyApproxFunctionalEq(1), ZeroCounting(2) |
 | **PrimeNumberTheoremAnd** | 3 | External dependency, NOT on critical path |
-| **Total** | **11** | 8 project + 3 external |
+| **Total** | **10** | 7 project + 3 external |
 
-### Full build: `lake build` — 15 warnings
-
-| Location | Sorries | Notes |
-|----------|---------|-------|
-| **CriticalAssumptions.lean** | 5 | Critical path hypotheses |
-| **Bridge/** | 2 | ExplicitFormulaOscillation + ThetaExplicitFormulaOscillation |
-| **Aristotle/** | 5 | HardyApproxFunctionalEq(1), PhragmenLindelof(1), ZeroCounting(2), PartialSummation(1) |
-| **PrimeNumberTheoremAnd** | 3 | External dependency, NOT on critical path |
-| **Total** | **15** | 12 project + 3 external |
-
-### Infrastructure: `lake build Littlewood.Assumptions` — adds ~54 sorries
+### Infrastructure: `lake build Littlewood.Assumptions` — adds ~52 sorries
 
 Assumptions.lean provides sorry-backed instances for non-critical hypothesis
 classes (zero counting, weighted average, Landau lemma, etc.). These are NOT
@@ -230,22 +223,23 @@ imported by the main theorems and are scaffolding for future extensions.
 
 | File | Sorries | What each sorry needs | Difficulty |
 |------|---------|----------------------|------------|
-| **PhragmenLindelof.lean** | 1 | `zeta_convexity_bound`: three-lines interpolation between left/right boundary bounds (both proved). gamma_growth CLOSED. zeta_critical_line_bound + bridge wiring are written and will auto-close. | Medium — apply PhragmenLindelof.vertical_strip (same pattern as StirlingRatioPL). |
-| **ZeroCounting.lean** | 2 | `zetaZeroCount_via_argument`: N(T) via argument principle. `zetaZeroCount_asymp`: N(T) = (T/2pi)log(T/2pi) - T/2pi + O(log T). | Medium — argument principle machinery exists in Mathlib. |
+| **ZeroCounting.lean** | 2 | `zetaZeroCount_via_argument`: N(T) via argument principle. `zetaZeroCount_asymp`: N(T) = (T/2pi)log(T/2pie) - T/2pi + O(log T). | Medium — argument principle machinery exists in Mathlib. |
 | **HardyApproxFunctionalEq.lean** | 1 | `approx_functional_eq`: int Z^2 >= k * int \|\|S\|\|^2 - C*T. Needs Riemann-Siegel type approximate functional equation. | Hard — deep analytic number theory. |
-| **PartialSummation.lean** | 1 | `psi_oscillation_implies_pi_li_oscillation`: transfer via partial summation. Alternative route (not on critical path). | Medium. |
 
 ### Recently Closed Sorries
 
 | File | Sorry | Closed by |
 |------|-------|-----------|
+| CriticalAssumptions.lean | `ExplicitFormulaPsiHyp` | REMOVED — tsum formulation FALSE (∑1/\|ρ\| diverges) |
+| CriticalAssumptions.lean | `ExplicitFormulaThetaHyp` | REMOVED — same tsum issue |
+| CriticalAssumptions.lean | `ZetaCriticalLineBoundHyp` | AUTO-WIRED via PhragmenLindelofWiring |
+| CriticalAssumptions.lean | `OmegaThetaToPiLiHyp` | Moved to Bridge/OmegaThetaToPiLiWiring |
+| PhragmenLindelof.lean | `zeta_pl_interpolation` | Claude Code — PL + Gaussian damping + Gammaℝ factorization |
 | PhragmenLindelof.lean | `gamma_growth` | Claude Code — via GammaGrowthComplete + StirlingRatioPL |
 | PhragmenLindelof.lean | `zeta_convexity_bound` | Claude Code — via PhragmenLindelof.vertical_strip |
+| PartialSummation.lean | `psi_oscillation_implies_pi_li_oscillation` | REMOVED — theorem was FALSE as stated |
 | Bridge/StirlingRatioPL.lean | `stirling_ratio_bounded_on_strip` | Claude Code — via PL + norm_cpow_of_ne_zero |
-| StirlingBernoulli.lean | `hasDerivWithinAt_B2_right` | Claude Code — budget exhaustion |
-| ContourIntegrationV2.lean | `crossing_upper` | Claude Code — budget exhaustion |
-| HardyApproxFunctionalEqV2.lean | `hardy_algebraic_bound`, `hardy_error_integral_bound` | Claude Code — budget exhaustion |
-| DirichletPhaseAlignment.lean | `abs_sin_le_abs`, `h_dirichlet` forwarding | Claude Code — abs_sin_le_abs + direct application |
+| DirichletPhaseAlignment.lean | `abs_sin_le_abs`, `h_dirichlet` | Claude Code — direct application |
 | ZeroCountingRectangle.lean | `limit_mul_zeta_sub_one` | Claude Code — via tendsto_riemannZeta_sub_one_div |
 | ZeroCountingRectangle.lean | `AnalyticAt ℂ g c` | Claude Code — removable singularity theorem |
 
@@ -255,13 +249,18 @@ imported by the main theorems and are scaffolding for future extensions.
   - `GammaGrowthComplete.lean` — HasGammaGrowth for all σ > 0
   - `GammaGrowthWiring.lean` — wires gamma growth to critical path
   - `StirlingRatioPL.lean` — Stirling ratio bounded via Phragmen-Lindelof
-- **PhragmenLindelof.lean** — reduced from 3 sorries to 1 (gamma_growth closed; zeta_convexity_bound remains)
+- **PhragmenLindelof.lean** — reduced from 3 sorries to **0** (all closed: gamma_growth, zeta_convexity_bound, zeta_pl_interpolation)
 - **ZetaBoundGtOne.lean** — |ζ(1+δ+it)| ≤ |ζ(1+δ)| (sorry-free)
 - **DirichletPhaseAlignment.lean** — Simultaneous Dirichlet approximation, phase alignment from critical zeros, oscillation extraction infrastructure (sorry-free)
 - **ZeroCountingRectangle.lean** — Rectangle contour integrals, N(T), zeta log deriv residue, (s-1)*ζ(s)→1, removable singularity (sorry-free)
 - **ZetaConvexityStrip.lean** — zeta convexity bounds (sorry-free)
 - **RiemannSiegelBound.lean** — Riemann-Siegel bounds (sorry-free)
-- 99+ Aristotle files compile sorry-free
+- **ZetaAnalyticProperties.lean** — functional equation, zeros isolated/finite, analytic at s!=1, Re(ζ)>0 for Re(s)>=2 (sorry-free)
+- **ZetaBoundFunctionalEq.lean** — zeta bounded Re(s)>=1+δ, functional eq χ(s) (sorry-free)
+- **HardyZIdentities.lean** — Hardy square bound, pointwise identity, integrability (sorry-free)
+- **ExplicitFormulaPerron.lean** — finite-sum explicit formula classes (sorry-free)
+- **OscillationInfraV2.lean** — sum_diverges_to_infinity oscillation extraction (sorry-free)
+- 120+ Aristotle files compile sorry-free
 
 ## Key Definitions
 
@@ -293,6 +292,7 @@ imported by the main theorems and are scaffolding for future extensions.
 | `abs_sin_le_abs` | \|sin x\| ≤ \|x\| for all real x |
 | `tendsto_riemannZeta_sub_one_div` | ζ(s) - 1/(s-1) → γ (Euler-Mascheroni) as s → 1 |
 | `analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt` | Removable singularity: diff on punctured nhds + continuous → analytic |
+| `HurwitzZeta.hurwitzZetaEven_residue_one` | (s-1)*ζ(s) → 1 at s=1 |
 
 ## Notes for AI Assistants
 
@@ -310,6 +310,7 @@ imported by the main theorems and are scaffolding for future extensions.
 - **OmegaPsiToThetaHyp is mathematically false** (kept for backward compatibility, NOT used by main theorems).
 - **PsiToThetaOscillation.lean is DEPRECATED** — the ψ→θ transfer is mathematically problematic (|ψ-θ| ~ √x absorbs the Ω₊ signal). Replaced by ThetaExplicitFormulaOscillation.lean.
 - **LandauLemma.lean** sorry is FALSE as stated. Not used downstream.
+- **ExplicitFormulaPsiHyp/ThetaHyp** used tsum over zetaNontrivialZeros, which is FALSE (∑1/|ρ| diverges on critical line → tsum = 0). Use truncated sums instead.
 
 ### Build configuration
 - `maxHeartbeats 1600000`, `maxRecDepth 4000` in lakefile.toml
@@ -326,18 +327,18 @@ imported by the main theorems and are scaffolding for future extensions.
 - `← rpow_zero` can rewrite the wrong `1` — use `calc` with `(rpow_zero _).symm` instead.
 
 ### Priority for reducing sorry count
-1. **PhragmenLindelof.lean** (1 sorry) — `zeta_convexity_bound`: apply `PhragmenLindelof.vertical_strip` with boundary bounds (both proved). Would auto-close `zeta_critical_line_bound` + `ZetaCriticalLineBoundHyp` (critical path 8→7).
-2. **ExplicitFormulaOscillation** (1 sorry) — ψ oscillation extraction from zeros + formula.
-3. **ThetaExplicitFormulaOscillation** (1 sorry) — θ oscillation extraction (same argument as ψ).
-4. **HardyApproxFunctionalEq.lean** (1 sorry) — approximate functional equation.
-5. **ExplicitFormulaPsiHyp / ExplicitFormulaThetaHyp** — Perron's formula (same underlying proof).
-6. **OmegaThetaToPiLiHyp** — quantitative PNT error bounds.
+1. **ExplicitFormulaOscillation** (1 sorry) — ψ oscillation extraction from zeros. Needs truncated explicit formula + Dirichlet phase alignment (alignment PROVED in DirichletPhaseAlignment.lean).
+2. **ThetaExplicitFormulaOscillation** (1 sorry) — θ oscillation extraction (same argument as ψ).
+3. **HardyApproxFunctionalEq.lean** (1 sorry) — approximate functional equation.
+4. **OmegaThetaToPiLiWiring** (1 sorry) — θ oscillation → π-li oscillation transfer.
+5. **HardyFirstMomentUpperHyp** (1 sorry) — first moment bound (conditional theorem proved, needs oscillatory integral bounds).
+6. **ZeroCounting.lean** (2 sorries) — N(T) via argument principle, asymptotic.
 
 ### What a second AI should read first
 1. This README (complete dependency tree above)
 2. `docs/resumption_guide.md` — session handoff guide with Lean/Mathlib API notes
 3. `docs/CurrentStatus.md` — detailed status with wiring diagrams
-4. `Littlewood/CriticalAssumptions.lean` — 5 critical path hypothesis instances
+4. `Littlewood/CriticalAssumptions.lean` — 1 critical path hypothesis instance
 5. `Littlewood/Bridge/ExplicitFormulaOscillation.lean` — the key ψ bridge (1 sorry)
 6. `Littlewood/Bridge/ThetaExplicitFormulaOscillation.lean` — the θ bridge (1 sorry)
 7. `Littlewood/Bridge/PsiToPiLiOscillation.lean` — the π-li bridge (0 sorry)
@@ -386,12 +387,11 @@ Build configuration: `maxHeartbeats 1600000`, `maxRecDepth 4000`.
 
 See `docs/aristotle_prompts.md` for detailed prompts. Priority order:
 
-1. **PhragmenLindelof.lean** (1 sorry) — `zeta_convexity_bound`: three-lines interpolation via `PhragmenLindelof.vertical_strip`. Boundary bounds proved. Would cascade to close `ZetaCriticalLineBoundHyp`.
-2. **ExplicitFormulaOscillation.lean** (1 sorry) — show ∞ critical-line zeros + explicit formula → ψ oscillation.
-3. **ThetaExplicitFormulaOscillation.lean** (1 sorry) — same argument as #2 applied to θ.
-4. **HardyApproxFunctionalEq.lean** (1 sorry) — approximate functional equation.
+1. **ExplicitFormulaOscillation.lean** (1 sorry) — show ∞ critical-line zeros → ψ oscillation. Dirichlet alignment infrastructure proved.
+2. **ThetaExplicitFormulaOscillation.lean** (1 sorry) — same argument as #1 applied to θ.
+3. **HardyApproxFunctionalEq.lean** (1 sorry) — approximate functional equation.
+4. **OmegaThetaToPiLiWiring.lean** (1 sorry) — θ oscillation → π-li oscillation transfer.
 5. **ZeroCounting.lean** (2 sorries) — N(T) via argument principle, asymptotic.
-6. **PartialSummation.lean** (1 sorry) — psi oscillation implies pi-li oscillation.
 
 ### Workflow
 

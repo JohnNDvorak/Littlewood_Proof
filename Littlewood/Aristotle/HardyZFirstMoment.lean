@@ -13,6 +13,7 @@ KEY RESULTS (ALL PROVED - 0 sorries):
 
 import Mathlib
 import Littlewood.Aristotle.HardyEstimatesPartial
+import Littlewood.Aristotle.HardyZMeasurability
 
 set_option linter.mathlibStandardSet false
 
@@ -73,10 +74,24 @@ Error term of the approximate functional equation for Z(t)
 -/
 def ErrorTerm (t : ℝ) : ℝ := hardyZ t - MainTerm t
 
+lemma MainTerm_eq_hardySum : MainTerm = hardySum := by
+  funext t
+  simp [MainTerm, hardySum, hardyN]
+
+lemma ErrorTerm_eq_hardyRemainder : ErrorTerm = hardyRemainder := by
+  funext t
+  simp [ErrorTerm, hardyRemainder, MainTerm_eq_hardySum]
+
+lemma mainTerm_integrable (T : ℝ) : IntegrableOn MainTerm (Ioc 1 T) := by
+  simpa [MainTerm_eq_hardySum] using hardySum_integrable T
+
+lemma errorTerm_integrable (T : ℝ) : IntegrableOn ErrorTerm (Ioc 1 T) := by
+  simpa [ErrorTerm_eq_hardyRemainder] using hardyRemainder_integrable T
+
 /-
 Conditional first moment bound assuming bounds on MainTerm and ErrorTerm
 -/
-theorem hardyZ_first_moment_bound_conditional (ε : ℝ) (hε : ε > 0)
+theorem hardyZ_first_moment_bound_conditional (ε : ℝ) (_hε : ε > 0)
     (h_integrable_main : ∀ T ≥ 1, IntegrableOn MainTerm (Ioc 1 T))
     (h_integrable_error : ∀ T ≥ 1, IntegrableOn ErrorTerm (Ioc 1 T))
     (h_main_bound : ∃ C₁ > 0, ∀ T ≥ 2, |∫ t in Ioc 1 T, MainTerm t| ≤ C₁ * T^(1/2 + ε))
@@ -88,5 +103,15 @@ theorem hardyZ_first_moment_bound_conditional (ε : ℝ) (hε : ε > 0)
       have h_split : ∀ T ≥ 2, ∫ t in Set.Ioc 1 T, hardyZ t = (∫ t in Set.Ioc 1 T, MainTerm t) + (∫ t in Set.Ioc 1 T, ErrorTerm t) := by
         intro T hT; rw [ ← MeasureTheory.integral_add ( h_integrable_main T ( by linarith ) ) ( h_integrable_error T ( by linarith ) ) ] ; exact MeasureTheory.setIntegral_congr_fun measurableSet_Ioc fun x hx => by unfold ErrorTerm; ring;
       exact fun T hT => by rw [ h_split T hT ] ; exact abs_le.mpr ⟨ by nlinarith [ abs_le.mp ( hC₁ T hT ), abs_le.mp ( hC₂ T hT ), Real.rpow_pos_of_pos ( by linarith : 0 < T ) ( 1 / 2 + ε ) ], by nlinarith [ abs_le.mp ( hC₁ T hT ), abs_le.mp ( hC₂ T hT ), Real.rpow_pos_of_pos ( by linarith : 0 < T ) ( 1 / 2 + ε ) ] ⟩ ;
+
+theorem hardyZ_first_moment_bound_conditional_two_bounds (ε : ℝ) (hε : ε > 0)
+    (h_main_bound : ∃ C₁ > 0, ∀ T ≥ 2, |∫ t in Ioc 1 T, MainTerm t| ≤ C₁ * T^(1/2 + ε))
+    (h_error_bound : ∃ C₂ > 0, ∀ T ≥ 2, |∫ t in Ioc 1 T, ErrorTerm t| ≤ C₂ * T^(1/2 + ε)) :
+    ∃ C > 0, ∃ T₀ > 0, ∀ T ≥ T₀, |∫ t in Ioc 1 T, hardyZ t| ≤ C * T^(1/2 + ε) := by
+  refine hardyZ_first_moment_bound_conditional ε hε ?_ ?_ h_main_bound h_error_bound
+  · intro T hT
+    exact mainTerm_integrable T
+  · intro T hT
+    exact errorTerm_integrable T
 
 end HardyEstimatesPartial
