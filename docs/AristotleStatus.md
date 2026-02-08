@@ -1,6 +1,6 @@
 # Aristotle Module: Status Tracker
 
-**Date**: 2026-02-08 (OmegaThetaToPiLiHyp moved to bridge; sorry count unchanged at 10)
+**Date**: 2026-02-08 (Overnight wiring pass: 10 Aristotle imports added; sorry count unchanged at 10)
 
 ## Overview
 
@@ -9,14 +9,23 @@ Anthropic's Claude) that work toward closing the sorry-backed hypothesis instanc
 Files are organized in `Littlewood/Aristotle/`.
 
 - **Total files**: 128
-- **Files in build**: 81 (was 76)
-- **Orphan files**: 50 (was 55)
+- **Files in build**: 106 (import-graph verified from `Littlewood`)
+- **Orphan files**: 22
 - **Files with active sorries (build-visible)**: 2
 - **Sorry-free files**: 125 (97.7%)
 - **Total build-visible Aristotle sorries**: 3
 - **Budget-exhaustion sorry track record**: 22/22 CLOSED (all resolved)
 - **Total project sorries (build)**: 7 (1 critical + 3 bridge + 3 Aristotle)
 - **External sorries**: 3 (PrimeNumberTheoremAnd/Wiener.lean, not on critical path)
+
+## Recent Achievements (Session 13)
+
+| Achievement | Details |
+|------------|---------|
+| **Stale import comments fixed in `Littlewood.lean`** | Updated stale Aristotle sorry-count comments (e.g. PhragmenLindelof/PartialSummation now marked 0 sorries where appropriate) |
+| **`RemainderTermAnalysis.lean` fixed and wired** | Replaced all 4 `exact?` placeholders with concrete lemmas; module compiles and is now imported |
+| **9 additional orphan Aristotle files wired** | Added imports for VanDerCorputInfra, DirichletPhaseAlignment, ZeroCountingRectangle, ContourIntegrationV2, ZetaLogDerivInfra, HardySetupRequirements, GammaGrowthGeneral, ZetaBoundGtOne, RiemannSiegelBound |
+| **Build baseline preserved** | `lake build` still passes with 10 sorry warnings (7 project + 3 external) |
 
 ## Recent Achievements (Session 12)
 
@@ -32,7 +41,7 @@ Files are organized in `Littlewood/Aristotle/`.
 |------------|---------|
 | **5 orphan Aristotle files wired into build** | HardyZIdentities, ZetaAnalyticProperties, OscillationInfraV2, ExplicitFormulaPerron, ZetaBoundFunctionalEq — all 0 sorries, now available in build tree |
 | **ZetaAnalyticProperties chi conflict fixed** | Moved `chi` definition inside `Aristotle.ZetaAnalyticProperties` namespace to avoid conflict with `MeanSquare.lean` root-level `chi` |
-| **RemainderTermAnalysis skipped** | Has 2 `exact?` placeholders (would add sorries). Can import later after fixing. |
+| **RemainderTermAnalysis was previously skipped** | Later resolved and imported in Session 13 (all `exact?` placeholders closed). |
 | **Sorry count unchanged** | 10 build warnings (7 project + 3 external) |
 | **Aristotle files in build** | 76 → 81 |
 | **Orphan files** | 55 → 50 |
@@ -128,7 +137,7 @@ NOTE: ExplicitFormulaPsiHyp and ExplicitFormulaThetaHyp REMOVED from critical pa
 
 2. **OmegaThetaToPiLiHyp** (`Bridge/OmegaThetaToPiLiWiring.lean`) — The PartialSummation.lean route was FALSE and has been removed. This sorry now requires a direct approach: quantitative PNT error bounds to show θ(x)-x oscillation transfers to π(x)-li(x) oscillation at the √x/log x scale.
 
-3. **HardyFirstMomentUpperHyp** — Conditional theorem proved, 4+ prerequisites unproved (approx functional equation + van der Corput).
+3. **HardyFirstMomentUpperHyp** — Conditional theorem and measurability wiring proved; 2 remaining integral-bound prerequisites are unproved (van der Corput/remainder control).
 
 ## Aristotle Bridge Files (all sorry-free)
 
@@ -153,6 +162,11 @@ NOTE: ExplicitFormulaPsiHyp and ExplicitFormulaThetaHyp REMOVED from critical pa
 | **ZeroCountingRectangle.lean** | (s-1)ζ(s)→1, (s-1)²ζ'(s)→-1, residue of ζ'/ζ at s=1 |
 | **ContourIntegrationV2.lean** | Cauchy rectangle theorem, residue at simple pole, segment integrals |
 | **ZetaLogDerivInfra.lean** | All 10 theorems proved: pole structure of -ζ'/ζ, analytic orders |
+| **VanDerCorputInfra.lean** | Van der Corput first/second derivative infrastructure for oscillatory integrals |
+| **GammaGrowthGeneral.lean** | General Gamma growth bounds used by strip/contour arguments |
+| **ZetaBoundGtOne.lean** | Additional `Re(s)>1` zeta growth/boundedness infrastructure |
+| **RiemannSiegelBound.lean** | Riemann-Siegel style Hardy Z control lemmas |
+| **HardySetupRequirements.lean** | Documentation-only checklist module (now imported for visibility) |
 
 ## What Aristotle Needs Next
 
@@ -164,7 +178,7 @@ Infrastructure exists in DirichletPhaseAlignment.lean; needs wiring to Littlewoo
 - ExplicitFormulaPsiHyp/ThetaHyp REMOVED from bridge dependencies (tsum was FALSE).
 - Bridge sorries now absorb the full oscillation extraction: truncated explicit formula
   + Dirichlet phase alignment + anti-alignment.
-- DirichletPhaseAlignment.lean (orphan) proves alignment (Ω₋ direction) but only for
+- DirichletPhaseAlignment.lean (now imported) proves alignment (Ω₋ direction) but only for
   `IsOmegaOscillation` (∀ M, ∃ x, f x ≥ M·g x), not `IsOmegaPlusMinus`.
 - Anti-alignment (Ω₊ direction) requires inhomogeneous Dirichlet approximation or
   mean-value argument — neither proved in the codebase.

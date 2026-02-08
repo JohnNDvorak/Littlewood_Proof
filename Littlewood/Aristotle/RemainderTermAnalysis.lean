@@ -252,7 +252,7 @@ lemma remainder_sq_le_product_bound (x : ℝ) (hx : 2 ≤ x) :
           have h_psi_measurable : Measurable psi := by
             apply_rules [ Monotone.measurable, measurable_const ];
             intro x y hxy;
-            exact Finset.sum_le_sum_of_subset_of_nonneg ( Finset.Icc_subset_Icc_right ( Nat.floor_mono hxy ) ) fun _ _ _ => by exact?;
+            exact Finset.sum_le_sum_of_subset_of_nonneg ( Finset.Icc_subset_Icc_right ( Nat.floor_mono hxy ) ) fun _ _ _ => by exact_mod_cast ArithmeticFunction.vonMangoldt_nonneg;
           exact h_psi_measurable.sub measurable_id;
         · exact measurable_inv.aestronglyMeasurable;
       · exact Measurable.aestronglyMeasurable ( by exact Measurable.div measurable_const ( by exact Measurable.pow_const ( Real.measurable_log ) _ ) );
@@ -265,7 +265,7 @@ lemma remainder_sq_le_product_bound (x : ℝ) (hx : 2 ≤ x) :
               intro t ht
               have h_psi_le : psi t ≤ ∑ n ∈ Finset.Icc 1 ⌊t⌋₊, Real.log n := by
                 refine' Finset.sum_le_sum fun n hn => _;
-                exact?;
+                exact ArithmeticFunction.vonMangoldt_le_log
               refine le_trans h_psi_le ?_;
               refine' le_trans ( Finset.sum_le_sum fun i hi => Real.log_le_log ( Nat.cast_pos.mpr <| Finset.mem_Icc.mp hi |>.1 ) <| Nat.floor_le ( by linarith [ ht.1 ] ) |> le_trans ( Nat.cast_le.mpr <| Finset.mem_Icc.mp hi |>.2 ) ) _ ; norm_num;
               exact mul_le_mul_of_nonneg_right ( Nat.floor_le ( by linarith [ ht.1 ] ) ) ( Real.log_nonneg ( by linarith [ ht.1 ] ) );
@@ -309,7 +309,7 @@ theorem integral_remainder_small
         convert remainder_sq_le_product_bound x hx.le using 1 ; norm_num [ abs_div, abs_mul ];
         rw [ one_mul, Real.norm_of_nonneg ( mul_nonneg ( intervalIntegral.integral_nonneg ( by linarith ) fun t ht => div_nonneg ( sq_nonneg _ ) ( sq_nonneg _ ) ) ( intervalIntegral.integral_nonneg ( by linarith ) fun t ht => one_div_nonneg.mpr ( pow_nonneg ( Real.log_nonneg ( by linarith [ ht.1 ] ) ) _ ) ) ) ];
       refine' h_combined.trans ( h_mean_sq.mul _ );
-      exact?;
+      exact integral_inv_log_pow_four_bound
     -- Taking square roots, $|R(x)| = O(\sqrt{x} / \log^{1.5} x)$.
     have h_sqrt : (fun x => |remainder_term x|) =O[atTop] (fun x => Real.sqrt (x / (Real.log x) ^ 3)) := by
       rw [ Asymptotics.isBigO_iff ] at *;
@@ -322,7 +322,7 @@ theorem integral_remainder_small
     have h_final : (fun x => |remainder_term x|) =o[atTop] (fun x => Real.sqrt x / Real.log x) := by
       refine' h_sqrt.trans_isLittleO _;
       convert asymptotic_algebra_2 using 1;
-    exact?
+    simpa [Real.norm_eq_abs] using Asymptotics.IsLittleO.of_norm_left h_final
 
 /-
 The square of the remainder term is O(x/log^3 x).

@@ -102,13 +102,14 @@ import Littlewood.Aristotle.ExplicitFormulaPerron    -- Finite-sum explicit form
 import Littlewood.Aristotle.StirlingArgGamma      -- Stirling arg Gamma bounds (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundsNorm        -- Zeta norm bounds, functional eq (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundFunctionalEq -- Zeta bounded Re(s)≥1+δ, functional eq (0 sorries) ✓
-import Littlewood.Aristotle.HardyZConjugation     -- Hardy Z, completedZeta conjugation (1 sorry)
+import Littlewood.Aristotle.HardyZConjugation     -- Hardy Z, completedZeta conjugation (0 sorries) ✓
 import Littlewood.Aristotle.CompletedZetaCriticalLine -- Completed zeta real on critical line (0 sorries) ✓
 import Littlewood.Aristotle.ExplicitFormulaInfrastructure -- Zeta zeros finite, explicit formula (0 sorries) ✓
 import Littlewood.Aristotle.ZetaConjugation         -- Zeta/FE pair conjugation properties (0 sorries) ✓
 import Littlewood.Aristotle.DirichletSeriesConvergence -- Dirichlet series summability lemmas (0 sorries) ✓
 import Littlewood.Aristotle.HardyZContradiction       -- Hardy Z contradiction infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.HardyZMeasurability       -- Hardy Z measurability/integrability (0 sorries) ✓
+import Littlewood.Aristotle.RemainderTermAnalysis     -- Remainder term analysis (0 sorries) ✓
 import Littlewood.Aristotle.ZetaConvexityStrip         -- Zeta PL convexity in critical strip (0 sorries) ✓
 import Littlewood.Aristotle.MeanSquarePartialSum       -- Mean square partial sum definitions (0 sorries) ✓
 import Littlewood.Aristotle.ZeroFreeRegionV2           -- Zero-free region / 3-4-1 infrastructure (0 sorries) ✓
@@ -116,15 +117,24 @@ import Littlewood.Aristotle.ZetaBoundsPartialSum       -- Zeta bounds, partial s
 import Littlewood.Aristotle.MeanSquareLowerBound        -- Mean square lower bound for partial sum (0 sorries) ✓
 import Littlewood.Aristotle.DiagonalIntegralBound       -- Diagonal integral ≥ c·T·log T (0 sorries) ✓
 import Littlewood.Aristotle.ContourInfrastructure       -- Contour defs, measure-zero segments (0 sorries) ✓
+import Littlewood.Aristotle.ContourIntegrationV2        -- Cauchy rectangle contour integration infrastructure (0 sorries) ✓
+import Littlewood.Aristotle.ZeroCountingRectangle       -- Zero-counting rectangle residue/limit infrastructure (0 sorries) ✓
+import Littlewood.Aristotle.ZetaLogDerivInfra           -- -ζ'/ζ pole/log-derivative infrastructure (0 sorries) ✓
+import Littlewood.Aristotle.VanDerCorputInfra           -- Van der Corput oscillatory integral infrastructure (0 sorries) ✓
+import Littlewood.Aristotle.DirichletPhaseAlignment     -- Simultaneous Dirichlet phase-alignment infrastructure (0 sorries) ✓
+import Littlewood.Aristotle.GammaGrowthGeneral          -- General Gamma growth bounds (0 sorries) ✓
+import Littlewood.Aristotle.ZetaBoundGtOne              -- ζ(s) bounded for Re(s) > 1 infrastructure (0 sorries) ✓
+import Littlewood.Aristotle.RiemannSiegelBound          -- Riemann-Siegel style Z-function bounds (0 sorries) ✓
+import Littlewood.Aristotle.HardySetupRequirements      -- Hardy setup requirements note (documentation-only module)
 -- import Littlewood.Aristotle.HardyInfiniteZeros       -- DEPRECATED: V1 has unsatisfiable field signatures (grind works vacuously)
-import Littlewood.Aristotle.HardyInfiniteZerosV2        -- Hardy's theorem V2: 4/5 proved, main contradiction sorry (1 sorry)
-import Littlewood.Aristotle.HardyApproxFunctionalEq     -- Approx functional eq: ∫Z²≥k∫|S_N|²-CT (0 sorries) ✓
+import Littlewood.Aristotle.HardyInfiniteZerosV2        -- Hardy's theorem V2 (0 sorries) ✓
+import Littlewood.Aristotle.HardyApproxFunctionalEq     -- Approx functional eq: ∫Z²≥k∫|S_N|²-CT (1 sorry)
 import Littlewood.Aristotle.MeanSquarePartialSumAsymptotic -- Mean square ∫|S_N|² ≥ c·T·log T (0 sorries) ✓
 import Littlewood.Aristotle.OscillatorySumBound          -- First moment: |∫ oscillatory| ≤ C·T^(1/2+ε) (0 sorries) ✓
-import Littlewood.Aristotle.ContourRectangle             -- Rectangle contour integrals, Cauchy (1 sorry)
-import Littlewood.Aristotle.ZetaBoundsV2                  -- Zeta ‖ζ(s)‖≤Re(s)/(Re(s)-1), χ, FE, sinh/Gamma bounds (3 sorries)
+import Littlewood.Aristotle.ContourRectangle             -- Rectangle contour integrals, Cauchy (0 sorries) ✓
+import Littlewood.Aristotle.ZetaBoundsV2                  -- Zeta ‖ζ(s)‖≤Re(s)/(Re(s)-1), χ, FE, sinh/Gamma bounds (0 sorries) ✓
 import Littlewood.Aristotle.CauchyGoursatRectangle        -- Cauchy-Goursat rectangle theorem (0 sorries) ✓
-import Littlewood.Aristotle.ZeroFreeRegionV3               -- Zero-free region: 3-4-1, ζ(1+it)≠0, log-deriv bounds (3 sorries)
+import Littlewood.Aristotle.ZeroFreeRegionV3               -- Zero-free region: 3-4-1, ζ(1+it)≠0, log-deriv bounds (0 sorries) ✓
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
@@ -137,11 +147,11 @@ import Littlewood.Aristotle.ZeroFreeRegionV3               -- Zero-free region: 
 -- import Littlewood.Aristotle.SchmidtOscillationInfinite -- uses local chebyshevPsi
 -- import Littlewood.Aristotle.PartialSummationPiLi -- redefines chebyshevPsi, primeCountingReal, li
 
--- Aristotle files with remaining sorries (verified via lake build sorry warnings)
-import Littlewood.Aristotle.MeanSquare             -- 3 sorries: off-diag bound, normSq decomp, main thm
+-- Aristotle status snapshot (verified via lake build sorry warnings)
+import Littlewood.Aristotle.MeanSquare             -- Mean square framework (0 sorries) ✓
 import Littlewood.Aristotle.ZeroCounting           -- 2 sorries: arg principle, RvM asymptotic
-import Littlewood.Aristotle.PhragmenLindelof       -- 3 sorries: critical line bound, convexity, Stirling
-import Littlewood.Aristotle.PartialSummation       -- 1 sorry: π(x)-li(x) sign changes from ψ(x)-x
+import Littlewood.Aristotle.PhragmenLindelof       -- Critical line bound/convexity/Stirling (0 sorries) ✓
+import Littlewood.Aristotle.PartialSummation       -- Partial summation pipeline (0 sorries) ✓
 -- import Littlewood.Aristotle.FunctionalEquation  -- DEPRECATED: 1 sorry, use FunctionalEquationV2
 -- import Littlewood.Aristotle.PerronFormula       -- 5 sorries, redefines chebyshevPsi
 -- import Littlewood.Aristotle.PrimePowerSums      -- 4 sorries, redefines psi
@@ -196,8 +206,8 @@ The main theorems are proved assuming ~58 hypothesis classes (classical theorems
 not yet in Mathlib). See `Assumptions.lean` for the full list.
 
 ### Build Status
-- Sorry declarations (project): 82
-- Sorry-free .lean files: 158 (92%)
+- Sorry declarations and file counts change over time; check `docs/sorry_manifest.txt`
+  and current `lake build` output for exact totals.
 - Main theorem sorries: 0
 - Hardy chain: V2 canonical (V1 deprecated)
 
