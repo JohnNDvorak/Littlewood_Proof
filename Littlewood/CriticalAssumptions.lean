@@ -75,6 +75,8 @@ open Conversion ZetaZeros
     Remaining missing prerequisites are only:
       3. |∫ MainTerm| ≤ C₁·T^{1/2+ε} (needs oscillatory integral bounds)
       4. |∫ ErrorTerm| ≤ C₂·T^{1/2+ε}
+    These are isolated in `Bridge/HardyFirstMomentWiring.lean` as
+    `MainTermFirstMomentBoundHyp` and `ErrorTermFirstMomentBoundHyp`.
 
     CONSUMED BY: Bridge/HardyCriticalLineWiring.lean (combined with
     ZetaCriticalLineBoundHyp to produce HardyCriticalLineZerosHyp).

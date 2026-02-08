@@ -1,41 +1,50 @@
-/-
-Bridge: Wire Aristotle's hardyZ_first_moment_bound_conditional
-         → HardyFirstMomentUpperHyp.
+import Littlewood.Aristotle.HardyZFirstMoment
+import Littlewood.Bridge.HardyChainHyp
 
-STATUS: PLACEHOLDER — NOT imported by the main build.
+/-!
+Bridge plumbing for Hardy's first-moment hypothesis.
 
-PREREQUISITES (remaining open items):
-  3. |∫ MainTerm| ≤ C₁·T^{1/2+ε} (needs van der Corput bounds)
-  4. |∫ ErrorTerm| ≤ C₂·T^{1/2+ε}
+This module is sorry-free and does not add new axioms. It isolates the exact
+remaining analytic obligations:
 
-EXISTING PROGRESS:
-  - hardyZ_first_moment_bound_conditional (HardyZFirstMoment.lean): PROVED (0 sorry)
-  - MainTerm_eq_hardySum, ErrorTerm_eq_hardyRemainder: PROVED (0 sorry)
-  - mainTerm_integrable, errorTerm_integrable: PROVED (0 sorry)
-  - hardyZ_first_moment_bound_conditional_two_bounds: PROVED (0 sorry)
-    reduces wiring to prerequisites (3) and (4) only
-  - OscillatorySumBound.oscillatory_sum_integral_bound: PROVED (0 sorry)
-    provides partial progress toward prerequisite 3
+1. a `MainTerm` integral bound at scale `T^(1/2+ε)`
+2. an `ErrorTerm` integral bound at scale `T^(1/2+ε)`
 
-BLOCKERS:
-  - van der Corput exponential sum bounds — not in Mathlib
-
-PLAN:
-  1. Prove integral bounds (prerequisites 3-4) via van der Corput/remainder bounds
-  2. Apply hardyZ_first_moment_bound_conditional_two_bounds
-  3. Wire result to HardyFirstMomentUpperHyp
-
-CONSUMED BY: CriticalAssumptions.lean (replaces the sorry on HardyFirstMomentUpperHyp).
+Once those are available, the final `HardyFirstMomentUpperHyp` statement follows
+immediately from `HardyZFirstMoment.hardyZ_first_moment_bound_conditional_two_bounds`.
 -/
 
--- This file is a PLACEHOLDER. It does not import project files or provide
--- any instances. It serves as documentation for the wiring plan.
---
--- When ready to activate:
---   1. Add imports:
---      import Littlewood.Aristotle.HardyZFirstMoment
---      import Littlewood.Bridge.HardyChainHyp
---   2. Prove the 2 remaining integral bounds (3)-(4)
---   3. Wire to HardyFirstMomentUpperHyp instance
---   4. Import from CriticalAssumptions.lean
---   5. Remove the sorry instance for HardyFirstMomentUpperHyp
+noncomputable section
+
+open Complex Real Set Filter MeasureTheory
+
+namespace HardyFirstMomentWiring
+
+/-- Missing main-term estimate in the Hardy first-moment chain. -/
+class MainTermFirstMomentBoundHyp : Prop where
+  bound : ∀ ε : ℝ, ε > 0 →
+    ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, HardyEstimatesPartial.MainTerm t| ≤ C * T ^ (1 / 2 + ε)
+
+/-- Missing error-term estimate in the Hardy first-moment chain. -/
+class ErrorTermFirstMomentBoundHyp : Prop where
+  bound : ∀ ε : ℝ, ε > 0 →
+    ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, HardyEstimatesPartial.ErrorTerm t| ≤ C * T ^ (1 / 2 + ε)
+
+/-- If the two remaining integral bounds are available, the Hardy first-moment hypothesis follows. -/
+theorem hardyFirstMomentUpper_from_two_bounds
+    [MainTermFirstMomentBoundHyp] [ErrorTermFirstMomentBoundHyp] :
+    HardyFirstMomentUpperHyp := by
+  refine ⟨?_⟩
+  intro ε hε
+  obtain ⟨C₁, hC₁, hMain⟩ := MainTermFirstMomentBoundHyp.bound ε hε
+  obtain ⟨C₂, hC₂, hErr⟩ := ErrorTermFirstMomentBoundHyp.bound ε hε
+  obtain ⟨C, hC, T₀, hT₀, hHardy⟩ :=
+    HardyEstimatesPartial.hardyZ_first_moment_bound_conditional_two_bounds ε hε
+      ⟨C₁, hC₁, hMain⟩ ⟨C₂, hC₂, hErr⟩
+  refine ⟨C, hC, max 2 T₀, le_max_left _ _, ?_⟩
+  intro T hT
+  exact hHardy T (le_trans (le_max_right _ _) hT)
+
+end HardyFirstMomentWiring

@@ -1,6 +1,6 @@
 # Aristotle Module: Status Tracker
 
-**Date**: 2026-02-08 (Overnight wiring pass: 10 Aristotle imports added; sorry count unchanged at 10)
+**Date**: 2026-02-08 (Overnight + follow-up wiring: counts refreshed, transfer/plumbing infrastructure added)
 
 ## Overview
 
@@ -8,15 +8,24 @@ The Aristotle module contains AI-generated proofs (from Harmonic's Aristotle and
 Anthropic's Claude) that work toward closing the sorry-backed hypothesis instances.
 Files are organized in `Littlewood/Aristotle/`.
 
-- **Total files**: 128
-- **Files in build**: 106 (import-graph verified from `Littlewood`)
-- **Orphan files**: 22
+- **Total files**: 129
+- **Files imported from `Littlewood.lean`**: 103
+- **Orphan files**: 26
 - **Files with active sorries (build-visible)**: 2
-- **Sorry-free files**: 125 (97.7%)
+- **Sorry-free files**: 126 (97.7%)
 - **Total build-visible Aristotle sorries**: 3
 - **Budget-exhaustion sorry track record**: 22/22 CLOSED (all resolved)
 - **Total project sorries (build)**: 7 (1 critical + 3 bridge + 3 Aristotle)
 - **External sorries**: 3 (PrimeNumberTheoremAnd/Wiener.lean, not on critical path)
+
+## Recent Achievements (Session 14)
+
+| Achievement | Details |
+|------------|---------|
+| **`ThetaToPiLiTransferInfra.lean` added** | Added exact θ→(π-li) decomposition identity in project notation: `π-li = (θ-x)/log x + remainder` |
+| **Hardy first-moment plumbing tightened** | Added/imported `Bridge/HardyFirstMomentWiring.lean` and documented the two remaining hypotheses (`MainTermFirstMomentBoundHyp`, `ErrorTermFirstMomentBoundHyp`) |
+| **No-axiom integrity check** | Active Lean files (excluding `.bak`) contain no `axiom` declarations; only backups had old axiom stubs |
+| **Build baseline preserved** | `lake build` still reports 10 sorry warnings (7 project + 3 external) |
 
 ## Recent Achievements (Session 13)
 
@@ -135,9 +144,9 @@ NOTE: ExplicitFormulaPsiHyp and ExplicitFormulaThetaHyp REMOVED from critical pa
 
 1. **ZetaCriticalLineBoundHyp** — CLOSED (auto-wired via PhragmenLindelofWiring.lean).
 
-2. **OmegaThetaToPiLiHyp** (`Bridge/OmegaThetaToPiLiWiring.lean`) — The PartialSummation.lean route was FALSE and has been removed. This sorry now requires a direct approach: quantitative PNT error bounds to show θ(x)-x oscillation transfers to π(x)-li(x) oscillation at the √x/log x scale.
+2. **OmegaThetaToPiLiHyp** (`Bridge/OmegaThetaToPiLiWiring.lean`) — Transfer plumbing is now formalized via `Aristotle/ThetaToPiLiTransferInfra.lean` and `omegaThetaToPiLi_from_remainder_small`. The remaining blocker is a single analytic estimate class: `ThetaPiLiRemainderSmallHyp` (`thetaPiLiRemainder =o(f/log)`).
 
-3. **HardyFirstMomentUpperHyp** — Conditional theorem and measurability wiring proved; 2 remaining integral-bound prerequisites are unproved (van der Corput/remainder control).
+3. **HardyFirstMomentUpperHyp** — Conditional theorem and measurability wiring proved; 2 remaining integral-bound prerequisites are isolated in `Bridge/HardyFirstMomentWiring.lean` (`MainTermFirstMomentBoundHyp`, `ErrorTermFirstMomentBoundHyp`).
 
 ## Aristotle Bridge Files (all sorry-free)
 
@@ -167,6 +176,7 @@ NOTE: ExplicitFormulaPsiHyp and ExplicitFormulaThetaHyp REMOVED from critical pa
 | **ZetaBoundGtOne.lean** | Additional `Re(s)>1` zeta growth/boundedness infrastructure |
 | **RiemannSiegelBound.lean** | Riemann-Siegel style Hardy Z control lemmas |
 | **HardySetupRequirements.lean** | Documentation-only checklist module (now imported for visibility) |
+| **ThetaToPiLiTransferInfra.lean** | Exact θ→(π-li) decomposition identity in project notation, hypothesis-free |
 
 ## What Aristotle Needs Next
 
@@ -199,10 +209,7 @@ Blocked on vertical line integrals (not in Mathlib).
 ### Priority 4: OmegaThetaToPiLiHyp (Bridge/OmegaThetaToPiLiWiring.lean:26)
 Transfer θ(x)-x = Ω±(f) to π(x)-li(x) = Ω±(f/log x).
 
-**OBSTRUCTION**: The decomposition π(x)-li(x) = (θ(x)-x)/log(x) + ∫(θ(t)-t)/(t·log²t)dt
-has integral error O(x/log⁴x) which overwhelms √x/log(x). Even PNTA's quantitative PNT
-(|θ(t)-t| ≤ Ct/log²t) is insufficient AND sorry-backed. Requires Vinogradov-Korobov
-zero-free region or a completely different approach (direct explicit formula for π).
+**OBSTRUCTION**: The exact decomposition is now in-tree and the perturbative Ω± transfer lemma is proved. The unresolved content is proving `thetaPiLiRemainder =o(f/log)` for all `f` with `√x ≤ f(x)` eventually; existing absolute θ-error bounds still leave a remainder term too large at `f=√x`.
 
 ## RiemannVonMangoldt Infrastructure Note
 

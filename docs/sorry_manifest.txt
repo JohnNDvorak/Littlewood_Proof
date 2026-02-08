@@ -12,12 +12,12 @@
 #   EXTERNAL      = in external dependency, NOT on critical path
 #
 # === CriticalAssumptions Sorries (1, was 4) ===
-Littlewood/CriticalAssumptions.lean:84:HardyFirstMomentUpperHyp:CRITICAL:First moment upper bound for Hardy Z-function
+Littlewood/CriticalAssumptions.lean:86:HardyFirstMomentUpperHyp:CRITICAL:First moment upper bound for Hardy Z-function
 #
 # === Bridge Sorries (3) ===
 Littlewood/Bridge/ExplicitFormulaOscillation.lean:63:PsiOscillationFromCriticalZerosHyp:BRIDGE:Psi oscillation extraction from explicit formula + critical zeros (absorbs ExplicitFormulaPsiHyp)
 Littlewood/Bridge/ThetaExplicitFormulaOscillation.lean:63:ThetaOscillationSqrtHyp:BRIDGE:Theta oscillation extraction from explicit formula + critical zeros (absorbs ExplicitFormulaThetaHyp)
-Littlewood/Bridge/OmegaThetaToPiLiWiring.lean:26:OmegaThetaToPiLiHyp:BRIDGE:Theta oscillation implies pi-li oscillation transfer
+Littlewood/Bridge/OmegaThetaToPiLiWiring.lean:49:OmegaThetaToPiLiHyp:BRIDGE:Theta oscillation implies pi-li oscillation transfer (plumbing proved; remainder little-o bound still missing)
 #
 # === Aristotle Sorries (3, build-visible) ===
 Littlewood/Aristotle/HardyApproxFunctionalEq.lean:113:approx_functional_eq:ARISTOTLE:Approximate functional equation for Z(t)^2 integral lower bound

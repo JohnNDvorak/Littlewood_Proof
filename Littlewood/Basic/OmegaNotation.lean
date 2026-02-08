@@ -250,15 +250,60 @@ theorem IsOmegaPlusMinus.div_const (h : f =Ω±[g]) (c : ℝ) (hc : 0 < c) :
 
 end Scaling
 
-/-!
-## Transfer Lemmas (REMOVED - had sorries, not yet used)
+section Transfer
 
-The following lemmas were removed because they had sorries and weren't imported:
-- IsOmegaPlus.add_isLittleO
-- IsOmegaMinus.add_isLittleO
-- IsOmegaPlusMinus.add_isLittleO
+variable {f h g : ℝ → ℝ}
 
-To be restored when filter manipulation is worked out.
--/
+/-- Stability of `Ω₊` under a little-o perturbation (for eventually nonnegative comparison
+function). -/
+theorem IsOmegaPlus.add_isLittleO (hΩ : f =Ω₊[g]) (ho : h =o[atTop] g)
+    (hg_nonneg : ∀ᶠ x in atTop, 0 ≤ g x) :
+    (fun x => f x + h x) =Ω₊[g] := by
+  rcases hΩ with ⟨c, hc, hfreq⟩
+  have hc2 : 0 < c / 2 := by positivity
+  have hsmall : ∀ᶠ x in atTop, |h x| ≤ (c / 2) * |g x| := ho.bound hc2
+  have hlower : ∀ᶠ x in atTop, -(c / 2) * g x ≤ h x := by
+    refine (Filter.Eventually.and hsmall hg_nonneg).mono ?_
+    intro x hx
+    have habs : |h x| ≤ (c / 2) * |g x| := hx.1
+    have hgx : 0 ≤ g x := hx.2
+    have hneg : -((c / 2) * |g x|) ≤ h x := by
+      have h1 : -|h x| ≤ h x := neg_abs_le (h x)
+      have h2 : -((c / 2) * |g x|) ≤ -|h x| := by exact neg_le_neg habs
+      exact le_trans h2 h1
+    simpa [abs_of_nonneg hgx, mul_comm, mul_left_comm, mul_assoc] using hneg
+  refine ⟨c / 2, hc2, ?_⟩
+  refine (Filter.Frequently.and_eventually hfreq hlower).mono ?_
+  intro x hx
+  nlinarith [hx.1, hx.2]
+
+/-- Stability of `Ω₋` under a little-o perturbation (for eventually nonnegative comparison
+function). -/
+theorem IsOmegaMinus.add_isLittleO (hΩ : f =Ω₋[g]) (ho : h =o[atTop] g)
+    (hg_nonneg : ∀ᶠ x in atTop, 0 ≤ g x) :
+    (fun x => f x + h x) =Ω₋[g] := by
+  rcases hΩ with ⟨c, hc, hfreq⟩
+  have hc2 : 0 < c / 2 := by positivity
+  have hsmall : ∀ᶠ x in atTop, |h x| ≤ (c / 2) * |g x| := ho.bound hc2
+  have hupper : ∀ᶠ x in atTop, h x ≤ (c / 2) * g x := by
+    refine (Filter.Eventually.and hsmall hg_nonneg).mono ?_
+    intro x hx
+    have habs : |h x| ≤ (c / 2) * |g x| := hx.1
+    have hgx : 0 ≤ g x := hx.2
+    have h' : h x ≤ (c / 2) * |g x| := by exact (abs_le.mp habs).2
+    simpa [abs_of_nonneg hgx] using h'
+  refine ⟨c / 2, hc2, ?_⟩
+  refine (Filter.Frequently.and_eventually hfreq hupper).mono ?_
+  intro x hx
+  nlinarith [hx.1, hx.2]
+
+/-- Stability of `Ω±` under a little-o perturbation (for eventually nonnegative comparison
+function). -/
+theorem IsOmegaPlusMinus.add_isLittleO (hΩ : f =Ω±[g]) (ho : h =o[atTop] g)
+    (hg_nonneg : ∀ᶠ x in atTop, 0 ≤ g x) :
+    (fun x => f x + h x) =Ω±[g] := by
+  exact ⟨hΩ.1.add_isLittleO ho hg_nonneg, hΩ.2.add_isLittleO ho hg_nonneg⟩
+
+end Transfer
 
 end Asymptotics

@@ -68,6 +68,7 @@ import Littlewood.Aristotle.ThetaLinearBound       -- θ(x) = O(x) (0 sorries) �
 import Littlewood.Aristotle.ThetaLinearBoundV2     -- θ(n) ≤ Cn via Chebyshev (0 sorries) ✓
 import Littlewood.Aristotle.ChebyshevThetaV2       -- ψ = Σ θ(n^{1/k}), θ diff ≤ log C(2n,n) (0 sorries) ✓
 import Littlewood.Aristotle.PsiThetaBound          -- |ψ(x) - θ(x)| ≤ C√x (0 sorries) ✓
+import Littlewood.Aristotle.PsiThetaCanonicalBound -- canonical ψ/θ transfer lemmas (0 sorries) ✓
 import Littlewood.Aristotle.HarmonicSumIntegral    -- ∫H_{N(t)} = Θ(T log T) (0 sorries) ✓
 import Littlewood.Aristotle.HorizontalSegmentBounds -- Horizontal segment bounds (0 sorries) ✓
 import Littlewood.Aristotle.PerronContourIntegrals -- Perron contour integrals (0 sorries) ✓
@@ -110,6 +111,7 @@ import Littlewood.Aristotle.DirichletSeriesConvergence -- Dirichlet series summa
 import Littlewood.Aristotle.HardyZContradiction       -- Hardy Z contradiction infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.HardyZMeasurability       -- Hardy Z measurability/integrability (0 sorries) ✓
 import Littlewood.Aristotle.RemainderTermAnalysis     -- Remainder term analysis (0 sorries) ✓
+import Littlewood.Aristotle.ThetaToPiLiTransferInfra  -- θ→(π-li) exact decomposition identity (0 sorries) ✓
 import Littlewood.Aristotle.ZetaConvexityStrip         -- Zeta PL convexity in critical strip (0 sorries) ✓
 import Littlewood.Aristotle.MeanSquarePartialSum       -- Mean square partial sum definitions (0 sorries) ✓
 import Littlewood.Aristotle.ZeroFreeRegionV2           -- Zero-free region / 3-4-1 infrastructure (0 sorries) ✓
@@ -168,6 +170,7 @@ import Littlewood.Bridge.HardyZTransfer            -- Hardy Z type transfer brid
 import Littlewood.Bridge.HardyBuildingBlocksInstance  -- BuildingBlocks 4/6 fields template (0 sorries) ✓
 import Littlewood.Bridge.HardyZDefinitionMap          -- Hardy Z variant equivalences (0 sorries) ✓
 import Littlewood.Bridge.HardyCriticalLineWiring      -- Pre-wired for Hardy completion (0 sorries) ✓
+import Littlewood.Bridge.HardyFirstMomentWiring      -- Hardy first-moment plumbing (0 sorries) ✓
 import Littlewood.Bridge.HardyZUnified                -- Unified Hardy Z exports (0 sorries) ✓
 import Littlewood.Bridge.HardyChainTest               -- Hardy chain integration test (0 sorries) ✓
 import Littlewood.Bridge.HardyChainHyp                  -- Hardy chain hypothesis classes (0 sorries) ✓

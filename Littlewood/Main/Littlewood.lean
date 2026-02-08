@@ -14,8 +14,8 @@ oscillation of π(x) - li(x).
 
 ## Main Theorems
 
-* `LittlewoodPi.littlewood_pi_li` : π(x) - li(x) = Ω±(x^{1/2}/log x · log log log x)
-* `Littlewood.littlewood_psi` : ψ(x) - x = Ω±(x^{1/2} · log log log x)
+* `LittlewoodPi.littlewood_pi_li` : π(x) - li(x) = Ω±(x^{1/2}/log x)
+* `Littlewood.littlewood_psi` : ψ(x) - x = Ω±(x^{1/2})
 * `LittlewoodPi.pi_gt_li_infinitely_often` : π(x) > li(x) infinitely often
 * `LittlewoodPi.pi_lt_li_infinitely_often` : π(x) < li(x) infinitely often
 
