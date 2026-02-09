@@ -72,11 +72,18 @@ open Conversion ZetaZeros
       - `MainTerm_eq_hardySum`, `mainTerm_integrable`
       - `ErrorTerm_eq_hardyRemainder`, `errorTerm_integrable`
     via Aristotle/HardyZMeasurability.lean.
-    Remaining missing prerequisites are only:
-      3. |∫ MainTerm| ≤ C₁·T^{1/2+ε} (needs oscillatory integral bounds)
+    Remaining missing prerequisites are:
+      3. |∫ MainTerm| ≤ C₁·T^{1/2+ε}
       4. |∫ ErrorTerm| ≤ C₂·T^{1/2+ε}
-    These are isolated in `Bridge/HardyFirstMomentWiring.lean` as
-    `MainTermFirstMomentBoundHyp` and `ErrorTermFirstMomentBoundHyp`.
+    In `Bridge/HardyFirstMomentWiring.lean`, (3) is further reduced to
+    oscillatory-integral control classes:
+      - `HardyExpPhaseIntegralUniformBoundHyp`
+      - `HardyExpPhaseIntervalIntegralUniformBoundOnSupportHyp`
+      - `HardyExpPhaseVdcOnSupportHyp` (endpoint + correction + decomposition)
+      - `HardyExpPhaseVdcEndpointBoundOnSupportHyp`
+      - `HardyExpPhaseVdcCorrectionBoundOnSupportHyp`
+      - `HardyExpPhaseVdcCalculusOnSupportHyp` (van der Corput calculus layer)
+    while (4) remains `ErrorTermFirstMomentBoundHyp`.
 
     CONSUMED BY: Bridge/HardyCriticalLineWiring.lean (combined with
     ZetaCriticalLineBoundHyp to produce HardyCriticalLineZerosHyp).
