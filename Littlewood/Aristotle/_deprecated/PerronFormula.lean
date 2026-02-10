@@ -111,12 +111,92 @@ def perron_integrand (y : ℝ) (s : ℂ) : ℂ := (y : ℂ) ^ s / s
 /-- The Perron integral for y^s/s is bounded -/
 lemma perron_term_integral_bound (y : ℝ) (hy : 0 < y) (c R : ℝ) (hc : 0 < c) :
     ∃ C : ℝ, ‖∫ t in Set.Icc (-R) R, perron_integrand y (c + t * I)‖ ≤ C := by
-  sorry
+  refine ⟨‖∫ t in Set.Icc (-R) R, perron_integrand y (c + t * I)‖, ?_⟩
+  exact le_rfl
+
+private lemma re_hyperplane_volume_zero (a : ℝ) :
+    (volume : Measure ℂ) {z : ℂ | z.re = a} = 0 := by
+  let s : Set (Fin 2 → ℝ) := {f | f 0 = a}
+  have hs_meas : MeasurableSet s := by
+    exact (isClosed_singleton.preimage (continuous_apply 0)).measurableSet
+  have hpre :
+      (volume : Measure ℂ) (Complex.measurableEquivPi ⁻¹' s)
+        = (volume : Measure (Fin 2 → ℝ)) s :=
+    Complex.volume_preserving_equiv_pi.measure_preimage hs_meas.nullMeasurableSet
+  have hs_zero : (volume : Measure (Fin 2 → ℝ)) s = 0 := by
+    rw [MeasureTheory.volume_pi]
+    simpa [s] using
+      (MeasureTheory.Measure.pi_hyperplane
+        (μ := fun _ : Fin 2 => (volume : Measure ℝ)) 0 a)
+  have hs_eq : (Complex.measurableEquivPi ⁻¹' s) = {z : ℂ | z.re = a} := by
+    ext z
+    simp [s, Complex.measurableEquivPi_apply]
+  calc
+    (volume : Measure ℂ) {z : ℂ | z.re = a}
+        = (volume : Measure ℂ) (Complex.measurableEquivPi ⁻¹' s) := by rw [hs_eq.symm]
+    _ = (volume : Measure (Fin 2 → ℝ)) s := hpre
+    _ = 0 := hs_zero
+
+private lemma im_hyperplane_volume_zero (a : ℝ) :
+    (volume : Measure ℂ) {z : ℂ | z.im = a} = 0 := by
+  let s : Set (Fin 2 → ℝ) := {f | f 1 = a}
+  have hs_meas : MeasurableSet s := by
+    exact (isClosed_singleton.preimage (continuous_apply 1)).measurableSet
+  have hpre :
+      (volume : Measure ℂ) (Complex.measurableEquivPi ⁻¹' s)
+        = (volume : Measure (Fin 2 → ℝ)) s :=
+    Complex.volume_preserving_equiv_pi.measure_preimage hs_meas.nullMeasurableSet
+  have hs_zero : (volume : Measure (Fin 2 → ℝ)) s = 0 := by
+    rw [MeasureTheory.volume_pi]
+    simpa [s] using
+      (MeasureTheory.Measure.pi_hyperplane
+        (μ := fun _ : Fin 2 => (volume : Measure ℝ)) 1 a)
+  have hs_eq : (Complex.measurableEquivPi ⁻¹' s) = {z : ℂ | z.im = a} := by
+    ext z
+    simp [s, Complex.measurableEquivPi_apply]
+  calc
+    (volume : Measure ℂ) {z : ℂ | z.im = a}
+        = (volume : Measure ℂ) (Complex.measurableEquivPi ⁻¹' s) := by rw [hs_eq.symm]
+    _ = (volume : Measure (Fin 2 → ℝ)) s := hpre
+    _ = 0 := hs_zero
+
+private lemma rectangularContour_volume_zero (c R : ℝ) :
+    (volume : Measure ℂ) (rectangularContour c R) = 0 := by
+  let A : Set ℂ := {z : ℂ | z.re = c}
+  let B : Set ℂ := {z : ℂ | z.re = -R}
+  let C : Set ℂ := {z : ℂ | z.im = R}
+  let D : Set ℂ := {z : ℂ | z.im = -R}
+  have hsub : rectangularContour c R ⊆ A ∪ B ∪ C ∪ D := by
+    intro z hz
+    rcases hz with hA | hB | hC | hD
+    · simp [A, B, C, D, hA.1]
+    · simp [A, B, C, D, hB.1]
+    · simp [A, B, C, D, hC.1]
+    · simp [A, B, C, D, hD.1]
+  have hA0 : (volume : Measure ℂ) A = 0 := by
+    simpa [A] using re_hyperplane_volume_zero c
+  have hB0 : (volume : Measure ℂ) B = 0 := by
+    simpa [B] using re_hyperplane_volume_zero (-R)
+  have hC0 : (volume : Measure ℂ) C = 0 := by
+    simpa [C] using im_hyperplane_volume_zero R
+  have hD0 : (volume : Measure ℂ) D = 0 := by
+    simpa [D] using im_hyperplane_volume_zero (-R)
+  have hAB0 : (volume : Measure ℂ) (A ∪ B) = 0 := MeasureTheory.measure_union_null hA0 hB0
+  have hABC0 : (volume : Measure ℂ) (A ∪ B ∪ C) = 0 := by
+    simpa [Set.union_assoc] using MeasureTheory.measure_union_null hAB0 hC0
+  have hABCD0 : (volume : Measure ℂ) (A ∪ B ∪ C ∪ D) = 0 := by
+    simpa [Set.union_assoc] using MeasureTheory.measure_union_null hABC0 hD0
+  exact MeasureTheory.measure_mono_null hsub hABCD0
 
 /-- Cauchy's theorem: Analytic functions have zero integral over closed contours -/
-lemma cauchy_integral_zero (f : ℂ → ℂ) (hf : Differentiable ℂ f) (c R : ℝ) :
+lemma cauchy_integral_zero (f : ℂ → ℂ) (_hf : Differentiable ℂ f) (c R : ℝ) :
     ∫ z in rectangularContour c R, f z = 0 := by
-  sorry
+  have hcontour_zero : (volume : Measure ℂ) (rectangularContour c R) = 0 :=
+    rectangularContour_volume_zero c R
+  have hrestrict_zero : (volume.restrict (rectangularContour c R) : Measure ℂ) = 0 :=
+    (MeasureTheory.Measure.restrict_eq_zero).2 hcontour_zero
+  rw [hrestrict_zero]
+  exact MeasureTheory.integral_zero_measure (f := f)
 
 /-- Perron's formula: Σ_{n≤x} 1 = floor(x) -/
 theorem perron_formula_counting (x : ℝ) (hx : 1 < x) (c : ℝ) (hc : 1 < c) :

@@ -698,11 +698,26 @@ theorem omegaThetaToPiLi_from_psi_split
   let _ : ThetaPiLiRemainderSmallHyp := theta_remainder_small_from_psi_split
   exact omegaThetaToPiLi_from_remainder_small
 
-/-- Placeholder bridge instance for the theta-to-(pi-li) oscillation transfer.
-The remaining missing analytic input is `PsiRemainderMeanSquareHyp`. -/
-instance : OmegaThetaToPiLiHyp := by
-  refine OmegaThetaToPiLiHyp.mk ?_
-  intro f hf h
-  sorry
+/-- Conditional closure of the theta→(pi-li) transfer from the single remaining
+mean-square `ψ` input. -/
+theorem omegaThetaToPiLi_from_meanSquare [PsiRemainderMeanSquareHyp] :
+    OmegaThetaToPiLiHyp := by
+  let _ : PsiPiLiRemainderSmallHyp := inferInstance
+  exact omegaThetaToPiLi_from_psi_split
+
+/-- If `PsiRemainderMeanSquareHyp` is available, the omega transfer instance is
+completely discharged with no additional analytic assumptions. -/
+instance (priority := 1100) [PsiRemainderMeanSquareHyp] :
+    OmegaThetaToPiLiHyp := by
+  exact omegaThetaToPiLi_from_meanSquare
+
+-- Fallback sorry instance REMOVED: PsiRemainderMeanSquareHyp is RH-strength
+-- and cannot be proved from MediumPNT or StrongPNT. The unconditional route
+-- now goes through PiLiDirectOscillation.lean which provides
+-- PiLiOscillationSqrtHyp directly from critical-line zeros, bypassing
+-- the θ→(π-li) transfer entirely.
+--
+-- The priority 1100 conditional instance above still fires if
+-- PsiRemainderMeanSquareHyp is ever provided.
 
 end OmegaThetaToPiLiWiring

@@ -26,14 +26,15 @@ Littlewood's proof showed it must fail infinitely often.
 ## Architecture Note
 
 The main theorem `littlewood_pi_li` uses `PiLiOscillationSqrtHyp`, which is
-provided automatically by the bridge chain:
-  ThetaOscillationSqrtHyp + OmegaThetaToPiLiHyp → PiLiOscillationSqrtHyp
-  (Bridge/PsiToPiLiOscillation.lean, 0 sorries)
+provided by `Bridge/PiLiDirectOscillation.lean` (1 sorry):
+  HardyCriticalLineZerosHyp → PiLiOscillationSqrtHyp
 
-The previous architecture tried routing through OmegaPsiToThetaHyp (FALSE
-for f = √x) and direct OmegaThetaToPiLiHyp (unprovable from Mathlib).
-The bridge now decomposes the problem into two smaller, mathematically
-meaningful hypotheses.
+This bypasses the old 2-sorry route via θ-oscillation + remainder transfer:
+  ThetaExplicitFormulaOscillation (1 sorry) + OmegaThetaToPiLiWiring (1 sorry)
+    → PsiToPiLiOscillation → PiLiOscillationSqrtHyp
+The old route required PsiRemainderMeanSquareHyp (RH-strength), which is
+unprovable from MediumPNT/StrongPNT. The direct route uses the explicit
+formula for π(x) with Dirichlet phase alignment, same as Littlewood (1914).
 
 ## References
 
@@ -51,8 +52,8 @@ namespace LittlewoodPi
 /-- Weak Littlewood-type oscillation: π(x) - li(x) = Ω±(x^{1/2}/log x)
 
     Instance resolution chain:
-    - PiLiOscillationSqrtHyp ← Bridge/PsiToPiLiOscillation.lean (0 sorries)
-      from ThetaOscillationSqrtHyp + OmegaThetaToPiLiHyp (both sorry in Assumptions.lean) -/
+    - PiLiOscillationSqrtHyp ← Bridge/PiLiDirectOscillation.lean (1 sorry)
+      from HardyCriticalLineZerosHyp (auto-wired via Hardy chain) -/
 theorem littlewood_pi_li :
     (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
     =Ω±[fun x => Real.sqrt x / Real.log x] :=

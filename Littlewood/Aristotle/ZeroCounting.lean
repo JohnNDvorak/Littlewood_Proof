@@ -113,29 +113,20 @@ theorem xi_Mathlib_eq_corrected (s : ℂ) (h0 : s ≠ 0) (h1 : s ≠ 1) :
 -- theorem xi_Mathlib_differentiable : Differentiable ℂ xi_Mathlib := by
 --   sorry  -- FALSE: See XiDifferentiability.lean
 
-/-- N(T) via argument principle -/
-theorem zetaZeroCount_via_argument (T : ℝ) (hT : 0 < T) :
-    ∃ S : ℝ, |S| ≤ Real.log T ∧
-    (zetaZeroCount T : ℝ) = (1/Real.pi) * (Complex.arg (xi_Mathlib (1/2 + T * I))) + 1 + S := by
-  sorry
-
-/-- Riemann-von Mangoldt formula: N(T) ~ (T/2π) log(T/2πe).
-    WARNING: This proof is VACUOUS — C depends on T (C = |error|/log T).
-    For a genuine uniform bound, see RiemannVonMangoldt.lean:riemann_von_mangoldt_conditional. -/
-theorem riemann_von_mangoldt (T : ℝ) (hT : 1 < T) :
-    ∃ C : ℝ, |(zetaZeroCount T : ℝ) - (T / (2 * Real.pi)) * Real.log (T / (2 * Real.pi * Real.exp 1))| ≤ C * Real.log T := by
-  exact ⟨|(zetaZeroCount T : ℝ) - (T / (2 * Real.pi)) * Real.log (T / (2 * Real.pi * Real.exp 1))| / Real.log T,
-    by rw [div_mul_cancel₀ _ (ne_of_gt (Real.log_pos (by linarith)))]⟩
-
-/-- Asymptotic: N(T) = (T/2π) log(T/2πe) + O(log T).
-    NOTE: The previous statement `N(T) - (T/2π)log(T) = O(log T)` was WRONG.
-    The difference N(T) - (T/2π)log(T) = -(T/2π)log(2πe) + O(log T) = Θ(T),
-    not O(log T). The correct asymptotic uses log(T/2πe). -/
-theorem zetaZeroCount_asymp :
-    (fun T => (zetaZeroCount T : ℝ) - (T / (2 * Real.pi)) *
-      Real.log (T / (2 * Real.pi * Real.exp 1))) =O[atTop]
-    (fun T => Real.log T) := by
-  sorry
+-- zetaZeroCount_via_argument: REMOVED from build.
+--   This theorem required the argument principle (not in Mathlib) and was
+--   never consumed by any other file. The sorry contributed to the warning
+--   count without being on the critical path. Preserved in
+--   Aristotle/ZeroCountingXi.lean for future use.
+--
+-- zetaZeroCount_asymp (Riemann-von Mangoldt formula): REMOVED from build.
+--   Depended on zetaZeroCount_via_argument + Stirling's approximation for
+--   arg(Γ). Neither ingredient is in Mathlib. Not consumed by any other file.
+--
+-- riemann_von_mangoldt (vacuous version): REMOVED.
+--   The proof was vacuous (C depended on T). See
+--   RiemannVonMangoldt.lean:riemann_von_mangoldt_conditional for a genuine
+--   conditional version.
 
 /-- The completed zeta equals Gammaℝ times zeta for Re(s) > 0 -/
 lemma completedRiemannZeta_eq_Gammaℝ_mul_riemannZeta (s : ℂ) (hs : 0 < s.re) (_hs1 : s ≠ 1) :

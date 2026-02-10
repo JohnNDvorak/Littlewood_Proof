@@ -95,6 +95,8 @@ import Littlewood.Aristotle.FunctionalEquationHyp  -- Functional equation hypoth
 import Littlewood.Aristotle.IntegralLogSqrtAsymp  -- ∫log(√(1/4+t²)) = Θ(T log T) (0 sorries) ✓
 import Littlewood.Aristotle.IntegralLogAsymp     -- ∫log(√(t/2π)) = Θ(T log T) (0 sorries) ✓
 import Littlewood.Aristotle.GammaGrowth           -- Gamma growth bounds, harmonic sums (0 sorries) ✓
+import Littlewood.Aristotle.GammaHalfPlane        -- Γ(1/4+it/2) properties for Hardy θ (0 sorries) ✓
+import Littlewood.Aristotle.HardyCosSmooth        -- Branch-cut-free hardyCos representation (0 sorries) ✓
 import Littlewood.Aristotle.RiemannVonMangoldt    -- Riemann-von Mangoldt N(T) framework (0 sorries) ✓
 import Littlewood.Aristotle.RiemannVonMangoldtV2  -- R-vM formula v2 with xi, ImLogGamma (0 sorries) ✓
 import Littlewood.Aristotle.NZerosStirling        -- N(T) from S(T) and Stirling (0 sorries) ✓
@@ -123,10 +125,19 @@ import Littlewood.Aristotle.ContourIntegrationV2        -- Cauchy rectangle cont
 import Littlewood.Aristotle.ZeroCountingRectangle       -- Zero-counting rectangle residue/limit infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.ZetaLogDerivInfra           -- -ζ'/ζ pole/log-derivative infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.VanDerCorputInfra           -- Van der Corput oscillatory integral infrastructure (0 sorries) ✓
+import Littlewood.Aristotle.VdcFirstDerivTest            -- Van der Corput first derivative test: |∫cos(φ)| ≤ 3/m (0 sorries) ✓
+import Littlewood.Aristotle.AbelSummation                -- Abel summation + alternating series bound (0 sorries) ✓
+import Littlewood.Aristotle.CosPiSqSign                  -- cos(πn²) = (-1)^n + alternating sqrt sum bound (0 sorries) ✓
 import Littlewood.Aristotle.DirichletPhaseAlignment     -- Simultaneous Dirichlet phase-alignment infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.GammaGrowthGeneral          -- General Gamma growth bounds (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundGtOne              -- ζ(s) bounded for Re(s) > 1 infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.RiemannSiegelBound          -- Riemann-Siegel style Z-function bounds (0 sorries) ✓
+import Littlewood.Aristotle.RiemannSiegelFirstMoment    -- RS remainder first moment O(T^{1/4}) (1 sorry)
+import Littlewood.Aristotle.FresnelIntegrals             -- Fresnel integral evaluations via Gaussian regularization (0 sorries) ✓
+import Littlewood.Aristotle.SecondMVT                    -- Second mean value theorem for integrals (1 sorry)
+import Littlewood.Aristotle.DigammaAsymptotic             -- Digamma-log bound (1 sorry: Binet formula)
+import Littlewood.Aristotle.ThetaDerivAsymptotic         -- θ'(t) = (1/2)log(t/2π) + O(1/t) asymptotic (2 sorries)
+import Littlewood.Aristotle.StationaryPhaseDecomposition -- Hardy cosine integral alternating sqrt decomposition (1 sorry)
 import Littlewood.Aristotle.HardySetupRequirements      -- Hardy setup requirements note (documentation-only module)
 -- import Littlewood.Aristotle.HardyInfiniteZeros       -- DEPRECATED: V1 has unsatisfiable field signatures (grind works vacuously)
 import Littlewood.Aristotle.HardyInfiniteZerosV2        -- Hardy's theorem V2 (0 sorries) ✓
@@ -176,6 +187,7 @@ import Littlewood.Bridge.HardyChainTest               -- Hardy chain integration
 import Littlewood.Bridge.HardyChainHyp                  -- Hardy chain hypothesis classes (0 sorries) ✓
 import Littlewood.Bridge.MeanSquareBridge              -- Mean square bridge: DiagBound + ApproxFuncEq (0 sorries) ✓
 import Littlewood.Bridge.HardySetupV2Instance          -- HardySetupV2 instance: all 6 fields proved (0 sorries) ✓
+import Littlewood.Bridge.LandauOscillation               -- Landau oscillation: HardyZeros → ψ Ω±(√x) (1 sorry, TRUE)
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst

@@ -26,6 +26,7 @@ to the full Z(t) mean square needed by HardySetupInstance.
 -/
 
 import Mathlib
+import Littlewood.Aristotle.MeanSquare
 
 set_option linter.mathlibStandardSet false
 
@@ -46,6 +47,8 @@ set_option autoImplicit false
 noncomputable section
 
 namespace HardyApproxFunctional
+
+open Complex MeasureTheory Set Filter Asymptotics
 
 /-
 Local definition of Hardy Z for this file (norm-based variant).
@@ -87,6 +90,44 @@ Approximation of the partial sum using the floor of the square root of t/2pi.
 -/
 def partial_sum_approx (t : ℝ) : ℂ :=
   partial_sum (Nat.floor (Real.sqrt (t / (2 * Real.pi)))) t
+
+private lemma partial_sum_approx_eq_partialZeta (t : ℝ) :
+    partial_sum_approx t =
+    partialZeta (Real.sqrt (t / (2 * Real.pi))) (1/2 + Complex.I * ↑t) := by
+  unfold partial_sum_approx partial_sum partialZeta
+  set N := Nat.floor (Real.sqrt (t / (2 * Real.pi)))
+  rw [show Finset.Icc 1 N = Finset.Ico 1 (N + 1) from
+        (Finset.Ico_succ_right_eq_Icc 1 N).symm,
+      Finset.sum_Ico_eq_sum_range]
+  simp only [Nat.add_sub_cancel]
+  apply Finset.sum_congr rfl
+  intro n _
+  congr 1
+  · push_cast
+    ring
+  · ring
+
+private lemma norm_sq_partial_sum_eq_partialZeta (t : ℝ) :
+    ‖partial_sum_approx t‖^2 =
+    Complex.normSq (partialZeta (Real.sqrt (t / (2 * Real.pi)))
+      (1/2 + Complex.I * ↑t)) := by
+  rw [partial_sum_approx_eq_partialZeta, Complex.sq_norm]
+
+/-- The mean square of `partial_sum_approx` is `Θ(T log T)` on `[1,T]`. -/
+theorem partial_sum_approx_mean_square_asymp :
+    (fun T => ∫ t in (1 : ℝ)..T, ‖partial_sum_approx t‖^2)
+      =Θ[atTop] (fun T => T * Real.log T) := by
+  have hEq :
+      (fun T => ∫ t in (1 : ℝ)..T, ‖partial_sum_approx t‖^2)
+        = (fun T => ∫ t in (1 : ℝ)..T,
+            Complex.normSq (partialZeta (Real.sqrt (t / (2 * Real.pi)))
+              (1/2 + Complex.I * ↑t))) := by
+    funext T
+    congr 1
+    ext t
+    exact norm_sq_partial_sum_eq_partialZeta t
+  rw [hEq]
+  exact mean_square_partial_zeta_asymp
 
 /-
 The norm of the Hardy Z function equals the norm of zeta on the critical line.
