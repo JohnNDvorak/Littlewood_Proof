@@ -43,6 +43,8 @@ import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.Basic.LogarithmicIntegral
 import Littlewood.Aristotle.AlmostPeriodicMeanValue
+import Littlewood.Aristotle.HardyInfiniteZerosV2
+import Littlewood.Aristotle.HardyEstimatesPartial
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -75,7 +77,39 @@ PROOF ROUTE:
   6. Therefore Z changes sign infinitely often → infinitely many zeros. -/
 private theorem hardy_critical_line_zeros :
     Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 } := by
-  sorry
+  -- Step 1: Construct HardySetupV2 instance with 5 analytic inputs sorry'd.
+  -- The contradiction argument (HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2)
+  -- is already fully proved and requires only these quantitative bounds.
+  haveI : HardyInfiniteZerosV2.HardySetupV2 := {
+    Z := HardyEstimatesPartial.hardyZ
+    Z_continuous := by sorry -- Re(exp(iθ(t))·ζ(1/2+it)) continuous
+    Z_zero_iff := by sorry -- |exp(iθ)|=1 ⟹ Z=0 ↔ ζ=0
+    mean_square_lower := by sorry -- ∫₁ᵀ Z² ≥ c·T·log T (Hardy-Littlewood MVT)
+    first_moment_upper := by sorry -- |∫₁ᵀ Z| ≤ C·T^{1/2+ε} (stationary phase)
+    Z_convexity_bound := by sorry -- |Z(t)| ≤ C·|t|^{1/4+ε} (Phragmén-Lindelöf)
+  }
+  -- Step 2: Apply the fully proved contradiction argument
+  have h_inf_t := @HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2 _
+  -- h_inf_t : Set.Infinite {t : ℝ | riemannZeta (1/2 + I * ↑t) = 0}
+  -- Step 3: Transfer to zetaNontrivialZeros via by_contra
+  -- If {ρ ∈ NTZ | Re=1/2} is finite, then its Im-image is finite,
+  -- but {t | ζ(1/2+it)=0} ⊆ Im-image, contradicting h_inf_t.
+  by_contra h_fin
+  rw [Set.not_infinite] at h_fin
+  exact h_inf_t <| (h_fin.image Complex.im).subset fun t ht => by
+    -- ht : riemannZeta (1/2 + I * ↑t) = 0
+    -- Need: t ∈ Im '' {ρ ∈ NTZ | Re(ρ) = 1/2}
+    -- Witness: ρ = 1/2 + I*t
+    refine ⟨(1:ℂ)/2 + Complex.I * ↑t, ?_, ?_⟩
+    · refine ⟨⟨ht, ?_, ?_⟩, ?_⟩ <;>
+        simp only [Complex.add_re, Complex.mul_re, Complex.I_re, Complex.I_im,
+                    Complex.ofReal_re, Complex.ofReal_im, mul_zero, zero_mul,
+                    sub_zero, add_zero] <;>
+        norm_num
+    · simp only [Complex.add_im, Complex.mul_im, Complex.I_re, Complex.I_im,
+                 Complex.ofReal_re, Complex.ofReal_im, mul_one, zero_mul, sub_zero,
+                 add_zero]
+      norm_num
 
 /-! ## Component 2: Landau contradiction for ψ -/
 
