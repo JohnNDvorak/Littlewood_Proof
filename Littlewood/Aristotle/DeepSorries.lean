@@ -45,6 +45,9 @@ import Littlewood.Basic.LogarithmicIntegral
 import Littlewood.Aristotle.AlmostPeriodicMeanValue
 import Littlewood.Aristotle.HardyInfiniteZerosV2
 import Littlewood.Aristotle.HardyEstimatesPartial
+import Littlewood.Bridge.HardySetupInstance
+import Littlewood.Aristotle.HardyZFirstMoment
+import Littlewood.Bridge.PhragmenLindelofWiring
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -82,11 +85,14 @@ private theorem hardy_critical_line_zeros :
   -- is already fully proved and requires only these quantitative bounds.
   haveI : HardyInfiniteZerosV2.HardySetupV2 := {
     Z := HardyEstimatesPartial.hardyZ
-    Z_continuous := by sorry -- Re(exp(iθ(t))·ζ(1/2+it)) continuous
-    Z_zero_iff := by sorry -- |exp(iθ)|=1 ⟹ Z=0 ↔ ζ=0
+    Z_continuous := HardySetupInstance.hardyZ_continuous
+    Z_zero_iff := HardySetupInstance.hardyZ_zero_iff
     mean_square_lower := by sorry -- ∫₁ᵀ Z² ≥ c·T·log T (Hardy-Littlewood MVT)
     first_moment_upper := by sorry -- |∫₁ᵀ Z| ≤ C·T^{1/2+ε} (stationary phase)
-    Z_convexity_bound := by sorry -- |Z(t)| ≤ C·|t|^{1/4+ε} (Phragmén-Lindelöf)
+    Z_convexity_bound := by
+      intro ε hε
+      obtain ⟨C, hC, hb⟩ := ZetaCriticalLineBoundHyp.bound ε hε
+      exact ⟨C, hC, fun t ht => le_trans (HardyEstimatesPartial.hardyZ_abs_le t) (hb t ht)⟩
   }
   -- Step 2: Apply the fully proved contradiction argument
   have h_inf_t := @HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2 _
