@@ -152,6 +152,7 @@ import Littlewood.Aristotle.RSBlockWiring             -- Wiring RSBoundProp + br
 -- import Littlewood.Aristotle.RiemannSiegelFirstMoment  -- MERGED into HardyFirstMomentDirect (was 1 sorry via chain)
 import Littlewood.Aristotle.RiemannSiegelSignCancellation -- RS sign cancellation O(T^{1/4}) (0 sorries) ✓
 import Littlewood.Aristotle.FresnelIntegrals             -- Fresnel integral evaluations via Gaussian regularization (0 sorries) ✓
+import Littlewood.Aristotle.AlmostPeriodicMeanValue      -- Almost-periodic mean value: Parseval, Cesàro, one-sided bounds (0 sorries) ✓
 -- import Littlewood.Aristotle.SecondMVT                    -- Second mean value theorem (DEAD CODE: not on critical path)
 -- import Littlewood.Aristotle.SecondMVTAtomic              -- Atomic: du Bois-Reymond second MVT (DEAD CODE: not on critical path)
 -- import Littlewood.Aristotle.DigammaAsymptotic             -- Digamma-log bound (DEAD CODE: only feeds HardyCosExpOmega/PhaseDerivBounds)

@@ -85,20 +85,9 @@ theorem chebyshevPsi_le (x : ℝ) (hx : 1 ≤ x) : ψ x ≤ 6 * x := by
         exact (Real.log_le_iff_le_exp (by norm_num)).2 h'
       nlinarith
 
-/-- θ(x)/x → 1 as x → ∞ (PNT for θ).
-Axiomatized: previously derived from PrimeNumberTheoremAnd.chebyshev_asymptotic.
-Unused by the critical path but retained for completeness. -/
-axiom chebyshevTheta_asymptotic : Tendsto (fun x => θ x / x) atTop (nhds 1)
-
-/-- ψ(x)/x → 1 as x → ∞ (PNT for ψ).
-Axiomatized: previously derived from PrimeNumberTheoremAnd.WeakPNT''.
-Unused by the critical path but retained for completeness. -/
-axiom chebyshevPsi_asymptotic : Tendsto (fun x => ψ x / x) atTop (nhds 1)
-
-/-- x/2 ≤ θ(x) eventually, consequence of PNT.
-Axiomatized: previously derived from PrimeNumberTheoremAnd.chebyshev_asymptotic.
-Unused by the critical path but retained for completeness. -/
-axiom chebyshevTheta_eventually_ge : ∀ᶠ x in atTop, x / 2 ≤ θ x
+-- PNT asymptotics (chebyshevTheta_asymptotic, chebyshevPsi_asymptotic,
+-- chebyshevTheta_eventually_ge) quarantined to ChebyshevFunctionsQuarantine.lean.
+-- They are correct but axiomatized; not imported by the build.
 
 -- Specific values
 theorem chebyshevTheta_two : θ 2 = Real.log 2 := by

@@ -13,8 +13,8 @@ These are building blocks toward proving the Landau contradiction
 (currently in DeepSorries.deep_mathematical_results) from a hypothesized
 smoothed explicit formula.
 
-STATUS: 5 of 6 lemmas proved (1 sorry: parseval_finite_trig_sum).
-NOT imported by the main build (no effect on project sorry count).
+STATUS: ALL 7 lemmas proved (0 sorries).
+NOT imported by the main build yet — ready for integration.
 
 REFERENCES:
   - Landau, "Über einen Satz von Tschebyschef" (1905)
@@ -26,13 +26,13 @@ import Mathlib
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
-set_option maxHeartbeats 800000
+set_option maxHeartbeats 6400000
 
 noncomputable section
 
 namespace Aristotle.AlmostPeriodicMeanValue
 
-open Complex Filter MeasureTheory Topology Real
+open Complex Filter MeasureTheory Topology Real Finset
 
 /-! ## Norm of complex exponential with purely imaginary argument -/
 
@@ -112,6 +112,40 @@ theorem cesaro_exp_norm_tendsto_zero (γ : ℝ) (hγ : γ ≠ 0) :
           mul_le_mul_of_nonneg_left (exp_integral_bound γ hγ T)
             (div_nonneg one_pos.le hT_pos.le)
       _ = (2 / |γ|) * T⁻¹ := by rw [one_div]; ring
+
+/-- **Cesàro mean of Re(d·exp(iδu)) → 0**: For any d : ℂ and nonzero δ : ℝ,
+  (1/T)∫₀ᵀ Re(d·e^{iδu}) du → 0 as T → ∞.
+
+PROOF: Factor out d from the integral, bound |Re(z)| ≤ ‖z‖, then
+use `cesaro_exp_norm_tendsto_zero` on the exponential part. -/
+theorem cesaro_re_cmul_exp_tendsto_zero (d : ℂ) (δ : ℝ) (hδ : δ ≠ 0) :
+    Tendsto (fun T : ℝ => (1 / T) * ∫ u in (0 : ℝ)..T,
+      (d * Complex.exp (Complex.I * ↑δ * ↑u)).re) atTop (nhds 0) := by
+  have h_bound : Tendsto (fun T : ℝ => ‖d‖ * ((1 / T) *
+      ‖∫ u in (0:ℝ)..T, exp (I * ↑δ * ↑u)‖)) atTop (nhds 0) := by
+    have := (cesaro_exp_norm_tendsto_zero δ hδ).const_mul ‖d‖
+    rwa [mul_zero] at this
+  refine squeeze_zero_norm' ?_ h_bound
+  filter_upwards [eventually_ge_atTop (1 : ℝ)] with T hT
+  have hT_pos : (0 : ℝ) < T := by linarith
+  rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg (by positivity : (0:ℝ) ≤ 1/T)]
+  have hf_int : IntervalIntegrable (fun u => d * exp (I * ↑δ * ↑u)) volume 0 T :=
+    (continuous_const.mul (Complex.continuous_exp.comp
+      (continuous_const.mul Complex.continuous_ofReal))).intervalIntegrable 0 T
+  have h_re_comm : ∫ u in (0:ℝ)..T, (d * exp (I * ↑δ * ↑u)).re =
+      (∫ u in (0:ℝ)..T, d * exp (I * ↑δ * ↑u)).re := by
+    simp only [← Complex.reCLM_apply]
+    exact (Complex.reCLM.intervalIntegral_comp_comm hf_int)
+  rw [h_re_comm]
+  calc (1 / T) * |(∫ u in (0:ℝ)..T, d * exp (I * ↑δ * ↑u)).re|
+      ≤ (1 / T) * ‖∫ u in (0:ℝ)..T, d * exp (I * ↑δ * ↑u)‖ := by
+        apply mul_le_mul_of_nonneg_left _ (by positivity)
+        exact Complex.abs_re_le_norm _
+    _ = (1 / T) * ‖d * ∫ u in (0:ℝ)..T, exp (I * ↑δ * ↑u)‖ := by
+        congr 1; rw [← intervalIntegral.integral_const_mul]
+    _ = (1 / T) * (‖d‖ * ‖∫ u in (0:ℝ)..T, exp (I * ↑δ * ↑u)‖) := by
+        rw [norm_mul]
+    _ = ‖d‖ * ((1 / T) * ‖∫ u in (0:ℝ)..T, exp (I * ↑δ * ↑u)‖) := by ring
 
 /-! ## One-sided bound lemma -/
 
@@ -242,6 +276,83 @@ theorem one_sided_zero_l2_mean
 
 /-! ## Parseval identity for finite trigonometric sums -/
 
+private lemma inner_eq_re_conj_mul (z w : ℂ) :
+    @inner ℝ ℂ _ z w = (starRingEnd ℂ z * w).re := by
+  simp [Complex.inner, Complex.mul_re, Complex.conj_re, Complex.conj_im]; ring
+
+private lemma norm_cmul_cexp (c : ℂ) (γ u : ℝ) :
+    ‖c * cexp (I * ↑γ * ↑u)‖ = ‖c‖ := by
+  rw [norm_mul, Complex.norm_exp]
+  simp [Complex.mul_re, Complex.I_re, Complex.I_im,
+        Complex.ofReal_re, Complex.ofReal_im, Real.exp_zero, mul_one]
+
+private lemma conj_cexp_mul_cexp (γ δ u : ℝ) :
+    starRingEnd ℂ (cexp (I * ↑γ * ↑u)) * cexp (I * ↑δ * ↑u) =
+    cexp (I * ↑(δ - γ) * ↑u) := by
+  have h : starRingEnd ℂ (cexp (I * ↑γ * ↑u)) = cexp (starRingEnd ℂ (I * ↑γ * ↑u)) := by
+    rw [← Complex.exp_conj]
+  rw [h]; simp only [map_mul, Complex.conj_I, Complex.conj_ofReal]
+  rw [← Complex.exp_add]; congr 1; push_cast; ring
+
+private lemma cross_term_eq
+    {n : ℕ} (γ' : Fin n → ℝ) (c' : Fin n → ℂ)
+    (c_last : ℂ) (γ_last : ℝ) (u : ℝ) :
+    @inner ℝ ℂ _ (∑ k : Fin n, c' k * cexp (I * ↑(γ' k) * ↑u))
+                  (c_last * cexp (I * ↑γ_last * ↑u)) =
+    ∑ k : Fin n, (starRingEnd ℂ (c' k) * c_last *
+      cexp (I * ↑(γ_last - γ' k) * ↑u)).re := by
+  rw [inner_eq_re_conj_mul]
+  have h : starRingEnd ℂ (∑ k : Fin n, c' k * cexp (I * ↑(γ' k) * ↑u)) *
+      (c_last * cexp (I * ↑γ_last * ↑u)) =
+      ∑ k : Fin n, starRingEnd ℂ (c' k) * c_last *
+        cexp (I * ↑(γ_last - γ' k) * ↑u) := by
+    rw [map_sum, Finset.sum_mul]
+    congr 1; ext k
+    simp only [map_mul]
+    calc starRingEnd ℂ (c' k) * starRingEnd ℂ (cexp (I * ↑(γ' k) * ↑u)) *
+          (c_last * cexp (I * ↑γ_last * ↑u))
+        = starRingEnd ℂ (c' k) * c_last *
+          (starRingEnd ℂ (cexp (I * ↑(γ' k) * ↑u)) * cexp (I * ↑γ_last * ↑u)) := by ring
+      _ = starRingEnd ℂ (c' k) * c_last *
+          cexp (I * ↑(γ_last - γ' k) * ↑u) := by rw [conj_cexp_mul_cexp]
+  rw [h]
+  exact_mod_cast map_sum Complex.reAddGroupHom _ _
+
+private lemma cross_term_cesaro_zero
+    {n : ℕ} (γ' : Fin n → ℝ) (c' : Fin n → ℂ)
+    (c_last : ℂ) (γ_last : ℝ)
+    (h_distinct : ∀ k, γ' k ≠ γ_last) :
+    Tendsto (fun T : ℝ => (1 / T) * ∫ u in (0 : ℝ)..T,
+      @inner ℝ ℂ _ (∑ k : Fin n, c' k * cexp (I * ↑(γ' k) * ↑u))
+                    (c_last * cexp (I * ↑γ_last * ↑u)))
+      atTop (nhds 0) := by
+  simp_rw [cross_term_eq]
+  have h_int : ∀ k : Fin n, ∀ a b : ℝ,
+      IntervalIntegrable (fun u => (starRingEnd ℂ (c' k) * c_last *
+        cexp (I * ↑(γ_last - γ' k) * ↑u)).re) volume a b := by
+    intro k a b; apply Continuous.intervalIntegrable
+    exact Complex.continuous_re.comp (continuous_const.mul
+      (Complex.continuous_exp.comp (continuous_const.mul Complex.continuous_ofReal)))
+  have h_swap : ∀ T : ℝ,
+      ∫ u in (0:ℝ)..T, ∑ k : Fin n,
+        (starRingEnd ℂ (c' k) * c_last * cexp (I * ↑(γ_last - γ' k) * ↑u)).re =
+      ∑ k : Fin n, ∫ u in (0:ℝ)..T,
+        (starRingEnd ℂ (c' k) * c_last * cexp (I * ↑(γ_last - γ' k) * ↑u)).re :=
+    fun T => intervalIntegral.integral_finset_sum (fun k _ => h_int k 0 T)
+  simp_rw [h_swap, Finset.mul_sum]
+  have h_each : ∀ k : Fin n, Tendsto (fun T : ℝ => 1 / T *
+      ∫ u in (0:ℝ)..T, (starRingEnd ℂ (c' k) * c_last *
+        cexp (I * ↑(γ_last - γ' k) * ↑u)).re) atTop (nhds 0) :=
+    fun k => cesaro_re_cmul_exp_tendsto_zero _ _ (sub_ne_zero.mpr (h_distinct k).symm)
+  have := tendsto_finset_sum Finset.univ (fun k _ => h_each k)
+  simp only [Finset.sum_const_zero] at this; exact this
+
+private lemma continuous_trig_sum {n : ℕ} (γ : Fin n → ℝ) (c : Fin n → ℂ) :
+    Continuous (fun u : ℝ => ∑ k : Fin n, c k * cexp (I * ↑(γ k) * ↑u)) :=
+  continuous_finset_sum _ fun _ _ =>
+    continuous_const.mul (Complex.continuous_exp.comp
+      (continuous_const.mul Complex.continuous_ofReal))
+
 /-- Parseval identity for finite sums of complex exponentials:
   M(|∑ₖ cₖ e^{iγₖu}|²) = ∑ₖ |cₖ|²
 when the frequencies γₖ are distinct and nonzero.
@@ -249,11 +360,10 @@ when the frequencies γₖ are distinct and nonzero.
 More precisely: for distinct nonzero reals γ₁,...,γₙ and complex c₁,...,cₙ,
   lim_{T→∞} (1/T)∫₀ᵀ |∑ₖ cₖ e^{iγₖu}|² du = ∑ₖ |cₖ|²
 
-PROOF SKETCH:
-  |∑ cₖ e^{iγₖu}|² = ∑_{j,k} cⱼ c̄ₖ e^{i(γⱼ-γₖ)u}.
-  Taking Cesàro means, the cross terms (j≠k) vanish by
-  `cesaro_exp_norm_tendsto_zero` (since γⱼ-γₖ ≠ 0).
-  The diagonal terms (j=k) contribute |cⱼ|². -/
+PROOF: Induction on n. Base: n=0 trivial. Step: decompose sum into
+first n terms S(u) plus last term b(u). Then ‖S+b‖² = ‖S‖² + 2⟨S,b⟩ + ‖b‖².
+The IH handles ‖S‖², cross terms vanish by `cross_term_cesaro_zero`,
+and ‖b‖² = ‖c_last‖² is constant. -/
 theorem parseval_finite_trig_sum
     {n : ℕ} (γ : Fin n → ℝ) (c : Fin n → ℂ)
     (hγ_distinct : Function.Injective γ)
@@ -261,6 +371,79 @@ theorem parseval_finite_trig_sum
     Tendsto (fun T : ℝ => (1 / T) * ∫ u in (0 : ℝ)..T,
       ‖∑ k : Fin n, c k * Complex.exp (Complex.I * ↑(γ k) * ↑u)‖ ^ 2)
       atTop (nhds (∑ k : Fin n, ‖c k‖ ^ 2)) := by
-  sorry
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    set γ' := γ ∘ Fin.castSucc
+    set c' := c ∘ Fin.castSucc
+    set c_last := c (Fin.last n)
+    set γ_last := γ (Fin.last n)
+    set S := fun u : ℝ => ∑ i : Fin n, c' i * cexp (I * ↑(γ' i) * ↑u)
+    set bt := fun u : ℝ => c_last * cexp (I * ↑γ_last * ↑u)
+    have hγ'_inj : Function.Injective γ' := hγ_distinct.comp (Fin.castSucc_injective n)
+    have hγ'_nz : ∀ k, γ' k ≠ 0 := fun k => hγ_nonzero _
+    have h_dist : ∀ k : Fin n, γ' k ≠ γ_last :=
+      fun k => hγ_distinct.ne (Fin.castSucc_lt_last k).ne
+    have h_ih := ih γ' c' hγ'_inj hγ'_nz
+    have h_sum_eq : ∀ u : ℝ,
+        ∑ i : Fin (n + 1), c i * cexp (I * ↑(γ i) * ↑u) = S u + bt u :=
+      fun u => Fin.sum_univ_castSucc _
+    rw [show ∑ i : Fin (n + 1), ‖c i‖ ^ 2 =
+        (∑ i : Fin n, ‖c' i‖ ^ 2) + ‖c_last‖ ^ 2 from Fin.sum_univ_castSucc _]
+    simp_rw [h_sum_eq]
+    -- Continuity & integrability
+    have hS_cont : Continuous S := continuous_trig_sum γ' c'
+    have hbt_cont : Continuous bt := continuous_const.mul
+      (Complex.continuous_exp.comp (continuous_const.mul Complex.continuous_ofReal))
+    have hS2_int : ∀ a b : ℝ, IntervalIntegrable (fun u => ‖S u‖ ^ 2) volume a b :=
+      fun a b => (hS_cont.norm.pow 2).intervalIntegrable a b
+    have hI_int : ∀ a b : ℝ,
+        IntervalIntegrable (fun u => @inner ℝ ℂ _ (S u) (bt u)) volume a b :=
+      fun a b => (hS_cont.inner hbt_cont).intervalIntegrable a b
+    have h_bt_norm : ∀ u : ℝ, ‖bt u‖ = ‖c_last‖ := fun u => norm_cmul_cexp c_last γ_last u
+    -- Integral decomposition
+    have h_int_decomp : ∀ T : ℝ, 0 < T →
+        ∫ u in (0:ℝ)..T, ‖S u + bt u‖ ^ 2 =
+        (∫ u in (0:ℝ)..T, ‖S u‖ ^ 2) +
+        2 * (∫ u in (0:ℝ)..T, @inner ℝ ℂ _ (S u) (bt u)) +
+        T * ‖c_last‖ ^ 2 := by
+      intro T _
+      have hp : ∀ u, ‖S u + bt u‖ ^ 2 =
+          ‖S u‖ ^ 2 + 2 * @inner ℝ ℂ _ (S u) (bt u) + ‖c_last‖ ^ 2 := by
+        intro u; rw [norm_add_sq_real, h_bt_norm]
+      simp_rw [hp]
+      have h1 := intervalIntegral.integral_add
+        ((hS2_int 0 T).add ((hI_int 0 T).const_mul 2))
+        (intervalIntegrable_const (c := ‖c_last‖ ^ 2))
+      have h2 := intervalIntegral.integral_add (hS2_int 0 T) ((hI_int 0 T).const_mul 2)
+      have h3 : ∫ u in (0:ℝ)..T, (2 : ℝ) * @inner ℝ ℂ _ (S u) (bt u) =
+          (2 : ℝ) * ∫ u in (0:ℝ)..T, @inner ℝ ℂ _ (S u) (bt u) :=
+        intervalIntegral.integral_const_mul ..
+      have h4 : ∫ _ in (0:ℝ)..T, (‖c_last‖ ^ 2 : ℝ) = T * ‖c_last‖ ^ 2 := by
+        rw [intervalIntegral.integral_const, smul_eq_mul, sub_zero, mul_comm]
+      linarith
+    -- Eventual equality
+    have h_eq : ∀ᶠ T in atTop,
+        (1 / T) * ∫ u in (0:ℝ)..T, ‖S u + bt u‖ ^ 2 =
+        ((1 / T) * ∫ u in (0:ℝ)..T, ‖S u‖ ^ 2) +
+        2 * ((1 / T) * ∫ u in (0:ℝ)..T, @inner ℝ ℂ _ (S u) (bt u)) +
+        ‖c_last‖ ^ 2 := by
+      filter_upwards [eventually_gt_atTop (0:ℝ)] with T hT
+      rw [h_int_decomp T hT]; field_simp
+    -- Cross terms → 0
+    have h_cross := cross_term_cesaro_zero γ' c' c_last γ_last h_dist
+    -- Combined limit
+    have h2 : Tendsto (fun T =>
+        2 * ((1 / T) * ∫ u in (0:ℝ)..T, @inner ℝ ℂ _ (S u) (bt u)))
+        atTop (nhds 0) := by
+      have := h_cross.const_mul 2; rwa [mul_zero] at this
+    have h_combined : Tendsto (fun T =>
+        ((1 / T) * ∫ u in (0:ℝ)..T, ‖S u‖ ^ 2) +
+        2 * ((1 / T) * ∫ u in (0:ℝ)..T, @inner ℝ ℂ _ (S u) (bt u)) +
+        ‖c_last‖ ^ 2)
+        atTop (nhds ((∑ i : Fin n, ‖c' i‖ ^ 2) + ‖c_last‖ ^ 2)) := by
+      have := (h_ih.add h2).add (tendsto_const_nhds (x := ‖c_last‖ ^ 2))
+      simp only [add_zero] at this; exact this
+    exact h_combined.congr' (h_eq.mono fun _ h => h.symm)
 
 end Aristotle.AlmostPeriodicMeanValue
