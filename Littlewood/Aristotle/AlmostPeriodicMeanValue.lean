@@ -13,8 +13,7 @@ These are building blocks toward proving the Landau contradiction
 (currently in DeepSorries.deep_mathematical_results) from a hypothesized
 smoothed explicit formula.
 
-STATUS: Architecture file. norm_exp_I_mul_real is proved (0 sorry).
-Other lemmas have correct types but sorry'd proofs — to be filled.
+STATUS: 5 of 6 lemmas proved (1 sorry: parseval_finite_trig_sum).
 NOT imported by the main build (no effect on project sorry count).
 
 REFERENCES:
@@ -27,7 +26,7 @@ import Mathlib
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
-set_option maxHeartbeats 400000
+set_option maxHeartbeats 800000
 
 noncomputable section
 
@@ -116,49 +115,130 @@ theorem cesaro_exp_norm_tendsto_zero (γ : ℝ) (hγ : γ ≠ 0) :
 
 /-! ## One-sided bound lemma -/
 
-/-- If f : ℝ → ℝ satisfies:
+/-- **One-sided zero absolute mean**: If f : ℝ → ℝ satisfies:
   (i)  |f(u)| ≤ B for all u,
   (ii) f(u) ≤ 0 for u ≥ u₀,
   (iii) (1/T)∫₀ᵀ f → 0 as T → ∞,
 then (1/T)∫₀ᵀ |f| → 0 as T → ∞.
 
-This is the key analysis lemma for Landau's oscillation argument:
-one-sided bound + zero mean + boundedness implies zero absolute mean.
-
-PROOF SKETCH:
-  For T > u₀:
-  (1/T)∫₀ᵀ |f| = (1/T)∫₀^{u₀} |f| + (1/T)∫_{u₀}^T |f|
-  First term ≤ B·u₀/T → 0.
-  For u ≥ u₀: f(u) ≤ 0, so |f(u)| = -f(u), hence
-  (1/T)∫_{u₀}^T |f| = -(1/T)∫_{u₀}^T f = (1/T)∫₀^{u₀} f - (1/T)∫₀ᵀ f
-  → 0 - 0 = 0.
-  Thus (1/T)∫₀ᵀ |f| → 0. -/
+PROVED: For u ≥ u₀, |f(u)| + f(u) = 0, so ∫₀ᵀ |f| = C - ∫₀ᵀ f where
+C = ∫₀^{u₀}(|f|+f) is constant. Both C/T → 0 and (1/T)∫₀ᵀ f → 0. -/
 theorem one_sided_zero_abs_mean
     (f : ℝ → ℝ) (B : ℝ) (u₀ : ℝ)
-    (hB : ∀ u, |f u| ≤ B)
+    (_hB : ∀ u, |f u| ≤ B)
     (hf_neg : ∀ u, u ≥ u₀ → f u ≤ 0)
+    (hf_int : ∀ a b : ℝ, IntervalIntegrable f volume a b)
     (hf_mean : Tendsto (fun T => (1 / T) * ∫ u in (0 : ℝ)..T, f u) atTop (nhds 0)) :
     Tendsto (fun T => (1 / T) * ∫ u in (0 : ℝ)..T, |f u|) atTop (nhds 0) := by
-  sorry
+  -- |f| is integrable (since ‖·‖ = |·| for reals)
+  have hf_abs_int : ∀ a b : ℝ, IntervalIntegrable (fun u => |f u|) volume a b :=
+    fun a b => (hf_int a b).norm
+  -- |f(u)| + f(u) = 0 for u ≥ u₀
+  have h_sum_zero : ∀ u, u ≥ u₀ → |f u| + f u = 0 := by
+    intro u hu
+    rw [abs_of_nonpos (hf_neg u hu)]
+    ring
+  -- Define C = ∫₀^{u₀} (|f| + f)
+  set C := ∫ u in (0 : ℝ)..u₀, (|f u| + f u) with hC_def
+  -- For T ≥ u₀: ∫₀ᵀ (|f| + f) = C
+  have h_sum_eq : ∀ T, u₀ ≤ T →
+      ∫ u in (0 : ℝ)..T, (|f u| + f u) = C := by
+    intro T hT
+    have h_zero : ∫ u in u₀..T, (|f u| + f u) = 0 := by
+      rw [← intervalIntegral.integral_zero (a := u₀) (b := T)]
+      apply intervalIntegral.integral_congr
+      intro u hu
+      rw [Set.mem_uIcc] at hu
+      apply h_sum_zero
+      rcases hu with ⟨h1, _⟩ | ⟨_, h2⟩
+      · exact h1
+      · linarith
+    have h_split := intervalIntegral.integral_add_adjacent_intervals
+          ((hf_abs_int 0 u₀).add (hf_int 0 u₀))
+          ((hf_abs_int u₀ T).add (hf_int u₀ T))
+    linarith
+  -- For T ≥ u₀: ∫₀ᵀ |f| = C - ∫₀ᵀ f
+  have h_abs_eq : ∀ T, u₀ ≤ T →
+      ∫ u in (0 : ℝ)..T, |f u| = C - ∫ u in (0 : ℝ)..T, f u := by
+    intro T hT
+    have h_add := intervalIntegral.integral_add (hf_abs_int 0 T) (hf_int 0 T)
+    have h_eq := h_sum_eq T hT
+    linarith
+  -- C·T⁻¹ → 0
+  have h_CT : Tendsto (fun T : ℝ => C * T⁻¹) atTop (nhds 0) := by
+    rw [show (0 : ℝ) = C * 0 from (mul_zero C).symm]
+    exact tendsto_const_nhds.mul tendsto_inv_atTop_zero
+  -- C·T⁻¹ - (1/T)∫f → 0 - 0 = 0
+  have h_lim : Tendsto (fun T : ℝ =>
+      C * T⁻¹ - (1 / T) * ∫ u in (0 : ℝ)..T, f u) atTop (nhds 0) := by
+    have := h_CT.sub hf_mean
+    rwa [sub_zero] at this
+  -- Transfer: rhs → lhs via eventual equality
+  refine h_lim.congr' ?_
+  filter_upwards [eventually_ge_atTop u₀] with T hT
+  rw [h_abs_eq T hT]; ring
 
-/-- If f : ℝ → ℝ satisfies:
+/-- **One-sided zero L² mean**: If f : ℝ → ℝ satisfies:
   (i)  |f(u)| ≤ B for all u,
   (ii) f(u) ≤ 0 for u ≥ u₀,
   (iii) (1/T)∫₀ᵀ f → 0 as T → ∞,
 then (1/T)∫₀ᵀ f² → 0 as T → ∞.
 
-Corollary of `one_sided_zero_abs_mean`: since f² ≤ B·|f|, zero absolute
-mean implies zero L² mean.
-
-PROOF: f² = |f|² ≤ B·|f| (using |f| ≤ B), so
-  (1/T)∫ f² ≤ B·(1/T)∫|f| → 0 by `one_sided_zero_abs_mean`. -/
+PROVED: Squeeze between 0 and B·(1/T)∫|f|. The pointwise bound
+f² = |f|² ≤ B·|f| (from |f| ≤ B) gives ∫f² ≤ B·∫|f|, and
+`one_sided_zero_abs_mean` provides (1/T)∫|f| → 0. -/
 theorem one_sided_zero_l2_mean
     (f : ℝ → ℝ) (B : ℝ) (hB_pos : 0 < B) (u₀ : ℝ)
     (hB : ∀ u, |f u| ≤ B)
     (hf_neg : ∀ u, u ≥ u₀ → f u ≤ 0)
+    (hf_int : ∀ a b : ℝ, IntervalIntegrable f volume a b)
     (hf_mean : Tendsto (fun T => (1 / T) * ∫ u in (0 : ℝ)..T, f u) atTop (nhds 0)) :
     Tendsto (fun T => (1 / T) * ∫ u in (0 : ℝ)..T, (f u) ^ 2) atTop (nhds 0) := by
-  sorry
+  have h_abs := one_sided_zero_abs_mean f B u₀ hB hf_neg hf_int hf_mean
+  have hf_abs_int : ∀ a b : ℝ, IntervalIntegrable (fun u => |f u|) volume a b :=
+    fun a b => (hf_int a b).norm
+  -- Key pointwise bound: f² ≤ B·|f|
+  have h_pw : ∀ u, (f u) ^ 2 ≤ B * |f u| := by
+    intro u
+    calc (f u) ^ 2 = |f u| ^ 2 := by rw [sq_abs]
+      _ = |f u| * |f u| := by ring
+      _ ≤ B * |f u| := mul_le_mul_of_nonneg_right (hB u) (abs_nonneg _)
+  -- Upper bound: B * (1/T * ∫|f|) → 0
+  have h_upper : Tendsto (fun T : ℝ => B * ((1 / T) * ∫ u in (0 : ℝ)..T, |f u|))
+      atTop (nhds 0) := by
+    have := (tendsto_const_nhds (x := B)).mul h_abs
+    rwa [mul_zero] at this
+  -- Squeeze: 0 ≤ (1/T)∫f² ≤ B·(1/T)∫|f| → 0
+  apply tendsto_of_tendsto_of_tendsto_of_le_of_le'
+    (g := fun _ => (0 : ℝ))
+    (h := fun T => B * ((1 / T) * ∫ u in (0 : ℝ)..T, |f u|))
+    tendsto_const_nhds h_upper
+  · -- 0 ≤ (1/T)∫f²
+    filter_upwards [eventually_ge_atTop (1 : ℝ)] with T hT
+    apply mul_nonneg (by positivity)
+    exact intervalIntegral.integral_nonneg (by linarith) (fun u _ => sq_nonneg _)
+  · -- (1/T)∫f² ≤ B·(1/T)∫|f|
+    filter_upwards [eventually_ge_atTop (1 : ℝ)] with T hT
+    have hT_pos : (0 : ℝ) < T := by linarith
+    show 1 / T * ∫ u in (0:ℝ)..T, (f u) ^ 2 ≤ B * (1 / T * ∫ u in (0:ℝ)..T, |f u|)
+    calc 1 / T * ∫ u in (0:ℝ)..T, (f u) ^ 2
+        ≤ 1 / T * ∫ u in (0:ℝ)..T, B * |f u| := by
+          apply mul_le_mul_of_nonneg_left _ (by positivity)
+          apply intervalIntegral.integral_mono_on (by linarith)
+          · apply IntervalIntegrable.mono_fun (intervalIntegrable_const (c := B ^ 2))
+            · exact ((intervalIntegrable_iff.mp (hf_int 0 T)).aestronglyMeasurable).pow 2
+            · exact ae_of_all _ fun u => by
+                show ‖f u ^ 2‖ ≤ |B ^ 2|
+                have h1 : f u ^ 2 ≤ B ^ 2 :=
+                  sq_le_sq' ((abs_le.mp (hB u)).1) ((abs_le.mp (hB u)).2)
+                rw [Real.norm_eq_abs, abs_of_nonneg (by positivity), abs_of_nonneg (by positivity)]
+                exact h1
+          · exact (hf_abs_int 0 T).const_mul B
+          · intro u _; exact h_pw u
+      _ = 1 / T * (B * ∫ u in (0:ℝ)..T, |f u|) := by
+          congr 1
+          exact intervalIntegral.integral_const_mul B _
+      _ = B * (1 / T * ∫ u in (0:ℝ)..T, |f u|) := by ring
 
 /-! ## Parseval identity for finite trigonometric sums -/
 
