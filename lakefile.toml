@@ -5,12 +5,8 @@ defaultTargets = ["Littlewood"]
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "master"
+rev = "fdddb3ea2c8c35de4455e033bc2a5df4d3a391ee"
 
-[[require]]
-name = "PrimeNumberTheoremAnd"
-git = "https://github.com/AlexKontorovich/PrimeNumberTheoremAnd"
-rev = "main"
 
 [[lean_lib]]
 name = "Littlewood"

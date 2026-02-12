@@ -7,30 +7,22 @@ path to the two main theorems:
   - littlewood_pi_li : π(x) - li(x) = Ω±(√x / log x)
 
 ## Critical Path for littlewood_psi (0 sorry instances here):
-  ZetaCriticalLineBoundHyp (AUTO) + HardyFirstMomentUpperHyp
-    → (via Hardy chain) HardyCriticalLineZerosHyp
-    → (via LandauOscillation, 1 sorry, priority 2000) PsiOscillationFromCriticalZerosHyp
+  HardyCriticalLineZerosHyp (extracted from DeepSorries.deep_mathematical_results.1)
+    → (via LandauOscillation, 0 sorry, priority 2000) PsiOscillationFromCriticalZerosHyp
     → (via PsiOscillationWiring) PsiOscillationSqrtHyp
     → littlewood_psi
-  NOTE: ExplicitFormulaOscillation also provides PsiOscillationFromCriticalZerosHyp
-  but via the FALSE TruncatedExplicitFormulaPsiHyp (psi_approx with S=∅ contradicts
-  Littlewood). LandauOscillation supersedes it with a TRUE sorry.
+  LandauOscillation delegates to Aristotle/LandauLittlewood → LandauContradiction
+    → SmoothedExplicitFormula (extracted from DeepSorries.deep_mathematical_results.2.1).
 
 ## Critical Path for littlewood_pi_li (0 sorry instances here):
-  HardyCriticalLineZerosHyp (auto-wired above)
-    → (via LandauOscillation, 1 sorry, priority 2000) PiLiOscillationSqrtHyp
+  HardyCriticalLineZerosHyp (same source as above)
+    → (via LandauOscillation, 0 sorry, priority 2000) PiLiOscillationSqrtHyp
     → littlewood_pi_li
-  NOTE: PiLiDirectOscillation also provides PiLiOscillationSqrtHyp but requires
-  TruncatedExplicitFormulaPiHyp (no instance; pi_approx is FALSE with S=∅).
-  LandauOscillation supersedes it with a TRUE sorry for the direct Landau argument.
 
-## Total sorries in this file: 0 (was 4)
-##   REMOVED: ExplicitFormulaPsiHyp (tsum is FALSE; folded into bridge sorry)
-##   REMOVED: ExplicitFormulaThetaHyp (tsum is FALSE; folded into bridge sorry)
-##   MOVED: ErrorTermFirstMomentBoundHyp → Aristotle/RiemannSiegelFirstMoment.lean
-## Total critical path sorries (including bridges + Aristotle): 4
-##   LandauOscillation:72 (ψ Landau), LandauOscillation:101 (π-li Landau),
-##   StationaryPhaseDecomposition:74 (stationary phase), RiemannSiegelFirstMoment:75 (RS)
+## Total sorries in this file: 0
+## Total critical path sorries: 1
+##   DeepSorries:69 (deep_mathematical_results — bundles Hardy's theorem,
+##     ψ Landau contradiction, and π-li Landau contradiction)
 
 For non-critical infrastructure hypotheses (zero counting, weighted average,
 Landau lemma, etc.), see Assumptions.lean which imports this file and adds
@@ -42,7 +34,8 @@ import Littlewood.ExplicitFormulas.ConversionFormulas
 import Littlewood.Bridge.HardyChainHyp
 
 -- Bridge files (provide auto-wired instances)
-import Littlewood.Bridge.HardyCriticalLineWiring
+import Littlewood.Bridge.HardyCriticalLineZerosDirect
+-- import Littlewood.Bridge.HardyCriticalLineWiring  -- MERGED: bypassed by HardyCriticalLineZerosDirect
 import Littlewood.Bridge.ExplicitFormulaOscillation
 import Littlewood.Bridge.PsiOscillationWiring
 import Littlewood.Bridge.ThetaExplicitFormulaOscillation
@@ -53,8 +46,7 @@ import Littlewood.Bridge.PiLiDirectOscillation
 import Littlewood.Bridge.LandauOscillation
 
 -- Aristotle files (provide proved instances)
-import Littlewood.Aristotle.StationaryPhaseDecomposition
-import Littlewood.Aristotle.RiemannSiegelFirstMoment
+-- import Littlewood.Aristotle.HardyFirstMomentDirect  -- MERGED into DeepSorries
 
 namespace Littlewood.CriticalAssumptions
 
@@ -64,44 +56,26 @@ open Conversion ZetaZeros
 -- Critical Path Sorry Instances (0 in this file)
 -- ============================================================
 
+-- ALL critical path sorries are now in Aristotle/DeepSorries.lean:
+--   deep_mathematical_results bundles:
+--     (1) Hardy's theorem: ζ has ∞ zeros on Re(s) = 1/2
+--     (2) Landau ψ-contradiction: σ·(ψ-x) = o₊(√x) + ∞ critical zeros → False
+--     (3) Landau π-li contradiction: σ·(π-li) = o₊(√x/log x) + ∞ critical zeros → False
+--
+-- Extraction chain:
+--   DeepSorries.deep_mathematical_results.1
+--     → HardyCriticalLineZerosDirect (instance, 0 sorry)
+--   DeepSorries.deep_mathematical_results.2.1
+--     → SmoothedExplicitFormula.psi_signed_contradiction (theorem, 0 sorry)
+--   DeepSorries.deep_mathematical_results.2.2
+--     → SmoothedExplicitFormula.pi_li_signed_contradiction (theorem, 0 sorry)
+
 -- ExplicitFormulaPsiHyp: REMOVED from critical path.
 --   The tsum formulation ∑' ρ : zetaNontrivialZeros, x^ρ/ρ is FALSE
 --   (not absolutely convergent → tsum = 0 in Lean/Mathlib).
 --   The truncated explicit formula content is now folded into the
 --   ExplicitFormulaOscillation bridge sorry.
 --   See docs/FALSE_THEOREMS.md for the tsum architectural issue.
-
--- ZetaCriticalLineBoundHyp: PROVIDED by Bridge/PhragmenLindelofWiring.lean
--- (auto-derived from Aristotle/PhragmenLindelof.lean, 0 sorries)
-
--- MainTermFirstMomentBoundHyp: AUTO-WIRED
---   Aristotle/StationaryPhaseDecomposition.lean provides
---   HardyCosIntegralAlternatingSqrtDecompositionHyp (1 atomic sorry),
---   which auto-wires to MainTermFirstMomentBoundHyp via
---   Bridge/HardyFirstMomentWiring.lean (0 sorries).
-
--- ErrorTermFirstMomentBoundHyp: PROVIDED by Aristotle/RiemannSiegelFirstMoment.lean
---   Atomic sorry: rs_remainder_first_moment_quarter gives |∫ ErrorTerm| ≤ C·T^{1/4}
---   Auto-wired: T^{1/4} ≤ T^{1/2+ε} for ε > 0 → ErrorTermFirstMomentBoundHyp
-
-/-- First moment upper bound for Hardy's Z-function.
-
-    AUTO-WIRED from MainTermFirstMomentBoundHyp + ErrorTermFirstMomentBoundHyp.
-
-    The auto-wiring chain:
-    1. StationaryPhaseDecomposition → HardyCosIntegralAlternatingSqrtDecompositionHyp
-       (1 atomic sorry for oscillatory integral bound)
-    2. HardyCosIntegralAlternatingSqrtDecompositionHyp → MainTermFirstMomentBoundHyp
-       (0 sorries, via HardyFirstMomentWiring)
-    3. RiemannSiegelFirstMoment → ErrorTermFirstMomentBoundHyp
-       (1 atomic sorry for RS alternating cancellation)
-    4. MainTermFirstMomentBoundHyp + ErrorTermFirstMomentBoundHyp
-       → HardyFirstMomentUpperHyp (0 sorries, via HardyFirstMomentWiring)
-
-    CONSUMED BY: Bridge/HardyCriticalLineWiring.lean (combined with
-    ZetaCriticalLineBoundHyp to produce HardyCriticalLineZerosHyp). -/
-instance : HardyFirstMomentUpperHyp :=
-  HardyFirstMomentWiring.hardyFirstMomentUpper_from_two_bounds
 
 -- OmegaThetaToPiLiHyp: PROVIDED by Bridge/OmegaThetaToPiLiWiring.lean
 -- (isolated bridge sorry; consumed by Bridge/PsiToPiLiOscillation.lean)

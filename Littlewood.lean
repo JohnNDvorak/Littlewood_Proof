@@ -85,6 +85,10 @@ import Littlewood.Aristotle.ThreeFourOne           -- 3-4-1 original (0 sorries)
 import Littlewood.Aristotle.DirichletApprox        -- Dirichlet approx (0 sorries) ✓
 import Littlewood.Aristotle.DirichletSeries        -- Dirichlet series (0 sorries) ✓
 import Littlewood.Aristotle.LandauLemma            -- Landau lemma (0 sorries) ✓
+import Littlewood.Aristotle.DeepSorries              -- Combined deep mathematical sorry (1 sorry)
+import Littlewood.Aristotle.SmoothedExplicitFormula -- Landau contradictions (0 sorries, extracted from DeepSorries)
+import Littlewood.Aristotle.LandauContradiction    -- Landau contradiction atoms (4 sorries)
+import Littlewood.Aristotle.LandauLittlewood       -- Landau-Littlewood oscillation consequences (0 local sorries)
 import Littlewood.Aristotle.LaurentExpansion       -- Laurent at s=1 (0 sorries) ✓
 import Littlewood.Aristotle.PhaseAlignment         -- Phase alignment (0 sorries) ✓
 import Littlewood.Aristotle.OscillationInfraV2     -- sum_diverges_to_infinity technique (0 sorries) ✓
@@ -97,6 +101,11 @@ import Littlewood.Aristotle.IntegralLogAsymp     -- ∫log(√(t/2π)) = Θ(T lo
 import Littlewood.Aristotle.GammaGrowth           -- Gamma growth bounds, harmonic sums (0 sorries) ✓
 import Littlewood.Aristotle.GammaHalfPlane        -- Γ(1/4+it/2) properties for Hardy θ (0 sorries) ✓
 import Littlewood.Aristotle.HardyCosSmooth        -- Branch-cut-free hardyCos representation (0 sorries) ✓
+import Littlewood.Aristotle.AngularDerivative     -- Derivative of z/‖z‖ for complex-valued real-parameterized maps (0 sorries) ✓
+import Littlewood.Aristotle.HardyCosExpDeriv      -- Explicit derivative formula for HardyCosSmooth.hardyCosExp (0 sorries) ✓
+-- import Littlewood.Aristotle.HardyCosExpOmega      -- Angular velocity (DEAD CODE: not on critical path, pulls DigammaBinetBound sorry)
+import Littlewood.Aristotle.ComplexOscillatoryBound -- Basic complex interval-integral norm bounds (0 sorries) ✓
+import Littlewood.Aristotle.StationaryPhasePerMode -- Per-mode Hardy cosine tail wrapper via VdC (0 sorries) ✓
 import Littlewood.Aristotle.RiemannVonMangoldt    -- Riemann-von Mangoldt N(T) framework (0 sorries) ✓
 import Littlewood.Aristotle.RiemannVonMangoldtV2  -- R-vM formula v2 with xi, ImLogGamma (0 sorries) ✓
 import Littlewood.Aristotle.NZerosStirling        -- N(T) from S(T) and Stirling (0 sorries) ✓
@@ -119,6 +128,7 @@ import Littlewood.Aristotle.MeanSquarePartialSum       -- Mean square partial su
 import Littlewood.Aristotle.ZeroFreeRegionV2           -- Zero-free region / 3-4-1 infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundsPartialSum       -- Zeta bounds, partial sums, harmonic bound (0 sorries) ✓
 import Littlewood.Aristotle.MeanSquareLowerBound        -- Mean square lower bound for partial sum (0 sorries) ✓
+import Littlewood.Aristotle.DirichletPolynomialMVT      -- Dirichlet polynomial mean-square infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.DiagonalIntegralBound       -- Diagonal integral ≥ c·T·log T (0 sorries) ✓
 import Littlewood.Aristotle.ContourInfrastructure       -- Contour defs, measure-zero segments (0 sorries) ✓
 import Littlewood.Aristotle.ContourIntegrationV2        -- Cauchy rectangle contour integration infrastructure (0 sorries) ✓
@@ -132,16 +142,30 @@ import Littlewood.Aristotle.DirichletPhaseAlignment     -- Simultaneous Dirichle
 import Littlewood.Aristotle.GammaGrowthGeneral          -- General Gamma growth bounds (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundGtOne              -- ζ(s) bounded for Re(s) > 1 infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.RiemannSiegelBound          -- Riemann-Siegel style Z-function bounds (0 sorries) ✓
-import Littlewood.Aristotle.RiemannSiegelFirstMoment    -- RS remainder first moment O(T^{1/4}) (1 sorry)
+import Littlewood.Aristotle.IntervalPartition          -- Finite Ioc integral partition lemmas (0 sorries) ✓
+import Littlewood.Aristotle.HardyNProperties           -- hardyN/hardyStart breakpoint properties (0 sorries) ✓
+-- import Littlewood.Aristotle.RSBlockDecomposition       -- MERGED into HardyFirstMomentDirect (was 1 sorry)
+import Littlewood.Aristotle.RSBlockAmplitude           -- Crude RS block amplitude / O(T^(3/4)) infrastructure
+import Littlewood.Aristotle.RSBlockWiring             -- Wiring RSBoundProp + bridge hypothesis to crude ErrorTerm first moment
+-- import Littlewood.Aristotle.RSSignStructure           -- MERGED into HardyFirstMomentDirect
+-- import Littlewood.Aristotle.RSRemainderAlternating    -- MERGED into HardyFirstMomentDirect
+-- import Littlewood.Aristotle.RiemannSiegelFirstMoment  -- MERGED into HardyFirstMomentDirect (was 1 sorry via chain)
+import Littlewood.Aristotle.RiemannSiegelSignCancellation -- RS sign cancellation O(T^{1/4}) (0 sorries) ✓
 import Littlewood.Aristotle.FresnelIntegrals             -- Fresnel integral evaluations via Gaussian regularization (0 sorries) ✓
-import Littlewood.Aristotle.SecondMVT                    -- Second mean value theorem for integrals (1 sorry)
-import Littlewood.Aristotle.DigammaAsymptotic             -- Digamma-log bound (1 sorry: Binet formula)
-import Littlewood.Aristotle.ThetaDerivAsymptotic         -- θ'(t) = (1/2)log(t/2π) + O(1/t) asymptotic (2 sorries)
-import Littlewood.Aristotle.StationaryPhaseDecomposition -- Hardy cosine integral alternating sqrt decomposition (1 sorry)
+-- import Littlewood.Aristotle.SecondMVT                    -- Second mean value theorem (DEAD CODE: not on critical path)
+-- import Littlewood.Aristotle.SecondMVTAtomic              -- Atomic: du Bois-Reymond second MVT (DEAD CODE: not on critical path)
+-- import Littlewood.Aristotle.DigammaAsymptotic             -- Digamma-log bound (DEAD CODE: only feeds HardyCosExpOmega/PhaseDerivBounds)
+-- import Littlewood.Aristotle.DigammaBinetBound             -- Binet bound (DEAD CODE: 1 sorry, only feeds DigammaAsymptotic)
+-- import Littlewood.Aristotle.ThetaDerivAsymptotic         -- θ' asymptotic (DEAD CODE: only feeds HardyCosExpOmega/PhaseDerivBounds)
+-- import Littlewood.Aristotle.PhaseDerivBounds             -- Phase bounds (DEAD CODE: not consumed by any critical path file)
+-- import Littlewood.Aristotle.StationaryPhaseDecomposition -- MERGED into HardyFirstMomentDirect (was 1 sorry)
+-- import Littlewood.Aristotle.HardyFirstMomentDirect       -- MERGED into HardyCriticalLineZerosDirect
 import Littlewood.Aristotle.HardySetupRequirements      -- Hardy setup requirements note (documentation-only module)
 -- import Littlewood.Aristotle.HardyInfiniteZeros       -- DEPRECATED: V1 has unsatisfiable field signatures (grind works vacuously)
 import Littlewood.Aristotle.HardyInfiniteZerosV2        -- Hardy's theorem V2 (0 sorries) ✓
-import Littlewood.Aristotle.HardyApproxFunctionalEq     -- Approx functional eq: ∫Z²≥k∫|S_N|²-CT (1 sorry)
+-- import Littlewood.Aristotle.HardyApproxFunctionalEq     -- MERGED into HardyCriticalLineZerosDirect (was 1 sorry)
+-- import Littlewood.Aristotle.MeanValueLowerBound         -- MERGED: dead code (was consumed by HardyApproxFunctionalEq)
+-- import Littlewood.Aristotle.ZetaPartialSumComparison    -- MERGED: dead code (was consumed by HardyApproxFunctionalEq)
 import Littlewood.Aristotle.MeanSquarePartialSumAsymptotic -- Mean square ∫|S_N|² ≥ c·T·log T (0 sorries) ✓
 import Littlewood.Aristotle.OscillatorySumBound          -- First moment: |∫ oscillatory| ≤ C·T^(1/2+ε) (0 sorries) ✓
 import Littlewood.Aristotle.ContourRectangle             -- Rectangle contour integrals, Cauchy (0 sorries) ✓
@@ -180,14 +204,15 @@ import Littlewood.Bridge.WiringTests               -- Compilation tests for avai
 import Littlewood.Bridge.HardyZTransfer            -- Hardy Z type transfer bridge (0 sorries) ✓
 import Littlewood.Bridge.HardyBuildingBlocksInstance  -- BuildingBlocks 4/6 fields template (0 sorries) ✓
 import Littlewood.Bridge.HardyZDefinitionMap          -- Hardy Z variant equivalences (0 sorries) ✓
-import Littlewood.Bridge.HardyCriticalLineWiring      -- Pre-wired for Hardy completion (0 sorries) ✓
+-- import Littlewood.Bridge.HardyCriticalLineWiring      -- MERGED: bypassed by HardyCriticalLineZerosDirect
+import Littlewood.Bridge.HardyCriticalLineZerosDirect  -- Direct atomic sorry for Hardy's theorem (1 sorry)
 import Littlewood.Bridge.HardyFirstMomentWiring      -- Hardy first-moment plumbing (0 sorries) ✓
 import Littlewood.Bridge.HardyZUnified                -- Unified Hardy Z exports (0 sorries) ✓
 import Littlewood.Bridge.HardyChainTest               -- Hardy chain integration test (0 sorries) ✓
 import Littlewood.Bridge.HardyChainHyp                  -- Hardy chain hypothesis classes (0 sorries) ✓
-import Littlewood.Bridge.MeanSquareBridge              -- Mean square bridge: DiagBound + ApproxFuncEq (0 sorries) ✓
-import Littlewood.Bridge.HardySetupV2Instance          -- HardySetupV2 instance: all 6 fields proved (0 sorries) ✓
-import Littlewood.Bridge.LandauOscillation               -- Landau oscillation: HardyZeros → ψ Ω±(√x) (1 sorry, TRUE)
+-- import Littlewood.Bridge.MeanSquareBridge              -- MERGED: dead code (was consumed by HardySetupV2Instance)
+-- import Littlewood.Bridge.HardySetupV2Instance          -- MERGED: dead code (was consumed by HardyCriticalLineWiring)
+import Littlewood.Bridge.LandauOscillation               -- Landau oscillation bridge (0 sorries; uses Aristotle/LandauLittlewood)
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst

@@ -136,27 +136,75 @@ theorem norm_hardyZ_eq_norm_zeta (t : ℝ) :
     hardyZ t = ‖riemannZeta (1 / 2 + t * Complex.I)‖ := by
   rfl
 
-/-
-KEY THEOREM: The mean square of Hardy's Z function is lower bounded by
-the mean square of the partial sum minus a linear error term.
+/-- **Atomic sorry**: Hardy-Littlewood mean value theorem for |ζ(1/2+it)|².
 
-This connects DiagonalIntegralBound (∫|S_N|² ≥ c·T·log T) to the
-full mean square (∫ Z(t)² ≥ ...) needed for Hardy's theorem.
--/
-/-- BUG FIX: Previous version had `- C * T` inside the binder notation
-    `∫ t in ..., ‖S‖^2 - C * T`, making the bound vacuously true.
-    This version uses explicit parentheses so `- C * T` is subtracted
-    from the whole integral, not from each integrand value.
+MATHEMATICAL CONTENT:
+  ∫₁ᵀ |ζ(1/2+it)|² dt = T·log T + (2γ-1-log 2π)·T + O(T^{1/2+ε}).
+  In particular, ∫₁ᵀ |ζ(1/2+it)|² dt ≥ c·T·log T for large T.
 
-    The approximate functional equation gives Z(t) ≈ 2·Re(S_N(t)) for
-    appropriate N = ⌊√(t/2π)⌋, so Z(t)² ≥ const·‖S_N(t)‖² - error.
-    Integrating yields ∫Z² ≥ k·∫‖S‖² - C·T. -/
+PROOF SKETCH:
+1. AFE: ζ(1/2+it) = ∑_{n≤N} n^{-1/2-it} + χ(1/2+it)·∑ n^{-1/2+it} + O(t^{-1/4})
+2. |ζ|² = 2|S_N|² + oscillatory cross terms + O(T^{3/4})
+3. ∫|S_N|² = T·∑ 1/n + off-diag = T·(½ log T + γ) + O(T^{1/2})
+4. Oscillatory ∫Re(S·conj(χS̄)) = O(T) by rapid phase change
+5. Total: ∫|ζ|² = T·log T + O(T) ≥ c·T·log T
+
+NOTE: V4's approx_functional_eq is VACUOUS (proves RHS ≤ 0 ≤ LHS) and cannot
+be used to establish this bound. A genuine AFE comparison is needed.
+
+REFERENCES: Hardy-Littlewood (1918); Titchmarsh, §7.2, Theorem 7.2. -/
+theorem zeta_critical_mean_value_lower :
+    ∃ c > 0, ∃ T₁ ≥ (2 : ℝ), ∀ T : ℝ, T ≥ T₁ →
+      ∫ t in Set.Ioc 1 T, (hardyZ t)^2 ≥ c * T * Real.log T := by
+  sorry
+
+/-- The mean square of Z(t) on [1,T] is lower bounded by k times the
+partial sum mean square minus a linear error.
+
+PROOF: From the MVT (∫Z² ≥ c₀·T·log T) and the Θ upper bound
+(∫|S_N|² ≤ C_up·T·log T), choose k = c₀/(C_up+1). Then
+  k·∫|S_N|² ≤ k·C_up·T·log T ≤ c₀·T·log T ≤ ∫Z². -/
 theorem approx_functional_eq :
     ∃ k > 0, ∃ C ≥ 0, ∃ T₁ ≥ 2, ∀ T : ℝ, T ≥ T₁ →
       ∫ t in Set.Ioc 1 T, (hardyZ t)^2 ≥
         (k * ∫ t in Set.Ioc 1 T, ‖partial_sum_approx t‖^2) - C * T := by
-  -- Needs genuine approximate functional equation proof.
-  -- Previous version was vacuously true due to binder precedence.
-  sorry
+  -- Step 1: MVT lower bound
+  obtain ⟨c₀, hc₀, T_mvt, hT_mvt, h_mvt⟩ := zeta_critical_mean_value_lower
+  -- Step 2: Θ upper bound on ∫|S|²
+  obtain ⟨C_up, hCup, hCup_wit⟩ := partial_sum_approx_mean_square_asymp.1.exists_pos
+  rw [IsBigOWith] at hCup_wit
+  obtain ⟨T_up, hT_up⟩ := Filter.eventually_atTop.mp hCup_wit
+  -- Step 3: choose k, C, T₁
+  refine ⟨c₀ / (C_up + 1), div_pos hc₀ (by linarith), 0, le_refl 0,
+    max (max T_mvt T_up) 2, le_max_right _ _, fun T hT => ?_⟩
+  simp only [zero_mul, sub_zero]
+  have hT_mvt' : T ≥ T_mvt :=
+    le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hT
+  have hT_up' : T ≥ T_up :=
+    le_trans (le_trans (le_max_right T_mvt T_up) (le_max_left _ _)) hT
+  have hT1 : T ≥ 1 := by linarith [show T ≥ 2 from le_trans (le_max_right _ _) hT]
+  have hlog : Real.log T > 0 :=
+    Real.log_pos (by linarith [show T ≥ 2 from le_trans (le_max_right _ _) hT])
+  have hTlog : T * Real.log T > 0 := mul_pos (by linarith) hlog
+  -- Step 4: MVT gives ∫Z² ≥ c₀·T·log T
+  have h_lower := h_mvt T hT_mvt'
+  -- Step 5: upper bound ∫|S|² ≤ C_up · T · log T
+  have h_up := hT_up T hT_up'
+  simp only at h_up
+  have h_int_nn : 0 ≤ ∫ t in (1 : ℝ)..T, ‖partial_sum_approx t‖ ^ 2 := by
+    rw [intervalIntegral.integral_of_le hT1]
+    exact setIntegral_nonneg measurableSet_Ioc (fun _ _ => sq_nonneg _)
+  rw [Real.norm_of_nonneg h_int_nn, Real.norm_of_nonneg (le_of_lt hTlog)] at h_up
+  rw [intervalIntegral.integral_of_le hT1] at h_up
+  -- h_up : ∫ Ioc 1 T, ‖S‖² ≤ C_up * (T * log T)
+  -- Step 6: chain
+  calc ∫ t in Set.Ioc 1 T, (hardyZ t) ^ 2
+      ≥ c₀ * T * Real.log T := h_lower
+    _ ≥ c₀ / (C_up + 1) * (C_up * (T * Real.log T)) := by
+        suffices c₀ / (C_up + 1) * C_up ≤ c₀ by nlinarith
+        rw [div_mul_eq_mul_div, div_le_iff₀ (show (0 : ℝ) < C_up + 1 by linarith)]
+        nlinarith
+    _ ≥ c₀ / (C_up + 1) * ∫ t in Set.Ioc 1 T, ‖partial_sum_approx t‖ ^ 2 :=
+        mul_le_mul_of_nonneg_left h_up (le_of_lt (div_pos hc₀ (by linarith)))
 
 end HardyApproxFunctional

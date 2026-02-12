@@ -3797,24 +3797,28 @@ instance (priority := 900) [HardyThetaDifferentiableOnSupportHyp]
     HardyCosIntegralSqrtModeBoundHyp := by
   exact hardyCosIntegralSqrtModeBound_of_derivLowerSqrt_correctionNorm
 
-/-- Stationary-phase cancellation input for weighted mode integrals:
-after applying the Hardy coefficient `(n+1)^(-1/2)`, each mode decomposes into
-an alternating `√(n+1)` principal term (with fixed coefficient `A`) plus a
-uniformly bounded error. -/
+/-- Sum-level bound for weighted Hardy cosine mode integrals.
+
+The weighted sum `∑ (n+1)^{-1/2} · ∫ cos(θ-t·log(n+1))` is `O(N+1)`
+where `N = hardyN T`. This captures the essential cancellation
+(alternating signs from stationary phase + bounded error per mode)
+that makes the main-term first moment `O(T^{1/2+ε})`.
+
+The sum-level formulation avoids the endpoint degeneracy where
+`T = hardyStart n` makes the integral vanish (which would force
+`A = 0` in a per-mode decomposition). -/
 class HardyCosIntegralAlternatingSqrtDecompositionHyp : Prop where
   bound :
-    ∃ A B : ℝ, B > 0 ∧ ∀ T : ℝ, T ≥ 2 →
-      ∃ err : ℕ → ℝ,
-        (∀ n : ℕ, n < HardyEstimatesPartial.hardyN T →
+    ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+      |∑ n ∈ Finset.range (HardyEstimatesPartial.hardyN T),
           ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
             ∫ t in Ioc (HardyEstimatesPartial.hardyStart n) T,
-              HardyEstimatesPartial.hardyCos n t
-            = A * ((-1 : ℝ) ^ n * Real.sqrt (n + 1)) + err n) ∧
-        (∀ n : ℕ, n < HardyEstimatesPartial.hardyN T → |err n| ≤ B)
+              HardyEstimatesPartial.hardyCos n t|
+        ≤ C * ((HardyEstimatesPartial.hardyN T : ℝ) + 1)
 
-/-- Any mode-sensitive cosine bound can be packaged as an alternating
-decomposition by taking zero main amplitude (`A = 0`) and absorbing each mode
-into the bounded error term. -/
+/-- Any per-mode `√(n+1)` cosine bound implies the sum-level `O(N+1)` bound,
+via triangle inequality and the coefficient cancellation `(n+1)^{-1/2}·√(n+1) = 1`.
+Each weighted term has absolute value ≤ B, so the sum of N terms is ≤ N·B ≤ B·(N+1). -/
 theorem hardyCosIntegralAlternatingSqrtDecomposition_of_sqrtMode
     (hcos :
       ∃ B > 0, ∀ n : ℕ, ∀ T : ℝ, T ≥ 2 →
@@ -3822,46 +3826,36 @@ theorem hardyCosIntegralAlternatingSqrtDecomposition_of_sqrtMode
             HardyEstimatesPartial.hardyCos n t| ≤ B * Real.sqrt (n + 1)) :
     HardyCosIntegralAlternatingSqrtDecompositionHyp := by
   obtain ⟨B, hB, hcosB⟩ := hcos
-  refine ⟨0, B, hB, ?_⟩
-  intro T hT
-  let err : ℕ → ℝ := fun n =>
-    ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
-      ∫ t in Ioc (HardyEstimatesPartial.hardyStart n) T,
-        HardyEstimatesPartial.hardyCos n t
-  refine ⟨err, ?_, ?_⟩
-  · intro n hn
-    simp [err]
-  · intro n hn
-    have hcoef_nonneg : 0 ≤ (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) := by positivity
-    have hI :
-        |∫ t in Ioc (HardyEstimatesPartial.hardyStart n) T,
-            HardyEstimatesPartial.hardyCos n t| ≤ B * Real.sqrt (n + 1) :=
-      hcosB n T hT
-    have hcoef_sqrt_eq_one :
-        (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) * Real.sqrt (n + 1) = 1 := by
-      have hbase_pos : 0 < (n + 1 : ℝ) := by positivity
-      calc
-        (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) * Real.sqrt (n + 1)
-            = (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) * (n + 1 : ℝ) ^ (1 / 2 : ℝ) := by
-                rw [Real.sqrt_eq_rpow]
-        _ = (n + 1 : ℝ) ^ ((-(1 / 2 : ℝ)) + (1 / 2 : ℝ)) := by
-              rw [← Real.rpow_add hbase_pos]
-        _ = 1 := by norm_num
-    calc
-      |err n|
-          = |((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
-              ∫ t in Ioc (HardyEstimatesPartial.hardyStart n) T,
-                HardyEstimatesPartial.hardyCos n t| := by
-              rfl
-      _ = (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) *
-            |∫ t in Ioc (HardyEstimatesPartial.hardyStart n) T,
-              HardyEstimatesPartial.hardyCos n t| := by
-            rw [abs_mul, abs_of_nonneg hcoef_nonneg]
-      _ ≤ (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) * (B * Real.sqrt (n + 1)) := by
-            exact mul_le_mul_of_nonneg_left hI hcoef_nonneg
-      _ = B * ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) * Real.sqrt (n + 1)) := by ring
-      _ = B * 1 := by rw [hcoef_sqrt_eq_one]
-      _ = B := by ring
+  refine ⟨B, hB, fun T hT => ?_⟩
+  set N := HardyEstimatesPartial.hardyN T
+  calc |∑ n ∈ Finset.range N,
+          ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
+            ∫ t in Ioc (HardyEstimatesPartial.hardyStart n) T,
+              HardyEstimatesPartial.hardyCos n t|
+      ≤ ∑ n ∈ Finset.range N,
+          |((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
+            ∫ t in Ioc (HardyEstimatesPartial.hardyStart n) T,
+              HardyEstimatesPartial.hardyCos n t| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ _n ∈ Finset.range N, B := by
+        refine Finset.sum_le_sum fun n _hn => ?_
+        have hcoef_nonneg : 0 ≤ (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) := by positivity
+        rw [abs_mul, abs_of_nonneg hcoef_nonneg]
+        have hI := hcosB n T hT
+        have hcoef_sqrt_one : (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) * Real.sqrt (n + 1) = 1 := by
+          have h_pos : 0 < (n + 1 : ℝ) := by positivity
+          rw [Real.sqrt_eq_rpow, ← Real.rpow_add h_pos]; norm_num
+        calc (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) *
+              |∫ t in Ioc (HardyEstimatesPartial.hardyStart n) T,
+                  HardyEstimatesPartial.hardyCos n t|
+            ≤ (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) * (B * Real.sqrt (n + 1)) :=
+              mul_le_mul_of_nonneg_left hI hcoef_nonneg
+          _ = B * ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) * Real.sqrt (n + 1)) := by ring
+          _ = B := by rw [hcoef_sqrt_one, mul_one]
+    _ = (N : ℝ) * B := by simp [mul_comm]
+    _ ≤ B * ((N : ℝ) + 1) := by
+        have : (0 : ℝ) ≤ N := Nat.cast_nonneg N
+        nlinarith
 
 instance [HardyCosIntegralSqrtModeBoundHyp] :
     HardyCosIntegralAlternatingSqrtDecompositionHyp := by
@@ -3876,23 +3870,21 @@ lemma alternating_sqrt_sum_bound_range (N : ℕ) :
   | succ k =>
       simpa using CosPiSqSign.alternating_sqrt_sum_bound k
 
-/-- Alternating stationary-phase decomposition implies the main-term first
-moment bound at scale `T^(1/2+ε)`. -/
+/-- Sum-level `O(N+1)` bound implies the main-term first moment bound
+at scale `T^(1/2+ε)`, because `N = hardyN T ≤ T^{1/2+ε}`. -/
 theorem mainTermFirstMomentBound_of_alternatingSqrtDecomposition
     (hdec :
-      ∃ A B : ℝ, B > 0 ∧ ∀ T : ℝ, T ≥ 2 →
-        ∃ err : ℕ → ℝ,
-          (∀ n : ℕ, n < HardyEstimatesPartial.hardyN T →
+      ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+        |∑ n ∈ Finset.range (HardyEstimatesPartial.hardyN T),
             ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
               ∫ t in Ioc (HardyEstimatesPartial.hardyStart n) T,
-                HardyEstimatesPartial.hardyCos n t
-              = A * ((-1 : ℝ) ^ n * Real.sqrt (n + 1)) + err n) ∧
-          (∀ n : ℕ, n < HardyEstimatesPartial.hardyN T → |err n| ≤ B)) :
+                HardyEstimatesPartial.hardyCos n t|
+          ≤ C * ((HardyEstimatesPartial.hardyN T : ℝ) + 1)) :
     MainTermFirstMomentBoundHyp := by
-  obtain ⟨A, B, hB, hdecB⟩ := hdec
+  obtain ⟨C, hC, hdecT⟩ := hdec
   refine ⟨?_⟩
   intro ε hε
-  refine ⟨4 * (|A| + B + 1), by positivity, ?_⟩
+  refine ⟨4 * C, by positivity, ?_⟩
   intro T hT
   have hT1 : (1 : ℝ) ≤ T := by linarith
   have hMainInt :
@@ -3904,8 +3896,7 @@ theorem mainTermFirstMomentBound_of_alternatingSqrtDecomposition
               simp [HardyEstimatesPartial.MainTerm_eq_hardySum]
       _ = HardyEstimatesPartial.hardySumInt T := by
             simpa using HardyEstimatesPartial.hardySum_integral_eq T hT1
-  obtain ⟨err, hrepr, herr⟩ := hdecB T hT
-  let N : ℕ := HardyEstimatesPartial.hardyN T
+  set N := HardyEstimatesPartial.hardyN T
   set S : ℝ :=
     ∑ n ∈ Finset.range N,
       ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
@@ -3913,71 +3904,7 @@ theorem mainTermFirstMomentBound_of_alternatingSqrtDecomposition
           HardyEstimatesPartial.hardyCos n t
   have hSdef : HardyEstimatesPartial.hardySumInt T = 2 * S := by
     simp [S, HardyEstimatesPartial.hardySumInt, N]
-  have hS_repr :
-      S =
-        A * (∑ n ∈ Finset.range N, (-1 : ℝ) ^ n * Real.sqrt (n + 1))
-          + ∑ n ∈ Finset.range N, err n := by
-    unfold S
-    calc
-      ∑ n ∈ Finset.range N,
-          ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
-            ∫ t in Ioc (HardyEstimatesPartial.hardyStart n) T,
-              HardyEstimatesPartial.hardyCos n t
-          = ∑ n ∈ Finset.range N,
-              (A * ((-1 : ℝ) ^ n * Real.sqrt (n + 1)) + err n) := by
-              refine Finset.sum_congr rfl ?_
-              intro n hn
-              have hnlt : n < HardyEstimatesPartial.hardyN T := by
-                simpa [N] using Finset.mem_range.mp hn
-              exact hrepr n hnlt
-      _ = (∑ n ∈ Finset.range N, A * ((-1 : ℝ) ^ n * Real.sqrt (n + 1)))
-            + ∑ n ∈ Finset.range N, err n := by
-              rw [Finset.sum_add_distrib]
-      _ = A * (∑ n ∈ Finset.range N, (-1 : ℝ) ^ n * Real.sqrt (n + 1))
-            + ∑ n ∈ Finset.range N, err n := by
-              rw [← Finset.mul_sum]
-  have hAltBase :
-      |∑ n ∈ Finset.range N, (-1 : ℝ) ^ n * Real.sqrt (n + 1)| ≤ Real.sqrt N :=
-    alternating_sqrt_sum_bound_range N
-  have hAltBound :
-      |A * (∑ n ∈ Finset.range N, (-1 : ℝ) ^ n * Real.sqrt (n + 1))|
-        ≤ |A| * Real.sqrt N := by
-    calc
-      |A * (∑ n ∈ Finset.range N, (-1 : ℝ) ^ n * Real.sqrt (n + 1))|
-          = |A| *
-              |∑ n ∈ Finset.range N, (-1 : ℝ) ^ n * Real.sqrt (n + 1)| := by
-                rw [abs_mul]
-      _ ≤ |A| * Real.sqrt N := by
-            exact mul_le_mul_of_nonneg_left hAltBase (abs_nonneg A)
-  have hErrBound :
-      |∑ n ∈ Finset.range N, err n| ≤ (N : ℝ) * B := by
-    calc
-      |∑ n ∈ Finset.range N, err n|
-          ≤ ∑ n ∈ Finset.range N, |err n| := by
-              exact Finset.abs_sum_le_sum_abs _ _
-      _ ≤ ∑ n ∈ Finset.range N, B := by
-          refine Finset.sum_le_sum ?_
-          intro n hn
-          have hnlt : n < HardyEstimatesPartial.hardyN T := by
-            simpa [N] using Finset.mem_range.mp hn
-          exact herr n hnlt
-      _ = (N : ℝ) * B := by simp [mul_comm]
-  have hSbound : |S| ≤ (|A| + B + 1) * ((N : ℝ) + 1) := by
-    rw [hS_repr]
-    calc
-      |A * (∑ n ∈ Finset.range N, (-1 : ℝ) ^ n * Real.sqrt (n + 1))
-          + ∑ n ∈ Finset.range N, err n|
-          ≤ |A * (∑ n ∈ Finset.range N, (-1 : ℝ) ^ n * Real.sqrt (n + 1))|
-              + |∑ n ∈ Finset.range N, err n| := by
-                exact abs_add_le _ _
-      _ ≤ |A| * Real.sqrt N + ((N : ℝ) * B) := add_le_add hAltBound hErrBound
-      _ ≤ |A| * ((N : ℝ) + 1) + ((N : ℝ) * B) := by
-          gcongr
-          have hNnn : 0 ≤ (N : ℝ) := by exact_mod_cast Nat.zero_le N
-          nlinarith [Real.sq_sqrt hNnn]
-      _ ≤ (|A| + B + 1) * ((N : ℝ) + 1) := by
-          have hNnn : 0 ≤ (N : ℝ) := by exact_mod_cast Nat.zero_le N
-          nlinarith [hNnn, abs_nonneg A, hB]
+  have hSbound : |S| ≤ C * ((N : ℝ) + 1) := hdecT T hT
   have hN_le : (N : ℝ) ≤ T ^ (1 / 2 + ε) := by
     have hN_floor :
         (N : ℝ) ≤ Real.sqrt (T / (2 * Real.pi)) := by
@@ -3989,32 +3916,25 @@ theorem mainTermFirstMomentBound_of_alternatingSqrtDecomposition
         exact div_le_div_of_nonneg_left hTnn (by positivity : (0 : ℝ) < 1) hden_ge_one
       simpa using hdiv'
     have hsqrt_le : Real.sqrt (T / (2 * Real.pi)) ≤ Real.sqrt T := Real.sqrt_le_sqrt hdiv_le
-    have hpow_mono : T ^ (1 / 2 : ℝ) ≤ T ^ (1 / 2 + ε) := by
-      exact Real.rpow_le_rpow_of_exponent_le (by linarith : (1 : ℝ) ≤ T) (by linarith)
     calc
       (N : ℝ) ≤ Real.sqrt (T / (2 * Real.pi)) := hN_floor
       _ ≤ Real.sqrt T := hsqrt_le
       _ = T ^ (1 / 2 : ℝ) := by rw [Real.sqrt_eq_rpow]
-      _ ≤ T ^ (1 / 2 + ε) := hpow_mono
-  have hpow_ge_one : (1 : ℝ) ≤ T ^ (1 / 2 + ε) := by
-    exact Real.one_le_rpow (by linarith : (1 : ℝ) ≤ T) (by linarith : 0 ≤ (1 / 2 : ℝ) + ε)
+      _ ≤ T ^ (1 / 2 + ε) :=
+          Real.rpow_le_rpow_of_exponent_le (by linarith : (1 : ℝ) ≤ T) (by linarith)
+  have hpow_ge_one : (1 : ℝ) ≤ T ^ (1 / 2 + ε) :=
+    Real.one_le_rpow (by linarith : (1 : ℝ) ≤ T) (by linarith : 0 ≤ (1 / 2 : ℝ) + ε)
   have hNplusOne_le : (N : ℝ) + 1 ≤ 2 * T ^ (1 / 2 + ε) := by
     nlinarith [hN_le, hpow_ge_one]
-  have hSumIntBound :
-      |HardyEstimatesPartial.hardySumInt T|
-        ≤ (4 * (|A| + B + 1)) * T ^ (1 / 2 + ε) := by
-    calc
-      |HardyEstimatesPartial.hardySumInt T|
-          = 2 * |S| := by
-              rw [hSdef, abs_mul, abs_of_nonneg (by positivity)]
-      _ ≤ 2 * ((|A| + B + 1) * ((N : ℝ) + 1)) := by
-          exact mul_le_mul_of_nonneg_left hSbound (by positivity)
-      _ ≤ 2 * ((|A| + B + 1) * (2 * T ^ (1 / 2 + ε))) := by
-          exact mul_le_mul_of_nonneg_left
-            (mul_le_mul_of_nonneg_left hNplusOne_le (by positivity))
-            (by positivity)
-      _ = (4 * (|A| + B + 1)) * T ^ (1 / 2 + ε) := by ring
-  simpa [hMainInt] using hSumIntBound
+  calc |∫ t in Ioc 1 T, HardyEstimatesPartial.MainTerm t|
+      = |HardyEstimatesPartial.hardySumInt T| := by rw [hMainInt]
+    _ = 2 * |S| := by rw [hSdef, abs_mul, abs_of_nonneg (by positivity)]
+    _ ≤ 2 * (C * ((N : ℝ) + 1)) :=
+        mul_le_mul_of_nonneg_left hSbound (by positivity)
+    _ ≤ 2 * (C * (2 * T ^ (1 / 2 + ε))) :=
+        mul_le_mul_of_nonneg_left
+          (mul_le_mul_of_nonneg_left hNplusOne_le (le_of_lt hC)) (by positivity)
+    _ = (4 * C) * T ^ (1 / 2 + ε) := by ring
 
 instance [HardyCosIntegralAlternatingSqrtDecompositionHyp] :
     MainTermFirstMomentBoundHyp := by

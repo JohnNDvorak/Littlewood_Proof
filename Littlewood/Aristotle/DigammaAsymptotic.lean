@@ -34,6 +34,7 @@ Co-authored-by: Claude (Anthropic)
 
 import Mathlib
 import Littlewood.Aristotle.BinetStirling
+import Littlewood.Aristotle.DigammaBinetBound
 
 set_option linter.mathlibStandardSet false
 
@@ -71,7 +72,7 @@ theorem digamma_log_bound :
     ∃ C > 0, ∀ s : ℂ, s.re ≥ 1/4 → |s.im| ≥ 1 →
       Gamma s ≠ 0 →
       ‖deriv Gamma s / Gamma s - Complex.log s‖ ≤ C / ‖s‖ := by
-  sorry
+  exact Aristotle.DigammaBinetBound.digamma_log_bound_atomic
 
 /-! ## Consequence: Re(ψ(s)) - Re(log(s)) = O(1/t) at s = 1/4+it/2 -/
 
@@ -138,10 +139,13 @@ theorem re_digamma_asymptotic :
   -- The log term has a slight notation mismatch: I * (↑t/2) vs I * ↑t / 2
   -- They're equal:
   have h_s_eq : s = 1/4 + I * ↑t / 2 := by
-    simp [s]; push_cast; ring
+    simp [s]
+    ring
   -- Show s matches the target expression
   have h_s_eq1 : (1 : ℂ) / 4 + I * (↑t / 2) = s := rfl
-  have h_s_eq2 : (1 : ℂ) / 4 + I * ↑t / 2 = s := by simp [s]; push_cast; ring
+  have h_s_eq2 : (1 : ℂ) / 4 + I * ↑t / 2 = s := by
+    simp [s]
+    ring
   calc ‖(deriv Gamma (1 / 4 + I * (↑t / 2)) /
       Gamma (1 / 4 + I * (↑t / 2))).re -
       (Complex.log (1 / 4 + I * ↑t / 2)).re‖

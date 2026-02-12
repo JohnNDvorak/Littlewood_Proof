@@ -416,10 +416,4 @@ theorem thetaDeriv_eventually_pos :
   -- Combine: thetaDeriv t ≥ (|C|+1) - |C| = 1 > 0
   linarith
 
-/-- θ'(t) is eventually monotone increasing. Full proof requires
-    differentiability of θ' and second derivative analysis. -/
-theorem thetaDeriv_eventually_increasing :
-    ∀ᶠ (t : ℝ) in atTop, ∀ t' ≥ t, thetaDeriv t ≤ thetaDeriv t' := by
-  sorry
-
 end ThetaDerivAsymptotic

@@ -26,6 +26,7 @@ Co-authored-by: Claude (Anthropic)
 -/
 
 import Mathlib
+import Littlewood.Aristotle.SecondMVTAtomic
 
 set_option linter.mathlibStandardSet false
 
@@ -143,12 +144,12 @@ lemma integral_fg_mem_image_targetFun {f g : ℝ → ℝ} {a b : ℝ} (hab : a �
     (hg : IntervalIntegrable g volume a b)
     (hfg : IntervalIntegrable (fun x => f x * g x) volume a b) :
     ∫ t in a..b, f t * g t ∈ targetFun f g a b '' (Icc a b) := by
-  -- Need: ∃ c ∈ [a,b] with targetFun f g a b c = ∫fg
-  -- Equivalently: ∃ c ∈ [a,b] with (f(a)-f(b))·F(c) + f(b)·F(b) = ∫fg
-  -- This requires Stieltjes integration by parts for monotone functions
-  -- combined with the first MVT for integrals with nonneg weight.
-  -- Currently blocked on: Lebesgue-Stieltjes integration in Mathlib.
-  sorry
+  obtain ⟨c, hc, hc_eq⟩ := Aristotle.SecondMVTAtomic.second_mvt_exists_c_atomic hab hf_mono hg hfg
+  refine ⟨c, hc, ?_⟩
+  calc
+    targetFun f g a b c = f a * (∫ t in a..c, g t) + f b * (∫ t in c..b, g t) :=
+      targetFun_eq_split hab hg hc
+    _ = ∫ t in a..b, f t * g t := hc_eq.symm
 
 /-! ### Main theorem -/
 

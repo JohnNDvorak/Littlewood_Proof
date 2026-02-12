@@ -2,9 +2,8 @@
 Bridge: Wire HardyCriticalLineZerosHyp → PsiOscillationFromCriticalZerosHyp
 via Littlewood's original argument (Landau oscillation theorem).
 
-This provides PsiOscillationFromCriticalZerosHyp with a CORRECT atomic sorry,
-replacing the ExplicitFormulaOscillation route which goes through the FALSE
-hypothesis TruncatedExplicitFormulaPsiHyp.
+This provides bridge instances with no local `sorry`, using
+`Aristotle/LandauLittlewood.lean` for the atomic analytic steps.
 
 WHY TruncatedExplicitFormulaPsiHyp IS FALSE:
   TruncatedExplicitFormulaPsiHyp.psi_approx says:
@@ -41,17 +40,14 @@ DEPENDENCIES:
 OUTPUT:
   - PsiOscillationFromCriticalZerosHyp  (ψ(x) - x = Ω±(√x))
 
-SORRY COUNT: 1
-  The sorry encapsulates:
-  (a) Mellin transform integral representation of -ζ'/ζ (not in Mathlib)
-  (b) Analytic continuation argument from one-sided bound (Landau)
-  (c) Contradiction with critical-line zeros giving poles
-  (d) Both Ω₊ and Ω₋ directions
+SORRY COUNT: 0 in this bridge file.
+  Atomic analytic sorries live in `Aristotle/LandauLittlewood.lean`.
 
 Co-authored-by: Claude (Anthropic)
 -/
 
 import Littlewood.Oscillation.SchmidtTheorem
+import Littlewood.Aristotle.LandauLittlewood
 
 noncomputable section
 
@@ -61,19 +57,11 @@ open Schmidt
 ψ(x) - x = Ω±(√x).
 
 This instance has HIGHER PRIORITY than the one in ExplicitFormulaOscillation.lean,
-which goes through the FALSE hypothesis TruncatedExplicitFormulaPsiHyp.
-The sorry here captures a TRUE mathematical statement (Littlewood 1914).
-
-The atomic sorry encapsulates Littlewood's actual argument:
-1. Mellin transform: -ζ'/ζ(s) - 1/(s-1) = s·∫₁^∞ (ψ(x)-x)·x^{-s-1} dx
-2. One-sided bound ψ(x)-x ≤ c√x ⟹ convergence for Re(s) > 1/2
-3. But ζ has zeros on Re(s)=1/2 ⟹ poles of -ζ'/ζ ⟹ contradiction
-4. Both directions (Ω₊ and Ω₋) follow similarly. -/
+which goes through the FALSE hypothesis TruncatedExplicitFormulaPsiHyp. -/
 instance (priority := 2000) [HardyCriticalLineZerosHyp] :
     PsiOscillationFromCriticalZerosHyp where
   oscillation := by
-    have _h_zeros := HardyCriticalLineZerosHyp.infinite
-    sorry
+    exact (Aristotle.LandauLittlewood.psi_oscillation_sqrt_of_hardy).oscillation
 
 /-- Littlewood's theorem for π: infinitely many critical-line zeros imply
 π(x) - li(x) = Ω±(√x / log x).
@@ -81,14 +69,6 @@ instance (priority := 2000) [HardyCriticalLineZerosHyp] :
 This instance provides PiLiOscillationSqrtHyp DIRECTLY from Hardy's theorem,
 bypassing the FALSE TruncatedExplicitFormulaPiHyp (which has the same S=∅
 falseness issue as TruncatedExplicitFormulaPsiHyp).
-
-The atomic sorry encapsulates Littlewood's argument adapted for π:
-1. log ζ(s) = s · ∫₂^∞ π(x) · x^{-s-1} dx (Mellin transform for π)
-   or equivalently: ∑ Λ(n)/(n^s log n) relates to π(x) via Stieltjes integral
-2. If |π(x) - li(x)| ≤ c·√x/log x, then the Dirichlet series for log ζ(s)
-   converges for Re(s) > 1/2 (since li(x) contributes the pole at s=1)
-3. But ζ has zeros on Re(s) = 1/2, so log ζ has logarithmic singularities there
-4. Contradiction → π(x) - li(x) = Ω±(√x / log x)
 
 Alternatively, this follows from ψ(x) - x = Ω±(√x) (the instance above)
 via the identity π(x) = θ(x)/log x + ∫₂ˣ θ(t)/(t·log²t) dt and
@@ -101,5 +81,4 @@ REFERENCES:
 instance (priority := 2000) [HardyCriticalLineZerosHyp] :
     PiLiOscillationSqrtHyp where
   oscillation := by
-    have _h_zeros := HardyCriticalLineZerosHyp.infinite
-    sorry
+    exact (Aristotle.LandauLittlewood.pi_li_oscillation_sqrt_log_of_hardy).oscillation

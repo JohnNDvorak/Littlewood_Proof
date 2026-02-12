@@ -1,7 +1,6 @@
 import Littlewood.Basic.ChebyshevFunctions
 import Littlewood.Basic.LogarithmicIntegral
 import Littlewood.Basic.OmegaNotation
-import PrimeNumberTheoremAnd.Consequences
 
 /-!
 Infrastructure for the θ → (π - li) transfer.
@@ -26,7 +25,9 @@ lemma primeCounting_eq_theta_div_log_add_integral (x : ℝ) (hx : 2 ≤ x) :
     (Nat.primeCounting (Nat.floor x) : ℝ) =
       chebyshevTheta x / Real.log x
         + ∫ t in Set.Icc 2 x, chebyshevTheta t / (t * (Real.log t) ^ 2) := by
-  simpa [chebyshevTheta] using (th43_b x hx)
+  have h := Chebyshev.primeCounting_eq_theta_div_log_add_integral hx
+  rw [integral_Icc_eq_integral_Ioc, ← intervalIntegral.integral_of_le hx]
+  simpa [chebyshevTheta] using h
 
 /-- Integration-by-parts formula for `li` in project notation. -/
 lemma logarithmicIntegral_eq_main_plus_correction (x : ℝ) (hx : 2 < x) :

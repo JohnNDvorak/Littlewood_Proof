@@ -28,6 +28,8 @@ Co-authored-by: Claude (Anthropic)
 
 import Mathlib
 import Littlewood.Aristotle.HardyZFirstMoment
+import Littlewood.Aristotle.RSRemainderAlternating
+import Littlewood.Aristotle.RiemannSiegelSignCancellation
 import Littlewood.Bridge.HardyFirstMomentWiring
 
 set_option linter.mathlibStandardSet false
@@ -49,6 +51,27 @@ namespace RiemannSiegelFirstMoment
 open MeasureTheory Set Real Filter Topology HardyEstimatesPartial
 
 /-! ## Atomic sorry: RS remainder first moment is O(T^{1/4}) -/
+
+/-- **Atomic sorry**: The ErrorTerm integral admits an alternating √(n+1) decomposition.
+
+MATHEMATICAL CONTENT:
+1. Split ∫₁ᵀ ErrorTerm at breakpoints t_k = 2π(k+1)² where N(t) = ⌊√(t/(2π))⌋ jumps.
+2. On [t_k, t_{k+1}], the RS remainder has sign ≈ (-1)^k and the integral
+   has amplitude O(k^{1/2}) (from ∫ t^{-1/4} over interval of length ~4πk).
+3. Combine: |∫ ErrorTerm| ≤ A·|∑ (-1)^k √(k+1)| + B for a bounded error B.
+4. N = ⌊√(T/(2π))⌋ satisfies (N+1) ≤ T^{1/2}.
+
+REFERENCES:
+  - Titchmarsh, "Theory of the Riemann Zeta Function", §4.16
+  - Edwards, "Riemann's Zeta Function", §7.7 -/
+theorem errorTerm_alternatingSqrt_decomposition :
+    ∃ A B : ℝ, A > 0 ∧ B ≥ 0 ∧
+      ∀ T : ℝ, T ≥ 2 →
+        ∃ N : ℕ,
+          ((N : ℝ) + 1) ≤ T ^ (1 / 2 : ℝ) ∧
+          |∫ t in Ioc 1 T, ErrorTerm t|
+            ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B := by
+  exact Aristotle.RSRemainderAlternating.errorTerm_alternatingSqrt_decomposition
 
 /-- **Atomic sorry**: The signed integral of the Riemann-Siegel remainder
 is O(T^{1/4}).
@@ -74,8 +97,9 @@ The atomic sorry encapsulates:
   - Abel summation for alternating series with increasing terms -/
 theorem rs_remainder_first_moment_quarter :
     ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
-      |∫ t in Ioc 1 T, ErrorTerm t| ≤ C * T ^ (1 / 4 : ℝ) := by
-  sorry
+      |∫ t in Ioc 1 T, ErrorTerm t| ≤ C * T ^ (1 / 4 : ℝ) :=
+  RiemannSiegelSignCancellation.errorTerm_firstMoment_quarter_of_alternatingSqrt
+    errorTerm_alternatingSqrt_decomposition
 
 /-! ## Wiring: O(T^{1/4}) → ErrorTermFirstMomentBoundHyp -/
 
