@@ -371,7 +371,7 @@ private theorem pi_landau_contradiction
     hζ_anal hΩ_pc hz₀_mem h_ev
   -- At ρ₀ ∈ Ω: exp(H(ρ₀)) = ζ(ρ₀) = 0 contradicts exp_ne_zero
   have hρ₀_mem : ρ₀ ∈ Ω :=
-    ⟨by linarith, fun h => hρ₀_ne (mem_singleton_iff.mp h)⟩
+    ⟨show α < ρ₀.re by linarith, fun h => hρ₀_ne (mem_singleton_iff.mp h)⟩
   exact absurd ((h_eqOn hρ₀_mem).trans hρ₀_zero) (exp_ne_zero (H ρ₀))
 
 /-! ## π-li Schmidt oscillation — PROVED from π-li Landau contradictions -/
