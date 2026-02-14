@@ -9,11 +9,20 @@ then gives ψ(x) - x = Ω±(x^α) for any α ∈ (1/2, Re(ρ₀)).
 ## Main Results
 
 * `exists_zero_re_gt_half_of_not_RH` : ¬RH → ∃ zero with Re > 1/2
-* `psi_omega_rpow_of_zero_above` : Zero with Re > α → ψ-x = Ω±(x^α)
-  (sorry for the core Landau argument)
-* `psi_omega_lll_of_not_RH` : ¬RH → ψ-x = Ω±(√x · lll x) (PROVED from above)
-* `pi_li_omega_lll_of_not_RH` : ¬RH → π-li = Ω±(√x/log x · lll x)
-  (sorry for the π-li Landau argument)
+* `landau_dirichlet_extension` : One-sided bound → ζ'/ζ has analytic extension (SORRY)
+* `psi_omega_rpow_of_zero_above` : Zero with Re > α → ψ-x = Ω±(x^α) (PROVED)
+* `psi_omega_lll_of_not_RH` : ¬RH → ψ-x = Ω±(√x · lll x) (PROVED)
+* `pi_li_omega_lll_of_not_RH` : ¬RH → π-li = Ω±(√x/log x · lll x) (SORRY)
+
+## Architecture
+
+The Landau contradiction is cleanly decomposed:
+  1. `landau_dirichlet_extension` (SORRY): The analytical core — under a one-sided
+     bound on ψ, the Landau non-negative Dirichlet integral converges and provides
+     an analytic function agreeing with ζ'/ζ in a punctured neighborhood.
+  2. `zeta_logDeriv_no_analytic_extension` (PROVED, ZetaLogDerivNonAnalytic.lean):
+     Any analytic F agreeing with ζ'/ζ near a zero → False.
+  3. The contradiction follows in 2 lines (steps 1+2).
 
 ## Mathematical References
 
@@ -27,6 +36,7 @@ import Littlewood.ZetaZeros.SupremumRealPart
 import Littlewood.CoreLemmas.GrowthDomination
 import Littlewood.Basic.OmegaNotation
 import Littlewood.Basic.LogarithmicIntegral
+import Littlewood.Aristotle.ZetaLogDerivNonAnalytic
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -35,7 +45,7 @@ noncomputable section
 
 namespace Aristotle.LandauSchmidtDirect
 
-open Filter Topology Asymptotics
+open Filter Topology Asymptotics Complex
 open ZetaZeros GrowthDomination
 
 /-- Under ¬RH, there exists a nontrivial zero with Re > 1/2.
@@ -56,47 +66,97 @@ theorem exists_zero_re_gt_half_of_not_RH
     simp only [Complex.sub_re, Complex.one_re]
     linarith
 
-/-- Given a zero ρ₀ with Re(ρ₀) > α, choose a midpoint β between α and Re(ρ₀). -/
-private theorem exists_midpoint (α : ℝ) (ρ₀ : ℂ) (hα : α < ρ₀.re) :
-    ∃ β : ℝ, α < β ∧ β < ρ₀.re := ⟨(α + ρ₀.re) / 2, by linarith, by linarith⟩
+/-! ## Landau Dirichlet integral extension
 
-/-! ## Core Landau-Schmidt oscillation results
+The core analytical step: under a one-sided bound on ψ, the Landau non-negative
+Dirichlet integral converges and provides an analytic extension of ζ'/ζ.
 
-The Landau argument: if ψ(x) - x ≤ C·x^α for all large x, then the
-Dirichlet integral F(s) = s·∫₁^∞ (ψ(t)-t)/t^{s+1} dt converges for Re(s) > α
-and equals -ζ'/ζ(s) - s/(s-1) on Re(s) > 1 (from PsiIntegralRepresentation).
-By analytic continuation, -ζ'/ζ(s) extends analytically past Re(s) = α.
-But -ζ'/ζ has a pole at ρ₀ with Re(ρ₀) > α — contradiction.
+### Proof sketch (Landau 1905)
 
-The same argument with -ψ(x) + x ≤ C·x^α (lower bound) gives the Ω₋ direction.
+**Upper case** (σ = 1): Given ψ(x) - x ≤ C·x^α,
+  define g(t) = C·t^α + t - ψ(t) ≥ 0 for large t.
+  G(s) = s·∫₁^∞ g(t)·t^{-(s+1)} dt converges for Re(s) > α.
+  On Re(s) > 1: G(s) = sC/(s-α) + s/(s-1) + ζ'/ζ(s).
+  So F(s) := G(s) - sC/(s-α) - s/(s-1) is analytic on Re(s) > α
+  and equals ζ'/ζ(s) on Re(s) > 1.
+  By the identity principle, F = ζ'/ζ in a punctured neighborhood of any
+  point s₀ with Re(s₀) > α (using connectedness of {Re > α} minus isolated poles).
+
+**Lower case** (σ = -1): Given ψ(x) - x ≥ -C·x^α,
+  define g(t) = C·t^α + ψ(t) - t ≥ 0.
+  Same construction with F(s) = sC/(s-α) - s/(s-1) - G(s).
+
+### Required ingredients (not in Mathlib)
+
+1. Convergence of ∫₁^∞ f(t)·t^{-s-1} dt when f = O(t^α) and Re(s) > α
+2. Analyticity of the resulting function (differentiation under the integral)
+3. Identity principle on {Re > α} minus discrete pole set (connected by dim ≥ 2)
 -/
+
+/-- **Landau's Dirichlet integral extension**: Under a one-sided bound on ψ,
+there exists an analytic function at any point s₀ in the extended half-plane
+that agrees with ζ'/ζ in a punctured neighborhood.
+
+This is the SOLE analytical sorry in the Landau-Schmidt argument.
+The logical deduction (pole obstruction → contradiction) is fully proved.
+
+SORRY: Requires non-negative Dirichlet integral convergence (Landau 1905),
+analyticity of parametric integrals, and the identity principle on punctured
+half-planes. See proof sketch above. -/
+private theorem landau_dirichlet_extension
+    (α : ℝ) (hα : 1 / 2 < α) (C : ℝ) (hC : 0 < C)
+    (σ : ℝ) (_hσ : σ = 1 ∨ σ = -1)
+    (h_bound : ∀ᶠ x in atTop, σ * (chebyshevPsi x - x) ≤ C * x ^ α)
+    (s₀ : ℂ) (hs₀_re : α < s₀.re) (hs₀_ne : s₀ ≠ 1) :
+    ∃ F : ℂ → ℂ, AnalyticAt ℂ F s₀ ∧
+      ∀ᶠ s in 𝓝[≠] s₀, F s = deriv riemannZeta s / riemannZeta s := by
+  sorry
+
+/-! ## Landau contradictions — PROVED from the extension + pole obstruction -/
 
 /-- **Landau upper contradiction**: If there exists a zero with Re > α and
 ψ(x) - x is eventually bounded above by C·x^α, we get a contradiction.
 
-PROOF SKETCH (Landau 1905):
-  Define g(t) = C·t^α + t - ψ(t) ≥ 0 for large t.
-  The integral G(s) = s·∫₁^∞ g(t)/t^{s+1} dt converges for Re(s) > α.
-  On Re(s) > 1: G(s) = sC/(s-α) + s/(s-1) + ζ'/ζ(s).
-  By analytic continuation: ζ'/ζ(s) = G(s) - sC/(s-α) - s/(s-1) for Re(s) > α.
-  But ζ'/ζ has a pole at ρ₀ with Re(ρ₀) > α — contradiction. -/
+PROVED: 2-line derivation from `landau_dirichlet_extension` (sorry, analytical core)
+and `zeta_logDeriv_no_analytic_extension` (proved, pole obstruction). -/
 private theorem landau_upper_contradiction
     (ρ₀ : ℂ) (hρ₀ : ρ₀ ∈ zetaNontrivialZeros)
     (α : ℝ) (hα_half : 1 / 2 < α) (hα_re : α < ρ₀.re)
     (C : ℝ) (hC : 0 < C)
     (h_bound : ∀ᶠ x in atTop, chebyshevPsi x - x ≤ C * x ^ α) :
     False := by
-  sorry
+  -- Convert the bound to signed form (σ = 1)
+  have h_signed : ∀ᶠ x in atTop, 1 * (chebyshevPsi x - x) ≤ C * x ^ α := by
+    simpa only [one_mul] using h_bound
+  -- Get the analytic extension at ρ₀
+  obtain ⟨F, hF_anal, hF_eq⟩ := landau_dirichlet_extension α hα_half C hC 1
+    (Or.inl rfl) h_signed ρ₀ hα_re
+    (ZetaLogDerivNonAnalytic.nontrivial_zero_ne_one ρ₀ hρ₀)
+  -- F is analytic at ρ₀ but agrees with ζ'/ζ which has a pole — contradiction
+  exact ZetaLogDerivNonAnalytic.zeta_logDeriv_no_analytic_extension ρ₀ hρ₀ F hF_anal hF_eq
 
 /-- **Landau lower contradiction**: If there exists a zero with Re > α and
-ψ(x) - x is eventually bounded below by -C·x^α, we get a contradiction. -/
+ψ(x) - x is eventually bounded below by -C·x^α, we get a contradiction.
+
+PROVED: Same structure as the upper case with σ = -1. -/
 private theorem landau_lower_contradiction
     (ρ₀ : ℂ) (hρ₀ : ρ₀ ∈ zetaNontrivialZeros)
     (α : ℝ) (hα_half : 1 / 2 < α) (hα_re : α < ρ₀.re)
     (C : ℝ) (hC : 0 < C)
     (h_bound : ∀ᶠ x in atTop, -(C * x ^ α) ≤ chebyshevPsi x - x) :
     False := by
-  sorry
+  -- Convert: -(C·x^α) ≤ ψ-x means (-1)·(ψ-x) ≤ C·x^α
+  have h_signed : ∀ᶠ x in atTop, (-1) * (chebyshevPsi x - x) ≤ C * x ^ α := by
+    filter_upwards [h_bound] with x hx
+    linarith
+  -- Get the analytic extension at ρ₀
+  obtain ⟨F, hF_anal, hF_eq⟩ := landau_dirichlet_extension α hα_half C hC (-1)
+    (Or.inr rfl) h_signed ρ₀ hα_re
+    (ZetaLogDerivNonAnalytic.nontrivial_zero_ne_one ρ₀ hρ₀)
+  -- F is analytic at ρ₀ but agrees with ζ'/ζ which has a pole — contradiction
+  exact ZetaLogDerivNonAnalytic.zeta_logDeriv_no_analytic_extension ρ₀ hρ₀ F hF_anal hF_eq
+
+/-! ## Schmidt oscillation — PROVED from Landau contradictions -/
 
 /-- Schmidt's oscillation theorem (for ψ): If there exists a nontrivial zero ρ₀
 with Re(ρ₀) > α > 1/2, then ψ(x) - x = Ω±(x^α).
