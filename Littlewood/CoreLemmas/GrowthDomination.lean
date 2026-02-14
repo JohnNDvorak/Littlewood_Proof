@@ -135,4 +135,19 @@ theorem sqrt_mul_lll_le_rpow (α : ℝ) (hα : 1/2 < α) :
         rw [← Real.rpow_add hx_pos]
         congr 1; ring
 
+/-- √x/log x · lll x ≤ x^α eventually, for any α > 1/2.
+Follows from √x/log x ≤ √x (for log x ≥ 1) and √x · lll x ≤ x^α. -/
+theorem sqrt_div_log_mul_lll_le_rpow (α : ℝ) (hα : 1/2 < α) :
+    ∀ᶠ x in atTop, Real.sqrt x / Real.log x * lll x ≤ x ^ α := by
+  filter_upwards [sqrt_mul_lll_le_rpow α hα, lll_eventually_ge_one,
+    eventually_ge_atTop (Real.exp 1)] with x h_main hlll hx
+  have hx_pos : 0 < x := lt_of_lt_of_le (Real.exp_pos 1) hx
+  have hlog_ge : 1 ≤ Real.log x := by
+    rwa [← Real.log_exp 1, Real.log_le_log_iff (Real.exp_pos 1) hx_pos]
+  calc Real.sqrt x / Real.log x * lll x
+      ≤ Real.sqrt x * lll x := by
+        exact mul_le_mul_of_nonneg_right
+          (div_le_self (Real.sqrt_nonneg x) hlog_ge) (le_trans zero_le_one hlll)
+    _ ≤ x ^ α := h_main
+
 end GrowthDomination

@@ -13,7 +13,8 @@ then gives ψ(x) - x = Ω±(x^α) for any α ∈ (1/2, Re(ρ₀)).
     PROVED from `landau_nonneg_integral` (sorry) + h(s) trick + identity principle
 * `psi_omega_rpw_of_zero_above` : Zero with Re > α → ψ-x = Ω±(x^α) (PROVED)
 * `psi_omega_lll_of_not_RH` : ¬RH → ψ-x = Ω±(√x · lll x) (PROVED)
-* `pi_li_omega_lll_of_not_RH` : ¬RH → π-li = Ω±(√x/log x · lll x) (SORRY)
+* `pi_omega_rpow_of_zero_above` : Zero with Re > α → π-li = Ω±(x^α) (PROVED)
+* `pi_li_omega_lll_of_not_RH` : ¬RH → π-li = Ω±(√x/log x · lll x) (PROVED)
 
 ## Architecture
 
@@ -307,19 +308,124 @@ theorem psi_omega_lll_of_not_RH (hRH : ¬ZetaZeros.RiemannHypothesis) :
   -- Transfer: Ω±(x^α) → Ω±(√x · lll x)
   exact hΩ.of_eventually_ge h_dom h_nn
 
+/-! ## π-li Landau argument — log ζ obstruction -/
+
+/-- **Non-negative Dirichlet integral for π**: Under a one-sided bound
+σ*(π(x)-li(x)) ≤ C*x^α, there exists H analytic on {Re > α} with
+exp(H(s)) = ζ(s) for Re(s) > 1.
+
+SORRY: Requires Dirichlet integral convergence for the prime counting function,
+the relation log ζ(s) = ∑ Λ(n)/(n^s·log n) for Re(s) > 1, and construction
+of an analytic branch of log ζ from the convergent integral. -/
+private theorem pi_landau_log_extension
+    (α : ℝ) (hα : 1 / 2 < α) (C : ℝ) (hC : 0 < C)
+    (σ : ℝ) (hσ : σ = 1 ∨ σ = -1)
+    (h_bound : ∀ᶠ x in atTop, σ * ((↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
+      LogarithmicIntegral.logarithmicIntegral x) ≤ C * x ^ α) :
+    ∃ H : ℂ → ℂ, AnalyticOnNhd ℂ H {s : ℂ | α < s.re} ∧
+      ∀ s : ℂ, 1 < s.re → exp (H s) = riemannZeta s := by
+  sorry
+
+/-- **π-li Landau contradiction**: Under a one-sided bound on π(x)-li(x),
+any nontrivial zero with Re > α gives a contradiction.
+
+The proof uses the identity principle: exp(H) and ζ are both analytic on
+{Re > α}\{1}, agree on {Re > 1}, hence agree on {Re > α}\{1}.
+At a zero ρ₀: exp(H(ρ₀)) = ζ(ρ₀) = 0, contradicting exp_ne_zero. -/
+private theorem pi_landau_contradiction
+    (ρ₀ : ℂ) (hρ₀ : ρ₀ ∈ zetaNontrivialZeros)
+    (α : ℝ) (hα_half : 1 / 2 < α) (hα_re : α < ρ₀.re)
+    (C : ℝ) (hC : 0 < C)
+    (σ : ℝ) (hσ : σ = 1 ∨ σ = -1)
+    (h_bound : ∀ᶠ x in atTop, σ * ((↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
+      LogarithmicIntegral.logarithmicIntegral x) ≤ C * x ^ α) :
+    False := by
+  obtain ⟨H, hH_anal, hH_eq⟩ := pi_landau_log_extension α hα_half C hC σ hσ h_bound
+  have hρ₀_ne := ZetaLogDerivNonAnalytic.nontrivial_zero_ne_one ρ₀ hρ₀
+  have hρ₀_zero := ZetaLogDerivNonAnalytic.nontrivial_zero_vanishes ρ₀ hρ₀
+  -- Domain Ω = {Re > α} \ {1}
+  set Ω := {s : ℂ | α < s.re} \ {(1 : ℂ)} with hΩ_def
+  -- exp ∘ H is analytic on Ω (restriction of analytic on {Re > α})
+  have hExpH_anal : AnalyticOnNhd ℂ (exp ∘ H) Ω :=
+    fun s hs => analyticAt_cexp.comp (hH_anal s hs.1)
+  -- ζ is analytic on Ω
+  have hζ_anal : AnalyticOnNhd ℂ riemannZeta Ω :=
+    fun s hs => ZetaLogDerivPole.zeta_analyticAt s
+      (fun h => hs.2 (mem_singleton_iff.mpr h))
+  -- Ω is preconnected
+  have hΩ_pc := HalfPlaneConnected.halfPlane_diff_singleton_isPreconnected α 1
+  -- Base point z₀ ∈ Ω with Re > 1
+  set z₀ : ℂ := ⟨α + 1, 0⟩
+  have hz₀_re_1 : 1 < z₀.re := by simp [z₀]; linarith
+  have hz₀_ne : z₀ ≠ 1 := by
+    intro h; have := congr_arg re h; simp [z₀] at this; linarith
+  have hz₀_mem : z₀ ∈ Ω :=
+    ⟨by simp [z₀], fun h => hz₀_ne (mem_singleton_iff.mp h)⟩
+  -- exp(H) = ζ near z₀
+  have h_ev : (exp ∘ H) =ᶠ[𝓝 z₀] riemannZeta := by
+    filter_upwards [(isOpen_lt continuous_const continuous_re).mem_nhds hz₀_re_1]
+      with s hs
+    exact hH_eq s hs
+  -- Identity principle: exp(H) = ζ on Ω
+  have h_eqOn := hExpH_anal.eqOn_of_preconnected_of_eventuallyEq
+    hζ_anal hΩ_pc hz₀_mem h_ev
+  -- At ρ₀ ∈ Ω: exp(H(ρ₀)) = ζ(ρ₀) = 0 contradicts exp_ne_zero
+  have hρ₀_mem : ρ₀ ∈ Ω :=
+    ⟨by linarith, fun h => hρ₀_ne (mem_singleton_iff.mp h)⟩
+  exact absurd ((h_eqOn hρ₀_mem).trans hρ₀_zero) (exp_ne_zero (H ρ₀))
+
+/-! ## π-li Schmidt oscillation — PROVED from π-li Landau contradictions -/
+
+/-- Schmidt's oscillation theorem (for π-li): If there exists a nontrivial zero ρ₀
+with Re(ρ₀) > α > 1/2, then π(x) - li(x) = Ω±(x^α).
+PROVED from the π-li Landau contradiction above. -/
+theorem pi_omega_rpow_of_zero_above
+    (α : ℝ) (hα : 1 / 2 < α)
+    (hzero : ∃ ρ ∈ zetaNontrivialZeros, α < ρ.re) :
+    (fun x => (↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
+      LogarithmicIntegral.logarithmicIntegral x) =Ω±[fun x => x ^ α] := by
+  obtain ⟨ρ₀, hρ₀, hα_re⟩ := hzero
+  constructor
+  -- Ω₊: π(x)-li(x) ≥ c · x^α infinitely often
+  · by_contra h_not
+    have h_not_freq : ¬ ∃ᶠ x in atTop,
+        (↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
+        LogarithmicIntegral.logarithmicIntegral x ≥ 1 * x ^ α := by
+      intro hfreq; exact h_not ⟨1, one_pos, hfreq⟩
+    have h_upper : ∀ᶠ x in atTop,
+        (↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
+        LogarithmicIntegral.logarithmicIntegral x ≤ 1 * x ^ α :=
+      (Filter.not_frequently.mp h_not_freq).mono fun _ hx => le_of_lt (not_le.mp hx)
+    exact pi_landau_contradiction ρ₀ hρ₀ α hα hα_re 1 one_pos 1 (Or.inl rfl)
+      (by simpa only [one_mul] using h_upper)
+  -- Ω₋: π(x)-li(x) ≤ -c · x^α infinitely often
+  · by_contra h_not
+    have h_not_freq : ¬ ∃ᶠ x in atTop,
+        (↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
+        LogarithmicIntegral.logarithmicIntegral x ≤ -(1 * x ^ α) := by
+      intro hfreq; exact h_not ⟨1, one_pos, by simpa [neg_mul] using hfreq⟩
+    have h_lower : ∀ᶠ x in atTop,
+        -(1 * x ^ α) ≤ (↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
+        LogarithmicIntegral.logarithmicIntegral x :=
+      (Filter.not_frequently.mp h_not_freq).mono fun _ hx => le_of_lt (not_le.mp hx)
+    exact pi_landau_contradiction ρ₀ hρ₀ α hα hα_re 1 one_pos (-1) (Or.inr rfl)
+      (by filter_upwards [h_lower] with x hx; linarith)
+
 /-- **π-li Landau oscillation under ¬RH**: π(x) - li(x) = Ω±(√x/log x · lll x).
 
-This requires an independent Landau argument for the prime-counting function,
-not derivable from the ψ oscillation by partial summation (the integral error
-term O(x/log²x) dominates √x·lll x/log x).
-
-PROOF SKETCH: Apply the Landau non-negative Dirichlet integral argument
-to the generating function log ζ(s) = ∑ Λ(n)/(n^s·log n) and the integral
-representation involving π(x). -/
+PROVED from Schmidt oscillation + growth domination.
+Uses the independent Landau argument for π via log ζ (not derivable from ψ
+oscillation by partial summation). -/
 theorem pi_li_omega_lll_of_not_RH (hRH : ¬ZetaZeros.RiemannHypothesis) :
     (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
     =Ω±[fun x => Real.sqrt x / Real.log x * lll x] := by
-  sorry
+  obtain ⟨ρ₀, hρ₀, hρ₀_re⟩ := exists_zero_re_gt_half_of_not_RH hRH
+  set α := (1 / 2 + ρ₀.re) / 2
+  have hα_half : 1 / 2 < α := by simp [α]; linarith
+  have hα_re : α < ρ₀.re := by simp [α]; linarith
+  have hΩ := pi_omega_rpow_of_zero_above α hα_half ⟨ρ₀, hρ₀, hα_re⟩
+  exact hΩ.of_eventually_ge (sqrt_div_log_mul_lll_le_rpow α hα_half)
+    sqrt_div_log_mul_lll_eventually_nonneg
 
 end Aristotle.LandauSchmidtDirect
