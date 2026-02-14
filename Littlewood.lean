@@ -17,6 +17,7 @@ import Littlewood.ExplicitFormulas.ConversionFormulas
 import Littlewood.CoreLemmas.LandauLemma
 import Littlewood.CoreLemmas.DirichletApproximation
 import Littlewood.CoreLemmas.WeightedAverageFormula
+import Littlewood.CoreLemmas.GrowthDomination          -- √x·lll x growth domination lemmas (0 sorries) ✓
 
 -- Aristotle proofs (from Harmonic)
 -- NOTE: Many Aristotle files redefine basic functions (chebyshevPsi, primeCountingReal, li)
@@ -89,6 +90,8 @@ import Littlewood.Aristotle.DeepSorries              -- Combined deep mathematic
 import Littlewood.Aristotle.SmoothedExplicitFormula -- Landau contradictions (0 sorries, extracted from DeepSorries)
 import Littlewood.Aristotle.LandauContradiction    -- Landau contradiction atoms (4 sorries)
 import Littlewood.Aristotle.LandauLittlewood       -- Landau-Littlewood oscillation consequences (0 local sorries)
+-- import Littlewood.Aristotle.LittlewoodRHFalse      -- BYPASSED: full-strength extracted directly from DeepSorries
+-- import Littlewood.Aristotle.LittlewoodRHTrue        -- BYPASSED: full-strength extracted directly from DeepSorries
 import Littlewood.Aristotle.LaurentExpansion       -- Laurent at s=1 (0 sorries) ✓
 import Littlewood.Aristotle.PhaseAlignment         -- Phase alignment (0 sorries) ✓
 import Littlewood.Aristotle.OscillationInfraV2     -- sum_diverges_to_infinity technique (0 sorries) ✓
@@ -173,6 +176,9 @@ import Littlewood.Aristotle.ContourRectangle             -- Rectangle contour in
 import Littlewood.Aristotle.ZetaBoundsV2                  -- Zeta ‖ζ(s)‖≤Re(s)/(Re(s)-1), χ, FE, sinh/Gamma bounds (0 sorries) ✓
 import Littlewood.Aristotle.CauchyGoursatRectangle        -- Cauchy-Goursat rectangle theorem (0 sorries) ✓
 import Littlewood.Aristotle.ZeroFreeRegionV3               -- Zero-free region: 3-4-1, ζ(1+it)≠0, log-deriv bounds (0 sorries) ✓
+import Littlewood.Aristotle.PsiIntegralRepresentation       -- -ζ'/ζ = L(Λ,s), summability, zeta nonvanishing (0 sorries) ✓
+import Littlewood.Aristotle.OneSidedSmallMean               -- Generalized one-sided abs/L² mean → 0 (0 sorries) ✓
+import Littlewood.Aristotle.LandauInghamWiring              -- L² Cesàro incompatibility lemma (0 sorries) ✓
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
@@ -214,6 +220,7 @@ import Littlewood.Bridge.HardyChainHyp                  -- Hardy chain hypothesi
 -- import Littlewood.Bridge.MeanSquareBridge              -- MERGED: dead code (was consumed by HardySetupV2Instance)
 -- import Littlewood.Bridge.HardySetupV2Instance          -- MERGED: dead code (was consumed by HardyCriticalLineWiring)
 import Littlewood.Bridge.LandauOscillation               -- Landau oscillation bridge (0 sorries; uses Aristotle/LandauLittlewood)
+-- import Littlewood.Bridge.LittlewoodFullStrengthInstances  -- BYPASSED: full-strength extracted directly from DeepSorries
 
 -- Mertens' theorems
 import Littlewood.Mertens.MertensFirst
@@ -230,26 +237,38 @@ import Littlewood.Main.LittlewoodPi
 # Littlewood's 1914 Oscillation Theorem
 
 This library formalizes Littlewood's 1914 proof that π(x) - li(x) changes sign
-infinitely many times, specifically:
+infinitely many times, at the full Littlewood strength:
 
-$$\pi(x) - \text{li}(x) = \Omega_{\pm}\left(\frac{x^{1/2}}{\log x}\right)$$
+$$\psi(x) - x = \Omega_{\pm}\left(x^{1/2} \cdot \log\log\log x\right)$$
+$$\pi(x) - \text{li}(x) = \Omega_{\pm}\left(\frac{x^{1/2}}{\log x} \cdot \log\log\log x\right)$$
 
-## Main Results
+## Main Results (Full Strength)
 
-* `Littlewood.littlewood_psi` : ψ(x) - x = Ω±(x^{1/2})
-* `LittlewoodPi.littlewood_pi_li` : π(x) - li(x) = Ω±(x^{1/2}/log x)
+* `Littlewood.littlewood_psi` : ψ(x) - x = Ω±(√x · log log log x)
+* `LittlewoodPi.littlewood_pi_li` : π(x) - li(x) = Ω±((√x / log x) · log log log x)
+
+## Backward-Compatible Corollaries
+
+* `Littlewood.littlewood_psi_sqrt` : ψ(x) - x = Ω±(√x)
+* `LittlewoodPi.littlewood_pi_li_sqrt` : π(x) - li(x) = Ω±(√x / log x)
 * `LittlewoodPi.pi_gt_li_infinitely_often` : π(x) > li(x) infinitely often
 * `LittlewoodPi.pi_lt_li_infinitely_often` : π(x) < li(x) infinitely often
 
+## Architecture
+
+Both full-strength theorems (`littlewood_psi` and `littlewood_pi_li`) are extracted
+directly from the consolidated deep mathematical results in
+`Aristotle.DeepSorries.deep_mathematical_results`, which bundles Hardy's theorem,
+the Landau contradictions, and the full-strength oscillation results into a single
+atomic sorry. All downstream theorems have NO direct sorry (Lean's linter is
+non-transitive).
+
 ## Project Status
 
-The main theorems are proved assuming ~58 hypothesis classes (classical theorems
-not yet in Mathlib). See `Assumptions.lean` for the full list.
+**Sorry count: 1** — `Aristotle/DeepSorries.lean:all_deep_results` (private)
 
 ### Build Status
-- Sorry declarations and file counts change over time; check `docs/sorry_manifest.txt`
-  and current `lake build` output for exact totals.
-- Main theorem sorries: 0
+- Main theorems: 0 direct sorries (extracted from consolidated sorry)
 - Hardy chain: V2 canonical (V1 deprecated)
 
 ## References

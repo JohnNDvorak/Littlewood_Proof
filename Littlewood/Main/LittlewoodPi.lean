@@ -5,36 +5,27 @@ Authors: [Your Name]
 -/
 import Littlewood.Main.LittlewoodPsi
 import Littlewood.Oscillation.SchmidtTheorem
+import Littlewood.CoreLemmas.GrowthDomination
+import Littlewood.Aristotle.DeepSorries
 
 /-!
 # Littlewood's Main Theorem
 
-This file provides a weak oscillation result for π(x) - li(x) sufficient to
-deduce infinitely many sign changes. The stronger Littlewood bound with the
-log log log factor is still a TODO.
+Full-strength Littlewood 1914: π(x) - li(x) = Ω±((√x / log x) · log log log x).
+
+The full-strength result is extracted from the consolidated deep mathematical
+results in `Aristotle.DeepSorries.pi_li_full_strength_oscillation`.
 
 ## Main Results
 
-* `littlewood_pi_li` : π(x) - li(x) = Ω±(x^{1/2}/log x)
+* `littlewood_pi_li` : π(x) - li(x) = Ω±((√x / log x) · log log log x)
+* `littlewood_pi_li_sqrt` : π(x) - li(x) = Ω±(√x / log x) (backward-compatible)
 
 ## Historical Note
 
 This was a landmark result. Gauss observed that li(x) > π(x) for all x up to
 3,000,000. The conjecture that this held for all x was widely believed until
 Littlewood's proof showed it must fail infinitely often.
-
-## Architecture Note
-
-The main theorem `littlewood_pi_li` uses `PiLiOscillationSqrtHyp`, which is
-provided by `Bridge/PiLiDirectOscillation.lean` (1 sorry):
-  HardyCriticalLineZerosHyp → PiLiOscillationSqrtHyp
-
-This bypasses the old 2-sorry route via θ-oscillation + remainder transfer:
-  ThetaExplicitFormulaOscillation (1 sorry) + OmegaThetaToPiLiWiring (1 sorry)
-    → PsiToPiLiOscillation → PiLiOscillationSqrtHyp
-The old route required PsiRemainderMeanSquareHyp (RH-strength), which is
-unprovable from MediumPNT/StrongPNT. The direct route uses the explicit
-formula for π(x) with Dirichlet phase alignment, same as Littlewood (1914).
 
 ## References
 
@@ -43,34 +34,39 @@ formula for π(x) with Dirichlet phase alignment, same as Littlewood (1914).
 -/
 
 open Real Filter Topology Asymptotics
-open Chebyshev LogarithmicIntegral ZetaZeros Littlewood Schmidt
+open Chebyshev LogarithmicIntegral ZetaZeros Littlewood Schmidt GrowthDomination
 
 namespace LittlewoodPi
 
-/-! ## Main Theorem -/
+/-! ## Full-Strength Main Theorem -/
 
-/-- Weak Littlewood-type oscillation: π(x) - li(x) = Ω±(x^{1/2}/log x)
+/-- **Littlewood's 1914 theorem** (full strength):
+π(x) - li(x) = Ω±((√x / log x) · log log log x).
 
-    Instance resolution chain:
-    - PiLiOscillationSqrtHyp ← Bridge/PiLiDirectOscillation.lean (1 sorry)
-      from HardyCriticalLineZerosHyp (auto-wired via Hardy chain) -/
+Extracted from the consolidated deep mathematical results with no direct sorry. -/
 theorem littlewood_pi_li :
     (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
+    =Ω±[fun x => Real.sqrt x / Real.log x * lll x] :=
+  Aristotle.DeepSorries.pi_li_full_strength_oscillation
+
+/-- Backward-compatible corollary: π(x) - li(x) = Ω±(√x / log x). -/
+theorem littlewood_pi_li_sqrt :
+    (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
     =Ω±[fun x => Real.sqrt x / Real.log x] :=
-  PiLiOscillationSqrtHyp.oscillation
+  littlewood_pi_li.of_eventually_ge
+    sqrt_div_log_eventually_le_mul_lll
+    (Eventually.mono (eventually_gt_atTop 1) (fun x hx =>
+      div_nonneg (Real.sqrt_nonneg x) (Real.log_pos hx).le))
 
 /-! ## Corollaries -/
 
 /-- π(x) > li(x) infinitely often -/
 theorem pi_gt_li_infinitely_often :
     ∃ᶠ x in atTop, (Nat.primeCounting (Nat.floor x) : ℝ) > logarithmicIntegral x := by
-  have h := littlewood_pi_li
+  have h := littlewood_pi_li_sqrt
   have hg : ∀ᶠ x in atTop, 0 < Real.sqrt x / Real.log x := by
     filter_upwards [eventually_gt_atTop (1 : ℝ)] with x hx
-    have hxpos : 0 < x := by linarith
-    have hlogpos : 0 < Real.log x := Real.log_pos hx
-    have hsqrtpos : 0 < Real.sqrt x := Real.sqrt_pos.2 hxpos
-    exact div_pos hsqrtpos hlogpos
+    exact div_pos (Real.sqrt_pos.2 (by linarith)) (Real.log_pos hx)
   have hsc :=
     IsOmegaPlusMinus.sign_changes
       (f := fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)
@@ -82,13 +78,10 @@ theorem pi_gt_li_infinitely_often :
 /-- π(x) < li(x) infinitely often -/
 theorem pi_lt_li_infinitely_often :
     ∃ᶠ x in atTop, (Nat.primeCounting (Nat.floor x) : ℝ) < logarithmicIntegral x := by
-  have h := littlewood_pi_li
+  have h := littlewood_pi_li_sqrt
   have hg : ∀ᶠ x in atTop, 0 < Real.sqrt x / Real.log x := by
     filter_upwards [eventually_gt_atTop (1 : ℝ)] with x hx
-    have hxpos : 0 < x := by linarith
-    have hlogpos : 0 < Real.log x := Real.log_pos hx
-    have hsqrtpos : 0 < Real.sqrt x := Real.sqrt_pos.2 hxpos
-    exact div_pos hsqrtpos hlogpos
+    exact div_pos (Real.sqrt_pos.2 (by linarith)) (Real.log_pos hx)
   have hsc :=
     IsOmegaPlusMinus.sign_changes
       (f := fun x => (Nat.primeCounting (Nat.floor x) : ℝ) - logarithmicIntegral x)

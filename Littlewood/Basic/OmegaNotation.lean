@@ -306,4 +306,36 @@ theorem IsOmegaPlusMinus.add_isLittleO (hΩ : f =Ω±[g]) (ho : h =o[atTop] g)
 
 end Transfer
 
+section Monotonicity
+
+variable {f g h : ℝ → ℝ}
+
+/-- Ω₊ monotonicity: if f =Ω₊[g] and h ≤ g eventually (h nonneg), then f =Ω₊[h]. -/
+theorem IsOmegaPlus.of_eventually_ge (hfg : f =Ω₊[g])
+    (hge : ∀ᶠ x in atTop, h x ≤ g x) (hh : ∀ᶠ x in atTop, 0 ≤ h x) :
+    f =Ω₊[h] := by
+  rcases hfg with ⟨c, hc, hfreq⟩
+  refine ⟨c, hc, ?_⟩
+  refine (hfreq.and_eventually (hge.and hh)).mono ?_
+  intro x ⟨hfx, hgx, hhx⟩
+  exact le_trans (by nlinarith) hfx
+
+/-- Ω₋ monotonicity: if f =Ω₋[g] and h ≤ g eventually (h nonneg), then f =Ω₋[h]. -/
+theorem IsOmegaMinus.of_eventually_ge (hfg : f =Ω₋[g])
+    (hge : ∀ᶠ x in atTop, h x ≤ g x) (hh : ∀ᶠ x in atTop, 0 ≤ h x) :
+    f =Ω₋[h] := by
+  rcases hfg with ⟨c, hc, hfreq⟩
+  refine ⟨c, hc, ?_⟩
+  refine (hfreq.and_eventually (hge.and hh)).mono ?_
+  intro x ⟨hfx, hgx, hhx⟩
+  exact le_trans hfx (by nlinarith)
+
+/-- Ω± monotonicity: if f =Ω±[g] and h ≤ g eventually (h nonneg), then f =Ω±[h]. -/
+theorem IsOmegaPlusMinus.of_eventually_ge (hfg : f =Ω±[g])
+    (hge : ∀ᶠ x in atTop, h x ≤ g x) (hh : ∀ᶠ x in atTop, 0 ≤ h x) :
+    f =Ω±[h] :=
+  ⟨hfg.1.of_eventually_ge hge hh, hfg.2.of_eventually_ge hge hh⟩
+
+end Monotonicity
+
 end Asymptotics
