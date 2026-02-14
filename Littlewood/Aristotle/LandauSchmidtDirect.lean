@@ -9,20 +9,25 @@ then gives ψ(x) - x = Ω±(x^α) for any α ∈ (1/2, Re(ρ₀)).
 ## Main Results
 
 * `exists_zero_re_gt_half_of_not_RH` : ¬RH → ∃ zero with Re > 1/2
-* `landau_dirichlet_extension` : One-sided bound → ζ'/ζ has analytic extension (SORRY)
-* `psi_omega_rpow_of_zero_above` : Zero with Re > α → ψ-x = Ω±(x^α) (PROVED)
+* `landau_dirichlet_extension` : One-sided bound → ζ'/ζ has analytic extension
+    PROVED from `landau_nonneg_integral` (sorry) + h(s) trick + identity principle
+* `psi_omega_rpw_of_zero_above` : Zero with Re > α → ψ-x = Ω±(x^α) (PROVED)
 * `psi_omega_lll_of_not_RH` : ¬RH → ψ-x = Ω±(√x · lll x) (PROVED)
 * `pi_li_omega_lll_of_not_RH` : ¬RH → π-li = Ω±(√x/log x · lll x) (SORRY)
 
 ## Architecture
 
 The Landau contradiction is cleanly decomposed:
-  1. `landau_dirichlet_extension` (SORRY): The analytical core — under a one-sided
-     bound on ψ, the Landau non-negative Dirichlet integral converges and provides
-     an analytic function agreeing with ζ'/ζ in a punctured neighborhood.
-  2. `zeta_logDeriv_no_analytic_extension` (PROVED, ZetaLogDerivNonAnalytic.lean):
+  1. `landau_nonneg_integral` (SORRY): Pure analysis — non-negative Dirichlet
+     integral converges and gives analytic G on {Re > α} with explicit formula
+     on {Re > 1}.
+  2. `extract_analytic_extension` (PROVED): h(s) trick — from G, construct F
+     analytic at s₀ agreeing with ζ'/ζ in punctured neighborhood. Uses identity
+     principle on preconnected {Re > α} \ {1} and isolated zeros of ζ.
+  3. `landau_dirichlet_extension` (PROVED): Combines 1 and 2.
+  4. `zeta_logDeriv_no_analytic_extension` (PROVED, ZetaLogDerivNonAnalytic.lean):
      Any analytic F agreeing with ζ'/ζ near a zero → False.
-  3. The contradiction follows in 2 lines (steps 1+2).
+  5. The contradiction follows in 2 lines (steps 3+4).
 
 ## Mathematical References
 
@@ -37,6 +42,7 @@ import Littlewood.CoreLemmas.GrowthDomination
 import Littlewood.Basic.OmegaNotation
 import Littlewood.Basic.LogarithmicIntegral
 import Littlewood.Aristotle.ZetaLogDerivNonAnalytic
+import Littlewood.Aristotle.HalfPlaneConnected
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -45,7 +51,7 @@ noncomputable section
 
 namespace Aristotle.LandauSchmidtDirect
 
-open Filter Topology Asymptotics Complex
+open Filter Topology Asymptotics Complex Set
 open ZetaZeros GrowthDomination
 
 /-- Under ¬RH, there exists a nontrivial zero with Re > 1/2.
@@ -66,43 +72,143 @@ theorem exists_zero_re_gt_half_of_not_RH
     simp only [Complex.sub_re, Complex.one_re]
     linarith
 
-/-! ## Landau Dirichlet integral extension
+/-! ## Landau non-negative Dirichlet integral -/
 
-The core analytical step: under a one-sided bound on ψ, the Landau non-negative
-Dirichlet integral converges and provides an analytic extension of ζ'/ζ.
+/-- **Landau's non-negative Dirichlet integral theorem**: Under a one-sided bound
+σ*(ψ(x)-x) ≤ C*x^α, the non-negative function g(t) = C*t^α + σ*(t - ψ(t)) ≥ 0
+has convergent Dirichlet integral G(s) = s·∫₁^∞ g(t)·t^{-(s+1)} dt for Re(s) > α,
+and G is analytic there.
 
-### Proof sketch (Landau 1905)
+On {Re > 1}, G satisfies:
+  G(s) = s*C/(s-α) + σ*s/(s-1) + σ*ζ'/ζ(s)
 
-**Upper case** (σ = 1): Given ψ(x) - x ≤ C·x^α,
-  define g(t) = C·t^α + t - ψ(t) ≥ 0 for large t.
-  G(s) = s·∫₁^∞ g(t)·t^{-(s+1)} dt converges for Re(s) > α.
-  On Re(s) > 1: G(s) = sC/(s-α) + s/(s-1) + ζ'/ζ(s).
-  So F(s) := G(s) - sC/(s-α) - s/(s-1) is analytic on Re(s) > α
-  and equals ζ'/ζ(s) on Re(s) > 1.
-  By the identity principle, F = ζ'/ζ in a punctured neighborhood of any
-  point s₀ with Re(s₀) > α (using connectedness of {Re > α} minus isolated poles).
+SORRY: Requires non-negative Dirichlet integral convergence (Landau 1905),
+analyticity of parametric integrals, and evaluation of closed-form integrals.
+The identity principle and pole obstruction arguments are PROVED separately. -/
+private theorem landau_nonneg_integral
+    (α : ℝ) (hα : 1 / 2 < α) (C : ℝ) (hC : 0 < C)
+    (σ : ℝ) (hσ : σ = 1 ∨ σ = -1)
+    (h_bound : ∀ᶠ x in atTop, σ * (chebyshevPsi x - x) ≤ C * x ^ α) :
+    ∃ G : ℂ → ℂ, AnalyticOnNhd ℂ G {s : ℂ | α < s.re} ∧
+      ∀ s : ℂ, 1 < s.re →
+        G s = s * (↑C : ℂ) / (s - (↑α : ℂ)) + (↑σ : ℂ) * (s / (s - 1)) +
+              (↑σ : ℂ) * (deriv riemannZeta s / riemannZeta s) := by
+  sorry
 
-**Lower case** (σ = -1): Given ψ(x) - x ≥ -C·x^α,
-  define g(t) = C·t^α + ψ(t) - t ≥ 0.
-  Same construction with F(s) = sC/(s-α) - s/(s-1) - G(s).
+/-! ## The h(s) trick: identity principle + isolated zeros -/
 
-### Required ingredients (not in Mathlib)
+/-- **h(s) trick**: From the Dirichlet integral function G, construct an analytic
+function F at s₀ that agrees with ζ'/ζ in a punctured neighborhood.
 
-1. Convergence of ∫₁^∞ f(t)·t^{-s-1} dt when f = O(t^α) and Re(s) > α
-2. Analyticity of the resulting function (differentiation under the integral)
-3. Identity principle on {Re > α} minus discrete pole set (connected by dim ≥ 2)
--/
+**Construction**: F(s) = σ·G(s) - σ·s·C/(s-α) - s/(s-1).
+Since σ² = 1, F = ζ'/ζ on {Re > 1} (algebraic simplification).
+Setting h = F·ζ - ζ', we get h analytic on {Re > α}\{1} with h = 0 on {Re > 1}.
+By the identity principle (preconnected domain), h = 0 everywhere.
+Since ζ has isolated zeros, F = ζ'/ζ in a punctured neighborhood of s₀. -/
+private theorem extract_analytic_extension
+    (α : ℝ) (hα : 1 / 2 < α)
+    (G : ℂ → ℂ) (hG_anal : AnalyticOnNhd ℂ G {s : ℂ | α < s.re})
+    (σ : ℝ) (hσ_cases : σ = 1 ∨ σ = -1) (C : ℝ)
+    (hG_eq : ∀ s : ℂ, 1 < s.re →
+      G s = s * (↑C : ℂ) / (s - (↑α : ℂ)) + (↑σ : ℂ) * (s / (s - 1)) +
+            (↑σ : ℂ) * (deriv riemannZeta s / riemannZeta s))
+    (s₀ : ℂ) (hs₀_re : α < s₀.re) (hs₀_ne : s₀ ≠ 1) :
+    ∃ F : ℂ → ℂ, AnalyticAt ℂ F s₀ ∧
+      ∀ᶠ s in 𝓝[≠] s₀, F s = deriv riemannZeta s / riemannZeta s := by
+  -- σ² = 1
+  have hσ_sq : (↑σ : ℂ) * (↑σ : ℂ) = 1 := by
+    rcases hσ_cases with rfl | rfl <;> push_cast <;> norm_num
+  -- Helper: s - ↑α ≠ 0 when α < s.re
+  have h_ne_α : ∀ s : ℂ, α < s.re → s - (↑α : ℂ) ≠ 0 := by
+    intro s hs h
+    have : s.re = α := by
+      have := congr_arg Complex.re h; simp at this; linarith
+    linarith
+  -- Define F(s) = σ·G(s) - σ·s·C/(s-α) - s/(s-1)
+  set F : ℂ → ℂ := fun s =>
+    (↑σ : ℂ) * G s - (↑σ : ℂ) * (s * (↑C : ℂ) / (s - (↑α : ℂ))) - s / (s - 1) with hF_def
+  -- Helper: F is AnalyticAt at any point of {Re > α} \ {1}
+  have hF_analyticAt : ∀ s : ℂ, α < s.re → s ≠ 1 → AnalyticAt ℂ F s := by
+    intro s hs_re hs_ne
+    exact ((analyticAt_const.mul (hG_anal s hs_re)).sub
+      (analyticAt_const.mul ((analyticAt_id.mul analyticAt_const).div
+        (analyticAt_id.sub analyticAt_const) (h_ne_α s hs_re)))).sub
+      (analyticAt_id.div (analyticAt_id.sub analyticAt_const) (sub_ne_zero.mpr hs_ne))
+  refine ⟨F, hF_analyticAt s₀ hs₀_re hs₀_ne, ?_⟩
+  -- Domain Ω = {Re > α} \ {1}: preconnected and open
+  set Ω := {s : ℂ | α < s.re} \ {(1 : ℂ)} with hΩ_def
+  have hΩ_pc := HalfPlaneConnected.halfPlane_diff_singleton_isPreconnected α 1
+  have hΩ_open : IsOpen Ω :=
+    (isOpen_lt continuous_const Complex.continuous_re).sdiff isClosed_singleton
+  -- Base point z₀ with Re > α and Re > 1
+  set z₀ : ℂ := ⟨α + 1, 0⟩ with hz₀_def
+  have hz₀_re_α : α < z₀.re := by simp [z₀]
+  have hz₀_re_1 : 1 < z₀.re := by simp [z₀]; linarith
+  have hz₀_ne : z₀ ≠ 1 := by
+    intro h; have := congr_arg Complex.re h; simp [z₀] at this; linarith
+  have hz₀_mem : z₀ ∈ Ω :=
+    ⟨hz₀_re_α, fun h => hz₀_ne (mem_singleton_iff.mp h)⟩
+  -- Step 1: F = ζ'/ζ when both Re > α and Re > 1
+  have hF_eq_zeta : ∀ s : ℂ, α < s.re → 1 < s.re →
+      F s = deriv riemannZeta s / riemannZeta s := by
+    intro s hsα hs1
+    simp only [hF_def]
+    rw [hG_eq s hs1]
+    -- Abbreviate for ring manipulation
+    set A := s * (↑C : ℂ) / (s - (↑α : ℂ))
+    set B := s / (s - 1)
+    set D := deriv riemannZeta s / riemannZeta s
+    -- Goal: ↑σ * (A + ↑σ * B + ↑σ * D) - ↑σ * A - B = D
+    have : ↑σ * (A + ↑σ * B + ↑σ * D) - ↑σ * A - B =
+        ↑σ * ↑σ * B + ↑σ * ↑σ * D - B := by ring
+    rw [this, hσ_sq, one_mul, one_mul]; ring
+  -- Step 2: h(s) = F(s)·ζ(s) - ζ'(s) is AnalyticOnNhd on Ω
+  set h : ℂ → ℂ := fun s => F s * riemannZeta s - deriv riemannZeta s with hh_def
+  have hh_anal : AnalyticOnNhd ℂ h Ω := by
+    intro s hs
+    have hs_ne : s ≠ 1 := fun heq => hs.2 (mem_singleton_iff.mpr heq)
+    have hζ := ZetaLogDerivPole.zeta_analyticAt s hs_ne
+    exact (hF_analyticAt s hs.1 hs_ne).mul hζ |>.sub hζ.deriv
+  -- Step 3: h = 0 near z₀ (since h = 0 on {Re > α} ∩ {Re > 1})
+  have hh_ev : h =ᶠ[𝓝 z₀] 0 := by
+    have ho1 := (isOpen_lt continuous_const Complex.continuous_re).mem_nhds
+      (show z₀ ∈ {s : ℂ | (1 : ℝ) < s.re} from hz₀_re_1)
+    have ho2 := (isOpen_lt continuous_const Complex.continuous_re).mem_nhds
+      (show z₀ ∈ {s : ℂ | α < s.re} from hz₀_re_α)
+    filter_upwards [ho1, ho2] with s hs1 hsα
+    simp only [hh_def, Pi.zero_apply]
+    have h_zeta_ne := riemannZeta_ne_zero_of_one_le_re (show (1 : ℝ) ≤ s.re by linarith)
+    rw [hF_eq_zeta s hsα hs1, div_mul_cancel₀ _ h_zeta_ne, sub_self]
+  -- Step 4: Identity principle: h = 0 on all of Ω
+  have hh_eq_zero := hh_anal.eqOn_of_preconnected_of_eventuallyEq
+    (fun _ _ => analyticAt_const) hΩ_pc hz₀_mem hh_ev
+  -- Step 5: Extract F = ζ'/ζ from h = 0 and isolated zeros of ζ
+  have hs₀_mem : s₀ ∈ Ω :=
+    ⟨hs₀_re, fun h => hs₀_ne (mem_singleton_iff.mp h)⟩
+  -- ζ has isolated zeros: eventually ζ(s) ≠ 0 in punctured nhd of s₀
+  have h_zeta_ev : ∀ᶠ s in 𝓝[≠] s₀, riemannZeta s ≠ 0 := by
+    rcases eq_or_ne (riemannZeta s₀) 0 with hz | hnz
+    · exact ZetaLogDerivPole.zeta_eventually_ne_zero_of_zero s₀ hs₀_ne hz
+    · exact nhdsWithin_le_nhds
+        ((ZetaLogDerivPole.zeta_analyticAt s₀ hs₀_ne).continuousAt.preimage_mem_nhds
+          (isOpen_ne.mem_nhds hnz))
+  -- Combine: in punctured nhd, ζ(s) ≠ 0 and s ∈ Ω, giving F = ζ'/ζ
+  filter_upwards [h_zeta_ev,
+    nhdsWithin_le_nhds (hΩ_open.mem_nhds hs₀_mem)] with s h_ne h_Ω
+  -- h(s) = 0 from identity principle
+  have h_zero := hh_eq_zero h_Ω
+  -- h(s) = F(s)·ζ(s) - ζ'(s) = 0, so F(s)·ζ(s) = ζ'(s)
+  simp only [hh_def] at h_zero
+  exact (eq_div_iff h_ne).mpr (sub_eq_zero.mp h_zero)
+
+/-! ## Landau Dirichlet integral extension — PROVED from sorry + h(s) trick -/
 
 /-- **Landau's Dirichlet integral extension**: Under a one-sided bound on ψ,
 there exists an analytic function at any point s₀ in the extended half-plane
 that agrees with ζ'/ζ in a punctured neighborhood.
 
-This is the SOLE analytical sorry in the Landau-Schmidt argument.
-The logical deduction (pole obstruction → contradiction) is fully proved.
-
-SORRY: Requires non-negative Dirichlet integral convergence (Landau 1905),
-analyticity of parametric integrals, and the identity principle on punctured
-half-planes. See proof sketch above. -/
+PROVED from `landau_nonneg_integral` (sorry, pure analysis) combined with
+`extract_analytic_extension` (proved, h(s) trick + identity principle). -/
 private theorem landau_dirichlet_extension
     (α : ℝ) (hα : 1 / 2 < α) (C : ℝ) (hC : 0 < C)
     (σ : ℝ) (_hσ : σ = 1 ∨ σ = -1)
@@ -110,7 +216,8 @@ private theorem landau_dirichlet_extension
     (s₀ : ℂ) (hs₀_re : α < s₀.re) (hs₀_ne : s₀ ≠ 1) :
     ∃ F : ℂ → ℂ, AnalyticAt ℂ F s₀ ∧
       ∀ᶠ s in 𝓝[≠] s₀, F s = deriv riemannZeta s / riemannZeta s := by
-  sorry
+  obtain ⟨G, hG_anal, hG_eq⟩ := landau_nonneg_integral α hα C hC σ _hσ h_bound
+  exact extract_analytic_extension α hα G hG_anal σ _hσ C hG_eq s₀ hs₀_re hs₀_ne
 
 /-! ## Landau contradictions — PROVED from the extension + pole obstruction -/
 
