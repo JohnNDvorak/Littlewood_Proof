@@ -179,6 +179,8 @@ import Littlewood.Aristotle.ZeroFreeRegionV3               -- Zero-free region: 
 import Littlewood.Aristotle.PsiIntegralRepresentation       -- -ζ'/ζ = L(Λ,s), summability, zeta nonvanishing (0 sorries) ✓
 import Littlewood.Aristotle.OneSidedSmallMean               -- Generalized one-sided abs/L² mean → 0 (0 sorries) ✓
 import Littlewood.Aristotle.LandauInghamWiring              -- L² Cesàro incompatibility lemma (0 sorries) ✓
+import Littlewood.Aristotle.HalfPlaneConnected              -- Punctured half-plane preconnectedness (0 sorries) ✓
+import Littlewood.Aristotle.LandauDirichletIntegral         -- Identity principle on half-planes (0 sorries) ✓
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/
