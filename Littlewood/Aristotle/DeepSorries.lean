@@ -49,7 +49,6 @@ REFERENCES:
 import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.CoreLemmas.GrowthDomination
-import Littlewood.Aristotle.LandauSchmidtDirect
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -158,18 +157,15 @@ References: Littlewood 1914, Montgomery-Vaughan §15.2.
 
 /-- The irreducible mathematical atoms. This is the ONLY sorry in the project.
 
-Components:
-  (Hardy) Infinitely many critical-line zeros — sorry
-  (L3) Full ψ oscillation — ¬RH PROVED (Landau-Schmidt), RH sorry
-  (L4) Full π-li oscillation — ¬RH PROVED (Landau-Schmidt), RH sorry
+All three atoms are sorry'd here. The downstream components (2)-(3) of
+`all_deep_results` (Landau contradictions) are PROVED from (L3)-(L4) via
+Ω± monotonicity — they are NOT separate atoms.
 
 Remaining atoms:
   - Hardy: mean square MVT + first moment bound (infrastructure in Hardy chain files)
-  - RH case of L3/L4: explicit formula + Dirichlet alignment on K zeros
-  - Dirichlet integral convergence (landau_nonneg_integral, pi_landau_log_extension)
-
-The Landau contradictions (components 2-3 of `all_deep_results`) are PROVED from
-L3 and L4 via Ω± monotonicity — they are NOT separate atoms. -/
+  - L3: ψ-x = Ω±(√x · lll x). Infrastructure in LandauSchmidtDirect.lean (¬RH case
+    proved modulo Dirichlet integral sorry) + RH case needs explicit formula
+  - L4: π-li = Ω±(√x/log x · lll x). Same structure as L3 -/
 private theorem combined_atoms :
     -- (Hardy) Infinitely many critical-line zeros (Hardy 1914)
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
@@ -186,14 +182,13 @@ private theorem combined_atoms :
   -- Needs: mean square MVT (∫Z² ≥ c·T·log T) + first moment (|∫Z| ≤ CT^{1/2+ε})
   -- Infrastructure built in HardyApproxFunctionalEq + HardyFirstMomentDirect
   · sorry
-  -- (L3) ψ-x = Ω±(√x · lll x) — ¬RH branch PROVED, RH branch sorry
-  · by_cases hRH : ZetaZeros.RiemannHypothesis
-    · sorry  -- RH case: requires explicit formula + Dirichlet alignment (Phase 4)
-    · exact LandauSchmidtDirect.psi_omega_lll_of_not_RH hRH
-  -- (L4) π-li = Ω±(√x/log x · lll x) — ¬RH branch PROVED, RH branch sorry
-  · by_cases hRH : ZetaZeros.RiemannHypothesis
-    · sorry  -- RH case: requires explicit formula + Dirichlet alignment (Phase 4)
-    · exact LandauSchmidtDirect.pi_li_omega_lll_of_not_RH hRH
+  -- (L3) ψ-x = Ω±(√x · lll x)
+  -- Infrastructure in LandauSchmidtDirect.lean: ¬RH case proved modulo Dirichlet integral,
+  -- RH case requires explicit formula + Dirichlet alignment
+  · sorry
+  -- (L4) π-li = Ω±(√x/log x · lll x)
+  -- Infrastructure in LandauSchmidtDirect.lean: same structure as L3
+  · sorry
 
 /-- **ALL deep mathematical content** for Littlewood's theorem.
 
