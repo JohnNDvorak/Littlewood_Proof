@@ -50,6 +50,9 @@ import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.CoreLemmas.GrowthDomination
 import Littlewood.Aristotle.LandauSchmidtDirect
+import Littlewood.Bridge.HardyCriticalLineWiring
+import Littlewood.Aristotle.HardyFirstMomentDirect
+import Littlewood.Bridge.PhragmenLindelofWiring
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -186,9 +189,10 @@ private theorem combined_atoms :
     =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
   refine ⟨?_, ?_, ?_⟩
   -- (Hardy) Infinitely many critical-line zeros
-  -- SORRY: Requires first moment upper bound |∫Z| ≤ CT^{1/2+ε} (stationary phase)
-  -- Proof infrastructure complete in HardyInfiniteZerosV2 (0 sorries given HardySetupV2)
-  · sorry
+  -- PROVED: via HardyCriticalLineWiring + HardyInfiniteZerosV2 + instances
+  -- (HardyFirstMomentDirect has sorry for first moment bound)
+  · exact HardyCriticalLineWiring.hardy_zeros_to_nontrivial_zeros
+      HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2
   -- (L3) ψ-x = Ω±(√x · lll x) — ¬RH branch PROVED, RH branch sorry
   · by_cases hRH : ZetaZeros.RiemannHypothesis
     · sorry  -- RH case: requires explicit formula + Dirichlet alignment (Phase 4)
