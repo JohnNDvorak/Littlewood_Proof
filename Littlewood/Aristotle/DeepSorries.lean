@@ -50,9 +50,6 @@ import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.CoreLemmas.GrowthDomination
 import Littlewood.Aristotle.LandauSchmidtDirect
-import Littlewood.Bridge.HardyCriticalLineWiring
-import Littlewood.Aristotle.HardyFirstMomentDirect
-import Littlewood.Bridge.PhragmenLindelofWiring
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -162,15 +159,12 @@ References: Littlewood 1914, Montgomery-Vaughan §15.2.
 /-- The irreducible mathematical atoms. This is the ONLY sorry in the project.
 
 Components:
-  (Hardy) Infinitely many critical-line zeros — SORRY (needs first moment bound)
-  (L3) Full ψ oscillation — ¬RH branch PROVED, RH branch sorry
-  (L4) Full π-li oscillation — ¬RH branch PROVED, RH branch sorry
+  (Hardy) Infinitely many critical-line zeros — sorry
+  (L3) Full ψ oscillation — ¬RH PROVED (Landau-Schmidt), RH sorry
+  (L4) Full π-li oscillation — ¬RH PROVED (Landau-Schmidt), RH sorry
 
-The ¬RH branches use Landau-Schmidt: non-negative Dirichlet integral + identity
-principle + pole/exp obstruction → Ω±(x^α) → Ω±(√x·lll x) by growth domination.
-
-Remaining sorries:
-  - Hardy: first moment |∫Z| ≤ CT^{1/2+ε} (stationary phase, HardyFirstMomentDirect)
+Remaining atoms:
+  - Hardy: mean square MVT + first moment bound (infrastructure in Hardy chain files)
   - RH case of L3/L4: explicit formula + Dirichlet alignment on K zeros
   - Dirichlet integral convergence (landau_nonneg_integral, pi_landau_log_extension)
 
@@ -189,10 +183,9 @@ private theorem combined_atoms :
     =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
   refine ⟨?_, ?_, ?_⟩
   -- (Hardy) Infinitely many critical-line zeros
-  -- PROVED: via HardyCriticalLineWiring + HardyInfiniteZerosV2 + instances
-  -- (HardyFirstMomentDirect has sorry for first moment bound)
-  · exact HardyCriticalLineWiring.hardy_zeros_to_nontrivial_zeros
-      HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2
+  -- Needs: mean square MVT (∫Z² ≥ c·T·log T) + first moment (|∫Z| ≤ CT^{1/2+ε})
+  -- Infrastructure built in HardyApproxFunctionalEq + HardyFirstMomentDirect
+  · sorry
   -- (L3) ψ-x = Ω±(√x · lll x) — ¬RH branch PROVED, RH branch sorry
   · by_cases hRH : ZetaZeros.RiemannHypothesis
     · sorry  -- RH case: requires explicit formula + Dirichlet alignment (Phase 4)
