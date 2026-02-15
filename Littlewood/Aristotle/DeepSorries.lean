@@ -211,6 +211,8 @@ private theorem combined_atoms :
       exact Aristotle.RHCaseOscillation.rh_psi_oscillation_from_frequent sorry sorry
     · -- ¬RH case: Landau-Schmidt argument (PROVED via LandauSchmidtDirect)
       -- The first `sorry` supplies `psi_integral_hyp` (Dirichlet integral atom)
+      -- When NonNegDirichletIntegral.psi_dirichlet_integral is proved, replace with:
+      -- exact ...psi_omega_lll_of_not_RH NonNegDirichletIntegral.psi_dirichlet_integral _hRH
       exact Aristotle.LandauSchmidtDirect.psi_omega_lll_of_not_RH sorry _hRH
   have hL4 : (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
@@ -221,6 +223,8 @@ private theorem combined_atoms :
       exact Aristotle.RHCaseOscillation.rh_pi_li_oscillation_from_frequent sorry sorry
     · -- ¬RH case: log ζ obstruction (PROVED via LandauSchmidtDirect)
       -- The first `sorry` supplies `pi_integral_hyp` (log ζ extension atom)
+      -- When NonNegDirichletIntegral.pi_log_zeta_extension is proved, replace with:
+      -- exact ...pi_li_omega_lll_of_not_RH NonNegDirichletIntegral.pi_log_zeta_extension _hRH
       exact Aristotle.LandauSchmidtDirect.pi_li_omega_lll_of_not_RH sorry _hRH
   exact ⟨hHardy, hL3, hL4⟩
 

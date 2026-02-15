@@ -114,6 +114,7 @@ private theorem landau_nonneg_integral
 
 /-! ## The h(s) trick: identity principle + isolated zeros -/
 
+set_option linter.unusedSectionVars false in
 /-- **h(s) trick**: From the Dirichlet integral function G, construct an analytic
 function F at s₀ that agrees with ζ'/ζ in a punctured neighborhood.
 
