@@ -7,9 +7,12 @@ extracts all components without direct sorry.
 
 ## Architecture:
 
-A single sorry in `combined_atoms` packages three mathematical atoms:
+A single sorry in `combined_atoms` packages the following mathematical content:
   (Hardy) Infinitely many zeros of ζ on Re(s) = 1/2 (Hardy 1914)
-  (L3)-(L4) Full-strength oscillation (Perron + Dirichlet alignment / Schmidt)
+  (L3)-(L4) Full-strength oscillation:
+    - ¬RH case: PROVED via LandauSchmidtDirect (Pringsheim atoms provided as sorry)
+    - RH case: sorry (Perron explicit formula + Dirichlet phase alignment)
+  (Pringsheim) Landau Satz: non-negative Dirichlet integral extension (sorry)
 
 The derived theorem `all_deep_results` packages the original 5 components:
   (1) Hardy's theorem: directly from combined_atoms.
