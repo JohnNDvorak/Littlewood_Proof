@@ -56,6 +56,7 @@ Co-authored-by: Claude (Anthropic)
 import Littlewood.Aristotle.MellinIntegralFormulas
 import Littlewood.Aristotle.ZetaRealNonvanishing
 import Littlewood.Aristotle.LandauLogZetaObstruction
+import Littlewood.Aristotle.ZetaPoleCancellation
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
