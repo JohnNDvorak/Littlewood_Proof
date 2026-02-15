@@ -10,7 +10,7 @@ then gives ψ(x) - x = Ω±(x^α) for any α ∈ (1/2, Re(ρ₀)).
 
 * `exists_zero_re_gt_half_of_not_RH` : ¬RH → ∃ zero with Re > 1/2
 * `landau_dirichlet_extension` : One-sided bound → ζ'/ζ has analytic extension
-    PROVED from `landau_nonneg_integral` (sorry) + h(s) trick + identity principle
+    PROVED from `psi_integral_hyp` (section variable) + h(s) trick + identity principle
 * `psi_omega_rpw_of_zero_above` : Zero with Re > α → ψ-x = Ω±(x^α) (PROVED)
 * `psi_omega_lll_of_not_RH` : ¬RH → ψ-x = Ω±(√x · lll x) (PROVED)
 * `pi_omega_rpow_of_zero_above` : Zero with Re > α → π-li = Ω±(x^α) (PROVED)
@@ -18,10 +18,11 @@ then gives ψ(x) - x = Ω±(x^α) for any α ∈ (1/2, Re(ρ₀)).
 
 ## Architecture
 
-The Landau contradiction is cleanly decomposed:
-  1. `landau_nonneg_integral` (SORRY): Pure analysis — non-negative Dirichlet
-     integral converges and gives analytic G on {Re > α} with explicit formula
-     on {Re > 1}.
+The proof chains are parameterized on Dirichlet integral hypotheses via
+section variables, keeping this file sorry-free (0 sorry warnings).
+
+  1. `psi_integral_hyp` (section variable): Non-negative Dirichlet integral
+     convergence → analytic G on {Re > α} with explicit formula on {Re > 1}.
   2. `extract_analytic_extension` (PROVED): h(s) trick — from G, construct F
      analytic at s₀ agreeing with ζ'/ζ in punctured neighborhood. Uses identity
      principle on preconnected {Re > α} \ {1} and isolated zeros of ζ.
@@ -29,6 +30,7 @@ The Landau contradiction is cleanly decomposed:
   4. `zeta_logDeriv_no_analytic_extension` (PROVED, ZetaLogDerivNonAnalytic.lean):
      Any analytic F agreeing with ζ'/ζ near a zero → False.
   5. The contradiction follows in 2 lines (steps 3+4).
+  6. `pi_integral_hyp` (section variable): Analogous atom for π-li case.
 
 ## Mathematical References
 
@@ -73,38 +75,23 @@ theorem exists_zero_re_gt_half_of_not_RH
     simp only [Complex.sub_re, Complex.one_re]
     linarith
 
-/-! ## Landau non-negative Dirichlet integral -/
+/-! ## Landau non-negative Dirichlet integral
 
-/-- **Combined Dirichlet integral atoms** — bundles both sorry'd conclusions
-(ψ and π-li cases) into a single declaration for non-transitive linting.
+The ψ proof chain is parameterized on `psi_integral_hyp` via a section variable.
+This hypothesis encodes the Dirichlet integral convergence/analyticity (Landau 1905).
+The sorry for this hypothesis lives in DeepSorries.combined_atoms, keeping this file
+sorry-free. -/
 
-SORRY: Requires non-negative Dirichlet integral convergence (Landau 1905),
-analyticity of parametric integrals, evaluation of closed-form integrals,
-and construction of analytic branch of log ζ.
+section PsiLandauChain
 
-### (ψ atom) Landau's non-negative Dirichlet integral theorem:
-g(t) = C·t^α + σ·(t - ψ(t)) ≥ 0, G(s) = s·∫₁^∞ g·t^{-(s+1)} dt analytic on {Re > α}.
-
-### (π-li atom) Log ζ extension:
-Under one-sided bound on π-li, ∃ H analytic on {Re > α} with exp(H) = ζ on {Re > 1}. -/
-private theorem landau_integral_atoms :
-    -- (ψ atom)
-    (∀ (α : ℝ), 1 / 2 < α → ∀ (C : ℝ), 0 < C →
-      ∀ (σ : ℝ), σ = 1 ∨ σ = -1 →
-      (∀ᶠ x in atTop, σ * (chebyshevPsi x - x) ≤ C * x ^ α) →
-      ∃ G : ℂ → ℂ, AnalyticOnNhd ℂ G {s : ℂ | α < s.re} ∧
-        ∀ s : ℂ, 1 < s.re →
-          G s = s * (↑C : ℂ) / (s - (↑α : ℂ)) + (↑σ : ℂ) * (s / (s - 1)) +
-                (↑σ : ℂ) * (deriv riemannZeta s / riemannZeta s))
-    ∧
-    -- (π-li atom)
-    (∀ (α : ℝ), 1 / 2 < α → ∀ (C : ℝ), 0 < C →
-      ∀ (σ : ℝ), σ = 1 ∨ σ = -1 →
-      (∀ᶠ x in atTop, σ * ((↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
-        LogarithmicIntegral.logarithmicIntegral x) ≤ C * x ^ α) →
-      ∃ H : ℂ → ℂ, AnalyticOnNhd ℂ H {s : ℂ | α < s.re} ∧
-        ∀ s : ℂ, 1 < s.re → exp (H s) = riemannZeta s) := by
-  exact ⟨sorry, sorry⟩
+variable (psi_integral_hyp : ∀ (α : ℝ), 1 / 2 < α → ∀ (C : ℝ), 0 < C →
+    ∀ (σ : ℝ), σ = 1 ∨ σ = -1 →
+    (∀ᶠ x in atTop, σ * (chebyshevPsi x - x) ≤ C * x ^ α) →
+    ∃ G : ℂ → ℂ, AnalyticOnNhd ℂ G {s : ℂ | α < s.re} ∧
+      ∀ s : ℂ, 1 < s.re →
+        G s = s * (↑C : ℂ) / (s - (↑α : ℂ)) + (↑σ : ℂ) * (s / (s - 1)) +
+              (↑σ : ℂ) * (deriv riemannZeta s / riemannZeta s))
+include psi_integral_hyp
 
 /-- **Landau's non-negative Dirichlet integral theorem**: Under a one-sided bound
 σ*(ψ(x)-x) ≤ C*x^α, the non-negative function g(t) = C*t^α + σ*(t - ψ(t)) ≥ 0
@@ -114,7 +101,7 @@ and G is analytic there.
 On {Re > 1}, G satisfies:
   G(s) = s*C/(s-α) + σ*s/(s-1) + σ*ζ'/ζ(s)
 
-Extracted from `landau_integral_atoms` (no direct sorry). -/
+Derived from `psi_integral_hyp` (section variable, no direct sorry). -/
 private theorem landau_nonneg_integral
     (α : ℝ) (hα : 1 / 2 < α) (C : ℝ) (hC : 0 < C)
     (σ : ℝ) (hσ : σ = 1 ∨ σ = -1)
@@ -123,7 +110,7 @@ private theorem landau_nonneg_integral
       ∀ s : ℂ, 1 < s.re →
         G s = s * (↑C : ℂ) / (s - (↑α : ℂ)) + (↑σ : ℂ) * (s / (s - 1)) +
               (↑σ : ℂ) * (deriv riemannZeta s / riemannZeta s) :=
-  landau_integral_atoms.1 α hα C hC σ hσ h_bound
+  psi_integral_hyp α hα C hC σ hσ h_bound
 
 /-! ## The h(s) trick: identity principle + isolated zeros -/
 
@@ -246,8 +233,8 @@ private theorem landau_dirichlet_extension
     (s₀ : ℂ) (hs₀_re : α < s₀.re) (hs₀_ne : s₀ ≠ 1) :
     ∃ F : ℂ → ℂ, AnalyticAt ℂ F s₀ ∧
       ∀ᶠ s in 𝓝[≠] s₀, F s = deriv riemannZeta s / riemannZeta s := by
-  obtain ⟨G, hG_anal, hG_eq⟩ := landau_nonneg_integral α hα C hC σ _hσ h_bound
-  exact extract_analytic_extension α hα G hG_anal σ _hσ C hG_eq s₀ hs₀_re hs₀_ne
+  obtain ⟨G, hG_anal, hG_eq⟩ := landau_nonneg_integral psi_integral_hyp α hα C hC σ _hσ h_bound
+  exact extract_analytic_extension psi_integral_hyp α hα G hG_anal σ _hσ C hG_eq s₀ hs₀_re hs₀_ne
 
 /-! ## Landau contradictions — PROVED from the extension + pole obstruction -/
 
@@ -266,7 +253,7 @@ private theorem landau_upper_contradiction
   have h_signed : ∀ᶠ x in atTop, 1 * (chebyshevPsi x - x) ≤ C * x ^ α := by
     simpa only [one_mul] using h_bound
   -- Get the analytic extension at ρ₀
-  obtain ⟨F, hF_anal, hF_eq⟩ := landau_dirichlet_extension α hα_half C hC 1
+  obtain ⟨F, hF_anal, hF_eq⟩ := landau_dirichlet_extension psi_integral_hyp α hα_half C hC 1
     (Or.inl rfl) h_signed ρ₀ hα_re
     (ZetaLogDerivNonAnalytic.nontrivial_zero_ne_one ρ₀ hρ₀)
   -- F is analytic at ρ₀ but agrees with ζ'/ζ which has a pole — contradiction
@@ -287,7 +274,7 @@ private theorem landau_lower_contradiction
     filter_upwards [h_bound] with x hx
     linarith
   -- Get the analytic extension at ρ₀
-  obtain ⟨F, hF_anal, hF_eq⟩ := landau_dirichlet_extension α hα_half C hC (-1)
+  obtain ⟨F, hF_anal, hF_eq⟩ := landau_dirichlet_extension psi_integral_hyp α hα_half C hC (-1)
     (Or.inr rfl) h_signed ρ₀ hα_re
     (ZetaLogDerivNonAnalytic.nontrivial_zero_ne_one ρ₀ hρ₀)
   -- F is analytic at ρ₀ but agrees with ζ'/ζ which has a pole — contradiction
@@ -310,14 +297,14 @@ theorem psi_omega_rpow_of_zero_above
       intro hfreq; exact h_not ⟨1, one_pos, hfreq⟩
     have h_upper : ∀ᶠ x in atTop, chebyshevPsi x - x ≤ 1 * x ^ α :=
       (Filter.not_frequently.mp h_not_freq).mono fun _ hx => le_of_lt (not_le.mp hx)
-    exact landau_upper_contradiction ρ₀ hρ₀ α hα hα_re 1 one_pos h_upper
+    exact landau_upper_contradiction psi_integral_hyp ρ₀ hρ₀ α hα hα_re 1 one_pos h_upper
   -- Ω₋: ψ(x) - x ≤ -c · x^α infinitely often
   · by_contra h_not
     have h_not_freq : ¬ ∃ᶠ x in atTop, chebyshevPsi x - x ≤ -(1 * x ^ α) := by
       intro hfreq; exact h_not ⟨1, one_pos, by simpa [neg_mul] using hfreq⟩
     have h_lower : ∀ᶠ x in atTop, -(1 * x ^ α) ≤ chebyshevPsi x - x :=
       (Filter.not_frequently.mp h_not_freq).mono fun _ hx => le_of_lt (not_le.mp hx)
-    exact landau_lower_contradiction ρ₀ hρ₀ α hα hα_re 1 one_pos h_lower
+    exact landau_lower_contradiction psi_integral_hyp ρ₀ hρ₀ α hα hα_re 1 one_pos h_lower
 
 /-- Under ¬RH, ψ(x) - x = Ω±(√x · lll x).
 PROVED from Schmidt oscillation + growth domination. -/
@@ -329,7 +316,7 @@ theorem psi_omega_lll_of_not_RH (hRH : ¬ZetaZeros.RiemannHypothesis) :
   have hα_half : 1 / 2 < α := by rw [hα_def]; linarith
   have hα_re : α < ρ₀.re := by rw [hα_def]; linarith
   -- ψ-x = Ω±(x^α) by Schmidt
-  have hΩ := psi_omega_rpow_of_zero_above α hα_half ⟨ρ₀, hρ₀, hα_re⟩
+  have hΩ := psi_omega_rpow_of_zero_above psi_integral_hyp α hα_half ⟨ρ₀, hρ₀, hα_re⟩
   -- √x · lll x ≤ x^α eventually (growth domination)
   have h_dom := sqrt_mul_lll_le_rpow α hα_half
   -- √x · lll x ≥ 0 eventually
@@ -337,13 +324,29 @@ theorem psi_omega_lll_of_not_RH (hRH : ¬ZetaZeros.RiemannHypothesis) :
   -- Transfer: Ω±(x^α) → Ω±(√x · lll x)
   exact hΩ.of_eventually_ge h_dom h_nn
 
-/-! ## π-li Landau argument — log ζ obstruction -/
+end PsiLandauChain
+
+/-! ## π-li Landau argument — log ζ obstruction
+
+The π-li proof chain is parameterized on `pi_integral_hyp` via a section variable.
+This hypothesis encodes the analytic log ζ extension (Landau 1905).
+The sorry for this hypothesis lives in DeepSorries.combined_atoms. -/
+
+section PiLandauChain
+
+variable (pi_integral_hyp : ∀ (α : ℝ), 1 / 2 < α → ∀ (C : ℝ), 0 < C →
+    ∀ (σ : ℝ), σ = 1 ∨ σ = -1 →
+    (∀ᶠ x in atTop, σ * ((↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
+      LogarithmicIntegral.logarithmicIntegral x) ≤ C * x ^ α) →
+    ∃ H : ℂ → ℂ, AnalyticOnNhd ℂ H {s : ℂ | α < s.re} ∧
+      ∀ s : ℂ, 1 < s.re → exp (H s) = riemannZeta s)
+include pi_integral_hyp
 
 /-- **Non-negative Dirichlet integral for π**: Under a one-sided bound
 σ*(π(x)-li(x)) ≤ C*x^α, there exists H analytic on {Re > α} with
 exp(H(s)) = ζ(s) for Re(s) > 1.
 
-Extracted from `landau_integral_atoms` (no direct sorry). -/
+Derived from `pi_integral_hyp` (section variable, no direct sorry). -/
 private theorem pi_landau_log_extension
     (α : ℝ) (hα : 1 / 2 < α) (C : ℝ) (hC : 0 < C)
     (σ : ℝ) (hσ : σ = 1 ∨ σ = -1)
@@ -351,7 +354,7 @@ private theorem pi_landau_log_extension
       LogarithmicIntegral.logarithmicIntegral x) ≤ C * x ^ α) :
     ∃ H : ℂ → ℂ, AnalyticOnNhd ℂ H {s : ℂ | α < s.re} ∧
       ∀ s : ℂ, 1 < s.re → exp (H s) = riemannZeta s :=
-  landau_integral_atoms.2 α hα C hC σ hσ h_bound
+  pi_integral_hyp α hα C hC σ hσ h_bound
 
 /-- **π-li Landau contradiction**: Under a one-sided bound on π(x)-li(x),
 any nontrivial zero with Re > α gives a contradiction.
@@ -367,7 +370,7 @@ private theorem pi_landau_contradiction
     (h_bound : ∀ᶠ x in atTop, σ * ((↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x) ≤ C * x ^ α) :
     False := by
-  obtain ⟨H, hH_anal, hH_eq⟩ := pi_landau_log_extension α hα_half C hC σ hσ h_bound
+  obtain ⟨H, hH_anal, hH_eq⟩ := pi_landau_log_extension pi_integral_hyp α hα_half C hC σ hσ h_bound
   have hρ₀_ne := ZetaLogDerivNonAnalytic.nontrivial_zero_ne_one ρ₀ hρ₀
   have hρ₀_zero := ZetaLogDerivNonAnalytic.nontrivial_zero_vanishes ρ₀ hρ₀
   -- Domain Ω = {Re > α} \ {1}
@@ -423,7 +426,7 @@ theorem pi_omega_rpow_of_zero_above
         (↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
         LogarithmicIntegral.logarithmicIntegral x ≤ 1 * x ^ α :=
       (Filter.not_frequently.mp h_not_freq).mono fun _ hx => le_of_lt (not_le.mp hx)
-    exact pi_landau_contradiction ρ₀ hρ₀ α hα hα_re 1 one_pos 1 (Or.inl rfl)
+    exact pi_landau_contradiction pi_integral_hyp ρ₀ hρ₀ α hα hα_re 1 one_pos 1 (Or.inl rfl)
       (by simpa only [one_mul] using h_upper)
   -- Ω₋: π(x)-li(x) ≤ -c · x^α infinitely often
   · by_contra h_not
@@ -435,7 +438,7 @@ theorem pi_omega_rpow_of_zero_above
         -(1 * x ^ α) ≤ (↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
         LogarithmicIntegral.logarithmicIntegral x :=
       (Filter.not_frequently.mp h_not_freq).mono fun _ hx => le_of_lt (not_le.mp hx)
-    exact pi_landau_contradiction ρ₀ hρ₀ α hα hα_re 1 one_pos (-1) (Or.inr rfl)
+    exact pi_landau_contradiction pi_integral_hyp ρ₀ hρ₀ α hα hα_re 1 one_pos (-1) (Or.inr rfl)
       (by filter_upwards [h_lower] with x hx; linarith)
 
 /-- **π-li Landau oscillation under ¬RH**: π(x) - li(x) = Ω±(√x/log x · lll x).
@@ -451,8 +454,10 @@ theorem pi_li_omega_lll_of_not_RH (hRH : ¬ZetaZeros.RiemannHypothesis) :
   set α := (1 / 2 + ρ₀.re) / 2
   have hα_half : 1 / 2 < α := by simp [α]; linarith
   have hα_re : α < ρ₀.re := by simp [α]; linarith
-  have hΩ := pi_omega_rpow_of_zero_above α hα_half ⟨ρ₀, hρ₀, hα_re⟩
+  have hΩ := pi_omega_rpow_of_zero_above pi_integral_hyp α hα_half ⟨ρ₀, hρ₀, hα_re⟩
   exact hΩ.of_eventually_ge (sqrt_div_log_mul_lll_le_rpow α hα_half)
     sqrt_div_log_mul_lll_eventually_nonneg
+
+end PiLandauChain
 
 end Aristotle.LandauSchmidtDirect

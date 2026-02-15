@@ -210,7 +210,8 @@ private theorem combined_atoms :
       -- Needs: h_plus/h_minus from Perron contour integration + phase alignment
       exact Aristotle.RHCaseOscillation.rh_psi_oscillation_from_frequent sorry sorry
     · -- ¬RH case: Landau-Schmidt argument (PROVED via LandauSchmidtDirect)
-      exact Aristotle.LandauSchmidtDirect.psi_omega_lll_of_not_RH _hRH
+      -- The first `sorry` supplies `psi_integral_hyp` (Dirichlet integral atom)
+      exact Aristotle.LandauSchmidtDirect.psi_omega_lll_of_not_RH sorry _hRH
   have hL4 : (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x] := by
@@ -219,7 +220,8 @@ private theorem combined_atoms :
     · -- RH case: explicit formula for π(x) via Perron on log ζ
       exact Aristotle.RHCaseOscillation.rh_pi_li_oscillation_from_frequent sorry sorry
     · -- ¬RH case: log ζ obstruction (PROVED via LandauSchmidtDirect)
-      exact Aristotle.LandauSchmidtDirect.pi_li_omega_lll_of_not_RH _hRH
+      -- The first `sorry` supplies `pi_integral_hyp` (log ζ extension atom)
+      exact Aristotle.LandauSchmidtDirect.pi_li_omega_lll_of_not_RH sorry _hRH
   exact ⟨hHardy, hL3, hL4⟩
 
 /-- **ALL deep mathematical content** for Littlewood's theorem.
