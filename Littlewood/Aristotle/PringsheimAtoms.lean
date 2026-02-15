@@ -1,15 +1,18 @@
 /-
-Pringsheim/Landau atoms for the non-negative Dirichlet integral argument.
+Pringsheim/Landau atoms: infrastructure and documentation.
 
-This file proves the two Pringsheim atoms (`pringsheim_psi` and `pringsheim_pi`)
-that are section variables of `NonNegDirichletIntegral.lean`. These atoms
-are the bridge between one-sided bounds on ψ/π and analytic extensions.
+This file provides proved infrastructure for the Landau non-negative Dirichlet
+integral argument (Landau, Satz 15), which is the core of Littlewood's proof.
 
 ## Architecture
 
-Both atoms are bundled into a SINGLE private sorry (`pringsheim_atoms_combined`)
-via Lean's non-transitive sorry linting. The public API extracts each component
-without direct sorry warnings.
+The Pringsheim atoms (one-sided bound → analytic extension) are supplied as
+`sorry` within `DeepSorries.combined_atoms`. This file provides the surrounding
+infrastructure:
+
+* `g_nonneg_eventually` : g(t) = C·t^α + σ·(t-ψ(t)) ≥ 0 from one-sided bound
+* `ZetaPoleCancellation.landau_formula_analyticAt_real` : corrected formula analytic at real x > α
+* `ZetaPoleCancellation.corrected_logDeriv_eq` : corrected formula = original on {Re > 1}
 
 ## Mathematical Content
 
@@ -21,8 +24,8 @@ The Dirichlet integral G(s) = s*∫₁^∞ g(t)*t^{-(s+1)} dt converges for Re(s
 and equals the formula sC/(s-α) + σs/(s-1) + σζ'/ζ(s) there.
 
 The formula extends analytically along (α,∞) ⊂ ℝ because:
-  - Poles at s=1 cancel (residue σ + residue -σ = 0)
-  - ζ(x) ≠ 0 for real x ∈ (0,1) (ZetaRealNonvanishing)
+  - Poles at s=1 cancel (residue σ + residue -σ = 0) [ZetaPoleCancellation]
+  - ζ(x) ≠ 0 for real x ∈ (0,1) [ZetaRealNonvanishing]
 
 By Landau's theorem (g ≥ 0 ⟹ σ_c is a singularity), the integral
 converges for Re(s) > α, giving G analytic on {Re > α}.
@@ -42,7 +45,12 @@ continuity at R), the series converges at R. Re-expanding at R with again
 non-negative coefficients extends past R, contradicting R = radius.
 Hence σ_c ≤ α, and parametric differentiation gives analyticity on {Re > α}.
 
-SORRY COUNT: 1 (bundled Landau non-negative Dirichlet integral atoms)
+### Key missing infrastructure for full proof:
+- Parametric differentiation of Dirichlet integrals (∂ⁿ/∂sⁿ ∫f(t)t^{-s}dt = ∫f(t)(-log t)ⁿt^{-s}dt)
+- Fubini interchange for the Taylor expansion (∫ Σ → Σ ∫)
+- Abscissa of convergence theory (not in Mathlib)
+
+SORRY COUNT: 0
 
 REFERENCES:
   - Landau, "Über einen Satz von Tschebyschef" (1905), Satz 15
@@ -68,68 +76,60 @@ namespace Aristotle.PringsheimAtoms
 
 open Complex Real Filter Topology MeasureTheory Set
 
-/-! ## Bundled Pringsheim atoms
+/-! ## Non-negativity of the generating function
 
-Both atoms are bundled into a single sorry. The proof reduces to Landau's
-non-negative Dirichlet integral theorem (Satz 15), which in turn reduces
-to `PringsheimTheorem.pringsheim_convergence_at_radius`. -/
+The generating function g(t) = C·t^α + σ·(t - ψ(t)) is non-negative for
+large t, following directly from the one-sided bound hypothesis. -/
 
-/-- **Bundled Pringsheim/Landau atoms** for the non-negative Dirichlet integral argument.
+/-- From a one-sided bound σ*(ψ(x)-x) ≤ C*x^α, the generating function
+g(t) = C*t^α + σ*(t-ψ(t)) is eventually non-negative. -/
+theorem g_nonneg_eventually (α : ℝ) (C : ℝ) (_hC : 0 < C)
+    (σ : ℝ) (_hσ : σ = 1 ∨ σ = -1)
+    (hbound : ∀ᶠ x in atTop, σ * (chebyshevPsi x - x) ≤ C * x ^ α) :
+    ∀ᶠ t in atTop, (0 : ℝ) ≤ C * t ^ α + σ * (t - chebyshevPsi t) := by
+  filter_upwards [hbound] with t ht
+  -- From ht: σ * (ψ(t) - t) ≤ C * t^α
+  -- Goal: 0 ≤ C * t^α + σ * (t - ψ(t))
+  -- Note: σ * (t - ψ(t)) = -(σ * (ψ(t) - t)) ≥ -(C * t^α)
+  -- Wait: C * t^α + σ * (t - ψ(t)) = C * t^α - σ * (ψ(t) - t) ≥ C * t^α - C * t^α = 0
+  linarith [ht]
 
-Component 1 (pringsheim_psi): From one-sided bound on ψ to analytic extension of
-the formula sC/(s-α) + σs/(s-1) + σζ'/ζ(s) from {Re > 1} to {Re > α}.
+/-! ## Corrected Landau formula infrastructure
 
-Component 2 (pringsheim_pi): From one-sided bound on π-li to analytic branch of
-log ζ on {Re > α} (i.e., H with exp(H) = ζ on {Re > 1}).
+Re-exports from ZetaPoleCancellation for convenience and documentation. -/
 
-Both reduce to Landau's Satz 15: a Dirichlet integral with non-negative integrand
-has abscissa of convergence equal to the leftmost singularity of the formula. -/
-private theorem pringsheim_atoms_combined :
-    -- (psi) From one-sided bound on ψ to analytic extension
-    (∀ (α : ℝ), 1 / 2 < α → ∀ (C : ℝ), 0 < C →
-    ∀ (σ : ℝ), σ = 1 ∨ σ = -1 →
-    (∀ᶠ x in atTop, σ * (chebyshevPsi x - x) ≤ C * x ^ α) →
-    ∃ G : ℂ → ℂ, AnalyticOnNhd ℂ G {s : ℂ | α < s.re} ∧
-      ∀ s : ℂ, 1 < s.re →
-        G s = s * (↑C : ℂ) / (s - (↑α : ℂ)) + (↑σ : ℂ) * (s / (s - 1)) +
-              (↑σ : ℂ) * (deriv riemannZeta s / riemannZeta s))
-    ∧
-    -- (pi) From one-sided bound on π-li to log ζ extension
-    (∀ (α : ℝ), 1 / 2 < α → ∀ (C : ℝ), 0 < C →
-    ∀ (σ : ℝ), σ = 1 ∨ σ = -1 →
-    (∀ᶠ x in atTop, σ * ((↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
-      LogarithmicIntegral.logarithmicIntegral x) ≤ C * x ^ α) →
-    ∃ H : ℂ → ℂ, AnalyticOnNhd ℂ H {s : ℂ | α < s.re} ∧
-      ∀ s : ℂ, 1 < s.re → exp (H s) = riemannZeta s) := by
-  sorry
+/-- The corrected Landau formula `s*C/(s-α) + σ*(1 + zrf'/zrf(s))` is analytic
+at every real point x > α, including x = 1 where poles cancel.
+See `ZetaPoleCancellation.landau_formula_analyticAt_real`. -/
+theorem corrected_formula_analyticAt_real (α : ℝ) (hα : 1 / 2 < α) (C σ : ℝ)
+    (x : ℝ) (hx : α < x) :
+    AnalyticAt ℂ (fun s => s * (↑C : ℂ) / (s - (↑α : ℂ)) +
+      (↑σ : ℂ) * (1 + deriv ZetaPoleCancellation.zrf s /
+        ZetaPoleCancellation.zrf s)) (↑x : ℂ) :=
+  ZetaPoleCancellation.landau_formula_analyticAt_real α hα C σ x hx
 
-/-! ## Public API: individual atoms (0 direct sorry warnings) -/
+/-! ## Formula type signatures (for documentation)
 
-/-- The pringsheim_psi atom: from one-sided bound on ψ to analytic extension.
+These type signatures document exactly what the Landau Satz needs to provide.
+The atoms are supplied as `sorry` in `DeepSorries.combined_atoms`. -/
 
-Given σ*(ψ(x)-x) ≤ C*x^α, produce G analytic on {Re > α} matching
-the formula sC/(s-α) + σs/(s-1) + σζ'/ζ(s) on {Re > 1}. -/
-theorem pringsheim_psi_proved :
+/-- Type of the ψ Pringsheim atom. -/
+def PsiAtomType : Prop :=
     ∀ (α : ℝ), 1 / 2 < α → ∀ (C : ℝ), 0 < C →
     ∀ (σ : ℝ), σ = 1 ∨ σ = -1 →
     (∀ᶠ x in atTop, σ * (chebyshevPsi x - x) ≤ C * x ^ α) →
     ∃ G : ℂ → ℂ, AnalyticOnNhd ℂ G {s : ℂ | α < s.re} ∧
       ∀ s : ℂ, 1 < s.re →
         G s = s * (↑C : ℂ) / (s - (↑α : ℂ)) + (↑σ : ℂ) * (s / (s - 1)) +
-              (↑σ : ℂ) * (deriv riemannZeta s / riemannZeta s) :=
-  pringsheim_atoms_combined.1
+              (↑σ : ℂ) * (deriv riemannZeta s / riemannZeta s)
 
-/-- The pringsheim_pi atom: from one-sided bound on π-li to log ζ extension.
-
-Given σ*(π(x)-li(x)) ≤ C*x^α, produce H analytic on {Re > α} with
-exp(H(s)) = ζ(s) on {Re > 1}. -/
-theorem pringsheim_pi_proved :
+/-- Type of the π Pringsheim atom. -/
+def PiAtomType : Prop :=
     ∀ (α : ℝ), 1 / 2 < α → ∀ (C : ℝ), 0 < C →
     ∀ (σ : ℝ), σ = 1 ∨ σ = -1 →
     (∀ᶠ x in atTop, σ * ((↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x) ≤ C * x ^ α) →
     ∃ H : ℂ → ℂ, AnalyticOnNhd ℂ H {s : ℂ | α < s.re} ∧
-      ∀ s : ℂ, 1 < s.re → exp (H s) = riemannZeta s :=
-  pringsheim_atoms_combined.2
+      ∀ s : ℂ, 1 < s.re → exp (H s) = riemannZeta s
 
 end Aristotle.PringsheimAtoms
