@@ -17,7 +17,7 @@ The proof uses the Dirichlet eta function η(s) = Σ (-1)^{n+1}/n^s:
 3. 1 - 2^{1-s} < 0 for s ∈ (0, 1) (since 2^{1-s} > 1)
 4. Therefore ζ(s) = η(s) / (1 - 2^{1-s}) < 0, so ζ(s) ≠ 0.
 
-SORRY COUNT: 1 (paired eta sum identity via analytic continuation)
+SORRY COUNT: 0
 
 REFERENCES:
   - Titchmarsh, "The Theory of the Riemann Zeta-Function", §1.4
