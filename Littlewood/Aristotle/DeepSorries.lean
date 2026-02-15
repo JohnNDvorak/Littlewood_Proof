@@ -52,6 +52,7 @@ import Littlewood.CoreLemmas.GrowthDomination
 import Littlewood.Aristotle.RHCaseOscillation
 import Littlewood.Aristotle.LandauSchmidtDirect
 import Littlewood.Aristotle.NonNegDirichletIntegral
+import Littlewood.Aristotle.PringsheimAtoms
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -214,7 +215,8 @@ private theorem combined_atoms :
       -- psi_integral_hyp supplied via NonNegDirichletIntegral.psi_dirichlet_integral
       -- The sorry here is the Pringsheim/Landau atom (section variable of NonNegDirichletIntegral)
       exact Aristotle.LandauSchmidtDirect.psi_omega_lll_of_not_RH
-        (Aristotle.NonNegDirichletIntegral.psi_dirichlet_integral sorry) _hRH
+        (Aristotle.NonNegDirichletIntegral.psi_dirichlet_integral
+          Aristotle.PringsheimAtoms.pringsheim_psi_proved) _hRH
   have hL4 : (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x] := by
@@ -226,7 +228,8 @@ private theorem combined_atoms :
       -- pi_integral_hyp supplied via NonNegDirichletIntegral.pi_log_zeta_extension
       -- The sorry here is the Pringsheim/Landau atom (section variable of NonNegDirichletIntegral)
       exact Aristotle.LandauSchmidtDirect.pi_li_omega_lll_of_not_RH
-        (Aristotle.NonNegDirichletIntegral.pi_log_zeta_extension sorry) _hRH
+        (Aristotle.NonNegDirichletIntegral.pi_log_zeta_extension
+          Aristotle.PringsheimAtoms.pringsheim_pi_proved) _hRH
   exact ⟨hHardy, hL3, hL4⟩
 
 /-- **ALL deep mathematical content** for Littlewood's theorem.
