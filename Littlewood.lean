@@ -87,6 +87,7 @@ import Littlewood.Aristotle.DirichletApprox        -- Dirichlet approx (0 sorrie
 import Littlewood.Aristotle.DirichletSeries        -- Dirichlet series (0 sorries) ✓
 import Littlewood.Aristotle.LandauLemma            -- Landau lemma (0 sorries) ✓
 import Littlewood.Aristotle.DeepSorries              -- Combined deep mathematical sorry (1 sorry)
+import Littlewood.Aristotle.RHCaseOscillation        -- RH-case oscillation infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.SmoothedExplicitFormula -- Landau contradictions (0 sorries, extracted from DeepSorries)
 import Littlewood.Aristotle.LandauContradiction    -- Landau contradiction atoms (4 sorries)
 import Littlewood.Aristotle.LandauLittlewood       -- Landau-Littlewood oscillation consequences (0 local sorries)

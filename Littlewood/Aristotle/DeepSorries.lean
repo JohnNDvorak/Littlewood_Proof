@@ -49,6 +49,7 @@ REFERENCES:
 import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.CoreLemmas.GrowthDomination
+import Littlewood.Aristotle.RHCaseOscillation
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -161,11 +162,29 @@ All three atoms are sorry'd here. The downstream components (2)-(3) of
 `all_deep_results` (Landau contradictions) are PROVED from (L3)-(L4) via
 Ω± monotonicity — they are NOT separate atoms.
 
-Remaining atoms:
-  - Hardy: mean square MVT + first moment bound (infrastructure in Hardy chain files)
-  - L3: ψ-x = Ω±(√x · lll x). Infrastructure in LandauSchmidtDirect.lean (¬RH case
-    proved modulo Dirichlet integral sorry) + RH case needs explicit formula
-  - L4: π-li = Ω±(√x/log x · lll x). Same structure as L3 -/
+## Remaining atoms and their proof strategies:
+
+### (Hardy) `Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1/2 }`
+Hardy 1914 — Titchmarsh Ch. X:
+  ∫₀ᵀ|ζ(1/2+it)|² dt ≥ cT·log T (mean-value theorem for |ζ|²)
+  |∫₀ᵀ Z(t) dt| ≤ CT^{1/2+ε} (van der Corput oscillatory cancellation)
+  Z constant sign on [T₀,∞) ⟹ ∫Z² ≤ sup|Z|·|∫Z| = O(T^{3/4+2ε}) ⟹ ⊥.
+Infrastructure: Hardy chain files (0 sorries), needs AFE + sign cancellation atoms.
+
+### (L3) `(ψ - id) =Ω±[√· · lll]`
+Splits by `by_cases RiemannHypothesis`:
+  **¬RH**: ∃ zero ρ₀ with Re(ρ₀) > 1/2. Landau non-negative integral argument
+    gives Ω±(x^α) with α = Re(ρ₀) > 1/2. Growth domination (GrowthDomination.lean)
+    upgrades to Ω±(√x · lll x). Infrastructure: LandauSchmidtDirect.lean
+    (fully proved modulo landau_nonneg_integral sorry).
+  **RH**: Truncated explicit formula ψ(x) = x - 2∑ Re(x^ρ/ρ) + O(log²x).
+    Individual Dirichlet phase alignment on zerosUpTo(T) makes all zero contributions
+    constructive. Bound: x ≤ exp(N^{N(T)}), so lll(x) ≤ log(N(T)), while
+    ∑ 1/|ρ| ≈ (log N(T))² ≫ lll(x). Infrastructure: RHCaseOscillation.lean (standalone).
+
+### (L4) `(π - li) =Ω±[√·/log · · lll]`
+Same case split as L3. Under ¬RH: log ζ obstruction (exp never vanishes).
+Under RH: explicit formula for π via Perron + partial summation. -/
 private theorem combined_atoms :
     -- (Hardy) Infinitely many critical-line zeros (Hardy 1914)
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
@@ -177,18 +196,32 @@ private theorem combined_atoms :
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
     =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
-  refine ⟨?_, ?_, ?_⟩
-  -- (Hardy) Infinitely many critical-line zeros
-  -- Needs: mean square MVT (∫Z² ≥ c·T·log T) + first moment (|∫Z| ≤ CT^{1/2+ε})
-  -- Infrastructure built in HardyApproxFunctionalEq + HardyFirstMomentDirect
-  · sorry
-  -- (L3) ψ-x = Ω±(√x · lll x)
-  -- Infrastructure in LandauSchmidtDirect.lean: ¬RH case proved modulo Dirichlet integral,
-  -- RH case requires explicit formula + Dirichlet alignment
-  · sorry
-  -- (L4) π-li = Ω±(√x/log x · lll x)
-  -- Infrastructure in LandauSchmidtDirect.lean: same structure as L3
-  · sorry
+  -- Use `have` for L3 so L4 could reference it in future (partial summation transfer)
+  have hHardy : Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 } := by
+    -- Hardy 1914: mean square ∫Z² ≥ cT·log T forces sign changes
+    -- Infrastructure: HardyZContradiction + MeanSquareLowerBound + VdcFirstDerivTest
+    sorry
+  have hL3 : (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x] := by
+    -- Littlewood 1914: split by RH
+    by_cases _hRH : ZetaZeros.RiemannHypothesis
+    · -- RH case: explicit formula + Dirichlet alignment gives frequently-large deviations
+      -- Infrastructure: RHCaseOscillation.rh_psi_oscillation_from_frequent
+      -- Needs: h_plus/h_minus from Perron contour integration + phase alignment
+      exact Aristotle.RHCaseOscillation.rh_psi_oscillation_from_frequent sorry sorry
+    · -- ¬RH case: Landau-Schmidt argument. ∃ ρ₀ with Re > 1/2, giving Ω±(x^α), α > 1/2
+      -- Infrastructure: LandauSchmidtDirect.psi_omega_lll_of_not_RH
+      sorry
+  have hL4 : (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
+      LogarithmicIntegral.logarithmicIntegral x)
+      =Ω±[fun x => Real.sqrt x / Real.log x * lll x] := by
+    -- Same case split as L3
+    by_cases _hRH : ZetaZeros.RiemannHypothesis
+    · -- RH case: explicit formula for π(x) via Perron on log ζ
+      exact Aristotle.RHCaseOscillation.rh_pi_li_oscillation_from_frequent sorry sorry
+    · -- ¬RH case: log ζ obstruction (exp never vanishes)
+      -- Infrastructure: LandauSchmidtDirect.pi_li_omega_lll_of_not_RH
+      sorry
+  exact ⟨hHardy, hL3, hL4⟩
 
 /-- **ALL deep mathematical content** for Littlewood's theorem.
 
