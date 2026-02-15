@@ -182,6 +182,7 @@ import Littlewood.Aristotle.OneSidedSmallMean               -- Generalized one-s
 import Littlewood.Aristotle.LandauInghamWiring              -- L² Cesàro incompatibility lemma (0 sorries) ✓
 import Littlewood.Aristotle.HalfPlaneConnected              -- Punctured half-plane preconnectedness (0 sorries) ✓
 import Littlewood.Aristotle.LandauDirichletIntegral         -- Identity principle on half-planes (0 sorries) ✓
+import Littlewood.Aristotle.LandauSchmidtDirect              -- Landau-Schmidt ¬RH oscillation (1 sorry: Dirichlet integral atoms)
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/

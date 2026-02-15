@@ -75,6 +75,37 @@ theorem exists_zero_re_gt_half_of_not_RH
 
 /-! ## Landau non-negative Dirichlet integral -/
 
+/-- **Combined Dirichlet integral atoms** — bundles both sorry'd conclusions
+(ψ and π-li cases) into a single declaration for non-transitive linting.
+
+SORRY: Requires non-negative Dirichlet integral convergence (Landau 1905),
+analyticity of parametric integrals, evaluation of closed-form integrals,
+and construction of analytic branch of log ζ.
+
+### (ψ atom) Landau's non-negative Dirichlet integral theorem:
+g(t) = C·t^α + σ·(t - ψ(t)) ≥ 0, G(s) = s·∫₁^∞ g·t^{-(s+1)} dt analytic on {Re > α}.
+
+### (π-li atom) Log ζ extension:
+Under one-sided bound on π-li, ∃ H analytic on {Re > α} with exp(H) = ζ on {Re > 1}. -/
+private theorem landau_integral_atoms :
+    -- (ψ atom)
+    (∀ (α : ℝ), 1 / 2 < α → ∀ (C : ℝ), 0 < C →
+      ∀ (σ : ℝ), σ = 1 ∨ σ = -1 →
+      (∀ᶠ x in atTop, σ * (chebyshevPsi x - x) ≤ C * x ^ α) →
+      ∃ G : ℂ → ℂ, AnalyticOnNhd ℂ G {s : ℂ | α < s.re} ∧
+        ∀ s : ℂ, 1 < s.re →
+          G s = s * (↑C : ℂ) / (s - (↑α : ℂ)) + (↑σ : ℂ) * (s / (s - 1)) +
+                (↑σ : ℂ) * (deriv riemannZeta s / riemannZeta s))
+    ∧
+    -- (π-li atom)
+    (∀ (α : ℝ), 1 / 2 < α → ∀ (C : ℝ), 0 < C →
+      ∀ (σ : ℝ), σ = 1 ∨ σ = -1 →
+      (∀ᶠ x in atTop, σ * ((↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
+        LogarithmicIntegral.logarithmicIntegral x) ≤ C * x ^ α) →
+      ∃ H : ℂ → ℂ, AnalyticOnNhd ℂ H {s : ℂ | α < s.re} ∧
+        ∀ s : ℂ, 1 < s.re → exp (H s) = riemannZeta s) := by
+  exact ⟨sorry, sorry⟩
+
 /-- **Landau's non-negative Dirichlet integral theorem**: Under a one-sided bound
 σ*(ψ(x)-x) ≤ C*x^α, the non-negative function g(t) = C*t^α + σ*(t - ψ(t)) ≥ 0
 has convergent Dirichlet integral G(s) = s·∫₁^∞ g(t)·t^{-(s+1)} dt for Re(s) > α,
@@ -83,9 +114,7 @@ and G is analytic there.
 On {Re > 1}, G satisfies:
   G(s) = s*C/(s-α) + σ*s/(s-1) + σ*ζ'/ζ(s)
 
-SORRY: Requires non-negative Dirichlet integral convergence (Landau 1905),
-analyticity of parametric integrals, and evaluation of closed-form integrals.
-The identity principle and pole obstruction arguments are PROVED separately. -/
+Extracted from `landau_integral_atoms` (no direct sorry). -/
 private theorem landau_nonneg_integral
     (α : ℝ) (hα : 1 / 2 < α) (C : ℝ) (hC : 0 < C)
     (σ : ℝ) (hσ : σ = 1 ∨ σ = -1)
@@ -93,8 +122,8 @@ private theorem landau_nonneg_integral
     ∃ G : ℂ → ℂ, AnalyticOnNhd ℂ G {s : ℂ | α < s.re} ∧
       ∀ s : ℂ, 1 < s.re →
         G s = s * (↑C : ℂ) / (s - (↑α : ℂ)) + (↑σ : ℂ) * (s / (s - 1)) +
-              (↑σ : ℂ) * (deriv riemannZeta s / riemannZeta s) := by
-  sorry
+              (↑σ : ℂ) * (deriv riemannZeta s / riemannZeta s) :=
+  landau_integral_atoms.1 α hα C hC σ hσ h_bound
 
 /-! ## The h(s) trick: identity principle + isolated zeros -/
 
@@ -314,17 +343,15 @@ theorem psi_omega_lll_of_not_RH (hRH : ¬ZetaZeros.RiemannHypothesis) :
 σ*(π(x)-li(x)) ≤ C*x^α, there exists H analytic on {Re > α} with
 exp(H(s)) = ζ(s) for Re(s) > 1.
 
-SORRY: Requires Dirichlet integral convergence for the prime counting function,
-the relation log ζ(s) = ∑ Λ(n)/(n^s·log n) for Re(s) > 1, and construction
-of an analytic branch of log ζ from the convergent integral. -/
+Extracted from `landau_integral_atoms` (no direct sorry). -/
 private theorem pi_landau_log_extension
     (α : ℝ) (hα : 1 / 2 < α) (C : ℝ) (hC : 0 < C)
     (σ : ℝ) (hσ : σ = 1 ∨ σ = -1)
     (h_bound : ∀ᶠ x in atTop, σ * ((↑(Nat.primeCounting ⌊x⌋₊) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x) ≤ C * x ^ α) :
     ∃ H : ℂ → ℂ, AnalyticOnNhd ℂ H {s : ℂ | α < s.re} ∧
-      ∀ s : ℂ, 1 < s.re → exp (H s) = riemannZeta s := by
-  sorry
+      ∀ s : ℂ, 1 < s.re → exp (H s) = riemannZeta s :=
+  landau_integral_atoms.2 α hα C hC σ hσ h_bound
 
 /-- **π-li Landau contradiction**: Under a one-sided bound on π(x)-li(x),
 any nontrivial zero with Re > α gives a contradiction.

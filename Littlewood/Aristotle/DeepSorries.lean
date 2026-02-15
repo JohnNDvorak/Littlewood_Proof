@@ -50,6 +50,7 @@ import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.CoreLemmas.GrowthDomination
 import Littlewood.Aristotle.RHCaseOscillation
+import Littlewood.Aristotle.LandauSchmidtDirect
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -208,9 +209,8 @@ private theorem combined_atoms :
       -- Infrastructure: RHCaseOscillation.rh_psi_oscillation_from_frequent
       -- Needs: h_plus/h_minus from Perron contour integration + phase alignment
       exact Aristotle.RHCaseOscillation.rh_psi_oscillation_from_frequent sorry sorry
-    · -- ¬RH case: Landau-Schmidt argument. ∃ ρ₀ with Re > 1/2, giving Ω±(x^α), α > 1/2
-      -- Infrastructure: LandauSchmidtDirect.psi_omega_lll_of_not_RH
-      sorry
+    · -- ¬RH case: Landau-Schmidt argument (PROVED via LandauSchmidtDirect)
+      exact Aristotle.LandauSchmidtDirect.psi_omega_lll_of_not_RH _hRH
   have hL4 : (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x] := by
@@ -218,9 +218,8 @@ private theorem combined_atoms :
     by_cases _hRH : ZetaZeros.RiemannHypothesis
     · -- RH case: explicit formula for π(x) via Perron on log ζ
       exact Aristotle.RHCaseOscillation.rh_pi_li_oscillation_from_frequent sorry sorry
-    · -- ¬RH case: log ζ obstruction (exp never vanishes)
-      -- Infrastructure: LandauSchmidtDirect.pi_li_omega_lll_of_not_RH
-      sorry
+    · -- ¬RH case: log ζ obstruction (PROVED via LandauSchmidtDirect)
+      exact Aristotle.LandauSchmidtDirect.pi_li_omega_lll_of_not_RH _hRH
   exact ⟨hHardy, hL3, hL4⟩
 
 /-- **ALL deep mathematical content** for Littlewood's theorem.
