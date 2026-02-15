@@ -178,6 +178,7 @@ import Littlewood.Aristotle.ZetaBoundsV2                  -- Zeta ‖ζ(s)‖≤
 import Littlewood.Aristotle.CauchyGoursatRectangle        -- Cauchy-Goursat rectangle theorem (0 sorries) ✓
 import Littlewood.Aristotle.ZeroFreeRegionV3               -- Zero-free region: 3-4-1, ζ(1+it)≠0, log-deriv bounds (0 sorries) ✓
 import Littlewood.Aristotle.PsiIntegralRepresentation       -- -ζ'/ζ = L(Λ,s), summability, zeta nonvanishing (0 sorries) ✓
+import Littlewood.Aristotle.ZetaRealNonvanishing             -- ζ(x) ≠ 0 for real x > 0, ζ'/ζ analytic on reals (1 sorry: eta positivity)
 import Littlewood.Aristotle.OneSidedSmallMean               -- Generalized one-sided abs/L² mean → 0 (0 sorries) ✓
 import Littlewood.Aristotle.LandauInghamWiring              -- L² Cesàro incompatibility lemma (0 sorries) ✓
 import Littlewood.Aristotle.HalfPlaneConnected              -- Punctured half-plane preconnectedness (0 sorries) ✓
