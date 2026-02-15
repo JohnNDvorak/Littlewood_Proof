@@ -188,7 +188,7 @@ import Littlewood.Aristotle.NonNegDirichletIntegral           -- Landau Dirichle
 import Littlewood.Aristotle.LandauLogZetaObstruction          -- Log ζ pole obstruction + Euler product (0 sorries)
 import Littlewood.Aristotle.MellinIntegralFormulas              -- Mellin integrals: ∫ t^α·t^{-(s+1)} = 1/(s-α) (0 sorries)
 import Littlewood.Aristotle.ZetaPoleCancellation                -- Pole cancellation: (s-1)ζ(s) corrected formula (0 sorries)
-import Littlewood.Aristotle.PringsheimAtoms                    -- Pringsheim/Landau atoms for ψ and π-li (1 sorry: Landau Satz)
+import Littlewood.Aristotle.PringsheimAtoms                    -- Pringsheim infrastructure: g_nonneg, type signatures (0 sorries)
 import Littlewood.Aristotle.LandauSchmidtDirect              -- Landau-Schmidt ¬RH oscillation (0 sorries, parameterized on integral hyps)
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
