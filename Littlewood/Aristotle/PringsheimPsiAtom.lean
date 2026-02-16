@@ -187,7 +187,31 @@ theorem dirichletIntegral_integrableOn (C : ℝ) (hC : 0 < C) (α : ℝ)
     (s : ℂ) (hs : α < s.re) :
     IntegrableOn (fun t => (↑(genFun C α σ_sign t) : ℂ) * (↑t : ℂ) ^ (-(s + 1)))
       (Ioi 1) := by
-  sorry
+  by_cases h1 : 1 < s.re
+  · -- Re(s) > 1: split genFun into three integrable components
+    have h_rpow := integrableOn_rpow_cpow α s hs
+    have h_x := integrableOn_x_cpow s h1
+    have h_psi := integrableOn_psi_cpow s h1
+    have h3 : IntegrableOn (fun t : ℝ =>
+        (↑C : ℂ) * ((↑t : ℂ) ^ (↑α : ℂ) * (↑t : ℂ) ^ (-(s + 1))) +
+        (↑σ_sign : ℂ) * ((↑t : ℂ) * (↑t : ℂ) ^ (-(s + 1))) -
+        (↑σ_sign : ℂ) * ((↑(chebyshevPsi t) : ℂ) * (↑t : ℂ) ^ (-(s + 1))))
+        (Ioi (1 : ℝ)) :=
+      ((h_rpow.const_mul _).add (h_x.const_mul _)).sub (h_psi.const_mul _)
+    exact h3.congr (by
+      filter_upwards [ae_restrict_mem measurableSet_Ioi] with t ht
+      simp only [mem_Ioi] at ht
+      simp only [genFun]
+      push_cast [ofReal_cpow (le_of_lt (lt_trans zero_lt_one ht))]
+      ring)
+  · -- α < Re(s) ≤ 1: requires Landau's abscissa of convergence theorem.
+    -- The non-negative generating function g ≥ 0 for large t, combined with
+    -- the corrected formula (ZetaPoleCancellation) providing analytic continuation
+    -- along the real axis, and Pringsheim's theorem (PringsheimTheorem.lean) on
+    -- non-negative Taylor coefficients, forces convergence for all Re(s) > α.
+    -- See Landau, "Über einen Satz von Tschebyschef" (1905), Satz 15.
+    push_neg at h1
+    sorry
 
 /-! ## Key Lemma 2: Analyticity on {Re > α} -/
 
