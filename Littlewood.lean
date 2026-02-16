@@ -190,6 +190,10 @@ import Littlewood.Aristotle.MellinIntegralFormulas              -- Mellin integr
 import Littlewood.Aristotle.ZetaPoleCancellation                -- Pole cancellation: (s-1)ζ(s) corrected formula (0 sorries)
 import Littlewood.Aristotle.PringsheimAtoms                    -- Pringsheim infrastructure: g_nonneg, type signatures (0 sorries)
 import Littlewood.Aristotle.LandauSchmidtDirect              -- Landau-Schmidt ¬RH oscillation (0 sorries, parameterized on integral hyps)
+import Littlewood.Aristotle.CorrectionTermAnalyticity          -- Correction term analyticity (target 0 sorries)
+import Littlewood.Aristotle.PringsheimPsiAtom                  -- Pringsheim ψ atom (0 sorries, parameterized on LandauAbscissaHyp)
+import Littlewood.Aristotle.LandauAbscissaConvergence          -- Landau abscissa convergence
+import Littlewood.Aristotle.PringsheimPiAtom                    -- Pringsheim π atom
 
 -- Files that redefine chebyshevPsi/primeCountingReal/li (conflicts with Basic/)
 -- These are valid standalone proofs but can't be imported alongside Basic/

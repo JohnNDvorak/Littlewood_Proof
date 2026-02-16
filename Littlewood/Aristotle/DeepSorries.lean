@@ -62,6 +62,7 @@ import Littlewood.Aristotle.RHCaseOscillation
 import Littlewood.Aristotle.LandauSchmidtDirect
 import Littlewood.Aristotle.NonNegDirichletIntegral
 import Littlewood.Aristotle.PringsheimPsiAtom
+import Littlewood.Aristotle.PringsheimPiAtom
 import Littlewood.Aristotle.HardyInfiniteZerosV2
 import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Bridge.HardySetupInstance
@@ -277,7 +278,7 @@ private theorem combined_atoms :
       -- Infrastructure: LandauLogZetaObstruction (Euler product log, pole obstruction).
       exact Aristotle.LandauSchmidtDirect.pi_li_omega_lll_of_not_RH
         (Aristotle.NonNegDirichletIntegral.pi_log_zeta_extension
-          sorry) _hRH
+          Aristotle.PringsheimPiAtom.pringsheim_pi_atom) _hRH
   exact ⟨hHardy, hL3, hL4⟩
 
 /-- **ALL deep mathematical content** for Littlewood's theorem.
