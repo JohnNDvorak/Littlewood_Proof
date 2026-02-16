@@ -9,6 +9,9 @@ extracts all components without direct sorry.
 
 A single sorry in `combined_atoms` packages the following mathematical content:
   (Hardy) Infinitely many zeros of ζ on Re(s) = 1/2 (Hardy 1914)
+    - WIRED through HardyInfiniteZerosV2 contradiction argument
+    - HardySetupV2: Z, Z_continuous, Z_zero_iff, Z_convexity_bound PROVED
+    - Remaining sorry: mean_square_lower (∫Z²≥cT·logT) + first_moment_upper (|∫Z|≤CT^{1/2+ε})
   (L3)-(L4) Full-strength oscillation:
     - ¬RH case: PROVED via LandauSchmidtDirect (Pringsheim atoms provided as sorry)
     - RH case: sorry (Perron explicit formula + Dirichlet phase alignment)
@@ -55,6 +58,10 @@ import Littlewood.CoreLemmas.GrowthDomination
 import Littlewood.Aristotle.RHCaseOscillation
 import Littlewood.Aristotle.LandauSchmidtDirect
 import Littlewood.Aristotle.NonNegDirichletIntegral
+import Littlewood.Aristotle.HardyInfiniteZerosV2
+import Littlewood.Aristotle.HardyZFirstMoment
+import Littlewood.Bridge.HardySetupInstance
+import Littlewood.Bridge.PhragmenLindelofWiring
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -170,11 +177,13 @@ All three atoms are sorry'd here. The downstream components (2)-(3) of
 ## Remaining atoms and their proof strategies:
 
 ### (Hardy) `Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1/2 }`
-Hardy 1914 — Titchmarsh Ch. X:
-  ∫₀ᵀ|ζ(1/2+it)|² dt ≥ cT·log T (mean-value theorem for |ζ|²)
-  |∫₀ᵀ Z(t) dt| ≤ CT^{1/2+ε} (van der Corput oscillatory cancellation)
-  Z constant sign on [T₀,∞) ⟹ ∫Z² ≤ sup|Z|·|∫Z| = O(T^{3/4+2ε}) ⟹ ⊥.
-Infrastructure: Hardy chain files (0 sorries), needs AFE + sign cancellation atoms.
+WIRED through HardyInfiniteZerosV2 contradiction argument.
+HardySetupV2 instance constructed locally:
+  Z, Z_continuous, Z_zero_iff: from HardySetupInstance (PROVED)
+  Z_convexity_bound: from PhragmenLindelofWiring + hardyZ_abs_le (PROVED)
+  mean_square_lower: sorry — ∫₁ᵀ Z² ≥ cT·logT (Hardy-Littlewood MVT)
+  first_moment_upper: sorry — |∫₁ᵀ Z| ≤ CT^{1/2+ε} (oscillatory cancellation)
+Conversion from real zeros to nontrivial zeros inlined.
 
 ### (L3) `(ψ - id) =Ω±[√· · lll]`
 Splits by `by_cases RiemannHypothesis`:
@@ -203,9 +212,38 @@ private theorem combined_atoms :
     =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
   -- Use `have` for L3 so L4 could reference it in future (partial summation transfer)
   have hHardy : Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 } := by
-    -- Hardy 1914: mean square ∫Z² ≥ cT·log T forces sign changes
-    -- Infrastructure: HardyZContradiction + MeanSquareLowerBound + VdcFirstDerivTest
-    sorry
+    -- Hardy 1914: wire through HardyInfiniteZerosV2
+    -- HardySetupV2: Z, Z_continuous, Z_zero_iff, Z_convexity_bound PROVED
+    -- Remaining atoms: mean_square_lower (Hardy-Littlewood MVT) + first_moment_upper
+    letI : HardyInfiniteZerosV2.HardySetupV2 := {
+      Z := HardyEstimatesPartial.hardyZ
+      Z_continuous := HardySetupInstance.hardyZ_continuous
+      Z_zero_iff := HardySetupInstance.hardyZ_zero_iff
+      mean_square_lower := sorry  -- ∫₁ᵀ Z² ≥ cT·logT (Hardy-Littlewood MVT)
+      first_moment_upper := sorry  -- |∫₁ᵀ Z| ≤ CT^{1/2+ε} (oscillatory cancellation)
+      Z_convexity_bound := by
+        intro ε hε
+        obtain ⟨C, hC, hb⟩ := ZetaCriticalLineBoundHyp.bound ε hε
+        exact ⟨C, hC, fun t ht =>
+          le_trans (HardyEstimatesPartial.hardyZ_abs_le t) (hb t ht)⟩
+    }
+    -- Get infinitely many real zeros from Hardy's contradiction argument
+    have h_real := HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2
+    -- Convert: {t : ℝ | ζ(1/2+It) = 0} → {ρ ∈ zetaNontrivialZeros | ρ.re = 1/2}
+    have inj : Function.Injective
+        (fun t : ℝ => (1/2 : ℂ) + Complex.I * (t : ℂ)) := by
+      intro a b hab
+      have := congr_arg Complex.im hab
+      simp [Complex.add_im, Complex.mul_im, Complex.I_re, Complex.I_im,
+            Complex.ofReal_re, Complex.ofReal_im] at this
+      exact this
+    apply Set.Infinite.mono _ (h_real.image (fun a _ b _ hab => inj hab))
+    intro ρ ⟨t, ht, hρ⟩
+    subst hρ
+    refine ⟨⟨ht, ?_, ?_⟩, ?_⟩ <;>
+      simp [Complex.add_re, Complex.mul_re, Complex.ofReal_re,
+            Complex.I_re, Complex.I_im, Complex.ofReal_im] <;>
+      norm_num
   have hL3 : (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x] := by
     -- Littlewood 1914: split by RH
     by_cases _hRH : ZetaZeros.RiemannHypothesis
