@@ -58,6 +58,7 @@ import Littlewood.CoreLemmas.GrowthDomination
 import Littlewood.Aristotle.RHCaseOscillation
 import Littlewood.Aristotle.LandauSchmidtDirect
 import Littlewood.Aristotle.NonNegDirichletIntegral
+import Littlewood.Aristotle.PringsheimPsiAtom
 import Littlewood.Aristotle.HardyInfiniteZerosV2
 import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Bridge.HardySetupInstance
@@ -253,14 +254,11 @@ private theorem combined_atoms :
       exact Aristotle.RHCaseOscillation.rh_psi_oscillation_from_frequent sorry sorry
     · -- ¬RH case: Landau-Schmidt argument (PROVED via LandauSchmidtDirect)
       -- psi_integral_hyp supplied via NonNegDirichletIntegral.psi_dirichlet_integral
-      -- The sorry here is the Pringsheim/Landau atom (section variable of NonNegDirichletIntegral)
-      -- Landau Satz for ψ: one-sided bound + non-negative Dirichlet integral → extension to {Re > α}
-      -- Proof reduces to Pringsheim's theorem (PringsheimTheorem.lean) via Taylor coefficient non-negativity.
-      -- Infrastructure built: ZetaPoleCancellation (pole cancellation), MellinIntegralFormulas (Mellin evaluations),
-      -- PsiIntegralRepresentation (-ζ'/ζ = L(Λ,s)). Missing: parametric differentiation of Dirichlet integrals.
+      -- Pringsheim atom for ψ: PringsheimPsiAtom.pringsheim_psi_atom (2 internal sorries:
+      -- dirichletIntegral_integrableOn (MCT convergence) + witnessG_analyticOnNhd (parametric diff))
       exact Aristotle.LandauSchmidtDirect.psi_omega_lll_of_not_RH
         (Aristotle.NonNegDirichletIntegral.psi_dirichlet_integral
-          sorry) _hRH
+          Aristotle.PringsheimPsiAtom.pringsheim_psi_atom) _hRH
   have hL4 : (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x] := by
