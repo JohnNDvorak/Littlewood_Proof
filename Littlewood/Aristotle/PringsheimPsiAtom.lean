@@ -22,7 +22,7 @@ on {Re(s) > 1}.
 * Landau, "Über einen Satz von Tschebyschef" (1905), Satz 15
 * Hardy-Riesz, "The General Theory of Dirichlet's Series", Ch. 1
 
-SORRY COUNT: 1 (convergence — in progress)
+SORRY COUNT: 0 (parameterized on Landau abscissa section variable)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -48,6 +48,25 @@ open Complex Real Filter Topology MeasureTheory Set
 /-- The generating function g(t) = C*t^α + σ*(t - ψ(t)). -/
 def genFun (C : ℝ) (α : ℝ) (σ : ℝ) (t : ℝ) : ℝ :=
   C * t ^ α + σ * (t - chebyshevPsi t)
+
+/-! ## Landau abscissa hypothesis
+
+The convergence of the Dirichlet integral for α < Re(s) ≤ 1 is the content of
+Landau's abscissa of convergence theorem (Satz 15): for non-negative generating
+functions, the integral converges wherever the corrected formula is analytic on
+the real axis. This deep result is parameterized as a hypothesis. -/
+
+/-- The Landau abscissa hypothesis: the Dirichlet integral of the generating
+function g(t) = C·t^α + σ·(t - ψ(t)) converges absolutely for α < Re(s) ≤ 1
+(where the individual pieces diverge but g ≥ 0 forces convergence via
+Pringsheim's theorem on non-negative Taylor coefficients). -/
+def LandauAbscissaHyp : Prop :=
+  ∀ (C : ℝ), 0 < C → ∀ (α : ℝ), 1 / 2 < α →
+  ∀ (σ_sign : ℝ), σ_sign = 1 ∨ σ_sign = -1 →
+  (∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α) →
+  ∀ (s : ℂ), α < s.re → s.re ≤ 1 →
+    IntegrableOn (fun t => (↑(genFun C α σ_sign t) : ℂ) * (↑t : ℂ) ^ (-(s + 1)))
+      (Ioi 1)
 
 /-- g(t) ≥ 0 for large t, from the one-sided bound. -/
 theorem genFun_nonneg_eventually (α : ℝ) (C : ℝ) (hC : 0 < C)
@@ -180,8 +199,12 @@ tail integral increases but stays bounded by the corrected formula.
 Then for complex s with Re(s) > α, absolute convergence follows by comparison
 with the real integral at Re(s). -/
 
-/-- The Dirichlet integral of g converges absolutely for Re(s) > α. -/
-theorem dirichletIntegral_integrableOn (C : ℝ) (hC : 0 < C) (α : ℝ)
+/-- The Dirichlet integral of g converges absolutely for Re(s) > α.
+
+The Re(s) > 1 case is proved directly by splitting g into three integrable components.
+The α < Re(s) ≤ 1 case follows from the Landau abscissa hypothesis (Pringsheim). -/
+theorem dirichletIntegral_integrableOn (landau : LandauAbscissaHyp)
+    (C : ℝ) (hC : 0 < C) (α : ℝ)
     (hα : 1 / 2 < α) (σ_sign : ℝ) (hσ : σ_sign = 1 ∨ σ_sign = -1)
     (hbound : ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α)
     (s : ℂ) (hs : α < s.re) :
@@ -204,14 +227,9 @@ theorem dirichletIntegral_integrableOn (C : ℝ) (hC : 0 < C) (α : ℝ)
       simp only [genFun]
       push_cast [ofReal_cpow (le_of_lt (lt_trans zero_lt_one ht))]
       ring)
-  · -- α < Re(s) ≤ 1: requires Landau's abscissa of convergence theorem.
-    -- The non-negative generating function g ≥ 0 for large t, combined with
-    -- the corrected formula (ZetaPoleCancellation) providing analytic continuation
-    -- along the real axis, and Pringsheim's theorem (PringsheimTheorem.lean) on
-    -- non-negative Taylor coefficients, forces convergence for all Re(s) > α.
-    -- See Landau, "Über einen Satz von Tschebyschef" (1905), Satz 15.
+  · -- α < Re(s) ≤ 1: Landau abscissa of convergence theorem
     push_neg at h1
-    sorry
+    exact landau C hC α hα σ_sign hσ hbound s hs h1
 
 /-! ## Key Lemma 2: Analyticity on {Re > α} -/
 
@@ -219,7 +237,8 @@ theorem dirichletIntegral_integrableOn (C : ℝ) (hC : 0 < C) (α : ℝ)
 Proved by parametric differentiation under the integral sign
 (using `hasDerivAt_integral_of_dominated_loc_of_deriv_le`) combined with
 `DifferentiableOn.analyticOnNhd` (Cauchy integral formula). -/
-theorem witnessG_analyticOnNhd (C : ℝ) (hC : 0 < C) (α : ℝ)
+theorem witnessG_analyticOnNhd (landau : LandauAbscissaHyp)
+    (C : ℝ) (hC : 0 < C) (α : ℝ)
     (hα : 1 / 2 < α) (σ_sign : ℝ) (hσ : σ_sign = 1 ∨ σ_sign = -1)
     (hbound : ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α) :
     AnalyticOnNhd ℂ (witnessG C α σ_sign) {s : ℂ | α < s.re} := by
@@ -241,7 +260,7 @@ theorem witnessG_analyticOnNhd (C : ℝ) (hC : 0 < C) (α : ℝ)
   have hσ₂ : α < s₀.re - 2 * δ := by rw [hδ_def]; linarith
   set μ := MeasureTheory.Measure.restrict MeasureTheory.volume (Ioi (1 : ℝ))
   -- Abbreviation for the generating function integral
-  let integ := dirichletIntegral_integrableOn C hC α hα σ_sign hσ hbound
+  let integ := dirichletIntegral_integrableOn landau C hC α hα σ_sign hσ hbound
   -- dirichletIntegral equals ∫ F s t ∂μ
   suffices h : DifferentiableAt ℂ (fun s => ∫ t,
       (↑(genFun C α σ_sign t) : ℂ) * (↑t : ℂ) ^ (-(s + 1)) ∂μ) s₀ by
@@ -403,9 +422,9 @@ private theorem psi_integral_eq (s : ℂ) (hs : 1 < s.re) :
   exact (PsiIntegralRepresentation.neg_zeta_logDeriv_eq_integral hs).symm
 
 /-- The witness function equals the formula when Re(s) > max(1, α). -/
-theorem witnessG_eq_formula (C : ℝ) (hC : 0 < C) (α : ℝ)
-    (hα : 1 / 2 < α) (σ_sign : ℝ) (hσ : σ_sign = 1 ∨ σ_sign = -1)
-    (hbound : ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α)
+theorem witnessG_eq_formula (C : ℝ) (_hC : 0 < C) (α : ℝ)
+    (hα : 1 / 2 < α) (σ_sign : ℝ) (_hσ : σ_sign = 1 ∨ σ_sign = -1)
+    (_hbound : ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α)
     (s : ℂ) (hs : 1 < s.re) (hαs : α < s.re) :
     witnessG C α σ_sign s =
       s * (↑C : ℂ) / (s - (↑α : ℂ)) + (↑σ_sign : ℂ) * (s / (s - 1)) +
@@ -437,7 +456,7 @@ theorem witnessG_eq_formula (C : ℝ) (hC : 0 < C) (α : ℝ)
 
 Given a one-sided bound σ*(ψ(x)-x) ≤ C*x^α with 1/2 < α, there exists
 G analytic on {Re > α} matching the Landau formula on {Re > 1}. -/
-theorem pringsheim_psi_atom :
+theorem pringsheim_psi_atom (landau : LandauAbscissaHyp) :
     ∀ (α : ℝ), 1 / 2 < α → ∀ (C : ℝ), 0 < C →
     ∀ (σ : ℝ), σ = 1 ∨ σ = -1 →
     (∀ᶠ x in atTop, σ * (chebyshevPsi x - x) ≤ C * x ^ α) →
@@ -449,7 +468,7 @@ theorem pringsheim_psi_atom :
   by_cases hα1 : α ≤ 1
   · -- Main case: α ≤ 1, so Re(s) > 1 implies α < Re(s)
     exact ⟨witnessG C α σ,
-      witnessG_analyticOnNhd C hC α hα σ hσ hbound,
+      witnessG_analyticOnNhd landau C hC α hα σ hσ hbound,
       fun s hs => witnessG_eq_formula C hC α hα σ hσ hbound s hs (by linarith)⟩
   · -- Trivial case: α > 1 — the formula itself is the witness.
     -- {Re > α} ⊂ {Re > 1} and the formula is analytic there since

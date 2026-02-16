@@ -15,7 +15,10 @@ A single sorry in `combined_atoms` packages the following mathematical content:
   (L3)-(L4) Full-strength oscillation:
     - ¬RH case: PROVED via LandauSchmidtDirect (Pringsheim atoms provided as sorry)
     - RH case: sorry (Perron explicit formula + Dirichlet phase alignment)
-  (Pringsheim) Landau Satz: non-negative Dirichlet integral extension (sorry)
+  (Pringsheim) Landau Satz: non-negative Dirichlet integral extension
+    - ψ atom: PringsheimPsiAtom (0 sorry, parameterized on LandauAbscissaHyp)
+    - π atom: sorry (analogous Euler product construction)
+    - LandauAbscissaHyp: sorry (Pringsheim power series + re-expansion argument)
 
 The derived theorem `all_deep_results` packages the original 5 components:
   (1) Hardy's theorem: directly from combined_atoms.
@@ -254,11 +257,11 @@ private theorem combined_atoms :
       exact Aristotle.RHCaseOscillation.rh_psi_oscillation_from_frequent sorry sorry
     · -- ¬RH case: Landau-Schmidt argument (PROVED via LandauSchmidtDirect)
       -- psi_integral_hyp supplied via NonNegDirichletIntegral.psi_dirichlet_integral
-      -- Pringsheim atom for ψ: PringsheimPsiAtom.pringsheim_psi_atom (2 internal sorries:
-      -- dirichletIntegral_integrableOn (MCT convergence) + witnessG_analyticOnNhd (parametric diff))
+      -- Pringsheim atom for ψ: PringsheimPsiAtom.pringsheim_psi_atom (proved modulo
+      -- LandauAbscissaHyp — Landau's abscissa of convergence theorem, sorry'd here)
       exact Aristotle.LandauSchmidtDirect.psi_omega_lll_of_not_RH
         (Aristotle.NonNegDirichletIntegral.psi_dirichlet_integral
-          Aristotle.PringsheimPsiAtom.pringsheim_psi_atom) _hRH
+          (Aristotle.PringsheimPsiAtom.pringsheim_psi_atom sorry)) _hRH
   have hL4 : (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x] := by
