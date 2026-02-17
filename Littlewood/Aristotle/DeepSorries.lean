@@ -11,14 +11,19 @@ A single sorry in `combined_atoms` packages the following mathematical content:
   (Hardy) Infinitely many zeros of ζ on Re(s) = 1/2 (Hardy 1914)
     - WIRED through HardyInfiniteZerosV2 contradiction argument
     - HardySetupV2: Z, Z_continuous, Z_zero_iff, Z_convexity_bound PROVED
-    - Remaining sorry: mean_square_lower (∫Z²≥cT·logT) + first_moment_upper (|∫Z|≤CT^{1/2+ε})
+    - mean_square_lower: sorry (∫Z²≥cT·logT, Hardy-Littlewood MVT)
+    - first_moment_upper: WIRED via HardyFirstMomentUpperLeaf
+      - MainTermFirstMomentBoundHyp: sorry (oscillatory sum cancellation)
+      - ErrorTermFirstMomentBoundHyp: sorry here, but PROVED in
+        RiemannSiegelFirstMoment.lean (not imported to avoid RSBlockDecomposition sorry)
   (L3)-(L4) Full-strength oscillation:
     - ¬RH case: PROVED via LandauSchmidtDirect (Pringsheim atoms provided as sorry)
     - RH case: sorry (Perron explicit formula + Dirichlet phase alignment)
   (Pringsheim) Landau Satz: non-negative Dirichlet integral extension
     - ψ atom: PringsheimPsiAtom (0 sorry, parameterized on LandauAbscissaHyp)
-    - π atom: sorry (analogous Euler product construction)
-    - LandauAbscissaHyp: sorry (Pringsheim power series + re-expansion argument)
+    - π atom: PringsheimPiAtom (0 sorry, parameterized on PiAtomHardCase)
+    - LandauAbscissaHyp: sorry via LandauAbscissaConvergence (RealIntegrabilityHyp)
+    - PiAtomHardCase: sorry (Euler product log construction for 1/2 < α < 1)
 
 The derived theorem `all_deep_results` packages the original 5 components:
   (1) Hardy's theorem: directly from combined_atoms.
@@ -67,6 +72,10 @@ import Littlewood.Aristotle.HardyInfiniteZerosV2
 import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Bridge.HardySetupInstance
 import Littlewood.Bridge.PhragmenLindelofWiring
+import Littlewood.Aristotle.HardyMeanSquareLeafFromAsymptotic
+import Littlewood.Aristotle.StationaryPhaseDecompositionLeaf
+import Littlewood.Aristotle.HardyFirstMomentUpperLeaf
+import Littlewood.Aristotle.LandauAbscissaConvergence
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -224,8 +233,18 @@ private theorem combined_atoms :
       Z := HardyEstimatesPartial.hardyZ
       Z_continuous := HardySetupInstance.hardyZ_continuous
       Z_zero_iff := HardySetupInstance.hardyZ_zero_iff
-      mean_square_lower := sorry  -- ∫₁ᵀ Z² ≥ cT·logT (Hardy-Littlewood MVT)
-      first_moment_upper := sorry  -- |∫₁ᵀ Z| ≤ CT^{1/2+ε} (oscillatory cancellation)
+      mean_square_lower :=  -- ∫₁ᵀ Z² ≥ cT·logT from Hardy-Littlewood asymptotic
+        HardyMeanSquareLeafFromAsymptotic.hardy_mean_square_lower_of_asymptotic
+          sorry  -- ∫₁ᵀ Z(t)² - T·logT = O(T) (Hardy-Littlewood mean value theorem)
+      first_moment_upper := by  -- |∫₁ᵀ Z| ≤ CT^{1/2+ε} (oscillatory cancellation)
+        -- MainTermFirstMomentBoundHyp: sorry (needs oscillatory sum cancellation in MainTerm)
+        -- ErrorTermFirstMomentBoundHyp: sorry (needs RS sign cancellation in ErrorTerm)
+        -- Both hypotheses are PROVED in RiemannSiegelFirstMoment.lean (0 sorry),
+        -- but importing it brings RSBlockDecomposition.lean which has its own sorry.
+        -- Wire locally to avoid that import chain.
+        letI : HardyFirstMomentWiring.MainTermFirstMomentBoundHyp := ⟨sorry⟩
+        letI : HardyFirstMomentWiring.ErrorTermFirstMomentBoundHyp := ⟨sorry⟩
+        exact Aristotle.HardyFirstMomentUpperLeaf.hardy_first_moment_upper_for_setup_v2
       Z_convexity_bound := by
         intro ε hε
         obtain ⟨C, hC, hb⟩ := ZetaCriticalLineBoundHyp.bound ε hε
@@ -258,11 +277,12 @@ private theorem combined_atoms :
       exact Aristotle.RHCaseOscillation.rh_psi_oscillation_from_frequent sorry sorry
     · -- ¬RH case: Landau-Schmidt argument (PROVED via LandauSchmidtDirect)
       -- psi_integral_hyp supplied via NonNegDirichletIntegral.psi_dirichlet_integral
-      -- Pringsheim atom for ψ: PringsheimPsiAtom.pringsheim_psi_atom (proved modulo
-      -- LandauAbscissaHyp — Landau's abscissa of convergence theorem, sorry'd here)
+      -- Pringsheim atom for ψ: PringsheimPsiAtom.pringsheim_psi_atom with
+      -- LandauAbscissaHyp via LandauAbscissaConvergence (sorry: RealIntegrabilityHyp)
       exact Aristotle.LandauSchmidtDirect.psi_omega_lll_of_not_RH
         (Aristotle.NonNegDirichletIntegral.psi_dirichlet_integral
-          (Aristotle.PringsheimPsiAtom.pringsheim_psi_atom sorry)) _hRH
+          (Aristotle.PringsheimPsiAtom.pringsheim_psi_atom
+            (Aristotle.LandauAbscissaConvergence.landau_abscissa_hyp sorry))) _hRH
   have hL4 : (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x] := by
@@ -271,14 +291,11 @@ private theorem combined_atoms :
     · -- RH case: explicit formula for π(x) via Perron on log ζ
       exact Aristotle.RHCaseOscillation.rh_pi_li_oscillation_from_frequent sorry sorry
     · -- ¬RH case: log ζ obstruction (PROVED via LandauSchmidtDirect)
-      -- pi_integral_hyp supplied via NonNegDirichletIntegral.pi_log_zeta_extension
-      -- The sorry here is the Pringsheim/Landau atom (section variable of NonNegDirichletIntegral)
-      -- Landau Satz for π: one-sided bound + non-negative generating function → log ζ extension to {Re > α}
-      -- Same Pringsheim argument as ψ but using Euler product log instead of ζ'/ζ.
-      -- Infrastructure: LandauLogZetaObstruction (Euler product log, pole obstruction).
+      -- pringsheim_pi_atom parameterized on PiAtomHardCase (sorry here)
+      -- Infrastructure: LandauLogZetaObstruction, CorrectionTermAnalyticity.
       exact Aristotle.LandauSchmidtDirect.pi_li_omega_lll_of_not_RH
         (Aristotle.NonNegDirichletIntegral.pi_log_zeta_extension
-          Aristotle.PringsheimPiAtom.pringsheim_pi_atom) _hRH
+          (Aristotle.PringsheimPiAtom.pringsheim_pi_atom sorry)) _hRH
   exact ⟨hHardy, hL3, hL4⟩
 
 /-- **ALL deep mathematical content** for Littlewood's theorem.

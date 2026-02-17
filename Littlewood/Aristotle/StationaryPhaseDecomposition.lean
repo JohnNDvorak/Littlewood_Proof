@@ -82,14 +82,49 @@ MATHEMATICAL PROOF SKETCH:
    N^{-1/2}, the contribution is O(√N) ⊂ O(N).
 
 5. Total: O(N) = O(N+1). -/
-theorem hardy_cos_integral_weighted_sum_bound :
+theorem hardy_cos_integral_weighted_sum_bound
+    [HardyFirstMomentWiring.HardyCosIntegralSqrtModeBoundHyp] :
     ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
       |∑ n ∈ Finset.range (hardyN T),
           ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
             ∫ t in Ioc (hardyStart n) T,
               hardyCos n t|
         ≤ C * ((hardyN T : ℝ) + 1) := by
-  sorry
+  obtain ⟨B, hB, hmode⟩ := HardyFirstMomentWiring.HardyCosIntegralSqrtModeBoundHyp.bound
+  refine ⟨B, hB, ?_⟩
+  intro T hT
+  set N : ℕ := hardyN T
+  calc
+    |∑ n ∈ Finset.range N,
+        ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
+          ∫ t in Ioc (hardyStart n) T,
+            hardyCos n t|
+      ≤ ∑ n ∈ Finset.range N,
+          |((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
+            ∫ t in Ioc (hardyStart n) T,
+              hardyCos n t| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ _n ∈ Finset.range N, B := by
+        refine Finset.sum_le_sum fun n _hn => ?_
+        have hcoef_nonneg : 0 ≤ (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) := by positivity
+        rw [abs_mul, abs_of_nonneg hcoef_nonneg]
+        have hI := hmode n T hT
+        have hcoef_sqrt_one : (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) * Real.sqrt (n + 1) = 1 := by
+          have h_pos : 0 < (n + 1 : ℝ) := by positivity
+          rw [Real.sqrt_eq_rpow, ← Real.rpow_add h_pos]
+          norm_num
+        calc
+          (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) *
+              |∫ t in Ioc (hardyStart n) T,
+                hardyCos n t|
+            ≤ (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) * (B * Real.sqrt (n + 1)) :=
+              mul_le_mul_of_nonneg_left hI hcoef_nonneg
+          _ = B * ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) * Real.sqrt (n + 1)) := by ring
+          _ = B := by rw [hcoef_sqrt_one, mul_one]
+    _ = (N : ℝ) * B := by simp [mul_comm]
+    _ ≤ B * ((N : ℝ) + 1) := by
+        have hN_nonneg : (0 : ℝ) ≤ N := Nat.cast_nonneg N
+        nlinarith
 
 end StationaryPhaseDecomposition
 
@@ -98,5 +133,6 @@ end StationaryPhaseDecomposition
 /-- Wire the sum-level bound into the typeclass instance.
 This provides `HardyCosIntegralAlternatingSqrtDecompositionHyp`, which
 auto-wires to `MainTermFirstMomentBoundHyp` via HardyFirstMomentWiring. -/
-instance : HardyFirstMomentWiring.HardyCosIntegralAlternatingSqrtDecompositionHyp :=
+instance [HardyFirstMomentWiring.HardyCosIntegralSqrtModeBoundHyp] :
+    HardyFirstMomentWiring.HardyCosIntegralAlternatingSqrtDecompositionHyp :=
   ⟨StationaryPhaseDecomposition.hardy_cos_integral_weighted_sum_bound⟩

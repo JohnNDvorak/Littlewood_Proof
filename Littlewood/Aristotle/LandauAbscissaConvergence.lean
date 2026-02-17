@@ -4,7 +4,7 @@ Landau's abscissa of convergence theorem: proves `LandauAbscissaHyp`.
 For g(t) = C·t^α + σ·(t - ψ(t)) ≥ 0 (eventually), the Dirichlet integral
 ∫₁^∞ g(t)·t^{-(s+1)} dt converges absolutely for Re(s) > α.
 
-SORRY COUNT: 0
+SORRY COUNT: 0 (parameterized on RealIntegrabilityHyp section variable)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -104,27 +104,31 @@ private theorem real_integrableOn_gt_one
 This is the heart of the proof. The power series expansion of the Dirichlet
 integral around σ₁ > 1 has non-negative Taylor coefficients. The corrected
 formula (ZetaPoleCancellation) provides an analytic continuation past σ = 1.
-Pringsheim's theorem forces the radius of convergence ≥ σ₁ - α. -/
+Pringsheim's theorem forces the radius of convergence ≥ σ₁ - α.
 
-/-- The real Dirichlet integral converges for α < σ ≤ 1.
-Uses Pringsheim's theorem on the Taylor series of the integral. -/
-private theorem real_integrableOn_le_one
-    (C : ℝ) (hC : 0 < C) (α : ℝ) (hα : 1 / 2 < α)
-    (σ_sign : ℝ) (hσ : σ_sign = 1 ∨ σ_sign = -1)
-    (hbound : ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α)
-    (σ₀ : ℝ) (hσ₀ : α < σ₀) (hσ₀1 : σ₀ ≤ 1) :
-    IntegrableOn (fun t => PringsheimPsiAtom.genFun C α σ_sign t * t ^ (-(σ₀ + 1)))
-      (Ioi 1) := by
-  sorry
+The hard case is parameterized as `RealIntegrabilityHyp` and supplied as sorry
+by `DeepSorries.combined_atoms`. -/
+
+/-- The hard real integrability hypothesis: the Dirichlet integral of the generating
+function converges for α < σ₀ ≤ 1. This is Landau's Satz 15 (1905). -/
+def RealIntegrabilityHyp : Prop :=
+  ∀ (C : ℝ), 0 < C → ∀ (α : ℝ), 1 / 2 < α →
+  ∀ (σ_sign : ℝ), σ_sign = 1 ∨ σ_sign = -1 →
+  (∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α) →
+  ∀ (σ₀ : ℝ), α < σ₀ → σ₀ ≤ 1 →
+  IntegrableOn (fun t => PringsheimPsiAtom.genFun C α σ_sign t * t ^ (-(σ₀ + 1)))
+    (Ioi 1)
 
 /-! ## Main theorem -/
 
-/-- **Landau's abscissa of convergence theorem** (`LandauAbscissaHyp`). -/
-theorem landau_abscissa_hyp : PringsheimPsiAtom.LandauAbscissaHyp := by
+/-- **Landau's abscissa of convergence theorem** (`LandauAbscissaHyp`).
+Parameterized on `RealIntegrabilityHyp` (the Pringsheim argument for α < σ ≤ 1). -/
+theorem landau_abscissa_hyp (h_hard : RealIntegrabilityHyp) :
+    PringsheimPsiAtom.LandauAbscissaHyp := by
   intro C hC α hα σ_sign hσ hbound s hs hs1
   apply complex_integrableOn_of_real
   by_cases hα1 : α ≤ 1
-  · exact real_integrableOn_le_one C hC α hα σ_sign hσ hbound s.re hs hs1
+  · exact h_hard C hC α hα σ_sign hσ hbound s.re hs hs1
   · push_neg at hα1
     exact real_integrableOn_gt_one C hC α hα (by linarith) σ_sign hσ s.re (by linarith)
 
