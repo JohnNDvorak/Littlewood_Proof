@@ -1,9 +1,10 @@
 /-
-Direct sorry-backed instance for the Hardy first moment upper bound.
+Direct derived instance for the Hardy first moment upper bound.
 
-This merges two previous sorries into one:
-  - StationaryPhaseDecomposition:85 (main term cosine integral bound)
-  - RSBlockDecomposition:134 (error term RS sign cancellation)
+This file now has no direct `sorry`: it assembles
+`HardyFirstMomentUpperHyp` from the two wiring hypotheses:
+  - main-term oscillatory cancellation
+  - error-term first-moment control
 
 MATHEMATICAL CONTENT:
   ∫₁ᵀ Z(t) dt = O(T^{1/2+ε}) for every ε > 0.
@@ -27,6 +28,7 @@ REFERENCES: Hardy-Littlewood (1918); Titchmarsh, §§4.16–4.17, §9.7.
 
 import Mathlib
 import Littlewood.Bridge.HardyChainHyp
+import Littlewood.Bridge.HardyFirstMomentWiring
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -37,14 +39,12 @@ namespace Aristotle.HardyFirstMomentDirect
 
 open MeasureTheory Set HardyEstimatesPartial
 
-/-- **Atomic sorry**: Hardy Z-function first moment upper bound.
-
-On the critical line, ∫₁ᵀ Z(t) dt = O(T^{1/2+ε}) for every ε > 0.
-This follows from stationary phase analysis of the main term cosine integrals
-and Riemann-Siegel sign cancellation in the error term. -/
-instance : HardyFirstMomentUpperHyp where
-  bound := by
-    intro ε hε
-    sorry
+/-- Derived Hardy first-moment upper bound from the two wiring hypotheses:
+main-term oscillatory cancellation and error-term first-moment control. -/
+instance
+    [HardyFirstMomentWiring.MainTermFirstMomentBoundHyp]
+    [HardyFirstMomentWiring.ErrorTermFirstMomentBoundHyp] :
+    HardyFirstMomentUpperHyp := by
+  exact HardyFirstMomentWiring.hardyFirstMomentUpper_from_two_bounds
 
 end Aristotle.HardyFirstMomentDirect

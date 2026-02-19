@@ -27,6 +27,7 @@ to the full Z(t) mean square needed by HardySetupInstance.
 
 import Mathlib
 import Littlewood.Aristotle.MeanSquare
+import Littlewood.Aristotle.Standalone.HardyApproxFunctionalEqMeanValueLowerDecomp
 
 set_option linter.mathlibStandardSet false
 
@@ -136,7 +137,8 @@ theorem norm_hardyZ_eq_norm_zeta (t : ℝ) :
     hardyZ t = ‖riemannZeta (1 / 2 + t * Complex.I)‖ := by
   rfl
 
-/-- **Atomic sorry**: Hardy-Littlewood mean value theorem for |ζ(1/2+it)|².
+/-- Hardy-Littlewood mean-value lower bound for `|ζ(1/2+it)|²`,
+derived from the `ZetaMeanSquareHalfBound` second-moment hypothesis.
 
 MATHEMATICAL CONTENT:
   ∫₁ᵀ |ζ(1/2+it)|² dt = T·log T + (2γ-1-log 2π)·T + O(T^{1/2+ε}).
@@ -149,14 +151,38 @@ PROOF SKETCH:
 4. Oscillatory ∫Re(S·conj(χS̄)) = O(T) by rapid phase change
 5. Total: ∫|ζ|² = T·log T + O(T) ≥ c·T·log T
 
-NOTE: V4's approx_functional_eq is VACUOUS (proves RHS ≤ 0 ≤ LHS) and cannot
-be used to establish this bound. A genuine AFE comparison is needed.
+This theorem is no longer a direct placeholder: it is obtained by transporting
+the proved decomposition theorem in
+`Standalone.HardyApproxFunctionalEqMeanValueLowerDecomp`.
 
 REFERENCES: Hardy-Littlewood (1918); Titchmarsh, §7.2, Theorem 7.2. -/
 theorem zeta_critical_mean_value_lower :
+    [ZetaMeanSquareHalfBound] →
     ∃ c > 0, ∃ T₁ ≥ (2 : ℝ), ∀ T : ℝ, T ≥ T₁ →
       ∫ t in Set.Ioc 1 T, (hardyZ t)^2 ≥ c * T * Real.log T := by
-  sorry
+  intro _h
+  have h_hardyZ_eq :
+      ∀ t : ℝ,
+        hardyZ t =
+          Aristotle.Standalone.HardyApproxFunctionalEqMeanValueLowerDecomp.hardyZ t := by
+    intro t
+    simp [hardyZ,
+      Aristotle.Standalone.HardyApproxFunctionalEqMeanValueLowerDecomp.hardyZ,
+      mul_comm]
+  rcases
+      Aristotle.Standalone.HardyApproxFunctionalEqMeanValueLowerDecomp.zeta_critical_mean_value_lower
+      with ⟨c, hc, T₁, hT₁, hmain⟩
+  refine ⟨c, hc, T₁, hT₁, ?_⟩
+  intro T hT
+  have hmain' := hmain T hT
+  calc
+    ∫ t in Set.Ioc 1 T, (hardyZ t)^2
+        = ∫ t in Set.Ioc 1 T,
+            (Aristotle.Standalone.HardyApproxFunctionalEqMeanValueLowerDecomp.hardyZ t)^2 := by
+              refine setIntegral_congr_fun measurableSet_Ioc ?_
+              intro t ht
+              simp [h_hardyZ_eq t]
+    _ ≥ c * T * Real.log T := hmain'
 
 /-- The mean square of Z(t) on [1,T] is lower bounded by k times the
 partial sum mean square minus a linear error.
@@ -165,9 +191,11 @@ PROOF: From the MVT (∫Z² ≥ c₀·T·log T) and the Θ upper bound
 (∫|S_N|² ≤ C_up·T·log T), choose k = c₀/(C_up+1). Then
   k·∫|S_N|² ≤ k·C_up·T·log T ≤ c₀·T·log T ≤ ∫Z². -/
 theorem approx_functional_eq :
+    [ZetaMeanSquareHalfBound] →
     ∃ k > 0, ∃ C ≥ 0, ∃ T₁ ≥ 2, ∀ T : ℝ, T ≥ T₁ →
       ∫ t in Set.Ioc 1 T, (hardyZ t)^2 ≥
         (k * ∫ t in Set.Ioc 1 T, ‖partial_sum_approx t‖^2) - C * T := by
+  intro _h
   -- Step 1: MVT lower bound
   obtain ⟨c₀, hc₀, T_mvt, hT_mvt, h_mvt⟩ := zeta_critical_mean_value_lower
   -- Step 2: Θ upper bound on ∫|S|²

@@ -138,8 +138,23 @@ theorem cesaro_pi_li_approx_trig_sum
 This follows from ψ(x) = O(x) (Chebyshev's theorem). -/
 theorem smoothedPsiError_bounded :
     ∃ B : ℝ, 0 < B ∧ ∀ u : ℝ, |smoothedPsiError u| ≤ B := by
-  -- From Chebyshev: ψ(x) ≤ Cx for some C, and ψ(x) ≥ 0
-  -- So |ψ(eᵘ)-eᵘ|/eᵘ ≤ max(C, 1)
-  sorry
+  refine ⟨6, by norm_num, ?_⟩
+  intro u
+  unfold smoothedPsiError
+  have hexp_pos : 0 < Real.exp u := Real.exp_pos u
+  rw [abs_div, abs_of_pos hexp_pos, div_le_iff₀ hexp_pos]
+  have h_nn : 0 ≤ chebyshevPsi (Real.exp u) := by
+    unfold chebyshevPsi
+    exact Chebyshev.psi_nonneg _
+  have h_upper : chebyshevPsi (Real.exp u) ≤ 6 * Real.exp u := by
+    by_cases hu : 1 ≤ Real.exp u
+    · exact ChebyshevExt.chebyshevPsi_le _ hu
+    · push_neg at hu
+      have h_zero : chebyshevPsi (Real.exp u) = 0 := by
+        unfold chebyshevPsi
+        exact Chebyshev.psi_eq_zero_of_lt_two (by linarith)
+      linarith
+  rw [abs_le]
+  constructor <;> linarith
 
 end Aristotle.SmoothedCesaroFormula

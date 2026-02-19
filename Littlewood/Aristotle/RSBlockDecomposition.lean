@@ -1,8 +1,10 @@
-/- 
+/-
 Riemann-Siegel block decomposition infrastructure.
 
 This file proves the interval-partition wiring for `ErrorTerm` and isolates
-the deep RS sign-structure input as one atomic sorry.
+the deep RS sign-structure input as `PerBlockSignedBoundHyp` (supplied externally).
+
+SORRY COUNT: 0 (parameterized on PerBlockSignedBoundHyp)
 -/
 
 import Mathlib
@@ -127,11 +129,23 @@ theorem errorTerm_block_sum (T : ℝ) (hT : T ≥ 2) :
                   ErrorTerm t ∂volume) := by
             simp [bp]
 
-/-- **Atomic sorry**: Per-block signed RS remainder bound.
+/-- Hypothesis: per-block signed RS remainder bound (Titchmarsh §4.16).
+Encodes the Riemann-Siegel sign-structure on each breakpoint block and
+includes the resulting global alternating-√ decomposition. Supplied externally. -/
+def PerBlockSignedBoundHyp : Prop :=
+  ∃ A B : ℝ, A > 0 ∧ B ≥ 0 ∧
+    (∀ T : ℝ, T ≥ 2 →
+      ∀ k : ℕ, k < hardyN T →
+        ∃ s : ℝ, s = (-1 : ℝ) ^ k ∧
+          |(∫ t in Ioc (min T (hardyStart k)) (min T (hardyStart (k + 1))),
+              ErrorTerm t) - s * A * Real.sqrt ((k : ℝ) + 1)| ≤ B) ∧
+    (∀ T : ℝ, T ≥ 2 →
+      ∃ N : ℕ,
+        ((N : ℝ) + 1) ≤ T ^ (1 / 2 : ℝ) ∧
+        |∫ t in Ioc 1 T, ErrorTerm t|
+          ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B)
 
-This encodes the Riemann-Siegel sign-structure on each breakpoint block and
-includes the resulting global alternating-`sqrt` decomposition. -/
-theorem per_block_signed_bound :
+theorem per_block_signed_bound (hyp : PerBlockSignedBoundHyp) :
     ∃ A B : ℝ, A > 0 ∧ B ≥ 0 ∧
       (∀ T : ℝ, T ≥ 2 →
         ∀ k : ℕ, k < hardyN T →
@@ -142,19 +156,20 @@ theorem per_block_signed_bound :
         ∃ N : ℕ,
           ((N : ℝ) + 1) ≤ T ^ (1 / 2 : ℝ) ∧
           |∫ t in Ioc 1 T, ErrorTerm t|
-            ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B) := by
-  sorry
+            ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B) :=
+  hyp
 
 /-- Wire the block-level atomic input into the global alternating-`sqrt`
 decomposition needed by `RSBreakpointDecomposition`. -/
-theorem errorTerm_alternatingSqrt_decomposition_from_blocks :
+theorem errorTerm_alternatingSqrt_decomposition_from_blocks
+    (hyp : PerBlockSignedBoundHyp) :
     ∃ A B : ℝ, A > 0 ∧ B ≥ 0 ∧
       ∀ T : ℝ, T ≥ 2 →
         ∃ N : ℕ,
           ((N : ℝ) + 1) ≤ T ^ (1 / 2 : ℝ) ∧
           |∫ t in Ioc 1 T, ErrorTerm t|
             ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B := by
-  rcases per_block_signed_bound with ⟨A, B, hA, hB, _hlocal, hglobal⟩
+  rcases per_block_signed_bound hyp with ⟨A, B, hA, hB, _hlocal, hglobal⟩
   exact ⟨A, B, hA, hB, hglobal⟩
 
 end Aristotle.RSBlockDecomposition

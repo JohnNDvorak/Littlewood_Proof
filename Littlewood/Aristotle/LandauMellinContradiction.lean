@@ -1,10 +1,8 @@
 /-
 Landau-Mellin contradiction: the final wiring for the Landau oscillation argument.
 
-This file wires together:
-  1. SmoothedCesaroFormula (explicit formula → trig sum approximation)
-  2. AlmostPeriodicMeanValue (one-sided bound → L² vanishing + Parseval)
-to derive contradictions for both ψ and π-li.
+This file now re-exports the Landau contradiction consequences from
+`SmoothedExplicitFormula` with the same signatures.
 
 ## Proof Structure
 
@@ -18,16 +16,14 @@ Step 5: Contradiction: 0 = ∑|cₖ|² > 0
 
 ## Status
 
-Architecture file with the complete wiring. Depends on AlmostPeriodicMeanValue
-(3 sorries) and SmoothedCesaroFormula (2 sorries).
-NOT in the main build.
+Sorry-free forwarding layer over `SmoothedExplicitFormula`.
 
 REFERENCES:
   - Landau, "Über einen Satz von Tschebyschef" (1905)
   - Montgomery-Vaughan, "Multiplicative Number Theory I", §15.1
 -/
 
-import Littlewood.Aristotle.SmoothedCesaroFormula
+import Littlewood.Aristotle.SmoothedExplicitFormula
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -37,10 +33,9 @@ noncomputable section
 
 namespace Aristotle.LandauMellinContradiction
 
-open Complex Filter MeasureTheory Topology Real
+open Filter Topology
 open ZetaZeros
-open Aristotle.SmoothedCesaroFormula
-open Aristotle.AlmostPeriodicMeanValue
+open Aristotle.SmoothedExplicitFormula
 
 /-- **Landau ψ-contradiction proof**: one-sided o₊(√x) bound on σ·(ψ-x)
 plus infinitely many critical-line zeros of ζ → False.
@@ -63,25 +58,8 @@ theorem landau_psi_contradiction_proof
     (σ : ℝ) (hσ : σ = 1 ∨ σ = -1)
     (h_side : ∀ c : ℝ, c > 0 →
       ∀ᶠ x in atTop, σ * (chebyshevPsi x - x) < c * Real.sqrt x) :
-    False := by
-  -- Step 1: Get trig sum approximation
-  obtain ⟨n, hn, γ, c_coeff, hγ_inj, hγ_nz, ⟨k₀, hk₀⟩, h_cesaro_approx⟩ :=
-    cesaro_psi_approx_trig_sum h_inf
-  -- Step 2: Get one-sided bound in smoothed domain
-  have h_nonpos := smoothed_psi_eventually_nonpos σ hσ h_side
-  -- Step 3: Get boundedness
-  obtain ⟨B, hB_pos, hB⟩ := smoothedPsiError_bounded
-  -- Step 4: The Cesàro mean of σ·g → 0
-  -- (from h_side and the trig sum approximation)
-  -- Step 5: By one_sided_zero_l2_mean applied to σ·g:
-  --   (1/T)∫₀ᵀ (σ·g)² du → 0
-  -- Step 6: But (σ·g)² = g² (since σ² = 1)
-  -- Step 7: The trig sum's L² mean → ∑|cₖ|² > 0 by Parseval
-  -- Step 8: The L² mean of g should be close to the L² mean of the trig sum
-  --   (by the approximation), giving a contradiction
-  -- The full wiring requires careful epsilon management.
-  -- For now, we record the proof structure and defer the epsilon management.
-  sorry
+    False :=
+  Aristotle.SmoothedExplicitFormula.psi_signed_contradiction h_inf σ hσ h_side
 
 /-- **Landau π-li contradiction proof**: one-sided o₊(√x/log x) bound on
 σ·(π(x)-li(x)) plus infinitely many critical-line zeros of ζ → False.
@@ -94,6 +72,11 @@ theorem landau_pi_li_contradiction_proof
       ∀ᶠ x in atTop, σ * DeepSorries.piLiError x <
         c * (Real.sqrt x / Real.log x)) :
     False := by
-  sorry
+  have h_side' : ∀ c : ℝ, c > 0 →
+      ∀ᶠ x in atTop, σ * Aristotle.SmoothedExplicitFormula.piLiError x <
+        c * (Real.sqrt x / Real.log x) := by
+    intro c hc
+    simpa [Aristotle.SmoothedExplicitFormula.piLiError] using h_side c hc
+  exact Aristotle.SmoothedExplicitFormula.pi_li_signed_contradiction h_inf σ hσ h_side'
 
 end Aristotle.LandauMellinContradiction

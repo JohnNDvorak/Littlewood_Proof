@@ -64,14 +64,15 @@ MATHEMATICAL CONTENT:
 REFERENCES:
   - Titchmarsh, "Theory of the Riemann Zeta Function", §4.16
   - Edwards, "Riemann's Zeta Function", §7.7 -/
-theorem errorTerm_alternatingSqrt_decomposition :
+theorem errorTerm_alternatingSqrt_decomposition
+    (hyp : Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp) :
     ∃ A B : ℝ, A > 0 ∧ B ≥ 0 ∧
       ∀ T : ℝ, T ≥ 2 →
         ∃ N : ℕ,
           ((N : ℝ) + 1) ≤ T ^ (1 / 2 : ℝ) ∧
           |∫ t in Ioc 1 T, ErrorTerm t|
-            ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B := by
-  exact Aristotle.RSRemainderAlternating.errorTerm_alternatingSqrt_decomposition
+            ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B :=
+  Aristotle.RSRemainderAlternating.errorTerm_alternatingSqrt_decomposition hyp
 
 /-- **Atomic sorry**: The signed integral of the Riemann-Siegel remainder
 is O(T^{1/4}).
@@ -95,11 +96,12 @@ The atomic sorry encapsulates:
   - The Riemann-Siegel formula with leading correction term
   - The alternating sign decomposition of the integral
   - Abel summation for alternating series with increasing terms -/
-theorem rs_remainder_first_moment_quarter :
+theorem rs_remainder_first_moment_quarter
+    (hyp : Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp) :
     ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Ioc 1 T, ErrorTerm t| ≤ C * T ^ (1 / 4 : ℝ) :=
   RiemannSiegelSignCancellation.errorTerm_firstMoment_quarter_of_alternatingSqrt
-    errorTerm_alternatingSqrt_decomposition
+    (errorTerm_alternatingSqrt_decomposition hyp)
 
 /-! ## Wiring: O(T^{1/4}) → ErrorTermFirstMomentBoundHyp -/
 
@@ -112,9 +114,10 @@ private lemma rpow_quarter_le_half_plus_eps (T : ℝ) (hT : T ≥ 1) (ε : ℝ) 
 ErrorTermFirstMomentBoundHyp hypothesis (O(T^{1/2+ε}) for all ε > 0).
 
 This is a trivial consequence: T^{1/4} ≤ T^{1/2+ε} for T ≥ 1 and ε > 0. -/
-theorem errorTermFirstMomentBound_from_quarter :
+theorem errorTermFirstMomentBound_from_quarter
+    (hyp : Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp) :
     HardyFirstMomentWiring.ErrorTermFirstMomentBoundHyp := by
-  obtain ⟨C, hC, hbound⟩ := rs_remainder_first_moment_quarter
+  obtain ⟨C, hC, hbound⟩ := rs_remainder_first_moment_quarter hyp
   refine ⟨?_⟩
   intro ε hε
   refine ⟨C, hC, ?_⟩
@@ -128,10 +131,8 @@ theorem errorTermFirstMomentBound_from_quarter :
 
 end RiemannSiegelFirstMoment
 
-/-! ## Typeclass wiring -/
+/-! ## Typeclass wiring
 
-/-- Wire the RS remainder first moment bound into the typeclass instance.
-This provides `ErrorTermFirstMomentBoundHyp`, which is consumed by
-`hardyFirstMomentUpper_from_two_bounds` in HardyFirstMomentWiring. -/
-instance : HardyFirstMomentWiring.ErrorTermFirstMomentBoundHyp :=
-  RiemannSiegelFirstMoment.errorTermFirstMomentBound_from_quarter
+The `ErrorTermFirstMomentBoundHyp` instance is supplied in `DeepSorries.lean`
+via `errorTermFirstMomentBound_from_quarter sorry`, where the sorry has type
+`PerBlockSignedBoundHyp` (RS per-block sign structure). -/

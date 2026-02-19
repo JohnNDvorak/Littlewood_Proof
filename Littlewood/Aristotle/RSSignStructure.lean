@@ -30,38 +30,44 @@ open MeasureTheory Set Real Filter Topology HardyEstimatesPartial
 /-- Extract the local per-block signed approximation component from
 `RSBlockDecomposition.per_block_signed_bound`. -/
 theorem per_block_signed_centered :
+    Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp →
     ∃ A B : ℝ, A > 0 ∧ B ≥ 0 ∧
       (∀ T : ℝ, T ≥ 2 →
         ∀ k : ℕ, k < hardyN T →
           ∃ s : ℝ, s = (-1 : ℝ) ^ k ∧
             |(∫ t in Ioc (min T (hardyStart k)) (min T (hardyStart (k + 1))),
                 ErrorTerm t) - s * A * Real.sqrt ((k : ℝ) + 1)| ≤ B) := by
-  rcases Aristotle.RSBlockDecomposition.per_block_signed_bound with
+  intro hyp
+  rcases Aristotle.RSBlockDecomposition.per_block_signed_bound hyp with
     ⟨A, B, hA, hB, hlocal, _hglobal⟩
   exact ⟨A, B, hA, hB, hlocal⟩
 
 /-- Extract the global alternating-sqrt decomposition component from
 `RSBlockDecomposition.per_block_signed_bound`. -/
 theorem global_alternating_decomposition :
+    Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp →
     ∃ A B : ℝ, A > 0 ∧ B ≥ 0 ∧
       (∀ T : ℝ, T ≥ 2 →
         ∃ N : ℕ,
           ((N : ℝ) + 1) ≤ T ^ (1 / 2 : ℝ) ∧
           |∫ t in Ioc 1 T, ErrorTerm t|
             ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B) := by
-  rcases Aristotle.RSBlockDecomposition.per_block_signed_bound with
+  intro hyp
+  rcases Aristotle.RSBlockDecomposition.per_block_signed_bound hyp with
     ⟨A, B, hA, hB, _hlocal, hglobal⟩
   exact ⟨A, B, hA, hB, hglobal⟩
 
 /-- The signed per-block approximation implies a coarse absolute per-block
 bound of size `A*sqrt(k+1) + B`. -/
 theorem per_block_abs_bound_from_signed :
+    Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp →
     ∃ A B : ℝ, A > 0 ∧ B ≥ 0 ∧
       (∀ T : ℝ, T ≥ 2 →
         ∀ k : ℕ, k < hardyN T →
           |∫ t in Ioc (min T (hardyStart k)) (min T (hardyStart (k + 1))), ErrorTerm t|
             ≤ A * Real.sqrt ((k : ℝ) + 1) + B) := by
-  rcases per_block_signed_centered with ⟨A, B, hA, hB, hlocal⟩
+  intro hyp
+  rcases per_block_signed_centered hyp with ⟨A, B, hA, hB, hlocal⟩
   refine ⟨A, B, hA, hB, ?_⟩
   intro T hT k hk
   rcases hlocal T hT k hk with ⟨s, hs, hclose⟩

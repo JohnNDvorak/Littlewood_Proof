@@ -49,13 +49,14 @@ MATHEMATICAL CONTENT:
 REFERENCES:
 - Titchmarsh, *The Theory of the Riemann Zeta-Function*, §4.16
 - Edwards, *Riemann's Zeta Function*, §7.7 -/
-theorem errorTerm_alternatingSqrt_decomposition :
+theorem errorTerm_alternatingSqrt_decomposition
+    (hyp : Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp) :
     ∃ A B : ℝ, A > 0 ∧ B ≥ 0 ∧
       ∀ T : ℝ, T ≥ 2 →
         ∃ N : ℕ,
           ((N : ℝ) + 1) ≤ T ^ (1 / 2 : ℝ) ∧
           |∫ t in Ioc 1 T, ErrorTerm t|
-            ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B := by
-  exact Aristotle.RSBreakpointDecomposition.errorTerm_alternatingSqrt_decomposition
+            ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B :=
+  Aristotle.RSBreakpointDecomposition.errorTerm_alternatingSqrt_decomposition hyp
 
 end Aristotle.RSRemainderAlternating
