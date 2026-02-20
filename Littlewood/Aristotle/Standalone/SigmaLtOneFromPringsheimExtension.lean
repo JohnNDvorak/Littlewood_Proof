@@ -6,16 +6,15 @@ The key theorem: for non-negative anti-coefficients B_k with Summable(B_k)
 extension to [0, 2-α), and the Pringsheim extension argument gives
 Summable(B_k (2-σ₀)^k) for σ₀ > α.
 
-The proof uses the sup/contradiction argument:
-1. R* := sup{w ≥ 0 : Summable(B_k w^k)}. R* ≥ 1.
-2. If R* ≥ 2-σ₀: done (comparison for non-neg series).
-3. If R* < 2-σ₀ ≤ 2-α: F analytic at R* (from correctedFormula).
-   Partial sums Σ_{k<N} B_k R*^k ≤ F(R*) [limit from below].
-   By summable_of_sum_range_le: Summable at R*.
-   Taylor expansion at R* with non-negative coefficients + binomial
-   rearrangement → Summable at R*+ε → contradiction.
+The proof uses the scaled partial sum bound:
+1. F(w) = Re(correctedFormula(2-w)) is continuous on [0, W] (W = 2-σ₀).
+2. F bounded on [0, W] by compactness.
+3. HasSum(B_k w^k, F(w)) for w ∈ [0, W) — sorry (identity theorem + Tonelli).
+4. For u ∈ (0, 1): Σ (B_k W^k) u^k = Σ B_k (Wu)^k ≤ F(Wu) ≤ M.
+5. Taking u → 1⁻ gives Σ_{k<N} B_k W^k ≤ M for all N.
+6. summable_of_sum_range_le concludes.
 
-SORRY COUNT: 1 (Pringsheim non-negative real extension)
+SORRY COUNT: 1 (hF_hasSum — HasSum identity on [0, W) via identity theorem)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -37,6 +36,8 @@ open MeasureTheory Set Filter Topology
 open Aristotle.Standalone.LandauPringsheimRealLine
 open Aristotle.Standalone.LandauSigmaLessThanOneTonelliConcrete
 open Aristotle.Standalone.LandauSigmaLessThanOneGenFunInstantiation
+open Aristotle.Standalone.LandauCauchyAtCenterTwo
+open Aristotle.ZetaPoleCancellation
 
 /-! ## Direct proof of SigmaLtOneHyp
 
@@ -90,9 +91,16 @@ This is the key result: extends convergence from w=1 to w=2-σ₀ > 1.
 Uses the fact that correctedFormula is analytic at every real σ > α,
 hence the sum function of Σ B_k w^k extends analytically to [0, 2-α).
 
-**Sorry**: Requires the full Pringsheim non-negative real-line extension argument
-(~200 lines, see proof strategy above). The key missing piece is the
-sup/contradiction + identity theorem + binomial rearrangement chain. -/
+The proof defines F(w) = Re(correctedFormula(2-w)), which is continuous on [0, W]
+(from analyticity at every real σ > α). For u ∈ (0, 1), the scaled partial sums
+  Σ_{k<N} (B_k W^k) u^k = Σ_{k<N} B_k (Wu)^k ≤ F(Wu) ≤ M
+are bounded. Taking u → 1⁻ gives ∀ N, Σ_{k<N} B_k W^k ≤ M.
+By `summable_of_sum_range_le`: Summable(B_k W^k).
+
+**Sorry**: `hF_hasSum` — the HasSum identity Σ B_k w^k = F(w) for w ∈ [0, W).
+For w < 1: Tonelli exchange (integrand_eq_tsum_anticoeff).
+For w ∈ [1, W): complex identity theorem (power series = correctedFormula(2-·)
+on B(0,1), both analytic on B(0, R*), Pringsheim forces R* ≥ W). -/
 theorem anticoeff_summable_at_target
     (C : ℝ) (hC : 0 < C) (α : ℝ) (hα : 1 / 2 < α) (hα1 : α < 1)
     (σ_sign : ℝ) (hσ : σ_sign = 1 ∨ σ_sign = -1)
@@ -103,7 +111,64 @@ theorem anticoeff_summable_at_target
     Summable (fun k =>
       antiCoeff (PringsheimPsiAtom.genFun C α σ_sign) T₀ 2 k *
         (2 - σ₀) ^ k) := by
-  sorry
+  -- Setup
+  set g := PringsheimPsiAtom.genFun C α σ_sign with hg_def
+  set B := fun k => antiCoeff g T₀ 2 k with hB_def
+  set W := (2 : ℝ) - σ₀ with hW_def
+  have hB_nn : ∀ k, 0 ≤ B k := antiCoeff_nonneg g T₀ 2 hT₀ hg_nn
+  have hW_pos : 0 < W := by linarith
+  have hW_nn : (0 : ℝ) ≤ W := hW_pos.le
+  -- Define F(w) = Re(correctedFormula(2-w)), continuous on [0, W]
+  set F : ℝ → ℝ := fun w => (correctedFormula α C σ_sign (↑(2 - w) : ℂ)).re with hF_def
+  have hF_cont : ContinuousOn F (Icc 0 W) := by
+    intro w ⟨hw0, hwW⟩
+    have h_gt : α < 2 - w := by linarith
+    -- correctedFormula ∘ ofReal is continuous at (2-w)
+    have h_cfR : ContinuousAt (fun x : ℝ => correctedFormula α C σ_sign (↑x : ℂ)) (2 - w) :=
+      (landau_formula_analyticAt_real α hα C σ_sign (2 - w) h_gt).continuousAt.comp
+        Complex.continuous_ofReal.continuousAt
+    -- Composing with w ↦ 2-w
+    have h_sub : ContinuousAt (fun w : ℝ => (2 : ℝ) - w) w :=
+      continuousAt_const.sub continuousAt_id
+    exact (Complex.continuous_re.continuousAt.comp (h_cfR.comp h_sub)).continuousWithinAt
+  -- F bounded on [0, W] by compactness
+  obtain ⟨C_bd, hC_bd⟩ := isCompact_Icc.exists_bound_of_continuousOn hF_cont
+  -- HasSum(B_k w^k, F w) for w ∈ [0, W) — identity theorem + Tonelli
+  -- For w < 1: integrand_eq_tsum_anticoeff gives the pointwise Tonelli expansion
+  -- For w ∈ [1, W): complex identity theorem on B(0, R*) + Pringsheim forces R* ≥ W
+  have hF_hasSum : ∀ w : ℝ, 0 ≤ w → w < W →
+      HasSum (fun k => B k * w ^ k) (F w) := by
+    sorry
+  -- Bound partial sums and conclude
+  apply summable_of_sum_range_le (fun k => mul_nonneg (hB_nn k) (pow_nonneg hW_nn k))
+  intro N
+  -- Limit argument: Σ_{k<N} B_k W^k = lim_{u→1⁻} Σ_{k<N} (B_k W^k) u^k ≤ C_bd
+  have h_lhs : Tendsto (fun u : ℝ => ∑ k ∈ Finset.range N, (B k * W ^ k) * u ^ k)
+      (𝓝[<] 1) (𝓝 (∑ k ∈ Finset.range N, B k * W ^ k)) := by
+    have h : Tendsto (fun u : ℝ => ∑ k ∈ Finset.range N, (B k * W ^ k) * u ^ k)
+        (𝓝[<] (1 : ℝ)) (𝓝 (∑ k ∈ Finset.range N, (B k * W ^ k) * (1 : ℝ) ^ k)) := by
+      apply tendsto_finset_sum
+      intro k _
+      exact (Tendsto.mul tendsto_const_nhds
+        ((continuous_pow k).continuousAt.tendsto)).mono_left nhdsWithin_le_nhds
+    simpa [one_pow, mul_one] using h
+  have h_bound : ∀ᶠ u in 𝓝[<] 1,
+      ∑ k ∈ Finset.range N, (B k * W ^ k) * u ^ k ≤ C_bd := by
+    filter_upwards [Ioo_mem_nhdsLT (show (0 : ℝ) < 1 by norm_num)]
+    intro u ⟨hu0, hu1⟩
+    have hwu_nn : 0 ≤ W * u := mul_nonneg hW_nn hu0.le
+    have hwu_lt : W * u < W := by nlinarith [hW_pos]
+    have hsum_wu := hF_hasSum (W * u) hwu_nn hwu_lt
+    calc ∑ k ∈ Finset.range N, (B k * W ^ k) * u ^ k
+        = ∑ k ∈ Finset.range N, B k * (W * u) ^ k :=
+          Finset.sum_congr rfl fun k _ => by rw [mul_pow]; ring
+      _ ≤ ∑' k, B k * (W * u) ^ k :=
+          hsum_wu.summable.sum_le_tsum (Finset.range N)
+            (fun k _ => mul_nonneg (hB_nn k) (pow_nonneg hwu_nn k))
+      _ = F (W * u) := hsum_wu.tsum_eq
+      _ ≤ ‖F (W * u)‖ := by rw [Real.norm_eq_abs]; exact le_abs_self _
+      _ ≤ C_bd := hC_bd (W * u) ⟨hwu_nn, le_of_lt hwu_lt⟩
+  exact le_of_tendsto_of_tendsto h_lhs tendsto_const_nhds h_bound
 
 /-- **SigmaLtOneHyp proved**: IntegrableOn from anti-coefficient summability
 via the Tonelli infrastructure.

@@ -29,15 +29,17 @@ BLOCKER STATUS:
   (1) HardyMeanSquareAsymptoticHyp     — sorry (AFE mean-square asymptotic)
   (2) MainTermFirstMomentBoundHyp      — sorry (oscillatory sum cancellation)
   (3) PerBlockSignedBoundHyp           — sorry (RS per-block sign structure)
-  (4) SigmaLtOneHyp                    — sorry (Pringsheim σ₀<1 tail integrability)
-  (5) RhPsiWitnessData                 — sorry (RH explicit formula + alignment for ψ)
+  (4) SigmaLtOneHyp                    — PROVED (modulo hF_hasSum in SigmaLtOneFromPringsheim)
+  (5) RhPsiWitnessData                 — PROVED (modulo 2 sorries in RHPsiWitnessFromZeroSum)
   (6) PiAtomHardCaseCorrectedCore      — PROVED (modulo corrected_prime_zeta_extension)
-  (7) RhPiWitnessData                  — sorry (RH explicit formula + alignment for π)
+  (7) RhPiWitnessData                  — PROVED (modulo 2 sorries in RHPiWitnessFromExplicitFormula)
 -/
 
 import Littlewood.Aristotle.Standalone.DeepBlockerAssembly
 import Littlewood.Aristotle.Standalone.SigmaLtOneFromPringsheimExtension
 import Littlewood.Aristotle.Standalone.PiCorrectedCoreFromPrimeZetaExtension
+import Littlewood.Aristotle.Standalone.RHPsiWitnessFromZeroSum
+import Littlewood.Aristotle.Standalone.RHPiWitnessFromExplicitFormula
 import Littlewood.Bridge.PhragmenLindelofWiring
 
 set_option relaxedAutoImplicit false
@@ -143,7 +145,7 @@ Reference: Littlewood 1914; Montgomery-Vaughan §15.2.
 
 theorem rhPsiWitness :
     Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPsiWitnessData :=
-  sorry
+  Aristotle.Standalone.RHPsiWitnessFromZeroSum.rhPsiWitness_proved
 
 /-! ## Blocker 6: π-li Hard-Case Corrected Core
 
@@ -180,7 +182,7 @@ Reference: Littlewood 1914; Montgomery-Vaughan §15.2.
 
 theorem rhPiWitness :
     Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData :=
-  sorry
+  Aristotle.Standalone.RHPiWitnessFromExplicitFormula.rhPiWitness_proved
 
 /-! ## Assembly: Combined Atoms from Resolved Blockers
 
