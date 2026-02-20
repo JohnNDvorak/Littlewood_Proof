@@ -100,15 +100,14 @@ theorem hardy_critical_line_infinitely_many_zeros_from_blockers
 1) non-RH constructive Landau sigma<1 domination data, and
 2) RH-side constructive Perron/explicit/alignment witnesses. -/
 theorem psi_omega_lll_from_blockers
-    (hLandau :
-      Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination.SigmaLtOneCorrectedFormulaDominationHyp)
+    (hLandau : Aristotle.LandauAbscissaProof.SigmaLtOneHyp)
     (hRhPsi : RhPsiWitnessData) :
     (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x] := by
   by_cases hRH : ZetaZeros.RiemannHypothesis
   · rcases hRhPsi hRH with ⟨psiMain, h_error, h_plus, h_minus⟩
     exact Aristotle.Standalone.RHWitnessConstructiveStrict.rh_psi_oscillation_from_perron_explicit_alignment
       hRH psiMain h_error h_plus h_minus
-  · exact Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination.psi_omega_lll_of_not_RH_from_correctedFormula_domination
+  · exact Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination.psi_omega_lll_of_not_RH_from_sigmaLtOne
       hLandau hRH
 
 /-- `π - li = Ω±((√x / log x) · lll x)` from:
@@ -137,8 +136,7 @@ theorem combined_atoms_from_blockers
     [HardyFirstMomentWiring.MainTermFirstMomentBoundHyp]
     [ZetaCriticalLineBoundHyp]
     (hRS : Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp)
-    (hLandau :
-      Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination.SigmaLtOneCorrectedFormulaDominationHyp)
+    (hLandau : Aristotle.LandauAbscissaProof.SigmaLtOneHyp)
     (hRhPsi : RhPsiWitnessData)
     (hPiCore :
       Aristotle.Standalone.PiAtomHardCaseCorrectedCore.PiAtomHardCaseCorrectedCore)

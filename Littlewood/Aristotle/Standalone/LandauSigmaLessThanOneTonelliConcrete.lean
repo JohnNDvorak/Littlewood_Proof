@@ -25,7 +25,7 @@ private theorem antiCoeffProfile_measurable
   exact (hg_meas.mul (measurable_id.pow_const (-(3 : ℝ)))).mul
     ((Real.measurable_log.pow_const k).div_const (k.factorial : ℝ))
 
-private theorem antiCoeffProfile_nonneg_on_tail
+theorem antiCoeffProfile_nonneg_on_tail
     (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
     (hg_nonneg : ∀ t : ℝ, t ∈ Ioi T₀ → 0 ≤ g t)
     (k : ℕ) :

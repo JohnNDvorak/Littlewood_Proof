@@ -11,7 +11,7 @@ The assembly API requires:
 - 3 typeclasses: `HardyMeanSquareAsymptoticHyp`, `MainTermFirstMomentBoundHyp`,
   `ZetaCriticalLineBoundHyp`
   (`ZetaCriticalLineBoundHyp` is auto-resolved via PhragmenLindelofWiring)
-- 5 term arguments: `PerBlockSignedBoundHyp`, `SigmaLtOneCorrectedFormulaDominationHyp`,
+- 5 term arguments: `PerBlockSignedBoundHyp`, `SigmaLtOneHyp`,
   `RhPsiWitnessData`, `PiAtomHardCaseCorrectedCore`, `RhPiWitnessData`
 
 When all 7 theorems below are proved sorry-free, the final `combined_atoms_resolved`
@@ -29,13 +29,15 @@ BLOCKER STATUS:
   (1) HardyMeanSquareAsymptoticHyp     — sorry (AFE mean-square asymptotic)
   (2) MainTermFirstMomentBoundHyp      — sorry (oscillatory sum cancellation)
   (3) PerBlockSignedBoundHyp           — sorry (RS per-block sign structure)
-  (4) SigmaLtOneCorrectedFormulaDominationHyp — sorry (Cauchy coefficient domination)
+  (4) SigmaLtOneHyp                    — sorry (Pringsheim σ₀<1 tail integrability)
   (5) RhPsiWitnessData                 — sorry (RH explicit formula + alignment for ψ)
-  (6) PiAtomHardCaseCorrectedCore      — sorry (log((s-1)ζ) construction)
+  (6) PiAtomHardCaseCorrectedCore      — PROVED (modulo corrected_prime_zeta_extension)
   (7) RhPiWitnessData                  — sorry (RH explicit formula + alignment for π)
 -/
 
 import Littlewood.Aristotle.Standalone.DeepBlockerAssembly
+import Littlewood.Aristotle.Standalone.SigmaLtOneFromPringsheimExtension
+import Littlewood.Aristotle.Standalone.PiCorrectedCoreFromPrimeZetaExtension
 import Littlewood.Bridge.PhragmenLindelofWiring
 
 set_option relaxedAutoImplicit false
@@ -99,29 +101,28 @@ theorem perBlockSignedBound :
     Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp :=
   sorry
 
-/-! ## Blocker 4: Landau σ₀ < 1 Cauchy Coefficient Domination
+/-! ## Blocker 4: Landau σ₀ < 1 Tail Integrability (Pringsheim Extension)
 
 For the Pringsheim/Landau non-negative integral argument: given the one-sided bound
-`σ·(ψ(x)-x) ≤ C·x^α`, produce the corrected-formula power series at center 2
-with Cauchy coefficient domination of the anti-coefficient integrals.
+`σ·(ψ(x)-x) ≤ C·x^α`, prove the Dirichlet integral ∫ g(t)·t^{-(σ₀+1)} converges
+for α < σ₀ < 1, where g = C·t^α + σ·(t-ψ(t)) ≥ 0 eventually.
 
-Proof strategy: The corrected Landau formula f(s) = sC/(s-α) + σ(1 + ζ'/ζ(s))
-is analytic at s=2 (pole at α < 1 is far from 2). Its Taylor series p at center 2
-has radius ≥ 2-α. The anti-coefficient integrals equal the Taylor coefficients
-(Fubini interchange of ∫ and Σ for the Dirichlet integral). Hence coefficient
-domination is trivial (each anti-coeff integral = corresponding Taylor coeff).
-The key gap: the Fubini interchange step (Tonelli argument).
+Proof strategy: The anti-coefficient series F(w) = Σ aₖ w^k where
+  aₖ = ∫_{T₀}^∞ g(t) t^{-3} (log t)^k / k! dt ≥ 0
+converges at w=1 (σ₀=1 case, proved via MCT). The corrected Landau formula
+provides analytic continuation of F to {w : Re(w) < 2-α}. Since aₖ ≥ 0,
+Pringsheim's theorem forces the radius R ≥ 2-α. In particular,
+F(2-σ₀) = ∫ g(t) t^{-(σ₀+1)} dt < ∞ by Tonelli.
 
 Infrastructure chain (all sorry-free):
-  LandauCauchyAtCenterTwo → correctedFormula_exists_powerSeries_at_two
-  LandauCoefficientDominationConstructive → hcoeff_dom_of_anticoeff_powerSeries
-  LandauSigmaLtOneFromAnticoeffPowerSeries → full chain to LandauAbscissaHyp
-  LandauSigmaLtOneFromCauchyDomination → SigmaLtOneCorrectedFormulaDominationHyp
+  LandauSigmaOneMCT → tail integrability at σ=1
+  PringsheimTheorem → radius ≥ analytic continuation boundary
+  LandauAbscissaProof → landau_abscissa_hyp_proved from SigmaLtOneHyp
 -/
 
-theorem sigmaLtOneCorrectedFormulaDomination :
-    Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination.SigmaLtOneCorrectedFormulaDominationHyp :=
-  sorry
+theorem sigmaLtOneProved :
+    Aristotle.LandauAbscissaProof.SigmaLtOneHyp :=
+  Aristotle.Standalone.SigmaLtOneFromPringsheimExtension.sigmaLtOneHyp_proved
 
 /-! ## Blocker 5: RH-Side ψ Witness Data
 
@@ -149,20 +150,18 @@ theorem rhPsiWitness :
 Given one-sided bound `σ·(π(x)-li(x)) ≤ C·x^α` with 1/2 < α < 1, produce
 G : ℂ → ℂ analytic on {Re > α} with exp(G s) = (s-1)·ζ(s) for Re(s) > 1.
 
-Proof strategy: The log-derivative of (s-1)ζ(s) is 1/(s-1) + ζ'/ζ(s), whose
-residues at s=1 cancel (+1 and -1). So log((s-1)ζ(s)) is single-valued on
-any simply-connected subdomain avoiding zeros. The Dirichlet series
-  -ζ'/ζ(s) = Σ Λ(n)/n^s
-converges for Re(s) > 1. The one-sided bound on π-li (via partial summation
-→ bound on Σ Λ(n)/(n^s log n)) gives convergence for Re(s) > α. Integrating
-the log-derivative from a base point in {Re > 1} extends G to {Re > α}.
+Proof strategy: Decompose log((s-1)ζ(s)) = log(s-1) + primeZeta(s) + correction(s).
+The correction is analytic on {Re > 1/2} (CorrectionTermAnalyticity). The combination
+log(s-1) + primeZeta(s) extends analytically from {Re > 1} to {Re > α} using the
+non-negative generating function h(t) = C·t^α + σ·(li(t) - π(t)) ≥ 0.
 
-Reference: Landau 1905; Ingham, Distribution of Prime Numbers, Ch. V.
+PROVED modulo `corrected_prime_zeta_extension` (1 sorry in
+PiCorrectedCoreFromPrimeZetaExtension.lean).
 -/
 
 theorem piAtomCorrectedCore :
     Aristotle.Standalone.PiAtomHardCaseCorrectedCore.PiAtomHardCaseCorrectedCore :=
-  sorry
+  Aristotle.Standalone.PiCorrectedCoreFromPrimeZetaExtension.piAtomHardCaseCorrectedCore_proved
 
 /-! ## Blocker 7: RH-Side π-li Witness Data
 
@@ -198,7 +197,7 @@ theorem combined_atoms_resolved :
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) :=
   Aristotle.Standalone.DeepBlockerAssembly.combined_atoms_from_five_blockers
     perBlockSignedBound
-    sigmaLtOneCorrectedFormulaDomination
+    sigmaLtOneProved
     rhPsiWitness
     piAtomCorrectedCore
     rhPiWitness

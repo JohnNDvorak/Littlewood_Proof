@@ -187,7 +187,7 @@ PROOF SKETCH (~100 lines):
 
 KEY APIS: `witnessG_eq_formula`, `real_integrableOn_gt_one`,
 `landau_formula_analyticAt_real`, `summable_of_sum_range_le`. -/
-private lemma anticoeff_summable_at_one
+lemma anticoeff_summable_at_one
     (C : ℝ) (hC : 0 < C) (α : ℝ) (hα : 1 / 2 < α) (hα1 : α < 1)
     (σ_sign : ℝ) (hσ : σ_sign = 1 ∨ σ_sign = -1)
     (hbound : ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α)

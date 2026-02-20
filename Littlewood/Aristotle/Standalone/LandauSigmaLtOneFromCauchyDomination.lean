@@ -170,4 +170,22 @@ theorem psi_omega_lll_of_not_RH_from_correctedFormula_domination
         (landauAbscissaHyp_of_correctedFormula_domination hDom)))
     hRH
 
+/-- Direct bridge from `SigmaLtOneHyp` to `LandauAbscissaHyp` (bypasses coefficient
+domination). -/
+theorem landauAbscissaHyp_of_sigmaLtOne
+    (hyp : Aristotle.LandauAbscissaProof.SigmaLtOneHyp) :
+    PringsheimPsiAtom.LandauAbscissaHyp :=
+  Aristotle.LandauAbscissaProof.landau_abscissa_hyp_proved hyp
+
+/-- Direct non-RH `ψ`-oscillation bridge from `SigmaLtOneHyp`. -/
+theorem psi_omega_lll_of_not_RH_from_sigmaLtOne
+    (hyp : Aristotle.LandauAbscissaProof.SigmaLtOneHyp)
+    (hRH : ¬ZetaZeros.RiemannHypothesis) :
+    (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x] :=
+  Aristotle.LandauSchmidtDirect.psi_omega_lll_of_not_RH
+    (Aristotle.NonNegDirichletIntegral.psi_dirichlet_integral
+      (Aristotle.PringsheimPsiAtom.pringsheim_psi_atom
+        (landauAbscissaHyp_of_sigmaLtOne hyp)))
+    hRH
+
 end Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination

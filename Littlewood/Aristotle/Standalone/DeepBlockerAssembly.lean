@@ -77,13 +77,12 @@ theorem hardy_first_moment_upper_atom_from_mainTerm_and_centered_blocks
     hA hcenter'
 
 /-- Constructive Landau-`σ₀ < 1` atom:
-`LandauAbscissaHyp` from corrected-formula coefficient-domination data. -/
-theorem landau_abscissa_atom_from_correctedFormula_domination
-    (hDom :
-      Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination.SigmaLtOneCorrectedFormulaDominationHyp) :
+`LandauAbscissaHyp` from direct `SigmaLtOneHyp` tail-integrability data. -/
+theorem landau_abscissa_atom_from_sigmaLtOne
+    (hyp : Aristotle.LandauAbscissaProof.SigmaLtOneHyp) :
     Aristotle.PringsheimPsiAtom.LandauAbscissaHyp := by
-  exact Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination.landauAbscissaHyp_of_correctedFormula_domination
-    hDom
+  exact Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination.landauAbscissaHyp_of_sigmaLtOne
+    hyp
 
 /-- RH-side `ψ-x = Ω±(√x·lll x)` atom from explicit-formula/Perron/alignment
 cofinal witnesses. -/
@@ -134,8 +133,7 @@ theorem combined_atoms_from_five_blockers
     [HardyFirstMomentWiring.MainTermFirstMomentBoundHyp]
     [ZetaCriticalLineBoundHyp]
     (hRS : Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp)
-    (hDom :
-      Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination.SigmaLtOneCorrectedFormulaDominationHyp)
+    (hLandau : Aristotle.LandauAbscissaProof.SigmaLtOneHyp)
     (hRhPsi :
       Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPsiWitnessData)
     (hPiCore :
@@ -150,6 +148,6 @@ theorem combined_atoms_from_five_blockers
       LogarithmicIntegral.logarithmicIntegral x)
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
   exact Aristotle.Standalone.CombinedAtomsFromDeepBlockers.combined_atoms_from_blockers
-    hRS hDom hRhPsi hPiCore hRhPi
+    hRS hLandau hRhPsi hPiCore hRhPi
 
 end Aristotle.Standalone.DeepBlockerAssembly
