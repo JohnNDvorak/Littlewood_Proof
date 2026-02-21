@@ -7,11 +7,9 @@ Proves RhPiWitnessData (Blocker 7) via:
 2. piMain oscillation: piMain is cofinally ≥ 2(√x/log x)·lll(x)
    AND ≤ -2(√x/log x)·lll(x)
 
-SORRY COUNT: 2 atomic sub-sorries
-  (1) rh_pi_explicit_formula_error_of_psi — partial summation transfer
+SORRY COUNT: 2 atomic sorries (both mathematically TRUE)
+  (1) rh_pi_explicit_formula_error — existential explicit formula for π
   (2) rh_pi_minus_li_oscillates_large — Dirichlet alignment for π
-
-PROVED: rh_psi_explicit_formula_error_aux — discharged by importing ψ file
 
 Reference: Littlewood 1914; Montgomery-Vaughan §15.2.
 
@@ -19,7 +17,6 @@ Co-authored-by: Claude (Anthropic), GPT Pro (OpenAI)
 -/
 
 import Littlewood.Aristotle.Standalone.CombinedAtomsFromDeepBlockers
-import Littlewood.Aristotle.Standalone.RHPsiWitnessFromZeroSum
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -32,45 +29,16 @@ namespace Aristotle.Standalone.RHPiWitnessFromExplicitFormula
 open Filter Complex
 open GrowthDomination
 open Aristotle.Standalone.CombinedAtomsFromDeepBlockers
-open Aristotle.Standalone.RHPsiWitnessFromZeroSum
 
 -- ============================================================
--- 1. Sub-sorry 1: Auxiliary ψ-witness (delegated to Blocker 5)
+-- 1. Explicit formula error bound for π (direct sorry)
 -- ============================================================
 
-/-- Auxiliary ψ-witness with `√x·lll(x)` error control, imported from ψ file. -/
-private lemma rh_psi_explicit_formula_error_aux
-    (hRH : ZetaZeros.RiemannHypothesis) :
-    ∃ psiMain : ℝ → ℝ,
-      (∀ᶠ x in atTop,
-        |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) :=
-  rh_psi_explicit_formula_error hRH
-
--- ============================================================
--- 2. Sub-sorry 2: Partial summation transfer
--- ============================================================
-
-/-- Partial summation transfer (analytic input):
-    define `piMain(x) = psiMain(x)/log x` and bound the propagated error. -/
-private lemma rh_pi_explicit_formula_error_of_psi
-    (psiMain : ℝ → ℝ)
-    (h_psi_error :
-      ∀ᶠ x in atTop, |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) :
-    ∀ᶠ x in atTop,
-      |((Nat.primeCounting (Nat.floor x) : ℝ) -
-          LogarithmicIntegral.logarithmicIntegral x) + (psiMain x / Real.log x)|
-        ≤ Real.sqrt x / Real.log x * lll x := by
-  -- Standard partial summation:
-  --   π(x) - li(x) ≈ (ψ(x) - x)/log x + remainder,
-  -- and the remainder is smaller (e.g. O(√x/log²x)) under RH at this scale.
-  sorry
-
--- ============================================================
--- 3. Proof of rh_pi_explicit_formula_error (proved from sub-sorries 1+2)
--- ============================================================
-
-/-- **Explicit formula error bound for π**.
-Under RH, there exists a zero-sum main term function with error ≤ (√x/log x) · lll(x). -/
+/-- **Explicit formula error bound for π** (analytic input).
+Under RH, there exists a main term function (from the explicit formula for π via
+Perron's formula applied to log ζ, or equivalently from partial summation of the
+ψ explicit formula with the integral contribution absorbed into piMain) such that
+the error is eventually ≤ (√x/log x) · lll(x). -/
 theorem rh_pi_explicit_formula_error
     (hRH : ZetaZeros.RiemannHypothesis) :
     ∃ piMain : ℝ → ℝ,
@@ -78,12 +46,10 @@ theorem rh_pi_explicit_formula_error
         |((Nat.primeCounting (Nat.floor x) : ℝ) -
             LogarithmicIntegral.logarithmicIntegral x) + piMain x|
           ≤ Real.sqrt x / Real.log x * lll x) := by
-  obtain ⟨psiMain, h_psi_error⟩ := rh_psi_explicit_formula_error_aux hRH
-  exact ⟨fun x => psiMain x / Real.log x,
-    rh_pi_explicit_formula_error_of_psi psiMain h_psi_error⟩
+  sorry
 
 -- ============================================================
--- 4. Sub-sorry 3: Dirichlet alignment oscillation for π
+-- 2. Dirichlet alignment oscillation for π (direct sorry)
 -- ============================================================
 
 /-- Deep input: under RH, `π(x) - li(x)` has cofinal oscillations of size
@@ -102,7 +68,7 @@ private lemma rh_pi_minus_li_oscillates_large
   sorry
 
 -- ============================================================
--- 5. Proof of rh_pi_main_term_oscillates (proved from sub-sorry 3 + error bound)
+-- 3. Proof of rh_pi_main_term_oscillates (proved from sorries 1+2)
 -- ============================================================
 
 /-- **piMain oscillation**.
