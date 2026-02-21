@@ -6,10 +6,11 @@ Proves RhPsiWitnessData (Blocker 5) via:
    with error eventually ≤ √x · lll(x)
 2. psiMain oscillation: psiMain is cofinally ≥ 2√x·lll(x) AND ≤ -2√x·lll(x)
 
-SORRY COUNT: 3 atomic sub-sorries
+SORRY COUNT: 2 atomic sub-sorries
   (1) rh_psi_truncated_explicit_formula — truncated explicit formula for ψ under RH
-  (2) log_sq_eventually_le_sqrt_mul_lll — growth domination estimate
-  (3) rh_psi_minus_x_oscillates_large — Dirichlet phase alignment (Littlewood omega)
+  (2) rh_psi_minus_x_oscillates_large — Dirichlet phase alignment (Littlewood omega)
+
+PROVED: log_sq_eventually_le_sqrt_mul_lll — growth domination (pure real analysis)
 
 Reference: Littlewood 1914; Montgomery-Vaughan §15.2.
 
@@ -46,11 +47,22 @@ private lemma rh_psi_truncated_explicit_formula
   -- Define psiMain(x) := 2 * Σ Re(x^ρ/ρ).
   sorry
 
-/-- Growth domination: `log²x ≤ √x · lll(x)` eventually. -/
+/-- Growth domination: `log²x ≤ √x · lll(x)` eventually.
+Proof: from `log_le_rpow_eventually (1/4)`, `(log x)^2 ≤ (x^{1/4})^2 = √x ≤ √x · lll(x)`. -/
 private lemma log_sq_eventually_le_sqrt_mul_lll :
     ∀ᶠ x in atTop, (Real.log x) ^ 2 ≤ Real.sqrt x * lll x := by
-  -- Any suitable growth lemma (e.g. `log^k = o(√x)`) plus `lll_eventually_ge_one`
-  sorry
+  filter_upwards [log_le_rpow_eventually (1/4) (by positivity),
+    lll_eventually_ge_one, eventually_ge_atTop (1 : ℝ)] with x hlog hlll hx
+  have hx_nn : (0 : ℝ) ≤ x := by linarith
+  have hlog_nn : 0 ≤ Real.log x := Real.log_nonneg (by linarith)
+  have h_sq : (Real.log x) ^ 2 ≤ (x ^ (1/4 : ℝ)) ^ 2 :=
+    pow_le_pow_left₀ hlog_nn hlog 2
+  have h_eq : (x ^ (1/4 : ℝ)) ^ 2 = Real.sqrt x := by
+    rw [← Real.rpow_natCast (x ^ (1/4 : ℝ)) 2, ← Real.rpow_mul hx_nn]
+    simp [Real.sqrt_eq_rpow]; ring_nf
+  calc (Real.log x) ^ 2 ≤ (x ^ (1/4 : ℝ)) ^ 2 := h_sq
+    _ = Real.sqrt x := h_eq
+    _ ≤ Real.sqrt x * lll x := le_mul_of_one_le_right (Real.sqrt_nonneg x) hlll
 
 -- ============================================================
 -- 2. Proof of rh_psi_explicit_formula_error (proved from sub-sorries 1+2)

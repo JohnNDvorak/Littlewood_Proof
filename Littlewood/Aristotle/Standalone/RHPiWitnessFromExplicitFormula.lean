@@ -7,10 +7,11 @@ Proves RhPiWitnessData (Blocker 7) via:
 2. piMain oscillation: piMain is cofinally ≥ 2(√x/log x)·lll(x)
    AND ≤ -2(√x/log x)·lll(x)
 
-SORRY COUNT: 3 atomic sub-sorries
-  (1) rh_psi_explicit_formula_error_aux — ψ explicit formula (delegated to Blocker 5a)
-  (2) rh_pi_explicit_formula_error_of_psi — partial summation transfer
-  (3) rh_pi_minus_li_oscillates_large — Dirichlet alignment for π
+SORRY COUNT: 2 atomic sub-sorries
+  (1) rh_pi_explicit_formula_error_of_psi — partial summation transfer
+  (2) rh_pi_minus_li_oscillates_large — Dirichlet alignment for π
+
+PROVED: rh_psi_explicit_formula_error_aux — discharged by importing ψ file
 
 Reference: Littlewood 1914; Montgomery-Vaughan §15.2.
 
@@ -18,6 +19,7 @@ Co-authored-by: Claude (Anthropic), GPT Pro (OpenAI)
 -/
 
 import Littlewood.Aristotle.Standalone.CombinedAtomsFromDeepBlockers
+import Littlewood.Aristotle.Standalone.RHPsiWitnessFromZeroSum
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -30,20 +32,19 @@ namespace Aristotle.Standalone.RHPiWitnessFromExplicitFormula
 open Filter Complex
 open GrowthDomination
 open Aristotle.Standalone.CombinedAtomsFromDeepBlockers
+open Aristotle.Standalone.RHPsiWitnessFromZeroSum
 
 -- ============================================================
 -- 1. Sub-sorry 1: Auxiliary ψ-witness (delegated to Blocker 5)
 -- ============================================================
 
-/-- Auxiliary ψ-witness with `√x·lll(x)` error control, used as input for the π-file.
-    (This is "Blocker 5a"; here we treat it as an imported/deep lemma.) -/
+/-- Auxiliary ψ-witness with `√x·lll(x)` error control, imported from ψ file. -/
 private lemma rh_psi_explicit_formula_error_aux
     (hRH : ZetaZeros.RiemannHypothesis) :
     ∃ psiMain : ℝ → ℝ,
       (∀ᶠ x in atTop,
-        |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) := by
-  -- Can be discharged by the ψ-development (or any deep-blocker lemma providing it).
-  sorry
+        |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) :=
+  rh_psi_explicit_formula_error hRH
 
 -- ============================================================
 -- 2. Sub-sorry 2: Partial summation transfer
