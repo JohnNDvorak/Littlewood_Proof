@@ -36,7 +36,7 @@ namespace Aristotle.Standalone.RHPsiWitnessFromZeroSum
 open Filter Complex
 open GrowthDomination
 open Aristotle.Standalone.CombinedAtomsFromDeepBlockers
-open Aristotle.DirichletPhaseAlignment (ZerosBelow)
+open Aristotle.DirichletPhaseAlignment (ZerosBelow ExplicitFormulaPsiHyp_V3)
 
 -- ============================================================
 -- 0. Concrete main term definition
@@ -61,7 +61,52 @@ private lemma rh_psi_truncated_explicit_formula
     (hRH : ZetaZeros.RiemannHypothesis) :
     ∀ᶠ x in atTop,
       |(chebyshevPsi x - x) + psiMainTerm x| ≤ (Real.log x) ^ 2 := by
-  sorry
+  classical
+  -- V3 hypothesis: truncated explicit formula for ψ under RH (sole analytic input)
+  letI inst : ExplicitFormulaPsiHyp_V3 := sorry
+  let C := inst.C
+  filter_upwards [eventually_ge_atTop (2 : ℝ),
+    (Filter.tendsto_atTop.1 Real.tendsto_log_atTop) (2 * |C|)] with x hx hxlog
+  -- Apply V3 with T = x
+  have hEF := inst.psi_approx x x hx hx
+  -- Simplify √x·log x / √x = log x
+  have hxpos : 0 < x := lt_of_lt_of_le (by norm_num : (0:ℝ) < 2) hx
+  have hsqrt_ne : Real.sqrt x ≠ 0 := ne_of_gt (Real.sqrt_pos.mpr hxpos)
+  have hcancel : Real.sqrt x * Real.log x / Real.sqrt x = Real.log x := by
+    field_simp
+  -- V3 formula: |DA.chebyshevPsi x - x - (-(Σ).re)| ≤ C * (√x·logx/√x + logx)
+  -- Simplify to: |DA.chebyshevPsi x - x + psiMainTerm x| ≤ 2*C*logx
+  have hEF' : |(Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) + psiMainTerm x|
+      ≤ 2 * C * Real.log x := by
+    have : Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re) =
+        (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) + psiMainTerm x := by
+      simp [psiMainTerm, sub_neg_eq_add]
+    rw [← this]
+    calc |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+            (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)|
+        ≤ C * (Real.sqrt x * Real.log x / Real.sqrt x + Real.log x) := hEF
+      _ = C * (Real.log x + Real.log x) := by rw [hcancel]
+      _ = 2 * C * Real.log x := by ring
+  -- Bridge: both chebyshevPsi definitions sum vonMangoldt over {0,..,⌊x⌋}
+  have h_bridge : chebyshevPsi x = Aristotle.DirichletPhaseAlignment.chebyshevPsi x := by
+    simp only [chebyshevPsi, Chebyshev.psi, Aristotle.DirichletPhaseAlignment.chebyshevPsi]
+    symm
+    have h0 : (0 : ℕ) ∉ Finset.Ioc 0 ⌊x⌋₊ := by simp [Finset.mem_Ioc]
+    have hinsert : Finset.range (⌊x⌋₊ + 1) = insert 0 (Finset.Ioc 0 ⌊x⌋₊) := by
+      ext n; simp [Finset.mem_range]
+    rw [hinsert, Finset.sum_insert h0, ArithmeticFunction.map_zero, zero_add]
+  -- Transfer the bound to root chebyshevPsi
+  have h_bound : |(chebyshevPsi x - x) + psiMainTerm x| ≤ 2 * C * Real.log x := by
+    rw [h_bridge]; exact hEF'
+  -- 2*C*log x ≤ (log x)² for log x ≥ 2|C|
+  have hlog_nn : 0 ≤ Real.log x := by
+    linarith [mul_nonneg (by norm_num : (0:ℝ) ≤ 2) (abs_nonneg C)]
+  calc |(chebyshevPsi x - x) + psiMainTerm x|
+      ≤ 2 * C * Real.log x := h_bound
+    _ ≤ 2 * |C| * Real.log x := by nlinarith [le_abs_self C]
+    _ ≤ Real.log x * Real.log x := by nlinarith
+    _ = (Real.log x) ^ 2 := by ring
 
 -- ============================================================
 -- 2. Growth domination (PROVED)
