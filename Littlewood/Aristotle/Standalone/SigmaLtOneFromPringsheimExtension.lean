@@ -14,7 +14,8 @@ The proof uses the scaled partial sum bound:
 5. Taking u → 1⁻ gives Σ_{k<N} B_k W^k ≤ M for all N.
 6. summable_of_sum_range_le concludes.
 
-SORRY COUNT: 1 (hF_hasSum — HasSum identity on [0, W) via identity theorem)
+SORRY COUNT: 1 (anticoeff_hasSum_on_pringsheim_disk — HasSum identity on [0, W)
+  via Tonelli exchange + identity theorem for real-analytic functions)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -85,6 +86,43 @@ Key Mathlib ingredients:
 
 References: Titchmarsh §1.8; Pringsheim 1893; Landau 1905. -/
 
+/-- **HasSum identity for anti-coefficient series on the Pringsheim disk**.
+
+For w ∈ [0, W) where W = 2-σ₀ > 1, the anti-coefficient series sums to F(w):
+  ∑ B_k w^k = Re(correctedFormula(2 - w))
+
+**Proof outline** (two regimes):
+
+For w ∈ [0, 1) (Tonelli/Fubini exchange):
+  B_k = ∫_{T₀}^∞ g(t)·t^{-3}·(log t)^k/k! dt  (definition of antiCoeff at center 2)
+  ∑ B_k w^k = ∫_{T₀}^∞ g(t)·t^{-3}·∑ (w·log t)^k/k! dt  (Tonelli, non-negative terms)
+           = ∫_{T₀}^∞ g(t)·t^{-3}·t^w dt = ∫_{T₀}^∞ g(t)·t^{-(2-w+1)} dt
+  This equals Re(correctedFormula(2-w)) by the Dirichlet integral representation
+  of the corrected formula for Re(s) = 2-w > 1.
+
+For w ∈ [1, W) (identity theorem):
+  Both G(w) := ∑' B_k w^k and F(w) are real-analytic on [0, W):
+  - G is analytic where its power series converges (radius R* ≥ 1 from MCT)
+  - F is analytic by `landau_formula_analyticAt_real` (correctedFormula analytic at σ > α)
+  They agree on [0, 1) by the Tonelli part. By the identity theorem for
+  real-analytic functions (connected domain, nonempty agreement set): G = F on [0, R*).
+  The Pringsheim extension then forces R* ≥ W (otherwise the sum has a singularity
+  at R*, but F extends continuously to R* and the non-negative partial sums are bounded,
+  giving Summable(B_k R*^k) by `summable_of_sum_range_le`, contradicting maximality).
+
+SORRY: The Tonelli exchange + Fubini step (integral-sum interchange) and the
+identity theorem application are complex analytical arguments (~200 lines). -/
+private theorem anticoeff_hasSum_on_pringsheim_disk
+    (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
+    (hg_nn : ∀ t, T₀ ≤ t → 0 ≤ g t)
+    (α C σ_sign : ℝ) (hα : 1 / 2 < α)
+    (hg_def : g = PringsheimPsiAtom.genFun C α σ_sign)
+    (W : ℝ) (hW_bound : W ≤ 2 - α) :
+    ∀ w : ℝ, 0 ≤ w → w < W →
+      HasSum (fun k => antiCoeff g T₀ 2 k * w ^ k)
+        ((correctedFormula α C σ_sign (↑(2 - w) : ℂ)).re) := by
+  sorry
+
 /-- The anti-coefficient summability at w = 2-σ₀ from the Pringsheim extension.
 
 This is the key result: extends convergence from w=1 to w=2-σ₀ > 1.
@@ -95,12 +133,7 @@ The proof defines F(w) = Re(correctedFormula(2-w)), which is continuous on [0, W
 (from analyticity at every real σ > α). For u ∈ (0, 1), the scaled partial sums
   Σ_{k<N} (B_k W^k) u^k = Σ_{k<N} B_k (Wu)^k ≤ F(Wu) ≤ M
 are bounded. Taking u → 1⁻ gives ∀ N, Σ_{k<N} B_k W^k ≤ M.
-By `summable_of_sum_range_le`: Summable(B_k W^k).
-
-**Sorry**: `hF_hasSum` — the HasSum identity Σ B_k w^k = F(w) for w ∈ [0, W).
-For w < 1: Tonelli exchange (integrand_eq_tsum_anticoeff).
-For w ∈ [1, W): complex identity theorem (power series = correctedFormula(2-·)
-on B(0,1), both analytic on B(0, R*), Pringsheim forces R* ≥ W). -/
+By `summable_of_sum_range_le`: Summable(B_k W^k). -/
 theorem anticoeff_summable_at_target
     (C : ℝ) (hC : 0 < C) (α : ℝ) (hα : 1 / 2 < α) (hα1 : α < 1)
     (σ_sign : ℝ) (hσ : σ_sign = 1 ∨ σ_sign = -1)
@@ -138,7 +171,8 @@ theorem anticoeff_summable_at_target
   -- For w ∈ [1, W): complex identity theorem on B(0, R*) + Pringsheim forces R* ≥ W
   have hF_hasSum : ∀ w : ℝ, 0 ≤ w → w < W →
       HasSum (fun k => B k * w ^ k) (F w) := by
-    sorry
+    have hW_bound : W ≤ 2 - α := by simp [hW_def]; linarith
+    exact anticoeff_hasSum_on_pringsheim_disk g T₀ hT₀ hg_nn α C σ_sign hα hg_def W hW_bound
   -- Bound partial sums and conclude
   apply summable_of_sum_range_le (fun k => mul_nonneg (hB_nn k) (pow_nonneg hW_nn k))
   intro N
