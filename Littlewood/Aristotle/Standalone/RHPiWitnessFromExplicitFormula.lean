@@ -8,13 +8,13 @@ Proves RhPiWitnessData (Blocker 7) via:
    AND ≤ -2(√x/log x)·lll(x)
 
 SORRY COUNT: 3 atomic sub-sorries
-  (1) rh_truncated_explicit_formula_pi — truncated explicit formula for π under RH
-  (2) rh_pi_not_eventually_bounded_below — Dirichlet alignment for π (phase π)
-  (3) rh_pi_not_eventually_bounded_above — Dirichlet alignment for π (phase 0)
+  (1) rh_psi_explicit_formula_error_aux — ψ explicit formula (delegated to Blocker 5a)
+  (2) rh_pi_explicit_formula_error_of_psi — partial summation transfer
+  (3) rh_pi_minus_li_oscillates_large — Dirichlet alignment for π
 
 Reference: Littlewood 1914; Montgomery-Vaughan §15.2.
 
-Co-authored-by: Claude (Anthropic)
+Co-authored-by: Claude (Anthropic), GPT Pro (OpenAI)
 -/
 
 import Littlewood.Aristotle.Standalone.CombinedAtomsFromDeepBlockers
@@ -31,76 +31,78 @@ open Filter Complex
 open GrowthDomination
 open Aristotle.Standalone.CombinedAtomsFromDeepBlockers
 
-/-! ## Sub-lemma 1: Truncated explicit formula for π under RH
+-- ============================================================
+-- 1. Sub-sorry 1: Auxiliary ψ-witness (delegated to Blocker 5)
+-- ============================================================
 
-Under RH, the explicit formula for π via partial summation from ψ gives:
-  π(x) = li(x) - piMain(x) + O(√x/log²x)
-where piMain(x) = ∑_ρ li(x^ρ) (truncated zero-sum).
-
-Alternatively, piMain(x) ≈ psiMain(x)/log(x) from the ψ-π relation.
-The error O(√x/log²x) is eventually ≤ (√x/log x)·lll(x) for large x. -/
-
-/-- Truncated explicit formula for π: under RH, π(x) = li(x) - piMain(x) + error,
-where |error| ≤ (√x/log x)·lll(x) eventually.
-
-Proof: standard analytic number theory via partial summation from the ψ formula.
-Under RH, the main term involves li(x^ρ) ≈ x^{1/2+iγ}/((1/2+iγ)·log x).
-Truncation at T = x gives error O(√x/log²x) ≤ (√x/log x)·lll(x). -/
-private theorem rh_truncated_explicit_formula_pi
+/-- Auxiliary ψ-witness with `√x·lll(x)` error control, used as input for the π-file.
+    (This is "Blocker 5a"; here we treat it as an imported/deep lemma.) -/
+private lemma rh_psi_explicit_formula_error_aux
     (hRH : ZetaZeros.RiemannHypothesis) :
-    ∃ piMain : ℝ → ℝ,
+    ∃ psiMain : ℝ → ℝ,
       (∀ᶠ x in atTop,
-        |((Nat.primeCounting (Nat.floor x) : ℝ) -
-            LogarithmicIntegral.logarithmicIntegral x) + piMain x|
-          ≤ Real.sqrt x / Real.log x * lll x) := by
+        |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) := by
+  -- Can be discharged by the ψ-development (or any deep-blocker lemma providing it).
   sorry
 
-/-- **Explicit formula error bound for π**. -/
+-- ============================================================
+-- 2. Sub-sorry 2: Partial summation transfer
+-- ============================================================
+
+/-- Partial summation transfer (analytic input):
+    define `piMain(x) = psiMain(x)/log x` and bound the propagated error. -/
+private lemma rh_pi_explicit_formula_error_of_psi
+    (psiMain : ℝ → ℝ)
+    (h_psi_error :
+      ∀ᶠ x in atTop, |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) :
+    ∀ᶠ x in atTop,
+      |((Nat.primeCounting (Nat.floor x) : ℝ) -
+          LogarithmicIntegral.logarithmicIntegral x) + (psiMain x / Real.log x)|
+        ≤ Real.sqrt x / Real.log x * lll x := by
+  -- Standard partial summation:
+  --   π(x) - li(x) ≈ (ψ(x) - x)/log x + remainder,
+  -- and the remainder is smaller (e.g. O(√x/log²x)) under RH at this scale.
+  sorry
+
+-- ============================================================
+-- 3. Proof of rh_pi_explicit_formula_error (proved from sub-sorries 1+2)
+-- ============================================================
+
+/-- **Explicit formula error bound for π**.
+Under RH, there exists a zero-sum main term function with error ≤ (√x/log x) · lll(x). -/
 theorem rh_pi_explicit_formula_error
     (hRH : ZetaZeros.RiemannHypothesis) :
     ∃ piMain : ℝ → ℝ,
       (∀ᶠ x in atTop,
         |((Nat.primeCounting (Nat.floor x) : ℝ) -
             LogarithmicIntegral.logarithmicIntegral x) + piMain x|
-          ≤ Real.sqrt x / Real.log x * lll x) :=
-  rh_truncated_explicit_formula_pi hRH
+          ≤ Real.sqrt x / Real.log x * lll x) := by
+  obtain ⟨psiMain, h_psi_error⟩ := rh_psi_explicit_formula_error_aux hRH
+  exact ⟨fun x => psiMain x / Real.log x,
+    rh_pi_explicit_formula_error_of_psi psiMain h_psi_error⟩
 
-/-! ## Sub-lemmas 2,3: Dirichlet phase alignment bounds for π
+-- ============================================================
+-- 4. Sub-sorry 3: Dirichlet alignment oscillation for π
+-- ============================================================
 
-Under RH, π(x) - li(x) cannot be eventually bounded from one side by any
-multiple of (√x/log x)·lll(x). The argument parallels the ψ case:
-Dirichlet alignment on zeros forces the oscillation to exceed any such bound. -/
-
-/-- Under RH, π(x) - li(x) cannot be eventually > -C(√x/log x)·lll(x) for any C.
-
-Proof: Dirichlet approximation on zero phases (aligned to π) produces
-π(x) - li(x) ≤ -K(√x/log x)·(log log x)² for arbitrarily large K. -/
-private theorem rh_pi_not_eventually_bounded_below
-    (hRH : ZetaZeros.RiemannHypothesis) (C : ℝ) :
-    ¬(∀ᶠ x in atTop,
-      -(C * (Real.sqrt x / Real.log x * lll x)) ≤
-        (↑(Nat.primeCounting (Nat.floor x)) : ℝ) -
-          LogarithmicIntegral.logarithmicIntegral x) := by
+/-- Deep input: under RH, `π(x) - li(x)` has cofinal oscillations of size
+`Ω±((√x/log x)·lll(x))`. Derived from ψ oscillation by partial summation. -/
+private lemma rh_pi_minus_li_oscillates_large
+    (hRH : ZetaZeros.RiemannHypothesis) :
+    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      ((Nat.primeCounting (Nat.floor x) : ℝ) -
+          LogarithmicIntegral.logarithmicIntegral x)
+        ≤ -(3 * (Real.sqrt x / Real.log x * lll x))) ∧
+    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      3 * (Real.sqrt x / Real.log x * lll x) ≤
+        ((Nat.primeCounting (Nat.floor x) : ℝ) -
+          LogarithmicIntegral.logarithmicIntegral x)) := by
+  -- Derived from ψ oscillation by partial summation / explicit formula machinery.
   sorry
 
-/-- Under RH, π(x) - li(x) cannot be eventually < C(√x/log x)·lll(x) for any C.
-
-Proof: Dirichlet approximation on zero phases (aligned to 0) produces
-π(x) - li(x) ≥ K(√x/log x)·(log log x)² for arbitrarily large K. -/
-private theorem rh_pi_not_eventually_bounded_above
-    (hRH : ZetaZeros.RiemannHypothesis) (C : ℝ) :
-    ¬(∀ᶠ x in atTop,
-      (↑(Nat.primeCounting (Nat.floor x)) : ℝ) -
-        LogarithmicIntegral.logarithmicIntegral x ≤
-        C * (Real.sqrt x / Real.log x * lll x)) := by
-  sorry
-
-/-! ## Main theorem 2: piMain oscillation from the Dirichlet sub-lemmas
-
-The proof parallels the ψ case exactly. If piMain were eventually
-< 2(√x/log x)·lll(x), then combining with h_error gives
-π(x)-li(x) > -3(√x/log x)·lll(x) eventually, contradicting
-rh_pi_not_eventually_bounded_below. Symmetrically for the other direction. -/
+-- ============================================================
+-- 5. Proof of rh_pi_main_term_oscillates (proved from sub-sorry 3 + error bound)
+-- ============================================================
 
 /-- **piMain oscillation**.
 Under RH, any function approximating li(x) - π(x) with error
@@ -116,27 +118,42 @@ theorem rh_pi_main_term_oscillates
       piMain x ≤ -(2 * (Real.sqrt x / Real.log x * lll x))) ∧
     (∀ X : ℝ, ∃ x : ℝ, X < x ∧
       2 * (Real.sqrt x / Real.log x * lll x) ≤ piMain x) := by
+  rcases (Filter.eventually_atTop.1 h_error) with ⟨B, hB⟩
+  rcases rh_pi_minus_li_oscillates_large hRH with ⟨h_osc_neg, h_osc_pos⟩
   constructor
-  · -- Negative oscillation: piMain cofinally ≤ -2(√x/log x)·lll(x)
-    by_contra h
-    push_neg at h
-    obtain ⟨X₀, hX₀⟩ := h
-    apply rh_pi_not_eventually_bounded_above hRH 3
-    have h_mem : ∀ᶠ x in atTop, X₀ < x := tendsto_id.eventually (Ioi_mem_atTop X₀)
-    filter_upwards [h_error, h_mem] with x hx_err hx_large
-    have hpi_bound := hX₀ x hx_large
-    have h_abs := abs_le.mp hx_err
-    linarith [h_abs.2]
-  · -- Positive oscillation: piMain cofinally ≥ 2(√x/log x)·lll(x)
-    by_contra h
-    push_neg at h
-    obtain ⟨X₀, hX₀⟩ := h
-    apply rh_pi_not_eventually_bounded_below hRH 3
-    have h_mem : ∀ᶠ x in atTop, X₀ < x := tendsto_id.eventually (Ioi_mem_atTop X₀)
-    filter_upwards [h_error, h_mem] with x hx_err hx_large
-    have hpi_bound := hX₀ x hx_large
-    have h_abs := abs_le.mp hx_err
-    linarith [h_abs.1]
+  · intro X
+    -- Large positive π-li ⇒ large negative piMain.
+    rcases h_osc_pos (max X B) with ⟨x, hx_gt, hx_pos⟩
+    have hXx : X < x := lt_of_le_of_lt (le_max_left _ _) hx_gt
+    have hBx : B ≤ x := le_trans (le_max_right _ _) (le_of_lt hx_gt)
+    have h_err_x :
+        |((Nat.primeCounting (Nat.floor x) : ℝ) -
+              LogarithmicIntegral.logarithmicIntegral x) + piMain x|
+          ≤ Real.sqrt x / Real.log x * lll x := hB x hBx
+    set A : ℝ := Real.sqrt x / Real.log x * lll x with hA
+    have h_upper :
+        ((Nat.primeCounting (Nat.floor x) : ℝ) -
+              LogarithmicIntegral.logarithmicIntegral x) + piMain x ≤ A :=
+      (abs_le.mp h_err_x).2
+    refine ⟨x, hXx, ?_⟩
+    nlinarith
+  · intro X
+    -- Large negative π-li ⇒ large positive piMain.
+    rcases h_osc_neg (max X B) with ⟨x, hx_gt, hx_neg⟩
+    have hXx : X < x := lt_of_le_of_lt (le_max_left _ _) hx_gt
+    have hBx : B ≤ x := le_trans (le_max_right _ _) (le_of_lt hx_gt)
+    have h_err_x :
+        |((Nat.primeCounting (Nat.floor x) : ℝ) -
+              LogarithmicIntegral.logarithmicIntegral x) + piMain x|
+          ≤ Real.sqrt x / Real.log x * lll x := hB x hBx
+    set A : ℝ := Real.sqrt x / Real.log x * lll x with hA
+    have h_lower :
+        -A ≤
+          ((Nat.primeCounting (Nat.floor x) : ℝ) -
+            LogarithmicIntegral.logarithmicIntegral x) + piMain x :=
+      (abs_le.mp h_err_x).1
+    refine ⟨x, hXx, ?_⟩
+    nlinarith
 
 /-! ## Main theorem: RhPiWitnessData from the two sub-results -/
 

@@ -7,13 +7,13 @@ Proves RhPsiWitnessData (Blocker 5) via:
 2. psiMain oscillation: psiMain is cofinally ≥ 2√x·lll(x) AND ≤ -2√x·lll(x)
 
 SORRY COUNT: 3 atomic sub-sorries
-  (1) rh_truncated_explicit_formula — truncated explicit formula for ψ under RH
-  (2) rh_psi_not_eventually_bounded_below — Dirichlet alignment (phase π)
-  (3) rh_psi_not_eventually_bounded_above — Dirichlet alignment (phase 0)
+  (1) rh_psi_truncated_explicit_formula — truncated explicit formula for ψ under RH
+  (2) log_sq_eventually_le_sqrt_mul_lll — growth domination estimate
+  (3) rh_psi_minus_x_oscillates_large — Dirichlet phase alignment (Littlewood omega)
 
 Reference: Littlewood 1914; Montgomery-Vaughan §15.2.
 
-Co-authored-by: Claude (Anthropic)
+Co-authored-by: Claude (Anthropic), GPT Pro (OpenAI)
 -/
 
 import Littlewood.Aristotle.Standalone.CombinedAtomsFromDeepBlockers
@@ -30,71 +30,63 @@ open Filter Complex
 open GrowthDomination
 open Aristotle.Standalone.CombinedAtomsFromDeepBlockers
 
-/-! ## Sub-lemma 1: Truncated explicit formula for ψ under RH
+-- ============================================================
+-- 1. Helper lemmas for Sorry 1 (ψ explicit formula; sorries OK)
+-- ============================================================
 
-Under RH, the truncated explicit formula at T = x gives:
-  ψ(x) = x - psiMain(x) + O(log²x)
-where psiMain(x) = 2·∑_{0<γ≤x} Re(x^ρ/ρ).
-
-The function psiMain is defined internally (we only expose the error bound).
-The error O(log²x) is eventually ≤ √x · lll(x) since √x dominates log²x. -/
-
-/-- Truncated explicit formula: under RH, ψ(x) = x - psiMain(x) + error,
-where |error| ≤ √x · lll(x) eventually.
-
-Proof: standard analytic number theory. The explicit formula for ψ sums over
-nontrivial zeros ρ of ζ. Under RH, all ρ = 1/2 + iγ, so |x^ρ/ρ| = √x/|ρ|.
-Truncating at T = x gives error O(x · log²x / T) = O(log²x).
-For large x: log²x ≤ √x · lll(x). -/
-private theorem rh_truncated_explicit_formula
+/-- Truncated explicit formula under RH (analytic input).
+    Provides an explicit-formula main term `psiMain` with a classical `O(log²x)` error. -/
+private lemma rh_psi_truncated_explicit_formula
     (hRH : ZetaZeros.RiemannHypothesis) :
     ∃ psiMain : ℝ → ℝ,
       (∀ᶠ x in atTop,
-        |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) := by
+        |(chebyshevPsi x - x) + psiMain x| ≤ (Real.log x) ^ 2) := by
+  -- Under RH, truncate the explicit formula at T = x:
+  --   ψ(x) = x - 2 * Σ_{|γ|≤x} Re(x^ρ / ρ) + O(log²x).
+  -- Define psiMain(x) := 2 * Σ Re(x^ρ/ρ).
   sorry
 
-/-- **Explicit formula error bound**.
-Under RH, there exists a zero-sum main term function with small error. -/
+/-- Growth domination: `log²x ≤ √x · lll(x)` eventually. -/
+private lemma log_sq_eventually_le_sqrt_mul_lll :
+    ∀ᶠ x in atTop, (Real.log x) ^ 2 ≤ Real.sqrt x * lll x := by
+  -- Any suitable growth lemma (e.g. `log^k = o(√x)`) plus `lll_eventually_ge_one`
+  sorry
+
+-- ============================================================
+-- 2. Proof of rh_psi_explicit_formula_error (proved from sub-sorries 1+2)
+-- ============================================================
+
+/-- **Explicit formula error bound for ψ**.
+Under RH, there exists a zero-sum main term function with error ≤ √x · lll(x). -/
 theorem rh_psi_explicit_formula_error
     (hRH : ZetaZeros.RiemannHypothesis) :
     ∃ psiMain : ℝ → ℝ,
       (∀ᶠ x in atTop,
-        |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) :=
-  rh_truncated_explicit_formula hRH
+        |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) := by
+  obtain ⟨psiMain, h_trunc⟩ := rh_psi_truncated_explicit_formula hRH
+  refine ⟨psiMain, ?_⟩
+  filter_upwards [h_trunc, log_sq_eventually_le_sqrt_mul_lll] with x hx_trunc hx_dom
+  exact le_trans hx_trunc hx_dom
 
-/-! ## Sub-lemmas 2,3: Dirichlet phase alignment bounds
+-- ============================================================
+-- 3. Sub-sorry 3: Dirichlet alignment oscillation
+-- ============================================================
 
-Under RH, ψ(x) - x cannot be eventually bounded from one side by any
-multiple of √x · lll(x). This is because the zero-sum from the explicit
-formula, with all zeros on the critical line, can be made to oscillate
-in both directions by Dirichlet's simultaneous approximation theorem
-applied to the imaginary parts of the zeros. -/
-
-/-- Under RH, ψ(x) - x cannot be eventually > -C√x·lll(x) for any C.
-
-Proof: Dirichlet approximation aligns zero phases to π, making the
-explicit-formula zero-sum ≤ -K√x·(log log x)² for arbitrarily large K.
-Since (log log x)² ≫ lll(x), this contradicts any one-sided bound. -/
-private theorem rh_psi_not_eventually_bounded_below
-    (hRH : ZetaZeros.RiemannHypothesis) (C : ℝ) :
-    ¬(∀ᶠ x in atTop, -(C * (Real.sqrt x * lll x)) ≤ chebyshevPsi x - x) := by
+/-- Deep input: under RH, `ψ(x) - x` has cofinal oscillations of size
+`Ω±(√x · lll(x))`. We package with constant `3` so that the `±2` conclusions
+survive an additional `±1` error term. -/
+private lemma rh_psi_minus_x_oscillates_large
+    (hRH : ZetaZeros.RiemannHypothesis) :
+    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      (chebyshevPsi x - x) ≤ -(3 * (Real.sqrt x * lll x))) ∧
+    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      3 * (Real.sqrt x * lll x) ≤ (chebyshevPsi x - x)) := by
+  -- Dirichlet phase alignment on zeros in the explicit formula (Littlewood-style omega).
   sorry
 
-/-- Under RH, ψ(x) - x cannot be eventually < C√x·lll(x) for any C.
-
-Proof: Dirichlet approximation aligns zero phases to 0, making the
-explicit-formula zero-sum ≥ K√x·(log log x)² for arbitrarily large K. -/
-private theorem rh_psi_not_eventually_bounded_above
-    (hRH : ZetaZeros.RiemannHypothesis) (C : ℝ) :
-    ¬(∀ᶠ x in atTop, chebyshevPsi x - x ≤ C * (Real.sqrt x * lll x)) := by
-  sorry
-
-/-! ## Main theorem 2: psiMain oscillation from the Dirichlet sub-lemmas
-
-The proof is by contradiction in each direction. If psiMain were eventually
-< 2√x·lll(x), then combining with the error bound h_error would give
-ψ(x) - x > -3√x·lll(x) eventually, contradicting rh_psi_not_eventually_bounded_below.
-Symmetrically for the other direction. -/
+-- ============================================================
+-- 4. Proof of rh_psi_main_term_oscillates (proved from sub-sorry 3 + error bound)
+-- ============================================================
 
 /-- **psiMain oscillation**.
 Under RH, any function approximating x - ψ(x) with error ≤ √x·lll(x)
@@ -108,37 +100,35 @@ theorem rh_psi_main_term_oscillates
       psiMain x ≤ -(2 * (Real.sqrt x * lll x))) ∧
     (∀ X : ℝ, ∃ x : ℝ, X < x ∧
       2 * (Real.sqrt x * lll x) ≤ psiMain x) := by
+  -- Extract a concrete threshold beyond which the error bound holds.
+  rcases (Filter.eventually_atTop.1 h_error) with ⟨B, hB⟩
+  -- Deep oscillation input for `ψ(x) - x`.
+  rcases rh_psi_minus_x_oscillates_large hRH with ⟨h_osc_neg, h_osc_pos⟩
   constructor
-  · -- Negative oscillation: psiMain cofinally ≤ -2√x·lll(x)
-    by_contra h
-    push_neg at h
-    obtain ⟨X₀, hX₀⟩ := h
-    -- If psiMain(x) > -2√x·lll(x) for x > X₀, then from h_error:
-    -- (ψ(x)-x) + psiMain(x) ≥ -√x·lll(x) (from |...| ≤ √x·lll(x))
-    -- Combined: ψ(x)-x > -psiMain(x) - √x·lll(x) > -(-2√x·lll(x)) - √x·lll(x) = √x·lll(x)
-    -- Wait, we need the other direction: ψ(x)-x ≤ something.
-    -- From h_error: ψ(x)-x = -psiMain(x) + error, |error| ≤ √x·lll(x)
-    -- So ψ(x)-x ≤ -psiMain(x) + √x·lll(x)
-    -- If psiMain(x) > -2√x·lll(x), then -psiMain(x) < 2√x·lll(x)
-    -- So ψ(x)-x < 3√x·lll(x) eventually
-    apply rh_psi_not_eventually_bounded_above hRH 3
-    have h_mem : ∀ᶠ x in atTop, X₀ < x := tendsto_id.eventually (Ioi_mem_atTop X₀)
-    filter_upwards [h_error, h_mem] with x hx_err hx_large
-    have hpsi_bound := hX₀ x hx_large
-    have h_abs := abs_le.mp hx_err
-    linarith [h_abs.2]
-  · -- Positive oscillation: psiMain cofinally ≥ 2√x·lll(x)
-    by_contra h
-    push_neg at h
-    obtain ⟨X₀, hX₀⟩ := h
-    -- If psiMain(x) < 2√x·lll(x) for x > X₀, then from h_error:
-    -- ψ(x)-x ≥ -psiMain(x) - √x·lll(x) > -2√x·lll(x) - √x·lll(x) = -3√x·lll(x)
-    apply rh_psi_not_eventually_bounded_below hRH 3
-    have h_mem : ∀ᶠ x in atTop, X₀ < x := tendsto_id.eventually (Ioi_mem_atTop X₀)
-    filter_upwards [h_error, h_mem] with x hx_err hx_large
-    have hpsi_bound := hX₀ x hx_large
-    have h_abs := abs_le.mp hx_err
-    linarith [h_abs.1]
+  · intro X
+    -- Large positive ψ(x)-x ⇒ large negative psiMain.
+    rcases h_osc_pos (max X B) with ⟨x, hx_gt, hx_pos⟩
+    have hXx : X < x := lt_of_le_of_lt (le_max_left _ _) hx_gt
+    have hBx : B ≤ x := le_trans (le_max_right _ _) (le_of_lt hx_gt)
+    have h_err_x :
+        |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x := hB x hBx
+    set A : ℝ := Real.sqrt x * lll x with hA
+    have h_upper : (chebyshevPsi x - x) + psiMain x ≤ A :=
+      (abs_le.mp h_err_x).2
+    refine ⟨x, hXx, ?_⟩
+    nlinarith
+  · intro X
+    -- Large negative ψ(x)-x ⇒ large positive psiMain.
+    rcases h_osc_neg (max X B) with ⟨x, hx_gt, hx_neg⟩
+    have hXx : X < x := lt_of_le_of_lt (le_max_left _ _) hx_gt
+    have hBx : B ≤ x := le_trans (le_max_right _ _) (le_of_lt hx_gt)
+    have h_err_x :
+        |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x := hB x hBx
+    set A : ℝ := Real.sqrt x * lll x with hA
+    have h_lower : -A ≤ (chebyshevPsi x - x) + psiMain x :=
+      (abs_le.mp h_err_x).1
+    refine ⟨x, hXx, ?_⟩
+    nlinarith
 
 /-! ## Main theorem: RhPsiWitnessData from the two sub-results -/
 
