@@ -8,13 +8,14 @@ Proves RhPsiWitnessData (Blocker 5) via:
 3. Assembly: ψ(x)-x = Ω±(3√x · lll(x))
 
 SORRY COUNT: 2 atomic sub-sorries
-  (1) rh_psi_truncated_explicit_formula — truncated explicit formula for ψ under RH
+  (1) explicit_formula_psi_at_T_eq_x — truncated explicit formula for ψ at T=x (unconditional)
   (2) psiMainTerm_oscillates_large — Dirichlet phase alignment (Littlewood omega)
 
 PROVED:
+  rh_psi_truncated_explicit_formula — from (1) + chebyshevPsi bridge + growth bound
   log_sq_eventually_le_sqrt_mul_lll — growth domination (pure real analysis)
-  rh_psi_minus_x_oscillates_large — from (1) + (2) + growth domination
-  rh_psi_explicit_formula_error — from (1) + growth domination
+  rh_psi_minus_x_oscillates_large — from above + (2) + growth domination
+  rh_psi_explicit_formula_error — from above + growth domination
   rh_psi_main_term_oscillates — from rh_psi_minus_x_oscillates_large + error bound
 
 Reference: Littlewood 1914; Montgomery-Vaughan §15.2.
@@ -36,7 +37,7 @@ namespace Aristotle.Standalone.RHPsiWitnessFromZeroSum
 open Filter Complex
 open GrowthDomination
 open Aristotle.Standalone.CombinedAtomsFromDeepBlockers
-open Aristotle.DirichletPhaseAlignment (ZerosBelow ExplicitFormulaPsiHyp_V3)
+open Aristotle.DirichletPhaseAlignment (ZerosBelow)
 
 -- ============================================================
 -- 0. Concrete main term definition
@@ -48,46 +49,31 @@ def psiMainTerm (x : ℝ) : ℝ :=
   (∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re
 
 -- ============================================================
--- 1. Sub-sorry 1: Truncated explicit formula (O(log²x) error)
+-- 1. Sub-sorry 1: Truncated explicit formula at T=x (standalone)
 -- ============================================================
 
-/-- Truncated explicit formula under RH (analytic input).
-Under RH with T = x, the explicit formula gives
-  |ψ(x) - x + Σ_{|γ|≤x} Re(x^ρ/ρ)| ≤ (log x)².
+/-- **Truncated explicit formula for ψ at T=x** (analytic input).
+There exists a uniform constant C such that for all x ≥ 2:
+  |ψ(x) - x + Σ_{|γ|≤x} Re(x^ρ/ρ)| ≤ C · log x.
 
-This follows from ExplicitFormulaPsiHyp_V3 with T = x:
-  error ≤ C·(√x·log x/√x + log x) = 2C·log x ≤ (log x)² eventually. -/
-private lemma rh_psi_truncated_explicit_formula
-    (hRH : ZetaZeros.RiemannHypothesis) :
+This is the T=x specialization of the full truncated explicit formula:
+  |ψ(x) - x + Σ_{|γ|≤T} Re(x^ρ/ρ)| ≤ C'·(√x·log T/√T + log x)
+which at T=x gives error ≤ C'·(log x + log x) = 2C'·log x.
+Unconditional (does not require RH). Reference: Montgomery-Vaughan §12.5. -/
+private theorem explicit_formula_psi_at_T_eq_x :
+    ∃ C : ℝ, ∀ x : ℝ, x ≥ 2 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * Real.log x := by
+  sorry
+
+/-- Truncated explicit formula: |ψ(x) - x + psiMainTerm(x)| ≤ (log x)².
+Proved from `explicit_formula_psi_at_T_eq_x` + growth bound. Unconditional. -/
+private lemma rh_psi_truncated_explicit_formula :
     ∀ᶠ x in atTop,
       |(chebyshevPsi x - x) + psiMainTerm x| ≤ (Real.log x) ^ 2 := by
-  classical
-  -- V3 hypothesis: truncated explicit formula for ψ under RH (sole analytic input)
-  letI inst : ExplicitFormulaPsiHyp_V3 := sorry
-  let C := inst.C
+  obtain ⟨C, hC⟩ := explicit_formula_psi_at_T_eq_x
   filter_upwards [eventually_ge_atTop (2 : ℝ),
-    (Filter.tendsto_atTop.1 Real.tendsto_log_atTop) (2 * |C|)] with x hx hxlog
-  -- Apply V3 with T = x
-  have hEF := inst.psi_approx x x hx hx
-  -- Simplify √x·log x / √x = log x
-  have hxpos : 0 < x := lt_of_lt_of_le (by norm_num : (0:ℝ) < 2) hx
-  have hsqrt_ne : Real.sqrt x ≠ 0 := ne_of_gt (Real.sqrt_pos.mpr hxpos)
-  have hcancel : Real.sqrt x * Real.log x / Real.sqrt x = Real.log x := by
-    field_simp
-  -- V3 formula: |DA.chebyshevPsi x - x - (-(Σ).re)| ≤ C * (√x·logx/√x + logx)
-  -- Simplify to: |DA.chebyshevPsi x - x + psiMainTerm x| ≤ 2*C*logx
-  have hEF' : |(Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) + psiMainTerm x|
-      ≤ 2 * C * Real.log x := by
-    have : Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
-        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re) =
-        (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) + psiMainTerm x := by
-      simp [psiMainTerm, sub_neg_eq_add]
-    rw [← this]
-    calc |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
-            (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)|
-        ≤ C * (Real.sqrt x * Real.log x / Real.sqrt x + Real.log x) := hEF
-      _ = C * (Real.log x + Real.log x) := by rw [hcancel]
-      _ = 2 * C * Real.log x := by ring
+    (Filter.tendsto_atTop.1 Real.tendsto_log_atTop) |C|] with x hx hxlog
   -- Bridge: both chebyshevPsi definitions sum vonMangoldt over {0,..,⌊x⌋}
   have h_bridge : chebyshevPsi x = Aristotle.DirichletPhaseAlignment.chebyshevPsi x := by
     simp only [chebyshevPsi, Chebyshev.psi, Aristotle.DirichletPhaseAlignment.chebyshevPsi]
@@ -96,15 +82,19 @@ private lemma rh_psi_truncated_explicit_formula
     have hinsert : Finset.range (⌊x⌋₊ + 1) = insert 0 (Finset.Ioc 0 ⌊x⌋₊) := by
       ext n; simp [Finset.mem_range]
     rw [hinsert, Finset.sum_insert h0, ArithmeticFunction.map_zero, zero_add]
-  -- Transfer the bound to root chebyshevPsi
-  have h_bound : |(chebyshevPsi x - x) + psiMainTerm x| ≤ 2 * C * Real.log x := by
-    rw [h_bridge]; exact hEF'
-  -- 2*C*log x ≤ (log x)² for log x ≥ 2|C|
-  have hlog_nn : 0 ≤ Real.log x := by
-    linarith [mul_nonneg (by norm_num : (0:ℝ) ≤ 2) (abs_nonneg C)]
+  -- Transfer explicit formula bound to root chebyshevPsi + psiMainTerm
+  have h_bound : |(chebyshevPsi x - x) + psiMainTerm x| ≤ C * Real.log x := by
+    have hEF := hC x hx
+    have h_eq : Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re) =
+        (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) + psiMainTerm x := by
+      simp [psiMainTerm, sub_neg_eq_add]
+    rw [h_bridge, ← h_eq]; exact hEF
+  -- C * log x ≤ (log x)² for log x ≥ |C|
+  have hlog_nn : 0 ≤ Real.log x := Real.log_nonneg (by linarith)
   calc |(chebyshevPsi x - x) + psiMainTerm x|
-      ≤ 2 * C * Real.log x := h_bound
-    _ ≤ 2 * |C| * Real.log x := by nlinarith [le_abs_self C]
+      ≤ C * Real.log x := h_bound
+    _ ≤ |C| * Real.log x := by nlinarith [le_abs_self C]
     _ ≤ Real.log x * Real.log x := by nlinarith
     _ = (Real.log x) ^ 2 := by ring
 
@@ -134,14 +124,13 @@ private lemma log_sq_eventually_le_sqrt_mul_lll :
 -- ============================================================
 
 /-- **Explicit formula error bound for ψ**.
-Under RH, psiMainTerm approximates x - ψ(x) with error ≤ √x · lll(x). -/
-theorem rh_psi_explicit_formula_error
-    (hRH : ZetaZeros.RiemannHypothesis) :
+psiMainTerm approximates x - ψ(x) with error ≤ √x · lll(x). Unconditional. -/
+theorem rh_psi_explicit_formula_error :
     ∃ psiMain : ℝ → ℝ,
       (∀ᶠ x in atTop,
         |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) := by
   refine ⟨psiMainTerm, ?_⟩
-  filter_upwards [rh_psi_truncated_explicit_formula hRH,
+  filter_upwards [rh_psi_truncated_explicit_formula,
     log_sq_eventually_le_sqrt_mul_lll] with x hx_trunc hx_dom
   exact le_trans hx_trunc hx_dom
 
@@ -183,7 +172,7 @@ private lemma rh_psi_minus_x_oscillates_large
   have hE : ∀ᶠ x in atTop,
       |(chebyshevPsi x - x) + psiMainTerm x| ≤ (Real.log x) ^ 2 ∧
         (Real.log x) ^ 2 ≤ Real.sqrt x * lll x :=
-    (rh_psi_truncated_explicit_formula hRH).and log_sq_eventually_le_sqrt_mul_lll
+    rh_psi_truncated_explicit_formula.and log_sq_eventually_le_sqrt_mul_lll
   rcases (Filter.eventually_atTop.1 hE) with ⟨X0, hX0⟩
   -- Main term oscillation
   rcases psiMainTerm_oscillates_large hRH with ⟨h_main_pos, h_main_neg⟩
@@ -263,7 +252,7 @@ The proof:
 3. Combine into the witness triple -/
 theorem rhPsiWitness_proved : RhPsiWitnessData := by
   intro hRH
-  obtain ⟨psiMain, h_error⟩ := rh_psi_explicit_formula_error hRH
+  obtain ⟨psiMain, h_error⟩ := rh_psi_explicit_formula_error
   obtain ⟨h_neg, h_pos⟩ := rh_psi_main_term_oscillates hRH psiMain h_error
   exact ⟨psiMain, h_error, h_neg, h_pos⟩
 
