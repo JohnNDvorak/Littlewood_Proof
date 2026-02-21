@@ -2,15 +2,20 @@
 RH-side ψ witness construction from explicit formula + zero-sum oscillation.
 
 Proves RhPsiWitnessData (Blocker 5) via:
-1. Truncated explicit formula error: under RH, ψ(x) ≈ x - psiMain(x)
-   with error eventually ≤ √x · lll(x)
-2. psiMain oscillation: psiMain is cofinally ≥ 2√x·lll(x) AND ≤ -2√x·lll(x)
+1. Truncated explicit formula error: under RH, ψ(x) ≈ x - psiMainTerm(x)
+   with error eventually ≤ (log x)² ≤ √x · lll(x)
+2. psiMainTerm oscillation: psiMainTerm is cofinally ≥ 4√x·lll(x) AND ≤ -4√x·lll(x)
+3. Assembly: ψ(x)-x = Ω±(3√x · lll(x))
 
 SORRY COUNT: 2 atomic sub-sorries
   (1) rh_psi_truncated_explicit_formula — truncated explicit formula for ψ under RH
-  (2) rh_psi_minus_x_oscillates_large — Dirichlet phase alignment (Littlewood omega)
+  (2) psiMainTerm_oscillates_large — Dirichlet phase alignment (Littlewood omega)
 
-PROVED: log_sq_eventually_le_sqrt_mul_lll — growth domination (pure real analysis)
+PROVED:
+  log_sq_eventually_le_sqrt_mul_lll — growth domination (pure real analysis)
+  rh_psi_minus_x_oscillates_large — from (1) + (2) + growth domination
+  rh_psi_explicit_formula_error — from (1) + growth domination
+  rh_psi_main_term_oscillates — from rh_psi_minus_x_oscillates_large + error bound
 
 Reference: Littlewood 1914; Montgomery-Vaughan §15.2.
 
@@ -18,6 +23,7 @@ Co-authored-by: Claude (Anthropic), GPT Pro (OpenAI)
 -/
 
 import Littlewood.Aristotle.Standalone.CombinedAtomsFromDeepBlockers
+import Littlewood.Aristotle.DirichletPhaseAlignment
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -30,22 +36,36 @@ namespace Aristotle.Standalone.RHPsiWitnessFromZeroSum
 open Filter Complex
 open GrowthDomination
 open Aristotle.Standalone.CombinedAtomsFromDeepBlockers
+open Aristotle.DirichletPhaseAlignment (ZerosBelow)
 
 -- ============================================================
--- 1. Helper lemmas for Sorry 1 (ψ explicit formula; sorries OK)
+-- 0. Concrete main term definition
+-- ============================================================
+
+/-- The explicit-formula main term for ψ, defined as the real part of the
+truncated zero sum Σ_{|γ|≤x} x^ρ/ρ. -/
+def psiMainTerm (x : ℝ) : ℝ :=
+  (∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re
+
+-- ============================================================
+-- 1. Sub-sorry 1: Truncated explicit formula (O(log²x) error)
 -- ============================================================
 
 /-- Truncated explicit formula under RH (analytic input).
-    Provides an explicit-formula main term `psiMain` with a classical `O(log²x)` error. -/
+Under RH with T = x, the explicit formula gives
+  |ψ(x) - x + Σ_{|γ|≤x} Re(x^ρ/ρ)| ≤ (log x)².
+
+This follows from ExplicitFormulaPsiHyp_V3 with T = x:
+  error ≤ C·(√x·log x/√x + log x) = 2C·log x ≤ (log x)² eventually. -/
 private lemma rh_psi_truncated_explicit_formula
     (hRH : ZetaZeros.RiemannHypothesis) :
-    ∃ psiMain : ℝ → ℝ,
-      (∀ᶠ x in atTop,
-        |(chebyshevPsi x - x) + psiMain x| ≤ (Real.log x) ^ 2) := by
-  -- Under RH, truncate the explicit formula at T = x:
-  --   ψ(x) = x - 2 * Σ_{|γ|≤x} Re(x^ρ / ρ) + O(log²x).
-  -- Define psiMain(x) := 2 * Σ Re(x^ρ/ρ).
+    ∀ᶠ x in atTop,
+      |(chebyshevPsi x - x) + psiMainTerm x| ≤ (Real.log x) ^ 2 := by
   sorry
+
+-- ============================================================
+-- 2. Growth domination (PROVED)
+-- ============================================================
 
 /-- Growth domination: `log²x ≤ √x · lll(x)` eventually.
 Proof: from `log_le_rpow_eventually (1/4)`, `(log x)^2 ≤ (x^{1/4})^2 = √x ≤ √x · lll(x)`. -/
@@ -65,39 +85,85 @@ private lemma log_sq_eventually_le_sqrt_mul_lll :
     _ ≤ Real.sqrt x * lll x := le_mul_of_one_le_right (Real.sqrt_nonneg x) hlll
 
 -- ============================================================
--- 2. Proof of rh_psi_explicit_formula_error (proved from sub-sorries 1+2)
+-- 3. Proof of rh_psi_explicit_formula_error (proved from 1 + growth dom)
 -- ============================================================
 
 /-- **Explicit formula error bound for ψ**.
-Under RH, there exists a zero-sum main term function with error ≤ √x · lll(x). -/
+Under RH, psiMainTerm approximates x - ψ(x) with error ≤ √x · lll(x). -/
 theorem rh_psi_explicit_formula_error
     (hRH : ZetaZeros.RiemannHypothesis) :
     ∃ psiMain : ℝ → ℝ,
       (∀ᶠ x in atTop,
         |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) := by
-  obtain ⟨psiMain, h_trunc⟩ := rh_psi_truncated_explicit_formula hRH
-  refine ⟨psiMain, ?_⟩
-  filter_upwards [h_trunc, log_sq_eventually_le_sqrt_mul_lll] with x hx_trunc hx_dom
+  refine ⟨psiMainTerm, ?_⟩
+  filter_upwards [rh_psi_truncated_explicit_formula hRH,
+    log_sq_eventually_le_sqrt_mul_lll] with x hx_trunc hx_dom
   exact le_trans hx_trunc hx_dom
 
 -- ============================================================
--- 3. Sub-sorry 3: Dirichlet alignment oscillation
+-- 4. Sub-sorry 2: psiMainTerm oscillation (Dirichlet phase alignment)
 -- ============================================================
 
-/-- Deep input: under RH, `ψ(x) - x` has cofinal oscillations of size
-`Ω±(√x · lll(x))`. We package with constant `3` so that the `±2` conclusions
-survive an additional `±1` error term. -/
+/-- The zero-sum main term Σ Re(x^ρ/ρ) oscillates cofinally with amplitude
+±4√x·lll(x). This follows from Dirichlet simultaneous approximation on
+zero phases (`exists_large_x_phases_aligned_finset`) combined with the
+lower bound `bound_real_part_of_sum_aligned` and the divergence of
+Σ Re(1/ρ) (`HardyCriticalLineZerosHyp_V3.sum_re_inv_rho_diverges`).
+The constant 4 provides margin for absorbing the O(log²x) error. -/
+private lemma psiMainTerm_oscillates_large
+    (hRH : ZetaZeros.RiemannHypothesis) :
+    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      psiMainTerm x ≥ 4 * (Real.sqrt x * lll x)) ∧
+    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x))) := by
+  -- Dirichlet phase alignment on zeros in the explicit formula.
+  sorry
+
+-- ============================================================
+-- 5. Proof of rh_psi_minus_x_oscillates_large (PROVED from 1+4+growth dom)
+-- ============================================================
+
+/-- **ψ(x)-x oscillation**. Under RH, `ψ(x) - x` has cofinal oscillations
+of size Ω±(3√x · lll(x)). Proved by combining:
+  (1) truncated explicit formula error O(log²x) from sub-sorry 1,
+  (2) psiMainTerm oscillation ±4√x·lll(x) from sub-sorry 2,
+  (3) growth domination log²x ≤ √x·lll(x). -/
 private lemma rh_psi_minus_x_oscillates_large
     (hRH : ZetaZeros.RiemannHypothesis) :
     (∀ X : ℝ, ∃ x : ℝ, X < x ∧
       (chebyshevPsi x - x) ≤ -(3 * (Real.sqrt x * lll x))) ∧
     (∀ X : ℝ, ∃ x : ℝ, X < x ∧
       3 * (Real.sqrt x * lll x) ≤ (chebyshevPsi x - x)) := by
-  -- Dirichlet phase alignment on zeros in the explicit formula (Littlewood-style omega).
-  sorry
+  -- Combine error bound and growth domination into single eventually
+  have hE : ∀ᶠ x in atTop,
+      |(chebyshevPsi x - x) + psiMainTerm x| ≤ (Real.log x) ^ 2 ∧
+        (Real.log x) ^ 2 ≤ Real.sqrt x * lll x :=
+    (rh_psi_truncated_explicit_formula hRH).and log_sq_eventually_le_sqrt_mul_lll
+  rcases (Filter.eventually_atTop.1 hE) with ⟨X0, hX0⟩
+  -- Main term oscillation
+  rcases psiMainTerm_oscillates_large hRH with ⟨h_main_pos, h_main_neg⟩
+  constructor
+  · -- Large positive psiMainTerm ⇒ large negative ψ(x)-x
+    intro X
+    rcases h_main_pos (max X X0) with ⟨z, hYz, hz_main⟩
+    have hzX : X < z := lt_of_le_of_lt (le_max_left _ _) hYz
+    have hzX0 : X0 ≤ z := le_trans (le_max_right _ _) (le_of_lt hYz)
+    obtain ⟨h_err_z, h_log_z⟩ := hX0 z hzX0
+    have h_upper : (chebyshevPsi z - z) + psiMainTerm z ≤ (Real.log z) ^ 2 :=
+      (abs_le.mp h_err_z).2
+    exact ⟨z, hzX, by nlinarith⟩
+  · -- Large negative psiMainTerm ⇒ large positive ψ(x)-x
+    intro X
+    rcases h_main_neg (max X X0) with ⟨z, hYz, hz_main⟩
+    have hzX : X < z := lt_of_le_of_lt (le_max_left _ _) hYz
+    have hzX0 : X0 ≤ z := le_trans (le_max_right _ _) (le_of_lt hYz)
+    obtain ⟨h_err_z, h_log_z⟩ := hX0 z hzX0
+    have h_lower : -((Real.log z) ^ 2) ≤ (chebyshevPsi z - z) + psiMainTerm z :=
+      (abs_le.mp h_err_z).1
+    exact ⟨z, hzX, by nlinarith⟩
 
 -- ============================================================
--- 4. Proof of rh_psi_main_term_oscillates (proved from sub-sorry 3 + error bound)
+-- 6. Proof of rh_psi_main_term_oscillates (unchanged)
 -- ============================================================
 
 /-- **psiMain oscillation**.
