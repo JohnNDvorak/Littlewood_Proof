@@ -89,18 +89,24 @@ This follows from:
 The HasSum F(1+t) = ∑ c_j t^j follows directly from AnalyticAt via
 HasFPowerSeriesOnBall.hasSum. -/
 
-/-- **Taylor bound from non-negative series**: the Taylor coefficients of F at 1
-dominate the finite binomial inner sums from B_k ≥ 0.
+/-- Taylor coefficients of F at 1 are non-negative and dominate the binomial sums.
 
-TRUE: from term-by-term differentiation + MCT + analyticity.
+TRUE: c_j = F^{(j)}(1)/j!. For w < 1: F^{(j)}(w) = j! ∑' C(k,j) B_k w^{k-j} ≥ 0
+(term-by-term differentiation of non-negative power series). Taking w→1⁻ by
+continuity of iteratedDeriv from AnalyticAt gives c_j ≥ 0. The domination
+∑_{k<N} B_k C(k,j) ≤ c_j follows from partial sums ≤ tsum ≤ lim = c_j. -/
+private lemma taylor_coeff_nonneg_and_dominates
+    (B : ℕ → ℝ) (hB : ∀ k, 0 ≤ B k)
+    (hB_sum : Summable B)
+    (F : ℝ → ℝ)
+    (hF_hasSum : ∀ w, 0 ≤ w → w < 1 → HasSum (fun k => B k * w ^ k) (F w))
+    (hF_anal : AnalyticAt ℝ F 1)
+    (j : ℕ) :
+    0 ≤ iteratedDeriv j F 1 / (j.factorial : ℝ) ∧
+    ∀ N, ∑ k ∈ range N, B k * (Nat.choose k j : ℝ) ≤
+      iteratedDeriv j F 1 / (j.factorial : ℝ) := by
+  sorry
 
-Proof sketch: For w ∈ (0,1), F(w) = ∑' B_k w^k. Term-by-term differentiation gives
-F^{(j)}(w) = j! ∑' C(k,j) B_k w^{k-j} ≥ 0 (non-neg terms). By continuity of
-iteratedDeriv j F at 1 (from AnalyticAt): c_j = F^{(j)}(1)/j! ≥ 0. And
-∑_{k<N} B_k C(k,j) = lim_{w→1⁻} ∑_{k<N} B_k C(k,j) w^{k-j}
-                     ≤ lim_{w→1⁻} ∑' B_k C(k,j) w^{k-j} = c_j.
-
-The HasSum property follows from AnalyticAt.hasFPowerSeriesAt + ofScalars evaluation. -/
 private theorem taylor_bound_from_nonneg_series
     (B : ℕ → ℝ) (hB : ∀ k, 0 ≤ B k)
     (hB_sum : Summable B)
@@ -111,7 +117,32 @@ private theorem taylor_bound_from_nonneg_series
       (∀ j, 0 ≤ c j) ∧
       (∀ j N, ∑ k ∈ range N, B k * (Nat.choose k j : ℝ) ≤ c j) ∧
       (∀ t, 0 ≤ t → t < δ → HasSum (fun j => c j * t ^ j) (F (1 + t))) := by
-  sorry
+  -- Define c_j = iteratedDeriv j F 1 / j!
+  set c := fun j => iteratedDeriv j F 1 / (j.factorial : ℝ) with hc_def
+  -- Get HasFPowerSeriesOnBall from AnalyticAt
+  obtain ⟨r, hball⟩ := hF_anal.hasFPowerSeriesAt
+  have hr_pos := hball.r_pos
+  -- Pick a finite δ with ENNReal.ofReal δ ≤ r
+  obtain ⟨δ, hδ_pos, hδ_le⟩ : ∃ δ : ℝ, 0 < δ ∧ ENNReal.ofReal δ ≤ r := by
+    by_cases hr_top : r = ⊤
+    · exact ⟨1, one_pos, by rw [hr_top]; exact le_top⟩
+    · refine ⟨r.toReal, ENNReal.toReal_pos (pos_iff_ne_zero.mp hr_pos) hr_top, ?_⟩
+      exact le_of_eq (ENNReal.ofReal_toReal hr_top)
+  refine ⟨c, δ, hδ_pos, ?_, ?_, ?_⟩
+  · -- c_j ≥ 0
+    intro j
+    exact (taylor_coeff_nonneg_and_dominates B hB hB_sum F hF_hasSum hF_anal j).1
+  · -- Domination
+    intro j N
+    exact (taylor_coeff_nonneg_and_dominates B hB hB_sum F hF_hasSum hF_anal j).2 N
+  · -- HasSum(c_j t^j, F(1+t))
+    intro t ht htδ
+    have ht_mem : t ∈ EMetric.ball (0 : ℝ) r := by
+      rw [EMetric.mem_ball, edist_dist, dist_zero_right, Real.norm_eq_abs, abs_of_nonneg ht]
+      exact lt_of_lt_of_le ((ENNReal.ofReal_lt_ofReal_iff_of_nonneg ht).mpr htδ) hδ_le
+    have hsum := hball.hasSum ht_mem
+    simp_rw [FormalMultilinearSeries.ofScalars_apply_eq, smul_eq_mul] at hsum
+    exact hsum
 
 /-! ## Partial sum bound past w = 1
 
