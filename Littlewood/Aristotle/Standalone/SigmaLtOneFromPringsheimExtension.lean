@@ -16,9 +16,9 @@ The proof uses:
 4. Continuous extension F on [0, W]: defined as tsum (using Summable from step 2).
 5. Scaled partial sum bound → summable_of_sum_range_le for downstream σ₀.
 
-SORRY COUNT: 1 (anticoeff_complex_extension_on_disk — TRUE,
-  from Tonelli + witnessG formula ID + ℂ-analytic extension + identity theorem.
-  The Pringsheim convergence step is PROVED via pringsheim_convergence_at_radius.)
+SORRY COUNT: 1 (anticoeff_summable_at_W_gt_one — TRUE,
+  convergence radius of anti-coefficient series is ≥ 2-α by Pringsheim contradiction.
+  Proof: Tonelli + witnessG formula ID + identity theorem + Pringsheim singularity.)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -214,42 +214,24 @@ private theorem correctedFormula_continuousOn_real_w
       (g := correctedFormula α C σ_sign) h_anal.continuousAt h_inner
   exact (Complex.continuous_re.continuousAt.comp h_full).continuousWithinAt
 
-/-- **Complex analytic extension of the anti-coefficient power series.**
-
-TRUE from: Tonelli exchange on [0,1) identifies ∑ B_k w^k = ∫ g(t)t^{w-3} dt.
-The witnessG/correctedFormula chain (witnessG_eq_formula + landau_formula_eq_original)
-identifies this integral with correctedFormula(2-w)/(2-w) minus a finite correction.
-Since correctedFormula is ℂ-analytic on {Re > α} (landau_formula_analyticAt_real),
-the function f(z) := correctedFormula(2-z)/(2-z) - ∫_1^{T₀} g(t)·(t:ℂ)^{z-3} dt
-extends the power series to the complex disk B(0, 2-α) ⊃ B(0, W).
-ContinuousAt at W follows from analyticity (W < 2-α).
-
-Proof route:
-1. f(z) is ℂ-analytic on {Re(z) < 2-α}: correctedFormula analytic, finite integral entire.
-2. For |z| < 1: HasSum((B_k:ℂ)z^k, f(z)) from Tonelli + witnessG identity + ℂ lift.
-3. For 1 ≤ |z| < 2-α: identity theorem extends HasSum from B(0,1) ∩ ℝ to B(0,2-α).
-4. ContinuousAt f (↑W : ℂ): analytic → continuous.
-
-References: Perron 1908; Titchmarsh §1.8; Landau 1905. -/
-private theorem anticoeff_complex_extension_on_disk
-    (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
-    (hg_nn : ∀ t, T₀ ≤ t → 0 ≤ g t)
-    (α C σ_sign : ℝ) (hα : 1 / 2 < α)
-    (hC : 0 < C) (hα1 : α < 1)
-    (hσ : σ_sign = 1 ∨ σ_sign = -1)
-    (hbound : ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α)
-    (hg_def : g = PringsheimPsiAtom.genFun C α σ_sign)
-    (W : ℝ) (hW_bound : W < 2 - α) :
-    ∃ f : ℂ → ℂ,
-      (∀ z : ℂ, ‖z‖ < W →
-        HasSum (fun k => (↑(antiCoeff g T₀ 2 k) : ℂ) * z ^ k) (f z)) ∧
-      ContinuousAt f (↑W : ℂ) := by
-  sorry
-
 /-- **Direct summability at W > 1 via Pringsheim extension.**
 
-From the complex extension (anticoeff_complex_extension_on_disk) and the proved
-pringsheim_convergence_at_radius theorem (0 sorries in PringsheimTheorem.lean). -/
+TRUE: The convergence radius of the anti-coefficient power series ∑ B_k w^k
+is at least 2-α (distance from center σ=2 to the pole at σ=α).
+
+Proof outline (Pringsheim contradiction on convergence radius):
+1. B_k ≥ 0, Summable(B_k) → convergence radius R ≥ 1.
+2. For w ∈ [0,1): Tonelli gives ∑' B_k w^k = ∫ g(t)t^{w-3} dt.
+   witnessG/correctedFormula chain identifies this with correctedFormula(2-w)/(2-w).
+3. Assume R < 2-α. Define g(z) = ∑'(B_k:ℂ) z^k (analytic on B(0,R)).
+   By identity theorem: g = correctedFormula-based on B(0,R).
+   correctedFormula is ℂ-analytic at real R (since R < 2-α → 2-R > α).
+   So g extends analytically past R.
+4. By Pringsheim's theorem: for non-negative coefficients, the convergence radius
+   is a singularity — but g is analytic at R. Contradiction.
+5. So R ≥ 2-α > W, hence Summable(B_k W^k).
+
+References: Pringsheim 1893; Landau 1905; Titchmarsh §1.8. -/
 private theorem anticoeff_summable_at_W_gt_one
     (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
     (hg_nn : ∀ t, T₀ ≤ t → 0 ≤ g t)
@@ -260,12 +242,7 @@ private theorem anticoeff_summable_at_W_gt_one
     (hg_def : g = PringsheimPsiAtom.genFun C α σ_sign)
     (W : ℝ) (hW_bound : W < 2 - α) (hW1 : 1 < W) :
     Summable (fun k => antiCoeff g T₀ 2 k * W ^ k) := by
-  obtain ⟨f, hf_sum, hf_cont⟩ := anticoeff_complex_extension_on_disk
-    g T₀ hT₀ hg_nn α C σ_sign hα hC hα1 hσ hbound hg_def W hW_bound
-  exact Aristotle.PringsheimTheorem.pringsheim_convergence_at_radius
-    (fun k => antiCoeff g T₀ 2 k)
-    (antiCoeff_nonneg g T₀ 2 hT₀ hg_nn)
-    W (by linarith) f hf_sum hf_cont
+  sorry
 
 /-- **Continuous sum function for anti-coefficient series on the Pringsheim disk**.
 
