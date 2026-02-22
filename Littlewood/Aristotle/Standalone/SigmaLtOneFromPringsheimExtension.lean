@@ -26,6 +26,7 @@ Co-authored-by: Claude (Anthropic)
 import Littlewood.Aristotle.Standalone.LandauPringsheimRealLine
 import Littlewood.Aristotle.Standalone.LandauSigmaLessThanOneGenFunInstantiation
 import Littlewood.Aristotle.Standalone.PringsheimBinomialRearrangement
+import Littlewood.Aristotle.Standalone.PringsheimRealBootstrap
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -214,24 +215,58 @@ private theorem correctedFormula_continuousOn_real_w
       (g := correctedFormula α C σ_sign) h_anal.continuousAt h_inner
   exact (Complex.continuous_re.continuousAt.comp h_full).continuousWithinAt
 
-/-- **Direct summability at W > 1 via Pringsheim extension.**
+/-! ### Direct summability at W > 1 via Pringsheim extension
 
 TRUE: The convergence radius of the anti-coefficient power series ∑ B_k w^k
 is at least 2-α (distance from center σ=2 to the pole at σ=α).
 
-Proof outline (Pringsheim contradiction on convergence radius):
-1. B_k ≥ 0, Summable(B_k) → convergence radius R ≥ 1.
-2. For w ∈ [0,1): Tonelli gives ∑' B_k w^k = ∫ g(t)t^{w-3} dt.
-   witnessG/correctedFormula chain identifies this with correctedFormula(2-w)/(2-w).
-3. Assume R < 2-α. Define g(z) = ∑'(B_k:ℂ) z^k (analytic on B(0,R)).
-   By identity theorem: g = correctedFormula-based on B(0,R).
-   correctedFormula is ℂ-analytic at real R (since R < 2-α → 2-R > α).
-   So g extends analytically past R.
-4. By Pringsheim's theorem: for non-negative coefficients, the convergence radius
-   is a singularity — but g is analytic at R. Contradiction.
-5. So R ≥ 2-α > W, hence Summable(B_k W^k).
+Proof: Tonelli identifies ∑' B_k w^k with correctedFormula expression on [0,1).
+correctedFormula is real-analytic on [0, 2-α). Real Pringsheim bootstrap extends
+summability from w=1 to w=W. References: Pringsheim 1893; Landau 1905. -/
 
-References: Pringsheim 1893; Landau 1905; Titchmarsh §1.8. -/
+/-- The correctedFormula-based function is real-analytic at any w < 2-α.
+This follows from `landau_formula_analyticAt_real` and composition with w ↦ 2-w. -/
+private lemma correctedFormula_analyticAt_real_w
+    (α C σ_sign : ℝ) (hα : 1 / 2 < α)
+    (w : ℝ) (hw : w < 2 - α) :
+    AnalyticAt ℝ (fun w : ℝ => (correctedFormula α C σ_sign (↑(2 - w))).re) w := by
+  have hσ_real : α < 2 - w := by linarith
+  -- correctedFormula is ℂ-analytic at (2-w : ℂ)
+  have h_anal_C : AnalyticAt ℂ (correctedFormula α C σ_sign) (↑(2 - w) : ℂ) := by
+    simpa [correctedFormula] using
+      Aristotle.ZetaPoleCancellation.landau_formula_analyticAt_real α hα C σ_sign (2 - w) hσ_real
+  -- f(z) = correctedFormula(2 - z) is ℂ-analytic at (w : ℂ)
+  have h_comp : AnalyticAt ℂ (fun z : ℂ => correctedFormula α C σ_sign (2 - z)) (↑w) := by
+    have h_sub : AnalyticAt ℂ (fun z : ℂ => (2 : ℂ) - z) (↑w) :=
+      analyticAt_const.sub analyticAt_id
+    exact h_anal_C.comp_of_eq h_sub (by push_cast; ring)
+  -- Apply re_ofReal to get ℝ-analyticity
+  have h_re := h_comp.re_ofReal
+  -- Match function: (2 : ℂ) - ↑x = ↑(2 - x)
+  convert h_re using 1
+  ext x; congr 1; push_cast; ring
+
+/-- **Tonelli integral is real-analytic on [0, 2-α).**
+
+The function F(w) = ∫_{T₀}^∞ g(t) t^{w-3} dt extends to a real-analytic function
+on [0, 2-α). From Tonelli: HasSum(B_k w^k, F(w)) for w < 1.
+From witnessG/correctedFormula: F extends analytically past w=1.
+
+TRUE: From witnessG(s) = s · ∫_1^∞ g(t) t^{-(s+1)} dt = correctedFormula(s) for Re(s)>1.
+So F(w) = correctedFormula(2-w)/(2-w) - ∫_1^{T₀} g(t) t^{w-3} dt, which is
+real-analytic on {w : 2-w > α} = {w < 2-α}. -/
+private theorem tonelli_sum_analyticAt
+    (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
+    (hg_nn : ∀ t, T₀ ≤ t → 0 ≤ g t)
+    (α C σ_sign : ℝ) (hα : 1 / 2 < α)
+    (hC : 0 < C) (hα1 : α < 1)
+    (hσ : σ_sign = 1 ∨ σ_sign = -1)
+    (hbound : ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α)
+    (hg_def : g = PringsheimPsiAtom.genFun C α σ_sign)
+    (w : ℝ) (hw : 0 ≤ w) (hwα : w < 2 - α) :
+    AnalyticAt ℝ (fun w => ∫ t in Ioi T₀, g t * t ^ (w - 3)) w := by
+  sorry
+
 private theorem anticoeff_summable_at_W_gt_one
     (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
     (hg_nn : ∀ t, T₀ ≤ t → 0 ≤ g t)
@@ -242,7 +277,29 @@ private theorem anticoeff_summable_at_W_gt_one
     (hg_def : g = PringsheimPsiAtom.genFun C α σ_sign)
     (W : ℝ) (hW_bound : W < 2 - α) (hW1 : 1 < W) :
     Summable (fun k => antiCoeff g T₀ 2 k * W ^ k) := by
-  sorry
+  set B := fun k => antiCoeff g T₀ 2 k
+  -- Summable(B_k) from MCT
+  have hB_sum : Summable B := by
+    show Summable (fun k => antiCoeff g T₀ 2 k)
+    rw [hg_def]
+    exact anticoeff_summable_at_one C hC α hα hα1 σ_sign hσ hbound T₀ hT₀
+      (by rw [← hg_def]; exact hg_nn)
+  have hB_nn : ∀ k, 0 ≤ B k := antiCoeff_nonneg g T₀ 2 hT₀ hg_nn
+  -- Define F as the Tonelli integral (real-analytic on [0, 2-α) by tonelli_sum_analyticAt)
+  set F := fun w : ℝ => ∫ t in Ioi T₀, g t * t ^ (w - 3)
+  -- F is real-analytic on [0, W]
+  have hF_anal : ∀ w, 0 ≤ w → w ≤ W → AnalyticAt ℝ F w := by
+    intro w hw hw_le
+    exact tonelli_sum_analyticAt g T₀ hT₀ hg_nn α C σ_sign hα hC hα1 hσ hbound hg_def
+      w hw (lt_of_le_of_lt hw_le hW_bound)
+  -- HasSum(B_k w^k, F(w)) for w ∈ [0, 1) — from Tonelli exchange
+  have hF_hasSum : ∀ w, 0 ≤ w → w < 1 →
+      HasSum (fun k => B k * w ^ k) (F w) := by
+    intro w hw hw1
+    exact tonelli_hasSum_lt_one g T₀ hT₀ hg_nn α C σ_sign hα hα1 hC hσ hbound hg_def w hw hw1
+  -- Apply pringsheim_real_extension
+  exact Aristotle.Standalone.PringsheimRealBootstrap.pringsheim_real_extension
+    B hB_nn hB_sum F hF_hasSum W hW1 hF_anal
 
 /-- **Continuous sum function for anti-coefficient series on the Pringsheim disk**.
 

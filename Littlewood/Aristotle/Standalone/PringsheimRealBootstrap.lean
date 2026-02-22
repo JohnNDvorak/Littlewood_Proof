@@ -89,11 +89,23 @@ This follows from:
 The HasSum F(1+t) = ∑ c_j t^j follows directly from AnalyticAt via
 HasFPowerSeriesOnBall.hasSum. -/
 
-/-- **Taylor bound from non-negative series**: the Taylor coefficients of F at 1
-dominate the finite binomial inner sums from B_k ≥ 0.
+/-- Partial sums of B_k * C(k,j) are bounded by the j-th derivative limit.
 
-TRUE: from term-by-term differentiation + MCT + analyticity.
-See the docstring above for the full proof sketch. -/
+TRUE: from term-by-term differentiation + MCT + analyticity. -/
+private lemma binomial_partial_sum_le_of_hasSum_deriv
+    (B : ℕ → ℝ) (hB : ∀ k, 0 ≤ B k)
+    (hB_sum : Summable B)
+    (F : ℝ → ℝ)
+    (hF_hasSum : ∀ w, 0 ≤ w → w < 1 → HasSum (fun k => B k * w ^ k) (F w))
+    (hF_anal : AnalyticAt ℝ F 1)
+    (j : ℕ) :
+    -- The j-th Taylor coefficient c_j = iteratedDeriv j F 1 / j! satisfies
+    -- c_j ≥ 0 and ∑_{k<N} B_k * C(k,j) ≤ c_j for all N.
+    0 ≤ iteratedDeriv j F 1 / (j.factorial : ℝ) ∧
+    ∀ N, ∑ k ∈ range N, B k * (Nat.choose k j : ℝ) ≤
+      iteratedDeriv j F 1 / (j.factorial : ℝ) := by
+  sorry
+
 private theorem taylor_bound_from_nonneg_series
     (B : ℕ → ℝ) (hB : ∀ k, 0 ≤ B k)
     (hB_sum : Summable B)
@@ -104,7 +116,29 @@ private theorem taylor_bound_from_nonneg_series
       (∀ j, 0 ≤ c j) ∧
       (∀ j N, ∑ k ∈ range N, B k * (Nat.choose k j : ℝ) ≤ c j) ∧
       (∀ t, 0 ≤ t → t < δ → HasSum (fun j => c j * t ^ j) (F (1 + t))) := by
-  sorry
+  -- Define c_j = iteratedDeriv j F 1 / j!
+  set c := fun j => iteratedDeriv j F 1 / (j.factorial : ℝ) with hc_def
+  -- Get HasFPowerSeriesOnBall from AnalyticAt
+  obtain ⟨r, hball⟩ := hF_anal.hasFPowerSeriesAt
+  have hr_pos := hball.r_pos
+  -- Pick a finite δ with ENNReal.ofReal δ ≤ r
+  obtain ⟨δ, hδ_pos, hδ_le⟩ : ∃ δ : ℝ, 0 < δ ∧ ENNReal.ofReal δ ≤ r := by
+    by_cases hr_top : r = ⊤
+    · exact ⟨1, one_pos, by rw [hr_top]; exact le_top⟩
+    · refine ⟨r.toReal, ENNReal.toReal_pos (pos_iff_ne_zero.mp hr_pos) hr_top, ?_⟩
+      exact le_of_eq (ENNReal.ofReal_toReal hr_top)
+  refine ⟨c, δ, hδ_pos, ?_, ?_, ?_⟩
+  · intro j
+    exact (binomial_partial_sum_le_of_hasSum_deriv B hB hB_sum F hF_hasSum hF_anal j).1
+  · intro j N
+    exact (binomial_partial_sum_le_of_hasSum_deriv B hB hB_sum F hF_hasSum hF_anal j).2 N
+  · intro t ht htδ
+    have ht_mem : t ∈ EMetric.ball (0 : ℝ) r := by
+      rw [EMetric.mem_ball, edist_dist, dist_zero_right, Real.norm_eq_abs, abs_of_nonneg ht]
+      exact lt_of_lt_of_le ((ENNReal.ofReal_lt_ofReal_iff_of_nonneg ht).mpr htδ) hδ_le
+    have hsum := hball.hasSum ht_mem
+    simp_rw [FormalMultilinearSeries.ofScalars_apply_eq, smul_eq_mul] at hsum
+    exact hsum
 
 /-! ## Partial sum bound past w = 1
 
@@ -163,11 +197,14 @@ The proof uses contradiction: if R := sup{r : Summable(B_k r^k)} < W,
 then partial_sum_bound_past_one at w = R extends summability past R,
 contradicting the definition of R. -/
 
-/-- **Pringsheim real extension**: For B_k ≥ 0 with Summable(B_k),
-if F is real-analytic on [0, W] and F = Σ' B_k w^k on [0, 1),
-then Summable(B_k W^k).
+/-- Helper: from partial sum bound, derive Summable. -/
+private lemma summable_from_partial_sum_bound
+    (B : ℕ → ℝ) (hB : ∀ k, 0 ≤ B k)
+    (w : ℝ) (hw : 0 ≤ w)
+    (M : ℝ) (hM : ∀ N, ∑ k ∈ range N, B k * w ^ k ≤ M) :
+    Summable (fun k => B k * w ^ k) :=
+  summable_of_sum_range_le (fun k => mul_nonneg (hB k) (pow_nonneg hw k)) hM
 
-The proof uses partial_sum_bound_past_one + uniform bound on [0, W]. -/
 theorem pringsheim_real_extension
     (B : ℕ → ℝ) (hB : ∀ k, 0 ≤ B k)
     (hB_sum : Summable B)
@@ -176,23 +213,20 @@ theorem pringsheim_real_extension
     (W : ℝ) (hW : 1 < W)
     (hF_anal : ∀ w, 0 ≤ w → w ≤ W → AnalyticAt ℝ F w) :
     Summable (fun k => B k * W ^ k) := by
-  -- Step 1: Get the Taylor radius at w = 1
-  have hF_anal_one : AnalyticAt ℝ F 1 := hF_anal 1 (by linarith) (by linarith)
-  obtain ⟨δ₁, hδ₁_pos, hδ₁_bound⟩ := partial_sum_bound_past_one B hB hB_sum F hF_hasSum
-    hF_anal_one
-  -- Step 2: F is continuous on [0, W] (from analyticity), hence bounded
+  -- F is continuous on [0, W] (from analyticity), hence bounded
   have hF_contOn : ContinuousOn F (Icc 0 W) := by
     intro w hw
     exact (hF_anal w hw.1 hw.2).continuousAt.continuousWithinAt
-  obtain ⟨M_bound, hM⟩ := IsCompact.exists_bound_of_continuousOn isCompact_Icc hF_contOn
-  -- Step 3: Partial sums at any w ∈ [1, min(1+δ₁, W)] are bounded
-  -- For w ∈ [0, 1): from HasSum
-  -- For w ∈ [1, 1+δ₁): from partial_sum_bound_past_one
-  -- Use summable_of_sum_range_le for the overall bound
-  -- Partial sums bounded → Summable.
-  -- The bound ∀ N, ∑_{k<N} B_k W^k ≤ M follows from
-  -- partial_sum_bound_past_one at center 1 + iteration via rescaling.
-  -- Full proof: contradiction on R = sup{r : Summable(B_k r^k)}.
+  obtain ⟨M, hM_bound⟩ := IsCompact.exists_bound_of_continuousOn isCompact_Icc hF_contOn
+  -- partial_sum_bound_past_one at center w₀ extends summability by δ(w₀).
+  -- Each w₀ ∈ [0, W] gets a radius δ(w₀) > 0. By compactness, finitely many cover.
+  -- But implementing compactness in Lean is heavy. Instead use sSup contradiction.
+  --
+  -- Let S = {r ≥ 0 : Summable(B_k r^k)}. We know 1 ∈ S (from hB_sum).
+  -- Claim: W ∈ S.
+  -- Proof by contradiction: suppose R = sSup(S ∩ [0, W]) < W.
+  -- Then R ≥ 1 and F is analytic at R. partial_sum_bound_past_one at R
+  -- gives Summable at R + ε, contradicting R = sSup.
   sorry
 
 end Aristotle.Standalone.PringsheimRealBootstrap
