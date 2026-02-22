@@ -7,15 +7,17 @@ Summable(B_k (2-σ₀)^k) for σ₀ > α.
 
 The proof uses:
 1. Tonelli exchange for w < 1: HasSum(B_k w^k, ∫ g(t)t^{w-3} dt) — PROVED.
-2. For W > 1: Pringsheim's convergence theorem (pringsheim_convergence_at_radius)
-   reduces Summable(B_k W^k) to ∃ complex analytic function with HasSum on B(0,W).
-3. The complex HasSum follows from correctedFormula(2-z) providing analytic extension
-   to {Re(z) < 2-α} ⊃ B(0, W), identified with the series on [0,1) via Tonelli.
+2. For W > 1: real Pringsheim bootstrap.
+   correctedFormula(2-w) is real-analytic on [0, 2-α) (landau_formula_analyticAt_real).
+   Tonelli + witnessG_eq_formula identify tsum(B_k w^k) with correctedFormula on [0,1).
+   Non-negative Taylor coefficients (from B_k ≥ 0) + binomial rearrangement
+   (sum_range_mul_add_pow_le_of_inner_le) bootstrap partial sum bounds past w=1.
+   summable_of_sum_range_le then gives Summable(B_k W^k).
 4. Continuous extension F on [0, W]: defined as tsum (using Summable from step 2).
 5. Scaled partial sum bound → summable_of_sum_range_le for downstream σ₀.
 
-SORRY COUNT: 1 (complex HasSum extension in anticoeff_has_continuous_sum_on_disk — TRUE,
-  from Tonelli exchange on [0,1) + correctedFormula analyticity + identity theorem)
+SORRY COUNT: 1 (Summable at W > 1 in anticoeff_has_continuous_sum_on_disk — TRUE,
+  from real Pringsheim bootstrap: Tonelli + identity theorem + non-neg Taylor + binomial)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -23,7 +25,6 @@ Co-authored-by: Claude (Anthropic)
 import Littlewood.Aristotle.Standalone.LandauPringsheimRealLine
 import Littlewood.Aristotle.Standalone.LandauSigmaLessThanOneGenFunInstantiation
 import Littlewood.Aristotle.Standalone.PringsheimBinomialRearrangement
-import Littlewood.Aristotle.PringsheimTheorem
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -217,10 +218,9 @@ private theorem correctedFormula_continuousOn_real_w
 There exists F continuous on [0, W] such that HasSum(B_k w^k, F(w)) for w ∈ [0, W).
 
 For W ≤ 1: direct comparison with Summable(B_k).
-For W > 1: Pringsheim's convergence theorem (`pringsheim_convergence_at_radius`)
-gives Summable(B_k W^k) from a complex analytic function with HasSum on B(0, W).
-The sorry provides this function via correctedFormula(2-z)/(2-z) identification.
-ContinuousOn then follows from Weierstrass M-test with the summable majorant B_k W^k. -/
+For W > 1: real Pringsheim bootstrap gives Summable(B_k W^k) via
+correctedFormula identification on [0,1) + non-negative Taylor coefficient
+bootstrap past w=1. ContinuousOn then follows from Weierstrass M-test. -/
 private theorem anticoeff_has_continuous_sum_on_disk
     (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
     (hg_nn : ∀ t, T₀ ≤ t → 0 ≤ g t)
@@ -255,19 +255,13 @@ private theorem anticoeff_has_continuous_sum_on_disk
               mul_le_mul_of_nonneg_left (pow_le_one₀ hW_pos hW1) (hB_nn k)
             _ = B k := mul_one _)
         hB_sum
-    · -- W > 1: Apply Pringsheim's convergence theorem.
-      -- The power series ∑ (B_k : ℂ)·z^k extends analytically to B(0, 2-α) ⊃ B(0, W):
-      -- (1) Tonelli exchange identifies the series with ∫ g(t)t^{w-3} dt on [0,1)
-      -- (2) witnessG_eq_formula + correctedFormula give analytic extension to {Re(z)<2-α}
-      -- (3) Identity theorem: series = extension on B(0,1), hence on B(0, 2-α)
-      -- pringsheim_convergence_at_radius then gives Summable at W.
+    · -- W > 1: Real Pringsheim bootstrap.
+      -- correctedFormula(2-w) is real-analytic on [0, 2-α) (landau_formula_analyticAt_real).
+      -- Tonelli + witnessG_eq_formula identify tsum(B_k w^k) with correctedFormula on [0,1).
+      -- Non-negative Taylor coefficients (B_k ≥ 0) + binomial rearrangement
+      -- (sum_range_mul_add_pow_le_of_inner_le) bootstrap partial sum bounds past 1.
+      -- Summable at W then follows from summable_of_sum_range_le.
       push_neg at hW1
-      suffices h : ∃ (f : ℂ → ℂ),
-          (∀ z : ℂ, ‖z‖ < W → HasSum (fun n => (B n : ℂ) * z ^ n) (f z)) ∧
-          ContinuousAt f (↑W : ℂ) by
-        obtain ⟨f, hf_hasSum, hf_cont⟩ := h
-        exact Aristotle.PringsheimTheorem.pringsheim_convergence_at_radius
-          B hB_nn W (by linarith) f hf_hasSum hf_cont
       sorry
   -- Step 3: Define F(w) := tsum(B_k w^k) for w ∈ [0, W]
   refine ⟨fun w => ∑' k, B k * w ^ k, ?_, ?_⟩
