@@ -16,8 +16,9 @@ The proof uses:
 4. Continuous extension F on [0, W]: defined as tsum (using Summable from step 2).
 5. Scaled partial sum bound → summable_of_sum_range_le for downstream σ₀.
 
-SORRY COUNT: 1 (Summable at W > 1 in anticoeff_has_continuous_sum_on_disk — TRUE,
-  from real Pringsheim bootstrap: Tonelli + identity theorem + non-neg Taylor + binomial)
+SORRY COUNT: 1 (anticoeff_summable_at_W_gt_one — TRUE,
+  from Pringsheim extension: Tonelli + witnessG formula ID + ℂ-analytic extension
+  + pringsheim_convergence_at_radius iteration)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -213,6 +214,35 @@ private theorem correctedFormula_continuousOn_real_w
       (g := correctedFormula α C σ_sign) h_anal.continuousAt h_inner
   exact (Complex.continuous_re.continuousAt.comp h_full).continuousWithinAt
 
+/-- **Direct summability at W > 1 via Pringsheim extension.**
+
+TRUE from: Tonelli exchange identifies tsum(B_k w^k) = ∫ g(t) t^{w-3} dt for w < 1.
+The witnessG/correctedFormula identification (witnessG_eq_formula + landau_formula_eq_original)
+shows this integral equals (correctedFormula(2-w)).re/(2-w) minus a finite correction.
+Since correctedFormula is ℂ-analytic on {Re > α} (landau_formula_analyticAt_real),
+the tsum extends to a ℂ-analytic function past w=1. Pringsheim's theorem
+(pringsheim_convergence_at_radius, 0 sorries) then gives Summable at W.
+
+Proof sketch:
+1. Define f(z) = correctedFormula(2-z)/(2-z) - ∫_1^{T₀} g(t)·t^{z-3} dt  (ℂ-analytic on Re(z) < 2-α)
+2. For |z| < 1: HasSum((B_k:ℂ) z^k, f(z))  (from Tonelli + witnessG identity)
+3. f is analytic at W ∈ ℝ  (since W < 2-α)
+4. Apply pringsheim_convergence_at_radius at each step R, R+δ, ...
+   or directly use the contradiction form.
+
+References: Pringsheim 1893; Titchmarsh §1.8; Landau 1905. -/
+private theorem anticoeff_summable_at_W_gt_one
+    (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
+    (hg_nn : ∀ t, T₀ ≤ t → 0 ≤ g t)
+    (α C σ_sign : ℝ) (hα : 1 / 2 < α)
+    (hC : 0 < C) (hα1 : α < 1)
+    (hσ : σ_sign = 1 ∨ σ_sign = -1)
+    (hbound : ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α)
+    (hg_def : g = PringsheimPsiAtom.genFun C α σ_sign)
+    (W : ℝ) (hW_bound : W < 2 - α) (hW1 : 1 < W) :
+    Summable (fun k => antiCoeff g T₀ 2 k * W ^ k) := by
+  sorry
+
 /-- **Continuous sum function for anti-coefficient series on the Pringsheim disk**.
 
 There exists F continuous on [0, W] such that HasSum(B_k w^k, F(w)) for w ∈ [0, W).
@@ -255,14 +285,10 @@ private theorem anticoeff_has_continuous_sum_on_disk
               mul_le_mul_of_nonneg_left (pow_le_one₀ hW_pos hW1) (hB_nn k)
             _ = B k := mul_one _)
         hB_sum
-    · -- W > 1: Real Pringsheim bootstrap.
-      -- correctedFormula(2-w) is real-analytic on [0, 2-α) (landau_formula_analyticAt_real).
-      -- Tonelli + witnessG_eq_formula identify tsum(B_k w^k) with correctedFormula on [0,1).
-      -- Non-negative Taylor coefficients (B_k ≥ 0) + binomial rearrangement
-      -- (sum_range_mul_add_pow_le_of_inner_le) bootstrap partial sum bounds past 1.
-      -- Summable at W then follows from summable_of_sum_range_le.
+    · -- W > 1: Pringsheim extension via correctedFormula identification.
       push_neg at hW1
-      sorry
+      exact anticoeff_summable_at_W_gt_one g T₀ hT₀ hg_nn α C σ_sign hα hC hα1 hσ hbound
+        hg_def W hW_bound hW1
   -- Step 3: Define F(w) := tsum(B_k w^k) for w ∈ [0, W]
   refine ⟨fun w => ∑' k, B k * w ^ k, ?_, ?_⟩
   · -- ContinuousOn F on [0, W]
@@ -289,11 +315,8 @@ private theorem anticoeff_has_continuous_sum_on_disk
 
 This is the key result: extends convergence from w=1 to w=2-σ₀ > 1.
 
-The proof obtains a continuous function F on [0, W] with HasSum(B_k w^k, F(w))
-for w ∈ [0, W). For u ∈ (0, 1), the scaled partial sums
-  Σ_{k<N} (B_k W^k) u^k = Σ_{k<N} B_k (Wu)^k ≤ F(Wu) ≤ M
-are bounded. Taking u → 1⁻ gives ∀ N, Σ_{k<N} B_k W^k ≤ M.
-By `summable_of_sum_range_le`: Summable(B_k W^k). -/
+For W ≤ 1: direct comparison with Summable(B_k).
+For W > 1: uses anticoeff_summable_at_W_gt_one. -/
 theorem anticoeff_summable_at_target
     (C : ℝ) (hC : 0 < C) (α : ℝ) (hα : 1 / 2 < α) (hα1 : α < 1)
     (σ_sign : ℝ) (hσ : σ_sign = 1 ∨ σ_sign = -1)
@@ -304,49 +327,12 @@ theorem anticoeff_summable_at_target
     Summable (fun k =>
       antiCoeff (PringsheimPsiAtom.genFun C α σ_sign) T₀ 2 k *
         (2 - σ₀) ^ k) := by
-  -- Setup
   set g := PringsheimPsiAtom.genFun C α σ_sign with hg_def
-  set B := fun k => antiCoeff g T₀ 2 k with hB_def
   set W := (2 : ℝ) - σ₀ with hW_def
-  have hB_nn : ∀ k, 0 ≤ B k := antiCoeff_nonneg g T₀ 2 hT₀ hg_nn
-  have hW_pos : 0 < W := by linarith
-  have hW_nn : (0 : ℝ) ≤ W := hW_pos.le
-  -- Get F continuous on [0,W] with HasSum(B_k w^k, F(w)) for w ∈ [0,W)
   have hW_bound : W < 2 - α := by simp [hW_def]; linarith
-  obtain ⟨F, hF_cont, hF_hasSum⟩ := anticoeff_has_continuous_sum_on_disk g T₀ hT₀ hg_nn
-    α C σ_sign hα hC hα1 hσ hbound hg_def W hW_bound
-  -- F bounded on [0, W] by compactness
-  obtain ⟨C_bd, hC_bd⟩ := isCompact_Icc.exists_bound_of_continuousOn hF_cont
-  -- Bound partial sums and conclude
-  apply summable_of_sum_range_le (fun k => mul_nonneg (hB_nn k) (pow_nonneg hW_nn k))
-  intro N
-  -- Limit argument: Σ_{k<N} B_k W^k = lim_{u→1⁻} Σ_{k<N} (B_k W^k) u^k ≤ C_bd
-  have h_lhs : Tendsto (fun u : ℝ => ∑ k ∈ Finset.range N, (B k * W ^ k) * u ^ k)
-      (𝓝[<] 1) (𝓝 (∑ k ∈ Finset.range N, B k * W ^ k)) := by
-    have h : Tendsto (fun u : ℝ => ∑ k ∈ Finset.range N, (B k * W ^ k) * u ^ k)
-        (𝓝[<] (1 : ℝ)) (𝓝 (∑ k ∈ Finset.range N, (B k * W ^ k) * (1 : ℝ) ^ k)) := by
-      apply tendsto_finset_sum
-      intro k _
-      exact (Tendsto.mul tendsto_const_nhds
-        ((continuous_pow k).continuousAt.tendsto)).mono_left nhdsWithin_le_nhds
-    simpa [one_pow, mul_one] using h
-  have h_bound : ∀ᶠ u in 𝓝[<] 1,
-      ∑ k ∈ Finset.range N, (B k * W ^ k) * u ^ k ≤ C_bd := by
-    filter_upwards [Ioo_mem_nhdsLT (show (0 : ℝ) < 1 by norm_num)]
-    intro u ⟨hu0, hu1⟩
-    have hwu_nn : 0 ≤ W * u := mul_nonneg hW_nn hu0.le
-    have hwu_lt : W * u < W := by nlinarith [hW_pos]
-    have hsum_wu := hF_hasSum (W * u) hwu_nn hwu_lt
-    calc ∑ k ∈ Finset.range N, (B k * W ^ k) * u ^ k
-        = ∑ k ∈ Finset.range N, B k * (W * u) ^ k :=
-          Finset.sum_congr rfl fun k _ => by rw [mul_pow]; ring
-      _ ≤ ∑' k, B k * (W * u) ^ k :=
-          hsum_wu.summable.sum_le_tsum (Finset.range N)
-            (fun k _ => mul_nonneg (hB_nn k) (pow_nonneg hwu_nn k))
-      _ = F (W * u) := hsum_wu.tsum_eq
-      _ ≤ ‖F (W * u)‖ := by rw [Real.norm_eq_abs]; exact le_abs_self _
-      _ ≤ C_bd := hC_bd (W * u) ⟨hwu_nn, le_of_lt hwu_lt⟩
-  exact le_of_tendsto_of_tendsto h_lhs tendsto_const_nhds h_bound
+  have hW1 : 1 < W := by simp [hW_def]; linarith
+  exact anticoeff_summable_at_W_gt_one g T₀ hT₀ hg_nn α C σ_sign hα hC hα1 hσ hbound
+    hg_def W hW_bound hW1
 
 /-- **SigmaLtOneHyp proved**: IntegrableOn from anti-coefficient summability
 via the Tonelli infrastructure.
