@@ -5,15 +5,17 @@ The key theorem: for non-negative anti-coefficients B_k with Summable(B_k)
 (convergence at w=1 from MCT), the Pringsheim extension argument gives
 Summable(B_k (2-σ₀)^k) for σ₀ > α.
 
-The proof uses the scaled partial sum bound:
-1. ∃ F continuous on [0, W] with HasSum(B_k w^k, F(w)) for w ∈ [0, W) — sorry.
-2. F bounded on [0, W] by compactness.
-3. For u ∈ (0, 1): Σ (B_k W^k) u^k = Σ B_k (Wu)^k ≤ F(Wu) ≤ M.
-4. Taking u → 1⁻ gives Σ_{k<N} B_k W^k ≤ M for all N.
-5. summable_of_sum_range_le concludes.
+The proof uses:
+1. Tonelli exchange for w < 1: HasSum(B_k w^k, ∫ g(t)t^{w-3} dt) — PROVED.
+2. For W > 1: Pringsheim's convergence theorem (pringsheim_convergence_at_radius)
+   reduces Summable(B_k W^k) to ∃ complex analytic function with HasSum on B(0,W).
+3. The complex HasSum follows from correctedFormula(2-z) providing analytic extension
+   to {Re(z) < 2-α} ⊃ B(0, W), identified with the series on [0,1) via Tonelli.
+4. Continuous extension F on [0, W]: defined as tsum (using Summable from step 2).
+5. Scaled partial sum bound → summable_of_sum_range_le for downstream σ₀.
 
-SORRY COUNT: 1 (anticoeff_has_continuous_sum_on_disk — TRUE,
-  existence of continuous sum function via Tonelli exchange + identity theorem)
+SORRY COUNT: 1 (complex HasSum extension in anticoeff_has_continuous_sum_on_disk — TRUE,
+  from Tonelli exchange on [0,1) + correctedFormula analyticity + identity theorem)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -214,10 +216,11 @@ private theorem correctedFormula_continuousOn_real_w
 
 There exists F continuous on [0, W] such that HasSum(B_k w^k, F(w)) for w ∈ [0, W).
 
-The proof uses:
-1. Tonelli exchange for w < 1 (non-negative integrand, dominated by Summable(B_k))
-2. Pringsheim's convergence theorem to extend past w = 1
-3. ContinuousOn from uniform convergence on [0, W] (convergence radius > W) -/
+For W ≤ 1: direct comparison with Summable(B_k).
+For W > 1: Pringsheim's convergence theorem (`pringsheim_convergence_at_radius`)
+gives Summable(B_k W^k) from a complex analytic function with HasSum on B(0, W).
+The sorry provides this function via correctedFormula(2-z)/(2-z) identification.
+ContinuousOn then follows from Weierstrass M-test with the summable majorant B_k W^k. -/
 private theorem anticoeff_has_continuous_sum_on_disk
     (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
     (hg_nn : ∀ t, T₀ ≤ t → 0 ≤ g t)
@@ -252,15 +255,19 @@ private theorem anticoeff_has_continuous_sum_on_disk
               mul_le_mul_of_nonneg_left (pow_le_one₀ hW_pos hW1) (hB_nn k)
             _ = B k := mul_one _)
         hB_sum
-    · -- W > 1: Pringsheim extension past convergence radius 1.
-      -- TRUE: the power series ∑ B_k z^k agrees with the Tonelli integral
-      -- ∫_{T₀}^∞ g(t)·t^{w-3}·dt on [0,1) (proved in tonelli_hasSum_lt_one).
-      -- The Tonelli integral extends to correctedFormula(2-w)/(2-w) via
-      -- witnessG_eq_formula. Since correctedFormula is analytic on {Re > α},
-      -- the identity theorem gives the power series convergence radius ≥ 2-α > W.
-      -- Requires: identity theorem for analytic functions (Mathlib) +
-      -- correctedFormula identification of the Tonelli integral.
+    · -- W > 1: Apply Pringsheim's convergence theorem.
+      -- The power series ∑ (B_k : ℂ)·z^k extends analytically to B(0, 2-α) ⊃ B(0, W):
+      -- (1) Tonelli exchange identifies the series with ∫ g(t)t^{w-3} dt on [0,1)
+      -- (2) witnessG_eq_formula + correctedFormula give analytic extension to {Re(z)<2-α}
+      -- (3) Identity theorem: series = extension on B(0,1), hence on B(0, 2-α)
+      -- pringsheim_convergence_at_radius then gives Summable at W.
       push_neg at hW1
+      suffices h : ∃ (f : ℂ → ℂ),
+          (∀ z : ℂ, ‖z‖ < W → HasSum (fun n => (B n : ℂ) * z ^ n) (f z)) ∧
+          ContinuousAt f (↑W : ℂ) by
+        obtain ⟨f, hf_hasSum, hf_cont⟩ := h
+        exact Aristotle.PringsheimTheorem.pringsheim_convergence_at_radius
+          B hB_nn W (by linarith) f hf_hasSum hf_cont
       sorry
   -- Step 3: Define F(w) := tsum(B_k w^k) for w ∈ [0, W]
   refine ⟨fun w => ∑' k, B k * w ^ k, ?_, ?_⟩
