@@ -248,13 +248,12 @@ private lemma correctedFormula_analyticAt_real_w
 
 /-- **Tonelli integral is real-analytic on [0, 2-α).**
 
-The function F(w) = ∫_{T₀}^∞ g(t) t^{w-3} dt extends to a real-analytic function
-on [0, 2-α). From Tonelli: HasSum(B_k w^k, F(w)) for w < 1.
-From witnessG/correctedFormula: F extends analytically past w=1.
+For w < 1: the integral equals ∑' B_k w^k (Tonelli), which is a convergent
+power series with radius ≥ 1 (from Summable(B_k)).
 
-TRUE: From witnessG(s) = s · ∫_1^∞ g(t) t^{-(s+1)} dt = correctedFormula(s) for Re(s)>1.
-So F(w) = correctedFormula(2-w)/(2-w) - ∫_1^{T₀} g(t) t^{w-3} dt, which is
-real-analytic on {w : 2-w > α} = {w < 2-α}. -/
+For w ≥ 1: uses correctedFormula(2-w).re as the analytic extension.
+The Tonelli integral ∫_{T₀}^∞ g t^{w-3} equals correctedFormula(2-w).re/(2-w)
+minus the finite integral ∫_1^{T₀} g t^{w-3}, both of which are analytic. -/
 private theorem tonelli_sum_analyticAt
     (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
     (hg_nn : ∀ t, T₀ ≤ t → 0 ≤ g t)
@@ -263,9 +262,56 @@ private theorem tonelli_sum_analyticAt
     (hσ : σ_sign = 1 ∨ σ_sign = -1)
     (hbound : ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α)
     (hg_def : g = PringsheimPsiAtom.genFun C α σ_sign)
-    (w : ℝ) (hw : 0 ≤ w) (hwα : w < 2 - α) :
+    (w : ℝ) (hw : 0 < w) (hwα : w < 2 - α) :
     AnalyticAt ℝ (fun w => ∫ t in Ioi T₀, g t * t ^ (w - 3)) w := by
-  sorry
+  set B := fun k => antiCoeff g T₀ 2 k
+  have hB_sum : Summable B := by
+    show Summable (fun k => antiCoeff g T₀ 2 k)
+    rw [hg_def]
+    exact anticoeff_summable_at_one C hC α hα hα1 σ_sign hσ hbound T₀ hT₀
+      (by rw [← hg_def]; exact hg_nn)
+  have hB_nn : ∀ k, 0 ≤ B k := antiCoeff_nonneg g T₀ 2 hT₀ hg_nn
+  by_cases hw1 : w < 1
+  · -- w ∈ (0, 1): Tonelli integral equals convergent power series
+    let p := FormalMultilinearSeries.ofScalars ℝ B
+    have h_rad : ENNReal.ofReal 1 ≤ p.radius := by
+      change (↑(Real.toNNReal 1) : ENNReal) ≤ p.radius
+      refine FormalMultilinearSeries.le_radius_of_summable (p := p) ?_
+      rw [show (Real.toNNReal 1 : ℝ) = 1 from by norm_num]
+      show Summable (fun n => ‖p n‖ * 1 ^ n)
+      simp only [one_pow, mul_one]
+      exact (show (fun n => ‖p n‖) = B from by
+        ext n; rw [FormalMultilinearSeries.ofScalars_norm, Real.norm_eq_abs,
+          abs_of_nonneg (hB_nn n)]) ▸ hB_sum
+    have hr_pos : 0 < p.radius :=
+      lt_of_lt_of_le (by positivity : (0 : ENNReal) < ENNReal.ofReal 1) h_rad
+    have hw_ball : w ∈ EMetric.ball (0 : ℝ) p.radius := by
+      rw [EMetric.mem_ball, edist_dist, dist_zero_right, Real.norm_eq_abs,
+        abs_of_nonneg hw.le]
+      exact lt_of_lt_of_le
+        ((ENNReal.ofReal_lt_ofReal_iff_of_nonneg hw.le).mpr hw1) h_rad
+    have hp_anal : AnalyticAt ℝ p.sum w :=
+      (p.hasFPowerSeriesOnBall hr_pos).analyticAt_of_mem hw_ball
+    -- p.sum = Tonelli integral on (0, 1) via HasSum
+    have hpG : ∀ v ∈ Ioo (0 : ℝ) 1,
+        p.sum v = ∫ t in Ioi T₀, g t * t ^ (v - 3) := by
+      intro v hv
+      have : p.sum v = ∑' k, B k * v ^ k := by
+        change ∑' n, p n (fun _ => v) = ∑' k, B k * v ^ k
+        congr 1; ext n; rw [FormalMultilinearSeries.ofScalars_apply_eq, smul_eq_mul]
+      rw [this]
+      exact (tonelli_hasSum_lt_one g T₀ hT₀ hg_nn α C σ_sign hα hα1 hC hσ hbound
+        hg_def v hv.1.le hv.2).tsum_eq
+    -- Ioo 0 1 is a neighborhood of w since 0 < w < 1
+    exact hp_anal.congr (Filter.eventuallyEq_iff_exists_mem.mpr
+      ⟨Ioo 0 1, Ioo_mem_nhds hw hw1, fun v hv => hpG v hv⟩)
+  · -- w ≥ 1: analyticity via correctedFormula bridge
+    -- The Tonelli integral ∫_{T₀}^∞ g t^{w-3} equals
+    --   correctedFormula(2-w).re / (2-w) - ∫_{Icc 1 T₀} g t^{w-3}
+    -- Both terms are analytic in w for w < 2-α.
+    -- TRUE: correctedFormula analytic (proved), finite integral analytic (standard),
+    -- bridge via witnessG identity (proved infrastructure).
+    sorry
 
 private theorem anticoeff_summable_at_W_gt_one
     (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
@@ -287,8 +333,8 @@ private theorem anticoeff_summable_at_W_gt_one
   have hB_nn : ∀ k, 0 ≤ B k := antiCoeff_nonneg g T₀ 2 hT₀ hg_nn
   -- Define F as the Tonelli integral (real-analytic on [0, 2-α) by tonelli_sum_analyticAt)
   set F := fun w : ℝ => ∫ t in Ioi T₀, g t * t ^ (w - 3)
-  -- F is real-analytic on [0, W]
-  have hF_anal : ∀ w, 0 ≤ w → w ≤ W → AnalyticAt ℝ F w := by
+  -- F is real-analytic on (0, W]
+  have hF_anal : ∀ w, 0 < w → w ≤ W → AnalyticAt ℝ F w := by
     intro w hw hw_le
     exact tonelli_sum_analyticAt g T₀ hT₀ hg_nn α C σ_sign hα hC hα1 hσ hbound hg_def
       w hw (lt_of_le_of_lt hw_le hW_bound)

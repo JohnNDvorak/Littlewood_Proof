@@ -387,7 +387,7 @@ private lemma tsum_eq_F_of_analytic
     (hF_hasSum : ∀ w, 0 ≤ w → w < 1 → HasSum (fun k => B k * w ^ k) (F w))
     (c : ℝ) (hc1 : 1 ≤ c)
     (hB_sum_c : Summable (fun k => B k * c ^ k))
-    (hF_anal : ∀ w, 0 ≤ w → w ≤ c → AnalyticAt ℝ F w)
+    (hF_anal : ∀ w, 0 < w → w ≤ c → AnalyticAt ℝ F w)
     (w : ℝ) (hw : 0 ≤ w) (hwc : w < c) :
     ∑' k, B k * w ^ k = F w := by
   -- Case w = 0: both are B 0
@@ -409,7 +409,7 @@ private lemma tsum_eq_F_of_analytic
     · have hG_eq_F : G =ᶠ[𝓝 w₀] F := by
         rw [Filter.eventuallyEq_iff_exists_mem]
         exact ⟨Ioo 0 1, Ioo_mem_nhds hw₀.1 hw₀1, fun v hv => hGF_lt1 v hv⟩
-      exact (hF_anal w₀ hw₀.1.le (by linarith)).congr hG_eq_F.symm
+      exact (hF_anal w₀ hw₀.1 (by linarith)).congr hG_eq_F.symm
     · -- For w₀ ≥ 1: G is analytic from the power series ofScalars ℝ B with
       -- radius ≥ c > w₀. TRUE by HasFPowerSeriesOnBall + analyticOnNhd.
       -- Pick c' with w₀ < c' < c. G analytic on ball(0, c') from ofScalars.
@@ -447,7 +447,7 @@ private lemma tsum_eq_F_of_analytic
       exact hpG ▸ (p.hasFPowerSeriesOnBall hr_pos).analyticAt_of_mem hw₀_ball
   -- F analytic on (0, c)
   have hF_analI : AnalyticOnNhd ℝ F (Ioo 0 c) := by
-    intro v hv; exact hF_anal v hv.1.le hv.2.le
+    intro v hv; exact hF_anal v hv.1 hv.2.le
   -- Identity theorem: G = F on (0, c)
   have h_half_mem : (2⁻¹ : ℝ) ∈ Ioo (0 : ℝ) c := ⟨by positivity, by linarith⟩
   have h_eq_near : G =ᶠ[𝓝 (2⁻¹ : ℝ)] F :=
@@ -497,7 +497,7 @@ theorem pringsheim_real_extension
     (F : ℝ → ℝ)
     (hF_hasSum : ∀ w, 0 ≤ w → w < 1 → HasSum (fun k => B k * w ^ k) (F w))
     (W : ℝ) (hW : 1 < W)
-    (hF_anal : ∀ w, 0 ≤ w → w ≤ W → AnalyticAt ℝ F w) :
+    (hF_anal : ∀ w, 0 < w → w ≤ W → AnalyticAt ℝ F w) :
     Summable (fun k => B k * W ^ k) := by
   -- sSup contradiction approach
   by_contra h_ns
