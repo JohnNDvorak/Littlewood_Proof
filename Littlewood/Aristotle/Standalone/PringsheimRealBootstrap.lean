@@ -90,12 +90,25 @@ This follows from:
 The HasSum F(1+t) = ∑ c_j t^j follows directly from AnalyticAt via
 HasFPowerSeriesOnBall.hasSum. -/
 
+/-- For ofScalars power series, changeOriginSeriesTerm at (fun _ => w, fun _ => 1)
+equals B(k+l) * w^l. -/
+private lemma ofScalars_changeOriginSeriesTerm_eval
+    (B : ℕ → ℝ) (k l : ℕ) (s : Finset (Fin (k + l))) (hs : s.card = l) (w : ℝ) :
+    (FormalMultilinearSeries.ofScalars ℝ B).changeOriginSeriesTerm k l s hs
+      (fun _ => w) (fun _ => (1 : ℝ)) = B (k + l) * w ^ l := by
+  rw [FormalMultilinearSeries.changeOriginSeriesTerm_apply]
+  simp only [FormalMultilinearSeries.ofScalars, ContinuousMultilinearMap.smul_apply, smul_eq_mul,
+    ContinuousMultilinearMap.mkPiAlgebraFin_apply, List.prod_ofFn]
+  congr 1
+  rw [show (fun i : Fin (k + l) => s.piecewise (fun _ => w) (fun _ => (1 : ℝ)) i) =
+    (fun i => if i ∈ s then w else 1) from by ext i; simp [Finset.piecewise]]
+  rw [prod_ite_mem_eq s (fun _ => w), Finset.prod_const, hs]
+
 /-- Taylor coefficients of F at 1 are non-negative and dominate the binomial sums.
 
-TRUE: c_j = F^{(j)}(1)/j!. For w < 1: F^{(j)}(w) = j! ∑' C(k,j) B_k w^{k-j} ≥ 0
-(term-by-term differentiation of non-negative power series). Taking w→1⁻ by
-continuity of iteratedDeriv from AnalyticAt gives c_j ≥ 0. The domination
-∑_{k<N} B_k C(k,j) ≤ c_j follows from partial sums ≤ tsum ≤ lim = c_j. -/
+Proof: changeOrigin of ofScalars ℝ B at w gives a tsum of non-negative terms.
+Via factorial_smul, this equals iteratedDeriv j F w / j!. Taking w→1⁻ gives
+c_j ≥ 0. For partial sum domination, reindex and use sum_le_tsum. -/
 private lemma taylor_coeff_nonneg_and_dominates
     (B : ℕ → ℝ) (hB : ∀ k, 0 ≤ B k)
     (hB_sum : Summable B)
@@ -106,7 +119,158 @@ private lemma taylor_coeff_nonneg_and_dominates
     0 ≤ iteratedDeriv j F 1 / (j.factorial : ℝ) ∧
     ∀ N, ∑ k ∈ range N, B k * (Nat.choose k j : ℝ) ≤
       iteratedDeriv j F 1 / (j.factorial : ℝ) := by
-  sorry
+  -- Setup: power series p = ofScalars ℝ B with radius ≥ 1
+  set p := FormalMultilinearSeries.ofScalars ℝ B
+  have hpsum_eq : ∀ v : ℝ, p.sum v = ∑' k, B k * v ^ k := by
+    intro v; show ∑' n, p n (fun _ => v) = ∑' k, B k * v ^ k
+    congr 1; ext n; rw [FormalMultilinearSeries.ofScalars_apply_eq, smul_eq_mul]
+  have h_rad : ENNReal.ofReal 1 ≤ p.radius := by
+    change (↑(Real.toNNReal 1) : ENNReal) ≤ p.radius
+    refine FormalMultilinearSeries.le_radius_of_summable (p := p) ?_
+    rw [show (Real.toNNReal 1 : ℝ) = 1 from by norm_num]
+    show Summable (fun n => ‖p n‖ * 1 ^ n)
+    simp only [one_pow, mul_one]
+    exact (show (fun n => ‖p n‖) = B from by
+      ext n; rw [FormalMultilinearSeries.ofScalars_norm, Real.norm_eq_abs,
+        abs_of_nonneg (hB n)]) ▸ hB_sum
+  have hr_pos : 0 < p.radius :=
+    lt_of_lt_of_le (by positivity : (0 : ENNReal) < ENNReal.ofReal 1) h_rad
+  have hball : HasFPowerSeriesOnBall p.sum p 0 p.radius := p.hasFPowerSeriesOnBall hr_pos
+  -- p.sum = F on (0,1)
+  have hGF : ∀ v ∈ Ioo (0 : ℝ) 1, p.sum v = F v := by
+    intro v hv; rw [hpsum_eq]; exact (hF_hasSum v hv.1.le hv.2).tsum_eq
+  -- w ∈ (0,1) ⟹ w in convergence ball
+  have hw_in_ball : ∀ w ∈ Ioo (0 : ℝ) 1, ↑‖w‖₊ < p.radius := by
+    intro w hw
+    show ‖w‖ₑ < p.radius
+    rw [Real.enorm_of_nonneg hw.1.le]
+    exact lt_of_lt_of_le
+      ((ENNReal.ofReal_lt_ofReal_iff_of_nonneg hw.1.le).mpr hw.2) h_rad
+  -- ContinuousAt (iteratedDeriv j F) 1 from AnalyticAt
+  have hcont : ContinuousAt (iteratedDeriv j F) 1 := by
+    rw [iteratedDeriv_eq_iterate]
+    exact (hF_anal.iterated_deriv j).continuousAt
+  -- iteratedDeriv j (p.sum) = iteratedDeriv j F on (0,1)
+  have hderiv_eq : ∀ w ∈ Ioo (0 : ℝ) 1,
+      iteratedDeriv j (p.sum) w = iteratedDeriv j F w := by
+    intro w hw
+    exact Filter.EventuallyEq.iteratedDeriv_eq j
+      (Filter.eventuallyEq_iff_exists_mem.mpr
+        ⟨Ioo 0 1, Ioo_mem_nhds hw.1 hw.2, fun v hv => hGF v hv⟩)
+  -- Helper: w ∈ (0,1) ⟹ changeOriginSeries summable
+  have hco_summable : ∀ w ∈ Ioo (0 : ℝ) 1,
+      Summable (fun l => (p.changeOriginSeries j l) (fun _ => w)) := by
+    intro w hw
+    exact (p.changeOriginSeries j).summable (by
+      rw [EMetric.mem_ball, edist_eq_enorm_sub, sub_zero]
+      exact (hw_in_ball w hw).trans_le (p.le_changeOriginSeries_radius j))
+  -- KEY: For w ∈ (0,1), changeOrigin gives iteratedDeriv j (p.sum) w / j! as tsum
+  -- of non-negative terms
+  have hG_nonneg : ∀ w ∈ Ioo (0 : ℝ) 1, 0 ≤ iteratedDeriv j (p.sum) w := by
+    intro w hw
+    have hfact := (hball.changeOrigin (hw_in_ball w hw)).factorial_smul (1 : ℝ) j
+    rw [zero_add] at hfact
+    rw [iteratedDeriv_eq_iteratedFDeriv, ← hfact]
+    apply nsmul_nonneg
+    show 0 ≤ ((p.changeOriginSeries j).sum w) (fun _ => (1 : ℝ))
+    rw [FormalMultilinearSeries.sum,
+      ← (ContinuousMultilinearMap.hasSum_eval (hco_summable w hw).hasSum
+        (fun _ => (1 : ℝ))).tsum_eq]
+    apply tsum_nonneg; intro l
+    show 0 ≤ (p.changeOriginSeries j l (fun _ => w)) (fun _ => (1 : ℝ))
+    simp only [p, FormalMultilinearSeries.changeOriginSeries,
+      ContinuousMultilinearMap.sum_apply]
+    apply Finset.sum_nonneg; intro ⟨s, hs⟩ _
+    rw [ofScalars_changeOriginSeriesTerm_eval]
+    exact mul_nonneg (hB _) (pow_nonneg hw.1.le _)
+  -- Non-negativity of c_j by limit
+  have hF_nonneg : ∀ w ∈ Ioo (0 : ℝ) 1, 0 ≤ iteratedDeriv j F w := by
+    intro w hw; rw [← hderiv_eq w hw]; exact hG_nonneg w hw
+  have h_nonneg : 0 ≤ iteratedDeriv j F 1 :=
+    ge_of_tendsto (hcont.tendsto.mono_left nhdsWithin_le_nhds)
+      (by filter_upwards [Ioo_mem_nhdsLT (show (0 : ℝ) < 1 by norm_num)] with w hw
+          exact hF_nonneg w hw)
+  refine ⟨div_nonneg h_nonneg (Nat.cast_nonneg' _), ?_⟩
+  -- Partial sum domination via limit with w^{k-j} intermediate
+  intro N
+  have h_lhs : Tendsto (fun w : ℝ => ∑ k ∈ range N,
+      B k * (Nat.choose k j : ℝ) * w ^ (k - j))
+      (𝓝[<] 1) (𝓝 (∑ k ∈ range N, B k * (Nat.choose k j : ℝ))) := by
+    have h1 : Tendsto (fun w : ℝ => ∑ k ∈ range N,
+        B k * (Nat.choose k j : ℝ) * w ^ (k - j))
+        (𝓝[<] 1)
+        (𝓝 (∑ k ∈ range N, B k * (Nat.choose k j : ℝ) * 1 ^ (k - j))) := by
+      apply tendsto_finset_sum; intro k _
+      exact ((continuous_const.mul (continuous_pow (k - j))).continuousAt.tendsto).mono_left
+        nhdsWithin_le_nhds
+    simp only [one_pow, mul_one] at h1; exact h1
+  have h_rhs : Tendsto (fun w : ℝ => iteratedDeriv j F w / (j.factorial : ℝ))
+      (𝓝[<] 1) (𝓝 (iteratedDeriv j F 1 / (j.factorial : ℝ))) :=
+    Tendsto.div_const (hcont.tendsto.mono_left nhdsWithin_le_nhds) _
+  have h_ineq : ∀ᶠ w in 𝓝[<] 1,
+      ∑ k ∈ range N, B k * (Nat.choose k j : ℝ) * w ^ (k - j) ≤
+        iteratedDeriv j F w / (j.factorial : ℝ) := by
+    filter_upwards [Ioo_mem_nhdsLT (show (0 : ℝ) < 1 by norm_num)]
+    intro w ⟨hw0, hw1⟩
+    have hw : w ∈ Ioo (0 : ℝ) 1 := ⟨hw0, hw1⟩
+    -- Reduce to changeOrigin value via factorial_smul
+    have hiterF : iteratedDeriv j (p.sum) w =
+        j.factorial • ((p.changeOrigin w) j (fun _ => 1)) := by
+      rw [iteratedDeriv_eq_iteratedFDeriv]
+      have hfact := (hball.changeOrigin (hw_in_ball w hw)).factorial_smul (1 : ℝ) j
+      rw [zero_add] at hfact; exact hfact.symm
+    rw [← hderiv_eq w hw, hiterF, nsmul_eq_mul, mul_div_cancel_left₀ _
+        (Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero j))]
+    -- Expand changeOrigin as tsum
+    change ∑ k ∈ range N, B k * (Nat.choose k j : ℝ) * w ^ (k - j) ≤
+      ((p.changeOriginSeries j).sum w) (fun _ => (1 : ℝ))
+    rw [FormalMultilinearSeries.sum,
+      ← (ContinuousMultilinearMap.hasSum_eval (hco_summable w hw).hasSum
+        (fun _ => (1 : ℝ))).tsum_eq]
+    -- Define sequences
+    set g := fun l => ((p.changeOriginSeries j l) (fun _ => w)) (fun _ => (1 : ℝ))
+    have hg_nn : ∀ l, 0 ≤ g l := by
+      intro l; show 0 ≤ ((p.changeOriginSeries j l) (fun _ => w)) (fun _ => (1 : ℝ))
+      simp only [FormalMultilinearSeries.changeOriginSeries, ContinuousMultilinearMap.sum_apply]
+      exact Finset.sum_nonneg fun ⟨s, hs⟩ _ => by
+        rw [ofScalars_changeOriginSeriesTerm_eval]; exact mul_nonneg (hB _) (pow_nonneg hw0.le _)
+    have hg_summable : Summable g :=
+      (ContinuousMultilinearMap.hasSum_eval (hco_summable w hw).hasSum (fun _ => (1 : ℝ))).summable
+    set f := fun k => B k * (Nat.choose k j : ℝ) * w ^ (k - j)
+    -- f(l + j) = g(l): each changeOriginSeries term is C(j+l,j) * B(j+l) * w^l
+    have hfg : ∀ l, f (l + j) = g l := by
+      intro l
+      simp only [f, g, show l + j = j + l from by omega, Nat.add_sub_cancel_left]
+      symm
+      simp only [p, FormalMultilinearSeries.changeOriginSeries,
+        ContinuousMultilinearMap.sum_apply]
+      simp_rw [ofScalars_changeOriginSeriesTerm_eval]
+      rw [Finset.sum_const, nsmul_eq_mul, Finset.card_univ]
+      have hcard : Fintype.card {s : Finset (Fin (j + l)) // s.card = l} =
+          Nat.choose (j + l) j := by
+        rw [Fintype.card_finset_len, Fintype.card_fin, ← Nat.choose_symm_add]
+      push_cast [hcard]; ring
+    -- f(k) = 0 for k < j (C(k,j) = 0)
+    have hf_zero : ∀ k, k < j → f k = 0 := by
+      intro k hk
+      simp only [f, Nat.choose_eq_zero_of_lt hk, Nat.cast_zero, mul_zero, zero_mul]
+    -- Summable f via shift equivalence
+    have hf_summable : Summable f := by
+      rw [← summable_nat_add_iff (f := f) j]
+      exact (show (fun l => f (l + j)) = g from funext hfg) ▸ hg_summable
+    -- ∑' k, f k = ∑' l, g l (shift by j, killing zero prefix)
+    have htsum_eq : ∑' k, f k = ∑' l, g l := by
+      have h_shift : HasSum (fun l => f (l + j)) (∑' l, g l) :=
+        (funext hfg) ▸ hg_summable.hasSum
+      have h_full := (hasSum_nat_add_iff j).mp h_shift
+      rw [Finset.sum_eq_zero (fun k hk => hf_zero k (Finset.mem_range.mp hk)),
+        add_zero] at h_full
+      exact h_full.tsum_eq
+    calc ∑ k ∈ range N, f k
+        ≤ ∑' k, f k := hf_summable.sum_le_tsum _ (fun k _ =>
+          mul_nonneg (mul_nonneg (hB k) (Nat.cast_nonneg' _)) (pow_nonneg hw0.le _))
+      _ = ∑' l, g l := htsum_eq
+  exact le_of_tendsto_of_tendsto h_lhs h_rhs h_ineq
 
 private theorem taylor_bound_from_nonneg_series
     (B : ℕ → ℝ) (hB : ∀ k, 0 ≤ B k)
