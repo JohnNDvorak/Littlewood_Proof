@@ -11,9 +11,8 @@ The proof uses:
    with non-negative Taylor coefficients (from B_k ≥ 0 and R ≥ 0)
 4. summable_of_sum_range_le concludes
 
-SORRY COUNT: 2
+SORRY COUNT: 1
   taylor_coeff_nonneg_and_dominates — Taylor coeff c_j ≥ 0 and ∑ B_k C(k,j) ≤ c_j
-  pringsheim_real_extension — sSup iteration extending summability from 1 to W
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -227,7 +226,74 @@ private lemma tsum_eq_F_of_analytic
     (hF_anal : ∀ w, 0 ≤ w → w ≤ c → AnalyticAt ℝ F w)
     (w : ℝ) (hw : 0 ≤ w) (hwc : w < c) :
     ∑' k, B k * w ^ k = F w := by
-  sorry
+  -- Case w = 0: both are B 0
+  rcases eq_or_lt_of_le hw with rfl | hw_pos
+  · have h0 := (hF_hasSum 0 le_rfl (by linarith : (0 : ℝ) < 1)).tsum_eq
+    simp only [zero_pow, mul_ite, mul_one, mul_zero, tsum_ite_eq] at h0 ⊢
+    exact h0
+  -- Case w > 0: use identity theorem on Ioo 0 c
+  set G := fun w : ℝ => ∑' k, B k * w ^ k with hG_def
+  -- G = F on (0, 1)
+  have hGF_lt1 : ∀ v ∈ Ioo (0 : ℝ) 1, G v = F v := by
+    intro v hv; exact (hF_hasSum v hv.1.le hv.2).tsum_eq
+  -- G analytic on (0, c): from power series ofScalars ℝ B with radius ≥ c
+  have hc_nn : (0 : ℝ) ≤ c := by linarith
+  have hG_anal : AnalyticOnNhd ℝ G (Ioo 0 c) := by
+    intro w₀ hw₀
+    -- For w₀ < 1: G agrees with F near w₀, so G is analytic (from hF_anal)
+    by_cases hw₀1 : w₀ < 1
+    · have hG_eq_F : G =ᶠ[𝓝 w₀] F := by
+        rw [Filter.eventuallyEq_iff_exists_mem]
+        exact ⟨Ioo 0 1, Ioo_mem_nhds hw₀.1 hw₀1, fun v hv => hGF_lt1 v hv⟩
+      exact (hF_anal w₀ hw₀.1.le (by linarith)).congr hG_eq_F.symm
+    · -- For w₀ ≥ 1: G is analytic from the power series ofScalars ℝ B with
+      -- radius ≥ c > w₀. TRUE by HasFPowerSeriesOnBall + analyticOnNhd.
+      -- Pick c' with w₀ < c' < c. G analytic on ball(0, c') from ofScalars.
+      push_neg at hw₀1
+      -- G = p.sum for p = ofScalars ℝ B with convergence radius ≥ c > w₀
+      let p := FormalMultilinearSeries.ofScalars ℝ B
+      -- p.sum = G: both are fun v => ∑' n, B n * v ^ n
+      have hpG : p.sum = G := by
+        ext v; change ∑' n, p n (fun _ => v) = ∑' k, B k * v ^ k
+        congr 1; ext n
+        show (FormalMultilinearSeries.ofScalars ℝ B) n (fun _ => v) = B n * v ^ n
+        rw [FormalMultilinearSeries.ofScalars_apply_eq, smul_eq_mul]
+      -- Radius of p ≥ c (from Summable(B_k c^k) and ‖p n‖ = B n)
+      have h_rad : ENNReal.ofReal c ≤ p.radius := by
+        have h_eq : (fun n => ‖p n‖ * c ^ n) = fun k => B k * c ^ k := by
+          ext n
+          show ‖(FormalMultilinearSeries.ofScalars ℝ B) n‖ * c ^ n = B n * c ^ n
+          rw [FormalMultilinearSeries.ofScalars_norm, Real.norm_eq_abs, abs_of_nonneg (hB n)]
+        -- ENNReal.ofReal c = ↑(c.toNNReal) definitionally
+        change (↑(Real.toNNReal c) : ENNReal) ≤ p.radius
+        refine FormalMultilinearSeries.le_radius_of_summable (p := p) ?_
+        rw [show (Real.toNNReal c : ℝ) = c from Real.coe_toNNReal c hc_nn]
+        exact h_eq ▸ hB_sum_c
+      -- 0 < p.radius (since c ≥ 1 > 0)
+      have hr_pos : 0 < p.radius :=
+        lt_of_lt_of_le (ENNReal.ofReal_pos.mpr (by linarith)) h_rad
+      -- w₀ ∈ EMetric.ball 0 p.radius
+      have hw₀_ball : w₀ ∈ EMetric.ball (0 : ℝ) p.radius := by
+        rw [EMetric.mem_ball, edist_dist, dist_zero_right]
+        exact lt_of_lt_of_le
+          (by rw [Real.norm_eq_abs, abs_of_pos hw₀.1]
+              exact (ENNReal.ofReal_lt_ofReal_iff_of_nonneg hw₀.1.le).mpr hw₀.2)
+          h_rad
+      -- p.sum analytic at w₀, hence G analytic at w₀
+      exact hpG ▸ (p.hasFPowerSeriesOnBall hr_pos).analyticAt_of_mem hw₀_ball
+  -- F analytic on (0, c)
+  have hF_analI : AnalyticOnNhd ℝ F (Ioo 0 c) := by
+    intro v hv; exact hF_anal v hv.1.le hv.2.le
+  -- Identity theorem: G = F on (0, c)
+  have h_half_mem : (2⁻¹ : ℝ) ∈ Ioo (0 : ℝ) c := ⟨by positivity, by linarith⟩
+  have h_eq_near : G =ᶠ[𝓝 (2⁻¹ : ℝ)] F :=
+    Filter.eventuallyEq_iff_exists_mem.mpr
+      ⟨Ioo 0 1, Ioo_mem_nhds (by positivity) (by norm_num),
+       fun v hv => hGF_lt1 v hv⟩
+  have h_eq : EqOn G F (Ioo 0 c) :=
+    hG_anal.eqOn_of_preconnected_of_eventuallyEq hF_analI isPreconnected_Ioo
+      h_half_mem h_eq_near
+  exact h_eq ⟨hw_pos, hwc⟩
 
 /-- Comparison: Summable at r ≥ w for non-negative series implies Summable at w. -/
 private lemma summable_nonneg_of_le
