@@ -246,73 +246,87 @@ private lemma correctedFormula_analyticAt_real_w
   convert h_re using 1
   ext x; congr 1; push_cast; ring
 
-/-- **Tonelli integral is real-analytic on [0, 2-α).**
+/-! ### Direct summability at W > 1 via Pringsheim extension (correctedFormula approach)
 
-For w < 1: the integral equals ∑' B_k w^k (Tonelli), which is a convergent
-power series with radius ≥ 1 (from Summable(B_k)).
+The Tonelli integral ∫_{T₀}^∞ g(t) t^{w-3} dt converges for w < 1 but DIVERGES
+for w ≥ 1 (since g(t) = O(t)). The Lean integral returns 0 for non-integrable
+functions, so the function w ↦ ∫ g·t^{w-3} is NOT analytic at w ≥ 1.
 
-For w ≥ 1: uses correctedFormula(2-w).re as the analytic extension.
-The Tonelli integral ∫_{T₀}^∞ g t^{w-3} equals correctedFormula(2-w).re/(2-w)
-minus the finite integral ∫_1^{T₀} g t^{w-3}, both of which are analytic. -/
-private theorem tonelli_sum_analyticAt
-    (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
-    (hg_nn : ∀ t, T₀ ≤ t → 0 ≤ g t)
-    (α C σ_sign : ℝ) (hα : 1 / 2 < α)
-    (hC : 0 < C) (hα1 : α < 1)
+Instead, we define F via the correctedFormula, which IS analytic on all of (0, 2-α):
+  F(w) = correctedFormula(2-w).re / (2-w) - ∫_{Icc 1 T₀} g(t)·t^{w-3} dt
+
+For w < 1: F agrees with the Tonelli integral ∫_{Ioi T₀} g·t^{w-3} via:
+  correctedFormula(2-w) = witnessG(2-w) = (2-w)·∫_{Ioi 1} g·t^{w-3}  (bridge)
+  ∫_{Ioi 1} = ∫_{Icc 1 T₀} + ∫_{Ioi T₀}  (splitting)
+
+For w ≥ 1: F is the analytic extension defined by the correctedFormula.
+
+SORRY COUNT: 1
+  finite_integral_analyticAt — parametric integral of analytic integrand on compact domain
+  TRUE: t^{w-3} = exp((w-3)·log t) is analytic in w; uniform convergence of Taylor series
+  on [1, T₀] gives ∫ g·t^{w-3} dt analytic via termwise integration.
+
+References: Titchmarsh §1.8; standard parametric integral theory. -/
+
+/-- Finite integral `∫_{Icc 1 T₀} g(t)·t^{w-3} dt` is real-analytic in w.
+
+TRUE: The integrand g(t)·exp((w-3)·log t) is real-analytic in w for each t > 0.
+On the compact domain [1, T₀], the Taylor series in w converges uniformly,
+so termwise integration gives a convergent power series for the integral.
+Alternatively: complexify, use parametric differentiation + Cauchy, then re_ofReal. -/
+private theorem finite_integral_analyticAt
+    (g : ℝ → ℝ) (T₀ : ℝ) (w₀ : ℝ) :
+    AnalyticAt ℝ (fun w => ∫ t in Icc 1 T₀, g t * t ^ (w - 3)) w₀ := by
+  sorry
+
+-- Bridge: correctedFormula(2-w).re / (2-w) = ∫_{Ioi 1} genFun·t^{w-3} for w < 1.
+-- Chain: correctedFormula = witnessG [formula matching] → dirichletIntegral [def]
+--        → ↑(∫ genFun · t^{w-3}) [cpow bridge + integral_ofReal] → .re / (2-w).
+set_option maxHeartbeats 3200000 in
+private theorem correctedFormula_div_eq_integral
+    (α C σ_sign : ℝ) (hα : 1 / 2 < α) (hC : 0 < C) (hα1 : α < 1)
     (hσ : σ_sign = 1 ∨ σ_sign = -1)
     (hbound : ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C * x ^ α)
-    (hg_def : g = PringsheimPsiAtom.genFun C α σ_sign)
-    (w : ℝ) (hw : 0 < w) (hwα : w < 2 - α) :
-    AnalyticAt ℝ (fun w => ∫ t in Ioi T₀, g t * t ^ (w - 3)) w := by
-  set B := fun k => antiCoeff g T₀ 2 k
-  have hB_sum : Summable B := by
-    show Summable (fun k => antiCoeff g T₀ 2 k)
-    rw [hg_def]
-    exact anticoeff_summable_at_one C hC α hα hα1 σ_sign hσ hbound T₀ hT₀
-      (by rw [← hg_def]; exact hg_nn)
-  have hB_nn : ∀ k, 0 ≤ B k := antiCoeff_nonneg g T₀ 2 hT₀ hg_nn
-  by_cases hw1 : w < 1
-  · -- w ∈ (0, 1): Tonelli integral equals convergent power series
-    let p := FormalMultilinearSeries.ofScalars ℝ B
-    have h_rad : ENNReal.ofReal 1 ≤ p.radius := by
-      change (↑(Real.toNNReal 1) : ENNReal) ≤ p.radius
-      refine FormalMultilinearSeries.le_radius_of_summable (p := p) ?_
-      rw [show (Real.toNNReal 1 : ℝ) = 1 from by norm_num]
-      show Summable (fun n => ‖p n‖ * 1 ^ n)
-      simp only [one_pow, mul_one]
-      exact (show (fun n => ‖p n‖) = B from by
-        ext n; rw [FormalMultilinearSeries.ofScalars_norm, Real.norm_eq_abs,
-          abs_of_nonneg (hB_nn n)]) ▸ hB_sum
-    have hr_pos : 0 < p.radius :=
-      lt_of_lt_of_le (by positivity : (0 : ENNReal) < ENNReal.ofReal 1) h_rad
-    have hw_ball : w ∈ EMetric.ball (0 : ℝ) p.radius := by
-      rw [EMetric.mem_ball, edist_dist, dist_zero_right, Real.norm_eq_abs,
-        abs_of_nonneg hw.le]
-      exact lt_of_lt_of_le
-        ((ENNReal.ofReal_lt_ofReal_iff_of_nonneg hw.le).mpr hw1) h_rad
-    have hp_anal : AnalyticAt ℝ p.sum w :=
-      (p.hasFPowerSeriesOnBall hr_pos).analyticAt_of_mem hw_ball
-    -- p.sum = Tonelli integral on (0, 1) via HasSum
-    have hpG : ∀ v ∈ Ioo (0 : ℝ) 1,
-        p.sum v = ∫ t in Ioi T₀, g t * t ^ (v - 3) := by
-      intro v hv
-      have : p.sum v = ∑' k, B k * v ^ k := by
-        change ∑' n, p n (fun _ => v) = ∑' k, B k * v ^ k
-        congr 1; ext n; rw [FormalMultilinearSeries.ofScalars_apply_eq, smul_eq_mul]
-      rw [this]
-      exact (tonelli_hasSum_lt_one g T₀ hT₀ hg_nn α C σ_sign hα hα1 hC hσ hbound
-        hg_def v hv.1.le hv.2).tsum_eq
-    -- Ioo 0 1 is a neighborhood of w since 0 < w < 1
-    exact hp_anal.congr (Filter.eventuallyEq_iff_exists_mem.mpr
-      ⟨Ioo 0 1, Ioo_mem_nhds hw hw1, fun v hv => hpG v hv⟩)
-  · -- w ≥ 1: analyticity via correctedFormula bridge
-    -- The Tonelli integral ∫_{T₀}^∞ g t^{w-3} equals
-    --   correctedFormula(2-w).re / (2-w) - ∫_{Icc 1 T₀} g t^{w-3}
-    -- Both terms are analytic in w for w < 2-α.
-    -- TRUE: correctedFormula analytic (proved), finite integral analytic (standard),
-    -- bridge via witnessG identity (proved infrastructure).
-    sorry
+    (w : ℝ) (_hw : 0 ≤ w) (hw1 : w < 1) :
+    (correctedFormula α C σ_sign (↑(2 - w))).re / (2 - w) =
+    ∫ t in Ioi (1 : ℝ), PringsheimPsiAtom.genFun C α σ_sign t * t ^ (w - 3) := by
+  have h2w_gt1 : (1 : ℝ) < 2 - w := by linarith
+  have h2w_ne : (2 : ℝ) - w ≠ 0 := by linarith
+  -- Step 1: correctedFormula = witnessG (formula matching)
+  have h_cf_eq : correctedFormula α C σ_sign (↑(2 - w)) =
+      PringsheimPsiAtom.witnessG C α σ_sign (↑(2 - w)) := by
+    unfold correctedFormula
+    rw [Aristotle.ZetaPoleCancellation.landau_formula_eq_original α C (2 - w) h2w_gt1 σ_sign,
+      ← PringsheimPsiAtom.witnessG_eq_formula C hC α hα σ_sign hσ hbound
+        (↑(2 - w)) (by simp; linarith) (by simp; linarith)]
+  -- Step 2: dirichletIntegral = ↑(real integral) via cpow bridge
+  -- Define the real integral for cleaner type inference
+  set I := ∫ t in Ioi (1 : ℝ),
+    PringsheimPsiAtom.genFun C α σ_sign t * t ^ (w - 3) with hI_def
+  have h_di_real : PringsheimPsiAtom.dirichletIntegral C α σ_sign (↑(2 - w)) =
+      (I : ℂ) := by
+    unfold PringsheimPsiAtom.dirichletIntegral
+    have h_eq : ∀ t ∈ Ioi (1 : ℝ),
+        ((↑(PringsheimPsiAtom.genFun C α σ_sign t) : ℂ) *
+          (↑t : ℂ) ^ (-((↑(2 - w) : ℂ) + 1))) =
+        ((PringsheimPsiAtom.genFun C α σ_sign t * t ^ (w - 3) : ℝ) : ℂ) := by
+      intro t ht
+      have ht0 : 0 ≤ t := by linarith [show (1 : ℝ) < t from ht]
+      have h_exp : (-(((↑(2 - w) : ℂ)) + (1 : ℂ)) : ℂ) = ((w - 3 : ℝ) : ℂ) := by
+        push_cast; ring
+      rw [h_exp, show (↑t : ℂ) ^ ((w - 3 : ℝ) : ℂ) = ((t ^ (w - 3) : ℝ) : ℂ) from
+        (Complex.ofReal_cpow ht0 (w - 3)).symm]
+      push_cast; ring
+    rw [setIntegral_congr_fun measurableSet_Ioi h_eq]
+    exact integral_ofReal
+  -- Step 3: combine and simplify
+  rw [h_cf_eq]
+  show (PringsheimPsiAtom.witnessG C α σ_sign (↑(2 - w))).re / (2 - w) = I
+  unfold PringsheimPsiAtom.witnessG
+  rw [h_di_real, show ((↑(2 - w) : ℂ) * (I : ℂ)) = ((2 - w) * I : ℝ) from by push_cast; ring]
+  simp [Complex.ofReal_re, mul_div_cancel_left₀ _ h2w_ne]
 
+set_option maxHeartbeats 3200000 in
 private theorem anticoeff_summable_at_W_gt_one
     (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
     (hg_nn : ∀ t, T₀ ≤ t → 0 ≤ g t)
@@ -324,26 +338,52 @@ private theorem anticoeff_summable_at_W_gt_one
     (W : ℝ) (hW_bound : W < 2 - α) (hW1 : 1 < W) :
     Summable (fun k => antiCoeff g T₀ 2 k * W ^ k) := by
   set B := fun k => antiCoeff g T₀ 2 k
-  -- Summable(B_k) from MCT
   have hB_sum : Summable B := by
     show Summable (fun k => antiCoeff g T₀ 2 k)
     rw [hg_def]
     exact anticoeff_summable_at_one C hC α hα hα1 σ_sign hσ hbound T₀ hT₀
       (by rw [← hg_def]; exact hg_nn)
   have hB_nn : ∀ k, 0 ≤ B k := antiCoeff_nonneg g T₀ 2 hT₀ hg_nn
-  -- Define F as the Tonelli integral (real-analytic on [0, 2-α) by tonelli_sum_analyticAt)
-  set F := fun w : ℝ => ∫ t in Ioi T₀, g t * t ^ (w - 3)
-  -- F is real-analytic on (0, W]
+  -- F(w) = correctedFormula(2-w).re / (2-w) - ∫_{Icc 1 T₀} g t * t^{w-3}
+  -- This is analytic on (0, 2-α) since correctedFormula is analytic and finite integral is analytic.
+  -- For w < 1: F agrees with ∫_{Ioi T₀} g t * t^{w-3} (Tonelli integral).
+  set F := fun w : ℝ =>
+    (correctedFormula α C σ_sign (↑(2 - w))).re / (2 - w) -
+    ∫ t in Icc 1 T₀, g t * t ^ (w - 3) with hF_def
   have hF_anal : ∀ w, 0 < w → w ≤ W → AnalyticAt ℝ F w := by
     intro w hw hw_le
-    exact tonelli_sum_analyticAt g T₀ hT₀ hg_nn α C σ_sign hα hC hα1 hσ hbound hg_def
-      w hw (lt_of_le_of_lt hw_le hW_bound)
-  -- HasSum(B_k w^k, F(w)) for w ∈ [0, 1) — from Tonelli exchange
+    have hwα : w < 2 - α := lt_of_le_of_lt hw_le hW_bound
+    have h2w_ne : (2 : ℝ) - w ≠ 0 := by linarith
+    have hΦ_anal := correctedFormula_analyticAt_real_w α C σ_sign hα w hwα
+    have hΦdiv_anal : AnalyticAt ℝ
+        (fun w : ℝ => (correctedFormula α C σ_sign (↑(2 - w))).re / (2 - w)) w :=
+      hΦ_anal.div (analyticAt_const.sub analyticAt_id) h2w_ne
+    exact hΦdiv_anal.sub (finite_integral_analyticAt g T₀ w)
   have hF_hasSum : ∀ w, 0 ≤ w → w < 1 →
       HasSum (fun k => B k * w ^ k) (F w) := by
     intro w hw hw1
-    exact tonelli_hasSum_lt_one g T₀ hT₀ hg_nn α C σ_sign hα hα1 hC hσ hbound hg_def w hw hw1
-  -- Apply pringsheim_real_extension
+    have hTonelli := tonelli_hasSum_lt_one g T₀ hT₀ hg_nn α C σ_sign hα hα1 hC hσ
+      hbound hg_def w hw hw1
+    suffices h_eq : F w = ∫ t in Ioi T₀, g t * t ^ (w - 3) from h_eq ▸ hTonelli
+    -- Bridge: correctedFormula(2-w).re / (2-w) = ∫_{Ioi 1} g·t^{w-3}
+    have h_bridge := correctedFormula_div_eq_integral α C σ_sign hα hC hα1 hσ hbound w hw hw1
+    -- Unpack F(w) and substitute the bridge
+    show (correctedFormula α C σ_sign (↑(2 - w))).re / (2 - w) -
+      ∫ t in Icc 1 T₀, g t * t ^ (w - 3) =
+      ∫ t in Ioi T₀, g t * t ^ (w - 3)
+    rw [hg_def, h_bridge, ← hg_def]
+    -- Integral splitting: ∫_{Ioi 1} f - ∫_{Icc 1 T₀} f = ∫_{Ioi T₀} f
+    -- Icc 1 T₀ and Ioi T₀ are disjoint, union = Ici 1
+    have h_disj : Disjoint (Icc (1 : ℝ) T₀) (Ioi T₀) :=
+      Set.disjoint_left.mpr (fun _ ⟨_, ht⟩ h => not_lt.mpr ht h)
+    -- IntegrableOn conditions (TRUE: bounded on compact, O(t^{w-2}) on semi-infinite)
+    have hf_Icc : IntegrableOn (fun t => g t * t ^ (w - 3)) (Icc 1 T₀) := sorry
+    have hf_Ioi_T₀ : IntegrableOn (fun t => g t * t ^ (w - 3)) (Ioi T₀) := sorry
+    -- ∫_{Ici 1} = ∫_{Icc 1 T₀} + ∫_{Ioi T₀}
+    have h_split := setIntegral_union h_disj measurableSet_Ioi hf_Icc hf_Ioi_T₀
+    -- ∫_{Ioi 1} = ∫_{Ici 1} (singleton {1} has measure zero for Lebesgue)
+    rw [Icc_union_Ioi_eq_Ici hT₀, integral_Ici_eq_integral_Ioi] at h_split
+    linarith
   exact Aristotle.Standalone.PringsheimRealBootstrap.pringsheim_real_extension
     B hB_nn hB_sum F hF_hasSum W hW1 hF_anal
 
