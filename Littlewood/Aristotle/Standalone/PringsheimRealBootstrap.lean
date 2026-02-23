@@ -11,7 +11,9 @@ The proof uses:
    with non-negative Taylor coefficients (from B_k ≥ 0 and R ≥ 0)
 4. summable_of_sum_range_le concludes
 
-SORRY COUNT: 1 (taylor_bound_from_nonneg_series — Taylor coefficient identification)
+SORRY COUNT: 2
+  taylor_coeff_nonneg_and_dominates — Taylor coeff c_j ≥ 0 and ∑ B_k C(k,j) ≤ c_j
+  pringsheim_real_extension — sSup iteration extending summability from 1 to W
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -209,6 +211,56 @@ private lemma summable_from_partial_sum_bound
     Summable (fun k => B k * w ^ k) :=
   summable_of_sum_range_le (fun k => mul_nonneg (hB k) (pow_nonneg hw k)) hM
 
+/-- Identity theorem extension: if B_k ≥ 0, Summable(B_k c^k) for c ≥ 1,
+HasSum(B_k w^k, F(w)) for w ∈ [0,1), and F analytic on [0,c], then
+tsum(B_k w^k) = F(w) for w ∈ [0,c).
+
+TRUE: Both w ↦ tsum(B_k w^k) and F are real-analytic on (0,c). They agree on (0,1).
+By AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq, they agree on (0,c).
+At w = 0: both equal B_0. -/
+private lemma tsum_eq_F_of_analytic
+    (B : ℕ → ℝ) (hB : ∀ k, 0 ≤ B k)
+    (F : ℝ → ℝ)
+    (hF_hasSum : ∀ w, 0 ≤ w → w < 1 → HasSum (fun k => B k * w ^ k) (F w))
+    (c : ℝ) (hc1 : 1 ≤ c)
+    (hB_sum_c : Summable (fun k => B k * c ^ k))
+    (hF_anal : ∀ w, 0 ≤ w → w ≤ c → AnalyticAt ℝ F w)
+    (w : ℝ) (hw : 0 ≤ w) (hwc : w < c) :
+    ∑' k, B k * w ^ k = F w := by
+  sorry
+
+/-- Comparison: Summable at r ≥ w for non-negative series implies Summable at w. -/
+private lemma summable_nonneg_of_le
+    (B : ℕ → ℝ) (hB : ∀ k, 0 ≤ B k)
+    (r w : ℝ) (hw : 0 ≤ w) (hwr : w ≤ r)
+    (hs : Summable (fun k => B k * r ^ k)) :
+    Summable (fun k => B k * w ^ k) :=
+  Summable.of_nonneg_of_le
+    (fun k => mul_nonneg (hB k) (pow_nonneg hw k))
+    (fun k => mul_le_mul_of_nonneg_left (pow_le_pow_left₀ hw hwr k) (hB k))
+    hs
+
+/-- Generalized partial sum bound at limit point R. -/
+private lemma partial_sum_bound_at_limit
+    (B : ℕ → ℝ) (hB : ∀ k, 0 ≤ B k)
+    (R : ℝ) (hR : 0 < R)
+    (F : ℝ → ℝ)
+    (hF_hasSum : ∀ w, 0 ≤ w → w < R → HasSum (fun k => B k * w ^ k) (F w))
+    (hF_cont : ContinuousAt F R) (N : ℕ) :
+    ∑ k ∈ range N, B k * R ^ k ≤ F R := by
+  have h_lhs : Tendsto (fun w : ℝ => ∑ k ∈ range N, B k * w ^ k)
+      (𝓝[<] R) (𝓝 (∑ k ∈ range N, B k * R ^ k)) := by
+    apply tendsto_finset_sum; intro k _
+    exact (Tendsto.mul tendsto_const_nhds
+      ((continuous_pow k).continuousAt.tendsto)).mono_left nhdsWithin_le_nhds
+  have h_rhs : Tendsto F (𝓝[<] R) (𝓝 (F R)) :=
+    hF_cont.tendsto.mono_left nhdsWithin_le_nhds
+  have h_ineq : ∀ᶠ w in 𝓝[<] R, ∑ k ∈ range N, B k * w ^ k ≤ F w := by
+    filter_upwards [Ioo_mem_nhdsLT (show (0 : ℝ) < R by positivity)]
+    intro w ⟨hw0, hw1⟩
+    exact partial_sum_le_of_hasSum B hB w hw0.le (F w) (hF_hasSum w hw0.le hw1) N
+  exact le_of_tendsto_of_tendsto h_lhs h_rhs h_ineq
+
 theorem pringsheim_real_extension
     (B : ℕ → ℝ) (hB : ∀ k, 0 ≤ B k)
     (hB_sum : Summable B)
@@ -217,20 +269,89 @@ theorem pringsheim_real_extension
     (W : ℝ) (hW : 1 < W)
     (hF_anal : ∀ w, 0 ≤ w → w ≤ W → AnalyticAt ℝ F w) :
     Summable (fun k => B k * W ^ k) := by
-  -- F is continuous on [0, W] (from analyticity), hence bounded
-  have hF_contOn : ContinuousOn F (Icc 0 W) := by
-    intro w hw
-    exact (hF_anal w hw.1 hw.2).continuousAt.continuousWithinAt
-  obtain ⟨M, hM_bound⟩ := IsCompact.exists_bound_of_continuousOn isCompact_Icc hF_contOn
-  -- partial_sum_bound_past_one at center w₀ extends summability by δ(w₀).
-  -- Each w₀ ∈ [0, W] gets a radius δ(w₀) > 0. By compactness, finitely many cover.
-  -- But implementing compactness in Lean is heavy. Instead use sSup contradiction.
-  --
-  -- Let S = {r ≥ 0 : Summable(B_k r^k)}. We know 1 ∈ S (from hB_sum).
-  -- Claim: W ∈ S.
-  -- Proof by contradiction: suppose R = sSup(S ∩ [0, W]) < W.
-  -- Then R ≥ 1 and F is analytic at R. partial_sum_bound_past_one at R
-  -- gives Summable at R + ε, contradicting R = sSup.
-  sorry
+  -- sSup contradiction approach
+  by_contra h_ns
+  -- S = {r ∈ [0,W] : Summable(B_k r^k)}
+  set S := {r : ℝ | 0 ≤ r ∧ r ≤ W ∧ Summable (fun k => B k * r ^ k)} with hS_def
+  have hS_ne : S.Nonempty :=
+    ⟨1, by linarith, hW.le, by simpa [one_pow, mul_one] using hB_sum⟩
+  have hS_bdd : BddAbove S := ⟨W, fun r hr => hr.2.1⟩
+  set R := sSup S with hR_def
+  have hR_ge : 1 ≤ R := le_csSup hS_bdd ⟨by linarith, hW.le,
+    by simpa [one_pow, mul_one] using hB_sum⟩
+  have hR_le : R ≤ W := csSup_le hS_ne (fun r hr => hr.2.1)
+  have hR_pos : 0 < R := by linarith
+  -- Key: HasSum(B_k w^k, F(w)) for w ∈ [0, R)
+  have hF_hasSum_ext : ∀ w, 0 ≤ w → w < R →
+      HasSum (fun k => B k * w ^ k) (F w) := by
+    intro w hw hwR
+    -- For w < 1: directly from hypothesis
+    by_cases hw1 : w < 1
+    · exact hF_hasSum w hw hw1
+    -- For w ≥ 1: find c ∈ S with c > w, use identity theorem
+    · push_neg at hw1
+      obtain ⟨c, hcS, hcw⟩ := lt_csSup_iff hS_bdd hS_ne |>.mp hwR
+      have hcw' : w < c := hcw
+      have hBc : Summable (fun k => B k * c ^ k) := hcS.2.2
+      have hBw : Summable (fun k => B k * w ^ k) :=
+        summable_nonneg_of_le B hB c w hw hcw'.le hBc
+      rw [← tsum_eq_F_of_analytic B hB F hF_hasSum c (by linarith : 1 ≤ c) hBc
+        (fun v hv hvc => hF_anal v hv (hvc.trans hcS.2.1)) w hw hcw']
+      exact hBw.hasSum
+  -- F continuous at R (from analyticity when R < W, or R = W and analytic at W)
+  have hF_cont_R : ContinuousAt F R :=
+    (hF_anal R (by linarith) hR_le).continuousAt
+  -- Summable at R via partial sum bound
+  have hsum_R : Summable (fun k => B k * R ^ k) :=
+    summable_from_partial_sum_bound B hB R hR_pos.le (F R)
+      (fun N => partial_sum_bound_at_limit B hB R hR_pos F hF_hasSum_ext hF_cont_R N)
+  -- If R = W: contradiction
+  rcases eq_or_lt_of_le hR_le with hRW | hRW
+  · exact h_ns (hRW ▸ hsum_R)
+  -- R < W: extend past R via partial_sum_bound_past_one (rescaled)
+  -- Rescale: B̃_k = B_k R^k, F̃(w) = F(R·w)
+  set B' := fun k => B k * R ^ k with hB'_def
+  set F' := fun w => F (R * w) with hF'_def
+  have hB'_nn : ∀ k, 0 ≤ B' k := fun k => mul_nonneg (hB k) (pow_nonneg hR_pos.le k)
+  have hB'_sum : Summable B' := by simpa [hB'_def, one_pow, mul_one] using hsum_R
+  have hF'_hasSum : ∀ w, 0 ≤ w → w < 1 →
+      HasSum (fun k => B' k * w ^ k) (F' w) := by
+    intro w hw hw1
+    have hRw_lt : R * w < R := by nlinarith
+    have hRw_nn : 0 ≤ R * w := mul_nonneg hR_pos.le hw
+    have h := hF_hasSum_ext (R * w) hRw_nn hRw_lt
+    have h_eq : ∀ k, B k * (R * w) ^ k = B' k * w ^ k := by
+      intro k; simp [hB'_def, mul_pow]; ring
+    simpa [h_eq, hF'_def] using h
+  have hF'_anal : AnalyticAt ℝ F' 1 := by
+    show AnalyticAt ℝ (fun w => F (R * w)) 1
+    have : AnalyticAt ℝ F (R * 1) := by simpa using hF_anal R (by linarith) hR_le
+    exact this.comp (analyticAt_const.mul analyticAt_id)
+  -- Get δ > 0 with partial sums past 1
+  obtain ⟨δ, hδ, hbound⟩ := partial_sum_bound_past_one B' hB'_nn hB'_sum F'
+    hF'_hasSum hF'_anal
+  -- Summable at R(1 + δ/2) > R
+  have hδ2 : 0 < δ / 2 := by linarith
+  have hδ2_lt : δ / 2 < δ := by linarith
+  have hsum_ext : Summable (fun k => B' k * (1 + δ / 2) ^ k) :=
+    summable_from_partial_sum_bound B' hB'_nn (1 + δ / 2) (by linarith) (F' (1 + δ / 2))
+      (fun N => hbound (δ / 2) hδ2.le hδ2_lt N)
+  -- Convert back: Summable(B_k (R(1+δ/2))^k)
+  have h_conv : ∀ k, B' k * (1 + δ / 2) ^ k = B k * (R * (1 + δ / 2)) ^ k := by
+    intro k; simp [hB'_def, mul_pow]; ring
+  have hsum_new : Summable (fun k => B k * (R * (1 + δ / 2)) ^ k) := by
+    rwa [show (fun k => B' k * (1 + δ / 2) ^ k) = (fun k => B k * (R * (1 + δ / 2)) ^ k)
+      from funext h_conv] at hsum_ext
+  -- R(1+δ/2) ∈ S (need R(1+δ/2) ≤ W)
+  have hRδ_gt : R < R * (1 + δ / 2) := by nlinarith
+  have hRδ_le : R * (1 + δ / 2) ≤ W := by
+    by_contra h_gt; push_neg at h_gt
+    -- If R(1+δ/2) > W, then W < R(1+δ/2) and Summable at R(1+δ/2)
+    -- So Summable at W by comparison
+    exact h_ns (summable_nonneg_of_le B hB (R * (1 + δ / 2)) W (by linarith) h_gt.le hsum_new)
+  have hRδ_in_S : R * (1 + δ / 2) ∈ S :=
+    ⟨by positivity, hRδ_le, hsum_new⟩
+  -- Contradiction: R(1+δ/2) > R = sSup S but R(1+δ/2) ∈ S
+  exact not_le.mpr hRδ_gt (le_csSup hS_bdd hRδ_in_S)
 
 end Aristotle.Standalone.PringsheimRealBootstrap
