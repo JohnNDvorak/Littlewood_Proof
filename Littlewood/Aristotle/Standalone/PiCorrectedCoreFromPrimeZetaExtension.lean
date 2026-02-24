@@ -34,6 +34,7 @@ Co-authored-by: Claude (Anthropic)
 
 import Littlewood.Aristotle.Standalone.PiAtomHardCaseCorrectedCore
 import Littlewood.Aristotle.CorrectionTermAnalyticity
+import Littlewood.Aristotle.Standalone.PrimeZetaExtensionProof
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -74,7 +75,8 @@ theorem corrected_prime_zeta_extension
     ∃ Q : ℂ → ℂ, AnalyticOnNhd ℂ Q {s : ℂ | α < s.re} ∧
       ∀ s : ℂ, 1 < s.re →
         Q s = primeZeta s + Complex.log (s - 1) := by
-  sorry
+  exact Aristotle.Standalone.PrimeZetaExtensionProof.corrected_prime_zeta_extension_proof
+    α hα hα1 C hC σ hσ hbound
 
 /-! ## Formula verification helpers -/
 
