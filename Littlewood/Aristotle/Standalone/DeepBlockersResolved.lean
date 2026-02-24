@@ -42,6 +42,7 @@ import Littlewood.Aristotle.Standalone.RHPsiWitnessFromZeroSum
 import Littlewood.Aristotle.Standalone.RHPiCoeffControlFromTargetTowerSqrt
 import Littlewood.Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase
 import Littlewood.Aristotle.Standalone.RHPiTargetPhaseArgReduction
+import Littlewood.Aristotle.Standalone.RHPiArgApproxFromPerronThreshold
 import Littlewood.Bridge.PhragmenLindelofWiring
 
 set_option relaxedAutoImplicit false
@@ -55,6 +56,7 @@ namespace Aristotle.Standalone.DeepBlockersResolved
 
 open MeasureTheory Set Filter
 open HardyEstimatesPartial GrowthDomination ZetaZeros
+open PiLiDirectOscillationBridge
 
 /-! ## Blocker 1: Hardy Mean-Square Asymptotic
 
@@ -188,6 +190,26 @@ theorem rhPiWitness
     Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData :=
   Aristotle.Standalone.RHPiTargetPhaseArgReduction.rhPiWitnessData_of_argApproxFacts
 
+/-- Alternative Blocker-7 endpoint through the "above Perron threshold" arg
+payload classes. This route is equivalent to `rhPiWitness`, but exposes the
+deeper constructive interface used by the standalone RH-`pi` chain. -/
+theorem rhPiWitness_of_argAboveThreshold
+    [TruncatedExplicitFormulaPiHyp]
+    [Aristotle.Standalone.RHPiArgApproxFromPerronThreshold.TargetTowerArgApproxAbovePerronThresholdHyp]
+    [Aristotle.Standalone.RHPiArgApproxFromPerronThreshold.AntiTargetTowerArgApproxAbovePerronThresholdHyp] :
+    Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData :=
+  Aristotle.Standalone.RHPiArgApproxFromPerronThreshold.rhPiWitnessData_of_arg_above_threshold_hyp
+
+/-- Alternative Blocker-7 endpoint through the "above Perron threshold" phase
+payload classes. This target is equivalent to
+`rhPiWitness_of_argAboveThreshold` but bypasses the arg reduction layer. -/
+theorem rhPiWitness_of_phaseAboveThreshold
+    [TruncatedExplicitFormulaPiHyp]
+    [Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.TargetTowerPhaseAbovePerronThresholdHyp]
+    [Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.AntiTargetTowerPhaseAbovePerronThresholdHyp] :
+    Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData :=
+  Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.rhPiWitness_proved_of_phase_above_threshold_hyp
+
 /-! ## Assembly: Combined Atoms from Resolved Blockers
 
 When all 7 blockers above are sorry-free, this theorem is sorry-free and
@@ -209,5 +231,45 @@ theorem combined_atoms_resolved
     rhPsiWitness
     piAtomCorrectedCore
     rhPiWitness
+
+/-- Alternative assembly endpoint through the "above Perron threshold" arg
+payload classes. -/
+theorem combined_atoms_resolved_of_argAboveThreshold
+    [TruncatedExplicitFormulaPiHyp]
+    [Aristotle.Standalone.RHPiArgApproxFromPerronThreshold.TargetTowerArgApproxAbovePerronThresholdHyp]
+    [Aristotle.Standalone.RHPiArgApproxFromPerronThreshold.AntiTargetTowerArgApproxAbovePerronThresholdHyp] :
+    (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
+    ∧
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ∧
+    ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
+      LogarithmicIntegral.logarithmicIntegral x)
+      =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
+  exact Aristotle.Standalone.DeepBlockerAssembly.combined_atoms_from_five_blockers
+    perBlockSignedBound
+    sigmaLtOneProved
+    rhPsiWitness
+    piAtomCorrectedCore
+    rhPiWitness_of_argAboveThreshold
+
+/-- Alternative assembly endpoint through the "above Perron threshold" phase
+payload classes. -/
+theorem combined_atoms_resolved_of_phaseAboveThreshold
+    [TruncatedExplicitFormulaPiHyp]
+    [Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.TargetTowerPhaseAbovePerronThresholdHyp]
+    [Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.AntiTargetTowerPhaseAbovePerronThresholdHyp] :
+    (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
+    ∧
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ∧
+    ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
+      LogarithmicIntegral.logarithmicIntegral x)
+      =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
+  exact Aristotle.Standalone.DeepBlockerAssembly.combined_atoms_from_five_blockers
+    perBlockSignedBound
+    sigmaLtOneProved
+    rhPsiWitness
+    piAtomCorrectedCore
+    rhPiWitness_of_phaseAboveThreshold
 
 end Aristotle.Standalone.DeepBlockersResolved
