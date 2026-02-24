@@ -127,15 +127,74 @@ private theorem inner_integral_analyticOnNhd
       (by simp only [neg_re]; linarith)
       (mellinIntegrand_isBigO_nhdsWithin_zero R T₀ hT₀ _)
       (by simp only [neg_re]; linarith)
-    -- LocallyIntegrableOn g (Ioi 0): g = 0 on (0, T₀], locally bounded on (T₀, ∞)
-    sorry
+    -- LocallyIntegrableOn g (Ioi 0): g = 0 on (0, T₀], bounded on compact subsets
+    intro x (hx : x ∈ Ioi (0 : ℝ))
+    have hx_pos : (0 : ℝ) < x := hx
+    rw [nhdsWithin_eq_nhds.mpr (isOpen_Ioi.mem_nhds hx)]
+    refine ⟨Ioo (x / 2) (x + 1), Ioo_mem_nhds (by linarith) (by linarith), ?_⟩
+    have hg_meas : Measurable g :=
+      (continuous_ofReal.measurable.comp hR_meas).indicator measurableSet_Ioi
+    have hx_half_pos : (0 : ℝ) < x / 2 := by linarith
+    set B := |M| * ((x / 2) ^ β + (x + 1) ^ β) with hB_def
+    apply Measure.integrableOn_of_bounded measure_Ioo_lt_top.ne
+      hg_meas.aestronglyMeasurable (M := B)
+    filter_upwards [ae_restrict_mem measurableSet_Ioo] with t ⟨ht_lo, ht_hi⟩
+    simp only [hg_def, mellinIntegrand, indicator_apply, mem_Ioi]
+    split_ifs with h
+    · -- t > T₀: ‖↑(R t)‖ = R t ≤ M * t^β ≤ B
+      have ht_pos : (0 : ℝ) < t := by linarith
+      have hRt_nn := hR_nn t (le_of_lt h)
+      have hnorm : ‖(↑(R t) : ℂ)‖ = R t := by
+        simp [RCLike.norm_ofReal, abs_of_nonneg hRt_nn]
+      rw [hnorm]
+      calc R t ≤ M * t ^ β := hR_bound t (le_of_lt h)
+        _ ≤ |M| * t ^ β :=
+            mul_le_mul_of_nonneg_right (le_abs_self M) (rpow_nonneg (le_of_lt ht_pos) β)
+        _ ≤ B := by
+            apply mul_le_mul_of_nonneg_left _ (abs_nonneg M)
+            by_cases hβ : 0 ≤ β
+            · calc t ^ β ≤ (x + 1) ^ β :=
+                    rpow_le_rpow (le_of_lt ht_pos) (le_of_lt ht_hi) hβ
+                _ ≤ (x / 2) ^ β + (x + 1) ^ β :=
+                    le_add_of_nonneg_left (rpow_nonneg (le_of_lt hx_half_pos) β)
+            · push_neg at hβ
+              have h_neg_nn : 0 ≤ -β := by linarith
+              have h1 : (x / 2) ^ (-β) ≤ t ^ (-β) :=
+                rpow_le_rpow (le_of_lt hx_half_pos) (le_of_lt ht_lo) h_neg_nn
+              have h2 : 0 < (x / 2) ^ (-β) := rpow_pos_of_pos hx_half_pos (-β)
+              have ht_eq : t ^ β = (t ^ (-β))⁻¹ := by
+                have h := rpow_neg (le_of_lt ht_pos) (-β); rw [neg_neg] at h; exact h
+              have hx_eq : (x / 2) ^ β = ((x / 2) ^ (-β))⁻¹ := by
+                have h := rpow_neg (le_of_lt hx_half_pos) (-β); rw [neg_neg] at h; exact h
+              calc t ^ β = (t ^ (-β))⁻¹ := ht_eq
+                _ ≤ ((x / 2) ^ (-β))⁻¹ := inv_anti₀ h2 h1
+                _ = (x / 2) ^ β := hx_eq.symm
+                _ ≤ (x / 2) ^ β + (x + 1) ^ β :=
+                    le_add_of_nonneg_right (rpow_nonneg (by linarith) β)
+    · -- t ≤ T₀: g t = 0
+      simp only [norm_zero]
+      exact mul_nonneg (abs_nonneg M) (add_nonneg (rpow_nonneg (le_of_lt hx_half_pos) β)
+        (rpow_nonneg (by linarith) β))
   -- Step 2: Compose with s ↦ -s to get differentiability at s₀
   have hcomp : DifferentiableAt ℂ (fun s => mellin g (-s)) s₀ :=
     hmd.comp s₀ differentiable_neg.differentiableAt
   -- Step 3: Our integral agrees with mellin g (-s) on {Re > β}
   have hmeq : ∀ s : ℂ, β < s.re →
       (∫ t in Ioi T₀, (↑(R t) : ℂ) * (↑t : ℂ) ^ (-(s + 1))) = mellin g (-s) := by
-    sorry
+    intro s _hs
+    symm
+    simp only [mellin, hg_def, mellinIntegrand]
+    -- Rewrite integrand: case-split indicator, match smul ↔ mul
+    have h_eq : ∀ t : ℝ, (↑t : ℂ) ^ (-s - 1) •
+        (Ioi T₀).indicator (fun t => (↑(R t) : ℂ)) t =
+        (Ioi T₀).indicator (fun t => ↑(R t) * (↑t : ℂ) ^ (-(s + 1))) t := by
+      intro t; simp only [indicator_apply, mem_Ioi]
+      split_ifs
+      · rw [smul_eq_mul, mul_comm]; congr 1; ring
+      · rw [smul_zero]
+    simp_rw [h_eq]
+    rw [setIntegral_indicator measurableSet_Ioi]
+    rw [Ioi_inter_Ioi, show (0 : ℝ) ⊔ T₀ = T₀ from sup_eq_right.mpr (by linarith)]
   -- Step 4: Functions agree on a neighborhood of s₀, so differentiability transfers
   have hcongr : (fun s => ∫ t in Ioi T₀, (↑(R t) : ℂ) * (↑t : ℂ) ^ (-(s + 1))) =ᶠ[𝓝 s₀]
       (fun s => mellin g (-s)) :=
@@ -157,52 +216,21 @@ theorem nonneg_dirichlet_integral_analyticOnNhd
     (analyticOnNhd_id (𝕜 := ℂ)).mono (fun _ _ => trivial)
   exact hid.mul hint
 
-/-! ## Sub-lemma 2: E₁ cancellation (li-Mellin + log is entire)
+/-! ## Main theorem: corrected prime zeta extension
 
-The function g(s) = s · ∫₂^∞ li(t) · t^{-(s+1)} dt + log(s-1) extends to
-an entire function.
+Combines three ingredients:
+1. **E₁ cancellation** (li-Mellin + log is entire):
+   g(s) = s · ∫₂^∞ li(t) · t^{-(s+1)} dt + log(s-1) extends to an entire function.
+   Proof: by IBP, the integral = E₁((s-1)·log 2), and E₁(z) + log(z) + γ is entire.
 
-Proof sketch:
-  s · ∫₂^∞ li(t) · t^{-(s+1)} dt = ∫₂^∞ t^{-s}/log(t) dt  [IBP, li(2)=0]
-  = E₁((s-1)·log 2)  [substitution u = (s-1)·log t]
-  = -γ - log((s-1)·log 2) - ∑_{n≥1} (-(s-1)·log 2)^n/(n·n!)
+2. **Abel decomposition**: for Re(s) > 1,
+   primeZeta(s) + log(s-1) = s·∫_{T₀}^∞ (π-li)·t^{-(s+1)} dt + g(s) + boundary.
 
-Adding log(s-1) cancels the logarithmic singularity:
-  g(s) = -γ - log(log 2) - ∑_{n≥1} (-(s-1)·log 2)^n/(n·n!)  [entire] -/
-theorem li_mellin_plus_log_entire :
-    ∃ g : ℂ → ℂ, AnalyticOnNhd ℂ g Set.univ ∧
-      ∀ s : ℂ, 1 < s.re →
-        g s = s * ∫ t in Ioi (2 : ℝ),
-          ((LogarithmicIntegral.logarithmicIntegral t : ℝ) : ℂ) *
-            (↑t : ℂ) ^ (-(s + 1)) +
-          Complex.log (s - 1) := by
-  sorry
+3. **Non-negative Dirichlet integral** (proved above):
+   R(t) = C·t^α + σ·(li-π) ≥ 0 for t ≥ T₀ from PiLiHardBound.
+   D(s) = s·∫ R·t^{-(s+1)} is analytic on {Re > α} by MCT + Landau's theorem.
 
-/-! ## Sub-lemma 3: Prime zeta Abel decomposition
-
-For Re(s) > 1:
-  primeZeta(s) + log(s-1) = s·∫₂^∞ (π(⌊t⌋) - li(t))·t^{-(s+1)} dt + g(s) + boundary
-
-where g is the E₁ entire function and boundary terms come from [2, T₀]. -/
-theorem primeZeta_abel_decomposition
-    (T₀ : ℝ) (hT₀ : 2 ≤ T₀) :
-    ∃ bnd : ℂ → ℂ, AnalyticOnNhd ℂ bnd Set.univ ∧
-      ∀ (g : ℂ → ℂ),
-      (∀ s : ℂ, 1 < s.re →
-        g s = s * ∫ t in Ioi (2 : ℝ),
-          ((LogarithmicIntegral.logarithmicIntegral t : ℝ) : ℂ) *
-            (↑t : ℂ) ^ (-(s + 1)) +
-          Complex.log (s - 1)) →
-      ∀ s : ℂ, 1 < s.re →
-        primeZeta s + Complex.log (s - 1) =
-          s * ∫ t in Ioi T₀,
-            (((Nat.primeCounting ⌊t⌋₊ : ℝ) -
-              LogarithmicIntegral.logarithmicIntegral t : ℝ) : ℂ) *
-              (↑t : ℂ) ^ (-(s + 1))
-          + g s + bnd s := by
-  sorry
-
-/-! ## Main assembly -/
+Assembly: rearranging, primeZeta + log(s-1) = analytic pieces on {Re > α}. -/
 
 /-- **Corrected prime zeta extension**: under the one-sided π-li bound,
 primeZeta(s) + log(s-1) extends analytically from {Re > 1} to {Re > α}. -/
@@ -213,25 +241,9 @@ theorem corrected_prime_zeta_extension_proof
     ∃ Q : ℂ → ℂ, AnalyticOnNhd ℂ Q {s : ℂ | α < s.re} ∧
       ∀ s : ℂ, 1 < s.re →
         Q s = primeZeta s + Complex.log (s - 1) := by
-  -- Step 1: Extract T₀ from the eventually-bound
-  obtain ⟨T₀, hT₀_bound⟩ := hbound.exists_forall_of_atTop
-  let T₁ := max T₀ 2
-  have hT₁_ge2 : 2 ≤ T₁ := le_max_right _ _
-  have hT₁_ge1 : 1 ≤ T₁ := le_trans one_le_two hT₁_ge2
-  -- Step 2: Get the E₁ entire function g
-  obtain ⟨g, hg_anal, hg_eq⟩ := li_mellin_plus_log_entire
-  -- Step 3: Get the Abel decomposition boundary term
-  obtain ⟨bnd, hbnd_anal, hbnd_eq⟩ := primeZeta_abel_decomposition T₁ hT₁_ge2
-  -- Step 4: The non-negative function R(t) = C·t^α + σ·(li(t) - π(⌊t⌋))
-  -- satisfies R(t) ≥ 0 for t ≥ T₁ and R(t) ≤ 2C·t^α (for large t)
-  -- Its Dirichlet integral is analytic on {Re > α}
-  -- Step 5: Rearranging:
-  --   σ · s · ∫(π-li)·t^{-(s+1)} dt = C·s·integral - D(s)
-  -- where the RHS is analytic on {Re > α}
-  -- Step 6: primeZeta + log(s-1) = error integral + g + bnd (by step 3)
-  --   = σ⁻¹ · [analytic piece] + g + bnd
-  -- All pieces analytic on {Re > α}
-  -- Step 7: Define Q and verify
+  -- Requires: E₁ cancellation, Abel decomposition, non-negative Dirichlet integral
+  -- analyticity (Landau's theorem for non-negative Dirichlet integrals),
+  -- and algebraic assembly. See docstring above for proof sketch.
   sorry
 
 end Aristotle.Standalone.PrimeZetaExtensionProof
