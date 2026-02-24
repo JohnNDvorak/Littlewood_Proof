@@ -7,9 +7,11 @@ Proves RhPsiWitnessData (Blocker 5) via:
 2. psiMainTerm oscillation: psiMainTerm is cofinally ≥ 4√x·lll(x) AND ≤ -4√x·lll(x)
 3. Assembly: ψ(x)-x = Ω±(3√x · lll(x))
 
-SORRY COUNT: 2 atomic sub-sorries
+SORRY COUNT: 3 atomic sub-sorries (2 on critical path + 1 proved from them)
   (1) explicit_formula_psi_at_T_eq_x — truncated explicit formula for ψ at T=x (unconditional)
-  (2) psiMainTerm_oscillates_large — Dirichlet phase alignment (Littlewood omega)
+  (2a) sum_reciprocal_norm_diverges — ∑ 1/‖ρ‖ → ∞ (unconditional, follows from RVM)
+  (2b) psiMainTerm_oscillates_of_divergent_sum — oscillation from divergence (under RH)
+  psiMainTerm_oscillates_large is PROVED from (2a) + (2b)
 
 PROVED:
   rh_psi_truncated_explicit_formula — from (1) + chebyshevPsi bridge + growth bound
@@ -135,23 +137,67 @@ theorem rh_psi_explicit_formula_error :
   exact le_trans hx_trunc hx_dom
 
 -- ============================================================
--- 4. Sub-sorry 2: psiMainTerm oscillation (Dirichlet phase alignment)
+-- 4. Sub-sorry 2: psiMainTerm oscillation (decomposed into sub-sorries)
 -- ============================================================
 
+-- 4a. Sub-sorry 5c-I: Reciprocal norm sum divergence
+
+/-- **Reciprocal norm sum divergence** (unconditional).
+The sum `∑_{ρ ∈ ZerosBelow T} 1/‖ρ‖` diverges as `T → ∞`.
+
+Proof strategy: From Riemann-von Mangoldt `N(T) ~ T log T/(2π)` and
+partial summation, `∑_{0<γ≤T} 1/γ ~ (1/(2π))(log T)²`. Since
+`‖ρ‖ = √(σ²+γ²) ≤ |γ|+1`, we have `1/‖ρ‖ ≥ 1/(|γ|+1)`, and the
+lower bound diverges. Grouping conjugate pairs doubles the sum.
+
+This is a clean sub-goal that can be closed from `ZeroCountingSumInvGammaAsymptoticHyp`
+or directly from the non-uniform RVM already proved in `RiemannVonMangoldt.lean`.
+
+Reference: Titchmarsh §9.4. -/
+private lemma sum_reciprocal_norm_diverges :
+    ∀ M : ℝ, ∃ T : ℝ, T ≥ 2 ∧
+      M ≤ ∑ ρ ∈ ZerosBelow T, 1 / ‖(ρ : ℂ)‖ := by
+  sorry
+
+-- 4b. Sub-sorry 5c-II: Oscillation from unbounded reciprocal sum
+
+/-- **Cofinal oscillation from unbounded reciprocal sum** (under RH).
+Given `∑ 1/‖ρ‖ → ∞`, produce cofinal witnesses where `psiMainTerm(x)`
+exceeds `±4·√x·lll(x)`.
+
+Under RH, `Re(x^ρ/ρ) = √x · cos(γ log x − arg ρ)/|ρ|`. After
+Dirichlet alignment of K zeros, the aligned sum is `≥ (1−ε)·∑ 1/|ρ|`.
+The tower bound from Dirichlet (`x ≤ exp((2π/ε)^K)`) keeps
+`lll(x) ≤ O(log K)`, while `∑ 1/|ρ| ≥ c·(log T)² ≫ lll(x)`.
+
+The main difficulty is controlling the tail contribution from
+zeros above T in `ZerosBelow(x)`. Standard approaches:
+  (a) L²-mean-value + Chebyshev: the tail is `O(1)` for most t values,
+      and the dense set of good Dirichlet points contains one with small tail.
+  (b) Ingham/Tauberian contradiction: assume `ψ(x)−x = o(√x·lll x)`,
+      derive a Mellin-transform contradiction with `∑ 1/|ρ| = ∞`.
+
+Reference: Ingham 1932, Theorem 5; Montgomery-Vaughan §15.2 (Thm 15.11). -/
+private lemma psiMainTerm_oscillates_of_divergent_sum
+    (hRH : ZetaZeros.RiemannHypothesis)
+    (h_div : ∀ M : ℝ, ∃ T : ℝ, T ≥ 2 ∧
+      M ≤ ∑ ρ ∈ ZerosBelow T, 1 / ‖(ρ : ℂ)‖) :
+    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      psiMainTerm x ≥ 4 * (Real.sqrt x * lll x)) ∧
+    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x))) := by
+  sorry
+
 /-- The zero-sum main term Σ Re(x^ρ/ρ) oscillates cofinally with amplitude
-±4√x·lll(x). This follows from Dirichlet simultaneous approximation on
-zero phases (`exists_large_x_phases_aligned_finset`) combined with the
-lower bound `bound_real_part_of_sum_aligned` and the divergence of
-Σ Re(1/ρ) (`HardyCriticalLineZerosHyp_V3.sum_re_inv_rho_diverges`).
-The constant 4 provides margin for absorbing the O(log²x) error. -/
+±4√x·lll(x). Factored through the divergence of `∑ 1/‖ρ‖` (sub-sorry 5c-I)
+and the oscillation construction (sub-sorry 5c-II). -/
 private lemma psiMainTerm_oscillates_large
     (hRH : ZetaZeros.RiemannHypothesis) :
     (∀ X : ℝ, ∃ x : ℝ, X < x ∧
       psiMainTerm x ≥ 4 * (Real.sqrt x * lll x)) ∧
     (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-      psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x))) := by
-  -- Dirichlet phase alignment on zeros in the explicit formula.
-  sorry
+      psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x))) :=
+  psiMainTerm_oscillates_of_divergent_sum hRH sum_reciprocal_norm_diverges
 
 -- ============================================================
 -- 5. Proof of rh_psi_minus_x_oscillates_large (PROVED from 1+4+growth dom)
