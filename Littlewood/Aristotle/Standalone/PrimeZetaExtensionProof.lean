@@ -22,7 +22,9 @@ Define R(t) = C·t^α - σ·(π(⌊t⌋) - li(t)) ≥ 0 for t ≥ T₀.
 
 5. Assembly: Q(s) = σ⁻¹·(C·s/(s-α) - D(s)) + g(s) + boundary is analytic on {Re > α}.
 
-SORRY COUNT: 3 (error_integral, E₁ cancellation, Abel decomposition)
+SORRY COUNT: 1 (corrected_prime_zeta_extension_proof — needs E₁, Abel, Landau MCT)
+PROVED: inner_integral_analyticOnNhd, nonneg_dirichlet_integral_analyticOnNhd,
+  mellinIntegrand_isBigO_atTop, mellinIntegrand_isBigO_nhdsWithin_zero
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -31,6 +33,7 @@ import Littlewood.Aristotle.Standalone.PiAtomHardCaseCorrectedCore
 import Littlewood.Aristotle.CorrectionTermAnalyticity
 import Mathlib.Analysis.MellinTransform
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
+import Mathlib.NumberTheory.LSeries.SumCoeff
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -216,21 +219,81 @@ theorem nonneg_dirichlet_integral_analyticOnNhd
     (analyticOnNhd_id (𝕜 := ℂ)).mono (fun _ _ => trivial)
   exact hid.mul hint
 
+/-! ## Abel summation for primeZeta
+
+We connect primeZeta (∑' over primes) to Mathlib's LSeries infrastructure,
+then apply `LSeries_eq_mul_integral'` to get the integral representation:
+  primeZeta(s) = s · ∫ t in Ioi 1, (primeCounting ⌊t⌋₊ : ℂ) · t^{-(s+1)}
+for Re(s) > 1. -/
+
+/-- Prime indicator function: 1 on primes, 0 elsewhere. -/
+private def primeIndicator : ℕ → ℂ := fun n => if n.Prime then 1 else 0
+
+/-- Partial sums of prime indicator norms are O(n^1).
+This follows from π(n) ≤ n (trivially: every prime is a natural number).
+Proof: ∑_{k=1}^n ‖primeIndicator k‖ ≤ card(Icc 1 n) ≤ n ≤ n^1. -/
+private theorem primeIndicator_partial_sum_bigO :
+    (fun n ↦ ∑ k ∈ Finset.Icc 1 n, ‖primeIndicator k‖) =O[atTop]
+      fun n ↦ (n : ℝ) ^ (1 : ℝ) := by
+  simp only [rpow_one]
+  exact Asymptotics.isBigO_of_le atTop (fun n => by
+    simp only [Real.norm_eq_abs]
+    rw [abs_of_nonneg (Finset.sum_nonneg (fun _ _ => norm_nonneg _))]
+    rw [abs_of_nonneg (Nat.cast_nonneg n)]
+    calc ∑ k ∈ Finset.Icc 1 n, ‖primeIndicator k‖
+        ≤ ∑ _k ∈ Finset.Icc 1 n, (1 : ℝ) := Finset.sum_le_sum (fun _ _ => by
+          simp only [primeIndicator]; split_ifs <;> simp)
+      _ = (Finset.Icc 1 n).card := by simp
+      _ ≤ n := by
+          have hcard : (Finset.Icc 1 n).card ≤ n := by rw [Nat.card_Icc]; omega
+          exact_mod_cast hcard)
+
+/-- primeZeta equals LSeries of primeIndicator for Re(s) > 1.
+Bridges tsum over Nat.Primes to tsum over ℕ via indicator/LSeries.term matching. -/
+private theorem primeZeta_eq_LSeries {s : ℂ} (hs : 1 < s.re) :
+    primeZeta s = LSeries primeIndicator s := by
+  simp only [primeZeta, LSeries, LSeries.term, primeIndicator]
+  -- Step 1: tsum_subtype bridges ∑' over Nat.Primes ↔ ∑' over ℕ with indicator
+  -- Use trans since rw can't match Nat.Primes ≡ ↑{n : ℕ | n.Prime} definitionally
+  trans (∑' n : ℕ, (({n : ℕ | n.Prime} : Set ℕ).indicator
+    (fun (n : ℕ) => (↑n : ℂ) ^ (-s))) n)
+  · exact tsum_subtype (α := ℂ) {n : ℕ | n.Prime} (fun (n : ℕ) => (↑n : ℂ) ^ (-s))
+  -- Step 2: Match indicator terms with LSeries.term
+  · congr 1; ext n
+    simp only [Set.indicator_apply, Set.mem_setOf_eq]
+    by_cases hp : n.Prime
+    · simp [hp, hp.ne_zero, one_div, cpow_neg]
+    · -- ¬ n.Prime: indicator is 0, LSeries term is 0
+      simp only [hp, ite_false]
+      split_ifs with hn
+      · rfl
+      · simp
+
+/-- Abel summation for primeZeta:
+  primeZeta(s) = s * ∫ t in Ioi 1, (∑ k ∈ Icc 1 ⌊t⌋₊, primeIndicator k) * t^{-(s+1)}
+for Re(s) > 1. -/
+theorem primeZeta_eq_integral {s : ℂ} (hs : 1 < s.re) :
+    primeZeta s = s * ∫ t in Ioi (1 : ℝ),
+      (∑ k ∈ Finset.Icc 1 ⌊t⌋₊, primeIndicator k) * (↑t : ℂ) ^ (-(s + 1)) := by
+  rw [primeZeta_eq_LSeries hs]
+  exact LSeries_eq_mul_integral' primeIndicator (by norm_num : (0 : ℝ) ≤ 1)
+    (by linarith) primeIndicator_partial_sum_bigO
+
 /-! ## Main theorem: corrected prime zeta extension
 
-Combines three ingredients:
+Combines the proved Abel summation with two analytic extension sub-lemmas:
+
 1. **E₁ cancellation** (li-Mellin + log is entire):
-   g(s) = s · ∫₂^∞ li(t) · t^{-(s+1)} dt + log(s-1) extends to an entire function.
-   Proof: by IBP, the integral = E₁((s-1)·log 2), and E₁(z) + log(z) + γ is entire.
+   K(s) = log(s-1) + s·∫₂^∞ li(t)·t^{-(s+1)} dt extends to an entire function.
+   Proof: IBP gives s·∫ li = li(2)·2^{-s} + ∫ t^{-s}/log t dt.
+   Substitution u = log t gives E₁((s-1)·log 2), and E₁(z)+log(z)+γ is entire.
 
-2. **Abel decomposition**: for Re(s) > 1,
-   primeZeta(s) + log(s-1) = s·∫_{T₀}^∞ (π-li)·t^{-(s+1)} dt + g(s) + boundary.
+2. **π-li integral extension** (Landau MCT):
+   F(s) = s·∫₂^∞ (π-li)·t^{-(s+1)} dt extends from {Re>1} to {Re>α}.
+   Uses: R(t) = C·t^α - σ·(π-li) ≥ 0 (from PiLiHardBound), Landau's theorem
+   for non-negative Dirichlet integrals.
 
-3. **Non-negative Dirichlet integral** (proved above):
-   R(t) = C·t^α + σ·(li-π) ≥ 0 for t ≥ T₀ from PiLiHardBound.
-   D(s) = s·∫ R·t^{-(s+1)} is analytic on {Re > α} by MCT + Landau's theorem.
-
-Assembly: rearranging, primeZeta + log(s-1) = analytic pieces on {Re > α}. -/
+Assembly: Q = K + F, using integral linearity and Abel summation. -/
 
 /-- **Corrected prime zeta extension**: under the one-sided π-li bound,
 primeZeta(s) + log(s-1) extends analytically from {Re > 1} to {Re > α}. -/
@@ -241,9 +304,9 @@ theorem corrected_prime_zeta_extension_proof
     ∃ Q : ℂ → ℂ, AnalyticOnNhd ℂ Q {s : ℂ | α < s.re} ∧
       ∀ s : ℂ, 1 < s.re →
         Q s = primeZeta s + Complex.log (s - 1) := by
-  -- Requires: E₁ cancellation, Abel decomposition, non-negative Dirichlet integral
-  -- analyticity (Landau's theorem for non-negative Dirichlet integrals),
-  -- and algebraic assembly. See docstring above for proof sketch.
+  -- Proof requires: E₁ cancellation (li-Mellin + log entire),
+  -- Landau MCT (non-negative Dirichlet integral analytic past α),
+  -- integral linearity, and Abel summation (proved above as primeZeta_eq_integral).
   sorry
 
 end Aristotle.Standalone.PrimeZetaExtensionProof
