@@ -16,9 +16,9 @@ The proof uses:
 4. Continuous extension F on [0, W]: defined as tsum (using Summable from step 2).
 5. Scaled partial sum bound → summable_of_sum_range_le for downstream σ₀.
 
-SORRY COUNT: 1 (anticoeff_summable_at_W_gt_one — TRUE,
-  convergence radius of anti-coefficient series is ≥ 2-α by Pringsheim contradiction.
-  Proof: Tonelli + witnessG formula ID + identity theorem + Pringsheim singularity.)
+SORRY COUNT: 0 — All sub-components proved.
+  finite_integral_analyticAt: parametric integral analyticity via complexification.
+  IntegrableOn conditions: bounded on compact + O(t^{w-2}) tail decay.
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -268,16 +268,173 @@ SORRY COUNT: 1
 
 References: Titchmarsh §1.8; standard parametric integral theory. -/
 
+set_option maxHeartbeats 6400000 in
 /-- Finite integral `∫_{Icc 1 T₀} g(t)·t^{w-3} dt` is real-analytic in w.
 
-TRUE: The integrand g(t)·exp((w-3)·log t) is real-analytic in w for each t > 0.
-On the compact domain [1, T₀], the Taylor series in w converges uniformly,
-so termwise integration gives a convergent power series for the integral.
-Alternatively: complexify, use parametric differentiation + Cauchy, then re_ofReal. -/
+Proof: complexify to `Φ(z) = ∫ (g t : ℂ) * (↑t)^(z-3) dt`, show Φ is ℂ-differentiable
+via parametric differentiation (`hasDerivAt_integral_of_dominated_loc_of_deriv_le`),
+then holomorphic → analytic (`Differentiable.analyticAt`), bridge `Φ(↑w) = ↑(f(w))`
+via `Complex.ofReal_cpow`, and restrict to ℝ via `AnalyticAt.re_ofReal`. -/
 private theorem finite_integral_analyticAt
-    (g : ℝ → ℝ) (T₀ : ℝ) (w₀ : ℝ) :
+    (g : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀)
+    (hg_meas : Measurable g)
+    (hg_bound : ∃ D : ℝ, 0 < D ∧ ∀ t : ℝ, 1 ≤ t → |g t| ≤ D * t)
+    (w₀ : ℝ) :
     AnalyticAt ℝ (fun w => ∫ t in Icc 1 T₀, g t * t ^ (w - 3)) w₀ := by
-  sorry
+  obtain ⟨D, hD, hg_le⟩ := hg_bound
+  -- Step 1: Define the complexified integrand
+  set Φ : ℂ → ℂ := fun z => ∫ t in Icc (1 : ℝ) T₀,
+    ((g t : ℝ) : ℂ) * (↑t : ℂ) ^ (z - 3) with hΦ_def
+  -- Step 2: Show Φ is ℂ-differentiable everywhere
+  have hΦ_diff : Differentiable ℂ Φ := by
+    intro z₀
+    -- Use hasDerivAt_integral_of_dominated_loc_of_deriv_le
+    set s := Metric.ball z₀ 1
+    set μ := MeasureTheory.Measure.restrict MeasureTheory.volume (Icc (1 : ℝ) T₀)
+    -- The derivative of (g t : ℂ) * (↑t)^(z-3) w.r.t. z is
+    -- (g t : ℂ) * Complex.log(↑t) * (↑t)^(z-3)
+    -- Bound: on [1,T₀] × ball(z₀,1), ‖F'(z,t)‖ ≤ D*T₀ * log(T₀) * M for suitable M
+    set M := max (T₀ ^ (z₀.re + 1 - 3)) 1 with hM_def
+    set bound_val := D * T₀ * Real.log T₀ * M with hbound_def
+    have hM_pos : 0 < M := lt_max_of_lt_right one_pos
+    -- HasDerivAt for each t
+    have h_deriv : ∀ t : ℝ, 1 ≤ t → t ≤ T₀ →
+        ∀ z : ℂ, HasDerivAt (fun z => ((g t : ℝ) : ℂ) * (↑t : ℂ) ^ (z - 3))
+          (((g t : ℝ) : ℂ) * Complex.log (↑t) * (↑t : ℂ) ^ (z - 3)) z := by
+      intro t ht1 _htT₀ z
+      have ht_pos : (0 : ℝ) < t := by linarith
+      have ht_ne : (↑t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt ht_pos)
+      -- HasDerivAt for z ↦ (↑t)^(z-3) via const_cpow
+      have h_sub : HasDerivAt (fun z : ℂ => z - 3) 1 z := by
+        exact (hasDerivAt_id z).sub_const 3
+      have h_cpow : HasDerivAt (fun z : ℂ => (↑t : ℂ) ^ (z - 3))
+          ((↑t : ℂ) ^ (z - 3) * Complex.log (↑t) * 1) z := by
+        exact HasDerivAt.const_cpow h_sub (Or.inl ht_ne)
+      simp only [mul_one] at h_cpow
+      exact (h_cpow.const_mul _).congr_deriv (by ring)
+    -- Norm bound on derivative
+    have h_norm_bound : ∀ t : ℝ, t ∈ Icc 1 T₀ → ∀ z ∈ s,
+        ‖((g t : ℝ) : ℂ) * Complex.log (↑t) * (↑t : ℂ) ^ (z - 3)‖ ≤ bound_val := by
+      intro t ⟨ht1, htT₀⟩ z hz
+      have ht_pos : (0 : ℝ) < t := by linarith
+      -- ‖(g t : ℂ)‖ = |g t| ≤ D * t ≤ D * T₀
+      have h1 : ‖((g t : ℝ) : ℂ)‖ ≤ D * T₀ := by
+        rw [Complex.norm_real, Real.norm_eq_abs]
+        exact (hg_le t ht1).trans (by nlinarith)
+      -- ‖Complex.log(↑t)‖ ≤ |log(t)| = log(t) ≤ log(T₀)
+      have h2 : ‖Complex.log (↑t)‖ ≤ Real.log T₀ := by
+        rw [show Complex.log (↑t) = ↑(Real.log t) from by
+          rw [Complex.ofReal_log (le_of_lt ht_pos)]]
+        simp only [Complex.norm_real, Real.norm_eq_abs,
+          abs_of_nonneg (Real.log_nonneg ht1)]
+        exact Real.log_le_log ht_pos htT₀
+      -- ‖(↑t)^(z-3)‖ = t^(Re(z)-3) ≤ M
+      have h3 : ‖(↑t : ℂ) ^ (z - 3)‖ ≤ M := by
+        rw [Complex.norm_cpow_eq_rpow_re_of_pos ht_pos (z - 3)]
+        -- t^(Re(z-3)) = t^(z.re - 3)
+        have hre : (z - 3).re = z.re - 3 := by simp
+        rw [hre]
+        by_cases hexp : z.re - 3 ≥ 0
+        · -- t^(z.re-3) ≤ T₀^(z.re-3) ≤ T₀^(z₀.re+1-3) ≤ M
+          calc t ^ (z.re - 3) ≤ T₀ ^ (z.re - 3) :=
+                Real.rpow_le_rpow (by linarith) htT₀ hexp
+            _ ≤ T₀ ^ (z₀.re + 1 - 3) := by
+                apply Real.rpow_le_rpow_of_exponent_le (by linarith)
+                have h_dist : dist z z₀ < 1 := Metric.mem_ball.mp hz
+                have h_abs_re : |z.re - z₀.re| ≤ dist z z₀ := by
+                  calc |z.re - z₀.re| = |(z - z₀).re| := by congr 1
+                    _ ≤ ‖z - z₀‖ := Complex.abs_re_le_norm _
+                    _ = dist z z₀ := (dist_eq_norm z z₀).symm
+                linarith [(abs_le.mp (h_abs_re.trans h_dist.le)).2]
+            _ ≤ M := le_max_left _ _
+        · -- z.re - 3 < 0, so t^(z.re-3) ≤ 1^(z.re-3) = 1 ≤ M
+          push_neg at hexp
+          calc t ^ (z.re - 3) ≤ 1 :=
+                Real.rpow_le_one_of_one_le_of_nonpos ht1 (le_of_lt hexp)
+            _ ≤ M := le_max_right _ _
+      calc ‖((g t : ℝ) : ℂ) * Complex.log (↑t) * (↑t : ℂ) ^ (z - 3)‖
+          = ‖((g t : ℝ) : ℂ)‖ * ‖Complex.log (↑t)‖ * ‖(↑t : ℂ) ^ (z - 3)‖ := by
+            rw [norm_mul, norm_mul]
+        _ ≤ (D * T₀) * Real.log T₀ * M := by
+            have : 0 ≤ Real.log T₀ := Real.log_nonneg (by linarith)
+            gcongr
+        _ = bound_val := by ring
+    -- AEStronglyMeasurable helpers (cpow via ContinuousOn on [1,T₀])
+    have h_slit : ∀ t : ℝ, t ∈ Icc 1 T₀ → (↑t : ℂ) ∈ Complex.slitPlane := by
+      intro t ⟨ht1, _⟩; left; simp [Complex.ofReal_re]; linarith
+    have h_cpow_cont : ∀ z : ℂ, ContinuousOn
+        (fun t : ℝ => (↑t : ℂ) ^ (z - 3)) (Icc 1 T₀) :=
+      fun z => (Complex.continuous_ofReal.continuousOn.cpow_const (fun t ht => h_slit t ht))
+    have h_g_aesm : AEStronglyMeasurable (fun t : ℝ => ((g t : ℝ) : ℂ)) μ :=
+      (Complex.measurable_ofReal.comp hg_meas).aestronglyMeasurable
+    have h_aesm : ∀ z : ℂ, AEStronglyMeasurable
+        (fun t : ℝ => ((g t : ℝ) : ℂ) * (↑t : ℂ) ^ (z - 3)) μ :=
+      fun z => h_g_aesm.mul ((h_cpow_cont z).aestronglyMeasurable measurableSet_Icc)
+    -- Apply the parametric integral theorem
+    have h_result := hasDerivAt_integral_of_dominated_loc_of_deriv_le
+      (Metric.ball_mem_nhds z₀ one_pos)
+      -- hF_meas: AEStronglyMeasurable for each z
+      (Eventually.of_forall fun z => h_aesm z)
+      -- hF_int: Integrable at z₀
+      (by
+        refine Integrable.mono'
+          (integrableOn_const (C := D * T₀ * M) (hs := isCompact_Icc.measure_lt_top.ne))
+          (h_aesm z₀) ?_
+        filter_upwards [ae_restrict_mem measurableSet_Icc] with t ⟨ht1, htT₀⟩
+        have ht_pos : (0 : ℝ) < t := by linarith
+        calc ‖((g t : ℝ) : ℂ) * (↑t : ℂ) ^ (z₀ - 3)‖
+            = ‖((g t : ℝ) : ℂ)‖ * ‖(↑t : ℂ) ^ (z₀ - 3)‖ := norm_mul _ _
+          _ ≤ (D * T₀) * M := by
+              apply mul_le_mul
+              · rw [Complex.norm_real, Real.norm_eq_abs]
+                exact (hg_le t ht1).trans (by nlinarith)
+              · rw [Complex.norm_cpow_eq_rpow_re_of_pos ht_pos]
+                simp only [Complex.sub_re, Complex.ofReal_re, Complex.ofReal_im]
+                by_cases hexp : z₀.re - 3 ≥ 0
+                · exact (Real.rpow_le_rpow (by linarith) htT₀ hexp).trans
+                    ((Real.rpow_le_rpow_of_exponent_le (by linarith) (by linarith)).trans
+                      (le_max_left _ _))
+                · push_neg at hexp
+                  exact (Real.rpow_le_one_of_one_le_of_nonpos ht1 hexp.le).trans (le_max_right _ _)
+              · exact norm_nonneg _
+              · positivity)
+      -- hF'_meas: derivative measurable at z₀
+      ((h_g_aesm.mul ((Complex.continuous_ofReal.continuousOn.clog
+          (fun t ht => h_slit t ht)).aestronglyMeasurable measurableSet_Icc)).mul
+        ((h_cpow_cont z₀).aestronglyMeasurable measurableSet_Icc))
+      -- h_bound: norm of derivative bounded
+      (by
+        filter_upwards [ae_restrict_mem measurableSet_Icc] with t ht z hz
+        exact h_norm_bound t ht z hz)
+      -- bound_integrable: constant is integrable on compact set
+      (integrableOn_const (hs := isCompact_Icc.measure_lt_top.ne))
+      -- h_diff: HasDerivAt for each t
+      (by
+        filter_upwards [ae_restrict_mem measurableSet_Icc] with t ⟨ht1, htT₀⟩ z _hz
+        exact h_deriv t ht1 htT₀ z)
+    exact h_result.2.differentiableAt
+  -- Step 3: AnalyticAt ℂ Φ z₀
+  have hΦ_anal : AnalyticAt ℂ Φ (↑w₀) := hΦ_diff.analyticAt (↑w₀)
+  -- Step 4: Bridge Φ(↑w) = ↑(f(w))
+  have h_bridge : (fun w : ℝ => (Φ (↑w)).re) = fun w => ∫ t in Icc 1 T₀, g t * t ^ (w - 3) := by
+    ext w
+    show (∫ t in Icc (1 : ℝ) T₀, ((g t : ℝ) : ℂ) * (↑t : ℂ) ^ ((↑w : ℂ) - 3)).re =
+      ∫ t in Icc 1 T₀, g t * t ^ (w - 3)
+    rw [show (↑w : ℂ) - (3 : ℂ) = ((w - 3 : ℝ) : ℂ) from by push_cast; ring]
+    have h_eq : ∀ t ∈ Icc (1 : ℝ) T₀,
+        ((g t : ℝ) : ℂ) * (↑t : ℂ) ^ ((w - 3 : ℝ) : ℂ) =
+        ((g t * t ^ (w - 3) : ℝ) : ℂ) := by
+      intro t ⟨ht1, _⟩
+      rw [show (↑t : ℂ) ^ ((w - 3 : ℝ) : ℂ) = ((t ^ (w - 3) : ℝ) : ℂ) from
+        (Complex.ofReal_cpow (by linarith : (0 : ℝ) ≤ t) _).symm,
+        ← Complex.ofReal_mul]
+    rw [setIntegral_congr_fun measurableSet_Icc h_eq]
+    have : ∫ x in Icc (1 : ℝ) T₀, ((g x * x ^ (w - 3) : ℝ) : ℂ) =
+        (↑(∫ x in Icc 1 T₀, g x * x ^ (w - 3)) : ℂ) := integral_ofReal
+    rw [this, Complex.ofReal_re]
+  -- Step 5: AnalyticAt ℝ via re_ofReal
+  rw [← h_bridge]
+  exact hΦ_anal.re_ofReal
 
 -- Bridge: correctedFormula(2-w).re / (2-w) = ∫_{Ioi 1} genFun·t^{w-3} for w < 1.
 -- Chain: correctedFormula = witnessG [formula matching] → dirichletIntegral [def]
@@ -358,7 +515,13 @@ private theorem anticoeff_summable_at_W_gt_one
     have hΦdiv_anal : AnalyticAt ℝ
         (fun w : ℝ => (correctedFormula α C σ_sign (↑(2 - w))).re / (2 - w)) w :=
       hΦ_anal.div (analyticAt_const.sub analyticAt_id) h2w_ne
-    exact hΦdiv_anal.sub (finite_integral_analyticAt g T₀ w)
+    have hg_meas : Measurable g := by
+      rw [hg_def]; unfold PringsheimPsiAtom.genFun
+      exact (measurable_id.pow_const α |>.const_mul C).add
+        ((measurable_id.sub Chebyshev.psi_mono.measurable).const_mul σ_sign)
+    have hg_bound := PringsheimPsiAtom.genFun_le_linear C hC α (le_of_lt hα1) σ_sign hσ
+    exact hΦdiv_anal.sub (finite_integral_analyticAt g T₀ hT₀ hg_meas
+      (by rw [hg_def]; exact hg_bound) w)
   have hF_hasSum : ∀ w, 0 ≤ w → w < 1 →
       HasSum (fun k => B k * w ^ k) (F w) := by
     intro w hw hw1
@@ -376,9 +539,44 @@ private theorem anticoeff_summable_at_W_gt_one
     -- Icc 1 T₀ and Ioi T₀ are disjoint, union = Ici 1
     have h_disj : Disjoint (Icc (1 : ℝ) T₀) (Ioi T₀) :=
       Set.disjoint_left.mpr (fun _ ⟨_, ht⟩ h => not_lt.mpr ht h)
-    -- IntegrableOn conditions (TRUE: bounded on compact, O(t^{w-2}) on semi-infinite)
-    have hf_Icc : IntegrableOn (fun t => g t * t ^ (w - 3)) (Icc 1 T₀) := sorry
-    have hf_Ioi_T₀ : IntegrableOn (fun t => g t * t ^ (w - 3)) (Ioi T₀) := sorry
+    -- IntegrableOn conditions: bounded on compact, O(t^{w-2}) on semi-infinite
+    have hα1_le : α ≤ 1 := le_of_lt hα1
+    obtain ⟨D, hD, hle⟩ := PringsheimPsiAtom.genFun_le_linear C hC α hα1_le σ_sign hσ
+    have hg_meas : Measurable g := by
+      rw [hg_def]; unfold PringsheimPsiAtom.genFun
+      exact (measurable_id.pow_const α |>.const_mul C).add
+        ((measurable_id.sub Chebyshev.psi_mono.measurable).const_mul σ_sign)
+    have hf_Icc : IntegrableOn (fun t => g t * t ^ (w - 3)) (Icc 1 T₀) := by
+      apply Measure.integrableOn_of_bounded (isCompact_Icc.measure_lt_top.ne)
+        ((hg_meas.mul (measurable_id.pow_const _)).aestronglyMeasurable) (M := D * T₀)
+      filter_upwards [ae_restrict_mem measurableSet_Icc] with t ⟨ht1, htT₀⟩
+      rw [Real.norm_eq_abs, abs_mul]
+      have ht_pos : 0 < t := by linarith
+      have h_abs_g : |g t| ≤ D * t := by rw [hg_def]; exact hle t ht1
+      have h_abs_rpow : |t ^ (w - 3)| ≤ 1 := by
+        rw [abs_of_pos (Real.rpow_pos_of_pos ht_pos _)]
+        exact Real.rpow_le_one_of_one_le_of_nonpos ht1 (by linarith)
+      calc |g t| * |t ^ (w - 3)|
+          ≤ (D * t) * 1 := mul_le_mul h_abs_g h_abs_rpow (abs_nonneg _) (by positivity)
+        _ = D * t := mul_one _
+        _ ≤ D * T₀ := by nlinarith [hD]
+    have hf_Ioi_T₀ : IntegrableOn (fun t => g t * t ^ (w - 3)) (Ioi T₀) := by
+      have h_bound : IntegrableOn (fun t : ℝ => D * t ^ (w - 2)) (Ioi T₀) :=
+        (integrableOn_Ioi_rpow_of_lt (by linarith : w - 2 < -1)
+          (by linarith : (0 : ℝ) < T₀)).const_mul D
+      apply h_bound.mono'
+      · exact (hg_meas.mul (measurable_id.pow_const _)).aestronglyMeasurable.restrict
+      · filter_upwards [ae_restrict_mem measurableSet_Ioi] with t ht
+        have ht1 : 1 ≤ t := by linarith [show T₀ < t from ht]
+        have ht_pos : 0 < t := by linarith
+        rw [Real.norm_eq_abs, abs_mul, abs_of_pos (Real.rpow_pos_of_pos ht_pos _)]
+        calc |g t| * t ^ (w - 3)
+            ≤ D * t * t ^ (w - 3) := by
+              rw [hg_def]
+              exact mul_le_mul_of_nonneg_right (hle t ht1) (Real.rpow_nonneg ht_pos.le _)
+          _ = D * (t ^ (1 : ℝ) * t ^ (w - 3)) := by rw [Real.rpow_one]; ring
+          _ = D * t ^ (1 + (w - 3)) := by rw [← Real.rpow_add ht_pos]
+          _ = D * t ^ (w - 2) := by ring_nf
     -- ∫_{Ici 1} = ∫_{Icc 1 T₀} + ∫_{Ioi T₀}
     have h_split := setIntegral_union h_disj measurableSet_Ioi hf_Icc hf_Ioi_T₀
     -- ∫_{Ioi 1} = ∫_{Ici 1} (singleton {1} has measure zero for Lebesgue)
