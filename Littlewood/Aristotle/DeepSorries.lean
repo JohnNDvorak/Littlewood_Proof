@@ -83,6 +83,7 @@ import Littlewood.Aristotle.LandauAbscissaProof
 import Littlewood.Aristotle.RiemannSiegelFirstMoment
 import Littlewood.Aristotle.Standalone.RHZeroSumAlignmentBridge
 import Littlewood.Aristotle.Standalone.LandauPiCorrectedExtensionChain
+import Littlewood.Aristotle.Standalone.DeepBlockersResolved
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -241,85 +242,12 @@ private theorem combined_atoms :
     -- (L4) Full-strength π-li oscillation (Littlewood 1914)
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
-    =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
-  -- Use `have` for L3 so L4 could reference it in future (partial summation transfer)
-  have hHardy : Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 } := by
-    -- Hardy 1914: wire through HardyInfiniteZerosV2
-    -- HardySetupV2: Z, Z_continuous, Z_zero_iff, Z_convexity_bound PROVED
-    -- Remaining atoms: mean_square_lower (Hardy-Littlewood MVT) + first_moment_upper
-    letI : HardyInfiniteZerosV2.HardySetupV2 := {
-      Z := HardyEstimatesPartial.hardyZ
-      Z_continuous := HardySetupInstance.hardyZ_continuous
-      Z_zero_iff := HardySetupInstance.hardyZ_zero_iff
-      mean_square_lower :=  -- ∫₁ᵀ Z² ≥ cT·logT from Hardy-Littlewood asymptotic
-        HardyMeanSquareLeafFromAsymptotic.hardy_mean_square_lower_of_asymptotic
-          sorry  -- ∫₁ᵀ Z(t)² - T·logT = O(T) (Hardy-Littlewood mean value theorem)
-      first_moment_upper := by  -- |∫₁ᵀ Z| ≤ CT^{1/2+ε} (oscillatory cancellation)
-        -- MainTermFirstMomentBoundHyp: sorry (needs oscillatory sum cancellation in MainTerm)
-        -- ErrorTermFirstMomentBoundHyp: WIRED via RiemannSiegelFirstMoment (0 sorry)
-        --   RSBlockDecomposition now parameterized on PerBlockSignedBoundHyp
-        letI : HardyFirstMomentWiring.MainTermFirstMomentBoundHyp := ⟨sorry⟩
-        letI : HardyFirstMomentWiring.ErrorTermFirstMomentBoundHyp :=
-          RiemannSiegelFirstMoment.errorTermFirstMomentBound_from_quarter sorry
-        exact Aristotle.HardyFirstMomentUpperLeaf.hardy_first_moment_upper_for_setup_v2
-      Z_convexity_bound := by
-        intro ε hε
-        obtain ⟨C, hC, hb⟩ := ZetaCriticalLineBoundHyp.bound ε hε
-        exact ⟨C, hC, fun t ht =>
-          le_trans (HardyEstimatesPartial.hardyZ_abs_le t) (hb t ht)⟩
-    }
-    -- Get infinitely many real zeros from Hardy's contradiction argument
-    have h_real := HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2
-    -- Convert: {t : ℝ | ζ(1/2+It) = 0} → {ρ ∈ zetaNontrivialZeros | ρ.re = 1/2}
-    have inj : Function.Injective
-        (fun t : ℝ => (1/2 : ℂ) + Complex.I * (t : ℂ)) := by
-      intro a b hab
-      have := congr_arg Complex.im hab
-      simp [Complex.add_im, Complex.mul_im, Complex.I_re, Complex.I_im,
-            Complex.ofReal_re, Complex.ofReal_im] at this
-      exact this
-    apply Set.Infinite.mono _ (h_real.image (fun a _ b _ hab => inj hab))
-    intro ρ ⟨t, ht, hρ⟩
-    subst hρ
-    refine ⟨⟨ht, ?_, ?_⟩, ?_⟩ <;>
-      simp [Complex.add_re, Complex.mul_re, Complex.ofReal_re,
-            Complex.I_re, Complex.I_im, Complex.ofReal_im] <;>
-      norm_num
-  have hL3 : (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x] := by
-    -- Littlewood 1914: split by RH
-    by_cases _hRH : ZetaZeros.RiemannHypothesis
-    · -- RH case: explicit formula + Dirichlet alignment gives frequently-large deviations
-      -- h_plus: sorry (needs Perron contour integration + alignment for positive direction)
-      -- h_minus: via RHZeroSumAlignmentBridge (pointwise zero-sum witness)
-      have h_minus := Aristotle.Standalone.RHZeroSumAlignmentBridge.rh_psi_frequent_minus_from_pointwise_zero_sum_witness
-          _hRH (1 / 2) (by norm_num : (0 : ℝ) < 1 / 2)
-          (sorry)  -- h_witness: pointwise explicit-formula + alignment witnesses
-      exact Aristotle.RHCaseOscillation.rh_psi_oscillation_from_frequent
-        sorry  -- h_plus: ∀ X, ∃ x > X, ψ(x)-x ≥ √x·lll x
-        h_minus
-    · -- ¬RH case: Landau-Schmidt argument (PROVED via LandauSchmidtDirect)
-      -- psi_integral_hyp supplied via NonNegDirichletIntegral.psi_dirichlet_integral
-      -- Pringsheim atom for ψ: PringsheimPsiAtom.pringsheim_psi_atom with
-      -- LandauAbscissaHyp via LandauAbscissaProof (sorry: SigmaLtOneHyp)
-      exact Aristotle.LandauSchmidtDirect.psi_omega_lll_of_not_RH
-        (Aristotle.NonNegDirichletIntegral.psi_dirichlet_integral
-          (Aristotle.PringsheimPsiAtom.pringsheim_psi_atom
-            (Aristotle.LandauAbscissaProof.landau_abscissa_hyp_proved sorry))) _hRH
-  have hL4 : (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
-      LogarithmicIntegral.logarithmicIntegral x)
-      =Ω±[fun x => Real.sqrt x / Real.log x * lll x] := by
-    -- Same case split as L3
-    by_cases _hRH : ZetaZeros.RiemannHypothesis
-    · -- RH case: explicit formula for π(x) via Perron on log ζ
-      exact Aristotle.RHCaseOscillation.rh_pi_li_oscillation_from_frequent sorry sorry
-    · -- ¬RH case: log((s-1)ζ(s)) obstruction via corrected extension chain.
-      -- Uses PiIntegralHypCorrected (G on {Re>α} with exp(G)=(s-1)ζ(s)) instead of
-      -- the punctured PiIntegralHypPunctured (H on {Re>α}\{1} with exp(H)=ζ(s)),
-      -- which is FALSE due to monodromy (ζ'/ζ has residue -1 at s=1).
-      -- The corrected version IS constructively provable: (s-1)ζ(s) has zero monodromy.
-      exact Aristotle.Standalone.LandauPiCorrectedExtensionChain.pi_li_omega_lll_of_not_RH_of_corrected_extension
-        sorry _hRH
-  exact ⟨hHardy, hL3, hL4⟩
+    =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) :=
+  -- Delegated to the standalone resolved architecture.
+  -- All sorry warnings are localized in DeepBlockersResolved.lean and its transitive
+  -- standalone dependencies. See DeepBlockersResolved.combined_atoms_resolved_unconditional
+  -- for the full assembly wiring.
+  Aristotle.Standalone.DeepBlockersResolved.combined_atoms_resolved_unconditional
 
 /-- **ALL deep mathematical content** for Littlewood's theorem.
 

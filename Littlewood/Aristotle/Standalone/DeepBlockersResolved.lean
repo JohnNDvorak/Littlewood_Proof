@@ -45,6 +45,8 @@ import Littlewood.Aristotle.Standalone.RHPiPhaseCouplingConstructiveFamilies
 import Littlewood.Aristotle.Standalone.RHPiCorrectedToLegacyPhaseCouplingBridge
 import Littlewood.Aristotle.Standalone.RHPiTargetPhaseArgReduction
 import Littlewood.Aristotle.Standalone.RHPiArgApproxFromPerronThreshold
+import Littlewood.Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
+import Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge
 import Littlewood.Bridge.PhragmenLindelofWiring
 
 set_option relaxedAutoImplicit false
@@ -220,6 +222,15 @@ theorem rhPiWitness_of_phaseAboveThreshold
     Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData :=
   Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.rhPiWitness_proved_of_phase_above_threshold_hyp
 
+/-- Alternative Blocker-7 endpoint through exact-seed payload classes above
+Perron's threshold. This route exposes the exact-congruence seed interface. -/
+theorem rhPiWitness_of_exactSeedAboveThreshold
+    [TruncatedExplicitFormulaPiHyp]
+    [Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThresholdHyp]
+    [Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.AntiTargetTowerExactSeedAbovePerronThresholdHyp] :
+    Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData :=
+  Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge.rhPiWitnessData_of_exactSeedAboveThreshold_hyp
+
 /-! ## Assembly: Combined Atoms from Resolved Blockers
 
 When all 7 blockers above are sorry-free, this theorem is sorry-free and
@@ -300,5 +311,50 @@ theorem combined_atoms_resolved_of_phaseAboveThreshold
     rhPsiWitness
     piAtomCorrectedCore
     rhPiWitness_of_phaseAboveThreshold
+
+/-- Alternative assembly endpoint through exact-seed payload classes above
+Perron's threshold. -/
+theorem combined_atoms_resolved_of_exactSeedAboveThreshold
+    [TruncatedExplicitFormulaPiHyp]
+    [Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThresholdHyp]
+    [Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.AntiTargetTowerExactSeedAbovePerronThresholdHyp] :
+    (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
+    ∧
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ∧
+    ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
+      LogarithmicIntegral.logarithmicIntegral x)
+      =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
+  exact Aristotle.Standalone.DeepBlockerAssembly.combined_atoms_from_five_blockers
+    perBlockSignedBound
+    sigmaLtOneProved
+    rhPsiWitness
+    piAtomCorrectedCore
+    rhPiWitness_of_exactSeedAboveThreshold
+
+/-- Unconditional assembly endpoint: provides local sorry instances for the
+phase-coupling payload classes, so downstream consumers (e.g. `DeepSorries`)
+can reference this without typeclass arguments.
+
+The 2 `sorry` instances here account for the Blocker 7 deep obligations
+(constructive Dirichlet-aligned seed families for RH-side π oscillation).
+All other blockers are explicitly wired through proved standalone files.
+
+When the phase-coupling payload classes are proved sorry-free (via the
+exact-seed / coefficient-control chain), replace the `letI` lines with
+the proved instances and this theorem becomes sorry-free. -/
+theorem combined_atoms_resolved_unconditional :
+    (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
+    ∧
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ∧
+    ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
+      LogarithmicIntegral.logarithmicIntegral x)
+      =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
+  letI : Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.TargetTowerPhaseCouplingFamilyHyp :=
+    ⟨sorry⟩
+  letI : Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.AntiTargetTowerPhaseCouplingFamilyHyp :=
+    ⟨sorry⟩
+  exact combined_atoms_resolved
 
 end Aristotle.Standalone.DeepBlockersResolved
