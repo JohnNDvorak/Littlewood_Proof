@@ -29,7 +29,7 @@ Co-authored-by: Claude (Anthropic)
 
 import Littlewood.Aristotle.Standalone.PiAtomHardCaseCorrectedCore
 import Littlewood.Aristotle.CorrectionTermAnalyticity
-import Mathlib.Analysis.Calculus.ParametricIntegral
+import Mathlib.Analysis.MellinTransform
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 
 set_option relaxedAutoImplicit false
@@ -57,6 +57,50 @@ and the complex integral converges by comparison.
 Analyticity follows from differentiating under the integral sign
 (hasDerivAt_integral_of_dominated_loc_of_deriv_le). -/
 
+/-- The Mellin integrand: R(t) on (T₀, ∞), 0 otherwise. -/
+private def mellinIntegrand (R : ℝ → ℝ) (T₀ : ℝ) : ℝ → ℂ :=
+  (Ioi T₀).indicator (fun t => (↑(R t) : ℂ))
+
+/-- The Mellin integrand is O(t^β) at infinity. -/
+private theorem mellinIntegrand_isBigO_atTop
+    (R : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀) (β M : ℝ)
+    (hR_bound : ∀ t, T₀ ≤ t → R t ≤ M * t ^ β)
+    (hR_nn : ∀ t, T₀ ≤ t → 0 ≤ R t)
+    (hR_meas : Measurable R) :
+    (mellinIntegrand R T₀) =O[atTop] (· ^ (-(-β))) := by
+  simp only [neg_neg]
+  apply Asymptotics.IsBigO.of_bound |M|
+  filter_upwards [Filter.eventually_ge_atTop T₀] with t ht
+  simp only [mellinIntegrand, indicator_apply, mem_Ioi]
+  split_ifs with h
+  · -- t > T₀: need ‖↑(R t)‖ ≤ |M| * ‖t ^ β‖
+    have ht_pos : 0 < t := lt_trans (lt_of_lt_of_le one_pos hT₀) h
+    have hRt_nn : 0 ≤ R t := hR_nn t (le_of_lt h)
+    have hRt_bound : R t ≤ M * t ^ β := hR_bound t (le_of_lt h)
+    have h1 : ‖(Complex.ofReal (R t))‖ = R t := by
+      simp [RCLike.norm_ofReal, abs_of_nonneg hRt_nn]
+    have h2 : ‖(t : ℝ) ^ β‖ = t ^ β := by
+      rw [Real.norm_eq_abs, abs_of_nonneg (rpow_nonneg (le_of_lt ht_pos) β)]
+    rw [h1, h2]
+    exact le_trans hRt_bound
+      (mul_le_mul_of_nonneg_right (le_abs_self M) (rpow_nonneg (le_of_lt ht_pos) β))
+  · -- t ≤ T₀: norm of 0 is 0
+    simp only [norm_zero]
+    exact mul_nonneg (abs_nonneg M) (norm_nonneg _)
+
+/-- The Mellin integrand is O(t^c) near 0 for any c (since it vanishes near 0). -/
+private theorem mellinIntegrand_isBigO_nhdsWithin_zero
+    (R : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀) (b : ℝ) :
+    (mellinIntegrand R T₀) =O[𝓝[>] 0] (· ^ (-b)) := by
+  -- g is identically 0 on (0, T₀), so it's O(anything) near 0
+  have hT₀_pos : (0 : ℝ) < T₀ := lt_of_lt_of_le one_pos hT₀
+  apply Asymptotics.IsBigO.of_bound 0
+  have hmem : Ioi 0 ∩ Iio T₀ ∈ 𝓝[>] (0 : ℝ) :=
+    inter_mem_nhdsWithin _ (Iio_mem_nhds hT₀_pos)
+  filter_upwards [hmem] with t ht
+  simp only [zero_mul, norm_le_zero_iff, mellinIntegrand, indicator_apply, mem_Ioi]
+  exact if_neg (not_lt.mpr (le_of_lt ht.2))
+
 /-- The inner integral (without the s factor) is analytic. -/
 private theorem inner_integral_analyticOnNhd
     (R : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀) (β M : ℝ)
@@ -70,25 +114,33 @@ private theorem inner_integral_analyticOnNhd
   have hopen : IsOpen {s : ℂ | β < s.re} :=
     isOpen_lt continuous_const Complex.continuous_re
   rw [analyticOnNhd_iff_differentiableOn hopen]
-  -- Need: for each s₀ with β < Re(s₀), the integral is complex-differentiable
   intro s₀ hs₀
-  -- Approach: show HasDerivAt at s₀, then extract DifferentiableWithinAt
-  -- Choose ε so that the ball B(s₀, ε) stays in {Re > β}
-  simp only [mem_setOf_eq] at hs₀
-  have hε_pos : 0 < (s₀.re - β) / 2 := by linarith
-  set ε := (s₀.re - β) / 2 with hε_def
-  -- The ball of radius ε around s₀ stays in {Re > β}
-  have hball : Metric.ball s₀ ε ⊆ {s : ℂ | β < s.re} := by
-    intro s hs
-    simp only [Metric.mem_ball, Complex.dist_eq] at hs
-    simp only [mem_setOf_eq]
-    have hre : |s.re - s₀.re| ≤ ‖s - s₀‖ := Complex.abs_re_le_norm (s - s₀)
-    linarith [abs_le.mp (le_of_lt (lt_of_le_of_lt hre (by linarith : ‖s - s₀‖ < ε)))]
-  -- Strategy: relate to Mellin transform and use mellin_differentiableAt_of_isBigO_rpow
-  -- Define g(t) = R(t) for t ≥ T₀, 0 otherwise
-  -- Then ∫_{T₀}^∞ R(t)·t^{-(s+1)} dt = mellin (↑g) (-s) [up to indicator]
-  -- Differentiability of mellin at (-s₀) + chain rule gives result
-  sorry
+  -- Strategy: show our integral = mellin g (-s) where g = R · 1_{(T₀,∞)},
+  -- then use mellin_differentiableAt_of_isBigO_rpow + chain rule.
+  have hs₀' : β < s₀.re := hs₀
+  set g := mellinIntegrand R T₀ with hg_def
+  -- Step 1: mellin g is differentiable at (-s₀)
+  have hmd : DifferentiableAt ℂ (mellin g) (-s₀) := by
+    refine @mellin_differentiableAt_of_isBigO_rpow ℂ _ _ (-β) (-s₀.re - 1) g (-s₀)
+      ?_ -- LocallyIntegrableOn: g is 0 near 0, measurable and locally bounded on Ioi T₀
+      (mellinIntegrand_isBigO_atTop R T₀ hT₀ β M hR_bound hR_nn hR_meas)
+      (by simp only [neg_re]; linarith)
+      (mellinIntegrand_isBigO_nhdsWithin_zero R T₀ hT₀ _)
+      (by simp only [neg_re]; linarith)
+    -- LocallyIntegrableOn g (Ioi 0): g = 0 on (0, T₀], locally bounded on (T₀, ∞)
+    sorry
+  -- Step 2: Compose with s ↦ -s to get differentiability at s₀
+  have hcomp : DifferentiableAt ℂ (fun s => mellin g (-s)) s₀ :=
+    hmd.comp s₀ differentiable_neg.differentiableAt
+  -- Step 3: Our integral agrees with mellin g (-s) on {Re > β}
+  have hmeq : ∀ s : ℂ, β < s.re →
+      (∫ t in Ioi T₀, (↑(R t) : ℂ) * (↑t : ℂ) ^ (-(s + 1))) = mellin g (-s) := by
+    sorry
+  -- Step 4: Functions agree on a neighborhood of s₀, so differentiability transfers
+  have hcongr : (fun s => ∫ t in Ioi T₀, (↑(R t) : ℂ) * (↑t : ℂ) ^ (-(s + 1))) =ᶠ[𝓝 s₀]
+      (fun s => mellin g (-s)) :=
+    Filter.eventually_of_mem (hopen.mem_nhds hs₀) (fun s hs => hmeq s hs)
+  exact (hcongr.symm.differentiableAt_iff.mp hcomp).differentiableWithinAt
 
 /-- Non-negative Dirichlet integral with power bound is analytic. -/
 theorem nonneg_dirichlet_integral_analyticOnNhd
