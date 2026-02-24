@@ -32,7 +32,7 @@ BLOCKER STATUS:
   (4) SigmaLtOneHyp                    — PROVED (modulo hF_hasSum in SigmaLtOneFromPringsheim)
   (5) RhPsiWitnessData                 — PROVED (modulo 2 sorries in RHPsiWitnessFromZeroSum)
   (6) PiAtomHardCaseCorrectedCore      — PROVED (modulo corrected_prime_zeta_extension)
-  (7) RhPiWitnessData                  — PROVED (from target/anti-target tower payload classes)
+  (7) RhPiWitnessData                  — PROVED (from phase-coupling payload classes)
 -/
 
 import Littlewood.Aristotle.Standalone.DeepBlockerAssembly
@@ -41,6 +41,8 @@ import Littlewood.Aristotle.Standalone.PiCorrectedCoreFromPrimeZetaExtension
 import Littlewood.Aristotle.Standalone.RHPsiWitnessFromZeroSum
 import Littlewood.Aristotle.Standalone.RHPiCoeffControlFromTargetTowerSqrt
 import Littlewood.Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase
+import Littlewood.Aristotle.Standalone.RHPiPhaseCouplingConstructiveFamilies
+import Littlewood.Aristotle.Standalone.RHPiCorrectedToLegacyPhaseCouplingBridge
 import Littlewood.Aristotle.Standalone.RHPiTargetPhaseArgReduction
 import Littlewood.Aristotle.Standalone.RHPiArgApproxFromPerronThreshold
 import Littlewood.Bridge.PhragmenLindelofWiring
@@ -185,10 +187,18 @@ Reference: Littlewood 1914; Montgomery-Vaughan §15.2.
 -/
 
 theorem rhPiWitness
-    [Fact Aristotle.Standalone.RHPiTargetPhaseArgReduction.TargetTowerArgApproxFamily]
-    [Fact Aristotle.Standalone.RHPiTargetPhaseArgReduction.AntiTargetTowerArgApproxFamily] :
+    [Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.TargetTowerPhaseCouplingFamilyHyp]
+    [Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.AntiTargetTowerPhaseCouplingFamilyHyp] :
     Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData :=
-  Aristotle.Standalone.RHPiTargetPhaseArgReduction.rhPiWitnessData_of_argApproxFacts
+  Aristotle.Standalone.RHPiPhaseCouplingConstructiveFamilies.rhPiWitnessData_of_phaseCouplingHyp
+
+/-- Corrected-canonical Blocker-7 endpoint: same result as `rhPiWitness`, but
+starting from corrected canonical phase-coupling payload classes. -/
+theorem rhPiWitness_of_correctedCanonical
+    [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected]
+    [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected] :
+    Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData :=
+  Aristotle.Standalone.RHPiCorrectedToLegacyPhaseCouplingBridge.rhPiWitnessData_of_correctedHyp
 
 /-- Alternative Blocker-7 endpoint through the "above Perron threshold" arg
 payload classes. This route is equivalent to `rhPiWitness`, but exposes the
@@ -216,8 +226,8 @@ When all 7 blockers above are sorry-free, this theorem is sorry-free and
 provides the exact triple consumed by `DeepSorries.combined_atoms`. -/
 
 theorem combined_atoms_resolved
-    [Fact Aristotle.Standalone.RHPiTargetPhaseArgReduction.TargetTowerArgApproxFamily]
-    [Fact Aristotle.Standalone.RHPiTargetPhaseArgReduction.AntiTargetTowerArgApproxFamily] :
+    [Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.TargetTowerPhaseCouplingFamilyHyp]
+    [Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.AntiTargetTowerPhaseCouplingFamilyHyp] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
     ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
@@ -231,6 +241,25 @@ theorem combined_atoms_resolved
     rhPsiWitness
     piAtomCorrectedCore
     rhPiWitness
+
+/-- Alternative assembly endpoint through corrected canonical phase-coupling
+payload classes. -/
+theorem combined_atoms_resolved_of_correctedCanonical
+    [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected]
+    [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected] :
+    (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
+    ∧
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ∧
+    ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
+      LogarithmicIntegral.logarithmicIntegral x)
+      =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
+  exact Aristotle.Standalone.DeepBlockerAssembly.combined_atoms_from_five_blockers
+    perBlockSignedBound
+    sigmaLtOneProved
+    rhPsiWitness
+    piAtomCorrectedCore
+    rhPiWitness_of_correctedCanonical
 
 /-- Alternative assembly endpoint through the "above Perron threshold" arg
 payload classes. -/
