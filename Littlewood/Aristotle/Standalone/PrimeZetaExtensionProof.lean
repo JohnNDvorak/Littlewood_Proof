@@ -57,6 +57,39 @@ and the complex integral converges by comparison.
 Analyticity follows from differentiating under the integral sign
 (hasDerivAt_integral_of_dominated_loc_of_deriv_le). -/
 
+/-- The inner integral (without the s factor) is analytic. -/
+private theorem inner_integral_analyticOnNhd
+    (R : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀) (β M : ℝ)
+    (hR_nn : ∀ t, T₀ ≤ t → 0 ≤ R t)
+    (hR_bound : ∀ t, T₀ ≤ t → R t ≤ M * t ^ β)
+    (hR_meas : Measurable R) :
+    AnalyticOnNhd ℂ
+      (fun s => ∫ t in Ioi T₀, (↑(R t) : ℂ) * (↑t : ℂ) ^ (-(s + 1)))
+      {s : ℂ | β < s.re} := by
+  -- On ℂ, analytic on open set ↔ differentiable on open set
+  have hopen : IsOpen {s : ℂ | β < s.re} :=
+    isOpen_lt continuous_const Complex.continuous_re
+  rw [analyticOnNhd_iff_differentiableOn hopen]
+  -- Need: for each s₀ with β < Re(s₀), the integral is complex-differentiable
+  intro s₀ hs₀
+  -- Approach: show HasDerivAt at s₀, then extract DifferentiableWithinAt
+  -- Choose ε so that the ball B(s₀, ε) stays in {Re > β}
+  simp only [mem_setOf_eq] at hs₀
+  have hε_pos : 0 < (s₀.re - β) / 2 := by linarith
+  set ε := (s₀.re - β) / 2 with hε_def
+  -- The ball of radius ε around s₀ stays in {Re > β}
+  have hball : Metric.ball s₀ ε ⊆ {s : ℂ | β < s.re} := by
+    intro s hs
+    simp only [Metric.mem_ball, Complex.dist_eq] at hs
+    simp only [mem_setOf_eq]
+    have hre : |s.re - s₀.re| ≤ ‖s - s₀‖ := Complex.abs_re_le_norm (s - s₀)
+    linarith [abs_le.mp (le_of_lt (lt_of_le_of_lt hre (by linarith : ‖s - s₀‖ < ε)))]
+  -- Strategy: relate to Mellin transform and use mellin_differentiableAt_of_isBigO_rpow
+  -- Define g(t) = R(t) for t ≥ T₀, 0 otherwise
+  -- Then ∫_{T₀}^∞ R(t)·t^{-(s+1)} dt = mellin (↑g) (-s) [up to indicator]
+  -- Differentiability of mellin at (-s₀) + chain rule gives result
+  sorry
+
 /-- Non-negative Dirichlet integral with power bound is analytic. -/
 theorem nonneg_dirichlet_integral_analyticOnNhd
     (R : ℝ → ℝ) (T₀ : ℝ) (hT₀ : 1 ≤ T₀) (β M : ℝ)
@@ -66,7 +99,11 @@ theorem nonneg_dirichlet_integral_analyticOnNhd
     AnalyticOnNhd ℂ
       (fun s => s * ∫ t in Ioi T₀, (↑(R t) : ℂ) * (↑t : ℂ) ^ (-(s + 1)))
       {s : ℂ | β < s.re} := by
-  sorry
+  -- Product of analytic functions: s is analytic, integral is analytic
+  have hint := inner_integral_analyticOnNhd R T₀ hT₀ β M hR_nn hR_bound hR_meas
+  have hid : AnalyticOnNhd ℂ id {s : ℂ | β < s.re} :=
+    (analyticOnNhd_id (𝕜 := ℂ)).mono (fun _ _ => trivial)
+  exact hid.mul hint
 
 /-! ## Sub-lemma 2: E₁ cancellation (li-Mellin + log is entire)
 
