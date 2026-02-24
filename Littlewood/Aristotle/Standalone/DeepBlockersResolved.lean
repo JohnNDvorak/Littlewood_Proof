@@ -32,14 +32,16 @@ BLOCKER STATUS:
   (4) SigmaLtOneHyp                    — PROVED (modulo hF_hasSum in SigmaLtOneFromPringsheim)
   (5) RhPsiWitnessData                 — PROVED (modulo 2 sorries in RHPsiWitnessFromZeroSum)
   (6) PiAtomHardCaseCorrectedCore      — PROVED (modulo corrected_prime_zeta_extension)
-  (7) RhPiWitnessData                  — PROVED (modulo 2 sorries in RHPiWitnessFromExplicitFormula)
+  (7) RhPiWitnessData                  — PROVED (from target/anti-target tower payload classes)
 -/
 
 import Littlewood.Aristotle.Standalone.DeepBlockerAssembly
 import Littlewood.Aristotle.Standalone.SigmaLtOneFromPringsheimExtension
 import Littlewood.Aristotle.Standalone.PiCorrectedCoreFromPrimeZetaExtension
 import Littlewood.Aristotle.Standalone.RHPsiWitnessFromZeroSum
-import Littlewood.Aristotle.Standalone.RHPiWitnessFromExplicitFormula
+import Littlewood.Aristotle.Standalone.RHPiCoeffControlFromTargetTowerSqrt
+import Littlewood.Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase
+import Littlewood.Aristotle.Standalone.RHPiTargetPhaseArgReduction
 import Littlewood.Bridge.PhragmenLindelofWiring
 
 set_option relaxedAutoImplicit false
@@ -180,16 +182,20 @@ with Dirichlet alignment for cofinal witnesses as in Blocker 5.
 Reference: Littlewood 1914; Montgomery-Vaughan §15.2.
 -/
 
-theorem rhPiWitness :
+theorem rhPiWitness
+    [Fact Aristotle.Standalone.RHPiTargetPhaseArgReduction.TargetTowerArgApproxFamily]
+    [Fact Aristotle.Standalone.RHPiTargetPhaseArgReduction.AntiTargetTowerArgApproxFamily] :
     Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData :=
-  Aristotle.Standalone.RHPiWitnessFromExplicitFormula.rhPiWitness_proved
+  Aristotle.Standalone.RHPiTargetPhaseArgReduction.rhPiWitnessData_of_argApproxFacts
 
 /-! ## Assembly: Combined Atoms from Resolved Blockers
 
 When all 7 blockers above are sorry-free, this theorem is sorry-free and
 provides the exact triple consumed by `DeepSorries.combined_atoms`. -/
 
-theorem combined_atoms_resolved :
+theorem combined_atoms_resolved
+    [Fact Aristotle.Standalone.RHPiTargetPhaseArgReduction.TargetTowerArgApproxFamily]
+    [Fact Aristotle.Standalone.RHPiTargetPhaseArgReduction.AntiTargetTowerArgApproxFamily] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
     ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])

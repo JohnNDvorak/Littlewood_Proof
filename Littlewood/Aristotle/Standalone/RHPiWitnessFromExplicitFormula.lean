@@ -25,6 +25,9 @@ Co-authored-by: Claude (Anthropic), GPT Pro (OpenAI)
 import Littlewood.Aristotle.Standalone.CombinedAtomsFromDeepBlockers
 import Littlewood.Aristotle.Standalone.RHPiLargeOscillationFromPointwise
 import Littlewood.Aristotle.Standalone.RHPiTargetPhaseWitnessBuilders
+import Littlewood.Aristotle.Standalone.RHPiWitnessFromExplicitFormulaHeightControl
+import Littlewood.Aristotle.Standalone.RHPiTargetHeightFromTowerBound
+import Littlewood.Aristotle.Standalone.RHPiTargetHeightTowerFromCoeffControl
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -40,6 +43,9 @@ open Aristotle.Standalone.CombinedAtomsFromDeepBlockers
 open Aristotle.Standalone.RHPiZeroSumAlignmentBridge
 open Aristotle.Standalone.RHPiLargeOscillationFromPointwise
 open Aristotle.Standalone.RHPiTargetPhaseWitnessBuilders
+open Aristotle.Standalone.RHPiWitnessFromExplicitFormulaHeightControl
+open Aristotle.Standalone.RHPiTargetHeightFromTowerBound
+open Aristotle.Standalone.RHPiTargetHeightTowerFromCoeffControl
 
 -- ============================================================
 -- 1. Explicit formula error bound for π (proved in-file)
@@ -92,75 +98,121 @@ private def RhPiPointwiseMainNegativeWitnessFamily : Prop :=
     |piLiErr x + piMainFromZeros S x| ≤ piScale x ∧
     piMainFromZeros S x ≤ -(4 * piScale x)
 
-/-- Deep RH payload #1:
-pointwise finite-zero witness family with sufficiently positive
-finite-zero main term (`≥ 4*piScale`). -/
-private theorem rh_pi_pointwise_witness_main_positive
-    (_hRH : ZetaZeros.RiemannHypothesis) :
-    RhPiPointwiseMainPositiveWitnessFamily := by
-  -- Deep analytic number theory obligation:
-  -- Under RH, Perron explicit formula and finite-zero phase analysis must yield
-  -- cofinal pointwise witnesses with:
-  --   (i) explicit-formula error bounded by `piScale`,
-  --   (ii) phase-target control strong enough to force
-  --       `4 * piScale ≤ piMainFromZeros` through deterministic transfer.
-  have h_witness :
-      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ S : Finset ℂ,
-        (∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2) ∧
+/-- Positive RH pointwise witness family from the coefficient-control
+target-height input, with tower conversion handled by
+`RHPiTargetHeightTowerFromCoeffControl`. -/
+theorem rh_pi_pointwise_witness_main_positive_of_coeff_control
+    (hRH : ZetaZeros.RiemannHypothesis)
+    (h_target_height_coeff :
+      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
         1 < x ∧
-        |piLiErr x + piMainFromZeros S x| ≤ piScale x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
         (∃ ε : ℝ,
           0 < ε ∧ ε < 1 ∧
-          (∀ ρ ∈ S,
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
             ‖(x : ℂ) ^ (Complex.I * ρ.im) - ρ / ‖ρ‖‖ ≤ ε) ∧
-          2 * lll x ≤ (1 - ε) * (∑ ρ ∈ S, 1 / ‖ρ‖)) := by
-    sorry
-  exact rh_pi_positive_main_witness_family_from_phase_target h_witness
-
-/-- Deep RH payload #2:
-pointwise finite-zero witness family with sufficiently negative
-finite-zero main term (`≤ -4*piScale`). -/
-private theorem rh_pi_pointwise_witness_main_negative
-    (_hRH : ZetaZeros.RiemannHypothesis) :
-    RhPiPointwiseMainNegativeWitnessFamily := by
-  -- Deep analytic number theory obligation:
-  -- Under RH, Perron explicit formula and finite-zero phase anti-alignment must
-  -- yield cofinal pointwise witnesses with:
-  --   (i) explicit-formula error bounded by `piScale`,
-  --   (ii) anti-target phase control strong enough to force
-  --       `piMainFromZeros ≤ -4 * piScale` through deterministic transfer.
-  have h_witness :
-      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ S : Finset ℂ,
-        (∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2) ∧
+          2 * lll x ≤ (1 - ε) * ((N T : ℝ) / (T + 1)))) :
+    RhPiPointwiseMainPositiveWitnessFamily := by
+  have h_target_height_tower :
+      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
         1 < x ∧
-        |piLiErr x + piMainFromZeros S x| ≤ piScale x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
         (∃ ε : ℝ,
           0 < ε ∧ ε < 1 ∧
-          (∀ ρ ∈ S,
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ‖(x : ℂ) ^ (Complex.I * ρ.im) - ρ / ‖ρ‖‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))) :=
+    positive_target_height_tower_of_coeff_control h_target_height_coeff
+  exact rh_pi_positive_main_witness_family_from_target_height_control_with_tower_bound
+    hRH h_target_height_tower
+
+/-- Negative RH pointwise witness family from the coefficient-control
+anti-target-height input, with tower conversion handled by
+`RHPiTargetHeightTowerFromCoeffControl`. -/
+theorem rh_pi_pointwise_witness_main_negative_of_coeff_control
+    (hRH : ZetaZeros.RiemannHypothesis)
+    (h_antitarget_height_coeff :
+      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
+        (∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
             ‖(x : ℂ) ^ (Complex.I * ρ.im) - (-(ρ / ‖ρ‖))‖ ≤ ε) ∧
-          2 * lll x ≤ (1 - ε) * (∑ ρ ∈ S, 1 / ‖ρ‖)) := by
-    sorry
-  exact rh_pi_negative_main_witness_family_from_phase_target h_witness
+          2 * lll x ≤ (1 - ε) * ((N T : ℝ) / (T + 1)))) :
+    RhPiPointwiseMainNegativeWitnessFamily := by
+  have h_antitarget_height_tower :
+      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
+        (∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ‖(x : ℂ) ^ (Complex.I * ρ.im) - (-(ρ / ‖ρ‖))‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))) :=
+    antitarget_height_tower_of_coeff_control h_antitarget_height_coeff
+  exact rh_pi_negative_main_witness_family_from_antitarget_height_control_with_tower_bound
+    hRH h_antitarget_height_tower
 
-/-- Pair packaging of the two deep RH pointwise witness families. -/
-private theorem rh_pi_pointwise_witness_pair
-    (hRH : ZetaZeros.RiemannHypothesis) :
-    (∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ S : Finset ℂ,
-      (∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2) ∧
-      |piLiErr x + piMainFromZeros S x| ≤ piScale x ∧
-      4 * piScale x ≤ piMainFromZeros S x)
-    ∧
-    (∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ S : Finset ℂ,
-      (∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2) ∧
-      |piLiErr x + piMainFromZeros S x| ≤ piScale x ∧
-      piMainFromZeros S x ≤ -(4 * piScale x)) := by
-  exact ⟨rh_pi_pointwise_witness_main_positive hRH,
-    rh_pi_pointwise_witness_main_negative hRH⟩
+/-- Bundle the positive and negative RH pointwise witness families from
+coefficient-control target/anti-target inputs. -/
+theorem rh_pi_pointwise_witness_pair_of_coeff_control
+    (hRH : ZetaZeros.RiemannHypothesis)
+    (h_target_height_coeff :
+      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
+        (∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ‖(x : ℂ) ^ (Complex.I * ρ.im) - ρ / ‖ρ‖‖ ≤ ε) ∧
+          2 * lll x ≤ (1 - ε) * ((N T : ℝ) / (T + 1))))
+    (h_antitarget_height_coeff :
+      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
+        (∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ‖(x : ℂ) ^ (Complex.I * ρ.im) - (-(ρ / ‖ρ‖))‖ ≤ ε) ∧
+          2 * lll x ≤ (1 - ε) * ((N T : ℝ) / (T + 1)))) :
+    RhPiPointwiseMainPositiveWitnessFamily ∧
+      RhPiPointwiseMainNegativeWitnessFamily := by
+  exact ⟨
+    rh_pi_pointwise_witness_main_positive_of_coeff_control hRH h_target_height_coeff,
+    rh_pi_pointwise_witness_main_negative_of_coeff_control hRH h_antitarget_height_coeff
+  ⟩
 
-/-- Deep RH-side cofinal `±3` oscillation for `π(x)-li(x)` at
-`(√x/log x)·lll(x)`, extracted from pointwise witness families. -/
-private lemma rh_pi_minus_li_oscillates_large
-    (hRH : ZetaZeros.RiemannHypothesis) :
+/-- Cofinal `±3` oscillation for `π-li` from coefficient-control target and
+anti-target witness families (no deep tower sorry payload). -/
+theorem rh_pi_minus_li_oscillates_large_of_coeff_control
+    (hRH : ZetaZeros.RiemannHypothesis)
+    (h_target_height_coeff :
+      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
+        (∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ‖(x : ℂ) ^ (Complex.I * ρ.im) - ρ / ‖ρ‖‖ ≤ ε) ∧
+          2 * lll x ≤ (1 - ε) * ((N T : ℝ) / (T + 1))))
+    (h_antitarget_height_coeff :
+      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
+        (∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ‖(x : ℂ) ^ (Complex.I * ρ.im) - (-(ρ / ‖ρ‖))‖ ≤ ε) ∧
+          2 * lll x ≤ (1 - ε) * ((N T : ℝ) / (T + 1)))) :
     (∀ X : ℝ, ∃ x : ℝ, X < x ∧
       ((Nat.primeCounting (Nat.floor x) : ℝ) -
           LogarithmicIntegral.logarithmicIntegral x)
@@ -169,34 +221,50 @@ private lemma rh_pi_minus_li_oscillates_large
       3 * (Real.sqrt x / Real.log x * lll x) ≤
         ((Nat.primeCounting (Nat.floor x) : ℝ) -
           LogarithmicIntegral.logarithmicIntegral x)) := by
-  rcases rh_pi_pointwise_witness_pair hRH with ⟨hminus, hplus⟩
+  rcases rh_pi_pointwise_witness_pair_of_coeff_control hRH
+      h_target_height_coeff h_antitarget_height_coeff with ⟨hminus, hplus⟩
   simpa [piLiErr, piScale] using
     rh_pi_minus_li_oscillates_large_from_pointwise_witness_pair
       hRH hminus hplus
 
--- ============================================================
--- 3. Proof of rh_pi_main_term_oscillates (proved from 1+2)
--- ============================================================
-
-/-- **piMain oscillation**.
-Under RH, any function approximating li(x) - π(x) with error
-≤ (√x/log x)·lll(x) must oscillate between ±2(√x/log x)·lll(x) cofinally. -/
-theorem rh_pi_main_term_oscillates
+/-- `piMain` oscillation from coefficient-control target and anti-target
+families, plus the eventual explicit-formula error bound. -/
+theorem rh_pi_main_term_oscillates_of_coeff_control
     (hRH : ZetaZeros.RiemannHypothesis)
     (piMain : ℝ → ℝ)
     (h_error : ∀ᶠ x in atTop,
       |((Nat.primeCounting (Nat.floor x) : ℝ) -
           LogarithmicIntegral.logarithmicIntegral x) + piMain x|
-        ≤ Real.sqrt x / Real.log x * lll x) :
+        ≤ Real.sqrt x / Real.log x * lll x)
+    (h_target_height_coeff :
+      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
+        (∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ‖(x : ℂ) ^ (Complex.I * ρ.im) - ρ / ‖ρ‖‖ ≤ ε) ∧
+          2 * lll x ≤ (1 - ε) * ((N T : ℝ) / (T + 1))))
+    (h_antitarget_height_coeff :
+      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
+        (∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ‖(x : ℂ) ^ (Complex.I * ρ.im) - (-(ρ / ‖ρ‖))‖ ≤ ε) ∧
+          2 * lll x ≤ (1 - ε) * ((N T : ℝ) / (T + 1)))) :
     (∀ X : ℝ, ∃ x : ℝ, X < x ∧
       piMain x ≤ -(2 * (Real.sqrt x / Real.log x * lll x))) ∧
     (∀ X : ℝ, ∃ x : ℝ, X < x ∧
       2 * (Real.sqrt x / Real.log x * lll x) ≤ piMain x) := by
   rcases (Filter.eventually_atTop.1 h_error) with ⟨B, hB⟩
-  rcases rh_pi_minus_li_oscillates_large hRH with ⟨h_osc_neg, h_osc_pos⟩
+  rcases rh_pi_minus_li_oscillates_large_of_coeff_control hRH
+      h_target_height_coeff h_antitarget_height_coeff with ⟨h_osc_neg, h_osc_pos⟩
   constructor
   · intro X
-    -- Large positive π-li ⇒ large negative piMain.
     rcases h_osc_pos (max X B) with ⟨x, hx_gt, hx_pos⟩
     have hXx : X < x := lt_of_le_of_lt (le_max_left _ _) hx_gt
     have hBx : B ≤ x := le_trans (le_max_right _ _) (le_of_lt hx_gt)
@@ -212,7 +280,6 @@ theorem rh_pi_main_term_oscillates
     refine ⟨x, hXx, ?_⟩
     nlinarith
   · intro X
-    -- Large negative π-li ⇒ large positive piMain.
     rcases h_osc_neg (max X B) with ⟨x, hx_gt, hx_neg⟩
     have hXx : X < x := lt_of_le_of_lt (le_max_left _ _) hx_gt
     have hBx : B ≤ x := le_trans (le_max_right _ _) (le_of_lt hx_gt)
@@ -229,18 +296,79 @@ theorem rh_pi_main_term_oscillates
     refine ⟨x, hXx, ?_⟩
     nlinarith
 
-/-! ## Main theorem: RhPiWitnessData from the two sub-results -/
-
-/-- **RhPiWitnessData proved** from explicit formula + oscillation.
-
-The proof:
-1. From rh_pi_explicit_formula_error: get piMain with error bound
-2. From rh_pi_main_term_oscillates: get cofinal negative AND positive oscillation
-3. Combine into the witness triple -/
-theorem rhPiWitness_proved : RhPiWitnessData := by
+/-- Full RH-side `RhPiWitnessData` from coefficient-control target and
+anti-target height families. -/
+theorem rhPiWitness_proved_of_coeff_control
+    (h_target_height_coeff :
+      ∀ hRH : ZetaZeros.RiemannHypothesis,
+        ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+          4 ≤ T ∧
+          1 < x ∧
+          |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
+          (∃ ε : ℝ,
+            0 < ε ∧ ε < 1 ∧
+            (∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ‖(x : ℂ) ^ (Complex.I * ρ.im) - ρ / ‖ρ‖‖ ≤ ε) ∧
+            2 * lll x ≤ (1 - ε) * ((N T : ℝ) / (T + 1))))
+    (h_antitarget_height_coeff :
+      ∀ hRH : ZetaZeros.RiemannHypothesis,
+        ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+          4 ≤ T ∧
+          1 < x ∧
+          |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
+          (∃ ε : ℝ,
+            0 < ε ∧ ε < 1 ∧
+            (∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ‖(x : ℂ) ^ (Complex.I * ρ.im) - (-(ρ / ‖ρ‖))‖ ≤ ε) ∧
+            2 * lll x ≤ (1 - ε) * ((N T : ℝ) / (T + 1)))) :
+    RhPiWitnessData := by
   intro hRH
   obtain ⟨piMain, h_error⟩ := rh_pi_explicit_formula_error hRH
-  obtain ⟨h_neg, h_pos⟩ := rh_pi_main_term_oscillates hRH piMain h_error
+  obtain ⟨h_neg, h_pos⟩ :=
+    rh_pi_main_term_oscillates_of_coeff_control hRH piMain h_error
+      (h_target_height_coeff hRH) (h_antitarget_height_coeff hRH)
   exact ⟨piMain, h_error, h_neg, h_pos⟩
+
+/-- Deep RH payload (positive branch):
+cofinal coefficient-control target-height family. -/
+class RhPiTargetHeightCoeffControlHyp : Prop where
+  witness :
+    ∀ hRH : ZetaZeros.RiemannHypothesis,
+      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
+        (∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ‖(x : ℂ) ^ (Complex.I * ρ.im) - ρ / ‖ρ‖‖ ≤ ε) ∧
+          2 * lll x ≤ (1 - ε) * ((N T : ℝ) / (T + 1)))
+
+/-- Deep RH payload (negative branch):
+cofinal coefficient-control anti-target-height family. -/
+class RhPiAntiTargetHeightCoeffControlHyp : Prop where
+  witness :
+    ∀ hRH : ZetaZeros.RiemannHypothesis,
+      ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ piScale x ∧
+        (∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ‖(x : ℂ) ^ (Complex.I * ρ.im) - (-(ρ / ‖ρ‖))‖ ≤ ε) ∧
+          2 * lll x ≤ (1 - ε) * ((N T : ℝ) / (T + 1)))
+
+/-- **Refactored RH π witness theorem**.
+All deterministic transfer work is proved in this file; the only remaining deep
+content is the pair of coefficient-control witness families encoded in
+`RhPiTargetHeightCoeffControlHyp` and `RhPiAntiTargetHeightCoeffControlHyp`. -/
+theorem rhPiWitness_proved
+    [RhPiTargetHeightCoeffControlHyp]
+    [RhPiAntiTargetHeightCoeffControlHyp] :
+    RhPiWitnessData := by
+  exact rhPiWitness_proved_of_coeff_control
+    RhPiTargetHeightCoeffControlHyp.witness
+    RhPiAntiTargetHeightCoeffControlHyp.witness
 
 end Aristotle.Standalone.RHPiWitnessFromExplicitFormula
