@@ -279,16 +279,96 @@ theorem primeZeta_eq_integral {s : ℂ} (hs : 1 < s.re) :
   exact LSeries_eq_mul_integral' primeIndicator (by norm_num : (0 : ℝ) ≤ 1)
     (by linarith) primeIndicator_partial_sum_bigO
 
+/-! ## E₁ cancellation: (1 - 2^{1-s})/(s-1) is entire
+
+The function K'(s) = (1 - 2^{1-s})/(s-1) has a removable singularity at s = 1
+(with value log 2). We prove it extends to an entire function using Mathlib's
+`dslope` API for removable singularities.
+
+Key: define f(z) = 1 - exp(-z). Then f is entire, f(0) = 0, so `dslope f 0`
+is entire by `differentiableOn_dslope` (complex removable singularity theorem).
+The composition s ↦ (log 2) · dslope f 0 ((s-1) · log 2) gives the entire
+extension of (1 - 2^{1-s})/(s-1).
+
+This is a sub-lemma for the E₁ cancellation in Blocker 6: the li-Mellin
+transform s · ∫₂^∞ li(t) · t^{-(s+1)} dt + log(s-1) extends to an entire
+function. The derivative of this combination involves (1 - 2^{1-s})/(s-1). -/
+
+/-- The base function for E₁ cancellation: z ↦ 1 - exp(-z). -/
+private def oneSubExpNeg : ℂ → ℂ := fun z => 1 - Complex.exp (-z)
+
+private lemma oneSubExpNeg_zero : oneSubExpNeg 0 = 0 := by
+  simp [oneSubExpNeg]
+
+private lemma differentiable_oneSubExpNeg : Differentiable ℂ oneSubExpNeg := by
+  unfold oneSubExpNeg
+  exact (differentiable_const 1).sub
+    (Complex.differentiable_exp.comp differentiable_neg)
+
+/-- The extended quotient (1 - exp(-z))/z (with value `deriv f 0 = 1` at z = 0)
+is entire. Uses the complex removable singularity theorem. -/
+theorem differentiable_dslope_oneSubExpNeg :
+    Differentiable ℂ (dslope oneSubExpNeg 0) := by
+  rw [← differentiableOn_univ]
+  rw [differentiableOn_dslope univ_mem]
+  exact differentiable_oneSubExpNeg.differentiableOn
+
+/-- The entire extension of (1 - 2^{1-s})/(s-1).
+For s ≠ 1: equals (1 - exp((1-s)·log 2))/(s-1) = (1 - 2^{1-s})/(s-1).
+At s = 1: equals log 2 (the removable singularity value). -/
+noncomputable def oneSubTwoPow_div : ℂ → ℂ :=
+  fun s => ↑(Real.log 2) * dslope oneSubExpNeg 0 ((s - 1) * ↑(Real.log 2))
+
+/-- `oneSubTwoPow_div` is entire (differentiable everywhere on ℂ). -/
+theorem oneSubTwoPow_div_differentiable : Differentiable ℂ oneSubTwoPow_div := by
+  unfold oneSubTwoPow_div
+  exact (differentiable_const _).mul
+    (differentiable_dslope_oneSubExpNeg.comp
+      ((differentiable_id.sub (differentiable_const 1)).mul (differentiable_const _)))
+
+private lemma hasDerivAt_oneSubExpNeg_zero : HasDerivAt oneSubExpNeg 1 (0 : ℂ) := by
+  unfold oneSubExpNeg
+  have h1 : HasDerivAt (fun z : ℂ => -z) (-1 : ℂ) 0 := (hasDerivAt_id (0 : ℂ)).neg
+  have h2 := h1.cexp
+  have h3 := h2.const_sub 1
+  simp only [neg_zero, Complex.exp_zero, one_mul, neg_neg] at h3
+  exact h3
+
+/-- At s = 1, `oneSubTwoPow_div` evaluates to log 2. -/
+theorem oneSubTwoPow_div_at_one : oneSubTwoPow_div 1 = ↑(Real.log 2) := by
+  simp only [oneSubTwoPow_div, sub_self, zero_mul, dslope_same]
+  rw [hasDerivAt_oneSubExpNeg_zero.deriv, mul_one]
+
+/-- Formula: for s ≠ 1, `oneSubTwoPow_div s = (1 - exp((1-s)·log 2)) / (s-1)`. -/
+theorem oneSubTwoPow_div_eq {s : ℂ} (hs : s ≠ 1) :
+    oneSubTwoPow_div s =
+      (1 - Complex.exp ((1 - s) * ↑(Real.log 2))) / (s - 1) := by
+  unfold oneSubTwoPow_div
+  have hlog : (↑(Real.log 2) : ℂ) ≠ 0 := by
+    simp only [ne_eq, ofReal_eq_zero]
+    exact (Real.log_pos (by norm_num)).ne'
+  have hsm1 : s - 1 ≠ 0 := sub_ne_zero.mpr hs
+  have hz : (s - 1) * ↑(Real.log 2) ≠ 0 := mul_ne_zero hsm1 hlog
+  have key := sub_smul_dslope oneSubExpNeg 0 ((s - 1) * ↑(Real.log 2))
+  simp only [sub_zero, smul_eq_mul] at key
+  rw [oneSubExpNeg_zero, sub_zero] at key
+  -- key : (s-1)*↑(log 2) * dslope ... = oneSubExpNeg ((s-1)*↑(log 2))
+  rw [eq_div_iff hsm1]
+  -- Goal: ↑(log 2) * dslope ... * (s-1) = 1 - exp((1-s)*↑(log 2))
+  simp only [oneSubExpNeg] at key
+  have h1 : -((s - 1) * ↑(Real.log 2)) = (1 - s) * ↑(Real.log 2) := by ring
+  rw [h1] at key
+  rw [← key]; ring
+
 /-! ## Main theorem: corrected prime zeta extension
 
-Combines the proved Abel summation with two analytic extension sub-lemmas:
+Combines the proved Abel summation with the following sub-lemmas:
 
-1. **E₁ cancellation** (li-Mellin + log is entire):
-   K(s) = log(s-1) + s·∫₂^∞ li(t)·t^{-(s+1)} dt extends to an entire function.
-   Proof: IBP gives s·∫ li = li(2)·2^{-s} + ∫ t^{-s}/log t dt.
-   Substitution u = log t gives E₁((s-1)·log 2), and E₁(z)+log(z)+γ is entire.
+1. **E₁ cancellation** (li-Mellin + log is entire): PROVED above.
+   The function (1 - 2^{1-s})/(s-1) is entire (`oneSubTwoPow_div_differentiable`).
+   This is the derivative of K(s) = log(s-1) + s·∫₂^∞ li(t)·t^{-(s+1)} dt.
 
-2. **π-li integral extension** (Landau MCT):
+2. **π-li integral extension** (Landau MCT): needs quantitative PNT (BLOCKED).
    F(s) = s·∫₂^∞ (π-li)·t^{-(s+1)} dt extends from {Re>1} to {Re>α}.
    Uses: R(t) = C·t^α - σ·(π-li) ≥ 0 (from PiLiHardBound), Landau's theorem
    for non-negative Dirichlet integrals.
