@@ -47,6 +47,7 @@ import Littlewood.Aristotle.Standalone.RHPiTargetPhaseArgReduction
 import Littlewood.Aristotle.Standalone.RHPiArgApproxFromPerronThreshold
 import Littlewood.Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
 import Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge
+import Littlewood.Aristotle.Standalone.RHPiWitnessFromExplicitFormula
 import Littlewood.Bridge.PhragmenLindelofWiring
 
 set_option relaxedAutoImplicit false
@@ -194,6 +195,18 @@ theorem rhPiWitness
     Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData :=
   Aristotle.Standalone.RHPiPhaseCouplingConstructiveFamilies.rhPiWitnessData_of_phaseCouplingHyp
 
+/-- Direct Blocker-7 endpoint from the two coefficient-control witness classes
+in `RHPiWitnessFromExplicitFormula`.
+
+This exposes the mathematically direct 7a/7c closure target:
+construct the positive and negative coefficient-control witness families.
+-/
+theorem rhPiWitness_of_coeffControl
+    [Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp]
+    [Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp] :
+    Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData :=
+  Aristotle.Standalone.RHPiWitnessFromExplicitFormula.rhPiWitness_proved
+
 /-- Corrected-canonical Blocker-7 endpoint: same result as `rhPiWitness`, but
 starting from corrected canonical phase-coupling payload classes. -/
 theorem rhPiWitness_of_correctedCanonical
@@ -332,17 +345,37 @@ theorem combined_atoms_resolved_of_exactSeedAboveThreshold
     piAtomCorrectedCore
     rhPiWitness_of_exactSeedAboveThreshold
 
-/-- Unconditional assembly endpoint: provides local sorry instances for the
-phase-coupling payload classes, so downstream consumers (e.g. `DeepSorries`)
-can reference this without typeclass arguments.
+/-- Alternative assembly endpoint through direct RH-`pi` coefficient-control
+payload classes. -/
+theorem combined_atoms_resolved_of_coeffControl
+    [Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp]
+    [Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp] :
+    (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
+    ∧
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ∧
+    ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
+      LogarithmicIntegral.logarithmicIntegral x)
+      =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
+  exact Aristotle.Standalone.DeepBlockerAssembly.combined_atoms_from_five_blockers
+    perBlockSignedBound
+    sigmaLtOneProved
+    rhPsiWitness
+    piAtomCorrectedCore
+    rhPiWitness_of_coeffControl
 
-The 2 `sorry` instances here account for the Blocker 7 deep obligations
-(constructive Dirichlet-aligned seed families for RH-side π oscillation).
+/-- Unconditional assembly endpoint: provides local sorry instances for the
+direct RH-`pi` coefficient-control payload classes, so downstream consumers
+(e.g. `DeepSorries`) can reference this without extra typeclass arguments.
+
+The 2 `sorry` instances here account for the Blocker 7 deep obligations at the
+mathematically direct closure boundary:
+`RhPiTargetHeightCoeffControlHyp` and `RhPiAntiTargetHeightCoeffControlHyp`.
 All other blockers are explicitly wired through proved standalone files.
 
-When the phase-coupling payload classes are proved sorry-free (via the
-exact-seed / coefficient-control chain), replace the `letI` lines with
-the proved instances and this theorem becomes sorry-free. -/
+When these two coefficient-control classes are proved sorry-free (or imported
+from standalone constructive modules), replace the `letI` lines with the proved
+instances and this theorem becomes sorry-free. -/
 theorem combined_atoms_resolved_unconditional :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
@@ -351,10 +384,10 @@ theorem combined_atoms_resolved_unconditional :
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
-  letI : Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.TargetTowerPhaseCouplingFamilyHyp :=
+  letI : Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp :=
     ⟨sorry⟩
-  letI : Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.AntiTargetTowerPhaseCouplingFamilyHyp :=
+  letI : Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp :=
     ⟨sorry⟩
-  exact combined_atoms_resolved
+  exact combined_atoms_resolved_of_coeffControl
 
 end Aristotle.Standalone.DeepBlockersResolved

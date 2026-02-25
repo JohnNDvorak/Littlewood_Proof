@@ -195,4 +195,118 @@ theorem sum_inv_norm_unbounded
   refine ⟨T, hT_ge4, ?_⟩
   exact hB_le_B0.trans (hB0_le_log.trans (hcoef_le.trans hsum_lower))
 
+/-- Quantitative unboundedness of the zero-count ratio `(N T)/(T+1)` from
+`ZeroCountingLowerBoundHyp`. -/
+theorem zero_count_div_unbounded
+    [ZeroCountingLowerBoundHyp] :
+    ∀ B : ℝ, ∃ T : ℝ, 4 ≤ T ∧ B ≤ (N T : ℝ) / (T + 1) := by
+  intro B
+  rcases zeroCountingFunction_lower_bound with ⟨T0, hT0⟩
+  let B0 : ℝ := max B 0
+  let T : ℝ := max (max T0 4) (Real.exp (6 * Real.pi * B0))
+  have hT_ge_T0 : T0 ≤ T := by
+    exact le_trans (le_max_left _ _) (le_max_left _ _)
+  have hT_ge4 : 4 ≤ T := by
+    exact le_trans (le_max_right T0 4) (le_max_left _ _)
+  have hT_ge1 : (1 : ℝ) ≤ T := by linarith [hT_ge4]
+  have hT1_pos : 0 < T + 1 := by linarith
+  have hB_le_B0 : B ≤ B0 := le_max_left _ _
+
+  have hN_lower : T / (3 * Real.pi) * Real.log T ≤ N T := hT0 T hT_ge_T0
+  have hN_div :
+      (T / (3 * Real.pi) * Real.log T) / (T + 1)
+        ≤ (N T : ℝ) / (T + 1) := by
+    exact div_le_div_of_nonneg_right hN_lower (le_of_lt hT1_pos)
+
+  have hratio : (1 / 2 : ℝ) ≤ T / (T + 1) :=
+    half_le_div_self_add_one hT_ge1
+  have hlog_nonneg : 0 ≤ Real.log T := Real.log_nonneg hT_ge1
+  have hbase_nonneg : 0 ≤ (1 / (3 * Real.pi)) * Real.log T := by
+    exact mul_nonneg (by positivity) hlog_nonneg
+  have hmul_ratio :
+      (1 / 2 : ℝ) * ((1 / (3 * Real.pi)) * Real.log T)
+        ≤ (T / (T + 1)) * ((1 / (3 * Real.pi)) * Real.log T) := by
+    exact mul_le_mul_of_nonneg_right hratio hbase_nonneg
+
+  have hfactor :
+      (T / (T + 1)) * ((1 / (3 * Real.pi)) * Real.log T)
+        = (T / (3 * Real.pi) * Real.log T) / (T + 1) := by
+    field_simp [hT1_pos.ne']
+
+  have hcoef_le :
+      (1 / (6 * Real.pi)) * Real.log T
+        ≤ (N T : ℝ) / (T + 1) := by
+    have hleft :
+        (1 / (6 * Real.pi)) * Real.log T
+          = (1 / 2 : ℝ) * ((1 / (3 * Real.pi)) * Real.log T) := by ring
+    calc
+      (1 / (6 * Real.pi)) * Real.log T
+          = (1 / 2 : ℝ) * ((1 / (3 * Real.pi)) * Real.log T) := hleft
+      _ ≤ (T / (T + 1)) * ((1 / (3 * Real.pi)) * Real.log T) := hmul_ratio
+      _ = (T / (3 * Real.pi) * Real.log T) / (T + 1) := hfactor
+      _ ≤ (N T : ℝ) / (T + 1) := hN_div
+
+  have hExp_le : Real.exp (6 * Real.pi * B0) ≤ T := by
+    exact le_max_right _ _
+  have hlog_ge : 6 * Real.pi * B0 ≤ Real.log T := by
+    have h := Real.log_le_log (Real.exp_pos _) hExp_le
+    simpa [Real.log_exp] using h
+  have hB0_le_log :
+      B0 ≤ (1 / (6 * Real.pi)) * Real.log T := by
+    have h6pi_pos : 0 < (6 * Real.pi : ℝ) := by positivity
+    have h' : B0 ≤ Real.log T / (6 * Real.pi) := by
+      refine (le_div_iff₀ h6pi_pos).2 ?_
+      nlinarith [hlog_ge]
+    simpa [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm] using h'
+
+  refine ⟨T, hT_ge4, ?_⟩
+  exact hB_le_B0.trans (hB0_le_log.trans hcoef_le)
+
+/-- The triple-exponential tower cap used in RH-`π` witness classes is
+cofinally unbounded under `ZeroCountingLowerBoundHyp`. -/
+theorem tower_cap_unbounded
+    [ZeroCountingLowerBoundHyp]
+    {ε : ℝ} (hεpos : 0 < ε) (hεlt : ε < 1) :
+    ∀ X : ℝ, ∃ T : ℝ, 4 ≤ T ∧
+      X < Real.exp (Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
+  intro X
+  let B : ℝ := max X 0 + 1
+  have hB_gt_X : X < B := by
+    have hX_le : X ≤ max X 0 := le_max_left X 0
+    linarith
+  have h1mε_pos : 0 < 1 - ε := by linarith
+  let C : ℝ := (2 * B) / (1 - ε)
+  rcases zero_count_div_unbounded C with ⟨T, hT4, hC⟩
+  let R : ℝ := (N T : ℝ) / (T + 1)
+  have hScale_nonneg : 0 ≤ (1 - ε) / 2 := by positivity
+  have hScaled : ((1 - ε) / 2) * C ≤ ((1 - ε) / 2) * R := by
+    exact mul_le_mul_of_nonneg_left hC hScale_nonneg
+  have hB_le_expArg : B ≤ ((1 - ε) * R) / 2 := by
+    have hBC : ((1 - ε) / 2) * C = B := by
+      unfold C
+      field_simp [h1mε_pos.ne']
+    have hR : ((1 - ε) / 2) * R = ((1 - ε) * R) / 2 := by ring
+    simpa [hBC, hR] using hScaled
+  have hB_lt_tower : B < Real.exp (Real.exp (Real.exp B)) := by
+    have h1 : B < Real.exp B := by
+      have h : B + 1 ≤ Real.exp B := Real.add_one_le_exp B
+      linarith
+    have h2 : Real.exp B < Real.exp (Real.exp B) := by
+      have h : Real.exp B + 1 ≤ Real.exp (Real.exp B) := Real.add_one_le_exp (Real.exp B)
+      linarith
+    have h3 : Real.exp (Real.exp B) < Real.exp (Real.exp (Real.exp B)) := by
+      have h :
+          Real.exp (Real.exp B) + 1 ≤ Real.exp (Real.exp (Real.exp B)) :=
+        Real.add_one_le_exp (Real.exp (Real.exp B))
+      linarith
+    exact lt_trans h1 (lt_trans h2 h3)
+  have hTower_mono :
+      Real.exp (Real.exp (Real.exp B))
+        ≤ Real.exp (Real.exp (Real.exp (((1 - ε) * R) / 2))) := by
+    exact Real.exp_le_exp.mpr
+      (Real.exp_le_exp.mpr
+        (Real.exp_le_exp.mpr hB_le_expArg))
+  refine ⟨T, hT4, ?_⟩
+  exact lt_of_lt_of_le (lt_trans hB_gt_X hB_lt_tower) hTower_mono
+
 end Aristotle.Standalone.RHPiReciprocalNormGrowth
