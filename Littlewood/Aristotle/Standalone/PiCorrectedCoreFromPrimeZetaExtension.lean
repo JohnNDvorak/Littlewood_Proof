@@ -69,6 +69,7 @@ Reference: Montgomery-Vaughan §5.2, Titchmarsh §3.15. -/
 /-- **Corrected prime zeta extension**: under the one-sided π-li bound,
 primeZeta(s) + log(s-1) extends analytically from {Re > 1} to {Re > α}. -/
 theorem corrected_prime_zeta_extension
+    [Aristotle.Standalone.PrimeZetaExtensionProof.CorrectedPrimeZetaExtensionHyp]
     (α : ℝ) (hα : 1 / 2 < α) (hα1 : α < 1)
     (C : ℝ) (hC : 0 < C) (σ : ℝ) (hσ : σ = 1 ∨ σ = -1)
     (hbound : PiLiHardBound α C σ) :
@@ -99,7 +100,8 @@ Constructs G(s) = Q(s) + correctionTerm(s), where:
 The formula exp(G(s)) = (s-1)*ζ(s) on {Re > 1} follows from:
   G = Q + correction = [primeZeta + log(s-1)] + correction = log(s-1) + H_zeta_log
   exp(G) = exp(log(s-1)) * exp(H_zeta_log) = (s-1) * ζ(s) -/
-theorem piAtomHardCaseCorrectedCore_proved :
+theorem piAtomHardCaseCorrectedCore_proved
+    [Aristotle.Standalone.PrimeZetaExtensionProof.CorrectedPrimeZetaExtensionHyp] :
     PiAtomHardCaseCorrectedCore := by
   intro α hα hα1 C hC σ hσ hbound
   obtain ⟨Q, hQ_anal, hQ_eq⟩ := corrected_prime_zeta_extension α hα hα1 C hC σ hσ hbound

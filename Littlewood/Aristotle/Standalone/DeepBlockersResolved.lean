@@ -83,28 +83,30 @@ These three results are independent of each other and of the oscillation branche
 They are needed ONLY for Hardy's theorem (infinitely many zeros on Re=1/2).
 -/
 
-/-- **Combined deep input**: all Hardy chain inputs (B1+B2+B3) AND
-RH-π coefficient-control payload families (B7 target + anti-target).
+/-- **Combined deep input**: ALL remaining deep obligations for the Littlewood proof
+consolidated into a single sorry declaration.
 
-This single sorry declaration consolidates all remaining deep obligations
-for the Littlewood proof:
-- B1: Hardy mean-square asymptotic (AFE, Titchmarsh Ch. VII)
-- B2: First moment bound (oscillatory cancellation, Heath-Brown 1978)
-- B3: RS per-block signed decomposition (Siegel 1932)
-- B7 target: positive coefficient-control family (Montgomery-Vaughan §15.2)
-- B7 anti-target: negative coefficient-control family
+This covers:
+- **B1**: Hardy mean-square asymptotic (AFE, Titchmarsh Ch. VII)
+- **B2**: First moment bound (oscillatory cancellation, Heath-Brown 1978)
+- **B3**: RS per-block signed decomposition (Siegel 1932)
+- **B5**: Explicit formula for ψ at T=x + oscillation under RH (Littlewood 1914)
+- **B6**: Corrected prime zeta extension (E₁ + MCT, Montgomery-Vaughan §5.2)
+- **B7 target**: positive coefficient-control family (Montgomery-Vaughan §15.2)
+- **B7 anti-target**: negative coefficient-control family
 
 All other blockers are proved through standalone infrastructure files:
-- B4 (σ₀ < 1): PROVED in SigmaLtOneFromPringsheimExtension
-- B5 (ψ witness): sorry in RHPsiWitnessFromZeroSum (separate file)
-- B6 (π correction): sorry in PrimeZetaExtensionProof (separate file)
-- B7 assembly: PROVED in RHPiWitnessFromExplicitFormula (0 sorry) -/
+- B4 (σ₀ < 1): PROVED in SigmaLtOneFromPringsheimExtension (0 sorry)
+- B7 assembly: PROVED in RHPiWitnessFromExplicitFormula (0 sorry)
+- All 40+ standalone infrastructure files: sorry-free -/
 private theorem all_deep_blockers :
     (Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp
       ∧ HardyFirstMomentWiring.MainTermFirstMomentBoundHyp
       ∧ Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp)
     ∧ (Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp
-      ∧ Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp) := by
+      ∧ Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp)
+    ∧ Aristotle.Standalone.RHPsiWitnessFromZeroSum.ExplicitFormulaAndOscillationHyp
+    ∧ Aristotle.Standalone.PrimeZetaExtensionProof.CorrectedPrimeZetaExtensionHyp := by
   sorry
 
 instance hardyMeanSquareAsymptoticInstance :
@@ -118,6 +120,12 @@ instance mainTermFirstMomentBoundInstance :
 theorem perBlockSignedBound :
     Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp :=
   all_deep_blockers.1.2.2
+
+instance : Aristotle.Standalone.RHPsiWitnessFromZeroSum.ExplicitFormulaAndOscillationHyp :=
+  all_deep_blockers.2.2.1
+
+instance : Aristotle.Standalone.PrimeZetaExtensionProof.CorrectedPrimeZetaExtensionHyp :=
+  all_deep_blockers.2.2.2
 
 /-! ## Blocker 4: Landau σ₀ < 1 Tail Integrability (Pringsheim Extension)
 
@@ -385,8 +393,8 @@ theorem combined_atoms_resolved_unconditional :
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
-  letI := all_deep_blockers.2.1
-  letI := all_deep_blockers.2.2
+  letI := all_deep_blockers.2.1.1
+  letI := all_deep_blockers.2.1.2
   exact combined_atoms_resolved_of_coeffControl
 
 end Aristotle.Standalone.DeepBlockersResolved

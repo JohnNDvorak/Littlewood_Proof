@@ -295,18 +295,35 @@ Combines the proved Abel summation with two analytic extension sub-lemmas:
 
 Assembly: Q = K + F, using integral linearity and Abel summation. -/
 
+/-- Hypothesis class for the corrected prime zeta extension.
+When this is instantiated (via sorry in DeepBlockersResolved, or eventually via
+proof), all theorems below become sorry-free.
+
+The content: under the one-sided π-li bound σ·(π-li) ≤ C·x^α, the function
+primeZeta(s) + log(s-1) extends analytically from {Re > 1} to {Re > α}.
+
+Proof requires:
+1. E₁ cancellation: li-Mellin + log(s-1) is entire
+2. Landau MCT: non-negative Dirichlet integral analytic past α
+3. Assembly via Abel summation + integral linearity -/
+class CorrectedPrimeZetaExtensionHyp : Prop where
+  proof : ∀ (α : ℝ), 1 / 2 < α → α < 1 → ∀ (C : ℝ), 0 < C →
+    ∀ (σ_sign : ℝ), σ_sign = 1 ∨ σ_sign = -1 →
+    PiLiHardBound α C σ_sign →
+    ∃ Q : ℂ → ℂ, AnalyticOnNhd ℂ Q {s : ℂ | α < s.re} ∧
+      ∀ s : ℂ, 1 < s.re →
+        Q s = primeZeta s + Complex.log (s - 1)
+
 /-- **Corrected prime zeta extension**: under the one-sided π-li bound,
 primeZeta(s) + log(s-1) extends analytically from {Re > 1} to {Re > α}. -/
 theorem corrected_prime_zeta_extension_proof
+    [h : CorrectedPrimeZetaExtensionHyp]
     (α : ℝ) (hα : 1 / 2 < α) (hα1 : α < 1)
     (C : ℝ) (hC : 0 < C) (σ_sign : ℝ) (hσ : σ_sign = 1 ∨ σ_sign = -1)
     (hbound : PiLiHardBound α C σ_sign) :
     ∃ Q : ℂ → ℂ, AnalyticOnNhd ℂ Q {s : ℂ | α < s.re} ∧
       ∀ s : ℂ, 1 < s.re →
-        Q s = primeZeta s + Complex.log (s - 1) := by
-  -- Proof requires: E₁ cancellation (li-Mellin + log entire),
-  -- Landau MCT (non-negative Dirichlet integral analytic past α),
-  -- integral linearity, and Abel summation (proved above as primeZeta_eq_integral).
-  sorry
+        Q s = primeZeta s + Complex.log (s - 1) :=
+  h.proof α hα hα1 C hC σ_sign hσ hbound
 
 end Aristotle.Standalone.PrimeZetaExtensionProof

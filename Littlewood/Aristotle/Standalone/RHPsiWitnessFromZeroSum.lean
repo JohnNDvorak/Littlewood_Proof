@@ -52,22 +52,32 @@ def psiMainTerm (x : ℝ) : ℝ :=
 -- 1. Sub-sorry 1: Truncated explicit formula at T=x (standalone)
 -- ============================================================
 
-/-- **Combined deep input**: truncated explicit formula for ψ at T=x (unconditional)
-AND cofinal oscillation of psiMainTerm under RH.
+/-- Hypothesis class for the combined explicit formula + oscillation input.
+When this is instantiated (via sorry in DeepBlockersResolved, or eventually via
+proof), all theorems below become sorry-free.
 
 Part 1 (explicit formula): There exists a uniform constant C such that for all x ≥ 2,
   |ψ(x) - x + Σ_{|γ|≤x} Re(x^ρ/ρ)| ≤ C · log x.
-This is the T=x specialization of the full truncated explicit formula
-  |ψ(x) - x + Σ_{|γ|≤T} Re(x^ρ/ρ)| ≤ C'·(√x·log T/√T + log x)
-which at T=x gives error O(log x). Unconditional. Reference: Montgomery-Vaughan §12.5.
+This is the T=x specialization of the full truncated explicit formula.
+Reference: Montgomery-Vaughan §12.5.
 
 Part 2 (oscillation under RH): psiMainTerm oscillates cofinally with amplitude
-±4√x·lll(x). The proof uses the general explicit formula for tail control
-(|∑_{T<|γ|≤x} x^ρ/ρ| = O(√x·log T/√T)), combined with homogeneous Dirichlet
-alignment of N(T) phases to target e^{iπ/2}, exploiting that
-Re(i/(1/2+iγ)) = γ/(1/4+γ²) ≈ 1/γ (divergent sum ∼ (log T)²),
-while lll(x) = O(log T) from the tower bound.
+±4√x·lll(x). Uses Dirichlet alignment + divergent ∑ 1/γ ∼ (log T)².
 Reference: Ingham 1932; Montgomery-Vaughan §15.2. -/
+class ExplicitFormulaAndOscillationHyp : Prop where
+  proof :
+    (∃ C : ℝ, ∀ x : ℝ, x ≥ 2 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * Real.log x)
+    ∧
+    (ZetaZeros.RiemannHypothesis →
+      (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+        psiMainTerm x ≥ 4 * (Real.sqrt x * lll x)) ∧
+      (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+        psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x))))
+
+variable [ExplicitFormulaAndOscillationHyp]
+
 private theorem explicit_formula_and_oscillation :
     (∃ C : ℝ, ∀ x : ℝ, x ≥ 2 →
       |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
@@ -77,8 +87,8 @@ private theorem explicit_formula_and_oscillation :
       (∀ X : ℝ, ∃ x : ℝ, X < x ∧
         psiMainTerm x ≥ 4 * (Real.sqrt x * lll x)) ∧
       (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-        psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x)))) := by
-  sorry
+        psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x)))) :=
+  ExplicitFormulaAndOscillationHyp.proof
 
 private theorem explicit_formula_psi_at_T_eq_x :
     ∃ C : ℝ, ∀ x : ℝ, x ≥ 2 →
@@ -122,6 +132,7 @@ private lemma rh_psi_truncated_explicit_formula :
 -- 2. Growth domination (PROVED)
 -- ============================================================
 
+omit [ExplicitFormulaAndOscillationHyp] in
 /-- Growth domination: `log²x ≤ √x · lll(x)` eventually.
 Proof: from `log_le_rpow_eventually (1/4)`, `(log x)^2 ≤ (x^{1/4})^2 = √x ≤ √x · lll(x)`. -/
 private lemma log_sq_eventually_le_sqrt_mul_lll :
