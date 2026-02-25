@@ -83,23 +83,41 @@ These three results are independent of each other and of the oscillation branche
 They are needed ONLY for Hardy's theorem (infinitely many zeros on Re=1/2).
 -/
 
-private theorem hardy_chain_deep_inputs :
-    Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp
-    ∧ HardyFirstMomentWiring.MainTermFirstMomentBoundHyp
-    ∧ Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp := by
+/-- **Combined deep input**: all Hardy chain inputs (B1+B2+B3) AND
+RH-π coefficient-control payload families (B7 target + anti-target).
+
+This single sorry declaration consolidates all remaining deep obligations
+for the Littlewood proof:
+- B1: Hardy mean-square asymptotic (AFE, Titchmarsh Ch. VII)
+- B2: First moment bound (oscillatory cancellation, Heath-Brown 1978)
+- B3: RS per-block signed decomposition (Siegel 1932)
+- B7 target: positive coefficient-control family (Montgomery-Vaughan §15.2)
+- B7 anti-target: negative coefficient-control family
+
+All other blockers are proved through standalone infrastructure files:
+- B4 (σ₀ < 1): PROVED in SigmaLtOneFromPringsheimExtension
+- B5 (ψ witness): sorry in RHPsiWitnessFromZeroSum (separate file)
+- B6 (π correction): sorry in PrimeZetaExtensionProof (separate file)
+- B7 assembly: PROVED in RHPiWitnessFromExplicitFormula (0 sorry) -/
+private theorem all_deep_blockers :
+    (Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp
+      ∧ HardyFirstMomentWiring.MainTermFirstMomentBoundHyp
+      ∧ Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp)
+    ∧ (Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp
+      ∧ Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp) := by
   sorry
 
 instance hardyMeanSquareAsymptoticInstance :
     Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp :=
-  hardy_chain_deep_inputs.1
+  all_deep_blockers.1.1
 
 instance mainTermFirstMomentBoundInstance :
     HardyFirstMomentWiring.MainTermFirstMomentBoundHyp :=
-  hardy_chain_deep_inputs.2.1
+  all_deep_blockers.1.2.1
 
 theorem perBlockSignedBound :
     Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp :=
-  hardy_chain_deep_inputs.2.2
+  all_deep_blockers.1.2.2
 
 /-! ## Blocker 4: Landau σ₀ < 1 Tail Integrability (Pringsheim Extension)
 
@@ -353,29 +371,12 @@ theorem combined_atoms_resolved_of_coeffControl
     piAtomCorrectedCore
     rhPiWitness_of_coeffControl
 
-/-- **Combined deep RH-π input**: both coefficient-control payload families
-(target and anti-target) for the inhomogeneous Dirichlet-aligned π-oscillation.
+/-- Unconditional assembly endpoint: the single sorry in `all_deep_blockers`
+provides all remaining deep obligations for the full Littlewood proof.
 
-This consolidates the two Blocker 7 obligations into a single sorry site.
-All other blockers are explicitly wired through proved standalone files.
-
-The target family aligns x^{iγ} ≈ ρ/‖ρ‖ (positive oscillation),
-the anti-target family aligns x^{iγ} ≈ -(ρ/‖ρ‖)) (negative oscillation).
-Both require an explicit-formula error bound for π(x)−li(x) and a
-coefficient inequality 2·lll(x) ≤ (1−ε)·N(T)/(T+1).
-
-Reference: Montgomery-Vaughan §15.2; Ingham 1932. -/
-private theorem rh_pi_coeff_control_pair :
-    Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp ∧
-    Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp := by
-  sorry
-
-/-- Unconditional assembly endpoint: the single sorry in `rh_pi_coeff_control_pair`
-is the only remaining deep obligation for the RH-π branch.
-All other blockers are explicitly wired through proved standalone files.
-
-When `rh_pi_coeff_control_pair` is proved sorry-free, this theorem and hence
-`DeepSorries.combined_atoms` become sorry-free. -/
+When `all_deep_blockers` is proved sorry-free (in this file), and the
+sorries in RHPsiWitnessFromZeroSum (B5) and PrimeZetaExtensionProof (B6)
+are also closed, `DeepSorries.combined_atoms` becomes sorry-free. -/
 theorem combined_atoms_resolved_unconditional :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
@@ -384,8 +385,8 @@ theorem combined_atoms_resolved_unconditional :
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
-  letI := rh_pi_coeff_control_pair.1
-  letI := rh_pi_coeff_control_pair.2
+  letI := all_deep_blockers.2.1
+  letI := all_deep_blockers.2.2
   exact combined_atoms_resolved_of_coeffControl
 
 end Aristotle.Standalone.DeepBlockersResolved
