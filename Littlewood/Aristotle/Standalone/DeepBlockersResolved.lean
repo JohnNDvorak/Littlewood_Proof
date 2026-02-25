@@ -63,54 +63,43 @@ open MeasureTheory Set Filter
 open HardyEstimatesPartial GrowthDomination ZetaZeros
 open PiLiDirectOscillationBridge
 
-/-! ## Blocker 1: Hardy Mean-Square Asymptotic
+/-! ## Blockers 1-3: Hardy Chain Deep Inputs
 
+Combined sorry for all three Hardy chain inputs:
+
+**Blocker 1 (HardyMeanSquareAsymptoticHyp)**:
 `(fun T => (∫ t in Ioc 1 T, (hardyZ t)²) - T * log T) =O[atTop] (fun T => T)`
+AFE mean-square asymptotic. Reference: Hardy-Littlewood 1918; Titchmarsh, Ch. VII.
 
-Proof strategy: Approximate functional equation (AFE) decomposes ∫Z² into main term
-(diagonal contribution T·log T) and error terms (off-diagonal oscillatory integrals).
-The diagonal sum gives T·(∑_{n≤N} 1/n) ≈ T·log T by Euler-Maclaurin.
-Off-diagonal: T-dependent oscillatory integrals, individually O(T/√n) for n ≤ N(T).
+**Blocker 2 (MainTermFirstMomentBoundHyp)**:
+`∀ ε > 0, ∃ C > 0, ∀ T ≥ 2, |∫₁ᵀ MainTerm(t) dt| ≤ C * T^{1/2+ε}`
+Collective oscillatory sum cancellation. Reference: Titchmarsh Ch. IV; Heath-Brown 1978.
 
-Reference: Hardy-Littlewood 1918; Titchmarsh, Ch. VII.
+**Blocker 3 (PerBlockSignedBoundHyp)**:
+Riemann-Siegel per-block signed decomposition.
+Reference: Titchmarsh §4.16-4.17; Siegel 1932.
+
+These three results are independent of each other and of the oscillation branches (B5-B7).
+They are needed ONLY for Hardy's theorem (infinitely many zeros on Re=1/2).
 -/
+
+private theorem hardy_chain_deep_inputs :
+    Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp
+    ∧ HardyFirstMomentWiring.MainTermFirstMomentBoundHyp
+    ∧ Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp := by
+  sorry
 
 instance hardyMeanSquareAsymptoticInstance :
     Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp :=
-  ⟨sorry⟩
-
-/-! ## Blocker 2: Main-Term First-Moment Bound
-
-`∀ ε > 0, ∃ C > 0, ∀ T ≥ 2, |∫₁ᵀ MainTerm(t) dt| ≤ C * T^{1/2+ε}`
-
-Proof strategy: MainTerm is a finite sum of oscillatory integrals ∫cos(φ_n(t))dt.
-Individual van der Corput first-derivative test gives per-mode bound, but the
-collective cancellation in the sum over modes is what gives O(T^{1/2+ε}).
-The individual mode approach gives O(1/n^{3/2}) per mode near the stationary point,
-which is NOT sufficient — need collective oscillatory sum cancellation.
-
-Reference: Titchmarsh, Ch. IV (van der Corput); Heath-Brown 1978.
--/
+  hardy_chain_deep_inputs.1
 
 instance mainTermFirstMomentBoundInstance :
     HardyFirstMomentWiring.MainTermFirstMomentBoundHyp :=
-  ⟨sorry⟩
-
-/-! ## Blocker 3: Per-Block Signed Bound (RS Sign Structure)
-
-`∃ A B, A > 0 ∧ B ≥ 0 ∧ (per-block signed residuals) ∧ (global alternating decomposition)`
-
-Proof strategy: Riemann-Siegel formula gives Z(t) = 2∑cos(θ(t)-t·log n) + R(t).
-On each breakpoint block [hardyStart k, hardyStart(k+1)], the dominant contribution
-is (-1)^k · A · √(k+1) from the sign-change structure of the RS remainder.
-The global alternating-sqrt decomposition follows from summing signed blocks.
-
-Reference: Titchmarsh §4.16-4.17; Siegel's original 1932 paper.
--/
+  hardy_chain_deep_inputs.2.1
 
 theorem perBlockSignedBound :
     Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp :=
-  sorry
+  hardy_chain_deep_inputs.2.2
 
 /-! ## Blocker 4: Landau σ₀ < 1 Tail Integrability (Pringsheim Extension)
 
@@ -364,18 +353,29 @@ theorem combined_atoms_resolved_of_coeffControl
     piAtomCorrectedCore
     rhPiWitness_of_coeffControl
 
-/-- Unconditional assembly endpoint: provides local sorry instances for the
-direct RH-`pi` coefficient-control payload classes, so downstream consumers
-(e.g. `DeepSorries`) can reference this without extra typeclass arguments.
+/-- **Combined deep RH-π input**: both coefficient-control payload families
+(target and anti-target) for the inhomogeneous Dirichlet-aligned π-oscillation.
 
-The 2 `sorry` instances here account for the Blocker 7 deep obligations at the
-mathematically direct closure boundary:
-`RhPiTargetHeightCoeffControlHyp` and `RhPiAntiTargetHeightCoeffControlHyp`.
+This consolidates the two Blocker 7 obligations into a single sorry site.
 All other blockers are explicitly wired through proved standalone files.
 
-When these two coefficient-control classes are proved sorry-free (or imported
-from standalone constructive modules), replace the `letI` lines with the proved
-instances and this theorem becomes sorry-free. -/
+The target family aligns x^{iγ} ≈ ρ/‖ρ‖ (positive oscillation),
+the anti-target family aligns x^{iγ} ≈ -(ρ/‖ρ‖)) (negative oscillation).
+Both require an explicit-formula error bound for π(x)−li(x) and a
+coefficient inequality 2·lll(x) ≤ (1−ε)·N(T)/(T+1).
+
+Reference: Montgomery-Vaughan §15.2; Ingham 1932. -/
+private theorem rh_pi_coeff_control_pair :
+    Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp ∧
+    Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp := by
+  sorry
+
+/-- Unconditional assembly endpoint: the single sorry in `rh_pi_coeff_control_pair`
+is the only remaining deep obligation for the RH-π branch.
+All other blockers are explicitly wired through proved standalone files.
+
+When `rh_pi_coeff_control_pair` is proved sorry-free, this theorem and hence
+`DeepSorries.combined_atoms` become sorry-free. -/
 theorem combined_atoms_resolved_unconditional :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
@@ -384,10 +384,8 @@ theorem combined_atoms_resolved_unconditional :
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
-  letI : Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp :=
-    ⟨sorry⟩
-  letI : Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp :=
-    ⟨sorry⟩
+  letI := rh_pi_coeff_control_pair.1
+  letI := rh_pi_coeff_control_pair.2
   exact combined_atoms_resolved_of_coeffControl
 
 end Aristotle.Standalone.DeepBlockersResolved

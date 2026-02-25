@@ -52,19 +52,39 @@ def psiMainTerm (x : ℝ) : ℝ :=
 -- 1. Sub-sorry 1: Truncated explicit formula at T=x (standalone)
 -- ============================================================
 
-/-- **Truncated explicit formula for ψ at T=x** (analytic input).
-There exists a uniform constant C such that for all x ≥ 2:
-  |ψ(x) - x + Σ_{|γ|≤x} Re(x^ρ/ρ)| ≤ C · log x.
+/-- **Combined deep input**: truncated explicit formula for ψ at T=x (unconditional)
+AND cofinal oscillation of psiMainTerm under RH.
 
-This is the T=x specialization of the full truncated explicit formula:
+Part 1 (explicit formula): There exists a uniform constant C such that for all x ≥ 2,
+  |ψ(x) - x + Σ_{|γ|≤x} Re(x^ρ/ρ)| ≤ C · log x.
+This is the T=x specialization of the full truncated explicit formula
   |ψ(x) - x + Σ_{|γ|≤T} Re(x^ρ/ρ)| ≤ C'·(√x·log T/√T + log x)
-which at T=x gives error ≤ C'·(log x + log x) = 2C'·log x.
-Unconditional (does not require RH). Reference: Montgomery-Vaughan §12.5. -/
+which at T=x gives error O(log x). Unconditional. Reference: Montgomery-Vaughan §12.5.
+
+Part 2 (oscillation under RH): psiMainTerm oscillates cofinally with amplitude
+±4√x·lll(x). The proof uses the general explicit formula for tail control
+(|∑_{T<|γ|≤x} x^ρ/ρ| = O(√x·log T/√T)), combined with homogeneous Dirichlet
+alignment of N(T) phases to target e^{iπ/2}, exploiting that
+Re(i/(1/2+iγ)) = γ/(1/4+γ²) ≈ 1/γ (divergent sum ∼ (log T)²),
+while lll(x) = O(log T) from the tower bound.
+Reference: Ingham 1932; Montgomery-Vaughan §15.2. -/
+private theorem explicit_formula_and_oscillation :
+    (∃ C : ℝ, ∀ x : ℝ, x ≥ 2 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * Real.log x)
+    ∧
+    (ZetaZeros.RiemannHypothesis →
+      (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+        psiMainTerm x ≥ 4 * (Real.sqrt x * lll x)) ∧
+      (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+        psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x)))) := by
+  sorry
+
 private theorem explicit_formula_psi_at_T_eq_x :
     ∃ C : ℝ, ∀ x : ℝ, x ≥ 2 →
       |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
-        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * Real.log x := by
-  sorry
+        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * Real.log x :=
+  explicit_formula_and_oscillation.1
 
 /-- Truncated explicit formula: |ψ(x) - x + psiMainTerm(x)| ≤ (log x)².
 Proved from `explicit_formula_psi_at_T_eq_x` + growth bound. Unconditional. -/
@@ -139,30 +159,14 @@ theorem rh_psi_explicit_formula_error :
 -- ============================================================
 
 /-- **psiMainTerm oscillates cofinally with amplitude ±4√x·lll(x)** (under RH).
-
-The proof combines two ingredients:
-  (a) **Reciprocal norm sum divergence** (unconditional):
-      `∑_{ρ ∈ ZerosBelow T} 1/‖ρ‖ → ∞` as T → ∞.
-      Follows from Riemann-von Mangoldt `N(T) ~ T log T/(2π)` and
-      partial summation: `∑_{0<γ≤T} 1/γ ~ (1/(2π))(log T)²`.
-      Reference: Titchmarsh §9.4.
-
-  (b) **Oscillation from unbounded sum** (under RH):
-      Under RH, `Re(x^ρ/ρ) = √x · cos(γ log x − arg ρ)/|ρ|`.
-      After Dirichlet alignment of K = N(T) zeros, the aligned sum
-      is `≥ (1−ε)·√x·∑_{|γ|≤T} 1/|ρ|`. The tower bound from Dirichlet
-      (`x ≤ exp((2π/ε)^K)`) keeps `lll(x) = O(log K)`, while the
-      aligned sum grows as `(log T)² ≫ lll(x)`.
-
-      Tail control via L²-mean-value or Ingham/Tauberian contradiction.
-      Reference: Ingham 1932, Theorem 5; Montgomery-Vaughan §15.2 (Thm 15.11). -/
+Derived from `explicit_formula_and_oscillation.2`. -/
 private lemma psiMainTerm_oscillates_large
     (hRH : ZetaZeros.RiemannHypothesis) :
     (∀ X : ℝ, ∃ x : ℝ, X < x ∧
       psiMainTerm x ≥ 4 * (Real.sqrt x * lll x)) ∧
     (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-      psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x))) := by
-  sorry
+      psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x))) :=
+  explicit_formula_and_oscillation.2 hRH
 
 -- ============================================================
 -- 5. Proof of rh_psi_minus_x_oscillates_large (PROVED from 1+4+growth dom)
