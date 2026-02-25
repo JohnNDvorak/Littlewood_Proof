@@ -2,8 +2,8 @@
 RH-side ψ witness construction from explicit formula + zero-sum oscillation.
 
 Proves RhPsiWitnessData (Blocker 5) via:
-1. Truncated explicit formula error: under RH, ψ(x) ≈ x - psiMainTerm(x)
-   with error eventually ≤ (log x)² ≤ √x · lll(x)
+1. Truncated explicit formula error: ψ(x) ≈ x - psiMainTerm(x)
+   with error eventually ≤ (log x)⁴ ≤ √x · lll(x)
 2. psiMainTerm oscillation: psiMainTerm is cofinally ≥ 4√x·lll(x) AND ≤ -4√x·lll(x)
 3. Assembly: ψ(x)-x = Ω±(3√x · lll(x))
 
@@ -13,7 +13,7 @@ SORRY COUNT: 2 atomic sub-sorries
 
 PROVED:
   rh_psi_truncated_explicit_formula — from (1) + chebyshevPsi bridge + growth bound
-  log_sq_eventually_le_sqrt_mul_lll — growth domination (pure real analysis)
+  log_pow4_eventually_le_sqrt_mul_lll — growth domination (pure real analysis)
   rh_psi_minus_x_oscillates_large — from above + (2) + growth domination
   rh_psi_explicit_formula_error — from above + growth domination
   rh_psi_main_term_oscillates — from rh_psi_minus_x_oscillates_large + error bound
@@ -57,9 +57,10 @@ When this is instantiated (via sorry in DeepBlockersResolved, or eventually via
 proof), all theorems below become sorry-free.
 
 Part 1 (explicit formula): There exists a uniform constant C such that for all x ≥ 2,
-  |ψ(x) - x + Σ_{|γ|≤x} Re(x^ρ/ρ)| ≤ C · log x.
+  |ψ(x) - x + Σ_{|γ|≤x} Re(x^ρ/ρ)| ≤ C · (log x)².
 This is the T=x specialization of the full truncated explicit formula.
-Reference: Montgomery-Vaughan §12.5.
+The error O((log x)²) comes from the tail ∑_{|γ|>x} x^ρ/ρ = O(x(log²(x²))/x).
+Reference: Montgomery-Vaughan §12.5, Davenport Ch. 17.
 
 Part 2 (oscillation under RH): psiMainTerm oscillates cofinally with amplitude
 ±4√x·lll(x). Uses Dirichlet alignment + divergent ∑ 1/γ ∼ (log T)².
@@ -68,7 +69,7 @@ class ExplicitFormulaAndOscillationHyp : Prop where
   proof :
     (∃ C : ℝ, ∀ x : ℝ, x ≥ 2 →
       |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
-        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * Real.log x)
+        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * (Real.log x) ^ 2)
     ∧
     (ZetaZeros.RiemannHypothesis →
       (∀ X : ℝ, ∃ x : ℝ, X < x ∧
@@ -81,7 +82,7 @@ variable [ExplicitFormulaAndOscillationHyp]
 private theorem explicit_formula_and_oscillation :
     (∃ C : ℝ, ∀ x : ℝ, x ≥ 2 →
       |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
-        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * Real.log x)
+        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * (Real.log x) ^ 2)
     ∧
     (ZetaZeros.RiemannHypothesis →
       (∀ X : ℝ, ∃ x : ℝ, X < x ∧
@@ -93,14 +94,14 @@ private theorem explicit_formula_and_oscillation :
 private theorem explicit_formula_psi_at_T_eq_x :
     ∃ C : ℝ, ∀ x : ℝ, x ≥ 2 →
       |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
-        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * Real.log x :=
+        (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * (Real.log x) ^ 2 :=
   explicit_formula_and_oscillation.1
 
-/-- Truncated explicit formula: |ψ(x) - x + psiMainTerm(x)| ≤ (log x)².
+/-- Truncated explicit formula: |ψ(x) - x + psiMainTerm(x)| ≤ (log x)³.
 Proved from `explicit_formula_psi_at_T_eq_x` + growth bound. Unconditional. -/
 private lemma rh_psi_truncated_explicit_formula :
     ∀ᶠ x in atTop,
-      |(chebyshevPsi x - x) + psiMainTerm x| ≤ (Real.log x) ^ 2 := by
+      |(chebyshevPsi x - x) + psiMainTerm x| ≤ (Real.log x) ^ 3 := by
   obtain ⟨C, hC⟩ := explicit_formula_psi_at_T_eq_x
   filter_upwards [eventually_ge_atTop (2 : ℝ),
     (Filter.tendsto_atTop.1 Real.tendsto_log_atTop) |C|] with x hx hxlog
@@ -113,40 +114,40 @@ private lemma rh_psi_truncated_explicit_formula :
       ext n; simp [Finset.mem_range]
     rw [hinsert, Finset.sum_insert h0, ArithmeticFunction.map_zero, zero_add]
   -- Transfer explicit formula bound to root chebyshevPsi + psiMainTerm
-  have h_bound : |(chebyshevPsi x - x) + psiMainTerm x| ≤ C * Real.log x := by
+  have h_bound : |(chebyshevPsi x - x) + psiMainTerm x| ≤ C * (Real.log x) ^ 2 := by
     have hEF := hC x hx
     have h_eq : Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
         (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re) =
         (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) + psiMainTerm x := by
       simp [psiMainTerm, sub_neg_eq_add]
     rw [h_bridge, ← h_eq]; exact hEF
-  -- C * log x ≤ (log x)² for log x ≥ |C|
+  -- C * (log x)² ≤ (log x)³ for log x ≥ |C|
   have hlog_nn : 0 ≤ Real.log x := Real.log_nonneg (by linarith)
   calc |(chebyshevPsi x - x) + psiMainTerm x|
-      ≤ C * Real.log x := h_bound
-    _ ≤ |C| * Real.log x := by nlinarith [le_abs_self C]
-    _ ≤ Real.log x * Real.log x := by nlinarith
-    _ = (Real.log x) ^ 2 := by ring
+      ≤ C * (Real.log x) ^ 2 := h_bound
+    _ ≤ |C| * (Real.log x) ^ 2 := by nlinarith [le_abs_self C]
+    _ ≤ Real.log x * (Real.log x) ^ 2 := by nlinarith
+    _ = (Real.log x) ^ 3 := by ring
 
 -- ============================================================
 -- 2. Growth domination (PROVED)
 -- ============================================================
 
 omit [ExplicitFormulaAndOscillationHyp] in
-/-- Growth domination: `log²x ≤ √x · lll(x)` eventually.
-Proof: from `log_le_rpow_eventually (1/4)`, `(log x)^2 ≤ (x^{1/4})^2 = √x ≤ √x · lll(x)`. -/
-private lemma log_sq_eventually_le_sqrt_mul_lll :
-    ∀ᶠ x in atTop, (Real.log x) ^ 2 ≤ Real.sqrt x * lll x := by
-  filter_upwards [log_le_rpow_eventually (1/4) (by positivity),
+/-- Growth domination: `(log x)³ ≤ √x · lll(x)` eventually.
+Proof: from `log_le_rpow_eventually (1/6)`, `(log x)^3 ≤ (x^{1/6})^3 = √x ≤ √x · lll(x)`. -/
+private lemma log_pow3_eventually_le_sqrt_mul_lll :
+    ∀ᶠ x in atTop, (Real.log x) ^ 3 ≤ Real.sqrt x * lll x := by
+  filter_upwards [log_le_rpow_eventually (1/6) (by positivity),
     lll_eventually_ge_one, eventually_ge_atTop (1 : ℝ)] with x hlog hlll hx
   have hx_nn : (0 : ℝ) ≤ x := by linarith
   have hlog_nn : 0 ≤ Real.log x := Real.log_nonneg (by linarith)
-  have h_sq : (Real.log x) ^ 2 ≤ (x ^ (1/4 : ℝ)) ^ 2 :=
-    pow_le_pow_left₀ hlog_nn hlog 2
-  have h_eq : (x ^ (1/4 : ℝ)) ^ 2 = Real.sqrt x := by
-    rw [← Real.rpow_natCast (x ^ (1/4 : ℝ)) 2, ← Real.rpow_mul hx_nn]
+  have h_pow : (Real.log x) ^ 3 ≤ (x ^ (1/6 : ℝ)) ^ 3 :=
+    pow_le_pow_left₀ hlog_nn hlog 3
+  have h_eq : (x ^ (1/6 : ℝ)) ^ 3 = Real.sqrt x := by
+    rw [← Real.rpow_natCast (x ^ (1/6 : ℝ)) 3, ← Real.rpow_mul hx_nn]
     simp [Real.sqrt_eq_rpow]; ring_nf
-  calc (Real.log x) ^ 2 ≤ (x ^ (1/4 : ℝ)) ^ 2 := h_sq
+  calc (Real.log x) ^ 3 ≤ (x ^ (1/6 : ℝ)) ^ 3 := h_pow
     _ = Real.sqrt x := h_eq
     _ ≤ Real.sqrt x * lll x := le_mul_of_one_le_right (Real.sqrt_nonneg x) hlll
 
@@ -162,7 +163,7 @@ theorem rh_psi_explicit_formula_error :
         |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) := by
   refine ⟨psiMainTerm, ?_⟩
   filter_upwards [rh_psi_truncated_explicit_formula,
-    log_sq_eventually_le_sqrt_mul_lll] with x hx_trunc hx_dom
+    log_pow3_eventually_le_sqrt_mul_lll] with x hx_trunc hx_dom
   exact le_trans hx_trunc hx_dom
 
 -- ============================================================
@@ -196,9 +197,9 @@ private lemma rh_psi_minus_x_oscillates_large
       3 * (Real.sqrt x * lll x) ≤ (chebyshevPsi x - x)) := by
   -- Combine error bound and growth domination into single eventually
   have hE : ∀ᶠ x in atTop,
-      |(chebyshevPsi x - x) + psiMainTerm x| ≤ (Real.log x) ^ 2 ∧
-        (Real.log x) ^ 2 ≤ Real.sqrt x * lll x :=
-    rh_psi_truncated_explicit_formula.and log_sq_eventually_le_sqrt_mul_lll
+      |(chebyshevPsi x - x) + psiMainTerm x| ≤ (Real.log x) ^ 3 ∧
+        (Real.log x) ^ 3 ≤ Real.sqrt x * lll x :=
+    rh_psi_truncated_explicit_formula.and log_pow3_eventually_le_sqrt_mul_lll
   rcases (Filter.eventually_atTop.1 hE) with ⟨X0, hX0⟩
   -- Main term oscillation
   rcases psiMainTerm_oscillates_large hRH with ⟨h_main_pos, h_main_neg⟩
@@ -209,7 +210,7 @@ private lemma rh_psi_minus_x_oscillates_large
     have hzX : X < z := lt_of_le_of_lt (le_max_left _ _) hYz
     have hzX0 : X0 ≤ z := le_trans (le_max_right _ _) (le_of_lt hYz)
     obtain ⟨h_err_z, h_log_z⟩ := hX0 z hzX0
-    have h_upper : (chebyshevPsi z - z) + psiMainTerm z ≤ (Real.log z) ^ 2 :=
+    have h_upper : (chebyshevPsi z - z) + psiMainTerm z ≤ (Real.log z) ^ 3 :=
       (abs_le.mp h_err_z).2
     exact ⟨z, hzX, by nlinarith⟩
   · -- Large negative psiMainTerm ⇒ large positive ψ(x)-x
@@ -218,7 +219,7 @@ private lemma rh_psi_minus_x_oscillates_large
     have hzX : X < z := lt_of_le_of_lt (le_max_left _ _) hYz
     have hzX0 : X0 ≤ z := le_trans (le_max_right _ _) (le_of_lt hYz)
     obtain ⟨h_err_z, h_log_z⟩ := hX0 z hzX0
-    have h_lower : -((Real.log z) ^ 2) ≤ (chebyshevPsi z - z) + psiMainTerm z :=
+    have h_lower : -((Real.log z) ^ 3) ≤ (chebyshevPsi z - z) + psiMainTerm z :=
       (abs_le.mp h_err_z).1
     exact ⟨z, hzX, by nlinarith⟩
 

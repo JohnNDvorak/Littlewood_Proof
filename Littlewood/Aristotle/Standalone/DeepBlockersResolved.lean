@@ -157,9 +157,9 @@ Under RH, produce `psiMain : ℝ → ℝ` with:
   (b) ∀ X, ∃ x > X, psiMain(x) ≤ -(2 · √x · lll(x))   [cofinal negative main term]
   (c) ∀ X, ∃ x > X, 2 · √x · lll(x) ≤ psiMain(x)        [cofinal positive main term]
 
-Proof strategy: Under RH, truncated explicit formula
-  ψ(x) = x - 2∑_{|γ|≤T} Re(x^ρ/ρ) + O(x·log²x/T)
-with T = x gives error O(log²x). Set psiMain(x) = 2∑Re(x^ρ/ρ) (truncated sum).
+Proof strategy: Truncated explicit formula
+  ψ(x) = x - ∑_{|γ|≤T} x^ρ/ρ + O(x·(log x)²/T)
+with T = x gives error O((log x)²). Set psiMain(x) = Re(∑ x^ρ/ρ) (truncated sum).
 For (b): Dirichlet approximation aligns zero phases → main term ≥ 2·√x·∑1/|ρ|.
 For (c): Anti-alignment (shift by half-period) → main term ≤ -2·√x·∑1/|ρ|.
 Since ∑1/|ρ| grows as (log T)², this dominates lll(x).
