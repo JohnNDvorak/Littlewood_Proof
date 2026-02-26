@@ -22,7 +22,7 @@ For `correctionTerm_analyticOnNhd`: Weierstrass M-test with Mathlib's
 `norm_log_one_add_sub_self_le` bound ‖log(1+z)-z‖ ≤ ‖z‖²/(2(1-‖z‖)) combined with
 `Nat.Primes.summable_rpow` for ∑_p p^{-2α} < ∞ when α > 1/2.
 
-SORRY COUNT: 4 (rpow algebra + series splitting, all non-mathematical)
+SORRY COUNT: 0 — All sub-components proved.
 
 Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
 Co-authored-by: Claude (Anthropic)

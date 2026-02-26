@@ -11,8 +11,8 @@ The proof uses:
    with non-negative Taylor coefficients (from B_k ≥ 0 and R ≥ 0)
 4. summable_of_sum_range_le concludes
 
-SORRY COUNT: 1
-  taylor_coeff_nonneg_and_dominates — Taylor coeff c_j ≥ 0 and ∑ B_k C(k,j) ≤ c_j
+SORRY COUNT: 0 — All sub-components proved.
+  (Previously: taylor_coeff_nonneg_and_dominates was sorry, now proved.)
 
 Co-authored-by: Claude (Anthropic)
 -/
