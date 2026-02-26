@@ -25,14 +25,19 @@ Replace the body of `combined_atoms` with:
 exact Aristotle.Standalone.DeepBlockersResolved.combined_atoms_resolved
 ```
 
-BLOCKER STATUS:
-  (1) HardyMeanSquareAsymptoticHyp     — sorry (AFE mean-square asymptotic)
-  (2) MainTermFirstMomentBoundHyp      — sorry (oscillatory sum cancellation)
-  (3) PerBlockSignedBoundHyp           — sorry (RS per-block sign structure)
-  (4) SigmaLtOneHyp                    — PROVED (modulo hF_hasSum in SigmaLtOneFromPringsheim)
-  (5) RhPsiWitnessData                 — PROVED (modulo 2 sorries in RHPsiWitnessFromZeroSum)
-  (6) PiAtomHardCaseCorrectedCore      — PROVED (modulo corrected_prime_zeta_extension)
-  (7) RhPiWitnessData                  — PROVED (from phase-coupling payload classes)
+DEEP BLOCKER STATUS (7 individual sorries):
+  B1 HardyMeanSquareAsymptoticHyp    — sorry (AFE mean-square asymptotic, Titchmarsh Ch. VII)
+  B2 MainTermFirstMomentBoundHyp     — sorry (oscillatory sum cancellation, Heath-Brown 1978)
+  B3 PerBlockSignedBoundHyp          — sorry (RS per-block sign structure, Siegel 1932)
+  B5 ExplicitFormulaAndOscillationHyp— sorry (explicit formula + RH oscillation, Littlewood 1914)
+  B6 CorrectedPrimeZetaExtensionHyp  — sorry (E₁ + Landau MCT for π-li, M-V §5.2)
+  B7a RhPiTargetHeightCoeffControlHyp— sorry (positive phase alignment, M-V §15.2)
+  B7b RhPiAntiTargetHeightCoeffCtlHyp— sorry (negative phase alignment, M-V §15.2)
+
+PROVED INFRASTRUCTURE (0 sorry):
+  B4 SigmaLtOneHyp                   — PROVED in SigmaLtOneFromPringsheimExtension
+  B7 assembly                         — PROVED in RHPiWitnessFromExplicitFormula
+  All 40+ standalone infrastructure   — sorry-free
 -/
 
 import Littlewood.Aristotle.Standalone.DeepBlockerAssembly
@@ -83,19 +88,56 @@ These three results are independent of each other and of the oscillation branche
 They are needed ONLY for Hardy's theorem (infinitely many zeros on Re=1/2).
 -/
 
-/-- **Combined deep input**: ALL remaining deep obligations for the Littlewood proof
-consolidated into a single sorry declaration.
+/-- **Deep blocker B1**: Hardy mean-square asymptotic.
+∫₁ᵀ |Z(t)|² dt - T·log(T) = O(T) (Titchmarsh Ch. VII, AFE ~800 lines). -/
+private theorem deep_blocker_B1 :
+    Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp := by
+  sorry
 
-This covers:
-- **B1**: Hardy mean-square asymptotic (AFE, Titchmarsh Ch. VII)
-- **B2**: First moment bound (oscillatory cancellation, Heath-Brown 1978)
-- **B3**: RS per-block signed decomposition (Siegel 1932)
-- **B5**: Explicit formula for ψ at T=x + oscillation under RH (Littlewood 1914)
-- **B6**: Corrected prime zeta extension (E₁ + MCT, Montgomery-Vaughan §5.2)
-- **B7 target**: positive coefficient-control family (Montgomery-Vaughan §15.2)
-- **B7 anti-target**: negative coefficient-control family
+/-- **Deep blocker B2**: First moment bound.
+|∫₁ᵀ MainTerm(t) dt| ≤ C·T^{1/2+ε} (Heath-Brown 1978, collective oscillation). -/
+private theorem deep_blocker_B2 :
+    HardyFirstMomentWiring.MainTermFirstMomentBoundHyp := by
+  sorry
 
-All other blockers are proved through standalone infrastructure files:
+/-- **Deep blocker B3**: RS per-block signed bound.
+Riemann-Siegel breakpoint blocks exhibit alternating sign pattern (Siegel 1932). -/
+private theorem deep_blocker_B3 :
+    Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp := by
+  sorry
+
+/-- **Deep blocker B5**: Explicit formula for ψ + oscillation under RH.
+Part 1: |ψ(x) - x + ∑ x^ρ/ρ| ≤ C·(log x)² (Riemann-von Mangoldt).
+Part 2: Under RH, psiMainTerm oscillates ±4√x·lll(x) cofinally (Littlewood 1914). -/
+private theorem deep_blocker_B5 :
+    Aristotle.Standalone.RHPsiWitnessFromZeroSum.ExplicitFormulaAndOscillationHyp := by
+  sorry
+
+/-- **Deep blocker B6**: Corrected prime zeta extension.
+Under PiLiHardBound, primeZeta(s) + log(s-1) extends analytically from {Re>1} to {Re>α}.
+Uses: Abel summation [PROVED], E₁ cancellation [PROVED], Landau MCT for π-li integrand. -/
+private theorem deep_blocker_B6 :
+    Aristotle.Standalone.PrimeZetaExtensionProof.CorrectedPrimeZetaExtensionHyp := by
+  sorry
+
+/-- **Deep blocker B7a**: Positive phase alignment family.
+Under RH, cofinal witness family for positive oscillation of π-li (Montgomery-Vaughan §15.2).
+Requires simultaneous phase control ‖x^{iγ} - ρ/‖ρ‖‖ ≤ ε for all zeros up to height T. -/
+private theorem deep_blocker_B7a :
+    Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp := by
+  sorry
+
+/-- **Deep blocker B7b**: Negative phase alignment family.
+Under RH, cofinal witness family for negative oscillation of π-li.
+Same as B7a but with target phase -(ρ/‖ρ‖) instead of ρ/‖ρ‖. -/
+private theorem deep_blocker_B7b :
+    Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp := by
+  sorry
+
+/-- **Combined deep input**: assembles all 7 deep blockers.
+Each blocker is proved individually above (currently via sorry).
+
+Proved blockers through standalone infrastructure files:
 - B4 (σ₀ < 1): PROVED in SigmaLtOneFromPringsheimExtension (0 sorry)
 - B7 assembly: PROVED in RHPiWitnessFromExplicitFormula (0 sorry)
 - All 40+ standalone infrastructure files: sorry-free -/
@@ -106,8 +148,11 @@ private theorem all_deep_blockers :
     ∧ (Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp
       ∧ Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp)
     ∧ Aristotle.Standalone.RHPsiWitnessFromZeroSum.ExplicitFormulaAndOscillationHyp
-    ∧ Aristotle.Standalone.PrimeZetaExtensionProof.CorrectedPrimeZetaExtensionHyp := by
-  sorry
+    ∧ Aristotle.Standalone.PrimeZetaExtensionProof.CorrectedPrimeZetaExtensionHyp :=
+  ⟨⟨deep_blocker_B1, deep_blocker_B2, deep_blocker_B3⟩,
+   ⟨deep_blocker_B7a, deep_blocker_B7b⟩,
+   deep_blocker_B5,
+   deep_blocker_B6⟩
 
 instance hardyMeanSquareAsymptoticInstance :
     Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp :=
