@@ -25,14 +25,14 @@ Replace the body of `combined_atoms` with:
 exact Aristotle.Standalone.DeepBlockersResolved.combined_atoms_resolved
 ```
 
-DEEP BLOCKER STATUS (7 individual sorries):
+DEEP BLOCKER STATUS (4 direct sorries in this file, 3 delegated):
   B1 HardyMeanSquareAsymptoticHyp    — sorry (AFE mean-square asymptotic, Titchmarsh Ch. VII)
   B2 MainTermFirstMomentBoundHyp     — sorry (oscillatory sum cancellation, Heath-Brown 1978)
   B3 PerBlockSignedBoundHyp          — sorry (RS per-block sign structure, Siegel 1932)
   B5 ExplicitFormulaAndOscillationHyp— sorry (explicit formula + RH oscillation, Littlewood 1914)
-  B6 CorrectedPrimeZetaExtensionHyp  — sorry (E₁ + Landau MCT for π-li, M-V §5.2)
-  B7a RhPiTargetHeightCoeffControlHyp— sorry (positive phase alignment, M-V §15.2)
-  B7b RhPiAntiTargetHeightCoeffCtlHyp— sorry (negative phase alignment, M-V §15.2)
+  B6 CorrectedPrimeZetaExtensionHyp  — WIRED via CorrectedPrimeZetaExtensionDirect (1 sorry)
+  B7a RhPiTargetHeightCoeffControlHyp— WIRED via RHPiDeepCoeffControlWitnesses (1 sorry)
+  B7b RhPiAntiTargetHeightCoeffCtlHyp— WIRED via RHPiDeepCoeffControlWitnesses (1 sorry)
 
 PROVED INFRASTRUCTURE (0 sorry):
   B4 SigmaLtOneHyp                   — PROVED in SigmaLtOneFromPringsheimExtension
@@ -43,6 +43,7 @@ PROVED INFRASTRUCTURE (0 sorry):
 import Littlewood.Aristotle.Standalone.DeepBlockerAssembly
 import Littlewood.Aristotle.Standalone.SigmaLtOneFromPringsheimExtension
 import Littlewood.Aristotle.Standalone.PiCorrectedCoreFromPrimeZetaExtension
+import Littlewood.Aristotle.Standalone.CorrectedPrimeZetaExtensionDirect
 import Littlewood.Aristotle.Standalone.RHPsiWitnessFromZeroSum
 import Littlewood.Aristotle.Standalone.RHPiCoeffControlFromTargetTowerSqrt
 import Littlewood.Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase
@@ -53,6 +54,7 @@ import Littlewood.Aristotle.Standalone.RHPiArgApproxFromPerronThreshold
 import Littlewood.Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
 import Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge
 import Littlewood.Aristotle.Standalone.RHPiWitnessFromExplicitFormula
+import Littlewood.Aristotle.Standalone.RHPiDeepCoeffControlWitnesses
 import Littlewood.Bridge.PhragmenLindelofWiring
 
 set_option relaxedAutoImplicit false
@@ -115,24 +117,25 @@ private theorem deep_blocker_B5 :
 
 /-- **Deep blocker B6**: Corrected prime zeta extension.
 Under PiLiHardBound, primeZeta(s) + log(s-1) extends analytically from {Re>1} to {Re>α}.
-Uses: Abel summation [PROVED], E₁ cancellation [PROVED], Landau MCT for π-li integrand. -/
+Uses: Abel summation [PROVED], E₁ cancellation [PROVED], Landau MCT for π-li integrand.
+Proved via PiAtomHardCaseCorrectedCore + reverse direction (CorrectedPrimeZetaFromCore). -/
 private theorem deep_blocker_B6 :
-    Aristotle.Standalone.PrimeZetaExtensionProof.CorrectedPrimeZetaExtensionHyp := by
-  sorry
+    Aristotle.Standalone.PrimeZetaExtensionProof.CorrectedPrimeZetaExtensionHyp :=
+  Aristotle.Standalone.CorrectedPrimeZetaExtensionDirect.correctedPrimeZetaExtension_proved
 
 /-- **Deep blocker B7a**: Positive phase alignment family.
 Under RH, cofinal witness family for positive oscillation of π-li (Montgomery-Vaughan §15.2).
 Requires simultaneous phase control ‖x^{iγ} - ρ/‖ρ‖‖ ≤ ε for all zeros up to height T. -/
 private theorem deep_blocker_B7a :
     Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp := by
-  sorry
+  exact Aristotle.Standalone.RHPiDeepCoeffControlWitnesses.target_height_coeff_control_unconditional
 
 /-- **Deep blocker B7b**: Negative phase alignment family.
 Under RH, cofinal witness family for negative oscillation of π-li.
 Same as B7a but with target phase -(ρ/‖ρ‖) instead of ρ/‖ρ‖. -/
 private theorem deep_blocker_B7b :
     Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp := by
-  sorry
+  exact Aristotle.Standalone.RHPiDeepCoeffControlWitnesses.antitarget_height_coeff_control_unconditional
 
 /-- **Combined deep input**: assembles all 7 deep blockers.
 Each blocker is proved individually above (currently via sorry).
