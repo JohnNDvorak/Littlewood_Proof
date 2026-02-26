@@ -15,11 +15,10 @@ regrouping the absolutely convergent Dirichlet series.
 By the identity theorem for analytic functions, this extends to all σ > 0.
 Since η(σ) > 0 and 1 - 2^{1-σ} < 0 for σ ∈ (0, 1), we get ζ(σ) < 0.
 
-SORRY COUNT: 2
+SORRY COUNT: 1
   1. eta_eq_one_sub_two_rpow_mul_zetaReal — identity η = (1-2^{1-σ})ζ for σ > 0
      (series identity for σ > 1 + identity theorem extension to σ > 0)
-  2. riemannZeta_ofReal_im_eq_zero — ζ(↑σ) ∈ ℝ for σ ≠ 1
-     (follows from Hurwitz zeta construction being real-valued on ℝ)
+  PROVED: riemannZeta_ofReal_im_eq_zero — via riemannZeta_conj from ZeroCountingFunction
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -28,6 +27,7 @@ import Mathlib.NumberTheory.LSeries.RiemannZeta
 import Mathlib.NumberTheory.Harmonic.ZetaAsymp
 import Mathlib.Analysis.SpecificLimits.Normed
 import Mathlib.Topology.Algebra.InfiniteSum.Real
+import Littlewood.ZetaZeros.ZeroCountingFunction
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -122,11 +122,17 @@ theorem one_sub_two_rpow_neg {σ : ℝ} (hσ : σ < 1) : 1 - (2 : ℝ) ^ (1 - σ
 /-! ## Section 4: Real-valuedness of ζ on ℝ -/
 
 /-- riemannZeta is real-valued on the real line (away from the pole at s = 1).
-This follows from the construction: completedRiemannZeta₀ is defined via Mellin
-transforms of theta functions, which are real-valued for real arguments. -/
+Proved via the conjugation symmetry `riemannZeta_conj` from ZeroCountingFunction. -/
 theorem riemannZeta_ofReal_im_eq_zero {σ : ℝ} (hσ : σ ≠ 1) :
     (riemannZeta (↑σ : ℂ)).im = 0 := by
-  sorry
+  open scoped ComplexConjugate in
+  have h1 : (↑σ : ℂ) ≠ 1 := by
+    intro h; apply hσ; exact_mod_cast congr_arg Complex.re h
+  have h2 := ZetaZeros.riemannZeta_conj h1
+  rw [Complex.conj_ofReal] at h2
+  have h3 := congr_arg Complex.im h2
+  simp only [Complex.conj_im] at h3
+  linarith
 
 /-- Extract the real part of riemannZeta at a real argument. -/
 private def zetaReal (σ : ℝ) : ℝ := (riemannZeta (↑σ : ℂ)).re
