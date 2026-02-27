@@ -1,28 +1,25 @@
 /-
-Decomposition of PiAtomHardCaseCorrectedCore into two clean sub-lemmas.
+Decomposition of PiAtomHardCaseCorrectedCore into clean sub-lemmas.
 
 The monolithic sorry at `piAtomHardCaseCorrectedCore_direct` in
 `CorrectedPrimeZetaExtensionDirect.lean` is decomposed into:
 
 1. **ζ zero-free on {Re > α}** (`zrf_ne_zero_of_piLiHardBound`):
    Under PiLiHardBound(α, C, σ), the function zrf(s) = (s-1)ζ(s) is
-   non-vanishing on {Re > α}. This follows from:
-   (a) π→ψ partial summation transfer: PiLiHardBound → ψ bound
-   (b) Landau–Pringsheim convergence (B4, PROVED): ψ bound → genFun integral converges
-   (c) Algebraic identity: convergence → ζ'/ζ has no poles → ζ zero-free
+   non-vanishing on {Re > α}. This is PROVED from two sub-lemmas:
+   (a) `pi_to_psi_transfer` (SORRY): PiLiHardBound → ψ bound with α' > α
+   (b) ψ bound → witnessG analytic (ALL PROVED via SigmaLtOneHyp + LandauAbscissaHyp)
+   (c) `zrf_ne_zero_of_witnessG_analytic` (PROVED via ZetaZeroFreeFromWitnessG): witnessG analytic → zrf ≠ 0
+   The assembly for Re(s) ≥ 1 is trivially handled by ζ non-vanishing (Mathlib).
 
 2. **Holomorphic logarithm on half-plane** (`analytic_log_on_halfPlane`):
-   For f entire and non-vanishing on {Re > α}, ∃ g analytic on {Re > α}
-   with exp(g) = f. This is standard complex analysis:
-   the half-plane is convex (hence simply connected), so every non-vanishing
-   holomorphic function has a holomorphic logarithm.
+   PROVED via covering map lift in HolomorphicLogOnHalfPlane.lean.
 
 The assembly (`piAtomHardCaseCorrectedCore_of_zeroFreeAndLog`) is PROVED:
 apply (2) to zrf (which is entire by `zrf_analyticAt`) using (1) for
 non-vanishing, then verify exp(G(s)) = (s-1)ζ(s) for Re(s) > 1.
 
-SORRY COUNT: 1 (zrf_ne_zero_of_piLiHardBound)
-analytic_log_on_halfPlane is PROVED via covering map lift in HolomorphicLogOnHalfPlane.lean.
+SORRY COUNT: 1 (pi_to_psi_transfer)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -30,6 +27,9 @@ Co-authored-by: Claude (Anthropic)
 import Littlewood.Aristotle.ZetaPoleCancellation
 import Littlewood.Aristotle.Standalone.PiAtomHardCaseCorrectedCore
 import Littlewood.Aristotle.Standalone.HolomorphicLogOnHalfPlane
+import Littlewood.Aristotle.Standalone.SigmaLtOneFromPringsheimExtension
+import Littlewood.Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination
+import Littlewood.Aristotle.Standalone.ZetaZeroFreeFromWitnessG
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -41,31 +41,105 @@ namespace Aristotle.Standalone.PiAtomCoreFromZetaZeroFree
 open Complex Filter Topology Set
 open Aristotle.ZetaPoleCancellation
 open Aristotle.Standalone.PiAtomHardCaseCorrectedCore
+open Aristotle.PringsheimPsiAtom
+
+/-! ## Sub-sorry 1a: π → ψ transfer via partial summation
+
+Under PiLiHardBound(α, C, σ), for any α' ∈ (α, 1), derive a one-sided ψ bound:
+  σ*(ψ(x) - x) ≤ C'*x^{α'}
+
+The proof uses the prime-counting decomposition:
+  π(x) - li(x) = (ψ(x)-x)/log(x) + O(√x/log(x)) + lower order terms
+from PartialSummationPiLi.lean. Multiplying by log(x) and absorbing the
+log(x) factor into the worse exponent α' > α (since x^α*log(x) ≤ C'*x^{α'}
+eventually) gives the ψ bound.
+
+Reference: Ingham, "The Distribution of Prime Numbers", Ch. 1. -/
+theorem pi_to_psi_transfer
+    (α : ℝ) (hα : 1 / 2 < α) (hα1 : α < 1)
+    (C : ℝ) (hC : 0 < C)
+    (σ_sign : ℝ) (hσ : σ_sign = 1 ∨ σ_sign = -1)
+    (hbound : PiLiHardBound α C σ_sign)
+    (α' : ℝ) (hα' : α < α') (hα'1 : α' < 1) :
+    ∃ C' : ℝ, 0 < C' ∧
+      ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C' * x ^ α' := by
+  sorry
+
+/-! ## Sub-sorry 1c: witnessG analytic → zrf ≠ 0 (Landau zero-free argument)
+
+If the witness function G(s) = s·∫₁^∞ g(t)·t^{-(s+1)} dt is analytic on {Re > α'}
+(where g is the generating function from the ψ bound), then zrf has no zeros
+in {Re > α'}.
+
+**Proof sketch** (identity theorem + ODE uniqueness):
+1. For Re(s) > 1: witnessG(s) = s·C'/(s-α') + σ·s/(s-1) + σ·ζ'/ζ(s)
+   (from `witnessG_eq_formula`)
+2. Rewrite via `corrected_logDeriv_eq`:
+   witnessG(s) = s·C'/(s-α') + σ·(1 + zrf'/zrf(s))
+3. Define φ(s) = (witnessG(s) - s·C'/(s-α') - σ) / σ, analytic on {Re > α'}.
+4. For Re(s) > 1: φ(s) = zrf'(s)/zrf(s), so φ(s)·zrf(s) = zrf'(s).
+5. Both sides are analytic on {Re > α'} and agree on {Re > 1}.
+   By the identity theorem: φ·zrf = zrf' on all of {Re > α'}.
+6. If zrf(s₀) = 0 for some s₀ with Re(s₀) > α': from step 5,
+   deriv zrf(s₀) = φ(s₀)·0 = 0. By Leibniz rule on higher derivatives,
+   all derivatives vanish at s₀. Since zrf is analytic, zrf ≡ 0 near s₀.
+7. zrf entire and ≡ 0 near s₀ → zrf ≡ 0 everywhere. But zrf(1) = 1. □
+
+Reference: Landau 1905; Montgomery-Vaughan §5.2. -/
+theorem zrf_ne_zero_of_witnessG_analytic
+    (α' : ℝ) (hα' : 1 / 2 < α') (hα'1 : α' < 1)
+    (C' : ℝ) (hC' : 0 < C')
+    (σ_sign : ℝ) (hσ : σ_sign = 1 ∨ σ_sign = -1)
+    (hbound : ∀ᶠ x in atTop, σ_sign * (chebyshevPsi x - x) ≤ C' * x ^ α')
+    (h_anal : AnalyticOnNhd ℂ (witnessG C' α' σ_sign) {s : ℂ | α' < s.re}) :
+    ∀ s : ℂ, α' < s.re → zrf s ≠ 0 :=
+  Aristotle.Standalone.ZetaZeroFreeFromWitnessG.zrf_ne_zero_of_witnessG_analytic'
+    α' hα' hα'1 C' hC' σ_sign hσ hbound h_anal
 
 /-! ## Sub-lemma 1: ζ zero-free on {Re > α} under PiLiHardBound
 
-Under the one-sided bound σ*(π(x) - li(x)) ≤ C*x^α with 1/2 < α < 1,
-the Riemann zeta function has no zeros in the half-plane {Re(s) > α}.
+Assembly of the zero-free argument from the two sub-sorries and proved
+infrastructure.
 
-**Proof sketch** (ψ-pathway):
-1. PiLiHardBound → one-sided ψ-bound via partial summation (θ-ψ transfer)
-2. ψ-bound → Dirichlet integral ∫ genFun*t^{-(σ₀+1)} converges for σ₀ > α
-   (from SigmaLtOneHyp, PROVED via Pringsheim extension)
-3. The algebraic identity gives ζ'/ζ(s) = [integral - C*s/(s-α) - σ*s/(s-1)] / σ,
-   which is analytic for Re(s) > α, s ≠ 1. Hence ζ has no zeros.
-
-Equivalently, zrf(s) = (s-1)*ζ(s) ≠ 0 on {Re > α}.
-At s = 1: zrf(1) = 1 ≠ 0 (residue value).
-At s ≠ 1 with Re(s) > α: ζ(s) ≠ 0 from the Landau argument.
-
-Reference: Landau 1905; Montgomery-Vaughan §5.2. -/
+For Re(s) ≥ 1: handled by ζ non-vanishing (`riemannZeta_ne_zero_of_one_le_re`).
+For α < Re(s) < 1: pick α' ∈ (α, Re(s)), transfer π→ψ, chain through
+SigmaLtOneHyp (PROVED) → LandauAbscissaHyp → witnessG analytic, then apply
+the zero-free argument. -/
 theorem zrf_ne_zero_of_piLiHardBound
     (α : ℝ) (hα : 1 / 2 < α) (hα1 : α < 1)
     (C : ℝ) (hC : 0 < C)
     (σ_sign : ℝ) (hσ : σ_sign = 1 ∨ σ_sign = -1)
     (hbound : PiLiHardBound α C σ_sign) :
     ∀ s : ℂ, α < s.re → zrf s ≠ 0 := by
-  sorry
+  intro s hs
+  -- Case split: Re(s) ≥ 1 vs α < Re(s) < 1
+  by_cases h_ge : 1 ≤ s.re
+  · -- Re(s) ≥ 1: use ζ non-vanishing on the closed half-plane {Re ≥ 1}
+    rcases eq_or_ne s 1 with rfl | hs1
+    · -- s = 1: zrf(1) = 1 ≠ 0
+      simp
+    · -- s ≠ 1, Re(s) ≥ 1: zrf(s) = (s-1)*ζ(s), both factors nonzero
+      rw [zrf_of_ne hs1]
+      exact mul_ne_zero (sub_ne_zero.mpr hs1)
+        (riemannZeta_ne_zero_of_one_le_re h_ge)
+  · -- α < Re(s) < 1: Landau argument via witnessG
+    push_neg at h_ge -- h_ge : s.re < 1
+    -- Pick intermediate exponent α' ∈ (α, Re(s))
+    obtain ⟨α', hαα', hα's⟩ := exists_between hs
+    have hα'1 : α' < 1 := lt_trans hα's h_ge
+    have hα'_half : 1 / 2 < α' := lt_trans hα hαα'
+    -- Step 1: π → ψ transfer (sorry)
+    obtain ⟨C', hC', hψ⟩ :=
+      pi_to_psi_transfer α hα hα1 C hC σ_sign hσ hbound α' hαα' hα'1
+    -- Step 2: ψ bound → witnessG analytic (ALL PROVED)
+    -- SigmaLtOneHyp (B4) → LandauAbscissaHyp → witnessG analytic on {Re > α'}
+    have h_landau : LandauAbscissaHyp :=
+      Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination.landauAbscissaHyp_of_sigmaLtOne
+        Aristotle.Standalone.SigmaLtOneFromPringsheimExtension.sigmaLtOneHyp_proved
+    have h_anal := witnessG_analyticOnNhd h_landau C' hC' α' hα'_half σ_sign hσ hψ
+    -- Step 3: witnessG analytic → zrf ≠ 0 (sorry)
+    exact zrf_ne_zero_of_witnessG_analytic
+      α' hα'_half hα'1 C' hC' σ_sign hσ hψ h_anal s hα's
 
 /-! ## Sub-lemma 2: Holomorphic logarithm on half-plane
 
