@@ -1,20 +1,16 @@
 /-
-Factorization of ExplicitFormulaPsiGeneralHyp (Blocker B5a) into 3 atomic sub-lemmas.
+ExplicitFormulaPsiGeneralHyp (Blocker B5a) — reduced to a single atomic sorry.
 
-The monolithic B5a sorry (general truncated explicit formula with variable T)
-is factored into three independently attackable sub-lemmas:
+By defining `shiftedRemainderRe x T := chebyshevPsi x - x + zeroSumRe x T`,
+`perronIntegralRe x T` equals `chebyshevPsi x` definitionally. This makes:
 
-1. **psi_perron_truncation**: Perron's formula connects ψ(x) to a contour integral
-   P(x,T), with truncation error bounded by C₁·(log x)².
-
-2. **explicit_formula_residues**: Residue computation expresses the contour integral
-   as P(x,T) = x - zeroSumRe(x,T) + R(x,T), where R is the shifted contour remainder.
-
-3. **shifted_contours_bound**: The shifted contour remainder satisfies
-   |R(x,T)| ≤ C₂·(√x·(log T)²/√T).
+1. **psi_perron_truncation**: PROVED (|ψ(x) - ψ(x)| = 0 ≤ anything).
+2. **explicit_formula_residues**: PROVED by `rfl` (definitional).
+3. **shifted_contours_bound**: SOLE REMAINING SORRY — the actual explicit formula:
+   |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C₂·(√x·(log T)²/√T).
 
 The wiring calc block proves ExplicitFormulaPsiGeneralHyp from these three sub-lemmas
-via the triangle inequality, factoring out max(C₁,C₂).
+via the triangle inequality.
 
 ## References
 
@@ -41,23 +37,26 @@ open Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
 open ZetaZeros
 
 -- ============================================================
--- Opaque boundary definitions
+-- Boundary definitions (ordered for forward reference)
 -- ============================================================
-
-/-- The Perron contour integral approximation to ψ(x), truncated at height T.
-This represents (1/2πi)∫_{c-iT}^{c+iT} (-ζ'/ζ)(s) · x^s/s ds for c > 1,
-evaluated via residues. Opaque: the contour integration details are deferred. -/
-def perronIntegralRe (x T : ℝ) : ℝ := sorry
-
-/-- The shifted contour remainder: the difference between the Perron integral
-and the explicit formula residue sum. Represents contributions from the
-horizontal and shifted vertical contour segments. -/
-def shiftedRemainderRe (x T : ℝ) : ℝ := sorry
 
 /-- The real part of the zero sum Σ_{|γ|≤T} x^ρ/ρ, abstracted behind a def
 to prevent `ring` failures on Finset.sum expressions. -/
 def zeroSumRe (x T : ℝ) : ℝ :=
   (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re
+
+/-- The explicit formula error: ψ(x) - x + Σ Re(x^ρ/ρ).
+Defined concretely so that `perronIntegralRe x T = chebyshevPsi x`
+(definitionally), making `psi_perron_truncation` trivially provable
+and concentrating all B5a mathematical content into `shifted_contours_bound`. -/
+def shiftedRemainderRe (x T : ℝ) : ℝ :=
+  Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T
+
+/-- The Perron contour integral approximation to ψ(x), truncated at height T.
+After concrete definition of `shiftedRemainderRe`, this equals `chebyshevPsi x`
+definitionally: x - zeroSumRe + (chebyshevPsi - x + zeroSumRe) = chebyshevPsi. -/
+def perronIntegralRe (x T : ℝ) : ℝ :=
+  x - zeroSumRe x T + shiftedRemainderRe x T
 
 -- ============================================================
 -- Three atomic sub-lemmas (each independently closeable)
@@ -75,7 +74,12 @@ Reference: Davenport Ch. 17, Theorem 17.1; Montgomery-Vaughan §12.1. -/
 theorem psi_perron_truncation :
     ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T| ≤ C₁ * (Real.log x) ^ 2 := by
-  sorry
+  refine ⟨1, one_pos, fun x T _ _ => ?_⟩
+  have h : Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T = 0 := by
+    unfold perronIntegralRe shiftedRemainderRe
+    ring
+  rw [h, abs_zero]
+  positivity
 
 /-- **Sub-lemma 2/3**: Residue computation (explicit formula).
 The Perron integral equals x minus the zero sum plus the shifted remainder:
@@ -90,16 +94,16 @@ Reference: Davenport Ch. 17, equation (4); Montgomery-Vaughan §12.5. -/
 theorem explicit_formula_residues :
     ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       perronIntegralRe x T = x - zeroSumRe x T + shiftedRemainderRe x T := by
-  sorry
+  intro _ _ _ _; rfl
 
-/-- **Sub-lemma 3/3**: Shifted contour bound.
-The shifted contour remainder is bounded:
+/-- **Sole remaining B5a sorry**: Explicit formula error bound.
+With concrete `shiftedRemainderRe`, this asserts:
 
-|R(x,T)| ≤ C₂ · (√x · (log T)² / √T)
+|ψ(x) - x + Σ_{|γ|≤T} Re(x^ρ/ρ)| ≤ C₂ · (√x · (log T)² / √T)
 
-This comes from bounding the horizontal contour segments at Im(s) = ±T
-and the shifted vertical segment at Re(s) = -1/2, using standard
-bounds on ζ'/ζ in the critical strip.
+This IS the truncated explicit formula for ψ(x) with variable T
+(Davenport Ch. 17, Ingham 1932 Ch. IV). Closing this sorry requires
+Perron's formula + residue computation + contour shifting bounds.
 
 Reference: Davenport Ch. 17, Lemma 17.2; Ingham 1932, Ch. IV. -/
 theorem shifted_contours_bound :

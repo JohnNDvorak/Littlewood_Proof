@@ -93,33 +93,48 @@ lemma re_I_div_le_inv_norm (ρ : ℂ) (_hρ : ρ ≠ 0) :
 -- Key analytic fact: Landau-Ingham unbounded oscillation
 -- ============================================================
 
+/-- **Core Landau-Ingham impossibility** (Landau 1905, Ingham 1932):
+Under RH, σ·(ψ(x)-x) cannot be bounded above by C₀·√x for all large x.
+
+For σ=+1: ψ(x)-x ≤ C₀√x → Mellin integral ∫(C₀√t-(ψ-t))t^{-s-1}dt
+converges for Re(s)>1/2, making ζ'/ζ+s/(s-1)-C₀s/(s-1/2) holomorphic
+there. But RH zeros give poles of ζ'/ζ at Re(s)=1/2. Contradiction.
+Symmetric for σ=-1. -/
+private theorem landau_psi_bounded_impossible
+    (hRH : ZetaZeros.RiemannHypothesis)
+    (σ : ℝ) (_hσ : σ = 1 ∨ σ = -1)
+    (C₀ X₀ : ℝ)
+    (h_bound : ∀ x, x ≥ X₀ →
+      σ * (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) ≤
+        C₀ * Real.sqrt x) :
+    False := sorry
+
 /-- **Landau-Ingham fact** (Landau 1905, Ingham 1932):
-
 Under RH, ψ(x) - x is unbounded above relative to √x.
-
-Proof sketch: Assume ψ(x) - x ≤ M√x for all large x. Then the Stieltjes
-integral ∫₁^∞ (M√t - (ψ(t)-t)) t^{-s-1} dt converges for Re(s) > 1/2,
-making ζ'/ζ + 1/(s-1) - M/(s-1/2) holomorphic there. But under RH, ζ has
-zeros at 1/2+iγ (infinitely many by Hardy 1914), so ζ'/ζ has non-removable
-poles at those points. Contradiction.
-
-This sorry encapsulates the Mellin-transform / Dirichlet-series convergence
-argument. It depends on B5a only for the explicit formula infrastructure. -/
+Proved from `landau_psi_bounded_impossible` via `by_contra` + `push_neg`. -/
 private theorem landau_ingham_unbounded_above
     [ExplicitFormulaPsiGeneralHyp]
     (hRH : ZetaZeros.RiemannHypothesis) :
     ∀ C : ℝ, ∀ X : ℝ, ∃ x : ℝ, X < x ∧
       Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x ≥ C * Real.sqrt x := by
-  sorry
+  by_contra h; push_neg at h
+  obtain ⟨C₀, X₀, hbound⟩ := h
+  exact landau_psi_bounded_impossible hRH 1 (Or.inl rfl) C₀ (X₀ + 1)
+    (fun x hx => by simp only [one_mul]; exact (hbound x (by linarith)).le)
 
 /-- Symmetric Landau-Ingham fact for the negative direction.
-The proof is identical with ψ(x)-x ≥ -M√x leading to the same contradiction. -/
+Proved from `landau_psi_bounded_impossible` via `by_contra` + `push_neg`. -/
 private theorem landau_ingham_unbounded_below
     [ExplicitFormulaPsiGeneralHyp]
     (hRH : ZetaZeros.RiemannHypothesis) :
     ∀ C : ℝ, ∀ X : ℝ, ∃ x : ℝ, X < x ∧
       Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x ≤ -(C * Real.sqrt x) := by
-  sorry
+  by_contra h; push_neg at h
+  obtain ⟨C₀, X₀, hbound⟩ := h
+  exact landau_psi_bounded_impossible hRH (-1) (Or.inr rfl) C₀ (X₀ + 1)
+    (fun x hx => by
+      simp only [neg_one_mul, neg_le]
+      exact (hbound x (by linarith)).le)
 
 -- ============================================================
 -- Main theorem: PsiZeroSumOscillationHyp from Landau indirect argument
@@ -129,9 +144,9 @@ private theorem landau_ingham_unbounded_below
 
 Under RH, ψ(x) - x is unbounded in both directions relative to √x.
 
-The proof delegates to two atomic sorry's (`landau_ingham_unbounded_above` and
-`landau_ingham_unbounded_below`) which encapsulate the Mellin-transform convergence
-argument. Each is independently closeable by formalizing the Landau contradiction. -/
+The proof delegates to a single atomic sorry (`landau_psi_bounded_impossible`) which
+encapsulates the symmetric Mellin-transform convergence argument. Both directions
+(above and below) are proved from it via `by_contra` + `push_neg`. -/
 theorem psiZeroSumOscillation_proved
     [ExplicitFormulaPsiGeneralHyp] :
     PsiZeroSumOscillationHyp where
