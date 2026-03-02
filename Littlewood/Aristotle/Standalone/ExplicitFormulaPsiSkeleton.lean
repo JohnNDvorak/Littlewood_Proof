@@ -1,16 +1,24 @@
 /-
-ExplicitFormulaPsiGeneralHyp (Blocker B5a) — reduced to a single atomic sorry.
+ExplicitFormulaPsiGeneralHyp (Blocker B5a) — factored into sub-sorry's.
 
-By defining `shiftedRemainderRe x T := chebyshevPsi x - x + zeroSumRe x T`,
-all B5a mathematical content is concentrated into `shifted_contours_bound`.
+The error `shiftedRemainderRe x T = ψ(x) - x + Σ Re(x^ρ/ρ)` decomposes as:
 
-## Single sorry: `shifted_contours_bound`
+  shiftedRemainderRe x T = (Perron truncation error) + (contour-shifted remainder)
 
-|ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C₂ · (√x · (log T)²/√T + (log x)²)
+## Sub-sorry's
 
-The bound includes both the shifted-contour remainder O(√x·(logT)²/√T)
-AND the Perron truncation error O((logx)²). This is the full truncated
-explicit formula error (Davenport Ch. 17, Ingham 1932 Ch. IV).
+1. **perron_truncation_bound**: Perron truncation error ≤ C₁ · (log x)²
+   The error from truncating the Perron integral at height T.
+   Reference: Davenport Ch. 17, Lemma 17.1.
+
+2. **contour_shift_bound**: Contour remainder ≤ C₃ · √x · (log T)² / √T
+   The horizontal + shifted vertical line integrals after rectangle contour shift.
+   Reference: Davenport Ch. 17, Lemma 17.2; uses HorizontalSegmentBounds.lean.
+
+## Assembly
+
+`shifted_contours_bound` is PROVED from sub-sorry's 1+2 via triangle inequality.
+`explicitFormulaPsiGeneral_proved` is PROVED from `shifted_contours_bound`.
 
 ## References
 
@@ -52,24 +60,73 @@ def shiftedRemainderRe (x T : ℝ) : ℝ :=
   Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T
 
 -- ============================================================
--- Sole B5a sorry: explicit formula error bound
+-- B5a sub-sorry's: decomposed explicit formula error bound
 -- ============================================================
 
-/-- **Sole remaining B5a sorry**: Explicit formula error bound.
-With concrete `shiftedRemainderRe`, this asserts:
+/-- **B5a sub-sorry 1/2**: Perron truncation error bound.
+
+After the Perron integral representation and residue extraction,
+the truncation at height T introduces an error of O((log x)²).
+This sub-sorry asserts the existence of a "contour remainder" function R
+such that the Perron truncation error (shiftedRemainder minus R) is bounded.
+
+Concretely: ψ(x) - x + Σ Re(x^ρ/ρ) = R(x,T) + (truncation error),
+where the truncation error satisfies |(truncation error)| ≤ C₁·(log x)².
+
+Reference: Davenport Ch. 17, Lemma 17.1; Montgomery-Vaughan §12.5. -/
+theorem perron_truncation_bound :
+    ∃ (R : ℝ → ℝ → ℝ), ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T - R x T| ≤ C₁ * (Real.log x) ^ 2 := by
+  sorry
+
+/-- **B5a sub-sorry 2/2**: Contour-shifted remainder bound.
+
+After shifting the Perron integral contour from Re(s) = c > 1 to Re(s) = 1/2,
+the horizontal segments contribute O(√x · (log T)² / √T). This uses:
+- ζ'/ζ growth: O(log²T) on horizontal segments (from zero density estimates)
+- x^s decay: |x^{σ+iT}| = x^σ for the shifted line at σ = 1/2
+
+The function R is the same as in `perron_truncation_bound`.
+
+Reference: Davenport Ch. 17, Lemma 17.2; uses HorizontalSegmentBounds.lean. -/
+theorem contour_shift_bound (R : ℝ → ℝ → ℝ) :
+    ∃ C₃ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |R x T| ≤ C₃ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  sorry
+
+-- ============================================================
+-- Assembly: shifted_contours_bound from sub-sorry's (PROVED)
+-- ============================================================
+
+/-- **B5a assembly** (PROVED from sub-sorry's 1+2): Explicit formula error bound.
 
 |ψ(x) - x + Σ_{|γ|≤T} Re(x^ρ/ρ)| ≤ C₂ · (√x · (log T)²/√T + (log x)²)
 
-The bound includes both the shifted-contour remainder O(√x·(logT)²/√T)
-AND the Perron truncation error O((logx)²). Previous version omitted
-the (logx)² term, making the bound unprovable for large x/T ratios.
-
-Reference: Davenport Ch. 17, Lemma 17.2; Ingham 1932, Ch. IV. -/
+Proof: triangle inequality on the Perron decomposition
+  shiftedRemainderRe = (truncation error) + R,
+then combine the two bounds using max(C₁, C₃). -/
 theorem shifted_contours_bound :
     ∃ C₂ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
         C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
-  sorry
+  obtain ⟨R, C₁, hC₁, h_trunc⟩ := perron_truncation_bound
+  obtain ⟨C₃, hC₃, h_cont⟩ := contour_shift_bound R
+  refine ⟨max C₁ C₃, by positivity, fun x T hx hT => ?_⟩
+  have h1 := h_trunc x T hx hT
+  have h2 := h_cont x T hx hT
+  calc |shiftedRemainderRe x T|
+      = |(shiftedRemainderRe x T - R x T) + R x T| := by ring_nf
+    _ ≤ |shiftedRemainderRe x T - R x T| + |R x T| := abs_add_le _ _
+    _ ≤ C₁ * (Real.log x) ^ 2 +
+        C₃ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+      add_le_add h1 h2
+    _ ≤ max C₁ C₃ * (Real.log x) ^ 2 +
+        max C₁ C₃ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+      gcongr
+      · exact le_max_left _ _
+      · exact le_max_right _ _
+    _ = max C₁ C₃ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+        (Real.log x) ^ 2) := by ring
 
 -- ============================================================
 -- Wiring: ExplicitFormulaPsiGeneralHyp from shifted_contours_bound

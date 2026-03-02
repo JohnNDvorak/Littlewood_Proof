@@ -23,13 +23,14 @@ argument shows the integral stays within the alternating sum structure.
 - Siegel, "Über Riemanns Nachlaß zur analytischen Zahlentheorie" (1932)
 - Titchmarsh, "The Theory of the Riemann Zeta-Function", §4.16-4.17
 
-SORRY COUNT: 1 (rsCompleteBlockWithResidual_sorry)
+SORRY COUNT: 1 (rs_block_analysis)
 -/
 
 import Mathlib
 import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.HardyNProperties
 import Littlewood.Aristotle.RSBlockDecomposition
+import Littlewood.Aristotle.AbelSummation
 
 set_option linter.mathlibStandardSet false
 
@@ -93,21 +94,162 @@ def RSCompleteBlockWithResidualHyp : Prop :=
         |(∫ t in Ioc (hardyStart k) T, ErrorTerm t)
           - α * ((-1 : ℝ) ^ k * A * Real.sqrt ((k : ℝ) + 1))| ≤ B)
 
-/-- **Atomic sorry**: The RS error term has per-block sign structure on
-complete blocks with centered residual cancellation and partial-block
-interpolation.
+/-- Unified RS block analysis: the single atomic sorry for B3.
 
-MATHEMATICAL JUSTIFICATION:
-On block k, ErrorTerm(t) = (-1)^k · Ψ(p(t)) · t^{-1/4} + O(t^{-3/4}).
-Integrating over a block gives (-1)^k · A · √(k+1) where A comes from
-the Fresnel integral. Clause 3 holds because Ψ(p(t)) has constant sign
-within each block (monotone phase), so partial integrals interpolate
-between 0 and the complete-block value.
+The block integral of ErrorTerm decomposes as:
+  ∫_{block k} ErrorTerm = (-1)^k · (A·√(k+1) + c(k))
+where A > 0 is the Fresnel constant, c(k) ≥ 0 captures the sign-definite
+correction, and c is antitone on k ≥ 1 (corrections decay).
 
-REFERENCES: Siegel 1932 §3; Titchmarsh §4.16; Edwards §7.7. -/
+Additionally, partial-block integrals interpolate: the partial integral
+is β times the full-block integral (β ∈ [0,1]) with bounded error C₂.
+
+The block integral clause uses exact equality (not bounds). This is essential:
+Clause 2 needs the errors to be EXACTLY (-1)^k · c_k to apply alternating
+series bounds. c_k is existentially quantified and defined as
+c_k := (-1)^k · (∫ ErrorTerm) - A √(k+1). The hard analytic content is
+proving c_k ≥ 0 (sign-definite) and AntitoneOn c (Ici 1) (decay).
+
+REFERENCES: Siegel 1932 §3; Titchmarsh §4.16-4.17. -/
+private theorem rs_block_analysis :
+    ∃ (A : ℝ) (c : ℕ → ℝ) (C₂ : ℝ),
+      A > 0 ∧
+      (∀ k, 0 ≤ c k) ∧
+      AntitoneOn c (Ici (1 : ℕ)) ∧
+      (∀ k : ℕ,
+        (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
+          = (-1 : ℝ) ^ k * (A * Real.sqrt ((k : ℝ) + 1) + c k)) ∧
+      C₂ ≥ 0 ∧
+      (∀ k : ℕ, ∀ T : ℝ, hardyStart k ≤ T → T ≤ hardyStart (k + 1) →
+        ∃ β : ℝ, 0 ≤ β ∧ β ≤ 1 ∧
+          |(∫ t in Ioc (hardyStart k) T, ErrorTerm t)
+            - β * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+                     ErrorTerm t)| ≤ C₂) := by
+  sorry
+
+/-- Helper: c k ≤ max (c 0) (c 1) for all k, from atom hypotheses.
+    For k = 0: trivially c 0 ≤ max (c 0) (c 1).
+    For k ≥ 1: AntitoneOn c (Ici 1) gives c k ≤ c 1 ≤ max (c 0) (c 1). -/
+private lemma c_le_max {c : ℕ → ℝ} (hc_anti : AntitoneOn c (Ici (1 : ℕ)))
+    (k : ℕ) : c k ≤ max (c 0) (c 1) := by
+  rcases k with _ | k
+  · exact le_max_left _ _
+  · -- AntitoneOn: a ∈ s → b ∈ s → a ≤ b → f b ≤ f a
+    -- Want c(k+1) ≤ c 1. Set a=1, b=k+1.
+    exact le_trans (hc_anti (Set.mem_Ici.mpr (le_refl 1))
+      (Set.mem_Ici.mpr (by omega : 1 ≤ k + 1)) (by omega : 1 ≤ k + 1))
+      (le_max_right _ _)
+
+/-- Assembly: wire the unified atom into `RSCompleteBlockWithResidualHyp`.
+
+From the atom, block errors are e_k = (-1)^k c_k. Clause 1 uses |e_k| ≤ max(c 0, c 1).
+Clause 2 splits at k=0 and applies `alternating_antitone_sum_le_first` to the tail.
+Clause 3 uses the interpolation from the atom with triangle inequality.
+
+B = max(c 0, c 1) + C₂, R = c 0 + c 1. -/
 theorem rsCompleteBlockWithResidual_sorry :
     RSCompleteBlockWithResidualHyp := by
-  sorry
+  obtain ⟨A, c, C₂, hA, hc_nn, hc_anti, hblock_eq, hC₂_nn, hinterp⟩ := rs_block_analysis
+  -- Constants
+  set B := max (c 0) (c 1) + C₂
+  set R := c 0 + c 1
+  refine ⟨A, B, R, hA, ?_, ?_, ?_, ?_, ?_⟩
+  · -- B ≥ 0
+    have : max (c 0) (c 1) ≥ 0 := le_trans (hc_nn 0) (le_max_left _ _)
+    linarith
+  · -- R ≥ 0
+    linarith [hc_nn 0, hc_nn 1]
+  · -- Clause 1: per-block sign structure
+    intro k
+    -- ∫ = (-1)^k (A √(k+1) + c k), so error = (-1)^k c_k
+    rw [hblock_eq k]
+    rw [show (-1 : ℝ) ^ k * (A * Real.sqrt (↑k + 1) + c k)
+          - (-1 : ℝ) ^ k * A * Real.sqrt (↑k + 1)
+        = (-1 : ℝ) ^ k * c k from by ring]
+    rw [abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul,
+        abs_of_nonneg (hc_nn k)]
+    -- c k ≤ max(c 0, c 1) ≤ max(c 0, c 1) + C₂ = B
+    calc c k ≤ max (c 0) (c 1) := c_le_max hc_anti k
+      _ ≤ max (c 0) (c 1) + C₂ := le_add_of_nonneg_right hC₂_nn
+  · -- Clause 2: centered residual cancellation
+    intro N
+    -- Each summand = (-1)^k c_k
+    have h_summand : ∀ k ∈ Finset.range N,
+        (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
+          - (-1 : ℝ) ^ k * A * Real.sqrt ((k : ℝ) + 1)
+        = (-1 : ℝ) ^ k * c k := by
+      intro k _
+      rw [hblock_eq k]; ring
+    rw [Finset.sum_congr rfl h_summand]
+    -- Split: ∑_{k<N} (-1)^k c_k
+    rcases N with _ | N
+    · -- N = 0: empty sum
+      simp; linarith [hc_nn 0, hc_nn 1]
+    · -- N = n+1: split off k=0 term, then bound tail via alternating antitone
+      rw [Finset.sum_range_succ', pow_zero, one_mul]
+      -- Goal: |∑_{k<N} (-1)^(k+1) c(k+1) + c 0| ≤ c 0 + c 1
+      rw [show ∀ (x y : ℝ), |x + y| = |y + x| from fun x y => by rw [add_comm]]
+      -- Goal: |c 0 + ∑_{k<N} (-1)^(k+1) c(k+1)| ≤ c 0 + c 1
+      calc |c 0 + ∑ k ∈ Finset.range N, (-1 : ℝ) ^ (k + 1) * c (k + 1)|
+          ≤ |c 0| + |∑ k ∈ Finset.range N, (-1 : ℝ) ^ (k + 1) * c (k + 1)| :=
+            abs_add_le _ _
+        _ = c 0 + |∑ k ∈ Finset.range N, (-1 : ℝ) ^ (k + 1) * c (k + 1)| := by
+            rw [abs_of_nonneg (hc_nn 0)]
+        _ ≤ c 0 + c 1 := by
+            gcongr
+            -- Factor out (-1): (-1)^(k+1) = (-1) * (-1)^k
+            -- ∑ (-1)^(k+1) c(k+1) = (-1) * ∑ (-1)^k c(k+1)
+            have h_factor : ∀ k : ℕ,
+                (-1 : ℝ) ^ (k + 1) * c (k + 1) = (-1 : ℝ) * ((-1 : ℝ) ^ k * c (k + 1)) := by
+              intro k; rw [pow_succ]; ring
+            rw [Finset.sum_congr rfl (fun k _ => h_factor k), ← Finset.mul_sum,
+                abs_mul, abs_neg, abs_one, one_mul]
+            -- Now bound |∑_{k<N} (-1)^k c(k+1)| ≤ c 1
+            -- Define a(k) = c(k+1). Then a is antitone and nonneg.
+            -- By alternating_antitone_sum_le_first: |∑_{k<N} (-1)^k a(k)| ≤ a 0 = c 1
+            rcases N with _ | M
+            · simp; exact hc_nn 1
+            · -- N = M + 1, sum over range (M+1)
+              have h_anti_shift : Antitone (fun k => c (k + 1)) := by
+                intro i j hij
+                -- Antitone: i ≤ j → c(j+1) ≤ c(i+1)
+                -- AntitoneOn: a ∈ s → b ∈ s → a ≤ b → f b ≤ f a
+                -- Set a = i+1, b = j+1
+                exact hc_anti (Set.mem_Ici.mpr (by omega : 1 ≤ i + 1))
+                  (Set.mem_Ici.mpr (by omega : 1 ≤ j + 1)) (by omega : i + 1 ≤ j + 1)
+              have h_nn_shift : ∀ k, 0 ≤ (fun k => c (k + 1)) k := fun k => hc_nn (k + 1)
+              exact AbelSummation.alternating_antitone_sum_le_first
+                (fun k => c (k + 1)) h_nn_shift h_anti_shift M
+  · -- Clause 3: partial-block interpolation
+    intro k T hkT hTk
+    obtain ⟨β, hβ0, hβ1, hβ_bound⟩ := hinterp k T hkT hTk
+    refine ⟨β, hβ0, hβ1, ?_⟩
+    -- Strategy: rewrite ∫_{full} via hblock_eq in hβ_bound, then triangle inequality.
+    -- hβ_bound: |∫_{partial} - β · ∫_{full}| ≤ C₂
+    -- hblock_eq: ∫_{full} = (-1)^k (A √(k+1) + c_k)
+    -- Goal: |∫_{partial} - β · (-1)^k A √(k+1)| ≤ B
+    -- = |(∫_{partial} - β · ∫_{full}) + β · (∫_{full} - (-1)^k A √(k+1))|
+    -- = |(∫_{partial} - β · ∫_{full}) + β · (-1)^k · c_k|
+    -- ≤ C₂ + β · c_k ≤ C₂ + max(c 0, c 1) = B
+    set I_full := ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t
+    set I_part := ∫ t in Ioc (hardyStart k) T, ErrorTerm t
+    have hI_full : I_full = (-1 : ℝ) ^ k * (A * Real.sqrt (↑k + 1) + c k) := hblock_eq k
+    -- Rewrite goal using algebra
+    have h_split : I_part - β * ((-1 : ℝ) ^ k * A * Real.sqrt (↑k + 1))
+        = (I_part - β * I_full) + β * ((-1 : ℝ) ^ k * c k) := by
+      rw [hI_full]; ring
+    rw [h_split]
+    have h_abs_beta : |β * ((-1 : ℝ) ^ k * c k)| = β * c k := by
+      rw [abs_mul, abs_mul, abs_of_nonneg hβ0, abs_pow, abs_neg, abs_one, one_pow,
+          one_mul, abs_of_nonneg (hc_nn k)]
+    calc |(I_part - β * I_full) + β * ((-1 : ℝ) ^ k * c k)|
+        ≤ |I_part - β * I_full| + |β * ((-1 : ℝ) ^ k * c k)| := abs_add_le _ _
+      _ ≤ C₂ + β * c k := add_le_add hβ_bound (le_of_eq h_abs_beta)
+      _ ≤ C₂ + max (c 0) (c 1) := by
+          have : β * c k ≤ max (c 0) (c 1) :=
+            le_trans (mul_le_of_le_one_left (hc_nn k) hβ1) (c_le_max hc_anti k)
+          linarith
+      _ = max (c 0) (c 1) + C₂ := by ring
 
 /-- Wire `RSCompleteBlockWithResidualHyp` to `PerBlockSignedBoundHyp`.
 

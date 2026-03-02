@@ -38,6 +38,7 @@ Co-authored-by: Claude (Anthropic)
 
 import Littlewood.Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
 import Littlewood.Aristotle.DirichletPhaseAlignment
+import Littlewood.Aristotle.ZetaLogDerivInfra
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -47,7 +48,7 @@ noncomputable section
 
 namespace Aristotle.Standalone.PsiZeroSumOscillationFromIngham
 
-open Filter Complex
+open Filter Complex Topology
 open GrowthDomination
 open Aristotle.DirichletPhaseAlignment (ZerosBelow CriticalZeros)
 open Aristotle.Standalone.RHPsiWitnessFromZeroSum (psiMainTerm)
@@ -112,40 +113,22 @@ private lemma landau_integrand_nonneg
     0 ≤ landauIntegrand σ C₀ x := by
   unfold landauIntegrand; linarith [h_bound x hx]
 
-/-- **Sub-sorry 2/4**: Mellin convergence (analytic number theory).
-The nonneg integrand defines an analytic function F on Re(s) > 1/2
-via Mellin-type transform. The one-sided bound ψ(x)-x = O(√x) gives
-absolute convergence of ∫ (gap) · x^{-s-1} dx for Re(s) > 1/2.
+-- NOTE: The former sorry's `landau_mellin_analytic` and `landau_zeta_identity`
+-- have been REMOVED. `landau_zeta_identity` was mathematically impossible:
+-- it required F + G = ζ'/ζ on {Re > 1} with both F, G analytic on {Re > 1/2},
+-- but ζ'/ζ has a simple pole at s = 1 ∈ {Re > 1/2} (proved in
+-- `landau_pole_contradiction` below). The Landau-Ingham impossibility is now
+-- captured as a single atomic sorry in `landau_psi_bounded_impossible`.
 
-Reference: Ingham 1932, Ch. V; Montgomery-Vaughan §15.2. -/
-private theorem landau_mellin_analytic
-    (σ C₀ X₀ : ℝ)
-    (h_bound : ∀ x, x ≥ X₀ →
-      σ * (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) ≤ C₀ * Real.sqrt x) :
-    ∃ F : ℂ → ℂ, AnalyticOn ℂ F {s : ℂ | 1/2 < s.re} := by
-  sorry
-
-/-- **Sub-sorry 3/4**: Connection to ζ'/ζ (Perron/Stieltjes identity).
-The Mellin transform F relates to ζ'/ζ: for Re(s) > 1,
--ζ'(s)/ζ(s) can be expressed in terms of F plus functions analytic
-on Re(s) > 1/2. Hence F + G = ζ'/ζ representation extends meromorphically.
-
-Reference: Ingham 1932, Ch. V; Davenport Ch. 17. -/
-private theorem landau_zeta_identity
-    (σ C₀ : ℝ) (F : ℂ → ℂ)
-    (hF_half : AnalyticOn ℂ F {s : ℂ | 1/2 < s.re}) :
-    ∃ G : ℂ → ℂ, AnalyticOn ℂ G {s : ℂ | 1/2 < s.re} ∧
-      ∀ s : ℂ, 1 < s.re →
-        deriv riemannZeta s / riemannZeta s = F s + G s := by
-  sorry
-
-/-- **Sub-sorry 4/4**: Pole contradiction under RH.
+/-- **Sub-lemma 4/4** (PROVED): Pole contradiction.
 If F + G represents ζ'/ζ for Re(s) > 1 and both F, G are analytic
-on Re(s) > 1/2, then ζ'/ζ extends analytically to Re(s) > 1/2 (except s=1).
-But under RH, ζ has infinitely many zeros at Re(s) = 1/2 (by Hardy 1914),
-so ζ'/ζ has poles accumulating there — contradiction.
+on Re(s) > 1/2, then F + G is continuous at s = 1. But ζ'/ζ has a
+simple pole at s = 1 (from `neg_zeta_logderiv_pole_at_one`).
+Multiplying by (s-1): limit is 0 (from continuity) but also -1 (from pole).
+Contradiction via `tendsto_nhds_unique`.
 
-Reference: Hardy 1914 (infinitely many zeros); Ingham 1932, Ch. V. -/
+Note: RH is not needed — the hypotheses are already inconsistent due to
+the s = 1 pole alone. The `hRH` parameter is kept for interface compatibility. -/
 private theorem landau_pole_contradiction
     (hRH : ZetaZeros.RiemannHypothesis)
     (F G : ℂ → ℂ)
@@ -154,11 +137,91 @@ private theorem landau_pole_contradiction
     (h_id : ∀ s : ℂ, 1 < s.re →
       deriv riemannZeta s / riemannZeta s = F s + G s) :
     False := by
-  sorry
+  -- The set {Re > 1/2} is open and contains 1
+  have hS_open : IsOpen {s : ℂ | (1 : ℝ) / 2 < s.re} :=
+    isOpen_lt continuous_const Complex.continuous_re
+  have h1_mem : (1 : ℂ) ∈ {s : ℂ | (1 : ℝ) / 2 < s.re} := by
+    show (1 : ℝ) / 2 < (1 : ℂ).re; simp [Complex.one_re]; norm_num
+  -- F + G is continuous at s = 1
+  have hFG_contAt : ContinuousAt (fun s => F s + G s) (1 : ℂ) :=
+    (hF.continuousOn.continuousAt (hS_open.mem_nhds h1_mem)).add
+      (hG.continuousOn.continuousAt (hS_open.mem_nhds h1_mem))
+  -- Pole data: -ζ'/ζ(s) = g(s)/(s-1) near s = 1, g analytic, g(1) = 1
+  obtain ⟨g, hg_an, hg1, hg_eq⟩ :=
+    Aristotle.ZetaLogDerivInfra.neg_zeta_logderiv_pole_at_one
+  -- The filter 𝓝[{Re > 1}] 1 is nontrivial (1 is on the boundary of {Re > 1})
+  have hL_neBot : (𝓝[{s : ℂ | 1 < s.re}] (1 : ℂ)).NeBot := by
+    refine Filter.NeBot.mk ?_
+    intro hbot
+    have h_empty : (∅ : Set ℂ) ∈ 𝓝[{s : ℂ | 1 < s.re}] (1 : ℂ) := by
+      rw [hbot]; exact Filter.mem_bot
+    rw [mem_nhdsWithin] at h_empty
+    obtain ⟨U, hU_open, h1U, hU_sub⟩ := h_empty
+    obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.mp hU_open 1 h1U
+    exact absurd (hU_sub ⟨hball (by
+        simp only [Metric.mem_ball, Complex.dist_eq, add_sub_cancel_left, Complex.norm_real]
+        rw [Real.norm_of_nonneg (half_pos hε).le]
+        linarith),
+      show 1 < ((1 : ℂ) + (↑(ε / 2) : ℂ)).re from by
+        simp only [Complex.add_re, Complex.one_re, Complex.ofReal_re]; linarith⟩)
+      (by simp)
+  -- 𝓝[{Re > 1}] 1 ≤ 𝓝[{1}ᶜ] 1 (since Re(s) > 1 implies s ≠ 1)
+  have hL_le : 𝓝[{s : ℂ | 1 < s.re}] (1 : ℂ) ≤ 𝓝[{(1 : ℂ)}ᶜ] (1 : ℂ) :=
+    nhdsWithin_mono (1 : ℂ) (fun (s : ℂ) (hs : s ∈ {s : ℂ | 1 < s.re}) =>
+      show s ∈ {(1 : ℂ)}ᶜ from by
+        simp only [Set.mem_compl_iff, Set.mem_singleton_iff]
+        intro h; subst h; exact absurd hs (by simp [Complex.one_re]))
+  -- On 𝓝[{Re > 1}] 1, eventually: (s-1) * (F s + G s) = -g s
+  have h_eq_L : ∀ᶠ s in 𝓝[{s : ℂ | 1 < s.re}] (1 : ℂ),
+      (s - 1) * (F s + G s) = -g s := by
+    filter_upwards [hg_eq.filter_mono hL_le, self_mem_nhdsWithin]
+      with s hpole (hs_re : s ∈ {s : ℂ | 1 < s.re})
+    have hs_ne : s ≠ (1 : ℂ) := by
+      intro h; subst h
+      exact absurd hs_re (by simp [Set.mem_setOf_eq, Complex.one_re])
+    have hs_sub_ne : s - 1 ≠ 0 := sub_ne_zero_of_ne hs_ne
+    -- F s + G s = ζ'/ζ(s) = -(g(s)/(s-1)), so (s-1)*(F+G) = -g(s)
+    have h_fg : F s + G s = -(g s / (s - 1)) := by
+      rw [(h_id s hs_re).symm]
+      exact neg_eq_iff_eq_neg.mp (by rwa [neg_div] at hpole)
+    rw [h_fg, mul_neg, neg_inj]
+    field_simp [hs_sub_ne]
+  -- Limit 1: (s-1)*(F+G)(s) → 0 as s → 1
+  have h_lim_0 : Filter.Tendsto (fun s => (s - 1) * (F s + G s))
+      (𝓝[{s : ℂ | 1 < s.re}] (1 : ℂ)) (𝓝 0) := by
+    have h_sub : Filter.Tendsto (fun s : ℂ => s - 1) (𝓝 (1 : ℂ)) (𝓝 (0 : ℂ)) := by
+      rw [show (0 : ℂ) = 1 - 1 from by ring]
+      exact tendsto_id.sub tendsto_const_nhds
+    have h_prod := h_sub.mul hFG_contAt
+    rw [show (0 : ℂ) * (F (1 : ℂ) + G (1 : ℂ)) = 0 from zero_mul _] at h_prod
+    exact h_prod.mono_left nhdsWithin_le_nhds
+  -- Limit 2: (s-1)*(F+G)(s) → -1 (equals -g(s) eventually, g(1) = 1)
+  have h_lim_neg1 : Filter.Tendsto (fun s => (s - 1) * (F s + G s))
+      (𝓝[{s : ℂ | 1 < s.re}] (1 : ℂ)) (𝓝 (-1)) := by
+    have hg_lim : Filter.Tendsto (fun s => -g s)
+        (𝓝[{s : ℂ | 1 < s.re}] (1 : ℂ)) (𝓝 (-1)) := by
+      have h4 := hg_an.continuousAt.neg.tendsto
+      rw [hg1] at h4
+      exact h4.mono_left nhdsWithin_le_nhds
+    exact (Filter.tendsto_congr' h_eq_L).mpr hg_lim
+  -- Contradiction: 0 = -1
+  exact absurd (tendsto_nhds_unique h_lim_0 h_lim_neg1) (by norm_num)
 
-/-- **Core Landau-Ingham impossibility** (Landau 1905, Ingham 1932):
+/-- **Sole B5b sorry**: Core Landau-Ingham impossibility (Landau 1905, Ingham 1932).
 Under RH, σ·(ψ(x)-x) cannot be bounded above by C₀·√x for all large x.
-PROVED from the 3 sub-sorry decomposition above. -/
+
+The proof strategy (not yet formalized):
+1. The one-sided bound makes ∫₁^∞ (C₀√x - σ(ψ(x)-x)) x^{-s-1} dx converge
+   for Re(s) > 1/2 (Mellin convergence from nonneg integrand).
+2. This Mellin transform relates to ζ'/ζ + σ/(s-1) + C₀/(s-1/2) via
+   Perron/Stieltjes identities on {Re > 1}.
+3. The s = 1 pole cancellation (σ/(s-1) absorbs ζ'/ζ pole) gives a function
+   analytic on {Re > 1/2}, but under RH, ζ'/ζ has poles at s = 1/2 + iγ
+   from zeros — contradicting the analytic extension.
+
+Note: `landau_pole_contradiction` (proved above) handles step 3 for the
+case where the pole cancellation fails to produce an analytic extension.
+The correct Ingham argument uses pole cancellation (see PringsheimPsiAtom.lean). -/
 private theorem landau_psi_bounded_impossible
     (hRH : ZetaZeros.RiemannHypothesis)
     (σ : ℝ) (_hσ : σ = 1 ∨ σ = -1)
@@ -167,9 +230,7 @@ private theorem landau_psi_bounded_impossible
       σ * (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) ≤
         C₀ * Real.sqrt x) :
     False := by
-  obtain ⟨F, hF_analytic⟩ := landau_mellin_analytic σ C₀ X₀ h_bound
-  obtain ⟨G, hG_analytic, h_identity⟩ := landau_zeta_identity σ C₀ F hF_analytic
-  exact landau_pole_contradiction hRH F G hF_analytic hG_analytic h_identity
+  sorry
 
 /-- **Landau-Ingham fact** (Landau 1905, Ingham 1932):
 Under RH, ψ(x) - x is unbounded above relative to √x.

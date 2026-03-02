@@ -88,4 +88,49 @@ theorem alternating_sum_le_last (a : ℕ → ℝ)
             linarith
         _ ≤ a (n + 2) := by linarith [h_mono (show n ≤ n + 1 from by omega)]
 
+/-- Reindexing identity: ∑_{j<n+1} (-1)^(n-j) a(j) = (-1)^n · ∑_{j<n+1} (-1)^j a(j).
+    Since (-1)^(n-j) = (-1)^n · (-1)^(-j) = (-1)^n · (-1)^j for natural exponents. -/
+private lemma alternating_sum_reverse_sign (a : ℕ → ℝ) (n : ℕ) :
+    ∑ j ∈ Finset.range (n + 1), (-1 : ℝ) ^ (n - j) * a j =
+    (-1 : ℝ) ^ n * ∑ j ∈ Finset.range (n + 1), (-1 : ℝ) ^ j * a j := by
+  rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro j hj
+  have hj_le : j ≤ n := Nat.lt_succ_iff.mp (Finset.mem_range.mp hj)
+  rw [← mul_assoc, ← pow_add, show n + j = (n - j) + 2 * j from by omega,
+      pow_add, pow_mul, neg_one_sq, one_pow, mul_one]
+
+theorem alternating_antitone_sum_le_first (a : ℕ → ℝ)
+    (h_nonneg : ∀ k, 0 ≤ a k)
+    (h_anti : Antitone a) (n : ℕ) :
+    |∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * a k| ≤ a 0 := by
+  -- Define reversed sequence b(k) = a(n-k). Then b is monotone nonneg.
+  set b : ℕ → ℝ := fun k => a (n - k) with hb_def
+  have hb_mono : Monotone b := fun i j hij => h_anti (Nat.sub_le_sub_left hij n)
+  have hb_nonneg : ∀ k, 0 ≤ b k := fun k => h_nonneg _
+  -- alternating_sum_le_last gives |∑_{k<n+1} (-1)^k b(k)| ≤ b(n) = a(0)
+  have h_last := alternating_sum_le_last b hb_nonneg hb_mono n
+  simp only [hb_def, Nat.sub_self] at h_last
+  -- h_last : |∑_{k<n+1} (-1)^k a(n-k)| ≤ a 0
+  -- Use sum_range_reflect to reindex: ∑_{k<n+1} f(n-k) = ∑_{k<n+1} f(k)
+  -- where f(k) = (-1)^k * a(n-k)... but that doesn't directly help.
+  -- Instead, directly rewrite ∑(-1)^k a(n-k) using the reverse sign lemma.
+  -- sum_range_reflect gives: ∑_{j<m} f(m-1-j) = ∑_{j<m} f(j)
+  -- With m = n+1, f(j) = (-1)^(n-j) * a(j):
+  -- ∑_{j<n+1} (-1)^(n-(n-j)) * a(n-j) = ∑_{j<n+1} (-1)^(n-j) * a(j)
+  -- LHS = ∑_{j<n+1} (-1)^j * a(n-j) (since n-(n-j) = j for j ≤ n)
+  -- So: ∑_{j<n+1} (-1)^j a(n-j) = ∑_{j<n+1} (-1)^(n-j) a(j)
+  --                                = (-1)^n · ∑_{j<n+1} (-1)^j a(j)
+  -- Therefore |∑(-1)^j a(j)| = |(-1)^n · ∑(-1)^j a(j)| = |∑(-1)^j a(n-j)| ≤ a 0
+  have h_reflect : ∑ j ∈ Finset.range (n + 1), (-1 : ℝ) ^ j * a (n - j)
+      = ∑ j ∈ Finset.range (n + 1), (-1 : ℝ) ^ (n - j) * a j := by
+    rw [← Finset.sum_range_reflect (fun j => (-1 : ℝ) ^ (n - j) * a j) (n + 1)]
+    apply Finset.sum_congr rfl
+    intro j hj
+    have hj_le : j ≤ n := Nat.lt_succ_iff.mp (Finset.mem_range.mp hj)
+    show (-1 : ℝ) ^ j * a (n - j) = (-1 : ℝ) ^ (n - (n - j)) * a (n - j)
+    rw [Nat.sub_sub_self hj_le]
+  rw [h_reflect, alternating_sum_reverse_sign] at h_last
+  rwa [abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul] at h_last
+
 end AbelSummation
