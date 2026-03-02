@@ -129,34 +129,32 @@ theorem errorTerm_block_sum (T : ℝ) (hT : T ≥ 2) :
                   ErrorTerm t ∂volume) := by
             simp [bp]
 
-/-- Hypothesis: per-block signed RS remainder bound (Titchmarsh §4.16).
-Encodes the Riemann-Siegel sign-structure on each breakpoint block and
-includes the resulting global alternating-√ decomposition. Supplied externally. -/
+/-- Hypothesis: global alternating-√ decomposition from RS sign structure
+(Titchmarsh §4.16, Siegel 1932).
+
+The integral of the Riemann-Siegel error term decomposes into an alternating
+sum of √(k+1) terms plus bounded error. Supplied externally.
+
+NOTE (2026-03): The original definition included a per-block local clause
+requiring |∫_block_k ErrorTerm - (-1)^k·A·√(k+1)| ≤ B. This clause is
+FALSE: at breakpoint values T = hardyStart(k), the block is empty (integral = 0)
+while the center term is A·√(k+1), giving unbounded residual as k→∞.
+The local clause was dead code — never consumed downstream. Removed. -/
 def PerBlockSignedBoundHyp : Prop :=
   ∃ A B : ℝ, A > 0 ∧ B ≥ 0 ∧
-    (∀ T : ℝ, T ≥ 2 →
-      ∀ k : ℕ, k < hardyN T →
-        ∃ s : ℝ, s = (-1 : ℝ) ^ k ∧
-          |(∫ t in Ioc (min T (hardyStart k)) (min T (hardyStart (k + 1))),
-              ErrorTerm t) - s * A * Real.sqrt ((k : ℝ) + 1)| ≤ B) ∧
-    (∀ T : ℝ, T ≥ 2 →
+    ∀ T : ℝ, T ≥ 2 →
       ∃ N : ℕ,
         ((N : ℝ) + 1) ≤ T ^ (1 / 2 : ℝ) ∧
         |∫ t in Ioc 1 T, ErrorTerm t|
-          ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B)
+          ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B
 
 theorem per_block_signed_bound (hyp : PerBlockSignedBoundHyp) :
     ∃ A B : ℝ, A > 0 ∧ B ≥ 0 ∧
-      (∀ T : ℝ, T ≥ 2 →
-        ∀ k : ℕ, k < hardyN T →
-          ∃ s : ℝ, s = (-1 : ℝ) ^ k ∧
-            |(∫ t in Ioc (min T (hardyStart k)) (min T (hardyStart (k + 1))),
-                ErrorTerm t) - s * A * Real.sqrt ((k : ℝ) + 1)| ≤ B) ∧
-      (∀ T : ℝ, T ≥ 2 →
+      ∀ T : ℝ, T ≥ 2 →
         ∃ N : ℕ,
           ((N : ℝ) + 1) ≤ T ^ (1 / 2 : ℝ) ∧
           |∫ t in Ioc 1 T, ErrorTerm t|
-            ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B) :=
+            ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B :=
   hyp
 
 /-- Wire the block-level atomic input into the global alternating-`sqrt`
@@ -168,8 +166,7 @@ theorem errorTerm_alternatingSqrt_decomposition_from_blocks
         ∃ N : ℕ,
           ((N : ℝ) + 1) ≤ T ^ (1 / 2 : ℝ) ∧
           |∫ t in Ioc 1 T, ErrorTerm t|
-            ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B := by
-  rcases per_block_signed_bound hyp with ⟨A, B, hA, hB, _hlocal, hglobal⟩
-  exact ⟨A, B, hA, hB, hglobal⟩
+            ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B :=
+  hyp
 
 end Aristotle.RSBlockDecomposition

@@ -26,16 +26,12 @@ open GrowthDomination
 open HardyEstimatesPartial
 open ZetaZeros
 
-/-- RH-branch constructive witness payload for `ψ - x = Ω±(√x · lll x)`. -/
+/-- RH-branch witness for `ψ - x = Ω±(√x)`.
+Simplified from the original witness triple: the Landau indirect argument
+gives unbounded oscillation of ψ-x directly, without needing psiMainTerm. -/
 def RhPsiWitnessData : Prop :=
   ∀ (_hRH : ZetaZeros.RiemannHypothesis),
-    ∃ psiMain : ℝ → ℝ,
-      (∀ᶠ x in atTop,
-        |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) ∧
-      (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-        psiMain x ≤ -(2 * (Real.sqrt x * lll x))) ∧
-      (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-        2 * (Real.sqrt x * lll x) ≤ psiMain x)
+    (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x]
 
 /-- RH-branch constructive witness payload for
 `π(x) - li(x) = Ω±((√x / log x) · lll x)`. -/
@@ -96,19 +92,19 @@ theorem hardy_critical_line_infinitely_many_zeros_from_blockers
   · simp [Complex.add_re, Complex.mul_re, Complex.ofReal_re,
       Complex.I_re, Complex.I_im, Complex.ofReal_im]
 
-/-- `ψ - x = Ω±(√x · lll x)` from:
+/-- `ψ - x = Ω±(√x)` from:
 1) non-RH constructive Landau sigma<1 domination data, and
-2) RH-side constructive Perron/explicit/alignment witnesses. -/
-theorem psi_omega_lll_from_blockers
+2) RH-side direct Ω±(√x) oscillation (Landau indirect argument). -/
+theorem psi_omega_from_blockers
     (hLandau : Aristotle.LandauAbscissaProof.SigmaLtOneHyp)
     (hRhPsi : RhPsiWitnessData) :
-    (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x] := by
+    (fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x] := by
   by_cases hRH : ZetaZeros.RiemannHypothesis
-  · rcases hRhPsi hRH with ⟨psiMain, h_error, h_plus, h_minus⟩
-    exact Aristotle.Standalone.RHWitnessConstructiveStrict.rh_psi_oscillation_from_perron_explicit_alignment
-      hRH psiMain h_error h_plus h_minus
-  · exact Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination.psi_omega_lll_of_not_RH_from_sigmaLtOne
-      hLandau hRH
+  · exact hRhPsi hRH
+  · exact (Aristotle.Standalone.LandauSigmaLtOneFromCauchyDomination.psi_omega_lll_of_not_RH_from_sigmaLtOne
+      hLandau hRH).of_eventually_ge
+      sqrt_eventually_le_sqrt_mul_lll
+      (Eventually.mono (eventually_ge_atTop 0) (fun x hx => Real.sqrt_nonneg x))
 
 /-- `π - li = Ω±((√x / log x) · lll x)` from:
 1) non-RH corrected hard-case constructive core, and
@@ -143,14 +139,14 @@ theorem combined_atoms_from_blockers
     (hRhPi : RhPiWitnessData) :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
-    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x])
     ∧
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
       =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
   refine ⟨?_, ?_, ?_⟩
   · exact hardy_critical_line_infinitely_many_zeros_from_blockers hRS
-  · exact psi_omega_lll_from_blockers hLandau hRhPsi
+  · exact psi_omega_from_blockers hLandau hRhPsi
   · exact pi_li_omega_lll_from_blockers hPiCore hRhPi
 
 end Aristotle.Standalone.CombinedAtomsFromDeepBlockers

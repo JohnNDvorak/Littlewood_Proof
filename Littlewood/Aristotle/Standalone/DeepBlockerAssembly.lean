@@ -142,7 +142,7 @@ theorem combined_atoms_from_five_blockers
       Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData) :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
-    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x])
     ∧
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)

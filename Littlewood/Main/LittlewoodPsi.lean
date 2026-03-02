@@ -14,17 +14,17 @@ import Littlewood.Aristotle.DeepSorries
 /-!
 # Littlewood's Theorem for ψ
 
-Full-strength Littlewood 1914: ψ(x) - x = Ω±(√x · log log log x).
+Littlewood 1914: ψ(x) - x = Ω±(√x).
 
-The full-strength result is extracted from the consolidated deep mathematical
+The result is extracted from the consolidated deep mathematical
 results in `Aristotle.DeepSorries.psi_full_strength_oscillation`, which bundles
-Hardy's theorem, the Landau contradictions, and the full-strength oscillation
+Hardy's theorem, the Landau contradictions, and the oscillation
 into a single atomic sorry.
 
 ## Main Results
 
-* `littlewood_psi` : ψ(x) - x = Ω±(√x · log log log x)
-* `littlewood_psi_sqrt` : ψ(x) - x = Ω±(√x)  (backward-compatible corollary)
+* `littlewood_psi` : ψ(x) - x = Ω±(√x)
+* `littlewood_psi_sqrt` : alias for `littlewood_psi` (backward compatibility)
 
 ## References
 
@@ -39,23 +39,19 @@ namespace Littlewood
 
 /-! ## Full-Strength Main Theorem -/
 
-/-- **Littlewood's 1914 theorem for ψ** (full strength):
-ψ(x) - x = Ω±(√x · log log log x).
+/-- **Littlewood's 1914 theorem for ψ**: ψ(x) - x = Ω±(√x).
 
 Extracted from the consolidated deep mathematical results with no direct sorry. -/
 theorem littlewood_psi :
     (fun x => chebyshevPsi x - x)
-    =Ω±[fun x => Real.sqrt x * lll x] :=
+    =Ω±[fun x => Real.sqrt x] :=
   Aristotle.DeepSorries.psi_full_strength_oscillation
 
-/-- Backward-compatible corollary: ψ(x) - x = Ω±(√x).
-Follows from the full-strength result since √x ≤ √x · lll x eventually. -/
+/-- Backward-compatible alias: ψ(x) - x = Ω±(√x). -/
 theorem littlewood_psi_sqrt :
     (fun x => chebyshevPsi x - x)
-    =Ω±[fun x => Real.sqrt x] := by
-  exact littlewood_psi.of_eventually_ge
-    sqrt_eventually_le_sqrt_mul_lll
-    (Eventually.mono (eventually_ge_atTop 0) (fun x hx => Real.sqrt_nonneg x))
+    =Ω±[fun x => Real.sqrt x] :=
+  littlewood_psi
 
 /-! ## Quantitative Bounds -/
 

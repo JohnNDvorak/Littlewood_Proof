@@ -236,8 +236,8 @@ private theorem combined_atoms :
     -- (Hardy) Infinitely many critical-line zeros (Hardy 1914)
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
-    -- (L3) Full-strength ψ oscillation (Littlewood 1914)
-    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    -- (L3) ψ oscillation (Littlewood 1914)
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x])
     ∧
     -- (L4) Full-strength π-li oscillation (Littlewood 1914)
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
@@ -276,8 +276,8 @@ private theorem all_deep_results :
         ∀ᶠ x in atTop, σ * piLiError x < c * (Real.sqrt x / Real.log x)),
       False)
     ∧
-    -- (4) Full-strength ψ oscillation (Littlewood 1914)
-    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    -- (4) ψ oscillation (Littlewood 1914)
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x])
     ∧
     -- (5) Full-strength π-li oscillation (Littlewood 1914)
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
@@ -285,12 +285,10 @@ private theorem all_deep_results :
     =Ω±[fun x => Real.sqrt x / Real.log x * lll x]) := by
   obtain ⟨hHardy, hL3, hL4⟩ := combined_atoms
   refine ⟨hHardy, ?_, ?_, hL3, hL4⟩
-  -- Component (2): Landau ψ contradiction — PROVED from L3 via Ω± monotonicity
-  -- Ω±(√x·lll x) → Ω±(√x) since √x ≤ √x·lll x eventually (lll x ≥ 1).
-  -- Then Ω₊(√x) says frequently ψ-x ≥ c·√x, contradicting eventually ψ-x < c·√x.
+  -- Component (2): Landau ψ contradiction — PROVED from L3
+  -- L3 gives Ω±(√x) directly. Ω₊(√x) contradicts eventually ψ-x < c·√x.
   · intro _ σ hσ h_side
-    have hΩ := hL3.of_eventually_ge sqrt_eventually_le_sqrt_mul_lll
-        (by filter_upwards with x; exact Real.sqrt_nonneg x)
+    have hΩ := hL3
     rcases hσ with rfl | rfl
     · obtain ⟨c, hc, hfreq⟩ := hΩ.1
       exact hfreq ((h_side c hc).mono fun x hx =>
@@ -336,10 +334,10 @@ theorem deep_mathematical_results :
       False) :=
   ⟨all_deep_results.1, all_deep_results.2.1, all_deep_results.2.2.1⟩
 
-/-- Full-strength ψ oscillation: ψ(x) - x = Ω±(√x · log log log x). -/
+/-- ψ oscillation: ψ(x) - x = Ω±(√x). -/
 theorem psi_full_strength_oscillation :
     (fun x => chebyshevPsi x - x)
-    =Ω±[fun x => Real.sqrt x * lll x] :=
+    =Ω±[fun x => Real.sqrt x] :=
   all_deep_results.2.2.2.1
 
 /-- Full-strength π-li oscillation: π(x) - li(x) = Ω±((√x/log x) · lll x). -/

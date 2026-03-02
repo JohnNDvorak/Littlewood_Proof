@@ -97,17 +97,20 @@ instance explicitFormulaPsiAtTEqX_of_general
 -- Sub-sorry 2: Oscillation of zero sum under RH
 -- ============================================================
 
-/-- **Sub-sorry leaf 2/2 for B5**: Under RH, `psiMainTerm` oscillates cofinally
-with amplitude ±4√x·lll(x).
+/-- **Sub-sorry leaf 2/2 for B5**: Under RH, `ψ(x) - x` is unbounded in both
+directions relative to √x.
 
-Uses Dirichlet alignment of zero phases + divergent ∑ 1/γ ∼ (log T)².
-Reference: Ingham 1932; Montgomery-Vaughan §15.2. -/
+The Landau indirect argument (Landau 1905, Ingham 1932) proves by contradiction:
+if ψ(x) - x were bounded above (or below) by C√x for all large x, the Dirichlet
+series for ψ would converge past Re(s) = 1/2, contradicting RH (critical-line zeros).
+
+Quantifies over all C: the oscillation grows without bound. -/
 class PsiZeroSumOscillationHyp : Prop where
   proof : ZetaZeros.RiemannHypothesis →
-    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-      psiMainTerm x ≥ 4 * (Real.sqrt x * lll x)) ∧
-    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-      psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x)))
+    (∀ C : ℝ, ∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x ≥ C * Real.sqrt x) ∧
+    (∀ C : ℝ, ∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x ≤ -(C * Real.sqrt x))
 
 -- ============================================================
 -- Assembly: pair the two leaves into the combined class

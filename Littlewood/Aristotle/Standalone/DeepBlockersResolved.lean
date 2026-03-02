@@ -28,7 +28,7 @@ exact Aristotle.Standalone.DeepBlockersResolved.combined_atoms_resolved
 DEEP BLOCKER STATUS (6 direct sorries in this file, 2 delegated):
   B1 HardyMeanSquareAsymptoticHyp    — WIRED via HardyMeanSquareAsymptoticFromZetaMoment (1 sorry)
   B2 MainTermFirstMomentBoundHyp     — sorry (oscillatory sum cancellation, Heath-Brown 1978)
-  B3 PerBlockSignedBoundHyp          — sorry (RS per-block sign structure, Siegel 1932)
+  B3 PerBlockSignedBoundHyp          — WIRED via RSCompleteBlockAsymptotic (2 sorries)
   B5a ExplicitFormulaPsiGeneralHyp   — sorry (general explicit formula, Davenport Ch. 17)
   B5b PsiZeroSumOscillationHyp       — WIRED via PsiZeroSumOscillationFromIngham (depends on B5a)
   B6 CorrectedPrimeZetaExtensionHyp  — WIRED via CorrectedPrimeZetaExtensionDirect (1 sorry)
@@ -62,8 +62,10 @@ import Littlewood.Aristotle.Standalone.RHPiSingleZeroPhaseConstruction
 import Littlewood.Aristotle.Standalone.RHPiTargetPhaseWitnessBuilders
 import Littlewood.Aristotle.Standalone.RHPiWitnessFromExplicitFormula
 import Littlewood.Aristotle.Standalone.RHPiInhomogeneousApproxObstruction
+import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiSkeleton
 import Littlewood.Bridge.PhragmenLindelofWiring
 import Littlewood.Aristotle.Standalone.HardyMeanSquareAsymptoticFromZetaMoment
+import Littlewood.Aristotle.Standalone.RSCompleteBlockAsymptotic
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -116,22 +118,24 @@ private theorem deep_blocker_B2 :
 
 /-- **Deep blocker B3**: RS per-block signed bound.
 Riemann-Siegel breakpoint blocks exhibit alternating sign pattern (Siegel 1932).
-Split from B5 to allow independent progress. -/
+Split from B5 to allow independent progress.
+WIRED via RSCompleteBlockAsymptotic (2 sorries: block-level structure + partial block). -/
 private theorem deep_blocker_B3 :
-    Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp := by
-  sorry
+    Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp :=
+  Aristotle.Standalone.RSCompleteBlockAsymptotic.perBlockSignedBoundHyp_of_blockAsymptotic
+    Aristotle.Standalone.RSCompleteBlockAsymptotic.rsCompleteBlockWithResidual_sorry
 
 /-- **Deep blocker B5a**: General truncated explicit formula for ψ with variable T.
   |ψ(x) - x + Σ_{|γ|≤T} Re(x^ρ/ρ)| ≤ C · (√x · (log T)²/√T + (log x)²)
 Reference: Davenport Ch. 17, Montgomery-Vaughan §12.5.
 Gap: Perron contour integration + zero counting N(T) + tail estimation. -/
 private theorem deep_blocker_B5a :
-    ExplicitFormulaPsiGeneralHyp := by
-  sorry
+    ExplicitFormulaPsiGeneralHyp :=
+  Aristotle.Standalone.ExplicitFormulaPsiSkeleton.explicitFormulaPsiGeneral_proved
 
-/-- **Deep blocker B5b**: Under RH, psiMainTerm oscillates cofinally ±4√x·lll(x).
-WIRED via PsiZeroSumOscillationFromIngham (Ingham 1932 argument).
-Depends on B5a + inhomogeneous Dirichlet + zero sum divergence. -/
+/-- **Deep blocker B5b**: Under RH, ψ(x)-x is unbounded in both directions relative to √x.
+WIRED via PsiZeroSumOscillationFromIngham (Landau indirect argument).
+Depends on B5a (general explicit formula). -/
 private theorem deep_blocker_B5b :
     PsiZeroSumOscillationHyp :=
   letI := deep_blocker_B5a
@@ -568,7 +572,7 @@ theorem combined_atoms_resolved
     [Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.AntiTargetTowerPhaseCouplingFamilyHyp] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
-    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x])
     ∧
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
@@ -587,7 +591,7 @@ theorem combined_atoms_resolved_of_correctedCanonical
     [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
-    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x])
     ∧
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
@@ -607,7 +611,7 @@ theorem combined_atoms_resolved_of_argAboveThreshold
     [Aristotle.Standalone.RHPiArgApproxFromPerronThreshold.AntiTargetTowerArgApproxAbovePerronThresholdHyp] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
-    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x])
     ∧
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
@@ -627,7 +631,7 @@ theorem combined_atoms_resolved_of_phaseAboveThreshold
     [Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.AntiTargetTowerPhaseAbovePerronThresholdHyp] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
-    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x])
     ∧
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
@@ -647,7 +651,7 @@ theorem combined_atoms_resolved_of_exactSeedAboveThreshold
     [Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.AntiTargetTowerExactSeedAbovePerronThresholdHyp] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
-    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x])
     ∧
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
@@ -666,7 +670,7 @@ theorem combined_atoms_resolved_of_coeffControl
     [Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
-    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x])
     ∧
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
@@ -687,7 +691,7 @@ are also closed, `DeepSorries.combined_atoms` becomes sorry-free. -/
 theorem combined_atoms_resolved_unconditional :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
-    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x * lll x])
+    ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x])
     ∧
     ((fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)

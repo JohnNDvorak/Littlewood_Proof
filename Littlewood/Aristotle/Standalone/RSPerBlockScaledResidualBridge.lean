@@ -128,16 +128,18 @@ theorem globalAlternating_fixedA_of_scaledResidual
   exact globalAlternating_fixedA_of_centeredResidual hA hcenter
 
 /-- Build `PerBlockSignedBoundHyp` from a single scaled per-block residual input.
-This removes the separate centered-residual hypothesis. -/
+This removes the separate centered-residual hypothesis.
+
+NOTE: After the 2026-03 simplification of `PerBlockSignedBoundHyp`, only the
+centered residual path is needed. -/
 theorem perBlockSignedBoundHyp_of_scaledResidual
-    {A R : ℝ} (hA : 0 < A) (hR : 0 ≤ R)
+    {A R : ℝ} (hA : 0 < A) (_hR : 0 ≤ R)
     (hscaled : ScaledPerBlockResidualInput A R) :
     Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp := by
-  have hlocal : LocalPerBlockSignedInput A R :=
-    localPerBlockSignedInput_of_scaledResidual hR hscaled
   have hcenter : CenteredResidualInput A R :=
     centeredResidualInput_of_scaledResidual hscaled
-  exact perBlockSignedBoundHyp_of_local_and_centered hA hlocal hcenter
+  rcases globalAlternating_fixedA_of_scaledResidual hA hscaled with ⟨B, hB, hglobal⟩
+  exact ⟨A, B, hA, hB, hglobal⟩
 
 /-- Ready-to-wire decomposition theorem in the same shape used by
 `RiemannSiegelSignCancellation`. -/

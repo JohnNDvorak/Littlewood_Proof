@@ -108,31 +108,20 @@ theorem globalAlternating_fixedA_of_centeredResidual
       linarith
 
 /-- Build the full `PerBlockSignedBoundHyp` payload from:
-1) local signed per-block control, and
-2) long-range centered residual control. -/
+1) local signed per-block control (retained for downstream compatibility), and
+2) long-range centered residual control.
+
+NOTE: After the 2026-03 simplification of `PerBlockSignedBoundHyp` (removal of
+the false local clause), only the centered residual input is needed. The local
+input parameter is retained for API stability but is unused. -/
 theorem perBlockSignedBoundHyp_of_local_and_centered
     {A Blocal R : ℝ} (hA : 0 < A)
-    (hlocal : LocalPerBlockSignedInput A Blocal)
+    (_hlocal : LocalPerBlockSignedInput A Blocal)
     (hcenter : CenteredResidualInput A R) :
     Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp := by
   rcases globalAlternating_fixedA_of_centeredResidual (A := A) (R := R) hA hcenter with
     ⟨Bglobal, hBglobal_nonneg, hglobal⟩
-  let B : ℝ := max Blocal Bglobal
-  refine ⟨A, B, hA, ?_, ?_, ?_⟩
-  · exact le_trans hBglobal_nonneg (le_max_right Blocal Bglobal)
-  · intro T hT k hk
-    rcases hlocal T hT k hk with ⟨s, hs, hbound⟩
-    refine ⟨s, hs, ?_⟩
-    exact le_trans hbound (le_max_left Blocal Bglobal)
-  · intro T hT
-    rcases hglobal T hT with ⟨N, hN, hbound⟩
-    refine ⟨N, hN, ?_⟩
-    have hBglobal_le_B : Bglobal ≤ B := le_max_right Blocal Bglobal
-    have hshift :
-        A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + Bglobal
-          ≤ A * |∑ k ∈ Finset.range (N + 1), (-1 : ℝ) ^ k * Real.sqrt ((k : ℝ) + 1)| + B := by
-      linarith
-    exact le_trans hbound hshift
+  exact ⟨A, Bglobal, hA, hBglobal_nonneg, hglobal⟩
 
 /-- Ready-to-wire decomposition theorem in the remainder namespace shape,
 constructed from local+centered block inputs. -/

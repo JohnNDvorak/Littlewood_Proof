@@ -62,9 +62,10 @@ This is the T=x specialization of the full truncated explicit formula.
 The error O((log x)²) comes from the tail ∑_{|γ|>x} x^ρ/ρ = O(x(log²(x²))/x).
 Reference: Montgomery-Vaughan §12.5, Davenport Ch. 17.
 
-Part 2 (oscillation under RH): psiMainTerm oscillates cofinally with amplitude
-±4√x·lll(x). Uses Dirichlet alignment + divergent ∑ 1/γ ∼ (log T)².
-Reference: Ingham 1932; Montgomery-Vaughan §15.2. -/
+Part 2 (oscillation under RH): Under RH, ψ(x) - x is unbounded in both directions
+relative to √x. The Landau indirect argument shows that bounded ψ-x would force
+ζ'/ζ to be analytic past the critical line, contradicting RH + Hardy's theorem.
+Reference: Landau 1905; Ingham 1932. -/
 class ExplicitFormulaAndOscillationHyp : Prop where
   proof :
     (∃ C : ℝ, ∀ x : ℝ, x ≥ 2 →
@@ -72,10 +73,10 @@ class ExplicitFormulaAndOscillationHyp : Prop where
         (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * (Real.log x) ^ 2)
     ∧
     (ZetaZeros.RiemannHypothesis →
-      (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-        psiMainTerm x ≥ 4 * (Real.sqrt x * lll x)) ∧
-      (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-        psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x))))
+      (∀ C : ℝ, ∀ X : ℝ, ∃ x : ℝ, X < x ∧
+        Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x ≥ C * Real.sqrt x) ∧
+      (∀ C : ℝ, ∀ X : ℝ, ∃ x : ℝ, X < x ∧
+        Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x ≤ -(C * Real.sqrt x)))
 
 variable [ExplicitFormulaAndOscillationHyp]
 
@@ -85,10 +86,10 @@ private theorem explicit_formula_and_oscillation :
         (-(∑ ρ ∈ ZerosBelow x, ((x : ℂ) ^ ρ) / ρ).re)| ≤ C * (Real.log x) ^ 2)
     ∧
     (ZetaZeros.RiemannHypothesis →
-      (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-        psiMainTerm x ≥ 4 * (Real.sqrt x * lll x)) ∧
-      (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-        psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x)))) :=
+      (∀ C : ℝ, ∀ X : ℝ, ∃ x : ℝ, X < x ∧
+        Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x ≥ C * Real.sqrt x) ∧
+      (∀ C : ℝ, ∀ X : ℝ, ∃ x : ℝ, X < x ∧
+        Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x ≤ -(C * Real.sqrt x))) :=
   ExplicitFormulaAndOscillationHyp.proof
 
 private theorem explicit_formula_psi_at_T_eq_x :
@@ -167,120 +168,64 @@ theorem rh_psi_explicit_formula_error :
   exact le_trans hx_trunc hx_dom
 
 -- ============================================================
--- 4. Sub-sorry 2: psiMainTerm oscillation
+-- 4. ψ-x oscillation under RH (directly from Part 2 of hypothesis)
 -- ============================================================
 
-/-- **psiMainTerm oscillates cofinally with amplitude ±4√x·lll(x)** (under RH).
-Derived from `explicit_formula_and_oscillation.2`. -/
-private lemma psiMainTerm_oscillates_large
+/-- **ψ(x)-x unbounded oscillation**. Under RH, `ψ(x) - x` exceeds any
+multiple of √x cofinally in both directions. Extracted from Part 2 of
+`ExplicitFormulaAndOscillationHyp` (Landau indirect argument). -/
+private lemma rh_psi_minus_x_unbounded
     (hRH : ZetaZeros.RiemannHypothesis) :
-    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-      psiMainTerm x ≥ 4 * (Real.sqrt x * lll x)) ∧
-    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-      psiMainTerm x ≤ -(4 * (Real.sqrt x * lll x))) :=
-  explicit_formula_and_oscillation.2 hRH
-
--- ============================================================
--- 5. Proof of rh_psi_minus_x_oscillates_large (PROVED from 1+4+growth dom)
--- ============================================================
-
-/-- **ψ(x)-x oscillation**. Under RH, `ψ(x) - x` has cofinal oscillations
-of size Ω±(3√x · lll(x)). Proved by combining:
-  (1) truncated explicit formula error O(log²x) from sub-sorry 1,
-  (2) psiMainTerm oscillation ±4√x·lll(x) from sub-sorry 2,
-  (3) growth domination log²x ≤ √x·lll(x). -/
-private lemma rh_psi_minus_x_oscillates_large
-    (hRH : ZetaZeros.RiemannHypothesis) :
-    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-      (chebyshevPsi x - x) ≤ -(3 * (Real.sqrt x * lll x))) ∧
-    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-      3 * (Real.sqrt x * lll x) ≤ (chebyshevPsi x - x)) := by
-  -- Combine error bound and growth domination into single eventually
-  have hE : ∀ᶠ x in atTop,
-      |(chebyshevPsi x - x) + psiMainTerm x| ≤ (Real.log x) ^ 3 ∧
-        (Real.log x) ^ 3 ≤ Real.sqrt x * lll x :=
-    rh_psi_truncated_explicit_formula.and log_pow3_eventually_le_sqrt_mul_lll
-  rcases (Filter.eventually_atTop.1 hE) with ⟨X0, hX0⟩
-  -- Main term oscillation
-  rcases psiMainTerm_oscillates_large hRH with ⟨h_main_pos, h_main_neg⟩
+    (∀ C : ℝ, ∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      chebyshevPsi x - x ≥ C * Real.sqrt x) ∧
+    (∀ C : ℝ, ∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      chebyshevPsi x - x ≤ -(C * Real.sqrt x)) := by
+  obtain ⟨h_pos, h_neg⟩ := explicit_formula_and_oscillation.2 hRH
   constructor
-  · -- Large positive psiMainTerm ⇒ large negative ψ(x)-x
-    intro X
-    rcases h_main_pos (max X X0) with ⟨z, hYz, hz_main⟩
-    have hzX : X < z := lt_of_le_of_lt (le_max_left _ _) hYz
-    have hzX0 : X0 ≤ z := le_trans (le_max_right _ _) (le_of_lt hYz)
-    obtain ⟨h_err_z, h_log_z⟩ := hX0 z hzX0
-    have h_upper : (chebyshevPsi z - z) + psiMainTerm z ≤ (Real.log z) ^ 3 :=
-      (abs_le.mp h_err_z).2
-    exact ⟨z, hzX, by nlinarith⟩
-  · -- Large negative psiMainTerm ⇒ large positive ψ(x)-x
-    intro X
-    rcases h_main_neg (max X X0) with ⟨z, hYz, hz_main⟩
-    have hzX : X < z := lt_of_le_of_lt (le_max_left _ _) hYz
-    have hzX0 : X0 ≤ z := le_trans (le_max_right _ _) (le_of_lt hYz)
-    obtain ⟨h_err_z, h_log_z⟩ := hX0 z hzX0
-    have h_lower : -((Real.log z) ^ 3) ≤ (chebyshevPsi z - z) + psiMainTerm z :=
-      (abs_le.mp h_err_z).1
-    exact ⟨z, hzX, by nlinarith⟩
+  · intro C X
+    obtain ⟨x, hXx, hbound⟩ := h_pos C X
+    have h_bridge : chebyshevPsi x = Aristotle.DirichletPhaseAlignment.chebyshevPsi x := by
+      simp only [chebyshevPsi, Chebyshev.psi, Aristotle.DirichletPhaseAlignment.chebyshevPsi]
+      symm
+      have h0 : (0 : ℕ) ∉ Finset.Ioc 0 ⌊x⌋₊ := by simp [Finset.mem_Ioc]
+      have hinsert : Finset.range (⌊x⌋₊ + 1) = insert 0 (Finset.Ioc 0 ⌊x⌋₊) := by
+        ext n; simp [Finset.mem_range]
+      rw [hinsert, Finset.sum_insert h0, ArithmeticFunction.map_zero, zero_add]
+    exact ⟨x, hXx, by rw [h_bridge]; exact hbound⟩
+  · intro C X
+    obtain ⟨x, hXx, hbound⟩ := h_neg C X
+    have h_bridge : chebyshevPsi x = Aristotle.DirichletPhaseAlignment.chebyshevPsi x := by
+      simp only [chebyshevPsi, Chebyshev.psi, Aristotle.DirichletPhaseAlignment.chebyshevPsi]
+      symm
+      have h0 : (0 : ℕ) ∉ Finset.Ioc 0 ⌊x⌋₊ := by simp [Finset.mem_Ioc]
+      have hinsert : Finset.range (⌊x⌋₊ + 1) = insert 0 (Finset.Ioc 0 ⌊x⌋₊) := by
+        ext n; simp [Finset.mem_range]
+      rw [hinsert, Finset.sum_insert h0, ArithmeticFunction.map_zero, zero_add]
+    exact ⟨x, hXx, by rw [h_bridge]; exact hbound⟩
 
--- ============================================================
--- 6. Proof of rh_psi_main_term_oscillates (unchanged)
--- ============================================================
+/-! ## Main theorem: RhPsiWitnessData from Landau oscillation -/
 
-/-- **psiMain oscillation**.
-Under RH, any function approximating x - ψ(x) with error ≤ √x·lll(x)
-must oscillate between ±2√x·lll(x) cofinally. -/
-theorem rh_psi_main_term_oscillates
-    (hRH : ZetaZeros.RiemannHypothesis)
-    (psiMain : ℝ → ℝ)
-    (h_error : ∀ᶠ x in atTop,
-      |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x) :
-    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-      psiMain x ≤ -(2 * (Real.sqrt x * lll x))) ∧
-    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
-      2 * (Real.sqrt x * lll x) ≤ psiMain x) := by
-  -- Extract a concrete threshold beyond which the error bound holds.
-  rcases (Filter.eventually_atTop.1 h_error) with ⟨B, hB⟩
-  -- Deep oscillation input for `ψ(x) - x`.
-  rcases rh_psi_minus_x_oscillates_large hRH with ⟨h_osc_neg, h_osc_pos⟩
-  constructor
-  · intro X
-    -- Large positive ψ(x)-x ⇒ large negative psiMain.
-    rcases h_osc_pos (max X B) with ⟨x, hx_gt, hx_pos⟩
-    have hXx : X < x := lt_of_le_of_lt (le_max_left _ _) hx_gt
-    have hBx : B ≤ x := le_trans (le_max_right _ _) (le_of_lt hx_gt)
-    have h_err_x :
-        |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x := hB x hBx
-    set A : ℝ := Real.sqrt x * lll x with hA
-    have h_upper : (chebyshevPsi x - x) + psiMain x ≤ A :=
-      (abs_le.mp h_err_x).2
-    refine ⟨x, hXx, ?_⟩
-    nlinarith
-  · intro X
-    -- Large negative ψ(x)-x ⇒ large positive psiMain.
-    rcases h_osc_neg (max X B) with ⟨x, hx_gt, hx_neg⟩
-    have hXx : X < x := lt_of_le_of_lt (le_max_left _ _) hx_gt
-    have hBx : B ≤ x := le_trans (le_max_right _ _) (le_of_lt hx_gt)
-    have h_err_x :
-        |(chebyshevPsi x - x) + psiMain x| ≤ Real.sqrt x * lll x := hB x hBx
-    set A : ℝ := Real.sqrt x * lll x with hA
-    have h_lower : -A ≤ (chebyshevPsi x - x) + psiMain x :=
-      (abs_le.mp h_err_x).1
-    refine ⟨x, hXx, ?_⟩
-    nlinarith
+/-- **RhPsiWitnessData proved** from explicit formula + Landau oscillation.
 
-/-! ## Main theorem: RhPsiWitnessData from the two sub-results -/
-
-/-- **RhPsiWitnessData proved** from explicit formula + oscillation.
-
-The proof:
-1. From rh_psi_explicit_formula_error: get psiMain with error bound
-2. From rh_psi_main_term_oscillates: get cofinal negative AND positive oscillation
-3. Combine into the witness triple -/
+Under RH, ψ(x) - x = Ω±(√x) follows from the unbounded oscillation of ψ-x
+in both directions relative to √x (Part 2 of ExplicitFormulaAndOscillationHyp). -/
 theorem rhPsiWitness_proved : RhPsiWitnessData := by
   intro hRH
-  obtain ⟨psiMain, h_error⟩ := rh_psi_explicit_formula_error
-  obtain ⟨h_neg, h_pos⟩ := rh_psi_main_term_oscillates hRH psiMain h_error
-  exact ⟨psiMain, h_error, h_neg, h_pos⟩
+  obtain ⟨h_pos, h_neg⟩ := rh_psi_minus_x_unbounded hRH
+  constructor
+  · -- IsOmegaPlus: ∃ c > 0, ∃ᶠ x in atTop, (ψ-x) ≥ c * √x
+    refine ⟨1, one_pos, ?_⟩
+    rw [Filter.Frequently]
+    intro hev
+    obtain ⟨N, hN⟩ := (Filter.eventually_atTop).mp hev
+    obtain ⟨x, hNx, hge⟩ := h_pos 1 N
+    exact absurd hge (hN x (le_of_lt hNx))
+  · -- IsOmegaMinus: ∃ c > 0, ∃ᶠ x in atTop, (ψ-x) ≤ -(c * √x)
+    refine ⟨1, one_pos, ?_⟩
+    rw [Filter.Frequently]
+    intro hev
+    obtain ⟨N, hN⟩ := (Filter.eventually_atTop).mp hev
+    obtain ⟨x, hNx, hle⟩ := h_neg 1 N
+    exact (hN x (le_of_lt hNx)) (by linarith)
 
 end Aristotle.Standalone.RHPsiWitnessFromZeroSum
