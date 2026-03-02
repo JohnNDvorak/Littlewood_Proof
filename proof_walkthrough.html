@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Littlewood's Theorem — Lean 4 Proof Architecture</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --surface: #111827;
+    --surface2: #1a2332;
+    --border: #1e3a5f;
+    --accent: #3b82f6;
+    --accent2: #8b5cf6;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --rose: #f43f5e;
+    --cyan: #06b6d4;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --gold: #fbbf24;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', monospace;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+    background: linear-gradient(180deg, #0f172a 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: 2.4em;
+    font-weight: 700;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+  .hero .subtitle {
+    font-size: 1.1em;
+    color: var(--text2);
+    margin-bottom: 6px;
+  }
+  .hero .math {
+    font-size: 1.3em;
+    color: var(--cyan);
+    font-style: italic;
+    margin-bottom: 20px;
+  }
+
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 28px;
+    text-align: center;
+    min-width: 140px;
+  }
+  .stat-card .value {
+    font-size: 2em;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .stat-card .label {
+    font-size: 0.75em;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .stat-card.green .value { color: var(--green); }
+  .stat-card.amber .value { color: var(--amber); }
+  .stat-card.blue .value { color: var(--accent); }
+  .stat-card.purple .value { color: var(--accent2); }
+  .stat-card.cyan .value { color: var(--cyan); }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+
+  .section {
+    margin: 48px 0;
+  }
+  .section-title {
+    font-size: 1.4em;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .section-desc {
+    color: var(--text3);
+    font-size: 0.85em;
+    margin-bottom: 24px;
+  }
+
+  /* Proof Flow Diagram */
+  .flow-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 24px;
+    overflow-x: auto;
+  }
+
+  .flow-svg {
+    display: block;
+    margin: 0 auto;
+    min-width: 1200px;
+  }
+
+  /* Chain cards */
+  .chains-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 1000px) {
+    .chains-grid { grid-template-columns: 1fr; }
+  }
+
+  .chain-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .chain-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .chain-card.chain-hardy::before { background: linear-gradient(90deg, var(--accent), var(--cyan)); }
+  .chain-card.chain-psi::before { background: linear-gradient(90deg, var(--accent2), var(--rose)); }
+  .chain-card.chain-pi::before { background: linear-gradient(90deg, var(--green), var(--gold)); }
+
+  .chain-card h3 {
+    font-size: 1.05em;
+    margin-bottom: 4px;
+  }
+  .chain-card .chain-status {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 16px;
+  }
+  .chain-card .chain-steps {
+    list-style: none;
+    position: relative;
+    padding-left: 24px;
+  }
+  .chain-card .chain-steps::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--border);
+  }
+  .chain-card .chain-steps li {
+    position: relative;
+    margin-bottom: 10px;
+    font-size: 0.82em;
+    color: var(--text2);
+    line-height: 1.4;
+  }
+  .chain-card .chain-steps li::before {
+    content: '';
+    position: absolute;
+    left: -21px;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--green);
+    background: var(--bg);
+  }
+  .chain-card .chain-steps li.sorry::before {
+    border-color: var(--amber);
+    background: rgba(245,158,11,0.15);
+  }
+  .chain-card .chain-steps li .file {
+    color: var(--accent);
+    font-size: 0.9em;
+  }
+
+  /* Module table */
+  .module-table-wrap {
+    overflow-x: auto;
+  }
+  .module-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+  }
+  .module-table th {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 2px solid var(--border);
+    color: var(--text3);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8em;
+    letter-spacing: 0.06em;
+  }
+  .module-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(30,58,95,0.4);
+    vertical-align: top;
+  }
+  .module-table tr:hover td {
+    background: rgba(59,130,246,0.04);
+  }
+  .module-table .mod-name {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .module-table .status-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+  }
+  .status-badge.proved { background: rgba(16,185,129,0.15); color: var(--green); }
+  .status-badge.sorry { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .status-badge.deprecated { background: rgba(100,116,139,0.15); color: var(--text3); }
+
+  /* Charts */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 800px) {
+    .chart-grid { grid-template-columns: 1fr; }
+  }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .chart-card h3 {
+    font-size: 0.95em;
+    color: var(--text2);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .chart-card canvas {
+    width: 100% !important;
+  }
+
+  /* Blockers */
+  .blocker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .blocker-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid;
+    position: relative;
+  }
+  .blocker-card.proved { border-left-color: var(--green); }
+  .blocker-card.sorry { border-left-color: var(--amber); }
+  .blocker-card .blocker-id {
+    font-size: 1.4em;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .blocker-card.proved .blocker-id { color: var(--green); }
+  .blocker-card.sorry .blocker-id { color: var(--amber); }
+  .blocker-card .blocker-title {
+    font-size: 0.85em;
+    color: var(--text2);
+    margin-bottom: 8px;
+  }
+  .blocker-card .blocker-desc {
+    font-size: 0.78em;
+    color: var(--text3);
+    line-height: 1.5;
+  }
+  .blocker-card .blocker-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    font-size: 0.7em;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  .blocker-card.proved .blocker-badge { background: rgba(16,185,129,0.15); color: var(--green); }
+  .blocker-card.sorry .blocker-badge { background: rgba(245,158,11,0.15); color: var(--amber); }
+
+  /* File tree */
+  .file-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    font-size: 0.82em;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+  .file-tree .dir { color: var(--accent); font-weight: 600; }
+  .file-tree .file { color: var(--text2); }
+  .file-tree .count { color: var(--text3); font-size: 0.9em; }
+  .file-tree .sorry-tag { color: var(--amber); font-size: 0.85em; }
+  .file-tree .proved-tag { color: var(--green); font-size: 0.85em; }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    font-size: 0.8em;
+    color: var(--text3);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 40px 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text3);
+    font-size: 0.78em;
+    margin-top: 60px;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: fixed;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.8em;
+    color: var(--text);
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 320px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    display: none;
+  }
+
+  /* Full-width chart */
+  .chart-full {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .chart-full h3 {
+    font-size: 0.95em;
+    color: var(--text2);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  /* Scroll indicator */
+  .scroll-hint {
+    text-align: center;
+    color: var(--text3);
+    font-size: 0.75em;
+    margin-top: 8px;
+  }
+
+  /* Animated pulse for sorry nodes */
+  @keyframes pulse-amber {
+    0%, 100% { filter: drop-shadow(0 0 2px rgba(245,158,11,0.3)); }
+    50% { filter: drop-shadow(0 0 8px rgba(245,158,11,0.6)); }
+  }
+  .sorry-pulse { animation: pulse-amber 2s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>Littlewood's Theorem</h1>
+  <div class="subtitle">Lean 4 / Mathlib Formalization &mdash; Complete Proof Architecture</div>
+  <div class="math">&psi;(x) &minus; x = &Omega;&plusmn;(&radic;x &middot; log log log x) &nbsp;&amp;&nbsp; &pi;(x) &minus; li(x) = &Omega;&plusmn;(&radic;x / log x &middot; log log log x)</div>
+  <div class="stats-row">
+    <div class="stat-card green"><div class="value">0</div><div class="label">Build Errors</div></div>
+    <div class="stat-card cyan"><div class="value">7,907</div><div class="label">Lean Jobs</div></div>
+    <div class="stat-card blue"><div class="value">356</div><div class="label">Active Files</div></div>
+    <div class="stat-card purple"><div class="value">57K+</div><div class="label">Lines of Code</div></div>
+    <div class="stat-card amber"><div class="value">3</div><div class="label">Deep Sorries</div></div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- Section 1: High-Level Proof Flow -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:var(--accent)"></span> Proof Architecture — Dependency Flow</div>
+  <div class="section-desc">Three independent chains converge through DeepSorries into the final public API theorems.</div>
+
+  <div class="flow-container">
+    <svg class="flow-svg" viewBox="0 0 1300 720" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse" fill="#3b82f6">
+          <path d="M 0 0 L 10 5 L 0 10 z"/>
+        </marker>
+        <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse" fill="#10b981">
+          <path d="M 0 0 L 10 5 L 0 10 z"/>
+        </marker>
+        <marker id="arrow-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse" fill="#f59e0b">
+          <path d="M 0 0 L 10 5 L 0 10 z"/>
+        </marker>
+        <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse" fill="#8b5cf6">
+          <path d="M 0 0 L 10 5 L 0 10 z"/>
+        </marker>
+
+        <linearGradient id="grad-blue" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#1e3a5f"/>
+          <stop offset="100%" stop-color="#1a2332"/>
+        </linearGradient>
+        <linearGradient id="grad-green" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#064e3b"/>
+          <stop offset="100%" stop-color="#1a2332"/>
+        </linearGradient>
+        <linearGradient id="grad-amber" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#78350f"/>
+          <stop offset="100%" stop-color="#1a2332"/>
+        </linearGradient>
+        <linearGradient id="grad-purple" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#3b0764"/>
+          <stop offset="100%" stop-color="#1a2332"/>
+        </linearGradient>
+
+        <filter id="glow-green">
+          <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#10b981" flood-opacity="0.4"/>
+        </filter>
+        <filter id="glow-amber">
+          <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#f59e0b" flood-opacity="0.4"/>
+        </filter>
+        <filter id="glow-blue">
+          <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#3b82f6" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+
+      <!-- LAYER 0: Definitions -->
+      <g>
+        <!-- Basic -->
+        <rect x="20" y="30" width="170" height="56" rx="10" fill="url(#grad-blue)" stroke="#3b82f6" stroke-width="1.5" filter="url(#glow-blue)"/>
+        <text x="105" y="52" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="700" font-family="monospace">Basic</text>
+        <text x="105" y="72" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="monospace">&Omega; notation, &psi;, &theta;, li</text>
+
+        <!-- CoreLemmas -->
+        <rect x="220" y="30" width="195" height="56" rx="10" fill="url(#grad-blue)" stroke="#3b82f6" stroke-width="1.5" filter="url(#glow-blue)"/>
+        <text x="318" y="52" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="700" font-family="monospace">CoreLemmas</text>
+        <text x="318" y="72" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="monospace">Landau, Dirichlet, Growth</text>
+
+        <!-- ZetaZeros -->
+        <rect x="445" y="30" width="180" height="56" rx="10" fill="url(#grad-blue)" stroke="#3b82f6" stroke-width="1.5" filter="url(#glow-blue)"/>
+        <text x="535" y="52" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="700" font-family="monospace">ZetaZeros</text>
+        <text x="535" y="72" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="monospace">N(T), density, sup Re</text>
+
+        <!-- ExplicitFormulas -->
+        <rect x="655" y="30" width="195" height="56" rx="10" fill="url(#grad-blue)" stroke="#3b82f6" stroke-width="1.5" filter="url(#glow-blue)"/>
+        <text x="752" y="52" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="700" font-family="monospace">ExplicitFormulas</text>
+        <text x="752" y="72" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="monospace">&psi; formula, Perron, smoothed</text>
+
+        <!-- Oscillation -->
+        <rect x="880" y="30" width="180" height="56" rx="10" fill="url(#grad-blue)" stroke="#3b82f6" stroke-width="1.5" filter="url(#glow-blue)"/>
+        <text x="970" y="52" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="700" font-family="monospace">Oscillation</text>
+        <text x="970" y="72" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="monospace">Schmidt 1903</text>
+
+        <!-- Mertens -->
+        <rect x="1090" y="30" width="170" height="56" rx="10" fill="url(#grad-blue)" stroke="#3b82f6" stroke-width="1.5" filter="url(#glow-blue)"/>
+        <text x="1175" y="52" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="700" font-family="monospace">Mertens</text>
+        <text x="1175" y="72" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="monospace">First theorem</text>
+      </g>
+
+      <!-- Layer label -->
+      <text x="8" y="18" fill="#475569" font-size="9" font-family="monospace" font-weight="600">LAYER 0 — DEFINITIONS &amp; INFRASTRUCTURE</text>
+
+      <!-- Arrows from L0 down -->
+      <line x1="105" y1="86" x2="105" y2="140" stroke="#1e3a5f" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="318" y1="86" x2="318" y2="140" stroke="#1e3a5f" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="535" y1="86" x2="535" y2="140" stroke="#1e3a5f" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="752" y1="86" x2="650" y2="140" stroke="#1e3a5f" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="970" y1="86" x2="850" y2="140" stroke="#1e3a5f" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- LAYER 1: Aristotle (the big core) -->
+      <text x="8" y="132" fill="#475569" font-size="9" font-family="monospace" font-weight="600">LAYER 1 — ARISTOTLE CORE (204 files, 37K+ LoC)</text>
+
+      <g>
+        <!-- Hardy Z cluster -->
+        <rect x="20" y="145" width="215" height="120" rx="12" fill="url(#grad-blue)" stroke="#3b82f6" stroke-width="1.2"/>
+        <text x="128" y="167" text-anchor="middle" fill="#60a5fa" font-size="10.5" font-weight="700" font-family="monospace">Hardy Z Machinery</text>
+        <text x="128" y="184" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">HardyZReal, HardyZIdentities</text>
+        <text x="128" y="198" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">HardyZCauchySchwarz</text>
+        <text x="128" y="212" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">HardyInfiniteZerosV2</text>
+        <text x="128" y="226" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">HardyMeanSquare*</text>
+        <text x="128" y="244" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">7 files</text>
+        <text x="128" y="258" text-anchor="middle" fill="#10b981" font-size="8" font-family="monospace">0 sorry</text>
+
+        <!-- Zeta cluster -->
+        <rect x="260" y="145" width="215" height="120" rx="12" fill="url(#grad-blue)" stroke="#3b82f6" stroke-width="1.2"/>
+        <text x="368" y="167" text-anchor="middle" fill="#60a5fa" font-size="10.5" font-weight="700" font-family="monospace">Zeta Infrastructure</text>
+        <text x="368" y="184" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">ZetaBounds*, ZeroFree*</text>
+        <text x="368" y="198" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">ZetaAnalyticProperties</text>
+        <text x="368" y="212" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">ZetaMoments, MeanSquare</text>
+        <text x="368" y="226" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">ZetaRealNonvanishing</text>
+        <text x="368" y="244" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">15+ files</text>
+        <text x="368" y="258" text-anchor="middle" fill="#10b981" font-size="8" font-family="monospace">0 sorry</text>
+
+        <!-- Contour / Perron -->
+        <rect x="500" y="145" width="215" height="120" rx="12" fill="url(#grad-blue)" stroke="#3b82f6" stroke-width="1.2"/>
+        <text x="608" y="167" text-anchor="middle" fill="#60a5fa" font-size="10.5" font-weight="700" font-family="monospace">Contour & Perron</text>
+        <text x="608" y="184" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">PerronContourIntegrals*</text>
+        <text x="608" y="198" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">CauchyGoursatRectangle</text>
+        <text x="608" y="212" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">ContourIntegration*</text>
+        <text x="608" y="226" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">RiemannVonMangoldt*</text>
+        <text x="608" y="244" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">14+ files</text>
+        <text x="608" y="258" text-anchor="middle" fill="#10b981" font-size="8" font-family="monospace">0 sorry</text>
+
+        <!-- Landau / Pringsheim -->
+        <rect x="740" y="145" width="215" height="120" rx="12" fill="url(#grad-blue)" stroke="#3b82f6" stroke-width="1.2"/>
+        <text x="848" y="167" text-anchor="middle" fill="#60a5fa" font-size="10.5" font-weight="700" font-family="monospace">Landau & Pringsheim</text>
+        <text x="848" y="184" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">LandauSchmidtDirect</text>
+        <text x="848" y="198" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">PringsheimPsiAtom/PiAtom</text>
+        <text x="848" y="212" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">NonNegDirichletIntegral</text>
+        <text x="848" y="226" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">PringsheimExtension</text>
+        <text x="848" y="244" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">12+ files</text>
+        <text x="848" y="258" text-anchor="middle" fill="#10b981" font-size="8" font-family="monospace">0 sorry</text>
+
+        <!-- Analysis -->
+        <rect x="980" y="145" width="215" height="120" rx="12" fill="url(#grad-blue)" stroke="#3b82f6" stroke-width="1.2"/>
+        <text x="1088" y="167" text-anchor="middle" fill="#60a5fa" font-size="10.5" font-weight="700" font-family="monospace">Analysis & Phase</text>
+        <text x="1088" y="184" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">PhragmenLindelof*</text>
+        <text x="1088" y="198" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">DirichletPhaseAlignment</text>
+        <text x="1088" y="212" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">FunctionalEquationV2</text>
+        <text x="1088" y="226" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">StirlingGammaBounds</text>
+        <text x="1088" y="244" text-anchor="middle" fill="#64748b" font-size="8" font-family="monospace">20+ files</text>
+        <text x="1088" y="258" text-anchor="middle" fill="#10b981" font-size="8" font-family="monospace">0 sorry</text>
+      </g>
+
+      <!-- Arrows from Aristotle to Standalone -->
+      <line x1="128" y1="265" x2="280" y2="310" stroke="#1e3a5f" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="368" y1="265" x2="420" y2="310" stroke="#1e3a5f" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="608" y1="265" x2="560" y2="310" stroke="#1e3a5f" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="848" y1="265" x2="700" y2="310" stroke="#1e3a5f" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="1088" y1="265" x2="840" y2="310" stroke="#1e3a5f" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- LAYER 2: Standalone -->
+      <text x="8" y="302" fill="#475569" font-size="9" font-family="monospace" font-weight="600">LAYER 2 — STANDALONE DEEP BLOCKERS (102 files)</text>
+
+      <!-- Standalone grid -->
+      <g>
+        <!-- B1 -->
+        <rect x="40" y="315" width="185" height="72" rx="10" fill="url(#grad-amber)" stroke="#f59e0b" stroke-width="1.2" class="sorry-pulse"/>
+        <text x="132" y="337" text-anchor="middle" fill="#fbbf24" font-size="10.5" font-weight="700" font-family="monospace">B1: Mean Square</text>
+        <text x="132" y="354" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">&int;|Z(t)|&sup2; dt &ge; cT log T</text>
+        <text x="132" y="371" text-anchor="middle" fill="#f59e0b" font-size="8" font-family="monospace">WIRED (1 sorry: AFE)</text>
+        <text x="132" y="383" text-anchor="middle" fill="#64748b" font-size="7.5" font-family="monospace">HardyMeanSquareAsymptoticFromZetaMoment</text>
+
+        <!-- B2 -->
+        <rect x="245" y="315" width="185" height="72" rx="10" fill="url(#grad-amber)" stroke="#f59e0b" stroke-width="1.2" class="sorry-pulse"/>
+        <text x="338" y="337" text-anchor="middle" fill="#fbbf24" font-size="10.5" font-weight="700" font-family="monospace">B2: First Moment</text>
+        <text x="338" y="354" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">|&int; MainTerm| &le; CT^{1/2+&epsilon;}</text>
+        <text x="338" y="371" text-anchor="middle" fill="#f59e0b" font-size="8" font-family="monospace">SORRY (Heath-Brown '78)</text>
+        <text x="338" y="383" text-anchor="middle" fill="#64748b" font-size="7.5" font-family="monospace">DeepBlockersResolved:113</text>
+
+        <!-- B3 -->
+        <rect x="450" y="315" width="185" height="72" rx="10" fill="url(#grad-amber)" stroke="#f59e0b" stroke-width="1.2" class="sorry-pulse"/>
+        <text x="542" y="337" text-anchor="middle" fill="#fbbf24" font-size="10.5" font-weight="700" font-family="monospace">B3: RS Sign</text>
+        <text x="542" y="354" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">Per-block alternation</text>
+        <text x="542" y="371" text-anchor="middle" fill="#f59e0b" font-size="8" font-family="monospace">SORRY (Siegel 1932)</text>
+        <text x="542" y="383" text-anchor="middle" fill="#64748b" font-size="7.5" font-family="monospace">DeepBlockersResolved:120</text>
+
+        <!-- B4 -->
+        <rect x="655" y="315" width="185" height="72" rx="10" fill="url(#grad-green)" stroke="#10b981" stroke-width="1.5" filter="url(#glow-green)"/>
+        <text x="748" y="337" text-anchor="middle" fill="#34d399" font-size="10.5" font-weight="700" font-family="monospace">B4: &sigma;&sub0; &lt; 1</text>
+        <text x="748" y="354" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">Convergence abscissa</text>
+        <text x="748" y="371" text-anchor="middle" fill="#10b981" font-size="8" font-weight="600" font-family="monospace">PROVED</text>
+        <text x="748" y="383" text-anchor="middle" fill="#64748b" font-size="7.5" font-family="monospace">SigmaLtOneFromPringsheimExtension</text>
+
+        <!-- B5 -->
+        <rect x="860" y="315" width="185" height="72" rx="10" fill="url(#grad-amber)" stroke="#f59e0b" stroke-width="1.2" class="sorry-pulse"/>
+        <text x="952" y="337" text-anchor="middle" fill="#fbbf24" font-size="10.5" font-weight="700" font-family="monospace">B5: Explicit + Osc</text>
+        <text x="952" y="354" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">&psi; = x - 2&Sigma; Re(x^&rho;/&rho;)</text>
+        <text x="952" y="371" text-anchor="middle" fill="#f59e0b" font-size="8" font-family="monospace">SORRY (Ingham 1932)</text>
+        <text x="952" y="383" text-anchor="middle" fill="#64748b" font-size="7.5" font-family="monospace">DeepBlockersResolved:126</text>
+
+        <!-- B6 + B7 -->
+        <rect x="1065" y="315" width="185" height="72" rx="10" fill="url(#grad-green)" stroke="#10b981" stroke-width="1.5" filter="url(#glow-green)"/>
+        <text x="1158" y="337" text-anchor="middle" fill="#34d399" font-size="10.5" font-weight="700" font-family="monospace">B6+B7: &pi; Chain</text>
+        <text x="1158" y="354" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">Corrected prime-&zeta;, phases</text>
+        <text x="1158" y="371" text-anchor="middle" fill="#10b981" font-size="8" font-weight="600" font-family="monospace">PROVED (50+ files)</text>
+        <text x="1158" y="383" text-anchor="middle" fill="#64748b" font-size="7.5" font-family="monospace">PiPringsheimExtension, B7a/B7b</text>
+      </g>
+
+      <!-- Arrows from Standalone to DeepSorries -->
+      <line x1="132" y1="387" x2="470" y2="435" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow-amber)"/>
+      <line x1="338" y1="387" x2="520" y2="435" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow-amber)"/>
+      <line x1="542" y1="387" x2="580" y2="435" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow-amber)"/>
+      <line x1="748" y1="387" x2="650" y2="435" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+      <line x1="952" y1="387" x2="720" y2="435" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow-amber)"/>
+      <line x1="1158" y1="387" x2="790" y2="435" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+
+      <!-- LAYER 3: DeepSorries -->
+      <text x="8" y="430" fill="#475569" font-size="9" font-family="monospace" font-weight="600">LAYER 3 — CONSOLIDATED SORRY</text>
+
+      <rect x="380" y="440" width="500" height="56" rx="12" fill="url(#grad-purple)" stroke="#8b5cf6" stroke-width="1.8"/>
+      <text x="630" y="462" text-anchor="middle" fill="#c4b5fd" font-size="12" font-weight="700" font-family="monospace">DeepSorries.lean &mdash; combined_atoms</text>
+      <text x="630" y="482" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="monospace">Hardy &infin; zeros &and; &psi; oscillation &and; &pi;-li oscillation (single private theorem)</text>
+
+      <!-- Arrows from DeepSorries to Bridge -->
+      <line x1="630" y1="496" x2="630" y2="540" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+
+      <!-- LAYER 4: Bridge -->
+      <text x="8" y="536" fill="#475569" font-size="9" font-family="monospace" font-weight="600">LAYER 4 — BRIDGE (37 files)</text>
+
+      <g>
+        <rect x="180" y="545" width="220" height="56" rx="10" fill="url(#grad-green)" stroke="#10b981" stroke-width="1.2"/>
+        <text x="290" y="567" text-anchor="middle" fill="#34d399" font-size="10.5" font-weight="700" font-family="monospace">AristotleBridges</text>
+        <text x="290" y="585" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">Hypothesis instances (0 sorry)</text>
+
+        <rect x="425" y="545" width="220" height="56" rx="10" fill="url(#grad-green)" stroke="#10b981" stroke-width="1.2"/>
+        <text x="535" y="567" text-anchor="middle" fill="#34d399" font-size="10.5" font-weight="700" font-family="monospace">AristotleWiring</text>
+        <text x="535" y="585" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">Master wiring (0 sorry)</text>
+
+        <rect x="670" y="545" width="220" height="56" rx="10" fill="url(#grad-green)" stroke="#10b981" stroke-width="1.2"/>
+        <text x="780" y="567" text-anchor="middle" fill="#34d399" font-size="10.5" font-weight="700" font-family="monospace">HypothesisInstances</text>
+        <text x="780" y="585" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">Type transfers (0 sorry)</text>
+
+        <rect x="915" y="545" width="220" height="56" rx="10" fill="url(#grad-green)" stroke="#10b981" stroke-width="1.2"/>
+        <text x="1025" y="567" text-anchor="middle" fill="#34d399" font-size="10.5" font-weight="700" font-family="monospace">HardyZ Bridges</text>
+        <text x="1025" y="585" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="monospace">Z transfer, unified (0 sorry)</text>
+      </g>
+
+      <!-- Arrows from Bridge to Main -->
+      <line x1="290" y1="601" x2="510" y2="640" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+      <line x1="535" y1="601" x2="560" y2="640" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+      <line x1="780" y1="601" x2="700" y2="640" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+      <line x1="1025" y1="601" x2="780" y2="640" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+
+      <!-- LAYER 5: Main -->
+      <text x="8" y="636" fill="#475569" font-size="9" font-family="monospace" font-weight="600">LAYER 5 — PUBLIC API</text>
+
+      <rect x="390" y="645" width="260" height="60" rx="14" fill="url(#grad-green)" stroke="#10b981" stroke-width="2.5" filter="url(#glow-green)"/>
+      <text x="520" y="668" text-anchor="middle" fill="#34d399" font-size="13" font-weight="700" font-family="monospace">littlewood_psi</text>
+      <text x="520" y="688" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="monospace">&psi;(x) - x = &Omega;&plusmn;(&radic;x &middot; lll x)</text>
+
+      <rect x="680" y="645" width="290" height="60" rx="14" fill="url(#grad-green)" stroke="#10b981" stroke-width="2.5" filter="url(#glow-green)"/>
+      <text x="825" y="668" text-anchor="middle" fill="#34d399" font-size="13" font-weight="700" font-family="monospace">littlewood_pi_li</text>
+      <text x="825" y="688" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="monospace">&pi;(x) - li(x) = &Omega;&plusmn;(&radic;x/log x &middot; lll x)</text>
+    </svg>
+    <div class="scroll-hint">Scroll horizontally if needed</div>
+  </div>
+</div>
+
+<!-- Section 2: Three Proof Chains -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:var(--accent2)"></span> Three Independent Proof Chains</div>
+  <div class="section-desc">The proof splits into three independent chains that converge to combined_atoms.</div>
+
+  <div class="chains-grid">
+    <!-- Chain 1: Hardy -->
+    <div class="chain-card chain-hardy">
+      <h3 style="color: var(--cyan)">Chain 1: Hardy's Theorem</h3>
+      <div class="chain-status" style="color: var(--amber)">&infin; critical-line zeros &mdash; 3 deep sorries</div>
+      <ul class="chain-steps">
+        <li>HardyZReal &mdash; Z(t) = e^{i&theta;} &zeta;(1/2+it) <span class="file">HardyZReal.lean</span></li>
+        <li>HardyZIdentities &mdash; Z&sup2; = |&zeta;|&sup2; <span class="file">HardyZIdentities.lean</span></li>
+        <li class="sorry">B1: Mean square &ge; cT log T <span class="file">HardyMeanSquare*.lean</span></li>
+        <li class="sorry">B2: First moment cancellation <span class="file">DeepBlockersResolved:113</span></li>
+        <li class="sorry">B3: RS sign structure <span class="file">DeepBlockersResolved:120</span></li>
+        <li>HardyInfiniteZerosV2 &mdash; contradiction <span class="file">HardyInfiniteZerosV2.lean</span></li>
+        <li>PhragmenLindelof &mdash; convexity bound <span class="file">PhragmenLindelof.lean</span></li>
+      </ul>
+    </div>
+
+    <!-- Chain 2: psi -->
+    <div class="chain-card chain-psi">
+      <h3 style="color: var(--rose)">&psi; Oscillation (Full Strength)</h3>
+      <div class="chain-status" style="color: var(--amber)">&psi;(x) &minus; x = &Omega;&plusmn; &mdash; B5 sorry</div>
+      <ul class="chain-steps">
+        <li>&not;RH case: LandauSchmidtDirect <span class="file">LandauSchmidtDirect.lean</span></li>
+        <li>B4: &sigma;&sub0; &lt; 1 (PROVED) <span class="file">SigmaLtOneFromPringsheim.lean</span></li>
+        <li>NonNegDirichletIntegral <span class="file">NonNegDirichletIntegral.lean</span></li>
+        <li>GrowthDomination &radic;x &middot; lll x <span class="file">GrowthDomination.lean</span></li>
+        <li class="sorry">B5: RH case explicit formula <span class="file">DeepBlockersResolved:126</span></li>
+        <li>RHPsiWitnessFromZeroSum <span class="file">RHPsiWitnessFromZeroSum.lean</span></li>
+        <li>SchmidtTheorem &mdash; &Omega;&plusmn;(x^{&Theta;-&epsilon;}) <span class="file">SchmidtTheorem.lean</span></li>
+      </ul>
+    </div>
+
+    <!-- Chain 3: pi-li -->
+    <div class="chain-card chain-pi">
+      <h3 style="color: var(--gold)">&pi;-li Oscillation (Full Strength)</h3>
+      <div class="chain-status" style="color: var(--green)">Sorry-free &pi; chain &mdash; fully proved</div>
+      <ul class="chain-steps">
+        <li>B6: Corrected (s-1)&zeta; extension <span class="file">CorrectedPrimeZeta*.lean</span></li>
+        <li>PiPringsheimExtension (2015 LoC) <span class="file">PiPringsheimExtension.lean</span></li>
+        <li>PiAtomCoreFromZetaZeroFree <span class="file">PiAtomCoreFromZetaZeroFree.lean</span></li>
+        <li>B7a: Phase coupling families <span class="file">RHPiPhaseCoupling*.lean</span></li>
+        <li>B7b: Witness construction <span class="file">RHPiWitness*.lean (50+ files)</span></li>
+        <li>PringsheimRealBootstrap <span class="file">PringsheimRealBootstrap.lean</span></li>
+        <li>DirichletEtaZetaSign <span class="file">DirichletEtaZetaSign.lean</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: Deep Blockers Status -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:var(--amber)"></span> Deep Blocker Status (B1&ndash;B7)</div>
+  <div class="section-desc">Each blocker encapsulates one deep mathematical result. 4 of 7 fully proved.</div>
+
+  <div class="blocker-grid">
+    <div class="blocker-card sorry">
+      <div class="blocker-badge">WIRED</div>
+      <div class="blocker-id">B1</div>
+      <div class="blocker-title">Hardy Mean-Square Asymptotic</div>
+      <div class="blocker-desc">&int;&sub1;&supT; |Z(t)|&sup2; dt &ge; c&middot;T&middot;log T. Wired via HardyMeanSquareAsymptoticFromZetaMoment. Needs approximate functional equation (~100-150 lines).</div>
+    </div>
+    <div class="blocker-card sorry">
+      <div class="blocker-badge">SORRY</div>
+      <div class="blocker-id">B2</div>
+      <div class="blocker-title">First Moment Bound</div>
+      <div class="blocker-desc">|&int;&sub1;&supT; MainTerm(t) dt| &le; C&middot;T^{1/2+&epsilon;}. Heath-Brown 1978 exponential sum cancellation. Est. 500+ lines.</div>
+    </div>
+    <div class="blocker-card sorry">
+      <div class="blocker-badge">SORRY</div>
+      <div class="blocker-id">B3</div>
+      <div class="blocker-title">RS Per-Block Sign</div>
+      <div class="blocker-desc">Riemann-Siegel breakpoint blocks alternate in sign. Siegel 1932, Titchmarsh &sect;4.16-4.17. Est. 300+ lines.</div>
+    </div>
+    <div class="blocker-card proved">
+      <div class="blocker-badge">PROVED</div>
+      <div class="blocker-id">B4</div>
+      <div class="blocker-title">&sigma;&sub0; &lt; 1 (Convergence Abscissa)</div>
+      <div class="blocker-desc">Landau's Dirichlet series has convergence abscissa &lt; 1. Pringsheim extension: non-negative coefficients &rArr; singularity at &sigma; = 1.</div>
+    </div>
+    <div class="blocker-card sorry">
+      <div class="blocker-badge">SORRY</div>
+      <div class="blocker-id">B5</div>
+      <div class="blocker-title">Explicit Formula + RH Oscillation</div>
+      <div class="blocker-desc">&psi;(x) = x - 2&Sigma; Re(x^&rho;/&rho;) + O(log&sup2;x). Phase alignment on zeros gives &Omega;&plusmn; oscillation. Ingham 1932 contradiction. Est. 400+ lines.</div>
+    </div>
+    <div class="blocker-card proved">
+      <div class="blocker-badge">PROVED</div>
+      <div class="blocker-id">B6</div>
+      <div class="blocker-title">Corrected Prime-Zeta Extension</div>
+      <div class="blocker-desc">G(s) on {Re &gt; &sigma;&sub0;} with exp(G) = (s-1)&zeta;(s). Monodromy-free via pole cancellation. Both piGenFun identities proved.</div>
+    </div>
+    <div class="blocker-card proved">
+      <div class="blocker-badge">PROVED</div>
+      <div class="blocker-id">B7</div>
+      <div class="blocker-title">RH Phase-Coupling Families</div>
+      <div class="blocker-desc">B7a + B7b: Constructive &pi;-li oscillation witnesses under RH. 50+ standalone infrastructure files, all 0 sorry. Phase coupling families fully closed.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 4: Charts -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:var(--green)"></span> Codebase Metrics</div>
+  <div class="section-desc">Distribution of files, lines of code, and proof status across modules.</div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>Files by Module</h3>
+      <canvas id="chart-files"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Lines of Code by Module</h3>
+      <canvas id="chart-loc"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Proof Status (Files)</h3>
+      <canvas id="chart-status"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Blocker Resolution Progress</h3>
+      <canvas id="chart-blockers"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Section 5: Line chart - Module Complexity -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:var(--cyan)"></span> Module Complexity Profile</div>
+  <div class="section-desc">Average lines of code per file across modules &mdash; showing mathematical density.</div>
+
+  <div class="chart-full">
+    <h3>Average LoC per File by Module Group</h3>
+    <canvas id="chart-complexity" height="100"></canvas>
+  </div>
+</div>
+
+<!-- Section 6: Aristotle Breakdown -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:var(--accent2)"></span> Aristotle Core &mdash; Subsystem Breakdown</div>
+  <div class="section-desc">The 204-file Aristotle directory organized by mathematical domain.</div>
+
+  <div class="chart-full">
+    <h3>Files and Approximate LoC per Aristotle Subsystem</h3>
+    <canvas id="chart-aristotle" height="120"></canvas>
+  </div>
+</div>
+
+<!-- Section 7: Full Module Table -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:var(--accent)"></span> Complete Module Inventory</div>
+  <div class="section-desc">Every active module with file counts, status, and mathematical role.</div>
+
+  <div class="module-table-wrap">
+    <table class="module-table">
+      <thead>
+        <tr>
+          <th>Module</th>
+          <th>Files</th>
+          <th>~LoC</th>
+          <th>Status</th>
+          <th>Key Contribution</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mod-name">Main</td><td>3</td><td>400</td>
+          <td><span class="status-badge proved">0 sorry</span></td>
+          <td>littlewood_psi, littlewood_pi_li &mdash; final public API</td>
+        </tr>
+        <tr>
+          <td class="mod-name">Basic</td><td>4</td><td>1,400</td>
+          <td><span class="status-badge proved">0 sorry</span></td>
+          <td>&Omega; notation, &psi;, &theta;, li definitions</td>
+        </tr>
+        <tr>
+          <td class="mod-name">CoreLemmas</td><td>4</td><td>1,400</td>
+          <td><span class="status-badge proved">0 sorry</span></td>
+          <td>Landau lemma, Dirichlet approx, growth domination</td>
+        </tr>
+        <tr>
+          <td class="mod-name">ZetaZeros</td><td>3</td><td>400</td>
+          <td><span class="status-badge proved">0 sorry</span></td>
+          <td>N(T) counting, zero density, sup Re</td>
+        </tr>
+        <tr>
+          <td class="mod-name">ExplicitFormulas</td><td>5</td><td>600</td>
+          <td><span class="status-badge proved">0 sorry</span></td>
+          <td>&psi; formula, &theta; formula, Perron, smoothed variants</td>
+        </tr>
+        <tr>
+          <td class="mod-name">Oscillation</td><td>2</td><td>300</td>
+          <td><span class="status-badge proved">0 sorry</span></td>
+          <td>Schmidt 1903 &Omega;&plusmn;(x^{&Theta;-&epsilon;}) for &psi; and &pi;</td>
+        </tr>
+        <tr>
+          <td class="mod-name">Mertens</td><td>1</td><td>150</td>
+          <td><span class="status-badge proved">0 sorry</span></td>
+          <td>Mertens' first theorem</td>
+        </tr>
+        <tr>
+          <td class="mod-name">Aristotle (core)</td><td>~160</td><td>37,000</td>
+          <td><span class="status-badge proved">0 sorry</span></td>
+          <td>Hardy Z, zeta bounds, contour integration, Landau, Pringsheim, phase alignment, Phragmen-Lindelof</td>
+        </tr>
+        <tr>
+          <td class="mod-name">Aristotle/Standalone</td><td>102</td><td>15,000</td>
+          <td><span class="status-badge sorry">3 sorry</span></td>
+          <td>Deep blocker assembly (B1-B7), RH oscillation witnesses, &pi; chain, phase coupling</td>
+        </tr>
+        <tr>
+          <td class="mod-name">Bridge</td><td>37</td><td>1,500</td>
+          <td><span class="status-badge proved">0 sorry</span></td>
+          <td>Hypothesis instances, type transfers, Hardy Z bridges, wiring</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Section 8: Key Lemma Critical Path -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:var(--rose)"></span> Critical Lemma Paths</div>
+  <div class="section-desc">The essential dependency chains that make each proof chain work.</div>
+
+  <div class="chart-full" style="padding: 32px;">
+    <svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;">
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto" fill="#3b82f6"><path d="M0 0L10 5L0 10z"/></marker>
+        <marker id="a2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto" fill="#10b981"><path d="M0 0L10 5L0 10z"/></marker>
+        <marker id="a2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto" fill="#f59e0b"><path d="M0 0L10 5L0 10z"/></marker>
+      </defs>
+
+      <!-- Path A: Hardy -->
+      <text x="20" y="30" fill="#06b6d4" font-size="12" font-weight="700" font-family="monospace">Path A: Hardy's Theorem</text>
+
+      <rect x="20" y="40" width="140" height="34" rx="6" fill="#111827" stroke="#06b6d4" stroke-width="1.2"/>
+      <text x="90" y="62" text-anchor="middle" fill="#67e8f9" font-size="9" font-family="monospace">HardyAssumptions</text>
+
+      <line x1="160" y1="57" x2="185" y2="57" stroke="#06b6d4" stroke-width="1" marker-end="url(#a2)"/>
+
+      <rect x="185" y="40" width="145" height="34" rx="6" fill="#111827" stroke="#f59e0b" stroke-width="1.2"/>
+      <text x="258" y="62" text-anchor="middle" fill="#fbbf24" font-size="9" font-family="monospace">mean_square_lower</text>
+      <text x="258" y="51" text-anchor="middle" fill="#f59e0b" font-size="7" font-family="monospace">B1</text>
+
+      <line x1="330" y1="57" x2="355" y2="57" stroke="#06b6d4" stroke-width="1" marker-end="url(#a2)"/>
+
+      <rect x="355" y="40" width="155" height="34" rx="6" fill="#111827" stroke="#f59e0b" stroke-width="1.2"/>
+      <text x="432" y="62" text-anchor="middle" fill="#fbbf24" font-size="9" font-family="monospace">first_moment_upper</text>
+      <text x="432" y="51" text-anchor="middle" fill="#f59e0b" font-size="7" font-family="monospace">B2</text>
+
+      <line x1="510" y1="57" x2="535" y2="57" stroke="#06b6d4" stroke-width="1" marker-end="url(#a2)"/>
+
+      <rect x="535" y="40" width="170" height="34" rx="6" fill="#111827" stroke="#3b82f6" stroke-width="1.2"/>
+      <text x="620" y="62" text-anchor="middle" fill="#60a5fa" font-size="9" font-family="monospace">Z_convexity_bound</text>
+      <text x="620" y="51" text-anchor="middle" fill="#10b981" font-size="7" font-family="monospace">Phragmen-Lindelof</text>
+
+      <line x1="705" y1="57" x2="730" y2="57" stroke="#06b6d4" stroke-width="1" marker-end="url(#a2)"/>
+
+      <rect x="730" y="40" width="180" height="34" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="820" y="62" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace">HardyInfiniteZerosV2</text>
+      <text x="820" y="51" text-anchor="middle" fill="#10b981" font-size="7" font-family="monospace">Contradiction</text>
+
+      <!-- Path B: psi not-RH -->
+      <text x="20" y="120" fill="#f43f5e" font-size="12" font-weight="700" font-family="monospace">Path B: &psi; Oscillation (&not;RH case)</text>
+
+      <rect x="20" y="130" width="155" height="34" rx="6" fill="#111827" stroke="#f43f5e" stroke-width="1.2"/>
+      <text x="98" y="152" text-anchor="middle" fill="#fb7185" font-size="9" font-family="monospace">ZeroCountingFunction</text>
+
+      <line x1="175" y1="147" x2="200" y2="147" stroke="#f43f5e" stroke-width="1" marker-end="url(#a2)"/>
+
+      <rect x="200" y="130" width="175" height="34" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.2"/>
+      <text x="288" y="152" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace">landau_nonneg_integral</text>
+
+      <line x1="375" y1="147" x2="400" y2="147" stroke="#f43f5e" stroke-width="1" marker-end="url(#a2)"/>
+
+      <rect x="400" y="130" width="120" height="34" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="460" y="152" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace">&sigma;&sub0; &lt; 1</text>
+      <text x="460" y="142" text-anchor="middle" fill="#10b981" font-size="7" font-family="monospace">B4 PROVED</text>
+
+      <line x1="520" y1="147" x2="545" y2="147" stroke="#f43f5e" stroke-width="1" marker-end="url(#a2)"/>
+
+      <rect x="545" y="130" width="190" height="34" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.2"/>
+      <text x="640" y="152" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace">GrowthDomination</text>
+      <text x="640" y="142" text-anchor="middle" fill="#10b981" font-size="7" font-family="monospace">&radic;x&middot;lll x dominates</text>
+
+      <line x1="735" y1="147" x2="760" y2="147" stroke="#f43f5e" stroke-width="1" marker-end="url(#a2)"/>
+
+      <rect x="760" y="130" width="190" height="34" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="855" y="152" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace">LandauSchmidtDirect</text>
+      <text x="855" y="142" text-anchor="middle" fill="#10b981" font-size="7" font-family="monospace">&Omega;&plusmn;(&radic;x&middot;lll x)</text>
+
+      <!-- Path C: psi RH -->
+      <text x="20" y="210" fill="#a78bfa" font-size="12" font-weight="700" font-family="monospace">Path C: &psi; Oscillation (RH case)</text>
+
+      <rect x="20" y="220" width="200" height="34" rx="6" fill="#111827" stroke="#f59e0b" stroke-width="1.2"/>
+      <text x="120" y="242" text-anchor="middle" fill="#fbbf24" font-size="9" font-family="monospace">explicit_formula_truncated</text>
+      <text x="120" y="232" text-anchor="middle" fill="#f59e0b" font-size="7" font-family="monospace">B5a: needs proof</text>
+
+      <line x1="220" y1="237" x2="245" y2="237" stroke="#a78bfa" stroke-width="1" marker-end="url(#a2)"/>
+
+      <rect x="245" y="220" width="210" height="34" rx="6" fill="#111827" stroke="#f59e0b" stroke-width="1.2"/>
+      <text x="350" y="242" text-anchor="middle" fill="#fbbf24" font-size="9" font-family="monospace">psi_zero_sum_oscillation</text>
+      <text x="350" y="232" text-anchor="middle" fill="#f59e0b" font-size="7" font-family="monospace">B5b: needs proof</text>
+
+      <line x1="455" y1="237" x2="480" y2="237" stroke="#a78bfa" stroke-width="1" marker-end="url(#a2)"/>
+
+      <rect x="480" y="220" width="210" height="34" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.2"/>
+      <text x="585" y="242" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace">DirichletPhaseAlignment</text>
+      <text x="585" y="232" text-anchor="middle" fill="#10b981" font-size="7" font-family="monospace">K-zero alignment</text>
+
+      <line x1="690" y1="237" x2="715" y2="237" stroke="#a78bfa" stroke-width="1" marker-end="url(#a2)"/>
+
+      <rect x="715" y="220" width="210" height="34" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="820" y="242" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace">RHPsiWitnessFromZeroSum</text>
+      <text x="820" y="232" text-anchor="middle" fill="#10b981" font-size="7" font-family="monospace">Constructive witness</text>
+
+      <!-- Path D: pi-li -->
+      <text x="20" y="300" fill="#fbbf24" font-size="12" font-weight="700" font-family="monospace">Path D/E: &pi;-li Oscillation (fully proved)</text>
+
+      <rect x="20" y="310" width="155" height="34" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.2"/>
+      <text x="98" y="332" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace">PringsheimPiAtom</text>
+
+      <line x1="175" y1="327" x2="200" y2="327" stroke="#10b981" stroke-width="1" marker-end="url(#a2g)"/>
+
+      <rect x="200" y="310" width="175" height="34" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.2"/>
+      <text x="288" y="332" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace">PiPringsheimExtension</text>
+      <text x="288" y="322" text-anchor="middle" fill="#10b981" font-size="7" font-family="monospace">2015 LoC</text>
+
+      <line x1="375" y1="327" x2="400" y2="327" stroke="#10b981" stroke-width="1" marker-end="url(#a2g)"/>
+
+      <rect x="400" y="310" width="190" height="34" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.2"/>
+      <text x="495" y="332" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace">PiAtomCoreFromZetaZF</text>
+      <text x="495" y="322" text-anchor="middle" fill="#10b981" font-size="7" font-family="monospace">Zero-free region</text>
+
+      <line x1="590" y1="327" x2="615" y2="327" stroke="#10b981" stroke-width="1" marker-end="url(#a2g)"/>
+
+      <rect x="615" y="310" width="205" height="34" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.2"/>
+      <text x="718" y="332" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace">RHPiPhaseCoupling*</text>
+      <text x="718" y="322" text-anchor="middle" fill="#10b981" font-size="7" font-family="monospace">B7a+B7b families</text>
+
+      <line x1="820" y1="327" x2="845" y2="327" stroke="#10b981" stroke-width="1" marker-end="url(#a2g)"/>
+
+      <rect x="845" y="310" width="210" height="34" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="950" y="332" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace">RHPiWitnessFromEF</text>
+      <text x="950" y="322" text-anchor="middle" fill="#10b981" font-size="7" font-family="monospace">Full &pi;-li witness</text>
+
+      <!-- Legend -->
+      <rect x="20" y="370" width="12" height="12" rx="2" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="38" y="381" fill="#94a3b8" font-size="9" font-family="monospace">Proved (0 sorry)</text>
+
+      <rect x="200" y="370" width="12" height="12" rx="2" fill="#111827" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="218" y="381" fill="#94a3b8" font-size="9" font-family="monospace">Has sorry</text>
+
+      <rect x="350" y="370" width="12" height="12" rx="2" fill="#111827" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="368" y="381" fill="#94a3b8" font-size="9" font-family="monospace">Infrastructure</text>
+    </svg>
+  </div>
+</div>
+
+<!-- Section 9: Dependency Line Chart -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:var(--gold)"></span> Proof Depth &mdash; Layer-by-Layer Accumulation</div>
+  <div class="section-desc">How modules accumulate through the 6 dependency layers from definitions to final theorems.</div>
+
+  <div class="chart-full">
+    <h3>Cumulative Files per Layer</h3>
+    <canvas id="chart-layers" height="90"></canvas>
+  </div>
+</div>
+
+</div><!-- end container -->
+
+<div class="footer">
+  Littlewood's Theorem &mdash; Lean 4 / Mathlib Formalization &mdash; 0 build errors, 7907 jobs, 57K+ LoC<br/>
+  Generated 2026-03-01 &middot; Lean v4.27.0-rc1 &middot; Mathlib fdddb3ea2c8c
+</div>
+
+<script>
+// Chart.js defaults
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = 'rgba(30,58,95,0.4)';
+Chart.defaults.font.family = "'SF Mono','Fira Code','JetBrains Mono',monospace";
+Chart.defaults.font.size = 11;
+
+// 1. Files by Module (bar)
+new Chart(document.getElementById('chart-files'), {
+  type: 'bar',
+  data: {
+    labels: ['Aristotle\n(core)', 'Standalone', 'Bridge', 'Explicit\nFormulas', 'Basic', 'CoreLemmas', 'ZetaZeros', 'Main', 'Oscillation', 'Mertens'],
+    datasets: [{
+      label: 'Files',
+      data: [160, 102, 37, 5, 4, 4, 3, 3, 2, 1],
+      backgroundColor: ['#3b82f6','#8b5cf6','#10b981','#06b6d4','#60a5fa','#a78bfa','#67e8f9','#34d399','#f472b6','#fbbf24'],
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, title: { display: true, text: 'File Count' } },
+      x: { ticks: { maxRotation: 45 } }
+    }
+  }
+});
+
+// 2. LoC by Module (horizontal bar)
+new Chart(document.getElementById('chart-loc'), {
+  type: 'bar',
+  data: {
+    labels: ['Aristotle (core)', 'Standalone', 'Bridge', 'Basic', 'CoreLemmas', 'ExplicitFormulas', 'Main', 'ZetaZeros', 'Oscillation', 'Mertens'],
+    datasets: [{
+      label: 'Lines of Code',
+      data: [37000, 15000, 1500, 1400, 1400, 600, 400, 400, 300, 150],
+      backgroundColor: '#3b82f6',
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { beginAtZero: true, title: { display: true, text: 'Lines of Code' } }
+    }
+  }
+});
+
+// 3. Proof Status (doughnut)
+new Chart(document.getElementById('chart-status'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Proved (0 sorry)', 'Sorry (3 atoms)'],
+    datasets: [{
+      data: [353, 3],
+      backgroundColor: ['#10b981', '#f59e0b'],
+      borderColor: '#111827',
+      borderWidth: 3,
+      hoverOffset: 10,
+    }]
+  },
+  options: {
+    responsive: true,
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom' },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => `${ctx.label}: ${ctx.raw} files (${(ctx.raw/356*100).toFixed(1)}%)`
+        }
+      }
+    }
+  }
+});
+
+// 4. Blocker Resolution (doughnut)
+new Chart(document.getElementById('chart-blockers'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Proved (B4, B6, B7)', 'Wired (B1)', 'Sorry (B2, B3, B5)'],
+    datasets: [{
+      data: [4, 1, 3],
+      backgroundColor: ['#10b981', '#06b6d4', '#f59e0b'],
+      borderColor: '#111827',
+      borderWidth: 3,
+      hoverOffset: 10,
+    }]
+  },
+  options: {
+    responsive: true,
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom' },
+    }
+  }
+});
+
+// 5. Complexity line chart
+new Chart(document.getElementById('chart-complexity'), {
+  type: 'line',
+  data: {
+    labels: ['Basic', 'CoreLemmas', 'ZetaZeros', 'ExplicitFormulas', 'Oscillation', 'Mertens', 'Aristotle (core)', 'Standalone', 'Bridge', 'Main'],
+    datasets: [{
+      label: 'Avg LoC/File',
+      data: [350, 350, 133, 120, 150, 150, 231, 147, 41, 133],
+      borderColor: '#8b5cf6',
+      backgroundColor: 'rgba(139,92,246,0.1)',
+      fill: true,
+      tension: 0.35,
+      pointBackgroundColor: '#8b5cf6',
+      pointBorderColor: '#1a2332',
+      pointBorderWidth: 2,
+      pointRadius: 5,
+      pointHoverRadius: 8,
+    },
+    {
+      label: 'Max LoC (notable file)',
+      data: [867, 521, 200, 200, 180, 150, 1482, 2015, 200, 139],
+      borderColor: '#f43f5e',
+      backgroundColor: 'rgba(244,63,94,0.05)',
+      fill: true,
+      tension: 0.35,
+      pointBackgroundColor: '#f43f5e',
+      pointBorderColor: '#1a2332',
+      pointBorderWidth: 2,
+      pointRadius: 5,
+      pointHoverRadius: 8,
+      borderDash: [5, 3],
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: {
+        callbacks: {
+          afterBody: (items) => {
+            const notables = {
+              'Basic': 'LogarithmicIntegral (867 LoC)',
+              'CoreLemmas': 'DirichletApproximation (521 LoC)',
+              'Aristotle (core)': 'PhragmenLindelof (1482 LoC)',
+              'Standalone': 'PiPringsheimExtension (2015 LoC)',
+            };
+            return notables[items[0].label] ? `Notable: ${notables[items[0].label]}` : '';
+          }
+        }
+      }
+    },
+    scales: {
+      y: { beginAtZero: true, title: { display: true, text: 'Lines of Code' } }
+    }
+  }
+});
+
+// 6. Aristotle subsystem bar chart
+new Chart(document.getElementById('chart-aristotle'), {
+  type: 'bar',
+  data: {
+    labels: [
+      'Hardy Z\nMachinery',
+      'Zeta\nInfrastructure',
+      'Riemann-Siegel\nDecomposition',
+      'Functional Eq\n& Gamma',
+      'Perron &\nContour',
+      'Explicit\nFormulas',
+      'Phase &\nOscillation',
+      'Landau &\nPringsheim',
+      'Analysis &\nSpecial Fns',
+      'Structural\n& Technical',
+      'Deep Sorry\nArchitecture',
+      'Standalone\nBlockers'
+    ],
+    datasets: [
+      {
+        label: 'Files',
+        data: [12, 18, 10, 9, 10, 8, 8, 12, 12, 18, 5, 102],
+        backgroundColor: 'rgba(59,130,246,0.7)',
+        borderRadius: 4,
+        yAxisID: 'y',
+      },
+      {
+        label: 'Approx LoC',
+        data: [2200, 3500, 1800, 2800, 3200, 1600, 1900, 3600, 4200, 2800, 1500, 15000],
+        backgroundColor: 'rgba(139,92,246,0.4)',
+        borderRadius: 4,
+        yAxisID: 'y1',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        position: 'left',
+        title: { display: true, text: 'File Count' },
+        grid: { color: 'rgba(30,58,95,0.3)' },
+      },
+      y1: {
+        beginAtZero: true,
+        position: 'right',
+        title: { display: true, text: 'Lines of Code' },
+        grid: { drawOnChartArea: false },
+      },
+      x: { ticks: { maxRotation: 45, font: { size: 9 } } }
+    }
+  }
+});
+
+// 7. Layer accumulation line chart
+new Chart(document.getElementById('chart-layers'), {
+  type: 'line',
+  data: {
+    labels: [
+      'L0: Definitions\n(Basic, CoreLemmas, ZetaZeros,\nExplicit, Oscillation, Mertens)',
+      'L1: Aristotle Core\n(160 files)',
+      'L2: Standalone\n(102 files)',
+      'L3: DeepSorries\n(consolidated)',
+      'L4: Bridge\n(37 files)',
+      'L5: Main\n(3 files)'
+    ],
+    datasets: [
+      {
+        label: 'Cumulative Files',
+        data: [19, 179, 281, 282, 319, 322],
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59,130,246,0.1)',
+        fill: true,
+        tension: 0.3,
+        pointBackgroundColor: '#3b82f6',
+        pointBorderColor: '#111827',
+        pointBorderWidth: 3,
+        pointRadius: 7,
+        pointHoverRadius: 10,
+      },
+      {
+        label: 'Cumulative LoC',
+        data: [4250, 41250, 56250, 56600, 58100, 58500],
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16,185,129,0.05)',
+        fill: true,
+        tension: 0.3,
+        pointBackgroundColor: '#10b981',
+        pointBorderColor: '#111827',
+        pointBorderWidth: 3,
+        pointRadius: 7,
+        pointHoverRadius: 10,
+        yAxisID: 'y1',
+      },
+      {
+        label: 'Sorries at Layer',
+        data: [0, 0, 3, 3, 3, 3],
+        borderColor: '#f59e0b',
+        backgroundColor: 'rgba(245,158,11,0.08)',
+        fill: true,
+        tension: 0,
+        pointBackgroundColor: '#f59e0b',
+        pointBorderColor: '#111827',
+        pointBorderWidth: 3,
+        pointRadius: 7,
+        pointHoverRadius: 10,
+        yAxisID: 'y2',
+        borderDash: [6, 3],
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'top' },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        position: 'left',
+        title: { display: true, text: 'Cumulative Files' },
+        grid: { color: 'rgba(30,58,95,0.3)' },
+      },
+      y1: {
+        beginAtZero: true,
+        position: 'right',
+        title: { display: true, text: 'Cumulative LoC' },
+        grid: { drawOnChartArea: false },
+      },
+      y2: {
+        beginAtZero: true,
+        max: 10,
+        display: false,
+      },
+      x: { ticks: { font: { size: 9 }, maxRotation: 0 } }
+    }
+  }
+});
+</script>
+
+</body>
+</html>

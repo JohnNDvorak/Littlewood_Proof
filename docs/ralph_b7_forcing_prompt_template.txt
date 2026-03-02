@@ -1,0 +1,31 @@
+Continue constructive closure of the three explicit B7 leaves only:
+- deep_blocker_B7_target_phase_coupling_family_leaf
+- deep_blocker_B7_antitarget_phase_coupling_family_leaf
+- deep_blocker_B7_coeff_control_leaf
+
+Strict policy:
+- No axioms.
+- No sorry relocation.
+- No ex-falso in the B7 path.
+- No wiring-only edits.
+- Do active leaf work only for this session.
+
+Forcing function:
+- Add at least one new proved active-leaf step lemma with the required prefix.
+- Use that step lemma inside the active leaf proof body.
+- Emit this contract block exactly once:
+  MICRO_GOAL:
+  PROVED_LEMMAS:
+  LEAF_USAGE:
+  BLOCKER_NEXT:
+  CLOSURE_PLAN_STEP:
+
+Milestone policy:
+- Grace window: first 2 sessions on an active leaf.
+- Deadline: close active leaf within 6 sessions.
+- Post-grace: step-lemma deltas do not count; closure is required.
+- Missed deadline: stop and emit milestone escalation.
+
+Real progress is counted only when targeted build passes and:
+1) leaf closes this session, or
+2) within grace only: active-leaf proved-step delta + in-leaf usage delta are both positive.
