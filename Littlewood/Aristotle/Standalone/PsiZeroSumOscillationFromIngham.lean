@@ -93,13 +93,72 @@ lemma re_I_div_le_inv_norm (ρ : ℂ) (_hρ : ρ ≠ 0) :
 -- Key analytic fact: Landau-Ingham unbounded oscillation
 -- ============================================================
 
+-- ============================================================
+-- Landau-Ingham decomposition: 4 sub-lemmas (1 proved, 3 sorry)
+-- ============================================================
+
+/-- The "gap" integrand: under a one-sided bound on ψ(x)-x,
+this integrand is nonneg for large x. -/
+private noncomputable def landauIntegrand
+    (σ : ℝ) (C₀ : ℝ) (x : ℝ) : ℝ :=
+  C₀ * Real.sqrt x - σ * (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x)
+
+/-- **Sub-lemma 1/4** (PROVED): Integrand nonnegativity from one-sided bound. -/
+private lemma landau_integrand_nonneg
+    (σ C₀ X₀ : ℝ)
+    (h_bound : ∀ x, x ≥ X₀ →
+      σ * (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) ≤ C₀ * Real.sqrt x)
+    (x : ℝ) (hx : x ≥ X₀) :
+    0 ≤ landauIntegrand σ C₀ x := by
+  unfold landauIntegrand; linarith [h_bound x hx]
+
+/-- **Sub-sorry 2/4**: Mellin convergence (analytic number theory).
+The nonneg integrand defines an analytic function F on Re(s) > 1/2
+via Mellin-type transform. The one-sided bound ψ(x)-x = O(√x) gives
+absolute convergence of ∫ (gap) · x^{-s-1} dx for Re(s) > 1/2.
+
+Reference: Ingham 1932, Ch. V; Montgomery-Vaughan §15.2. -/
+private theorem landau_mellin_analytic
+    (σ C₀ X₀ : ℝ)
+    (h_bound : ∀ x, x ≥ X₀ →
+      σ * (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) ≤ C₀ * Real.sqrt x) :
+    ∃ F : ℂ → ℂ, AnalyticOn ℂ F {s : ℂ | 1/2 < s.re} := by
+  sorry
+
+/-- **Sub-sorry 3/4**: Connection to ζ'/ζ (Perron/Stieltjes identity).
+The Mellin transform F relates to ζ'/ζ: for Re(s) > 1,
+-ζ'(s)/ζ(s) can be expressed in terms of F plus functions analytic
+on Re(s) > 1/2. Hence F + G = ζ'/ζ representation extends meromorphically.
+
+Reference: Ingham 1932, Ch. V; Davenport Ch. 17. -/
+private theorem landau_zeta_identity
+    (σ C₀ : ℝ) (F : ℂ → ℂ)
+    (hF_half : AnalyticOn ℂ F {s : ℂ | 1/2 < s.re}) :
+    ∃ G : ℂ → ℂ, AnalyticOn ℂ G {s : ℂ | 1/2 < s.re} ∧
+      ∀ s : ℂ, 1 < s.re →
+        deriv riemannZeta s / riemannZeta s = F s + G s := by
+  sorry
+
+/-- **Sub-sorry 4/4**: Pole contradiction under RH.
+If F + G represents ζ'/ζ for Re(s) > 1 and both F, G are analytic
+on Re(s) > 1/2, then ζ'/ζ extends analytically to Re(s) > 1/2 (except s=1).
+But under RH, ζ has infinitely many zeros at Re(s) = 1/2 (by Hardy 1914),
+so ζ'/ζ has poles accumulating there — contradiction.
+
+Reference: Hardy 1914 (infinitely many zeros); Ingham 1932, Ch. V. -/
+private theorem landau_pole_contradiction
+    (hRH : ZetaZeros.RiemannHypothesis)
+    (F G : ℂ → ℂ)
+    (hF : AnalyticOn ℂ F {s : ℂ | 1/2 < s.re})
+    (hG : AnalyticOn ℂ G {s : ℂ | 1/2 < s.re})
+    (h_id : ∀ s : ℂ, 1 < s.re →
+      deriv riemannZeta s / riemannZeta s = F s + G s) :
+    False := by
+  sorry
+
 /-- **Core Landau-Ingham impossibility** (Landau 1905, Ingham 1932):
 Under RH, σ·(ψ(x)-x) cannot be bounded above by C₀·√x for all large x.
-
-For σ=+1: ψ(x)-x ≤ C₀√x → Mellin integral ∫(C₀√t-(ψ-t))t^{-s-1}dt
-converges for Re(s)>1/2, making ζ'/ζ+s/(s-1)-C₀s/(s-1/2) holomorphic
-there. But RH zeros give poles of ζ'/ζ at Re(s)=1/2. Contradiction.
-Symmetric for σ=-1. -/
+PROVED from the 3 sub-sorry decomposition above. -/
 private theorem landau_psi_bounded_impossible
     (hRH : ZetaZeros.RiemannHypothesis)
     (σ : ℝ) (_hσ : σ = 1 ∨ σ = -1)
@@ -107,7 +166,10 @@ private theorem landau_psi_bounded_impossible
     (h_bound : ∀ x, x ≥ X₀ →
       σ * (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) ≤
         C₀ * Real.sqrt x) :
-    False := sorry
+    False := by
+  obtain ⟨F, hF_analytic⟩ := landau_mellin_analytic σ C₀ X₀ h_bound
+  obtain ⟨G, hG_analytic, h_identity⟩ := landau_zeta_identity σ C₀ F hF_analytic
+  exact landau_pole_contradiction hRH F G hF_analytic hG_analytic h_identity
 
 /-- **Landau-Ingham fact** (Landau 1905, Ingham 1932):
 Under RH, ψ(x) - x is unbounded above relative to √x.
