@@ -284,6 +284,59 @@ lemma bound_real_part_of_sum_aligned {S : Finset ℂ} (hS : ∀ ρ ∈ S, ρ.re 
     rw [ ← Finset.sum_sub_distrib ];
     rw [ Finset.mul_sum _ _ _ ] ; exact Finset.sum_le_sum fun i hi => by nlinarith [ h_re_bound i hi, Real.sqrt_nonneg x ] ;
 
+/-
+Generalized lower bound on Re(∑ x^ρ/ρ) when phases are aligned to an arbitrary
+target w on the unit circle (not just w = 1).
+
+When w = I (imaginary unit), the main term ∑ Re(I/ρ) = ∑ γ/(1/4+γ²) ≈ ∑ 1/γ
+which DIVERGES — this is the key to proving Littlewood's oscillation theorem.
+Contrast with w = 1 where ∑ Re(1/ρ) = ∑ (1/2)/(1/4+γ²) CONVERGES.
+-/
+lemma bound_real_part_of_sum_shifted {S : Finset ℂ} (hS : ∀ ρ ∈ S, ρ.re = 1/2)
+    {x : ℝ} (hx : x > 0) {w : ℂ} (hw : ‖w‖ = 1) {ε : ℝ} (hε : ε > 0)
+    (h_phases : ∀ ρ ∈ S, ‖(x : ℂ)^(I * ρ.im) - w‖ < ε) :
+    (∑ ρ ∈ S, (x : ℂ)^ρ / ρ).re ≥ Real.sqrt x * ((∑ ρ ∈ S, (w/ρ).re) - ε * (∑ ρ ∈ S, 1/‖ρ‖)) := by
+  -- Decompose x^ρ/ρ = √x · u_ρ/ρ where u_ρ = x^{iγ}
+  have h_re_expr (ρ : ℂ) (hρ : ρ ∈ S) : Complex.re ((x : ℂ) ^ ρ / ρ) = Real.sqrt x * Complex.re ((x : ℂ) ^ (Complex.I * ρ.im) / ρ) := by
+    rw [ show ρ = 1 / 2 + Complex.I * ρ.im by simp +decide [ Complex.ext_iff, hS ρ hρ ] ] ; norm_num [ Complex.exp_re, Complex.exp_im, Complex.log_re, Complex.log_im, Complex.cpow_def_of_ne_zero, hx.ne' ] ; ring;
+    norm_num [ Complex.exp_re, Complex.exp_im, Complex.log_re, Complex.log_im, Real.sqrt_eq_rpow, Real.rpow_def_of_pos hx ] ; ring;
+    norm_num [ Complex.arg_ofReal_of_nonneg hx.le, Real.sin_add, Real.cos_add, mul_assoc, ← Real.exp_add ] ; ring;
+  -- Bound: Re((u_ρ - w)/ρ) ≥ -ε/‖ρ‖
+  have h_re_bound (ρ : ℂ) (hρ : ρ ∈ S) : Complex.re (((x : ℂ) ^ (Complex.I * ρ.im) - w) / ρ) ≥ -ε / ‖ρ‖ := by
+    have h_re_bound (ρ : ℂ) (hρ : ρ ∈ S) : Complex.re (((x : ℂ) ^ (Complex.I * ρ.im) - w) / ρ) ≥ -‖((x : ℂ) ^ (Complex.I * ρ.im) - w) / ρ‖ := by
+      exact neg_le_of_abs_le ( Complex.abs_re_le_norm _ ) |> le_trans <| by norm_num;
+    exact le_trans ( by simpa [ neg_div ] using div_le_div_of_nonneg_right ( neg_le_neg ( le_of_lt ( h_phases ρ hρ ) ) ) ( norm_nonneg ρ ) ) ( h_re_bound ρ hρ );
+  simp_all +decide [ div_eq_mul_inv, Finset.mul_sum _ _ _, Finset.sum_mul ];
+  rw [ ← Finset.sum_sub_distrib ];
+  rw [ Finset.mul_sum _ _ _ ] ; exact Finset.sum_le_sum fun i hi => by nlinarith [ h_re_bound i hi, Real.sqrt_nonneg x ] ;
+
+/-
+Upper bound companion: when phases are aligned to w, the real part of ∑ x^ρ/ρ
+is at most √x · (∑ Re(w/ρ) + ε · ∑ 1/‖ρ‖).
+Needed for the NEGATIVE oscillation direction.
+-/
+lemma bound_real_part_of_sum_shifted_upper {S : Finset ℂ} (hS : ∀ ρ ∈ S, ρ.re = 1/2)
+    {x : ℝ} (hx : x > 0) {w : ℂ} (hw : ‖w‖ = 1) {ε : ℝ} (hε : ε > 0)
+    (h_phases : ∀ ρ ∈ S, ‖(x : ℂ)^(I * ρ.im) - w‖ < ε) :
+    (∑ ρ ∈ S, (x : ℂ)^ρ / ρ).re ≤ Real.sqrt x * ((∑ ρ ∈ S, (w/ρ).re) + ε * (∑ ρ ∈ S, 1/‖ρ‖)) := by
+  -- Decompose x^ρ/ρ = √x · u_ρ/ρ where u_ρ = x^{iγ}
+  have h_re_expr (ρ : ℂ) (hρ : ρ ∈ S) : Complex.re ((x : ℂ) ^ ρ / ρ) = Real.sqrt x * Complex.re ((x : ℂ) ^ (Complex.I * ρ.im) / ρ) := by
+    rw [ show ρ = 1 / 2 + Complex.I * ρ.im by simp +decide [ Complex.ext_iff, hS ρ hρ ] ] ; norm_num [ Complex.exp_re, Complex.exp_im, Complex.log_re, Complex.log_im, Complex.cpow_def_of_ne_zero, hx.ne' ] ; ring;
+    norm_num [ Complex.exp_re, Complex.exp_im, Complex.log_re, Complex.log_im, Real.sqrt_eq_rpow, Real.rpow_def_of_pos hx ] ; ring;
+    norm_num [ Complex.arg_ofReal_of_nonneg hx.le, Real.sin_add, Real.cos_add, mul_assoc, ← Real.exp_add ] ; ring;
+  -- Bound: Re((u_ρ - w)/ρ) ≤ ε/‖ρ‖
+  have h_re_bound (ρ : ℂ) (hρ : ρ ∈ S) : Complex.re (((x : ℂ) ^ (Complex.I * ρ.im) - w) / ρ) ≤ ε / ‖ρ‖ := by
+    calc Complex.re (((x : ℂ) ^ (Complex.I * ρ.im) - w) / ρ)
+        ≤ ‖((x : ℂ) ^ (Complex.I * ρ.im) - w) / ρ‖ :=
+          le_trans (le_abs_self _) (Complex.abs_re_le_norm _)
+      _ = ‖(x : ℂ) ^ (Complex.I * ρ.im) - w‖ / ‖ρ‖ := by
+          rw [norm_div]
+      _ ≤ ε / ‖ρ‖ := by
+          exact div_le_div_of_nonneg_right (le_of_lt (h_phases ρ hρ)) (norm_nonneg ρ)
+  simp_all +decide [ div_eq_mul_inv, Finset.mul_sum _ _ _ ];
+  rw [ ← Finset.sum_add_distrib ];
+  rw [ Finset.mul_sum _ _ _ ] ; exact Finset.sum_le_sum fun i hi => by nlinarith [ h_re_bound i hi, Real.sqrt_nonneg x ] ;
+
 end Aristotle.DirichletPhaseAlignment
 
 end

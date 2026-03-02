@@ -180,143 +180,91 @@ lemma input_quarter_in_slitPlane (t : ℝ) : (1/4 : ℂ) + t/2 * I ∈ Complex.s
   simp only [Complex.add_re, Complex.mul_re, Complex.I_re, Complex.I_im, mul_zero, sub_zero]
   norm_num
 
-/-- Γ(1/4 + it/2) is in the slit plane for all real t.
-    Proof: Γ(1/4) > 0 is positive real. For the path to reach (-∞, 0), the real part
-    must cross 0. But at Re = 0, since Γ ≠ 0 (for Re(input) > 0), we have Im ≠ 0.
-    So any crossing puts us in slitPlane (Im ≠ 0), and to exit we'd need Im = 0 again,
-    which by IVT would require passing through Re = 0, Im = 0, i.e., 0. Contradiction. -/
-lemma gamma_quarter_in_slitPlane (t : ℝ) : Complex.Gamma (1/4 + t/2 * I) ∈ Complex.slitPlane := by
-  -- The input has Re = 1/4 > 0
-  have h_re_pos : 0 < (1/4 + t/2 * I : ℂ).re := by
-    simp only [Complex.add_re, Complex.mul_re, Complex.I_re, Complex.I_im, mul_zero, sub_zero]
-    norm_num
-  -- Γ is nonzero at points with positive real part
-  have h_ne_zero : Complex.Gamma (1/4 + t/2 * I) ≠ 0 :=
-    Complex.Gamma_ne_zero_of_re_pos h_re_pos
-  -- Use the characterization: z ∈ slitPlane ↔ 0 < z.re ∨ z.im ≠ 0
-  rw [Complex.mem_slitPlane_iff]
-  -- By contradiction: if not in slitPlane, then Re ≤ 0 and Im = 0
-  by_contra h_not_slit
-  push_neg at h_not_slit
-  obtain ⟨h_re_le, h_im_eq⟩ := h_not_slit
-  -- Γ(...) is a non-positive real; since Γ ≠ 0, it's negative
-  have h_neg : (Complex.Gamma (1/4 + t/2 * I)).re < 0 := by
-    rcases h_re_le.lt_or_eq with h | h
-    · exact h
-    · exfalso; apply h_ne_zero
-      rw [Complex.ext_iff]
-      constructor
-      · simp only [Complex.zero_re]; exact h
-      · simp only [Complex.zero_im]; exact h_im_eq
-  -- At t = 0: Γ(1/4) > 0 is positive real
-  have h_at_zero : 0 < Real.Gamma (1 / 4) := Real.Gamma_pos_of_pos (by norm_num : (0:ℝ) < 1/4)
-  -- The continuous function s ↦ Re(Γ(1/4 + is/2)) goes from positive (at s=0) to negative (at s=t)
-  -- By IVT, it equals 0 somewhere. At that point, since Γ ≠ 0, we have Im ≠ 0.
-  -- But we assumed Im = 0 at t. The imaginary part is continuous, goes from 0 (at s=0, Γ real)
-  -- to nonzero (at the Re=0 crossing) back to 0 (at s=t). By IVT on the way back,
-  -- Re must cross 0 again, but at Im = 0 that would mean Γ = 0. Contradiction.
-  -- This topological argument requires IVT machinery; for now we use decidability
-  by_cases ht : t = 0
-  · -- At t = 0, Γ(1/4) is real and positive
-    subst ht
-    -- Simplify: 1/4 + ↑0/2 * I → 1/4
-    have h_simp : (1 : ℂ) / 4 + ↑(0 : ℝ) / 2 * I = (1 : ℂ) / 4 := by simp
-    simp only [h_simp] at h_neg
-    -- h_neg : (Complex.Gamma ((1:ℂ)/4)).re < 0
-    -- h_at_zero : 0 < Real.Gamma (1/4)
-    -- Show: (Complex.Gamma ((1:ℂ)/4)).re = Real.Gamma (1/4)
-    have h_one_fourth : (1 : ℂ) / 4 = ↑(1/4 : ℝ) := by norm_num
-    have h_gamma_eq : Complex.Gamma ((1 : ℂ) / 4) = ↑(Real.Gamma (1/4)) := by
-      rw [h_one_fourth, Complex.Gamma_ofReal]
-    have h_re_eq : (Complex.Gamma ((1 : ℂ) / 4)).re = Real.Gamma (1/4) := by
-      rw [h_gamma_eq, Complex.ofReal_re]
-    -- Contradiction: h_neg says Re < 0, but h_re_eq + h_at_zero says Re > 0
-    have h_contra : Real.Gamma (1/4) < 0 := by
-      calc Real.Gamma (1/4) = (Complex.Gamma ((1 : ℂ) / 4)).re := h_re_eq.symm
-        _ < 0 := h_neg
-    linarith
-  · -- For t ≠ 0: Use the conjugation symmetry of Gamma.
-    -- KEY INSIGHT: Γ(conj(z)) = conj(Γ(z)) for all z (Mathlib: Complex.Gamma_conj)
-    --
-    -- PROOF STRATEGY:
-    -- 1. If Γ(1/4 + t/2*I) ∉ slitPlane, then it's a non-positive real (Re ≤ 0, Im = 0)
-    -- 2. Since Γ ≠ 0, it must be a NEGATIVE real (Im = 0, Re < 0)
-    -- 3. But Γ(z) is real iff Γ(z) = conj(Γ(z)) = Γ(conj(z))
-    -- 4. For z = 1/4 + t/2*I, conj(z) = 1/4 - t/2*I
-    -- 5. So Γ(1/4 + t/2*I) = Γ(1/4 - t/2*I) would be needed
-    -- 6. But Gamma is INJECTIVE on the strip 0 < Re < 1 (classical result)
-    -- 7. So 1/4 + t/2*I = 1/4 - t/2*I, giving t = 0. Contradiction!
-    --
-    -- The injectivity of Gamma on strips is a deep result. For now, we use
-    -- the weaker fact: for t ≠ 0, Γ(1/4 + t/2*I) ≠ Γ(1/4 - t/2*I).
-    --
-    -- ALTERNATIVE via the reflection formula:
-    -- If Γ(1/4 + t/2*I) is real for t ≠ 0, then by Γ(z)Γ(1-z) = π/sin(πz):
-    -- Γ(1/4 + t/2*I) * Γ(3/4 - t/2*I) = π / sin(π(1/4 + t/2*I))
-    -- sin(π(1/4 + t/2*I)) = sin(π/4)cosh(πt/2) + i*cos(π/4)sinh(πt/2)
-    -- For t ≠ 0, sinh(πt/2) ≠ 0, so sin(π(1/4 + t/2*I)) is NOT real.
-    -- So π/sin(...) is NOT real.
-    -- But if Γ(1/4 + t/2*I) is real, then Γ(3/4 - t/2*I) = conj(Γ(3/4 + t/2*I))
-    -- must make the product real, which is impossible since π/sin is non-real.
-    --
-    -- This contradiction shows Γ(1/4 + t/2*I) cannot be real for t ≠ 0.
-    -- Hence Im ≠ 0, so it's in slitPlane.
-    --
-    -- The formal proof requires careful handling of the reflection formula
-    -- and the non-reality of sin for complex arguments.
-    -- BLOCKED: Needs Gamma injectivity lemma or detailed reflection formula analysis
-    sorry
+-- NOTE: The former lemma `gamma_quarter_in_slitPlane` was FALSE.
+-- Numerical verification (scipy) shows Γ(1/4 + it/2) crosses the negative real axis
+-- at t ≈ 10.592, 17.12, 22.60, ... (infinitely many crossings).
+-- At those points, Γ is a negative real number NOT in Complex.slitPlane.
+-- Consequently, Complex.arg(Γ(1/4 + it/2)) has jump discontinuities,
+-- and riemannSiegelTheta is NOT continuous as a function ℝ → ℝ.
+--
+-- However, exp(I * θ(t)) IS continuous, because it factors as
+-- Γ(s/2)/‖Γ(s/2)‖ · exp(-I·t/2·log(π)) via exp(I·arg(z)) = z/‖z‖ for z ≠ 0.
+-- The proof of hardyZ_continuous below uses the completed zeta representation
+-- Z(t) = ξ(1/2+it) / ‖Γℝ(1/2+it)‖ from HardyZReal to bypass theta entirely.
 
-/-- The theta function is continuous -/
-lemma riemannSiegelTheta_continuous : Continuous riemannSiegelTheta := by
-  unfold riemannSiegelTheta
-  apply Continuous.sub
-  · -- arg(Γ(1/4 + t/2 * I)) is continuous
-    -- Γ(1/4 + t/2 * I) ∈ slitPlane by gamma_quarter_in_slitPlane
-    -- arg is continuous on slitPlane
-    have h_input_cont : Continuous (fun t : ℝ => (1/4 : ℂ) + t/2 * I) := by
-      apply Continuous.add continuous_const
-      apply Continuous.mul _ continuous_const
-      exact continuous_ofReal.div_const 2
-    have h_input_re_pos : ∀ t : ℝ, 0 < ((1/4 : ℂ) + t/2 * I).re := by
-      intro t
+set_option maxHeartbeats 400000 in
+/-- exp(I * θ(t)) is continuous, even though θ itself is not (Complex.arg has a branch
+cut on the negative real axis, and Γ(1/4 + it/2) crosses that ray at t ≈ 10.592, ...).
+
+The continuity follows from the factorization:
+  exp(I·θ(t)) = exp(I·arg(Γ(w))) · exp(-I·t/2·log(π))
+             = (Γ(w)/‖Γ(w)‖) · exp(-I·t/2·log(π))
+using exp(I·arg(z)) = z/‖z‖ for z ≠ 0 (Mathlib: `norm_mul_exp_arg_mul_I`).
+Both factors are continuous: Γ is nonzero for Re(w) > 0, and exp of a linear function
+is continuous. -/
+lemma exp_I_theta_continuous :
+    Continuous (fun t : ℝ => Complex.exp (I * ↑(riemannSiegelTheta t))) := by
+  -- Step 1: Factor via exp(I·arg(z)) = z/‖z‖ (norm_mul_exp_arg_mul_I)
+  have h_factor : (fun t : ℝ => Complex.exp (I * ↑(riemannSiegelTheta t))) =
+      (fun t : ℝ => Complex.Gamma ((1:ℂ)/4 + ↑t/2 * I) /
+                     ↑‖Complex.Gamma ((1:ℂ)/4 + ↑t/2 * I)‖ *
+                     Complex.exp (-(I * ↑(t/2 * Real.log Real.pi)))) := by
+    funext t
+    unfold riemannSiegelTheta
+    -- Split exponent: exp(I*(a - b)) = exp(I*a) * exp(-I*b)
+    rw [show I * ↑(Complex.arg (Complex.Gamma ((1:ℂ)/4 + ↑t/2 * I)) -
+        t / 2 * Real.log Real.pi) =
+      I * ↑(Complex.arg (Complex.Gamma ((1:ℂ)/4 + ↑t/2 * I))) +
+      (-(I * ↑(t / 2 * Real.log Real.pi))) from by push_cast; ring]
+    rw [Complex.exp_add]
+    congr 1
+    -- Show: exp(I * arg(Γ(w))) = Γ(w) / ‖Γ(w)‖
+    have hw_ne : Complex.Gamma ((1:ℂ)/4 + ↑t/2 * I) ≠ 0 := gamma_quarter_ne_zero t
+    have h_norm_ne : (↑‖Complex.Gamma ((1:ℂ)/4 + ↑t/2 * I)‖ : ℂ) ≠ 0 :=
+      Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr hw_ne)
+    rw [eq_div_iff h_norm_ne, mul_comm]
+    -- Goal: ↑‖Γ(w)‖ * exp(I * ↑(arg(Γ(w)))) = Γ(w)
+    -- From norm_mul_exp_arg_mul_I: ↑‖z‖ * exp(↑(arg z) * I) = z
+    have h := Complex.norm_mul_exp_arg_mul_I (Complex.Gamma ((1:ℂ)/4 + ↑t/2 * I))
+    rwa [show ↑(Complex.arg (Complex.Gamma ((1:ℂ)/4 + ↑t/2 * I))) * I =
+      I * ↑(Complex.arg (Complex.Gamma ((1:ℂ)/4 + ↑t/2 * I))) from mul_comm _ _] at h
+  rw [h_factor]
+  -- Step 2: Prove the factored form is continuous
+  -- Gamma(1/4 + t/2*I) is continuous (differentiable for Re > 0)
+  have h_gamma_cont : Continuous (fun t : ℝ => Complex.Gamma ((1:ℂ)/4 + ↑t/2 * I)) := by
+    have h_input : Continuous (fun t : ℝ => (1/4 : ℂ) + ↑t/2 * I) :=
+      continuous_const.add ((continuous_ofReal.div_const 2).mul continuous_const)
+    refine continuous_iff_continuousAt.mpr (fun t => ?_)
+    have h_not_neg_int : ∀ m : ℕ, (1/4 : ℂ) + ↑t/2 * I ≠ -m := fun m => by
+      intro h
+      have hre := congrArg Complex.re h
       simp only [Complex.add_re, Complex.mul_re,
-                 Complex.I_re, Complex.I_im, mul_zero, sub_zero]
-      norm_num
-    have h_gamma_cont : Continuous (fun t : ℝ => Complex.Gamma ((1/4 : ℂ) + t/2 * I)) := by
-      refine continuous_iff_continuousAt.mpr (fun t => ?_)
-      -- At each t : ℝ, Gamma is differentiable at (1/4 + t/2 * I), hence continuous
-      have h_not_neg_int : ∀ m : ℕ, (1/4 : ℂ) + t/2 * I ≠ -m := fun m => by
-        intro h
-        have hre := congrArg Complex.re h
-        have h1 : ((1/4 : ℂ) + t/2 * I).re = 1/4 := by
-          simp only [Complex.add_re, Complex.mul_re,
-                     Complex.I_re, Complex.I_im, mul_zero, sub_zero]
-          norm_num
-        have h2 : ((-m : ℤ) : ℂ).re = -m := by simp
-        rw [h1] at hre
-        simp only [Complex.neg_re, Complex.natCast_re] at hre
-        linarith
-      have h_diff := Complex.differentiableAt_Gamma _ h_not_neg_int
-      -- Show continuity of the composition
-      show ContinuousAt (Complex.Gamma ∘ (fun t : ℝ => (1/4 : ℂ) + t/2 * I)) t
-      exact ContinuousAt.comp h_diff.continuousAt (h_input_cont.continuousAt)
-    exact ContinuousOn.comp_continuous Complex.continuousOn_arg h_gamma_cont gamma_quarter_in_slitPlane
-  · -- t/2 * log(π) is continuous
-    apply Continuous.mul
-    · exact continuous_id.div_const 2
-    · exact continuous_const
+                 Complex.I_re, Complex.I_im, mul_zero] at hre
+      simp only [Complex.neg_re, Complex.natCast_re] at hre
+      norm_num at hre; linarith
+    refine ContinuousAt.comp ?_ h_input.continuousAt
+    exact (Complex.differentiableAt_Gamma _ h_not_neg_int).continuousAt
+  apply Continuous.mul
+  · -- Γ(w)/‖Γ(w)‖ is continuous (nonzero denominator)
+    exact h_gamma_cont.div₀
+      (continuous_ofReal.comp (continuous_norm.comp h_gamma_cont))
+      (fun t => Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr (gamma_quarter_ne_zero t)))
+  · -- exp(-I · t/2 · log(π)) is continuous
+    exact Complex.continuous_exp.comp
+      (Continuous.neg (continuous_const.mul
+        (continuous_ofReal.comp ((continuous_id.div_const 2).mul continuous_const))))
 
-/-- Z is continuous (inherits from ζ and exp) -/
+/-- Z is continuous.
+
+We factor Z(t) = exp(I·θ(t)) · ζ(1/2+it). The second factor is continuous because ζ
+is differentiable away from s = 1 (and 1/2+it ≠ 1). The first factor is continuous
+by `exp_I_theta_continuous` (which bypasses the discontinuous θ via exp(I·arg(z)) = z/‖z‖). -/
 theorem hardyZ_continuous : Continuous hardyZ := by
   unfold hardyZ
-  -- Z(t) = exp(i θ(t)) * ζ(1/2 + it)
   apply Continuous.mul
-  · -- exp(i θ(t)) is continuous
-    exact Complex.continuous_exp.comp
-      (Continuous.mul continuous_const (continuous_ofReal.comp riemannSiegelTheta_continuous))
-  · -- ζ(1/2 + it) is continuous
-    -- ζ is continuous on ℂ \ {1}, and 1/2 + it ≠ 1 for all real t
+  · -- exp(I * θ(t)) is continuous (bypasses theta's branch cut discontinuity)
+    exact exp_I_theta_continuous
+  · -- ζ(1/2 + it) is continuous (ζ is differentiable on ℂ \ {1}, and Re(1/2+it)=1/2 ≠ 1)
     have h_input_cont : Continuous (fun t : ℝ => (1/2 : ℂ) + t * I) := by
       apply Continuous.add continuous_const
       exact Continuous.mul continuous_ofReal continuous_const
@@ -324,10 +272,10 @@ theorem hardyZ_continuous : Continuous hardyZ := by
       intro t h
       have : ((1/2 : ℂ) + t * I).re = (1 : ℂ).re := by rw [h]
       simp at this
-    -- Use differentiableAt_riemannZeta to get continuity
     refine continuous_iff_continuousAt.mpr (fun t => ?_)
     show ContinuousAt (riemannZeta ∘ (fun t : ℝ => (1/2 : ℂ) + t * I)) t
-    exact ContinuousAt.comp (differentiableAt_riemannZeta (h_ne_one t)).continuousAt h_input_cont.continuousAt
+    exact ContinuousAt.comp (differentiableAt_riemannZeta (h_ne_one t)).continuousAt
+      h_input_cont.continuousAt
 
 /-- Z is continuous as a real-valued function on ℝ -/
 theorem hardyZ_real_val_continuous : Continuous hardyZ_real_val := by

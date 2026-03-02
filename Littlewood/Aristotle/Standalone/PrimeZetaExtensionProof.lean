@@ -279,6 +279,32 @@ theorem primeZeta_eq_integral {s : ℂ} (hs : 1 < s.re) :
   exact LSeries_eq_mul_integral' primeIndicator (by norm_num : (0 : ℝ) ≤ 1)
     (by linarith) primeIndicator_partial_sum_bigO
 
+/-- Bridge: the primeIndicator partial sum equals Nat.primeCounting.
+∑ k ∈ Icc 1 n, primeIndicator k = ↑(Nat.primeCounting n) as complex numbers. -/
+private theorem primeIndicator_sum_eq_primeCounting (n : ℕ) :
+    (∑ k ∈ Finset.Icc 1 n, primeIndicator k : ℂ) = ↑(Nat.primeCounting n) := by
+  simp only [primeIndicator, Finset.sum_boole]
+  suffices h : ((Finset.Icc 1 n).filter Nat.Prime).card = Nat.primeCounting n by
+    exact_mod_cast h
+  -- Bridge: both count primes ≤ n. primeCounting goes through Nat.count/List.countP;
+  -- Finset.filter goes through Multiset. We normalize both to the same Finset.
+  rw [show Nat.primeCounting n = ((Finset.range (n + 1)).filter Nat.Prime).card from by
+    rw [Nat.primeCounting, Nat.primeCounting']
+    exact Nat.count_eq_card_filter_range Nat.Prime (n + 1)]
+  congr 1; ext k; simp only [Finset.mem_filter, Finset.mem_Icc, Finset.mem_range]
+  exact ⟨fun ⟨⟨_, h2⟩, hp⟩ => ⟨by omega, hp⟩,
+         fun ⟨hk, hp⟩ => ⟨⟨by have := hp.pos; omega, by omega⟩, hp⟩⟩
+
+/-- Abel summation for primeZeta using Nat.primeCounting:
+  primeZeta(s) = s * ∫ t in Ioi 1, ↑(π(⌊t⌋₊)) * t^{-(s+1)}
+for Re(s) > 1. Public version with Nat.primeCounting instead of primeIndicator. -/
+theorem primeZeta_eq_primeCounting_integral {s : ℂ} (hs : 1 < s.re) :
+    primeZeta s = s * ∫ t in Ioi (1 : ℝ),
+      (↑(Nat.primeCounting ⌊t⌋₊) : ℂ) * (↑t : ℂ) ^ (-(s + 1)) := by
+  rw [primeZeta_eq_integral hs]
+  congr 2; ext t; congr 1
+  exact primeIndicator_sum_eq_primeCounting ⌊t⌋₊
+
 /-! ## E₁ cancellation: (1 - 2^{1-s})/(s-1) is entire
 
 The function K'(s) = (1 - 2^{1-s})/(s-1) has a removable singularity at s = 1
