@@ -53,6 +53,9 @@ noncomputable section
 
 open Schmidt
 
+variable [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+  [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
+
 /-- Littlewood's theorem: infinitely many critical-line zeros imply
 ψ(x) - x = Ω±(√x).
 

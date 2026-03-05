@@ -38,6 +38,9 @@ namespace Aristotle.LandauContradiction
 open Filter Topology
 open ZetaZeros
 
+variable [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+  [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
+
 /-- One-sided upper o(√x) bound on ψ-x contradicts infinitely many
 critical-line zeros. See module docstring for proof outline. -/
 theorem psi_upper_contradicts_critical_zeros

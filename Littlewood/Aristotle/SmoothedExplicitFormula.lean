@@ -30,6 +30,9 @@ namespace Aristotle.SmoothedExplicitFormula
 open Filter Topology
 open ZetaZeros
 
+variable [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+  [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
+
 /-- Prime-counting error term used in the `π-li` Landau contradiction.
 Transparent alias for `DeepSorries.piLiError` to ensure definitional equality. -/
 abbrev piLiError := DeepSorries.piLiError

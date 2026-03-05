@@ -232,7 +232,9 @@ import Littlewood.Aristotle.Standalone.DeepBlockersResolved  -- (add to imports)
 exact Aristotle.Standalone.DeepBlockersResolved.combined_atoms_resolved
 ```
 See `DeepBlockerAssembly.combined_atoms_from_five_blockers` for the API. -/
-private theorem combined_atoms :
+private theorem combined_atoms
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     -- (Hardy) Infinitely many critical-line zeros (Hardy 1914)
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
@@ -258,7 +260,9 @@ Components (2)-(3) — Landau contradictions — PROVED from L3+L4:
   - One-sided o(√x) contradicts Ω₊(√x) or Ω₋(√x)
 
 Components (4)-(5) are passed through from combined_atoms L3+L4. -/
-private theorem all_deep_results :
+private theorem all_deep_results
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     -- (1) Hardy's theorem
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
@@ -318,7 +322,9 @@ private theorem all_deep_results :
 
 /-- Combined deep mathematical results.
 No direct sorry — Lean's linter is non-transitive. -/
-theorem deep_mathematical_results :
+theorem deep_mathematical_results
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
     (∀ (_h_inf : Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
@@ -335,13 +341,17 @@ theorem deep_mathematical_results :
   ⟨all_deep_results.1, all_deep_results.2.1, all_deep_results.2.2.1⟩
 
 /-- ψ oscillation: ψ(x) - x = Ω±(√x). -/
-theorem psi_full_strength_oscillation :
+theorem psi_full_strength_oscillation
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     (fun x => chebyshevPsi x - x)
     =Ω±[fun x => Real.sqrt x] :=
   all_deep_results.2.2.2.1
 
 /-- Full-strength π-li oscillation: π(x) - li(x) = Ω±((√x/log x) · lll x). -/
-theorem pi_li_full_strength_oscillation :
+theorem pi_li_full_strength_oscillation
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     (fun x => (Nat.primeCounting (Nat.floor x) : ℝ) -
       LogarithmicIntegral.logarithmicIntegral x)
     =Ω±[fun x => Real.sqrt x / Real.log x * lll x] :=

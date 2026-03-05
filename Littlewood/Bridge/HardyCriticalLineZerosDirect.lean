@@ -34,6 +34,9 @@ namespace HardyCriticalLineZerosDirect
 
 open Schmidt ZetaZeros
 
+variable [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+  [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
+
 /-- Hardy's theorem (1914): ζ has infinitely many zeros on Re(s) = 1/2.
 Extracted from `DeepSorries.deep_mathematical_results`. -/
 instance : HardyCriticalLineZerosHyp where

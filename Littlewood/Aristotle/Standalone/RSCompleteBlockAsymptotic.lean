@@ -31,6 +31,7 @@ import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.HardyNProperties
 import Littlewood.Aristotle.RSBlockDecomposition
 import Littlewood.Aristotle.AbelSummation
+import Littlewood.Aristotle.RSBlockBounds
 
 set_option linter.mathlibStandardSet false
 
@@ -125,7 +126,7 @@ private theorem rs_block_analysis :
           |(∫ t in Ioc (hardyStart k) T, ErrorTerm t)
             - β * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
                      ErrorTerm t)| ≤ C₂) := by
-  sorry
+  exact Aristotle.RSBlockBounds.rs_block_analysis_proof
 
 /-- Helper: c k ≤ max (c 0) (c 1) for all k, from atom hypotheses.
     For k = 0: trivially c 0 ≤ max (c 0) (c 1).
@@ -403,7 +404,11 @@ theorem perBlockSignedBoundHyp_of_blockAsymptotic
                 _ ≤ |head_val| + |resid_sum| + |η| := by
                     gcongr; exact abs_add_le _ _
         _ ≤ A * max |S n| |S (n + 1)| + (head_int + R + B) := by
-            gcongr <;> assumption
+            have h_head_le : |head_val| ≤ head_int := by
+              simp [head_val, head_int]
+            have h_resid_le : |resid_sum| ≤ R := by
+              simpa [resid_sum] using hresid_bound
+            nlinarith [h_head_le, h_resid_le, hη_bound]
     -- Choose N based on which alternating sum is larger
     have hbound_Bg :
         |∫ t in Ioc 1 T, ErrorTerm t|

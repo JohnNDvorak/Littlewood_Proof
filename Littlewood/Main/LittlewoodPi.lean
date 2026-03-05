@@ -38,6 +38,9 @@ open Chebyshev LogarithmicIntegral ZetaZeros Littlewood Schmidt GrowthDomination
 
 namespace LittlewoodPi
 
+variable [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+  [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
+
 /-! ## Full-Strength Main Theorem -/
 
 /-- **Littlewood's 1914 theorem** (full strength):
@@ -104,6 +107,9 @@ theorem first_crossover_bound :
   rcases (Filter.Frequently.exists pi_gt_li_infinitely_often) with ⟨x, hx⟩
   exact ⟨x, x, le_rfl, hx⟩
 
+section
+set_option linter.unusedSectionVars false
+
 /-- Weak positivity: the normalized integral is eventually nonnegative. -/
 theorem logarithmic_density_positive :
     ∀ᶠ X in atTop,
@@ -130,5 +136,7 @@ theorem logarithmic_density_positive :
     exact MeasureTheory.setIntegral_nonneg hs hnonneg
   have hlogpos : 0 < Real.log X := Real.log_pos (by linarith : (1 : ℝ) < X)
   exact div_nonneg hint hlogpos.le
+
+end
 
 end LittlewoodPi

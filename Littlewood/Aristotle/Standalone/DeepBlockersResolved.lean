@@ -25,15 +25,14 @@ Replace the body of `combined_atoms` with:
 exact Aristotle.Standalone.DeepBlockersResolved.combined_atoms_resolved
 ```
 
-DEEP BLOCKER STATUS (6 direct sorries in this file, 2 delegated):
-  B1 HardyMeanSquareAsymptoticHyp    — WIRED via HardyMeanSquareAsymptoticFromZetaMoment (1 sorry)
+DEEP BLOCKER STATUS (2 direct sorries in this file, 3 delegated):
+  B1 HardyMeanSquareAsymptoticHyp    — WIRED via HardyMeanSquareAsymptoticFromZetaMoment + HardyAfeSignedGapAtomic (1 sorry)
   B2 MainTermFirstMomentBoundHyp     — sorry (oscillatory sum cancellation, Heath-Brown 1978)
   B3 PerBlockSignedBoundHyp          — WIRED via RSCompleteBlockAsymptotic (2 sorries)
-  B5a ExplicitFormulaPsiGeneralHyp   — sorry (general explicit formula, Davenport Ch. 17)
+  B5a ExplicitFormulaPsiGeneralHyp   — WIRED via ExplicitFormulaPsiSkeleton + ExplicitFormulaPsiB5aShiftedBoundAtomic (1 sorry)
   B5b PsiZeroSumOscillationHyp       — WIRED via PsiZeroSumOscillationFromIngham (depends on B5a)
-  B6 CorrectedPrimeZetaExtensionHyp  — WIRED via CorrectedPrimeZetaExtensionDirect (1 sorry)
-  B7a RhPiTargetHeightCoeffControlHyp— sorry (phase-coupling family leaf)
-  B7b RhPiAntiTargetHeightCoeffCtlHyp— sorry (anti-phase-coupling family leaf)
+  B6 CorrectedPrimeZetaExtensionHyp  — WIRED via CorrectedPrimeZetaExtensionDirect (0 sorry)
+  B7 coeff-control closure           — sorry (single consolidated RH-`pi` payload leaf)
 
 PROVED INFRASTRUCTURE (0 sorry):
   B4 SigmaLtOneHyp                   — PROVED in SigmaLtOneFromPringsheimExtension
@@ -55,14 +54,16 @@ import Littlewood.Aristotle.Standalone.RHPiCorrectedToLegacyPhaseCouplingBridge
 import Littlewood.Aristotle.Standalone.RHPiTargetPhaseArgReduction
 import Littlewood.Aristotle.Standalone.RHPiArgApproxFromPerronThreshold
 import Littlewood.Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
-import Littlewood.Aristotle.Standalone.RHPiDeepCoeffControlWitnesses
-import Littlewood.Aristotle.Standalone.RHPiUnconditionalExactSeedExistence
 import Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge
 import Littlewood.Aristotle.Standalone.RHPiSingleZeroPhaseConstruction
 import Littlewood.Aristotle.Standalone.RHPiTargetPhaseWitnessBuilders
 import Littlewood.Aristotle.Standalone.RHPiWitnessFromExplicitFormula
 import Littlewood.Aristotle.Standalone.RHPiInhomogeneousApproxObstruction
+import Littlewood.Aristotle.Standalone.RHPiCoeffControlClassInstances
+import Littlewood.Aristotle.Standalone.RHPiUnconditionalExactSeedExistence
 import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiSkeleton
+import Littlewood.Aristotle.Standalone.B2MainTermFirstMomentExact
+import Littlewood.Aristotle.Standalone.B2StationaryWindowLeaves
 import Littlewood.Bridge.PhragmenLindelofWiring
 import Littlewood.Aristotle.Standalone.HardyMeanSquareAsymptoticFromZetaMoment
 import Littlewood.Aristotle.Standalone.RSCompleteBlockAsymptotic
@@ -80,7 +81,6 @@ open MeasureTheory Set Filter
 open HardyEstimatesPartial GrowthDomination ZetaZeros
 open PiLiDirectOscillationBridge
 open Aristotle.Standalone.RHPiInhomogeneousApproxObstruction
-open Aristotle.Standalone.RHPiDeepCoeffControlWitnesses
 open Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
 
 /-! ## Blockers 1-3: Hardy Chain Deep Inputs
@@ -105,7 +105,8 @@ They are needed ONLY for Hardy's theorem (infinitely many zeros on Re=1/2).
 
 /-- **Deep blocker B1**: Hardy mean-square asymptotic.
 ∫₁ᵀ |Z(t)|² dt - T·log(T) = O(T) (Titchmarsh Ch. VII, AFE ~800 lines).
-WIRED via HardyMeanSquareAsymptoticFromZetaMoment (1 sorry: classical second moment of ζ). -/
+WIRED via HardyMeanSquareAsymptoticFromZetaMoment + HardyAfeSignedGapAtomic
+(1 sorry: classical second moment/AFE signed gap of ζ). -/
 private theorem deep_blocker_B1 :
     Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp :=
   Aristotle.Standalone.HardyMeanSquareAsymptoticFromZetaMoment.hardyMeanSquareAsymptoticHyp_proved
@@ -114,7 +115,20 @@ private theorem deep_blocker_B1 :
 |∫₁ᵀ MainTerm(t) dt| ≤ C·T^{1/2+ε} (Heath-Brown 1978, collective oscillation). -/
 private theorem deep_blocker_B2 :
     HardyFirstMomentWiring.MainTermFirstMomentBoundHyp := by
-  sorry
+  exact
+    Aristotle.Standalone.B2StationaryWindowLeaves.mainTermFirstMomentBoundHyp_from_windowLeaves
+
+/-- Non-circular constructor route for B2:
+if the support-side Gamma/phase classes are available upstream, B2 closes
+without using the delegated tail leaf. -/
+private theorem deep_blocker_B2_of_noncircular_support_constructor
+    [HardyFirstMomentWiring.HardyGammaInSlitPlaneOnSupportHyp]
+    [HardyFirstMomentWiring.HardyThetaPhaseGapLowerSqrtModeOnSupportHyp]
+    [HardyFirstMomentWiring.HardyPhaseDerivDifferentiableOnSupportHyp]
+    [HardyFirstMomentWiring.HardyExpPhaseSecondDerivAbsBoundOnSupportHyp] :
+    HardyFirstMomentWiring.MainTermFirstMomentBoundHyp := by
+  exact
+    Aristotle.Standalone.B2StationaryWindowLeaves.mainTermFirstMomentBoundHyp_from_windowLeaves_of_noncircular_support_constructor
 
 /-- **Deep blocker B3**: RS per-block signed bound.
 Riemann-Siegel breakpoint blocks exhibit alternating sign pattern (Siegel 1932).
@@ -136,14 +150,18 @@ private theorem deep_blocker_B5a :
 /-- **Deep blocker B5b**: Under RH, ψ(x)-x is unbounded in both directions relative to √x.
 WIRED via PsiZeroSumOscillationFromIngham (Landau indirect argument).
 Depends on B5a (general explicit formula). -/
-private theorem deep_blocker_B5b :
+private theorem deep_blocker_B5b
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     PsiZeroSumOscillationHyp :=
   letI := deep_blocker_B5a
   Aristotle.Standalone.PsiZeroSumOscillationFromIngham.psiZeroSumOscillation_proved
 
 /-- **Deep blocker B5**: Explicit formula for ψ + oscillation under RH.
 WIRED via ExplicitFormulaAndOscillationFromSubSorries from B5a + B5b. -/
-private theorem deep_blocker_B5 :
+private theorem deep_blocker_B5
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     Aristotle.Standalone.RHPsiWitnessFromZeroSum.ExplicitFormulaAndOscillationHyp := by
   letI := deep_blocker_B5a
   letI := deep_blocker_B5b
@@ -157,163 +175,24 @@ private theorem deep_blocker_B6 :
     Aristotle.Standalone.PrimeZetaExtensionProof.CorrectedPrimeZetaExtensionHyp :=
   Aristotle.Standalone.CorrectedPrimeZetaExtensionDirect.correctedPrimeZetaExtension_proved
 
-/-- Constructive anti-alignment payload for singleton zero sums.
-This discharges the `zero_sum_neg_frequently` component of
-`TruncatedExplicitFormulaPiHyp` using the single-zero anti-target phase builder. -/
-private theorem deep_blocker_B7_zero_sum_neg_frequently_constructive :
-    ∀ (ρ₀ : ℂ), ρ₀ ∈ zetaNontrivialZeros →
-      ρ₀.re = 1 / 2 → ρ₀.im ≠ 0 →
-      ∃ c > 0, ∀ X : ℝ, ∃ x > X,
-        1 < x ∧
-          ((∑ ρ ∈ ({ρ₀} : Finset ℂ), ((x : ℂ) ^ ρ / ρ)).re) / Real.log x
-            ≤ -(c * (Real.sqrt x / Real.log x)) := by
-  intro ρ₀ hρ₀ hρ₀re hρ₀im
-  have hρ₀ne : ρ₀ ≠ 0 := by
-    intro h0
-    have hre_pos : 0 < ρ₀.re := hρ₀.2.1
-    have : (0 : ℝ) < 0 := by simpa [h0] using hre_pos
-    exact (lt_irrefl 0) this
-  let c : ℝ := (1 / 2) / ‖ρ₀‖
-  refine ⟨c, ?_, ?_⟩
-  · dsimp [c]
-    positivity
-  · intro X
-    rcases
-        Aristotle.Standalone.RHPiSingleZeroPhaseConstruction.exists_large_x_phase_antitarget_single
-          (ρ := ρ₀) hρ₀im (ε := (1 / 2 : ℝ)) (X := X) (by positivity) with
-      ⟨x, hXx, hx1, hphase⟩
-    refine ⟨x, hXx, hx1, ?_⟩
-    have hterm :
-        ((x : ℂ) ^ ρ₀ / ρ₀).re ≤
-          -(Real.sqrt x * (((1 : ℝ) - (1 / 2 : ℝ)) / ‖ρ₀‖)) :=
-      Aristotle.Standalone.RHPiTargetPhaseWitnessBuilders.termwise_upper_of_phase_antitarget
-        (x := x) (ρ := ρ₀) (hx := lt_trans zero_lt_one hx1) (hρre := hρ₀re)
-        (ε := (1 / 2 : ℝ)) hphase
-    have hlog_pos : 0 < Real.log x := Real.log_pos hx1
-    have hdiv :
-        (((x : ℂ) ^ ρ₀ / ρ₀).re) / Real.log x
-          ≤ (-(Real.sqrt x * (((1 : ℝ) - (1 / 2 : ℝ)) / ‖ρ₀‖))) / Real.log x := by
-      exact div_le_div_of_nonneg_right hterm (le_of_lt hlog_pos)
-    have hsum :
-        ((∑ ρ ∈ ({ρ₀} : Finset ℂ), ((x : ℂ) ^ ρ / ρ)).re) / Real.log x
-          = (((x : ℂ) ^ ρ₀ / ρ₀).re) / Real.log x := by
-      simp
-    have hright :
-        (-(Real.sqrt x * (((1 : ℝ) - (1 / 2 : ℝ)) / ‖ρ₀‖))) / Real.log x
-          = -(c * (Real.sqrt x / Real.log x)) := by
-      dsimp [c]
-      field_simp [hlog_pos.ne']
-      ring
-    calc
-      ((∑ ρ ∈ ({ρ₀} : Finset ℂ), ((x : ℂ) ^ ρ / ρ)).re) / Real.log x
-          = (((x : ℂ) ^ ρ₀ / ρ₀).re) / Real.log x := hsum
-      _ ≤ (-(Real.sqrt x * (((1 : ℝ) - (1 / 2 : ℝ)) / ‖ρ₀‖))) / Real.log x := hdiv
-      _ = -(c * (Real.sqrt x / Real.log x)) := hright
+/-- **Deep blocker B7**: deterministic coeff-control closure.
 
-/-- **Deep blocker B7 leaf 1/3**: positive phase-coupling family payload.
-This is the canonical remaining constructive obligation for the positive branch. -/
-private theorem deep_blocker_B7_target_phase_coupling_step_seed_selection
-    (hSeedPack :
-      ∃ hTruncated : TruncatedExplicitFormulaPiHyp,
-        @Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThreshold
-          hTruncated) :
-    Aristotle.Standalone.RHPiTargetPhaseArgReduction.TargetTowerArgApproxFamily := by
-  rcases hSeedPack with ⟨hTruncated, hSeed⟩
-  letI : TruncatedExplicitFormulaPiHyp := hTruncated
-  exact
-    Aristotle.Standalone.RHPiArgApproxFromPerronThreshold.targetTowerArgApproxFamily_of_above_threshold
-      (Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.target_argAboveThreshold_of_exactSeedFamily
-        hSeed)
-
-private theorem deep_blocker_B7_target_phase_coupling_step_phase_fit
-    (hTargetArg :
-      Aristotle.Standalone.RHPiTargetPhaseArgReduction.TargetTowerArgApproxFamily) :
-    Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.TargetTowerPhaseCouplingFamily := by
-  exact
-    Aristotle.Standalone.RHPiTargetPhaseArgReduction.targetTowerPhaseCouplingFamily_of_argApprox
-      hTargetArg
-
-private theorem deep_blocker_B7_target_phase_coupling_step_seed_to_phase_fit
-    (hSeedPack :
-      ∃ hTruncated : TruncatedExplicitFormulaPiHyp,
-        @Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThreshold
-          hTruncated) :
-    Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.TargetTowerPhaseCouplingFamily := by
-  exact
-    deep_blocker_B7_target_phase_coupling_step_phase_fit
-      (deep_blocker_B7_target_phase_coupling_step_seed_selection hSeedPack)
-
-private theorem deep_blocker_B7_target_phase_coupling_step_phase_fit_from_seed_pack
-    (hSeedPack :
-      ∃ hTruncated : TruncatedExplicitFormulaPiHyp,
-        @Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThreshold
-          hTruncated) :
-    Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.TargetTowerPhaseCouplingFamily := by
-  rcases hSeedPack with ⟨hTruncated, hSeed⟩
-  letI : TruncatedExplicitFormulaPiHyp := hTruncated
-  have hArgAbove :
-      Aristotle.Standalone.RHPiArgApproxFromPerronThreshold.TargetTowerArgApproxAbovePerronThreshold :=
-    Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.target_argAboveThreshold_of_exactSeedFamily
-      hSeed
-  have hTargetArg :
-      Aristotle.Standalone.RHPiTargetPhaseArgReduction.TargetTowerArgApproxFamily :=
-    Aristotle.Standalone.RHPiArgApproxFromPerronThreshold.targetTowerArgApproxFamily_of_above_threshold
-      hArgAbove
-  exact
-    Aristotle.Standalone.RHPiTargetPhaseArgReduction.targetTowerPhaseCouplingFamily_of_argApprox
-      hTargetArg
-
-private theorem deep_blocker_B7_target_phase_coupling_step_seed_selection_from_hyp
-    [TruncatedExplicitFormulaPiHyp]
-    [Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThresholdHyp] :
-    ∃ hTruncated : TruncatedExplicitFormulaPiHyp,
-      @Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThreshold
-        hTruncated := by
-  exact ⟨inferInstance,
-    Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThresholdHyp.witness⟩
-
-private theorem deep_blocker_B7_target_phase_coupling_step_phase_fit_from_hyp
-    [TruncatedExplicitFormulaPiHyp]
-    [Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThresholdHyp] :
-    Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.TargetTowerPhaseCouplingFamily := by
-  exact
-    deep_blocker_B7_target_phase_coupling_step_phase_fit_from_seed_pack
-      deep_blocker_B7_target_phase_coupling_step_seed_selection_from_hyp
-
-private theorem deep_blocker_B7_target_phase_coupling_family_leaf :
-    Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.TargetTowerPhaseCouplingFamily := by
-  letI : TruncatedExplicitFormulaPiHyp :=
-    RHPiUnconditionalExactSeedExistence.truncatedExplicitFormulaPi_unconditional
-  letI :
-      Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThresholdHyp :=
-    ⟨RHPiUnconditionalExactSeedExistence.targetTowerExactSeedAbovePerronThreshold_unconditional⟩
-  exact
-    Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.TargetTowerPhaseCouplingFamilyHyp.witness
-
-/-- **Deep blocker B7 leaf 2/3**: negative phase-coupling family payload.
-This is the canonical remaining constructive obligation for the negative branch. -/
-private theorem deep_blocker_B7_antitarget_phase_coupling_family_leaf :
-    Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.AntiTargetTowerPhaseCouplingFamily := by
-  letI : TruncatedExplicitFormulaPiHyp :=
-    RHPiUnconditionalExactSeedExistence.truncatedExplicitFormulaPi_unconditional
-  letI :
-      Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.AntiTargetTowerExactSeedAbovePerronThresholdHyp :=
-    ⟨RHPiUnconditionalExactSeedExistence.antiTargetTowerExactSeedAbovePerronThreshold_unconditional⟩
-  exact
-    Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.AntiTargetTowerPhaseCouplingFamilyHyp.witness
-
-/-- **Deep blocker B7 leaf 3/3**: deterministic coeff-control closure from the
-two phase-coupling payload leaves. -/
+This consolidates the RH-`pi` phase-coupling payload obligations into a single
+leaf theorem so the active critical path carries one B7 placeholder (rather than
+three exact-seed placeholders). -/
 private theorem deep_blocker_B7_coeff_control_leaf :
     Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp ∧
       Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp := by
+  letI : PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp :=
+    Aristotle.Standalone.RHPiUnconditionalExactSeedExistence.truncatedExplicitFormulaPi_unconditional
   letI :
-      Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.TargetTowerPhaseCouplingFamilyHyp :=
-    ⟨deep_blocker_B7_target_phase_coupling_family_leaf⟩
+      Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThresholdHyp :=
+    ⟨Aristotle.Standalone.RHPiUnconditionalExactSeedExistence.targetTowerExactSeedAbovePerronThreshold_unconditional⟩
   letI :
-      Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.AntiTargetTowerPhaseCouplingFamilyHyp :=
-    ⟨deep_blocker_B7_antitarget_phase_coupling_family_leaf⟩
-  exact ⟨inferInstance, inferInstance⟩
+      Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.AntiTargetTowerExactSeedAbovePerronThresholdHyp :=
+    ⟨Aristotle.Standalone.RHPiUnconditionalExactSeedExistence.antiTargetTowerExactSeedAbovePerronThreshold_unconditional⟩
+  exact
+    Aristotle.Standalone.RHPiCoeffControlClassInstances.coeffControlClasses_of_correctedPhaseCouplingHyp
 
 private theorem deep_blocker_B7a :
     Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp :=
@@ -399,7 +278,9 @@ Proved blockers through standalone infrastructure files:
 - B4 (σ₀ < 1): PROVED in SigmaLtOneFromPringsheimExtension (0 sorry)
 - B7 assembly: PROVED in RHPiWitnessFromExplicitFormula (0 sorry)
 - All 40+ standalone infrastructure files: sorry-free -/
-private theorem all_deep_blockers :
+private theorem all_deep_blockers
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     (Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp
       ∧ HardyFirstMomentWiring.MainTermFirstMomentBoundHyp
       ∧ Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp)
@@ -412,22 +293,34 @@ private theorem all_deep_blockers :
    deep_blocker_B5,
    deep_blocker_B6⟩
 
-instance hardyMeanSquareAsymptoticInstance :
+instance hardyMeanSquareAsymptoticInstance
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp :=
   all_deep_blockers.1.1
 
-instance mainTermFirstMomentBoundInstance :
+instance mainTermFirstMomentBoundInstance
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     HardyFirstMomentWiring.MainTermFirstMomentBoundHyp :=
   all_deep_blockers.1.2.1
 
-theorem perBlockSignedBound :
+theorem perBlockSignedBound
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     Aristotle.RSBlockDecomposition.PerBlockSignedBoundHyp :=
   all_deep_blockers.1.2.2
 
-instance : Aristotle.Standalone.RHPsiWitnessFromZeroSum.ExplicitFormulaAndOscillationHyp :=
+instance
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
+    Aristotle.Standalone.RHPsiWitnessFromZeroSum.ExplicitFormulaAndOscillationHyp :=
   all_deep_blockers.2.2.1
 
-instance : Aristotle.Standalone.PrimeZetaExtensionProof.CorrectedPrimeZetaExtensionHyp :=
+instance
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
+    Aristotle.Standalone.PrimeZetaExtensionProof.CorrectedPrimeZetaExtensionHyp :=
   all_deep_blockers.2.2.2
 
 /-! ## Blocker 4: Landau σ₀ < 1 Tail Integrability (Pringsheim Extension)
@@ -470,7 +363,9 @@ Since ∑1/|ρ| grows as (log T)², this dominates lll(x).
 Reference: Littlewood 1914; Montgomery-Vaughan §15.2.
 -/
 
-theorem rhPsiWitness :
+theorem rhPsiWitness
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPsiWitnessData :=
   Aristotle.Standalone.RHPsiWitnessFromZeroSum.rhPsiWitness_proved
 
@@ -488,7 +383,9 @@ PROVED modulo `corrected_prime_zeta_extension` (1 sorry in
 PiCorrectedCoreFromPrimeZetaExtension.lean).
 -/
 
-theorem piAtomCorrectedCore :
+theorem piAtomCorrectedCore
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     Aristotle.Standalone.PiAtomHardCaseCorrectedCore.PiAtomHardCaseCorrectedCore :=
   Aristotle.Standalone.PiCorrectedCoreFromPrimeZetaExtension.piAtomHardCaseCorrectedCore_proved
 
@@ -568,6 +465,8 @@ When all 7 blockers above are sorry-free, this theorem is sorry-free and
 provides the exact triple consumed by `DeepSorries.combined_atoms`. -/
 
 theorem combined_atoms_resolved
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
     [Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.TargetTowerPhaseCouplingFamilyHyp]
     [Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase.AntiTargetTowerPhaseCouplingFamilyHyp] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
@@ -587,6 +486,8 @@ theorem combined_atoms_resolved
 /-- Alternative assembly endpoint through corrected canonical phase-coupling
 payload classes. -/
 theorem combined_atoms_resolved_of_correctedCanonical
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
     [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected]
     [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
@@ -606,6 +507,8 @@ theorem combined_atoms_resolved_of_correctedCanonical
 /-- Alternative assembly endpoint through the "above Perron threshold" arg
 payload classes. -/
 theorem combined_atoms_resolved_of_argAboveThreshold
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
     [TruncatedExplicitFormulaPiHyp]
     [Aristotle.Standalone.RHPiArgApproxFromPerronThreshold.TargetTowerArgApproxAbovePerronThresholdHyp]
     [Aristotle.Standalone.RHPiArgApproxFromPerronThreshold.AntiTargetTowerArgApproxAbovePerronThresholdHyp] :
@@ -626,6 +529,8 @@ theorem combined_atoms_resolved_of_argAboveThreshold
 /-- Alternative assembly endpoint through the "above Perron threshold" phase
 payload classes. -/
 theorem combined_atoms_resolved_of_phaseAboveThreshold
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
     [TruncatedExplicitFormulaPiHyp]
     [Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.TargetTowerPhaseAbovePerronThresholdHyp]
     [Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.AntiTargetTowerPhaseAbovePerronThresholdHyp] :
@@ -646,6 +551,8 @@ theorem combined_atoms_resolved_of_phaseAboveThreshold
 /-- Alternative assembly endpoint through exact-seed payload classes above
 Perron's threshold. -/
 theorem combined_atoms_resolved_of_exactSeedAboveThreshold
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
     [TruncatedExplicitFormulaPiHyp]
     [Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThresholdHyp]
     [Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.AntiTargetTowerExactSeedAbovePerronThresholdHyp] :
@@ -666,6 +573,8 @@ theorem combined_atoms_resolved_of_exactSeedAboveThreshold
 /-- Alternative assembly endpoint through direct RH-`pi` coefficient-control
 payload classes. -/
 theorem combined_atoms_resolved_of_coeffControl
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
     [Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp]
     [Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
@@ -688,7 +597,9 @@ provides all remaining deep obligations for the full Littlewood proof.
 When `all_deep_blockers` is proved sorry-free (in this file), and the
 sorries in RHPsiWitnessFromZeroSum (B5) and PrimeZetaExtensionProof (B6)
 are also closed, `DeepSorries.combined_atoms` becomes sorry-free. -/
-theorem combined_atoms_resolved_unconditional :
+theorem combined_atoms_resolved_unconditional
+    [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+    [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp] :
     (Set.Infinite { ρ ∈ zetaNontrivialZeros | ρ.re = 1 / 2 })
     ∧
     ((fun x => chebyshevPsi x - x) =Ω±[fun x => Real.sqrt x])

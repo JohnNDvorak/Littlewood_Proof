@@ -37,6 +37,9 @@ open Chebyshev ZetaZeros WeightedAverage DirichletApprox Schmidt GrowthDominatio
 
 namespace Littlewood
 
+variable [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+  [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
+
 /-! ## Full-Strength Main Theorem -/
 
 /-- **Littlewood's 1914 theorem for ψ**: ψ(x) - x = Ω±(√x).
@@ -125,11 +128,16 @@ end RHFalseCase
 /-- The number of zeros up to height T -/
 noncomputable def zeroCount (T : ℝ) : ℕ := Nat.floor (zeroCountingFunction T)
 
+section
+set_option linter.unusedSectionVars false
+
 /-- Step 1: A weak Dirichlet step (existence of a bounded denominator). -/
 theorem dirichlet_step (M : ℕ) (hM : 10 ≤ M) :
     ∃ n : ℕ, 1 ≤ n ∧ n ≤ M^(zeroCount (M * Real.log M)) := by
   refine ⟨1, le_rfl, ?_⟩
   have hpos : 0 < M := by linarith
   exact Nat.one_le_pow _ _ hpos
+
+end
 
 end Littlewood

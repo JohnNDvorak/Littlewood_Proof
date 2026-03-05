@@ -1,4 +1,5 @@
 import Mathlib
+import Littlewood.ZetaZeros.SupremumRealPart
 
 set_option linter.mathlibStandardSet false
 
@@ -253,7 +254,7 @@ class PsiOscillationFromCriticalZerosHypAtTop_V3 : Prop where
 class ThetaOscillationSqrtHypAtTop_V3 : Prop where
   theta_osc : IsOmegaOscillationAtTop (fun x => chebyshevTheta x - x) (fun x => Real.sqrt x)
 
-lemma exists_large_x_phases_aligned_finset (S : Finset ℂ) (hS : ∀ ρ ∈ S, ρ.re = 1/2) (ε : ℝ) (hε : ε > 0) (X : ℝ) :
+lemma exists_large_x_phases_aligned_finset (S : Finset ℂ) (_hS : ∀ ρ ∈ S, ρ.re = 1/2) (ε : ℝ) (hε : ε > 0) (X : ℝ) :
   ∃ x > X, ∀ ρ ∈ S, ‖(x : ℂ)^(I * ρ.im) - 1‖ < ε := by
     -- Apply the simultaneous Dirichlet approximation theorem to the frequencies γ_i = ρ.im for ρ in S.
     have h_dirichlet : ∀ (γ : Fin (Finset.card S) → ℝ) (ε : ℝ) (hε : ε > 0) (X : ℝ), ∃ x > X, ∀ i, ‖(x : ℂ) ^ (I * γ i) - 1‖ < ε :=
@@ -267,7 +268,7 @@ lemma exists_large_x_phases_aligned_finset (S : Finset ℂ) (hS : ∀ ρ ∈ S, 
 /-
 Lower bound on the real part of the sum when phases are aligned.
 -/
-lemma bound_real_part_of_sum_aligned {S : Finset ℂ} (hS : ∀ ρ ∈ S, ρ.re = 1/2) {x : ℝ} (hx : x > 0) {ε : ℝ} (hε : ε > 0)
+lemma bound_real_part_of_sum_aligned {S : Finset ℂ} (hS : ∀ ρ ∈ S, ρ.re = 1/2) {x : ℝ} (hx : x > 0) {ε : ℝ} (_hε : ε > 0)
   (h_phases : ∀ ρ ∈ S, ‖(x : ℂ)^(I * ρ.im) - 1‖ < ε) :
   (∑ ρ ∈ S, (x : ℂ)^ρ / ρ).re ≥ Real.sqrt x * ((∑ ρ ∈ S, (1/ρ).re) - ε * (∑ ρ ∈ S, 1/‖ρ‖)) := by
     -- For each $\rho \in S$, we have $\text{Re}(x^\rho/\rho) = \sqrt{x} \text{Re}(u_\rho/\rho)$ where $u_\rho = x^{i \text{Im}(\rho)}$.
@@ -280,7 +281,7 @@ lemma bound_real_part_of_sum_aligned {S : Finset ℂ} (hS : ∀ ρ ∈ S, ρ.re 
       have h_re_bound (ρ : ℂ) (hρ : ρ ∈ S) : Complex.re (((x : ℂ) ^ (Complex.I * ρ.im) - 1) / ρ) ≥ -‖((x : ℂ) ^ (Complex.I * ρ.im) - 1) / ρ‖ := by
         exact neg_le_of_abs_le ( Complex.abs_re_le_norm _ ) |> le_trans <| by norm_num;
       exact le_trans ( by simpa [ neg_div ] using div_le_div_of_nonneg_right ( neg_le_neg ( le_of_lt ( h_phases ρ hρ ) ) ) ( norm_nonneg ρ ) ) ( h_re_bound ρ hρ );
-    simp_all +decide [ div_eq_mul_inv, Finset.mul_sum _ _ _, Finset.sum_mul ];
+    simp_all +decide [ div_eq_mul_inv, Finset.mul_sum _ _ _ ];
     rw [ ← Finset.sum_sub_distrib ];
     rw [ Finset.mul_sum _ _ _ ] ; exact Finset.sum_le_sum fun i hi => by nlinarith [ h_re_bound i hi, Real.sqrt_nonneg x ] ;
 
@@ -293,7 +294,7 @@ which DIVERGES — this is the key to proving Littlewood's oscillation theorem.
 Contrast with w = 1 where ∑ Re(1/ρ) = ∑ (1/2)/(1/4+γ²) CONVERGES.
 -/
 lemma bound_real_part_of_sum_shifted {S : Finset ℂ} (hS : ∀ ρ ∈ S, ρ.re = 1/2)
-    {x : ℝ} (hx : x > 0) {w : ℂ} (hw : ‖w‖ = 1) {ε : ℝ} (hε : ε > 0)
+    {x : ℝ} (hx : x > 0) {w : ℂ} (_hw : ‖w‖ = 1) {ε : ℝ} (_hε : ε > 0)
     (h_phases : ∀ ρ ∈ S, ‖(x : ℂ)^(I * ρ.im) - w‖ < ε) :
     (∑ ρ ∈ S, (x : ℂ)^ρ / ρ).re ≥ Real.sqrt x * ((∑ ρ ∈ S, (w/ρ).re) - ε * (∑ ρ ∈ S, 1/‖ρ‖)) := by
   -- Decompose x^ρ/ρ = √x · u_ρ/ρ where u_ρ = x^{iγ}
@@ -306,7 +307,7 @@ lemma bound_real_part_of_sum_shifted {S : Finset ℂ} (hS : ∀ ρ ∈ S, ρ.re 
     have h_re_bound (ρ : ℂ) (hρ : ρ ∈ S) : Complex.re (((x : ℂ) ^ (Complex.I * ρ.im) - w) / ρ) ≥ -‖((x : ℂ) ^ (Complex.I * ρ.im) - w) / ρ‖ := by
       exact neg_le_of_abs_le ( Complex.abs_re_le_norm _ ) |> le_trans <| by norm_num;
     exact le_trans ( by simpa [ neg_div ] using div_le_div_of_nonneg_right ( neg_le_neg ( le_of_lt ( h_phases ρ hρ ) ) ) ( norm_nonneg ρ ) ) ( h_re_bound ρ hρ );
-  simp_all +decide [ div_eq_mul_inv, Finset.mul_sum _ _ _, Finset.sum_mul ];
+  simp_all +decide [ div_eq_mul_inv, Finset.mul_sum _ _ _ ];
   rw [ ← Finset.sum_sub_distrib ];
   rw [ Finset.mul_sum _ _ _ ] ; exact Finset.sum_le_sum fun i hi => by nlinarith [ h_re_bound i hi, Real.sqrt_nonneg x ] ;
 
@@ -316,7 +317,7 @@ is at most √x · (∑ Re(w/ρ) + ε · ∑ 1/‖ρ‖).
 Needed for the NEGATIVE oscillation direction.
 -/
 lemma bound_real_part_of_sum_shifted_upper {S : Finset ℂ} (hS : ∀ ρ ∈ S, ρ.re = 1/2)
-    {x : ℝ} (hx : x > 0) {w : ℂ} (hw : ‖w‖ = 1) {ε : ℝ} (hε : ε > 0)
+    {x : ℝ} (hx : x > 0) {w : ℂ} (_hw : ‖w‖ = 1) {ε : ℝ} (_hε : ε > 0)
     (h_phases : ∀ ρ ∈ S, ‖(x : ℂ)^(I * ρ.im) - w‖ < ε) :
     (∑ ρ ∈ S, (x : ℂ)^ρ / ρ).re ≤ Real.sqrt x * ((∑ ρ ∈ S, (w/ρ).re) + ε * (∑ ρ ∈ S, 1/‖ρ‖)) := by
   -- Decompose x^ρ/ρ = √x · u_ρ/ρ where u_ρ = x^{iγ}
@@ -336,6 +337,65 @@ lemma bound_real_part_of_sum_shifted_upper {S : Finset ℂ} (hS : ∀ ρ ∈ S, 
   simp_all +decide [ div_eq_mul_inv, Finset.mul_sum _ _ _ ];
   rw [ ← Finset.sum_add_distrib ];
   rw [ Finset.mul_sum _ _ _ ] ; exact Finset.sum_le_sum fun i hi => by nlinarith [ h_re_bound i hi, Real.sqrt_nonneg x ] ;
+
+/-- **B5b-infra sorry**: Phase alignment to an arbitrary target w on S¹.
+
+Given RH, a finite set S of zeros with Re(ρ) = 1/2 and Im(ρ) > 0, a target w
+with ‖w‖ = 1, ε > 0, and X, there exists x > X such that all phases
+x^{iγ} are within ε of w.
+
+This is the inhomogeneous simultaneous Dirichlet approximation with equal
+targets. The lemma is FALSE for arbitrary frequency sets (counterexample:
+γ₁=1, γ₂=2, w=e^{iπ/3}). For zeta zeros, it holds because:
+
+(1) Zeta zero ordinates are NOT all commensurate: if ∃c>0 with all γ_k ∈ c·ℤ,
+    then N⁺(T) ≤ T/c + O(1), contradicting N⁺(T) ~ (T/2π)logT from RvM.
+(2) Not-commensurate frequencies generate a dense subgroup G ⊆ ℝ/2πℤ via
+    the map t ↦ (tγ₁ mod 2π, ..., tγₙ mod 2π).
+(3) Density of G implies G ⊇ Δ (the diagonal), giving equal-target approximation.
+
+The homogeneous case (w = 1) is proved in `exists_large_x_phases_aligned_finset`.
+The gap is extending to arbitrary w via Kronecker's theorem (1884).
+
+Now takes RH as a parameter, since the proof uses properties specific to
+zeta zero ordinates (superlinear growth of N(T)).
+
+**Blocked by**: Kronecker's theorem formalization + uniform Riemann-von Mangoldt.
+
+References: Kronecker 1884, Hardy-Wright (2008) §23.8, Titchmarsh (1986) §9.4. -/
+/- Deep input: inhomogeneous phase alignment to an arbitrary target on `S¹`.
+
+This packages the Kronecker/Minkowski-style approximation that is not currently
+derived in this file. -/
+class PhaseAlignmentToTargetHyp : Prop where
+  approx :
+    ∀ (S : Finset ℂ), (∀ ρ ∈ S, ρ.re = 1/2) →
+    (∀ ρ ∈ S, 0 < ρ.im) →
+    ∀ (w : ℂ), ‖w‖ = 1 →
+    ∀ (ε : ℝ), ε > 0 →
+    ∀ (X : ℝ), ZetaZeros.RiemannHypothesis →
+      ∃ x > X, ∀ ρ ∈ S, ‖(x : ℂ)^(I * ρ.im) - w‖ < ε
+
+/-- If the target is `1`, this is exactly the homogeneous phase-alignment lemma. -/
+lemma exists_large_x_phases_aligned_to_target_of_w_eq_one
+    (S : Finset ℂ) (hS : ∀ ρ ∈ S, ρ.re = 1/2)
+    (_hS_pos : ∀ ρ ∈ S, 0 < ρ.im)
+    (w : ℂ) (_hw : ‖w‖ = 1) (ε : ℝ) (hε : ε > 0) (X : ℝ)
+    (_hRH : ZetaZeros.RiemannHypothesis)
+    (hw1 : w = 1) :
+    ∃ x > X, ∀ ρ ∈ S, ‖(x : ℂ)^(I * ρ.im) - w‖ < ε := by
+  subst hw1
+  simpa using
+    (exists_large_x_phases_aligned_finset S hS ε hε X)
+
+lemma exists_large_x_phases_aligned_to_target
+    (S : Finset ℂ) (hS : ∀ ρ ∈ S, ρ.re = 1/2)
+    (hS_pos : ∀ ρ ∈ S, 0 < ρ.im)
+    (w : ℂ) (hw : ‖w‖ = 1) (ε : ℝ) (hε : ε > 0) (X : ℝ)
+    (hRH : ZetaZeros.RiemannHypothesis)
+    [PhaseAlignmentToTargetHyp] :
+    ∃ x > X, ∀ ρ ∈ S, ‖(x : ℂ)^(I * ρ.im) - w‖ < ε :=
+  PhaseAlignmentToTargetHyp.approx S hS hS_pos w hw ε hε X hRH
 
 end Aristotle.DirichletPhaseAlignment
 

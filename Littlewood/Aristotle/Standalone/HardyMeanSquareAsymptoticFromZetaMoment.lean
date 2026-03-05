@@ -8,18 +8,20 @@ The classical second moment theorem for ζ on the critical line:
 is proved by combining:
   1. partial_zeta_mean_square_half_coeff (PROVED): ∫₁ᵀ |S_N|² = ½·T·log T + O(T)
      Uses normSq decomposition + harmonicSum integral + exact log formula + offDiag bound
-  2. afe_mean_square_bridge (SORRY): ∫₁ᵀ |ζ|² = 2·∫₁ᵀ |S_N|² + O(T)
-     The AFE mean-value consequence (Ingham 1926, Titchmarsh §7.2)
+  2. afe_mean_square_bridge (PROVED from one signed-gap blocker):
+     ∫₁ᵀ |ζ|² = 2·∫₁ᵀ |S_N|² + O(T)
   3. Assembly: ms(T) = ms(1) + ∫₁ᵀ |ζ|² = K + T·log T + O(T)
 
 and then bridged to HardyMeanSquareAsymptoticHyp: ∫₁ᵀ Z(t)² = T·log T + O(T)
 via Z(t)² = |ζ(1/2+it)|² (Z-is-real + HardyZTransfer).
 
-SORRY COUNT: 1
-  - afe_integral_remainder_bound (mean-value integration of AFE pointwise error)
-    This is the sole remaining B1 sorry: ∫₁ᵀ ‖|ζ|²-2|S_N|²‖ = O(T).
-  NOTE: afe_mean_square_bridge is FULLY PROVED from afe_integral_remainder_bound.
-  Integrability lemmas (h_zeta_int, h_partial_int) are PROVED.
+SORRY COUNT: 0 (in this file)
+  - The B1 atomic leaf is delegated to:
+    `Standalone.HardyAfeSignedGapAtomic.afe_signed_integral_gap_bound_atomic`
+    with statement:
+    ∫₁ᵀ (|ζ|² - 2|S_N|²) = O(T).
+  NOTE: All integrability and bridge plumbing is in
+    Standalone.HardyAfeMeanSquareBridgeInfra.
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -28,6 +30,8 @@ import Littlewood.Aristotle.ZetaMeanSquare
 import Littlewood.Aristotle.HardyMeanSquareAsymptoticLeaf
 import Littlewood.Bridge.HardyZTransfer
 import Littlewood.Aristotle.Standalone.HardyApproxFunctionalEqMeanValueLowerDecomp
+import Littlewood.Aristotle.Standalone.HardyAfeMeanSquareBridgeInfra
+import Littlewood.Aristotle.Standalone.HardyAfeSignedGapAtomic
 import Littlewood.Aristotle.MeanSquare
 
 set_option maxHeartbeats 800000
@@ -39,6 +43,7 @@ noncomputable section
 namespace Aristotle.Standalone.HardyMeanSquareAsymptoticFromZetaMoment
 
 open Filter Asymptotics MeasureTheory Set Real
+open Aristotle.Standalone.HardyAfeMeanSquareBridgeInfra
 
 /-- Exact formula: ∫₁ᵀ log t = T·log T − T + 1 (integration by parts / FTC). -/
 private lemma integral_log_exact (T : ℝ) (hT : 1 ≤ T) :
@@ -196,99 +201,38 @@ private lemma partial_zeta_mean_square_half_coeff :
 -- BLOCK B1: APPROXIMATE FUNCTIONAL EQUATION BRIDGE
 -- ==============================================================================
 
-/-- Integral of the AFE remainder is O(T).
-Uses Cauchy-Schwarz (Hölder's inequality) and `partial_zeta_mean_square_half_coeff`.
-This is the mean-value integration of the pointwise AFE bound. -/
-private lemma afe_integral_remainder_bound :
-    (fun T => ∫ t in (1:ℝ)..T,
-      ‖‖riemannZeta (↑(1/2 : ℝ) + Complex.I * ↑t)‖^2 -
-       2 * Complex.normSq (partialZeta (Real.sqrt (t / (2 * Real.pi)))
-         (1/2 + Complex.I * t))‖)
+/-- Signed AFE mean-square gap is `O(T)`.
+This is the single analytic blocker for the AFE mean-square bridge
+(Ingham 1926 / Titchmarsh §7.2 oscillatory cancellation). -/
+private lemma afe_signed_integral_gap_bound :
+    (fun T => ∫ t in (1:ℝ)..T, afeGapIntegrand t)
     =O[atTop] (fun T => T) := by
-  sorry
+  simpa using Aristotle.Standalone.HardyAfeSignedGapAtomic.afe_signed_integral_gap_bound_atomic
+
+/-- Cycle-breaking extraction point: any signed AFE gap `O(T)` theorem yields
+the standard critical-line zeta second-moment asymptotic. -/
+theorem zeta_mean_square_half_of_signed_gap
+    (hSigned :
+      (fun T => ∫ t in (1 : ℝ)..T, afeGapIntegrand t)
+        =O[atTop] (fun T : ℝ => T)) :
+    (fun T : ℝ => mean_square_zeta (1 / 2) T - T * Real.log T)
+      =O[atTop] (fun T : ℝ => T) := by
+  exact
+    Aristotle.Standalone.HardyAfeSignedGapRootInfra.mean_square_zeta_half_asymp_of_signed_gap
+      hSigned
 
 /-- The mean-value consequence of the approximate functional equation.
 
-On the critical line, the AFE gives ζ(1/2+it) = S_N(t) + χ(t)·conj(S_N(t)) + R(t)
-with |χ|=1 and |R(t)| ≪ t^{-1/4}. Expanding |ζ|² and integrating:
-  ∫|ζ|² = 2∫|S_N|² + O(T)
-The O(T) absorbs cross-terms (Cauchy-Schwarz) and the oscillatory ∫Re(χ̄·S_N²).
-
-Proved by combining `afe_integral_remainder_bound` (integral of AFE error is O(T))
-with the triangle inequality for integrals.
-
-Reference: Titchmarsh §7.2; Ingham (1926). -/
+On the critical line, the AFE gives `|ζ|² = 2|S_N|² + oscillatory/remainder terms`.
+The signed integral of that gap is `O(T)`, which implies
+`∫|ζ|² = 2∫|S_N|² + O(T)`. -/
 private theorem afe_mean_square_bridge :
     (fun T => (∫ t in (1:ℝ)..T, ‖riemannZeta (↑(1/2 : ℝ) + Complex.I * ↑t)‖^2) -
       2 * (∫ t in (1:ℝ)..T, Complex.normSq
         (partialZeta (Real.sqrt (t / (2 * Real.pi))) (1/2 + Complex.I * t))))
     =O[atTop] (fun T => T) := by
-  -- Step 1: Prove Integrability
-  have h_zeta_int : ∀ T, IntervalIntegrable
-      (fun t : ℝ => ‖riemannZeta (↑(1/2 : ℝ) + Complex.I * ↑t)‖^2) volume 1 T := by
-    -- ζ is continuous away from s=1; 1/2+it ≠ 1 since Re = 1/2 ≠ 1
-    have h_ne_one : ∀ t : ℝ, ↑(1/2 : ℝ) + Complex.I * ↑t ≠ (1 : ℂ) := by
-      intro t h; have h_re := congr_arg Complex.re h; simp at h_re
-    have h_cont : Continuous (fun t : ℝ => riemannZeta (↑(1/2 : ℝ) + Complex.I * ↑t)) := by
-      rw [continuous_iff_continuousAt]; intro t
-      exact ContinuousAt.comp
-        (g := riemannZeta) (f := fun t : ℝ => (↑(1/2 : ℝ) : ℂ) + Complex.I * (↑t : ℂ))
-        (differentiableAt_riemannZeta (h_ne_one t)).continuousAt
-        (by fun_prop)
-    intro T
-    exact (h_cont.norm.pow 2).continuousOn.intervalIntegrable
-  have h_partial_int : ∀ T, IntervalIntegrable
-      (fun t : ℝ => Complex.normSq (partialZeta (Real.sqrt (t / (2 * Real.pi)))
-        (1/2 + Complex.I * t))) volume 1 T := by
-    intro T
-    -- Decompose normSq into diag + offDiag via normSq_partialZeta_eq
-    have h_eq : (fun t : ℝ => Complex.normSq (partialZeta (Real.sqrt (t / (2 * Real.pi)))
-        (1/2 + Complex.I * t))) =
-        (fun t => harmonicSum (N_truncation t) + (offDiagSsq t).re) := by
-      ext t
-      have := normSq_partialZeta_eq t
-      rw [sum_Icc_eq_harmonicSum, N_t_eq_N_truncation] at this
-      exact this
-    rw [h_eq]
-    -- Diagonal part: monotone hence integrable
-    have h_diag : IntervalIntegrable (fun t => harmonicSum (N_truncation t)) volume 1 T := by
-      have h1 : IntervalIntegrable
-          (fun t => ∑ n ∈ Finset.Icc 1 (N_t t), (1:ℝ)/n) volume 1 T := by
-        apply MonotoneOn.intervalIntegrable
-        intro t _ u _ htu
-        exact Finset.sum_le_sum_of_subset_of_nonneg
-          (Finset.Icc_subset_Icc_right (Nat.floor_mono (Real.sqrt_le_sqrt
-            (div_le_div_of_nonneg_right htu (by positivity)))))
-          (fun _ _ _ => by positivity)
-      simp_rw [sum_Icc_eq_harmonicSum, N_t_eq_N_truncation] at h1
-      exact h1
-    -- Off-diagonal part: CLM composition of integrable function
-    have h_offdiag : IntervalIntegrable (fun t => (offDiagSsq t).re) volume 1 T :=
-      ⟨Complex.reCLM.integrable_comp (offDiagSsq_intervalIntegrable 1 T).1,
-       Complex.reCLM.integrable_comp (offDiagSsq_intervalIntegrable 1 T).2⟩
-    exact h_diag.add h_offdiag
-  -- Step 2: Asymptotic transitivity: ‖∫f‖ ≤ ∫‖f‖ =O T
-  refine IsBigO.trans ?_ afe_integral_remainder_bound
-  refine IsBigO.of_bound 1 ?_
-  filter_upwards [eventually_ge_atTop (1 : ℝ)] with T hT
-  simp only [one_mul]
-  -- Step 3: Combine the two integrals into one
-  have h_combine : (∫ t in (1:ℝ)..T, ‖riemannZeta (↑(1/2 : ℝ) + Complex.I * ↑t)‖^2) -
-      2 * (∫ t in (1:ℝ)..T, Complex.normSq (partialZeta (Real.sqrt (t / (2 * Real.pi)))
-        (1/2 + Complex.I * t))) =
-      ∫ t in (1:ℝ)..T, (‖riemannZeta (↑(1/2 : ℝ) + Complex.I * ↑t)‖^2 -
-      2 * Complex.normSq (partialZeta (Real.sqrt (t / (2 * Real.pi)))
-        (1/2 + Complex.I * t))) := by
-    rw [← intervalIntegral.integral_const_mul 2]
-    rw [← intervalIntegral.integral_sub (h_zeta_int T) ((h_partial_int T).const_mul 2)]
-  rw [h_combine]
-  -- Step 4: Triangle inequality for integrals + norm of nonneg integral
-  exact (intervalIntegral.norm_integral_le_integral_norm
-    (f := fun t => ‖riemannZeta (↑(1/2 : ℝ) + Complex.I * ↑t)‖^2 -
-      2 * Complex.normSq (partialZeta (Real.sqrt (t / (2 * Real.pi)))
-        (1/2 + Complex.I * t))) hT).trans
-    (le_of_eq (Real.norm_of_nonneg (intervalIntegral.integral_nonneg_of_forall hT
-      (fun t => norm_nonneg _))).symm)
+  simpa [zetaMsIntegrand, partialMsIntegrand] using
+    mean_square_bridge_of_signed_remainder afe_signed_integral_gap_bound
 
 /-- EP.hardyZ² = Decomp.hardyZ² (direct proof via Z-is-real).
 
@@ -419,5 +363,44 @@ theorem hardyMeanSquareAsymptoticHyp_proved :
           have : ‖T‖ ≥ 1 := by rw [Real.norm_eq_abs, abs_of_nonneg hT_nn]; linarith
           nlinarith [abs_nonneg K]
       _ = (C + |K|) * ‖T‖ := by ring
+
+/-- Extracted conversion theorem:
+`mean_square_zeta (1/2) T - T log T = O(T)` implies
+`HardyMeanSquareAsymptoticHyp`. -/
+theorem hardyMeanSquareAsymptoticHyp_of_zeta_mean_square_half
+    (h_asymp :
+      (fun T : ℝ => mean_square_zeta (1 / 2) T - T * Real.log T)
+        =O[atTop] (fun T : ℝ => T)) :
+    Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp := by
+  refine { bound := ?_ }
+  set K := mean_square_zeta (1 / 2) 1
+  obtain ⟨C, hC_nn, hC⟩ := h_asymp.exists_nonneg
+  rw [IsBigOWith] at hC
+  refine .of_bound (C + |K|) ?_
+  filter_upwards [hC, eventually_ge_atTop 1] with T hms hT1
+  rw [integral_ep_hardyZ_sq T hT1]
+  have h_rw : mean_square_zeta (1 / 2) T - K - T * Real.log T =
+      (mean_square_zeta (1 / 2) T - T * Real.log T) + (-K) := by ring
+  rw [h_rw]
+  have hT_nn : (0 : ℝ) ≤ T := by linarith
+  calc ‖mean_square_zeta (1 / 2) T - T * Real.log T + -K‖
+      ≤ ‖mean_square_zeta (1 / 2) T - T * Real.log T‖ + ‖(-K : ℝ)‖ := norm_add_le _ _
+    _ = ‖mean_square_zeta (1 / 2) T - T * Real.log T‖ + |K| := by
+        simp only [Real.norm_eq_abs, abs_neg]
+    _ ≤ C * ‖T‖ + |K| := by linarith [hms]
+    _ ≤ C * ‖T‖ + |K| * ‖T‖ := by
+        have : ‖T‖ ≥ 1 := by rw [Real.norm_eq_abs, abs_of_nonneg hT_nn]; linarith
+        nlinarith [abs_nonneg K]
+    _ = (C + |K|) * ‖T‖ := by ring
+
+/-- Extracted conversion theorem:
+signed AFE mean-square gap `O(T)` implies `HardyMeanSquareAsymptoticHyp`. -/
+theorem hardyMeanSquareAsymptoticHyp_of_signed_gap
+    (hSigned :
+      (fun T => ∫ t in (1 : ℝ)..T, afeGapIntegrand t)
+        =O[atTop] (fun T : ℝ => T)) :
+    Aristotle.HardyMeanSquareAsymptoticLeaf.HardyMeanSquareAsymptoticHyp := by
+  exact hardyMeanSquareAsymptoticHyp_of_zeta_mean_square_half
+    (zeta_mean_square_half_of_signed_gap hSigned)
 
 end Aristotle.Standalone.HardyMeanSquareAsymptoticFromZetaMoment

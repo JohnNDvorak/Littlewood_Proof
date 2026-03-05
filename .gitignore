@@ -15,3 +15,8 @@ build_log*.txt
 build_audit.log
 warnings.txt
 import_graph.dot
+
+# Local proof probes / scratch files
+.tmp_*
+ralph_*.log
+.claude/

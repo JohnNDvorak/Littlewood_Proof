@@ -4,13 +4,13 @@
 
 Prove the truncated explicit formula error bound in Lean 4 / Mathlib:
 
-$$|\psi(x) - x + \sum_{|\gamma| \le T} \operatorname{Re}(x^\rho/\rho)| \le C_2 \cdot \frac{\sqrt{x} \cdot (\log T)^2}{\sqrt{T}}$$
+$$|\psi(x) - x + \sum_{|\gamma| \le T} \operatorname{Re}(x^\rho/\rho)| \le C_2 \cdot \left(\frac{\sqrt{x} \cdot (\log T)^2}{\sqrt{T}} + (\log x)^2\right)$$
 
 for all $x \ge 2$, $T \ge 2$. This is the **sole remaining sorry** (Blocker B5a) on the ψ explicit formula chain.
 
 ## Target File
 
-**Replace the sorry** at line 112 of:
+**Replace the sorry** in:
 ```
 Littlewood/Aristotle/Standalone/ExplicitFormulaPsiSkeleton.lean
 ```
@@ -20,7 +20,8 @@ Littlewood/Aristotle/Standalone/ExplicitFormulaPsiSkeleton.lean
 ```lean
 theorem shifted_contours_bound :
     ∃ C₂ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
-      |shiftedRemainderRe x T| ≤ C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+      |shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
   sorry
 ```
 
@@ -34,7 +35,8 @@ def zeroSumRe (x T : ℝ) : ℝ :=
   (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re
 ```
 
-So the sorry asserts: `|chebyshevPsi x - x + ∑_{|γ|≤T} Re(x^ρ/ρ)| ≤ C₂ · (√x · (log T)² / √T)`
+So the sorry asserts:
+`|chebyshevPsi x - x + ∑_{|γ|≤T} Re(x^ρ/ρ)| ≤ C₂ · (√x · (log T)² / √T + (log x)²)`.
 
 ## Mathematical Content
 
@@ -112,7 +114,8 @@ private theorem contour_remainder_bound :
       |contourRemainder x T| ≤ C * (√x * (log T)^2 / √T)
   := sorry
 ```
-Then wire via triangle inequality (similar to existing `explicitFormulaPsiGeneral_proved`).
+Then wire via triangle inequality to recover the `+ (log x)^2` term in
+`shifted_contours_bound`.
 
 ### Option C: Direct proof (most ambitious)
 Build the full Perron formula chain using existing `HorizontalSegmentBounds.lean`.

@@ -23,6 +23,9 @@ open Schmidt Filter Topology
 
 namespace Aristotle.LandauLittlewood
 
+variable [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+  [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
+
 /-- Landau-Littlewood consequence for ψ at square-root scale. -/
 theorem psi_oscillation_sqrt_of_hardy
     [HardyCriticalLineZerosHyp] :
