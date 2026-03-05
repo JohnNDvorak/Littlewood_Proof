@@ -1,0 +1,68 @@
+digraph MainChainState {
+  rankdir=LR;
+  node [shape=box, fontsize=10];
+
+  M0 [label="Littlewood.Main.Littlewood", style=filled, fillcolor="#ddffdd"];
+  MPsi [label="LittlewoodPsi.littlewood_psi", style=filled, fillcolor="#ddffdd"];
+  MPi [label="LittlewoodPi.littlewood_pi_li", style=filled, fillcolor="#ddffdd"];
+  Dcomb [label="DeepSorries.combined_atoms", style=filled, fillcolor="#ddffdd"];
+  Dres [label="DeepBlockersResolved.combined_atoms_resolved_unconditional", style=filled, fillcolor="#ddffdd"];
+  Aall [label="DeepBlockersResolved.all_deep_blockers", style=filled, fillcolor="#ddffdd"];
+
+  B1 [label="B1", style=filled, fillcolor="#ddffdd"];
+  B2 [label="B2", style=filled, fillcolor="#ddffdd"];
+  B3 [label="B3", style=filled, fillcolor="#ddffdd"];
+  B5 [label="B5", style=filled, fillcolor="#ddffdd"];
+  B7 [label="B7", style=filled, fillcolor="#ddffdd"];
+
+  HLeaf [label="HardyAfeSignedGapDeepLeaf:107", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+  BTLeaf [label="B2TailVdcDeepLeaf:166", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+  EPLeaf [label="ExplicitFormulaPsiB5aShiftedBoundDeepLeaf:32", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+
+  RSN [label="RSBlockBounds:115", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+  RSA [label="RSBlockBounds:120", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+  RSI [label="RSBlockBounds:144", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+  ETh [label="ErrorTermExpansion:107", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+  EInt [label="ErrorTermExpansion:251", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+  ESum [label="ErrorTermExpansion:260", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+  EExp [label="ErrorTermExpansion:297", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+
+  RH1 [label="RHPiUnconditionalExactSeedExistence:45", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+  RH2 [label="RHPiUnconditionalExactSeedExistence:52", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+  RH3 [label="RHPiUnconditionalExactSeedExistence:56", style=filled, fillcolor="#ffdddd", color="#b30000", penwidth=2];
+
+  CZD [label="CriticalZeroSumDivergesHyp", style=filled, fillcolor="#fff2cc", color="#b36b00", penwidth=2];
+  PAT [label="PhaseAlignmentToTargetHyp", style=filled, fillcolor="#fff2cc", color="#b36b00", penwidth=2];
+
+  M0 -> MPsi;
+  M0 -> MPi;
+  MPsi -> Dcomb;
+  MPi -> Dcomb;
+  Dcomb -> Dres;
+  Dres -> Aall;
+
+  Aall -> B1;
+  Aall -> B2;
+  Aall -> B3;
+  Aall -> B5;
+  Aall -> B7;
+
+  B1 -> HLeaf;
+  B2 -> BTLeaf;
+  B5 -> EPLeaf;
+
+  B3 -> RSN;
+  B3 -> RSA;
+  B3 -> RSI;
+  B3 -> ETh;
+  B3 -> EInt;
+  B3 -> ESum;
+  B3 -> EExp;
+
+  B5 -> CZD;
+  B5 -> PAT;
+
+  B7 -> RH1;
+  B7 -> RH2;
+  B7 -> RH3;
+}
