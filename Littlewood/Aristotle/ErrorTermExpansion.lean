@@ -39,6 +39,7 @@ import Littlewood.Aristotle.BinetStirling
 import Littlewood.Aristotle.CosPiSqSign
 import Littlewood.Aristotle.FresnelIntegrals
 import Littlewood.Aristotle.VdcFirstDerivTest
+import Littlewood.Aristotle.OffResonanceSmoothVdC
 
 set_option linter.mathlibStandardSet false
 
@@ -247,8 +248,8 @@ theorem off_resonance_integral_bound :
     ∀ k : ℕ, ∀ n : ℕ, n < k → 1 ≤ k →
       |∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
         Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))|
-          ≤ 6 / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) := by
-  sorry
+          ≤ 6 / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) :=
+  Aristotle.OffResonanceSmoothVdC.off_resonance_integral_bound_smooth
 
 /-- Weighted sum of off-resonance contributions is O(√(k+1)). -/
 theorem off_resonance_sum_bound :
