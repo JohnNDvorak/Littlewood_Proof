@@ -23,6 +23,7 @@ Co-authored-by: Claude (Anthropic)
 
 import Mathlib
 import Littlewood.Aristotle.Standalone.SumInvSqPlusSqBound
+import Littlewood.Aristotle.GammaSeqLocallyUniform
 
 set_option linter.mathlibStandardSet false
 set_option relaxedAutoImplicit false
@@ -483,7 +484,12 @@ theorem digamma_log_bound_atomic :
   have hgauss : ∀ s : ℂ, s.re ≥ 1 / 4 → |s.im| ≥ 1 → Gamma s ≠ 0 →
       deriv Gamma s / Gamma s - Complex.log s
         = ∑' n : ℕ, gaussComplexTerm (s + (n : ℂ)) := by
-    sorry
+    intro s hs him hΓ
+    have hrs : 0 < s.re := by linarith
+    have hsumm : Summable (fun n : ℕ =>
+        GammaSeqLocalUniform.gaussTerm (s + (n : ℂ))) := by
+      convert summable_gauss_complex_term s hs him using 1
+    exact GammaSeqLocalUniform.gauss_series_identity s hrs hΓ hsumm
   exact digamma_log_bound_from_gauss_identity hgauss
 
 end Aristotle.DigammaBinetBound
