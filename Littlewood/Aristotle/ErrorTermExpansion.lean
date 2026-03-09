@@ -243,12 +243,12 @@ theorem phase_deriv_off_resonance :
   linarith
 
 /-- Van der Corput bound per off-resonance mode: the integral of cos(θ(t)-t·log(n+1))
-    over block k is bounded by 6/log((k+1)/(n+1)). -/
+    over block k is bounded by C_vdc/log((k+1)/(n+1)) for some universal C_vdc > 0. -/
 theorem off_resonance_integral_bound :
-    ∀ k : ℕ, ∀ n : ℕ, n < k → 1 ≤ k →
+    ∃ C_vdc > 0, ∀ k : ℕ, ∀ n : ℕ, n < k → 1 ≤ k →
       |∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
         Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))|
-          ≤ 6 / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) :=
+          ≤ C_vdc / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) :=
   Aristotle.OffResonanceSmoothVdC.off_resonance_integral_bound_smooth
 
 /-- Weighted sum of off-resonance contributions is O(√(k+1)). -/
