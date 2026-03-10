@@ -132,10 +132,12 @@ theorem rs_block_analysis_proof :
                      ErrorTerm t)| ≤ C₂) := by
   -- The deep leaf uses `let` bindings that are definitionally equal to A_block, c_block
   have hleaf := Aristotle.Standalone.RSBlockAnalysisDeepLeaf.rs_block_analysis_leaf
+  -- Extract C₂ from the deep leaf's existential interpolation bound
+  obtain ⟨C₂, hC₂_nn, hinterp⟩ := hleaf.2.2
   -- After beta-reducing the `let` bindings, the types match
-  exact ⟨A_block, c_block, 0, A_block_pos,
+  exact ⟨A_block, c_block, C₂, A_block_pos,
     hleaf.1, hleaf.2.1,
     fun k => block_integral_eq k,
-    le_refl 0, hleaf.2.2⟩
+    hC₂_nn, hinterp⟩
 
 end Aristotle.RSBlockBounds

@@ -47,7 +47,12 @@ open Aristotle.ErrorTermExpansion
     Packages three obligations as a conjunction:
     1. c(k) ≥ 0 for all k (RS expansion sign structure)
     2. AntitoneOn c (Ici 1) (asymptotic decay of corrections)
-    3. Partial-block interpolation with C₂ = 0 (sign coherence within blocks)
+    3. Partial-block interpolation with C₂ ≥ 0 (sign coherence within blocks)
+
+    The interpolation allows C₂ > 0 to handle early blocks where the RS sign
+    structure may not yet dominate. For k large enough, the RS expansion gives
+    constant-sign ErrorTerm within blocks, yielding C₂ = 0. The existential C₂
+    covers all blocks uniformly.
 
     Reference: Siegel 1932 §3; Titchmarsh §4.16-4.17. -/
 theorem rs_block_analysis_leaf :
@@ -57,11 +62,12 @@ theorem rs_block_analysis_leaf :
         - A_val * Real.sqrt ((k : ℝ) + 1)
     (∀ k, 0 ≤ c_fn k) ∧
     AntitoneOn c_fn (Ici (1 : ℕ)) ∧
+    ∃ C₂ : ℝ, C₂ ≥ 0 ∧
     (∀ k : ℕ, ∀ T : ℝ, hardyStart k ≤ T → T ≤ hardyStart (k + 1) →
       ∃ β : ℝ, 0 ≤ β ∧ β ≤ 1 ∧
         |(∫ t in Ioc (hardyStart k) T, ErrorTerm t)
           - β * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
-                   ErrorTerm t)| ≤ 0) := by
+                   ErrorTerm t)| ≤ C₂) := by
   sorry
 
 end Aristotle.Standalone.RSBlockAnalysisDeepLeaf
