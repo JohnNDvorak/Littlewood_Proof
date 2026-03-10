@@ -104,7 +104,7 @@ theorem hardyZV2_real (t : ℝ) : (hardyZV2 t).im = 0 := by
   set s : ℂ := 1/2 + Complex.I * ↑t with hs_def
   set w : ℂ := 1/4 + Complex.I * ↑t / 2 with hw_def
   -- Basic facts
-  have hw_eq : s / 2 = w := by simp only [hs_def, hw_def]; push_cast; ring
+  have hw_eq : s / 2 = w := by simp only [hs_def, hw_def]; ring
   have hs_re : s.re = 1/2 := by
     simp only [hs_def, Complex.add_re, Complex.mul_re, Complex.I_re, Complex.I_im,
                 Complex.ofReal_re, Complex.ofReal_im]; norm_num

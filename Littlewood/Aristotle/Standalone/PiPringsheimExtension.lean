@@ -1977,7 +1977,7 @@ theorem primeZeta_plus_log_extends_of_piLiHardBound
     rw [h_split, mul_add] at h_identity
     -- Step C: σ_sign² = 1
     have hσ_sq : (↑σ_sign : ℂ) * (↑σ_sign : ℂ) = 1 := by
-      rcases hσ with rfl | rfl <;> simp <;> ring
+      rcases hσ with rfl | rfl <;> simp
     -- Step D: Algebraic verification via case split on σ_sign
     -- Q(s) = K_ext + σ*(C*s/(s-α) - s*∫_{Ioi T₀}) - σ*s*∫_{Icc}
     -- h_identity: s*∫_{Icc} + s*∫_{Ioi T₀} = C*s/(s-α) - σ*primeZeta + σ*(K_ext - log)

@@ -131,7 +131,7 @@ lemma modeOmega_lower_bound_eventually :
         (mem_Ioi.mpr (lt_of_lt_of_le ha_pos ht_lo)) h_lt)
   -- hardyStart k = 2π(k+1)²
   have h_hs_eq : hardyStart k = 2 * Real.pi * ((k : ℝ) + 1) ^ 2 := by
-    unfold hardyStart; push_cast; ring
+    unfold hardyStart; ring
   -- |thetaDeriv(2π(k+1)²) - log(k+1)| ≤ C/(k+1)²
   have h_sp := hC_bound k
   -- thetaDeriv(hardyStart k) ≥ log(k+1) - C/(k+1)²
@@ -283,7 +283,7 @@ theorem off_resonance_integral_bound_smooth :
   have hratio_gt : 1 < ((k : ℝ) + 1) / ((n : ℝ) + 1) := by rw [one_lt_div hn1_pos]; linarith
   have hlog_pos : 0 < Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) := Real.log_pos hratio_gt
   have hab : hardyStart k ≤ hardyStart (k + 1) := by
-    rw [hardyStart_formula, hardyStart_formula]; gcongr; push_cast; linarith
+    rw [hardyStart_formula, hardyStart_formula]; gcongr; linarith
   by_cases hk_large : K₀ ≤ k
   · -- Case 1: k ≥ K₀ — use VdC
     set m := Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) / 2 with hm_def

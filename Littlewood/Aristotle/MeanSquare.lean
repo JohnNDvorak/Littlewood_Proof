@@ -843,7 +843,7 @@ lemma offDiagSsq_intervalIntegrable (a b : ℝ) :
       have : ∑ n ∈ Finset.Icc 1 N, ∑ m ∈ Finset.Icc 1 N, (1 : ℝ) = (N : ℝ) ^ 2 := by
         simp only [Finset.sum_const, nsmul_eq_mul, mul_one,
           Nat.card_Icc, Nat.add_sub_cancel]
-        push_cast; ring
+        ring
       linarith
     -- Combine
     calc ‖offDiagSsq t‖ ≤ (N_t t : ℝ) ^ 2 := hbound

@@ -436,7 +436,7 @@ lemma hardyZ_eq_completedZeta_div_norm (t : ℝ) :
   have hs_re_pos : 0 < s.re := by rw [hs_re]; norm_num
   have hw_re_pos : 0 < (s / 2).re := by
     have : s / 2 = (1/4 : ℂ) + ↑t/2 * I := by
-      simp only [hs_def]; push_cast; ring
+      simp only [hs_def]; ring
     rw [this]; simp only [add_re, mul_re, ofReal_re, ofReal_im, I_re, I_im]; norm_num
   have hπ_pos : (0 : ℝ) < Real.pi := Real.pi_pos
   have hπ_ne : (↑Real.pi : ℂ) ≠ 0 := ofReal_ne_zero.mpr (ne_of_gt hπ_pos)
@@ -455,7 +455,7 @@ lemma hardyZ_eq_completedZeta_div_norm (t : ℝ) :
     field_simp
   -- Step 2: Decompose θ(t) = arg(Γ(s/2)) - t/2 * log(π)
   have h_s_half : (1/4 : ℂ) + ↑t / 2 * I = s / 2 := by
-    simp only [hs_def]; push_cast; ring
+    simp only [hs_def]; ring
   unfold riemannSiegelTheta'
   rw [h_s_half]
   rw [show I * ↑(arg (Gamma (s / 2)) - t / 2 * Real.log Real.pi) =

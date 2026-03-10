@@ -352,7 +352,7 @@ private lemma sum_log_one_add_inv (s : ℂ) (hs : 0 < s.re) (n : ℕ) :
         simp [add_re, natCast_re, one_re]; ring
       linarith [Nat.cast_nonneg (α := ℝ) n]
     have h1 : 1 + 1 / (s + (n : ℂ)) = (s + ((n : ℕ) + 1 : ℂ)) / (s + (n : ℂ)) := by
-      field_simp; push_cast; ring
+      field_simp; ring
     rw [h1]
     have harg_sn : (s + (n : ℂ)).arg ≠ Real.pi := by
       intro h

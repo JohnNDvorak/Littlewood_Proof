@@ -276,7 +276,7 @@ private lemma riemannZeta_ne_zero_punctured_nhds_one :
   have hne :
       ((fun s => (s - 1) * riemannZeta s) ⁻¹' ({0}ᶜ : Set ℂ)) ∈ 𝓝[≠] (1 : ℂ) := by
     have h0 : ({0}ᶜ : Set ℂ) ∈ 𝓝 (1 : ℂ) := by
-      simpa using (compl_singleton_mem_nhds (show (1 : ℂ) ≠ 0 by exact one_ne_zero))
+      simpa using (compl_singleton_mem_nhds (show (1 : ℂ) ≠ 0 from one_ne_zero))
     exact (tendsto_def.1 hres) ({0}ᶜ) h0
   rcases (Metric.mem_nhdsWithin_iff.1 hne) with ⟨ε, εpos, hε⟩
   refine ⟨ε, εpos, ?_⟩
