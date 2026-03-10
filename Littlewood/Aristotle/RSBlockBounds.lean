@@ -20,7 +20,7 @@ The proof requires the Riemann-Siegel expansion (Siegel 1932):
   - AntitoneOn c (Ici 1) (from asymptotic decay)
   - Partial-block interpolation (from sign coherence)
 
-SORRY COUNT: 1 (rs_block_analysis_proof — consolidated)
+SORRY COUNT: 0 (sorry isolated to RSBlockAnalysisDeepLeaf.lean)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -30,6 +30,7 @@ import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.HardyNProperties
 import Littlewood.Aristotle.RSBlockParam
 import Littlewood.Aristotle.ErrorTermExpansion
+import Littlewood.Aristotle.Standalone.RSBlockAnalysisDeepLeaf
 
 set_option linter.mathlibStandardSet false
 
@@ -112,14 +113,9 @@ theorem block_integral_eq (k : ℕ) :
 
     Witnesses A = A_block, c = c_block close conjuncts 1 (A > 0) and
     4 (block integral identity) from proved lemmas. The three remaining
-    sorry obligations are pure analytic content from the RS expansion:
-    - c(k) ≥ 0: (-1)^k · I_k ≥ A·√(k+1) from RS leading term
-    - c antitone on k ≥ 1: from asymptotic decay c(k) ∼ D/√(k+1)
-    - Partial-block interpolation: sign coherence within blocks
+    analytic obligations are supplied by `RSBlockAnalysisDeepLeaf`.
 
-    Reference: Siegel 1932; Titchmarsh §4.16.
-
-    SORRY COUNT: 1 (3 sorry goals within single theorem) -/
+    Reference: Siegel 1932; Titchmarsh §4.16. -/
 theorem rs_block_analysis_proof :
     ∃ (A : ℝ) (c : ℕ → ℝ) (C₂ : ℝ),
       A > 0 ∧
@@ -134,11 +130,12 @@ theorem rs_block_analysis_proof :
           |(∫ t in Ioc (hardyStart k) T, ErrorTerm t)
             - β * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
                      ErrorTerm t)| ≤ C₂) := by
+  -- The deep leaf uses `let` bindings that are definitionally equal to A_block, c_block
+  have hleaf := Aristotle.Standalone.RSBlockAnalysisDeepLeaf.rs_block_analysis_leaf
+  -- After beta-reducing the `let` bindings, the types match
   exact ⟨A_block, c_block, 0, A_block_pos,
-    sorry, -- c_block k ≥ 0: RS expansion sign structure (Siegel 1932)
-    sorry, -- AntitoneOn c_block (Ici 1): asymptotic decay c(k) ~ D/√(k+1)
+    hleaf.1, hleaf.2.1,
     fun k => block_integral_eq k,
-    le_refl 0, -- C₂ = 0 ≥ 0
-    sorry⟩ -- Partial-block interpolation: sign coherence within blocks
+    le_refl 0, hleaf.2.2⟩
 
 end Aristotle.RSBlockBounds
