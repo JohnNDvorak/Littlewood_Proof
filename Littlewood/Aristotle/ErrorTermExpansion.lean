@@ -507,8 +507,7 @@ theorem rsPsi_integral_pos : 0 < ∫ p in Ioc 0 1, rsPsi p := by
     integral_mono_ae h_const_int rsPsi_integrableOn h_ae
   have h_const_val : ∫ _ in Ioc (0 : ℝ) 1, Real.cos (Real.pi / 4)
       = Real.cos (Real.pi / 4) := by
-    simp [setIntegral_const, smul_eq_mul, Real.volume_Ioc,
-          ENNReal.toReal_ofReal (show (0 : ℝ) ≤ 1 - 0 by norm_num)]
+    simp
   linarith
 
 end Aristotle.ErrorTermExpansion
