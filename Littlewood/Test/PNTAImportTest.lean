@@ -1,6 +1,6 @@
 /-
-Test file to check if PrimeNumberTheoremAnd imports correctly.
+Toolchain-safe smoke test for the local ExternalPort adapter layer.
 -/
-import PrimeNumberTheoremAnd.MediumPNT
+import Littlewood.Aristotle.Standalone.ExternalPort.PrimeNumberTheoremAndContourCompat
 
-#check MediumPNT
+#check Aristotle.Standalone.ExternalPort.PrimeNumberTheoremAndContourCompat.legacy_linear_log_bound_of_components_exact_port

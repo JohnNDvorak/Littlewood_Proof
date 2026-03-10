@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-TMP="$(mktemp /tmp/root_constructor_status.XXXXXX.lean)"
+TMP_BASE="$(mktemp /tmp/root_constructor_status.XXXXXX)"
+TMP="${TMP_BASE}.lean"
+mv "$TMP_BASE" "$TMP"
 trap 'rm -f "$TMP"' EXIT
 
 cat > "$TMP" <<'LEAN'

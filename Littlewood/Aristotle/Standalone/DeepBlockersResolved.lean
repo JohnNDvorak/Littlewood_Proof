@@ -183,14 +183,7 @@ three exact-seed placeholders). -/
 private theorem deep_blocker_B7_coeff_control_leaf :
     Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp ∧
       Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp := by
-  letI : PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp :=
-    Aristotle.Standalone.RHPiUnconditionalExactSeedExistence.truncatedExplicitFormulaPi_unconditional
-  letI :
-      Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.TargetTowerExactSeedAbovePerronThresholdHyp :=
-    ⟨Aristotle.Standalone.RHPiUnconditionalExactSeedExistence.targetTowerExactSeedAbovePerronThreshold_unconditional⟩
-  letI :
-      Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox.AntiTargetTowerExactSeedAbovePerronThresholdHyp :=
-    ⟨Aristotle.Standalone.RHPiUnconditionalExactSeedExistence.antiTargetTowerExactSeedAbovePerronThreshold_unconditional⟩
+  -- Instances auto-resolved from RHPiUnconditionalExactSeedExistence
   exact
     Aristotle.Standalone.RHPiCoeffControlClassInstances.coeffControlClasses_of_correctedPhaseCouplingHyp
 

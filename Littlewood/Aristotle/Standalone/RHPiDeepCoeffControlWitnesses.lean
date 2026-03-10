@@ -148,12 +148,7 @@ boundary assumptions. -/
 theorem coeffControlClasses_unconditional :
     Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp ∧
       Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp := by
-  letI : TruncatedExplicitFormulaPiHyp :=
-    RHPiUnconditionalExactSeedExistence.truncatedExplicitFormulaPi_unconditional
-  letI : TargetTowerExactSeedAbovePerronThresholdHyp :=
-    ⟨RHPiUnconditionalExactSeedExistence.targetTowerExactSeedAbovePerronThreshold_unconditional⟩
-  letI : AntiTargetTowerExactSeedAbovePerronThresholdHyp :=
-    ⟨RHPiUnconditionalExactSeedExistence.antiTargetTowerExactSeedAbovePerronThreshold_unconditional⟩
+  -- Instances auto-resolved from RHPiUnconditionalExactSeedExistence
   exact
     coeffControlClasses_of_exactSeedAboveThresholdHyp
 

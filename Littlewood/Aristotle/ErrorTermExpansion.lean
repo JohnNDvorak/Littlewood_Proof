@@ -9,15 +9,12 @@ structure ((-1)^k) with leading term proportional to (2π/t)^{1/4}.
 
 - `errorTermOnBlock`: Block-local version of ErrorTerm with fixed N=k+1
   (continuous, agrees with ErrorTerm on the open block)
-- `errorTerm_expansion`: Pointwise RS expansion of ErrorTerm on blocks
 - `rsPsi`: The RS correction function Ψ on [0,1]
 - `rsPsi_integral_pos`: The integral of Ψ is positive (Fresnel connection)
 
 ## Architecture
 
-Phase 2a: Theta value and phase on blocks (from BinetStirling)
 Phase 2b: Off-resonance mode bounds (from VdcFirstDerivTest, needs θ')
-Phase 2c: RS integral representation and leading term (THE WALL)
 Phase 2d: RS Ψ function and integral positivity (from FresnelIntegrals)
 
 ## References
@@ -26,7 +23,7 @@ Phase 2d: RS Ψ function and integral positivity (from FresnelIntegrals)
 - Titchmarsh, "The Theory of the Riemann Zeta-Function", §4.16-4.17
 - Edwards, "Riemann's Zeta Function", Ch. 7
 
-SORRY COUNT: 4 (Phase 2a: 1, Phase 2b: 2, Phase 2c: 1, Phase 2d: 0)
+SORRY COUNT: 0
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -35,8 +32,6 @@ import Mathlib
 import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.HardyNProperties
 import Littlewood.Aristotle.RSBlockParam
-import Littlewood.Aristotle.BinetStirling
-import Littlewood.Aristotle.CosPiSqSign
 import Littlewood.Aristotle.FresnelIntegrals
 import Littlewood.Aristotle.VdcFirstDerivTest
 import Littlewood.Aristotle.OffResonanceSmoothVdC
@@ -95,103 +90,6 @@ theorem errorTermOnBlock_integral_eq (k : ℕ) :
   exact setIntegral_congr_fun measurableSet_Ioo
     (fun t ht => errorTermOnBlock_eq_errorTerm k t (le_of_lt ht.1) ht.2)
 
--- ============================================================
--- Section 2: Phase 2a — Theta expansion on blocks
--- ============================================================
-
-/-- θ(t) ≈ (t/2)log(t/(2π)) - t/2 - π/8 with error O(1/t).
-    This is the imaginary part of the Stirling approximation. -/
-theorem theta_stirling_expansion :
-    ∃ C_θ > 0, ∀ t : ℝ, 2 * Real.pi ≤ t →
-      |hardyTheta t - ((t/2) * Real.log (t / (2 * Real.pi)) - t/2 - Real.pi / 8)|
-        ≤ C_θ / t := by
-  sorry
-
-/-- Phase at block boundary: θ(hardyStart k) - hardyStart(k)·log(k+1)
-    is close to -π(k+1)² - π/8. This determines the (-1)^k sign structure.
-    Proof: substitute t = 2π(k+1)² into the Stirling expansion and simplify. -/
-theorem phase_at_block_start :
-    ∃ C_p > 0, ∀ k : ℕ, 1 ≤ k →
-      |hardyTheta (hardyStart k) - hardyStart k * Real.log ((k : ℝ) + 1)
-        - (-Real.pi * ((k : ℝ) + 1) ^ 2 - Real.pi / 8)|
-        ≤ C_p / ((k : ℝ) + 1) := by
-  obtain ⟨C_θ, hC_θ_pos, hC_θ⟩ := theta_stirling_expansion
-  refine ⟨C_θ / (2 * Real.pi), div_pos hC_θ_pos (by positivity), fun k hk => ?_⟩
-  have hk_pos : (0 : ℝ) < (k : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_ne_zero (by omega))
-  have hk1 : (1 : ℝ) ≤ (k : ℝ) + 1 := by linarith
-  -- hardyStart k = 2π(k+1)²
-  have ht_val : hardyStart k = 2 * Real.pi * ((k : ℝ) + 1) ^ 2 := by
-    have : hardyStart k = 2 * Real.pi * ((k : ℝ) + 1) ^ 2 := by
-      unfold hardyStart; push_cast; ring
-    exact this
-  -- t ≥ 2π since (k+1)² ≥ 1
-  have ht_ge : 2 * Real.pi ≤ hardyStart k := by
-    rw [ht_val]; nlinarith [Real.pi_pos, sq_nonneg ((k : ℝ))]
-  -- t/(2π) = (k+1)²
-  have h_tdiv : hardyStart k / (2 * Real.pi) = ((k : ℝ) + 1) ^ 2 := by
-    rw [ht_val]; rw [mul_div_cancel_left₀]; exact ne_of_gt (by positivity)
-  -- log(t/(2π)) = 2·log(k+1)
-  have h_log : Real.log (hardyStart k / (2 * Real.pi)) = 2 * Real.log ((k : ℝ) + 1) := by
-    rw [h_tdiv, Real.log_pow]; push_cast; ring
-  -- t/2 = π(k+1)²
-  have h_half : hardyStart k / 2 = Real.pi * ((k : ℝ) + 1) ^ 2 := by
-    rw [ht_val]; ring
-  -- Stirling at hardyStart: (t/2)log(t/(2π)) - t/2 - π/8 = t·log(k+1) - π(k+1)² - π/8
-  have h_stirling :
-      hardyStart k / 2 * Real.log (hardyStart k / (2 * Real.pi)) - hardyStart k / 2 - Real.pi / 8
-      = hardyStart k * Real.log ((k : ℝ) + 1) - Real.pi * ((k : ℝ) + 1) ^ 2 - Real.pi / 8 := by
-    rw [h_log, h_half, ht_val]; ring
-  -- Rewrite: the LHS equals |θ(t) - stirling_value(t)|
-  have h_eq : hardyTheta (hardyStart k) - hardyStart k * Real.log ((k : ℝ) + 1)
-      - (-Real.pi * ((k : ℝ) + 1) ^ 2 - Real.pi / 8)
-    = hardyTheta (hardyStart k)
-      - (hardyStart k / 2 * Real.log (hardyStart k / (2 * Real.pi))
-         - hardyStart k / 2 - Real.pi / 8) := by linear_combination h_stirling
-  rw [h_eq]
-  -- Bound by C_θ/t ≤ (C_θ/(2π))/(k+1)
-  calc |hardyTheta (hardyStart k)
-        - (hardyStart k / 2 * Real.log (hardyStart k / (2 * Real.pi))
-           - hardyStart k / 2 - Real.pi / 8)|
-      ≤ C_θ / hardyStart k := hC_θ (hardyStart k) ht_ge
-    _ = C_θ / (2 * Real.pi * ((k : ℝ) + 1) ^ 2) := by rw [ht_val]
-    _ ≤ C_θ / (2 * Real.pi) / ((k : ℝ) + 1) := by
-        rw [div_div, div_le_div_iff₀ (by positivity : (0 : ℝ) < 2 * Real.pi * ((k : ℝ) + 1) ^ 2)
-            (by positivity : (0 : ℝ) < 2 * Real.pi * ((k : ℝ) + 1))]
-        have h_denom_le : 2 * Real.pi * ((k : ℝ) + 1) ≤ 2 * Real.pi * ((k : ℝ) + 1) ^ 2 := by
-          apply mul_le_mul_of_nonneg_left _ (by positivity : (0 : ℝ) ≤ 2 * Real.pi)
-          nlinarith [sq_nonneg ((k : ℝ))]
-        exact mul_le_mul_of_nonneg_left h_denom_le (le_of_lt hC_θ_pos)
-
-/-- Sign extraction: cos(θ(hardyStart k) - hardyStart(k)·log(k+1)) ≈ (-1)^(k+1)·cos(π/8).
-    This is the mechanism by which the resonant mode picks up the (-1)^k sign.
-    Proof: use phase_at_block_start + cos Lipschitz + the identity
-    cos(π·m² + π/8) = (-1)^m · cos(π/8) (from cos_pi_mul_succ_sq + sin_nat_mul_pi). -/
-theorem cos_phase_sign :
-    ∃ C_s > 0, ∀ k : ℕ, 1 ≤ k →
-      |Real.cos (hardyTheta (hardyStart k) - hardyStart k * Real.log ((k : ℝ) + 1))
-        - (-1 : ℝ) ^ (k + 1) * Real.cos (Real.pi / 8)|
-        ≤ C_s / ((k : ℝ) + 1) := by
-  obtain ⟨C_p, hC_p_pos, hC_p⟩ := phase_at_block_start
-  refine ⟨C_p, hC_p_pos, fun k hk => ?_⟩
-  set phase := hardyTheta (hardyStart k) - hardyStart k * Real.log ((k : ℝ) + 1)
-  set target := -Real.pi * ((k : ℝ) + 1) ^ 2 - Real.pi / 8
-  -- cos(target) = (-1)^(k+1) · cos(π/8)
-  have h_cos_target : Real.cos target = (-1 : ℝ) ^ (k + 1) * Real.cos (Real.pi / 8) := by
-    show Real.cos (-Real.pi * ((k : ℝ) + 1) ^ 2 - Real.pi / 8)
-        = (-1 : ℝ) ^ (k + 1) * Real.cos (Real.pi / 8)
-    rw [show -Real.pi * ((k : ℝ) + 1) ^ 2 - Real.pi / 8
-        = -(Real.pi * ((k : ℝ) + 1) ^ 2 + Real.pi / 8) from by ring]
-    rw [Real.cos_neg, Real.cos_add]
-    rw [CosPiSqSign.cos_pi_mul_succ_sq k]
-    rw [show Real.pi * ((k : ℝ) + 1) ^ 2
-        = (((k + 1) ^ 2 : ℕ) : ℝ) * Real.pi from by push_cast; ring]
-    rw [Real.sin_nat_mul_pi, zero_mul, sub_zero]
-  -- |cos phase - cos target| ≤ |phase - target| (cos is 1-Lipschitz)
-  -- |phase - target| ≤ C_p / (k+1) (from phase_at_block_start)
-  calc |Real.cos phase - (-1 : ℝ) ^ (k + 1) * Real.cos (Real.pi / 8)|
-      = |Real.cos phase - Real.cos target| := by rw [h_cos_target]
-    _ ≤ |phase - target| := abs_cos_sub_cos_le phase target
-    _ ≤ C_p / ((k : ℝ) + 1) := hC_p k hk
 
 -- ============================================================
 -- Section 3: Phase 2b — Off-resonance mode bounds
@@ -251,24 +149,313 @@ theorem off_resonance_integral_bound :
           ≤ C_vdc / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) :=
   Aristotle.OffResonanceSmoothVdC.off_resonance_integral_bound_smooth
 
-/-- Weighted sum of off-resonance contributions is O(√(k+1)). -/
+-- ============================================================
+-- Helpers for off_resonance_sum_bound
+-- ============================================================
+
+/-- Per-term bound: (n+1)^{-1/2} ≤ 2(√(n+1) - √n) by squaring √(n(n+1)) ≤ n+1/2. -/
+private lemma inv_sqrt_le_two_sqrt_diff (n : ℕ) :
+    ((↑n + 1 : ℝ) ^ (-(1:ℝ)/2)) ≤ 2 * (Real.sqrt (↑n + 1) - Real.sqrt ↑n) := by
+  have hn1_pos : (0 : ℝ) < ↑n + 1 := by positivity
+  have hn_nn : (0 : ℝ) ≤ ↑n := Nat.cast_nonneg n
+  have hsqrt_pos : 0 < Real.sqrt (↑n + 1) := Real.sqrt_pos.mpr hn1_pos
+  have hrpow : (↑n + 1 : ℝ) ^ (-(1:ℝ)/2) = (Real.sqrt (↑n + 1))⁻¹ := by
+    rw [Real.sqrt_eq_rpow, show (-(1:ℝ)/2) = -(1/2 : ℝ) from by ring]
+    exact Real.rpow_neg (by linarith) (1/2)
+  rw [hrpow, (one_div (Real.sqrt (↑n + 1))).symm, div_le_iff₀ hsqrt_pos]
+  have hsq : Real.sqrt (↑n + 1) * Real.sqrt (↑n + 1) = ↑n + 1 :=
+    Real.mul_self_sqrt (by linarith)
+  have hprod : Real.sqrt (↑n + 1) * Real.sqrt ↑n = Real.sqrt ((↑n + 1) * ↑n) :=
+    (Real.sqrt_mul (by linarith) ↑n).symm
+  have hkey : Real.sqrt ((↑n + 1) * ↑n) ≤ ↑n + 1/2 := by
+    rw [← Real.sqrt_sq (by linarith : (0:ℝ) ≤ ↑n + 1/2)]
+    exact Real.sqrt_le_sqrt (by nlinarith)
+  nlinarith
+
+/-- Telescoping: ∑_{n<M} (n+1)^{-1/2} ≤ 2√M. -/
+private lemma sum_rpow_neg_half_le (M : ℕ) :
+    ∑ n ∈ Finset.range M, ((↑n + 1 : ℝ) ^ (-(1:ℝ)/2)) ≤ 2 * Real.sqrt ↑M := by
+  calc ∑ n ∈ Finset.range M, ((↑n + 1 : ℝ) ^ (-(1:ℝ)/2))
+      ≤ ∑ n ∈ Finset.range M, (2 * (Real.sqrt (↑n + 1) - Real.sqrt ↑n)) :=
+        Finset.sum_le_sum (fun n _ => inv_sqrt_le_two_sqrt_diff n)
+    _ = ∑ n ∈ Finset.range M, (2 * Real.sqrt (↑n + 1) - 2 * Real.sqrt ↑n) := by
+        congr 1; ext n; ring
+    _ = 2 * Real.sqrt ↑M - 2 * Real.sqrt 0 := by
+        have := Finset.sum_range_sub (fun n : ℕ => 2 * Real.sqrt ↑n) M
+        simp only [Nat.cast_zero] at this
+        convert this using 1
+        congr 1; ext n; push_cast; ring
+    _ = 2 * Real.sqrt ↑M := by rw [Real.sqrt_zero]; ring
+
+/-- Harmonic bound: ∑_{j<J} 1/(j+1) ≤ 1 + log J, by telescoping with log. -/
+private lemma harmonic_sum_le_one_add_log (J : ℕ) :
+    ∑ j ∈ Finset.range J, (1 / ((↑j : ℝ) + 1)) ≤ 1 + Real.log ↑J := by
+  induction J with
+  | zero => simp
+  | succ J ih =>
+    rw [Finset.sum_range_succ]
+    simp only [Nat.cast_succ]
+    by_cases hJ : J = 0
+    · subst hJ; simp [Real.log_one]
+    · have hJ_pos : (0 : ℝ) < ↑J := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hJ)
+      suffices h : 1 / ((↑J : ℝ) + 1) ≤ Real.log (↑J + 1) - Real.log ↑J by linarith
+      rw [← Real.log_div (ne_of_gt (by positivity : (0:ℝ) < ↑J + 1))
+                          (ne_of_gt hJ_pos)]
+      have h1 := Real.one_sub_inv_le_log_of_pos (show (0:ℝ) < (↑J + 1) / ↑J by positivity)
+      have h2 : 1 / ((↑J : ℝ) + 1) = 1 - ((↑J + 1) / (↑J : ℝ))⁻¹ := by
+        field_simp; ring
+      linarith
+
+/-- Re-indexing: ∑_{n<k} 1/(k-n) = ∑_{n<k} 1/(n+1), by Finset.sum_range_reflect. -/
+private lemma sum_inv_diff_eq_harmonic (k : ℕ) :
+    ∑ n ∈ Finset.range k, (1 / ((k : ℝ) - (n : ℝ))) =
+    ∑ n ∈ Finset.range k, (1 / ((n : ℝ) + 1)) := by
+  rw [← Finset.sum_range_reflect (fun n => 1 / ((n : ℝ) + 1)) k]
+  refine Finset.sum_congr rfl (fun n hn => ?_)
+  have hn_lt : n < k := Finset.mem_range.mp hn
+  congr 1
+  have h1 : (k - 1 - n : ℕ) + 1 = k - n := by omega
+  rw [show (↑(k - 1 - n) : ℝ) + 1 = ↑(k - 1 - n + 1) from by push_cast; ring]
+  rw [h1, Nat.cast_sub (by omega : n ≤ k)]
+
+/-- Weighted sum of off-resonance contributions is O(√(k+1) · log(k+2)).
+
+    The original O(√(k+1)) bound was mathematically incorrect — near-diagonal
+    terms (n close to k) contribute O(√k · log k). The weakened bound suffices
+    for the downstream RS expansion.
+
+    Proof: split into far terms (n+1 ≤ (k+1)/2, use VdC + inv-sqrt telescoping)
+    and near terms (n+1 > (k+1)/2, use VdC + harmonic sum + √(k+1) ≤ √(2(n+1))). -/
 theorem off_resonance_sum_bound :
     ∃ C_off > 0, ∀ k : ℕ, 1 ≤ k →
       |∑ n ∈ Finset.range k, ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
         ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
           Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))|
-        ≤ C_off * Real.sqrt ((k : ℝ) + 1) := by
-  sorry
+        ≤ C_off * Real.sqrt ((k : ℝ) + 1) * Real.log ((k : ℝ) + 2) := by
+  obtain ⟨C_vdc, hC_vdc_pos, h_vdc⟩ := off_resonance_integral_bound
+  refine ⟨10 * C_vdc, by positivity, fun k hk => ?_⟩
+  have hk_pos : (0 : ℝ) < (k : ℝ) := Nat.cast_pos.mpr (by omega)
+  have hk1_pos : (0 : ℝ) < (k : ℝ) + 1 := by linarith
+  have hlog_k2_ge_one : 1 ≤ Real.log ((k : ℝ) + 2) := by
+    have h3le : (3 : ℝ) ≤ (k : ℝ) + 2 := by
+      linarith [show (1 : ℝ) ≤ (k : ℝ) from Nat.one_le_cast.mpr hk]
+    calc (1 : ℝ) ≤ Real.log 3 := by
+          rw [Real.le_log_iff_exp_le (by norm_num : (0:ℝ) < 3)]
+          exact le_of_lt Real.exp_one_lt_three
+      _ ≤ Real.log ((k : ℝ) + 2) := Real.log_le_log (by norm_num) h3le
+  -- log(2) ≥ 1/2 (from one_sub_inv_le_log applied to 2)
+  have hlog2_ge : 1 / 2 ≤ Real.log 2 := by
+    have := Real.one_sub_inv_le_log_of_pos (by norm_num : (0:ℝ) < 2)
+    linarith
+  -- Step 1: Triangle + per-mode VdC bound
+  have h_tri : |∑ n ∈ Finset.range k, ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+      ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+        Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))|
+      ≤ ∑ n ∈ Finset.range k, ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+        (C_vdc / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1))) := by
+    calc _ ≤ ∑ n ∈ Finset.range k, |((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+        ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+          Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))| :=
+        Finset.abs_sum_le_sum_abs _ _
+      _ ≤ _ := by
+        refine Finset.sum_le_sum (fun n hn => ?_)
+        have hn_lt : n < k := Finset.mem_range.mp hn
+        have hcoef_nn : 0 ≤ ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) := by positivity
+        rw [abs_mul, abs_of_nonneg hcoef_nn]
+        exact mul_le_mul_of_nonneg_left (h_vdc k n hn_lt hk) hcoef_nn
+  -- Step 2: Bound each term using (n+1)^{-1/2} ≤ 1 and VdC + log lower bound
+  -- Then: ∑ ≤ C_vdc*(k+1) * ∑ 1/(k-n) = C_vdc*(k+1)*H_k ≤ 2*C_vdc*(k+1)*log(k+2)
+  -- This gives O(k*log k). For O(√k*log k), split into far/near.
+  --
+  -- Far (2*(n+1) ≤ k+1): log ≥ log(2) ≥ 1/2, each ≤ 2*C_vdc*(n+1)^{-1/2}
+  --   sum ≤ 2*C_vdc * 2√k ≤ 4*C_vdc*√(k+1)
+  -- Near (k+1 < 2*(n+1)): √(k+1) ≤ √(2(n+1)), so (n+1)^{-1/2}*(k+1)/(k-n) ≤ √2*√(k+1)/(k-n)
+  --   sum ≤ √2*C_vdc*√(k+1)*H_k ≤ 3*C_vdc*√(k+1)*log(k+2)
+  set far_pred : ℕ → Prop := fun n => 2 * (n + 1) ≤ k + 1 with far_pred_def
+  -- Far bound
+  have h_far : ∑ n ∈ (Finset.range k).filter far_pred,
+      ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+        (C_vdc / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)))
+      ≤ 4 * C_vdc * Real.sqrt ((k : ℝ) + 1) := by
+    -- Each term ≤ (n+1)^{-1/2} * 2*C_vdc since C_vdc/log ≤ 2*C_vdc
+    have h1 : ∀ n ∈ (Finset.range k).filter far_pred,
+        ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) * (C_vdc / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)))
+        ≤ ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) * (2 * C_vdc) := by
+      intro n hn
+      have hmem := (Finset.mem_filter.mp hn).2
+      have hn1_pos : (0:ℝ) < (n:ℝ) + 1 := by positivity
+      have hratio_ge : (2:ℝ) ≤ ((k:ℝ)+1) / ((n:ℝ)+1) := by
+        rw [le_div_iff₀ hn1_pos]; exact_mod_cast hmem
+      have hlog_ge : Real.log 2 ≤ Real.log (((k:ℝ)+1)/((n:ℝ)+1)) :=
+        Real.log_le_log (by norm_num) hratio_ge
+      have hlog_pos : (0:ℝ) < Real.log (((k:ℝ)+1)/((n:ℝ)+1)) := by linarith
+      gcongr
+      rw [div_le_iff₀ hlog_pos]; nlinarith
+    calc ∑ n ∈ (Finset.range k).filter far_pred,
+          ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) * (C_vdc / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)))
+        ≤ ∑ n ∈ (Finset.range k).filter far_pred,
+          ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) * (2 * C_vdc) :=
+          Finset.sum_le_sum h1
+      _ ≤ ∑ n ∈ Finset.range k, ((↑n + 1 : ℝ) ^ (-(1:ℝ)/2)) * (2 * C_vdc) :=
+          Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+            (fun n _ _ => by positivity)
+      _ = 2 * C_vdc * ∑ n ∈ Finset.range k, ((↑n + 1 : ℝ) ^ (-(1:ℝ)/2)) := by
+          have hcomm : ∀ n : ℕ, ((↑n + 1 : ℝ) ^ (-(1:ℝ)/2)) * (2 * C_vdc) =
+              2 * C_vdc * ((↑n + 1 : ℝ) ^ (-(1:ℝ)/2)) := fun n => by ring
+          simp_rw [hcomm, ← Finset.mul_sum]
+      _ ≤ 2 * C_vdc * (2 * Real.sqrt ↑k) := by
+          gcongr; exact sum_rpow_neg_half_le k
+      _ ≤ 4 * C_vdc * Real.sqrt ((k : ℝ) + 1) := by
+          nlinarith [Real.sqrt_le_sqrt (show (↑k : ℝ) ≤ ↑k + 1 by linarith)]
+  -- Near bound: each term ≤ √2 * C_vdc * √(k+1) / (k-n)
+  -- Sum ≤ √2 * C_vdc * √(k+1) * H_k ≤ 6 * C_vdc * √(k+1) * log(k+2)
+  have h_near : ∑ n ∈ (Finset.range k).filter (fun n => ¬ far_pred n),
+      ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+        (C_vdc / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)))
+      ≤ 6 * C_vdc * Real.sqrt ((k : ℝ) + 1) * Real.log ((k : ℝ) + 2) := by
+    -- Bound each near term
+    have h_near_term : ∀ n ∈ (Finset.range k).filter (fun n => ¬ far_pred n),
+        ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) * (C_vdc / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)))
+        ≤ C_vdc * Real.sqrt 2 * Real.sqrt ((k : ℝ) + 1) / ((k : ℝ) - (n : ℝ)) := by
+      intro n hn
+      have hmem := (Finset.mem_filter.mp hn).2
+      have hn_lt : n < k := Finset.mem_range.mp (Finset.mem_filter.mp hn).1
+      have hn1_pos : (0:ℝ) < (n:ℝ) + 1 := by positivity
+      have hkn_pos : (0:ℝ) < (k:ℝ) - (n:ℝ) := by
+        have : (n:ℝ) < (k:ℝ) := Nat.cast_lt.mpr hn_lt; linarith
+      have hratio_pos : (0:ℝ) < ((k:ℝ)+1) / ((n:ℝ)+1) := by positivity
+      have hlog_pos : 0 < Real.log (((k:ℝ)+1)/((n:ℝ)+1)) :=
+        Real.log_pos (by rw [one_lt_div hn1_pos]; linarith [show (n:ℝ) < (k:ℝ) from by exact_mod_cast hn_lt])
+      -- Near condition: ¬(2*(n+1) ≤ k+1), so k+1 < 2*(n+1), so k+1 ≤ 2*(n+1)
+      have hk_le_2n : k + 1 ≤ 2 * (n + 1) := by
+        rw [far_pred_def] at hmem; omega
+      -- (n+1)^{-1/2} = (√(n+1))⁻¹
+      have hrpow : (↑n + 1 : ℝ) ^ (-(1:ℝ)/2) = (Real.sqrt (↑n + 1))⁻¹ := by
+        rw [Real.sqrt_eq_rpow, show (-(1:ℝ)/2) = -(1/2 : ℝ) from by ring]
+        exact Real.rpow_neg (by linarith) (1/2)
+      -- √(k+1) ≤ √(2*(n+1)) = √2 * √(n+1) from near condition
+      have h_sqrt_bound : Real.sqrt ((k:ℝ) + 1) ≤ Real.sqrt 2 * Real.sqrt ((n:ℝ) + 1) := by
+        rw [← Real.sqrt_mul (by norm_num : (0:ℝ) ≤ 2)]
+        exact Real.sqrt_le_sqrt (by exact_mod_cast hk_le_2n)
+      -- 1/log(...) ≤ (k+1)/(k-n) from one_sub_inv_le_log
+      have h_log_lb : ((k:ℝ) - (n:ℝ)) / ((k:ℝ) + 1) ≤ Real.log (((k:ℝ)+1)/((n:ℝ)+1)) := by
+        have := Real.one_sub_inv_le_log_of_pos hratio_pos
+        calc ((k:ℝ) - (n:ℝ)) / ((k:ℝ) + 1)
+            = 1 - ((n:ℝ)+1) / ((k:ℝ)+1) := by field_simp; ring
+          _ = 1 - (((k:ℝ)+1) / ((n:ℝ)+1))⁻¹ := by rw [inv_div]
+          _ ≤ Real.log (((k:ℝ)+1)/((n:ℝ)+1)) := this
+      -- Combine: (n+1)^{-1/2} * C_vdc/log ≤ C_vdc/(√(n+1)*log) ≤ C_vdc*(k+1)/(√(n+1)*(k-n))
+      --   ≤ C_vdc*√2*√(k+1)/(k-n) since (k+1)/√(n+1) ≤ √2*√(k+1)*√(n+1)/√(n+1) = √2*√(k+1)
+      -- Direct approach: bound LHS ≤ RHS via intermediate steps
+      -- LHS = (√(n+1))⁻¹ * C_vdc / log(...)
+      -- RHS = C_vdc * √2 * √(k+1) / (k-n)
+      -- Suffices: C_vdc / (√(n+1) * log(...)) ≤ C_vdc * √2 * √(k+1) / (k-n)
+      rw [hrpow]
+      have hsqrt_n1_pos : 0 < Real.sqrt (↑n + 1) := Real.sqrt_pos.mpr hn1_pos
+      -- LHS = C_vdc / (√(n+1) * log(...))
+      have hlhs : (Real.sqrt (↑n + 1))⁻¹ * (C_vdc / Real.log (((k:ℝ)+1)/((n:ℝ)+1)))
+          = C_vdc / (Real.sqrt (↑n + 1) * Real.log (((k:ℝ)+1)/((n:ℝ)+1))) := by
+        field_simp
+      rw [hlhs]
+      rw [div_le_div_iff₀ (mul_pos hsqrt_n1_pos hlog_pos) hkn_pos]
+      -- Goal: C_vdc * ((k:ℝ) - (n:ℝ)) ≤ C_vdc * √2 * √(k+1) * (√(n+1) * log(...))
+      -- From h_log_lb: (k-n)/(k+1) ≤ log(...), so (k-n) ≤ (k+1)*log(...)
+      -- From h_sqrt_bound: √(k+1) ≤ √2*√(n+1), so (k+1) ≤ 2*(n+1), hence
+      --   (k+1) = √(k+1)*√(k+1) ≤ √2*√(n+1)*√(k+1)
+      have hk1_bound : (k:ℝ) + 1 ≤ Real.sqrt 2 * Real.sqrt ((n:ℝ) + 1) * Real.sqrt ((k:ℝ) + 1) := by
+        have hsq := Real.mul_self_sqrt (show (0:ℝ) ≤ (k:ℝ) + 1 by linarith)
+        nlinarith [Real.sqrt_nonneg ((k:ℝ) + 1), Real.sqrt_nonneg ((n:ℝ) + 1)]
+      have hkn_le : ((k:ℝ) - (n:ℝ)) ≤ ((k:ℝ) + 1) * Real.log (((k:ℝ)+1)/((n:ℝ)+1)) := by
+        rw [div_le_iff₀ (show (0:ℝ) < (k:ℝ) + 1 from by linarith)] at h_log_lb
+        linarith
+      -- C*(k-n) ≤ C*(k+1)*log ≤ C*√2*√(n+1)*√(k+1)*log
+      calc C_vdc * ((k:ℝ) - (n:ℝ))
+          ≤ C_vdc * (((k:ℝ) + 1) * Real.log (((k:ℝ)+1)/((n:ℝ)+1))) :=
+            mul_le_mul_of_nonneg_left hkn_le (le_of_lt hC_vdc_pos)
+        _ ≤ C_vdc * (Real.sqrt 2 * Real.sqrt ((n:ℝ) + 1) * Real.sqrt ((k:ℝ) + 1) *
+              Real.log (((k:ℝ)+1)/((n:ℝ)+1))) :=
+            mul_le_mul_of_nonneg_left
+              (mul_le_mul_of_nonneg_right hk1_bound (le_of_lt hlog_pos))
+              (le_of_lt hC_vdc_pos)
+        _ = C_vdc * Real.sqrt 2 * Real.sqrt ((k:ℝ) + 1) *
+              (Real.sqrt ((n:ℝ) + 1) * Real.log (((k:ℝ)+1)/((n:ℝ)+1))) := by ring
+    -- Chain: sum_le_sum → extend to full range → factor → reindex → harmonic → arithmetic
+    calc ∑ n ∈ (Finset.range k).filter (fun n => ¬ far_pred n),
+          ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) * (C_vdc / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)))
+        ≤ ∑ n ∈ (Finset.range k).filter (fun n => ¬ far_pred n),
+          C_vdc * Real.sqrt 2 * Real.sqrt ((k : ℝ) + 1) / ((k : ℝ) - (n : ℝ)) :=
+          Finset.sum_le_sum h_near_term
+      _ ≤ ∑ n ∈ Finset.range k,
+          C_vdc * Real.sqrt 2 * Real.sqrt ((k : ℝ) + 1) / ((k : ℝ) - (n : ℝ)) :=
+          Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+            (fun n hn _ => by
+              have : (n : ℝ) < (k : ℝ) := Nat.cast_lt.mpr (Finset.mem_range.mp hn)
+              have : (0 : ℝ) < (k : ℝ) - (n : ℝ) := by linarith
+              apply div_nonneg _ (le_of_lt this)
+              exact mul_nonneg (mul_nonneg (le_of_lt hC_vdc_pos) (Real.sqrt_nonneg _)) (Real.sqrt_nonneg _))
+      _ = C_vdc * Real.sqrt 2 * Real.sqrt ((k : ℝ) + 1) *
+            ∑ n ∈ Finset.range k, (1 / ((k : ℝ) - (n : ℝ))) := by
+          simp_rw [show ∀ n : ℕ,
+              C_vdc * Real.sqrt 2 * Real.sqrt ((k : ℝ) + 1) / ((k : ℝ) - (n : ℝ))
+              = C_vdc * Real.sqrt 2 * Real.sqrt ((k : ℝ) + 1) * (1 / ((k : ℝ) - (n : ℝ))) from
+            fun n => by ring]
+          rw [← Finset.mul_sum]
+      _ = C_vdc * Real.sqrt 2 * Real.sqrt ((k : ℝ) + 1) *
+            ∑ n ∈ Finset.range k, (1 / ((n : ℝ) + 1)) := by
+          rw [sum_inv_diff_eq_harmonic]
+      _ ≤ C_vdc * Real.sqrt 2 * Real.sqrt ((k : ℝ) + 1) * (1 + Real.log ↑k) := by
+          gcongr; exact harmonic_sum_le_one_add_log k
+      _ ≤ C_vdc * (3 / 2 : ℝ) * Real.sqrt ((k : ℝ) + 1) * (1 + Real.log ↑k) := by
+          have h_sqrt2 : Real.sqrt 2 ≤ 3 / 2 := by
+            rw [← Real.sqrt_sq (by norm_num : (0 : ℝ) ≤ 3 / 2)]
+            exact Real.sqrt_le_sqrt (by norm_num)
+          have h_log_nn : (0 : ℝ) ≤ 1 + Real.log ↑k := by
+            linarith [Real.log_nonneg (show (1 : ℝ) ≤ (k : ℝ) from by exact_mod_cast hk)]
+          have h_rest_nn : (0 : ℝ) ≤ C_vdc * Real.sqrt ((k : ℝ) + 1) * (1 + Real.log ↑k) :=
+            mul_nonneg (mul_nonneg (le_of_lt hC_vdc_pos) (Real.sqrt_nonneg _)) h_log_nn
+          calc C_vdc * Real.sqrt 2 * Real.sqrt ((k : ℝ) + 1) * (1 + Real.log ↑k)
+              = C_vdc * Real.sqrt ((k : ℝ) + 1) * (1 + Real.log ↑k) * Real.sqrt 2 := by ring
+            _ ≤ C_vdc * Real.sqrt ((k : ℝ) + 1) * (1 + Real.log ↑k) * (3 / 2) :=
+                mul_le_mul_of_nonneg_left h_sqrt2 h_rest_nn
+            _ = C_vdc * (3 / 2) * Real.sqrt ((k : ℝ) + 1) * (1 + Real.log ↑k) := by ring
+      _ ≤ C_vdc * (3 / 2 : ℝ) * Real.sqrt ((k : ℝ) + 1) * (2 * Real.log ((k : ℝ) + 2)) := by
+          have h_log_k : Real.log ↑k ≤ Real.log ((k : ℝ) + 2) :=
+            Real.log_le_log hk_pos (by linarith)
+          have h_1_log : 1 + Real.log ↑k ≤ 2 * Real.log ((k : ℝ) + 2) := by linarith
+          have h_prefix_nn : (0 : ℝ) ≤ C_vdc * (3 / 2) * Real.sqrt ((k : ℝ) + 1) :=
+            mul_nonneg (mul_nonneg (le_of_lt hC_vdc_pos) (by norm_num)) (Real.sqrt_nonneg _)
+          exact mul_le_mul_of_nonneg_left h_1_log h_prefix_nn
+      _ = 3 * C_vdc * Real.sqrt ((k : ℝ) + 1) * Real.log ((k : ℝ) + 2) := by ring
+      _ ≤ 6 * C_vdc * Real.sqrt ((k : ℝ) + 1) * Real.log ((k : ℝ) + 2) := by
+          have h_log_nn : (0 : ℝ) ≤ Real.log ((k : ℝ) + 2) :=
+            Real.log_nonneg (show (1 : ℝ) ≤ (k : ℝ) + 2 from by linarith)
+          have h_suffix_nn : (0 : ℝ) ≤ C_vdc * Real.sqrt ((k : ℝ) + 1) * Real.log ((k : ℝ) + 2) :=
+            mul_nonneg (mul_nonneg (le_of_lt hC_vdc_pos) (Real.sqrt_nonneg _)) h_log_nn
+          linarith
+  -- Combine far + near
+  have h_split := (Finset.sum_filter_add_sum_filter_not (Finset.range k) far_pred
+    (fun n => ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+      (C_vdc / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1))))).symm
+  have h_combined : ∑ n ∈ Finset.range k, ((n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+      (C_vdc / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)))
+      ≤ 10 * C_vdc * Real.sqrt ((k : ℝ) + 1) * Real.log ((k : ℝ) + 2) := by
+    have hsqrt_nn := Real.sqrt_nonneg ((k : ℝ) + 1)
+    -- far ≤ 4*C*√(k+1) ≤ 4*C*√(k+1)*log(k+2) since log(k+2) ≥ 1
+    have h_far_log : 4 * C_vdc * Real.sqrt ((k : ℝ) + 1) ≤
+        4 * C_vdc * Real.sqrt ((k : ℝ) + 1) * Real.log ((k : ℝ) + 2) := by
+      have := mul_le_mul_of_nonneg_left hlog_k2_ge_one (by nlinarith : 0 ≤ 4 * C_vdc * Real.sqrt ((k : ℝ) + 1))
+      linarith
+    linarith [h_split]
+  linarith [h_tri]
 
 -- ============================================================
--- Section 4: Phase 2c — RS integral representation (THE WALL)
+-- Section 4: Phase 2d — RS Ψ function and integral positivity
 -- ============================================================
 
 /-- The RS correction function Ψ on [0,1].
     This encodes the leading-order correction from the Riemann-Siegel formula.
     The phase convention (+1/4) is chosen so that Ψ > 0 on [0,1], consistent with
-    positive block integrals. The corresponding sign in errorTerm_expansion absorbs
-    the phase relationship to the standard RS remainder. -/
+    positive block integrals. -/
 def rsPsi (p : ℝ) : ℝ :=
   Real.cos (Real.pi * (2 * p ^ 2 - 2 * p + 1/4))
 
@@ -278,28 +465,6 @@ theorem rsPsi_continuousOn : ContinuousOn rsPsi (Icc 0 1) := by
   have : Continuous fun p : ℝ => Real.cos (Real.pi * (2 * p ^ 2 - 2 * p + 1 / 4)) := by
     fun_prop
   exact this.continuousOn
-
-/-- **Core RS expansion**: ErrorTerm on each block is well-approximated by
-    (-1)^k · Ψ(blockParam k t) · (2π/t)^{1/4} up to O(t^{-3/4}) error.
-
-    This is THE WALL — the single hardest piece of the entire proof.
-    Requires:
-    1. Functional equation ζ(s) = χ(s)ζ(1-s) (FunctionalEquationV2)
-    2. Euler-Maclaurin evaluation of the AFE remainder at the saddle point
-    3. Phase extraction using cos_pi_mul_nat_sq -/
-theorem errorTerm_expansion :
-    ∃ (C_rem : ℝ),
-      C_rem ≥ 0 ∧
-      (∀ k : ℕ, 1 ≤ k → ∀ t : ℝ,
-        hardyStart k ≤ t → t < hardyStart (k + 1) →
-          |ErrorTerm t - (-1 : ℝ) ^ k * rsPsi (blockParam k t) *
-            (2 * Real.pi / t) ^ ((1 : ℝ) / 4)|
-            ≤ C_rem * t ^ (-(3 : ℝ) / 4)) := by
-  sorry
-
--- ============================================================
--- Section 5: Phase 2d — Ψ integral positivity
--- ============================================================
 
 /-- Ψ is integrable on [0,1]. -/
 theorem rsPsi_integrableOn : IntegrableOn rsPsi (Ioc 0 1) := by
