@@ -3,6 +3,7 @@ import Littlewood.Aristotle.VanDerCorputInfra
 import Littlewood.Aristotle.CosPiSqSign
 import Littlewood.Aristotle.VdcFirstDerivTest
 import Littlewood.Aristotle.HardyCosSmooth
+import Littlewood.Aristotle.HardyNProperties
 import Littlewood.Bridge.HardyChainHyp
 
 /-!
@@ -3940,6 +3941,114 @@ instance [HardyCosIntegralAlternatingSqrtDecompositionHyp] :
     MainTermFirstMomentBoundHyp := by
   exact mainTermFirstMomentBound_of_alternatingSqrtDecomposition
     HardyCosIntegralAlternatingSqrtDecompositionHyp.bound
+
+/-- A weighted Hardy cosine sum bound with one logarithmic loss still implies
+the main-term first moment at the target scale `T^(1/2+ε)`, since
+`hardyN T = O(T^(1/2))` and `log(hardyN T + 2) = O(T^ε)` for every `ε > 0`. -/
+theorem mainTermFirstMomentBound_of_weightedSum_logBound
+    (hdec :
+      ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+        |∑ n ∈ Finset.range (HardyEstimatesPartial.hardyN T),
+            ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
+              ∫ t in Ioc (HardyEstimatesPartial.hardyStart n) T,
+                HardyEstimatesPartial.hardyCos n t|
+          ≤ C * ((HardyEstimatesPartial.hardyN T : ℝ) + 1) *
+              Real.log ((HardyEstimatesPartial.hardyN T : ℝ) + 2)) :
+    MainTermFirstMomentBoundHyp := by
+  obtain ⟨C, hC, hdecT⟩ := hdec
+  refine ⟨?_⟩
+  intro ε hε
+  let K : ℝ := 2 * C * (Real.log 3 + 1 / (2 * ε))
+  refine ⟨K, by
+    dsimp [K]
+    positivity, ?_⟩
+  intro T hT
+  have hT1 : (1 : ℝ) ≤ T := by linarith
+  have hTpos : 0 < T := lt_of_lt_of_le one_pos hT1
+  have hMainInt :
+      ∫ t in Ioc 1 T, HardyEstimatesPartial.MainTerm t =
+        HardyEstimatesPartial.hardySumInt T := by
+    calc
+      ∫ t in Ioc 1 T, HardyEstimatesPartial.MainTerm t
+          = ∫ t in Ioc 1 T, HardyEstimatesPartial.hardySum t := by
+              simp [HardyEstimatesPartial.MainTerm_eq_hardySum]
+      _ = HardyEstimatesPartial.hardySumInt T := by
+            simpa using HardyEstimatesPartial.hardySum_integral_eq T hT1
+  set N := HardyEstimatesPartial.hardyN T
+  set S : ℝ :=
+    ∑ n ∈ Finset.range N,
+      ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) *
+        ∫ t in Ioc (HardyEstimatesPartial.hardyStart n) T,
+          HardyEstimatesPartial.hardyCos n t
+  have hSdef : HardyEstimatesPartial.hardySumInt T = 2 * S := by
+    simp [S, N, HardyEstimatesPartial.hardySumInt]
+  have hSbound : |S| ≤ C * ((N : ℝ) + 1) * Real.log ((N : ℝ) + 2) := by
+    simpa [S, N] using hdecT T hT
+  have hN_le : ((N : ℝ) + 1) ≤ T ^ (1 / 2 : ℝ) := by
+    simpa [N] using Aristotle.HardyNProperties.hardyN_le_sqrt T hT
+  have hpow_half_nonneg : 0 ≤ T ^ (1 / 2 : ℝ) := by
+    positivity
+  have hpow_eps_nonneg : 0 ≤ T ^ ε := by
+    positivity
+  have hpow_eps_ge_one : (1 : ℝ) ≤ T ^ ε := by
+    exact Real.one_le_rpow hT1 hε.le
+  have hNplusTwo_le : ((N : ℝ) + 2) ≤ 3 * T ^ (1 / 2 : ℝ) := by
+    nlinarith
+  have hlog_arg_pos : 0 < (N : ℝ) + 2 := by positivity
+  have hlog3_nonneg : 0 ≤ Real.log 3 := by
+    exact Real.log_nonneg (by norm_num)
+  have hlogT_le : Real.log T ≤ T ^ ε / ε := by
+    exact Real.log_le_rpow_div hTpos.le hε
+  have hhalf_logT_le : (1 / 2 : ℝ) * Real.log T ≤ (1 / (2 * ε)) * T ^ ε := by
+    have htmp := mul_le_mul_of_nonneg_left hlogT_le (show 0 ≤ (1 / 2 : ℝ) by norm_num)
+    have hε_ne : ε ≠ 0 := ne_of_gt hε
+    calc
+      (1 / 2 : ℝ) * Real.log T ≤ (1 / 2 : ℝ) * (T ^ ε / ε) := htmp
+      _ = (1 / (2 * ε)) * T ^ ε := by
+            field_simp [hε_ne]
+  have hlogN_le :
+      Real.log ((N : ℝ) + 2) ≤ (Real.log 3 + 1 / (2 * ε)) * T ^ ε := by
+    have hlog_mul :
+        Real.log ((N : ℝ) + 2) ≤ Real.log 3 + (1 / 2 : ℝ) * Real.log T := by
+      calc
+        Real.log ((N : ℝ) + 2) ≤ Real.log (3 * T ^ (1 / 2 : ℝ)) := by
+              exact Real.log_le_log hlog_arg_pos hNplusTwo_le
+        _ = Real.log 3 + Real.log (T ^ (1 / 2 : ℝ)) := by
+              rw [Real.log_mul (by norm_num) (by positivity)]
+        _ = Real.log 3 + (1 / 2 : ℝ) * Real.log T := by
+              rw [Real.log_rpow hTpos]
+    have hterm1 : Real.log 3 ≤ Real.log 3 * T ^ ε := by
+      simpa [one_mul] using
+        (mul_le_mul_of_nonneg_left hpow_eps_ge_one hlog3_nonneg)
+    calc
+      Real.log ((N : ℝ) + 2) ≤ Real.log 3 + (1 / 2 : ℝ) * Real.log T := hlog_mul
+      _ ≤ Real.log 3 * T ^ ε + (1 / (2 * ε)) * T ^ ε := by
+            exact add_le_add hterm1 hhalf_logT_le
+      _ = (Real.log 3 + 1 / (2 * ε)) * T ^ ε := by ring
+  have hlogN_nonneg : 0 ≤ Real.log ((N : ℝ) + 2) := by
+    exact Real.log_nonneg (by linarith : (1 : ℝ) ≤ (N : ℝ) + 2)
+  have hprod :
+      ((N : ℝ) + 1) * Real.log ((N : ℝ) + 2)
+        ≤ T ^ (1 / 2 : ℝ) * ((Real.log 3 + 1 / (2 * ε)) * T ^ ε) := by
+    exact mul_le_mul hN_le hlogN_le hlogN_nonneg (by positivity)
+  have hpow_split :
+      T ^ (1 / 2 : ℝ) * T ^ ε = T ^ (1 / 2 + ε) := by
+    rw [← Real.rpow_add hTpos]
+  calc
+    |∫ t in Ioc 1 T, HardyEstimatesPartial.MainTerm t|
+        = |HardyEstimatesPartial.hardySumInt T| := by rw [hMainInt]
+    _ = 2 * |S| := by rw [hSdef, abs_mul, abs_of_nonneg (by positivity)]
+    _ ≤ 2 * (C * (((N : ℝ) + 1) * Real.log ((N : ℝ) + 2))) := by
+          simpa [mul_assoc] using
+            (mul_le_mul_of_nonneg_left hSbound (by positivity : 0 ≤ (2 : ℝ)))
+    _ ≤ 2 * (C * (T ^ (1 / 2 : ℝ) * ((Real.log 3 + 1 / (2 * ε)) * T ^ ε))) := by
+          gcongr
+    _ = (2 * C * (Real.log 3 + 1 / (2 * ε))) * T ^ (1 / 2 + ε) := by
+          rw [show T ^ (1 / 2 : ℝ) * ((Real.log 3 + 1 / (2 * ε)) * T ^ ε)
+              = (Real.log 3 + 1 / (2 * ε)) * (T ^ (1 / 2 : ℝ) * T ^ ε) by ring]
+          rw [hpow_split]
+          ring
+    _ = K * T ^ (1 / 2 + ε) := by rfl
 
 /-- `√(n+1)` mode-growth for cosine integrals is enough for the main-term
 first-moment bound at scale `T^(1/2+ε)`, because the Hardy coefficient

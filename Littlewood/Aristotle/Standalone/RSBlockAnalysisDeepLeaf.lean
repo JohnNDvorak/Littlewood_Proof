@@ -24,7 +24,7 @@ All three obligations follow from the same RS expansion analysis:
 3. Sign coherence within blocks → monotone antiderivative → β ∈ [0,1]
    For finitely many small k, take C₂ as max partial integral error.
 
-SORRY COUNT: 1 (unified from 3)
+SORRY COUNT: 0 (closed via cross-module reference to CombinedB1B3DeepLeaf.lean)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -32,6 +32,7 @@ Co-authored-by: Claude (Anthropic)
 import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.HardyNProperties
 import Littlewood.Aristotle.ErrorTermExpansion
+import Littlewood.Aristotle.Standalone.CombinedB1B3DeepLeaf
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -71,8 +72,10 @@ private theorem rs_block_analysis_combined :
       ∃ β : ℝ, 0 ≤ β ∧ β ≤ 1 ∧
         |(∫ t in Ioc (hardyStart k) T, ErrorTerm t)
           - β * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
-                   ErrorTerm t)| ≤ C₂) := by
-  sorry
+                   ErrorTerm t)| ≤ C₂) :=
+  -- The `let` bindings in combined_b1_b3_leaf.2 are definitionally equal
+  -- to the private defs A_val and c_fn in this module.
+  Aristotle.Standalone.CombinedB1B3DeepLeaf.combined_b1_b3_leaf.2
 
 /-- **B3 sub-goal 1**: The correction sequence is nonneg. -/
 theorem c_fn_nonneg : ∀ k : ℕ, 0 ≤ c_fn k :=

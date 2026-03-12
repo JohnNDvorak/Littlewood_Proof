@@ -1,0 +1,11 @@
+repo	url	default_branch	commit	lean_files	axiom_postulate_lines	sorry_lines	admit_lines	toolchain	license_line
+PrimeNumberTheoremAnd	https://github.com/AlexKontorovich/PrimeNumberTheoremAnd.git	main	14b0535	69	2	180	0	leanprover/lean4:v4.28.0	                                Apache License
+strongpnt	https://github.com/math-inc/strongpnt.git	main	2f5835c	8	0	0	0	leanprover/lean4:v4.21.0	none
+DirichletNonvanishing	https://github.com/CBirkbeck/DirichletNonvanishing.git	main	fb3e6ac	11	0	0	0	leanprover/lean4:v4.13.0-rc3	                                Apache License
+PNT	https://github.com/jonwashburn/PNT.git	main	65cebb7	6	0	0	0	leanprover/lean4:v4.13.0	none
+RiemannHypothesisCurves	https://github.com/math-inc/RiemannHypothesisCurves.git	main	c99880d	10	0	0	0	leanprover/lean4:v4.26.0-rc2	none
+stirling	https://github.com/mo271/stirling.git	main	101b098	1	0	1	0	(none)	                                Apache License
+Lean-RH	https://github.com/AlexKontorovich/Lean-RH.git	main	870f78c	8	0	0	0	(none)	MIT License
+lean-riemann-hypothesis	https://github.com/bhgomes/lean-riemann-hypothesis.git	master	c36b744	8	0	0	0	(none)	MIT License
+riemann-hypothesis-lean4-formal-proof	https://github.com/mimic1693/riemann-hypothesis-lean4-formal-proof.git	main	9caa6c3	11	0	0	0	leanprover/lean4:v4.29.0-rc2	MIT License
+Riemann-adelic	https://github.com/motanova84/Riemann-adelic.git	main	c00de3f	1094	4291	5416	132	(none)	================================================================================

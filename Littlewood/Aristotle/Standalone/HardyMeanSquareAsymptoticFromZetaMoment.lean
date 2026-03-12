@@ -46,7 +46,7 @@ open Filter Asymptotics MeasureTheory Set Real
 open Aristotle.Standalone.HardyAfeMeanSquareBridgeInfra
 
 /-- Exact formula: ∫₁ᵀ log t = T·log T − T + 1 (integration by parts / FTC). -/
-private lemma integral_log_exact (T : ℝ) (hT : 1 ≤ T) :
+private lemma integral_log_exact (T : ℝ) (_hT : 1 ≤ T) :
     ∫ t in (1:ℝ)..T, Real.log t = T * Real.log T - T + 1 := by
   aesop
 

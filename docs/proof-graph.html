@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Littlewood Proof — Dependency Graph</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: #0a0e17;
+    color: #c8d6e5;
+    overflow-x: hidden;
+  }
+  h1 {
+    text-align: center;
+    padding: 24px 0 4px;
+    font-size: 22px;
+    color: #f5f6fa;
+    letter-spacing: 1px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #636e72;
+    margin-bottom: 16px;
+  }
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 8px 0 20px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+  }
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 0 0 20px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-value {
+    font-size: 28px;
+    font-weight: bold;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: #636e72;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .graph-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+  }
+  /* Chain columns */
+  .chains {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  .chain {
+    background: #141a28;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #1e2a3a;
+  }
+  .chain-title {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1e2a3a;
+  }
+  .chain-hardy .chain-title { color: #0984e3; border-color: #0984e344; }
+  .chain-psi .chain-title { color: #6c5ce7; border-color: #6c5ce744; }
+  .chain-pi .chain-title { color: #00b894; border-color: #00b89444; }
+  /* Nodes */
+  .node {
+    position: relative;
+    padding: 10px 12px;
+    margin: 6px 0;
+    border-radius: 8px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .node:hover {
+    transform: translateX(4px);
+    border-color: #ffffff33;
+  }
+  .node-name {
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 2px;
+    word-break: break-all;
+  }
+  .node-desc {
+    color: #8395a7;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+  .node-sorry {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 9px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  /* Status colors */
+  .proved { background: #0984e311; border-color: #0984e333; }
+  .proved .node-name { color: #74b9ff; }
+  .sorry-node { background: #d6340411; border-color: #d6340444; }
+  .sorry-node .node-name { color: #ff7675; }
+  .sorry-node .node-sorry { background: #d6340433; color: #ff7675; }
+  .hub { background: #fdcb6e11; border-color: #fdcb6e33; }
+  .hub .node-name { color: #ffeaa7; }
+  .final { background: #00b89411; border-color: #00b89444; }
+  .final .node-name { color: #55efc4; }
+  .infra { background: #636e7211; border-color: #636e7233; }
+  .infra .node-name { color: #b2bec3; }
+  .recent { background: #a29bfe11; border-color: #a29bfe44; }
+  .recent .node-name { color: #a29bfe; }
+  /* Arrows */
+  .arrow {
+    text-align: center;
+    color: #2d3436;
+    font-size: 18px;
+    margin: 2px 0;
+    line-height: 1;
+  }
+  .arrow-down::after { content: '▼'; }
+  /* Hub section */
+  .hub-section {
+    background: #141a28;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #fdcb6e33;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .hub-section .chain-title {
+    color: #fdcb6e;
+    border-color: #fdcb6e44;
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+  .hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  /* Final section */
+  .final-section {
+    background: #141a28;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #00b89444;
+    text-align: center;
+  }
+  .final-section .chain-title {
+    color: #55efc4;
+    border-color: #00b89444;
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+  .final-grid {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .final-grid .node {
+    min-width: 280px;
+  }
+  /* SVG connectors */
+  .connector-section {
+    text-align: center;
+    margin: 12px 0;
+    font-size: 12px;
+    color: #636e72;
+  }
+  .connector-arrow {
+    font-size: 20px;
+    color: #2d3436;
+  }
+  /* Tooltip */
+  .tooltip {
+    display: none;
+    position: fixed;
+    background: #1e2a3a;
+    border: 1px solid #34495e;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 11px;
+    max-width: 400px;
+    z-index: 100;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    line-height: 1.6;
+  }
+  .tooltip-title {
+    font-weight: bold;
+    color: #f5f6fa;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .tooltip-path {
+    color: #636e72;
+    font-size: 10px;
+    margin-bottom: 6px;
+    word-break: break-all;
+  }
+  .sorry-badge {
+    display: inline-block;
+    background: #d6340433;
+    color: #ff7675;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+  }
+  .proved-badge {
+    display: inline-block;
+    background: #0984e333;
+    color: #74b9ff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+  }
+  /* Responsive */
+  @media (max-width: 900px) {
+    .chains { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>LITTLEWOOD'S THEOREM — LEAN 4 PROOF GRAPH</h1>
+<div class="subtitle">Infinite sign changes of π(x)−li(x) and ψ(x)−x &nbsp;|&nbsp; 510 files &nbsp;|&nbsp; Updated 2026-03-09</div>
+
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-value" style="color:#55efc4">2</div>
+    <div class="stat-label">Main Theorems</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" style="color:#ff7675">5</div>
+    <div class="stat-label">Deep Sorrys</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" style="color:#74b9ff">510</div>
+    <div class="stat-label">Lean Files</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" style="color:#ffeaa7">0</div>
+    <div class="stat-label">Build Errors</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" style="color:#a29bfe">3</div>
+    <div class="stat-label">Proof Chains</div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#55efc4"></div> Final theorem</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ffeaa7"></div> Assembly hub</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#74b9ff"></div> Proved module</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a29bfe"></div> Recently proved</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ff7675"></div> Sorry (deep leaf)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#b2bec3"></div> Infrastructure</div>
+</div>
+
+<div class="graph-container">
+
+<!-- ========== FINAL THEOREMS ========== -->
+<div class="final-section">
+  <div class="chain-title">MAIN THEOREMS</div>
+  <div class="final-grid">
+    <div class="node final" data-tip="littlewood_psi: ψ(x) − x = Ω±(√x). Infinite sign changes of the Chebyshev ψ function minus x." data-path="Main/LittlewoodPsi.lean">
+      <div class="node-name">littlewood_psi</div>
+      <div class="node-desc">ψ(x) − x = Ω±(√x) &nbsp;—&nbsp; Infinite sign changes</div>
+      <div class="node-sorry proved-badge">COMPILES</div>
+    </div>
+    <div class="node final" data-tip="littlewood_pi_li: π(x) − li(x) = Ω±(√x · log(log(log(x))) / log(x)). Littlewood's 1914 theorem." data-path="Main/LittlewoodPi.lean">
+      <div class="node-name">littlewood_pi_li</div>
+      <div class="node-desc">π(x) − li(x) changes sign infinitely often</div>
+      <div class="node-sorry proved-badge">COMPILES</div>
+    </div>
+  </div>
+</div>
+
+<div class="connector-section">
+  <div class="connector-arrow">▲ ▲</div>
+  both import DeepSorries.lean
+</div>
+
+<!-- ========== HUB ========== -->
+<div class="hub-section">
+  <div class="chain-title">ASSEMBLY HUB</div>
+  <div class="hub-grid">
+    <div class="node hub" data-tip="Public API: packages all_deep_results → psi_full_strength_oscillation + pi_li_full_strength_oscillation. Imports DeepBlockersResolved + 20 modules." data-path="Aristotle/DeepSorries.lean">
+      <div class="node-name">DeepSorries.lean</div>
+      <div class="node-desc">Public API: combined_atoms → final oscillation</div>
+    </div>
+    <div class="node hub" data-tip="Consolidation: 7 deep blockers → all_deep_blockers → combined_atoms_resolved_unconditional. Imports 27 standalone modules." data-path="Aristotle/Standalone/DeepBlockersResolved.lean">
+      <div class="node-name">DeepBlockersResolved.lean</div>
+      <div class="node-desc">7 blockers → combined_atoms (choke point)</div>
+    </div>
+  </div>
+</div>
+
+<div class="connector-section">
+  <div class="connector-arrow">▲ ▲ ▲</div>
+  feeds three independent chains
+</div>
+
+<!-- ========== THREE CHAINS ========== -->
+<div class="chains">
+
+  <!-- HARDY CHAIN -->
+  <div class="chain chain-hardy">
+    <div class="chain-title">HARDY CHAIN (B1 + B2 + B3)</div>
+    <div class="node-desc" style="margin-bottom:12px;color:#636e72">Hardy Z-function has infinitely many real zeros → sign changes in error term</div>
+
+    <div class="node proved" data-tip="RSCompleteBlockAsymptotic: Wires rs_block_analysis → PerBlockSignedBoundHyp. 0 sorry." data-path="Aristotle/Standalone/RSCompleteBlockAsymptotic.lean">
+      <div class="node-name">RSCompleteBlockAsymptotic</div>
+      <div class="node-desc">Block → signed bound wiring</div>
+      <div class="node-sorry proved-badge">0 sorry</div>
+    </div>
+    <div class="arrow arrow-down"></div>
+
+    <div class="node proved" data-tip="RSBlockBounds: Defines A_block, c_block, C₂_block. Proves rs_block_analysis_proof. Delegates 3 sub-goals to deep leaf." data-path="Aristotle/RSBlockBounds.lean">
+      <div class="node-name">RSBlockBounds</div>
+      <div class="node-desc">A_block, c_block, block_integral_eq</div>
+      <div class="node-sorry proved-badge">0 sorry</div>
+    </div>
+    <div class="arrow arrow-down"></div>
+
+    <div class="node sorry-node" data-tip="SORRY: rs_block_analysis_leaf — 3 obligations: (1) c(k) ≥ 0, (2) AntitoneOn c (Ici 1), (3) partial-block interpolation. Siegel 1932 / Titchmarsh §4.16." data-path="Aristotle/Standalone/RSBlockAnalysisDeepLeaf.lean">
+      <div class="node-name">B3: RSBlockAnalysisDeepLeaf</div>
+      <div class="node-desc">c≥0, antitone, interpolation (Siegel 1932)</div>
+      <div class="node-sorry sorry-badge">1 SORRY</div>
+    </div>
+    <div class="arrow arrow-down"></div>
+
+    <div class="node recent" data-tip="ErrorTermExpansion: Defines rsPsi, errorTermOnBlock. NOW 0 sorry — previously had 3. Contains theta_stirling, off_resonance expansions." data-path="Aristotle/ErrorTermExpansion.lean">
+      <div class="node-name">ErrorTermExpansion</div>
+      <div class="node-desc">rsPsi, errorTermOnBlock — recently cleared</div>
+      <div class="node-sorry proved-badge">0 sorry</div>
+    </div>
+    <div class="arrow arrow-down"></div>
+
+    <div class="node recent" data-tip="OffResonanceSmoothVdC: Smooth Van der Corput for off-resonance oscillatory integrals. NOW 0 sorry — previously had 1." data-path="Aristotle/OffResonanceSmoothVdC.lean">
+      <div class="node-name">OffResonanceSmoothVdC</div>
+      <div class="node-desc">Smooth VdC off-resonance — recently cleared</div>
+      <div class="node-sorry proved-badge">0 sorry</div>
+    </div>
+    <div class="arrow arrow-down"></div>
+
+    <div class="node recent" data-tip="ThetaDerivMonotone: θ'(t) is strictly increasing on (0,∞). Proved 2026-03-07 via positive derivative from Im(trigamma)." data-path="Aristotle/ThetaDerivMonotone.lean">
+      <div class="node-name">ThetaDerivMonotone</div>
+      <div class="node-desc">θ' strictly monotone — proved 2026-03-07</div>
+      <div class="node-sorry proved-badge">0 sorry</div>
+    </div>
+
+    <div style="margin-top: 16px; border-top: 1px solid #1e2a3a; padding-top: 12px;">
+      <div class="node sorry-node" data-tip="SORRY: afe_integral_remainder_bound_leaf — AFE integration bound from Ingham 1926. 100-150 lines needed." data-path="Aristotle/Standalone/HardyAfeSignedGapDeepLeaf.lean">
+        <div class="node-name">B1: HardyAfeSignedGapDeepLeaf</div>
+        <div class="node-desc">AFE signed gap (Ingham 1926)</div>
+        <div class="node-sorry sorry-badge">1 SORRY</div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="node sorry-node" data-tip="SORRY: b2_tail_vdc_deep_leaf — Heath-Brown 1978 Van der Corput tail bound. 200-300 lines needed." data-path="Aristotle/Standalone/B2TailVdcDeepLeaf.lean">
+        <div class="node-name">B2: B2TailVdcDeepLeaf</div>
+        <div class="node-desc">VdC tail bound (Heath-Brown 1978)</div>
+        <div class="node-sorry sorry-badge">1 SORRY</div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="node infra" data-tip="Infrastructure: HardyZFirstMoment, HardyNProperties, RSBlockParam, ComplexVdC, FresnelIntegrals, etc." data-path="">
+        <div class="node-name">Hardy Infrastructure</div>
+        <div class="node-desc">Z-function, block params, Fresnel, VdC tests</div>
+        <div class="node-sorry proved-badge">all proved</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PSI CHAIN -->
+  <div class="chain chain-psi">
+    <div class="chain-title">ψ CHAIN (B5a + B5b)</div>
+    <div class="node-desc" style="margin-bottom:12px;color:#636e72">Explicit formula for ψ(x) → Ω±(√x) oscillation via Landau/Ingham</div>
+
+    <div class="node proved" data-tip="PsiZeroSumOscillationFromIngham: Assembly for B5b — landau_psi_bounded_impossible PROVED. Connects zero sum divergence to ψ oscillation." data-path="Aristotle/Standalone/PsiZeroSumOscillationFromIngham.lean">
+      <div class="node-name">PsiZeroSumOscillation</div>
+      <div class="node-desc">Landau bounded→impossible assembly</div>
+      <div class="node-sorry proved-badge">0 sorry</div>
+    </div>
+    <div class="arrow arrow-down"></div>
+
+    <div class="node proved" data-tip="ExplicitFormulaAndOscillationFromSubSorries: Wires B5a shifted bound + B5b oscillation into unified result." data-path="Aristotle/Standalone/ExplicitFormulaAndOscillationFromSubSorries.lean">
+      <div class="node-name">ExplicitFormula+Oscillation</div>
+      <div class="node-desc">Unified B5a+B5b wiring</div>
+      <div class="node-sorry proved-badge">0 sorry</div>
+    </div>
+    <div class="arrow arrow-down"></div>
+
+    <div class="node proved" data-tip="ExplicitFormulaPsiSkeleton: Skeleton for ψ explicit formula, proved from components." data-path="Aristotle/Standalone/ExplicitFormulaPsiSkeleton.lean">
+      <div class="node-name">ExplicitFormulaPsiSkeleton</div>
+      <div class="node-desc">Explicit formula skeleton</div>
+      <div class="node-sorry proved-badge">0 sorry</div>
+    </div>
+    <div class="arrow arrow-down"></div>
+
+    <div class="node sorry-node" data-tip="SORRY: shifted_remainder_bound_leaf — needs 3 sub-goals: (1) Perron truncation O((log x)²) Davenport 17.1, (2) Cauchy residue identity, (3) contour shift O(√x·(log T)²/√T) Davenport 17.2." data-path="Aristotle/Standalone/ExplicitFormulaPsiB5aShiftedBoundDeepLeaf.lean">
+      <div class="node-name">B5a: ShiftedBoundDeepLeaf</div>
+      <div class="node-desc">Shifted remainder (Davenport Ch.17)</div>
+      <div class="node-sorry sorry-badge">1 SORRY</div>
+    </div>
+    <div class="arrow arrow-down"></div>
+
+    <div class="node infra" data-tip="B5a infrastructure: ExternalPort modules, StrongPNT bridges, B5aDefs, B5aRootInfra — all proved." data-path="">
+      <div class="node-name">B5a Infrastructure</div>
+      <div class="node-desc">10 ExternalPort modules, all proved</div>
+      <div class="node-sorry proved-badge">all proved</div>
+    </div>
+
+    <div style="margin-top: 16px; border-top: 1px solid #1e2a3a; padding-top: 12px;">
+      <div class="node proved" data-tip="B5b assembly: landau_psi_bounded_impossible PROVED (~250 lines). Both landau_ingham_unbounded_above/below PROVED. Depends on 2 typeclass parameters resolved in DeepBlockersResolved." data-path="">
+        <div class="node-name">B5b Assembly</div>
+        <div class="node-desc">Landau contradiction — PROVED</div>
+        <div class="node-sorry proved-badge">0 sorry</div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="node infra" data-tip="B5b typeclasses: CriticalZeroSumDivergesHyp + PhaseAlignmentToTargetHyp. NOT direct sorry warnings — resolved inside DeepBlockersResolved via RH-case branch." data-path="">
+        <div class="node-name">B5b Typeclasses</div>
+        <div class="node-desc">CriticalZeroSumDiverges + PhaseAlignment</div>
+        <div class="node-sorry" style="background:#fdcb6e33;color:#ffeaa7">RESOLVED</div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="node infra" data-tip="DirichletPhaseAlignment, ZetaLogDerivInfra, LandauAbscissa modules." data-path="">
+        <div class="node-name">ψ Infrastructure</div>
+        <div class="node-desc">Phase alignment, Landau abscissa, log-deriv</div>
+        <div class="node-sorry proved-badge">all proved</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PI CHAIN -->
+  <div class="chain chain-pi">
+    <div class="chain-title">π CHAIN (fully proved except seed)</div>
+    <div class="node-desc" style="margin-bottom:12px;color:#636e72">π(x) − li(x) oscillation via Pringsheim + explicit formula for π</div>
+
+    <div class="node proved" data-tip="RHPiWitnessFromExplicitFormula + chain of ~20 RHPi*.lean files. All wiring PROVED." data-path="">
+      <div class="node-name">RHPi Wiring Chain</div>
+      <div class="node-desc">20+ files: witness, phase coupling, tower</div>
+      <div class="node-sorry proved-badge">0 sorry</div>
+    </div>
+    <div class="arrow arrow-down"></div>
+
+    <div class="node proved" data-tip="RHPiUnconditionalExactSeedExistence: Imports RHPiExactSeedDeepLeaf. Bridges seed existence to unconditional result." data-path="Aristotle/Standalone/RHPiUnconditionalExactSeedExistence.lean">
+      <div class="node-name">RHPiUnconditionalExactSeed</div>
+      <div class="node-desc">Seed → unconditional bridge</div>
+      <div class="node-sorry proved-badge">0 sorry</div>
+    </div>
+    <div class="arrow arrow-down"></div>
+
+    <div class="node sorry-node" data-tip="SORRY: exact_seed_exists — existence of numerical seed x₀ where π(x₀) > li(x₀). Skewes-type computation." data-path="Aristotle/Standalone/RHPiExactSeedDeepLeaf.lean">
+      <div class="node-name">π: RHPiExactSeedDeepLeaf</div>
+      <div class="node-desc">Exact seed existence (Skewes-type)</div>
+      <div class="node-sorry sorry-badge">1 SORRY</div>
+    </div>
+    <div class="arrow arrow-down"></div>
+
+    <div class="node proved" data-tip="PiLiDirectOscillation: Defines TruncatedExplicitFormulaPiHyp class. Bridge from Schmidt oscillation to π-li." data-path="Bridge/PiLiDirectOscillation.lean">
+      <div class="node-name">PiLiDirectOscillation</div>
+      <div class="node-desc">Schmidt bridge for π−li</div>
+      <div class="node-sorry proved-badge">0 sorry</div>
+    </div>
+
+    <div style="margin-top: 16px; border-top: 1px solid #1e2a3a; padding-top: 12px;">
+      <div class="node proved" data-tip="PiAtomCoreFromZetaZeroFree, PiPringsheimExtension, B7a/B7b — all PROVED. The π chain downstream of the seed is fully sorry-free." data-path="">
+        <div class="node-name">π Assembly (all proved)</div>
+        <div class="node-desc">Pringsheim + B7a + B7b + atom core</div>
+        <div class="node-sorry proved-badge">0 sorry</div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="node infra" data-tip="PiCorrectedCore, CorrectedPrimeZetaExtension, SigmaLtOne, etc." data-path="">
+        <div class="node-name">π Infrastructure</div>
+        <div class="node-desc">Prime zeta, Pringsheim, σ<1 bounds</div>
+        <div class="node-sorry proved-badge">all proved</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========== FOUNDATION ========== -->
+<div class="hub-section" style="border-color:#636e7233">
+  <div class="chain-title" style="color:#b2bec3; border-color:#636e7244">FOUNDATION MODULES</div>
+  <div class="hub-grid">
+    <div class="node infra" data-tip="SchmidtTheorem: Oscillation extraction from growth domination. The core combinatorial engine." data-path="Oscillation/SchmidtTheorem.lean">
+      <div class="node-name">SchmidtTheorem</div>
+      <div class="node-desc">Oscillation extraction engine</div>
+    </div>
+    <div class="node infra" data-tip="GrowthDomination, WeightedAverageFormula, DirichletApproximation." data-path="CoreLemmas/">
+      <div class="node-name">CoreLemmas</div>
+      <div class="node-desc">Growth, weights, Dirichlet</div>
+    </div>
+    <div class="node infra" data-tip="ZeroCountingFunction, ZeroDensity, SupremumRealPart." data-path="ZetaZeros/">
+      <div class="node-name">ZetaZeros</div>
+      <div class="node-desc">N(T), density, sup real part</div>
+    </div>
+    <div class="node infra" data-tip="Chebyshev ψ, θ definitions, Ω notation." data-path="Basic/">
+      <div class="node-name">Basic</div>
+      <div class="node-desc">ψ, θ, Ω± definitions</div>
+    </div>
+    <div class="node infra" data-tip="GammaSeqLocallyUniform (Gauss identity), DigammaBinetBound, ThetaDerivAsymptotic, ComplexVdC, FresnelIntegrals." data-path="">
+      <div class="node-name">Analysis Infrastructure</div>
+      <div class="node-desc">Gamma, digamma, θ', VdC, Fresnel</div>
+    </div>
+    <div class="node infra" data-tip="Mathlib v4.27.0-rc1 compatible. Pinned to commit fdddb3ea2c8c." data-path="">
+      <div class="node-name">Mathlib</div>
+      <div class="node-desc">v4.27.0-rc1 (pinned fdddb3ea)</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ========== TOOLTIP ========== -->
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// Tooltip logic
+const tooltip = document.getElementById('tooltip');
+document.querySelectorAll('.node[data-tip]').forEach(node => {
+  node.addEventListener('mouseenter', e => {
+    const tip = node.getAttribute('data-tip');
+    const path = node.getAttribute('data-path');
+    let html = '';
+    if (path) html += `<div class="tooltip-path">${path}</div>`;
+    html += `<div>${tip}</div>`;
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+  });
+  node.addEventListener('mousemove', e => {
+    const x = Math.min(e.clientX + 16, window.innerWidth - 420);
+    const y = Math.min(e.clientY + 16, window.innerHeight - 200);
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  });
+  node.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none';
+  });
+});
+</script>
+
+</body>
+</html>

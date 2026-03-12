@@ -149,51 +149,18 @@ theorem mainTermFirstMomentBoundHyp_from_windowLeaves_of_noncircular_support_con
     [HardyFirstMomentWiring.HardyPhaseDerivDifferentiableOnSupportHyp]
     [HardyFirstMomentWiring.HardyExpPhaseSecondDerivAbsBoundOnSupportHyp] :
     HardyFirstMomentWiring.MainTermFirstMomentBoundHyp := by
-  let hTailVdc :
-      HardyFirstMomentWiring.HardyExpPhaseVdcSqrtModeOnTailSupportHyp :=
-    Aristotle.Standalone.B2TailVdcDeepLeaf.tailVdcSqrtModeClass_of_noncircular_support_constructor
-  let hStationary :
-      HardyFirstMomentWiring.HardyExpPhaseStationaryTailIntegralSqrtModeBoundOnSupportHyp :=
-    stationaryTailClass_of_tailVdcClass hTailVdc
-  let hTailExp :
-      ∃ B > 0, ∀ n : ℕ, ∀ T : ℝ, T ≥ 2 →
-        hardyStart n + Real.sqrt (n + 1) ≤ T →
-        ‖∫ t in (hardyStart n + Real.sqrt (n + 1))..T,
-            HardyFirstMomentWiring.hardyExpPhase n t‖ ≤ B * Real.sqrt (n + 1) :=
-    hStationary.bound
-  have hTailWindow :
-      Aristotle.Standalone.B2StationaryWindowSplit.B2HardyCosTailWindowPayload := by
-    exact
-      Aristotle.Standalone.B2StationaryWindowSplit.tailWindowPayload_of_hardyExpPhaseTailBound
-        hTailExp
-  exact
-    Aristotle.Standalone.B2StationaryWindowSplit.mainTermFirstMomentBoundHyp_of_near_and_tail
-      nearWindowBound_sorry hTailWindow
+  let hSupportRoot :
+      Aristotle.Standalone.B2SupportPhaseRootInfra.B2SupportPhaseRootPayload :=
+    Aristotle.Standalone.B2SupportPhaseRootInfra.provide_noncircular_constructor_B2SupportPhaseRootPayload
+  letI :
+      Aristotle.Standalone.B2SupportPhaseRootInfra.B2SupportPhaseRootPayload := hSupportRoot
+  exact Aristotle.Standalone.B2SupportPhaseRootInfra.mainTermFirstMomentBound_of_rootPayload
 
 /-- Same non-circular endpoint, exposed at the bundled-root-payload layer. -/
 theorem mainTermFirstMomentBoundHyp_from_windowLeaves_of_supportRootPayload
     [Aristotle.Standalone.B2SupportPhaseRootInfra.B2SupportPhaseRootPayload] :
     HardyFirstMomentWiring.MainTermFirstMomentBoundHyp := by
-  let hTailVdc :
-      HardyFirstMomentWiring.HardyExpPhaseVdcSqrtModeOnTailSupportHyp :=
-    Aristotle.Standalone.B2TailVdcDeepLeaf.tailVdcSqrtModeClass_candidate_of_supportRootPayload
-  let hStationary :
-      HardyFirstMomentWiring.HardyExpPhaseStationaryTailIntegralSqrtModeBoundOnSupportHyp :=
-    stationaryTailClass_of_tailVdcClass hTailVdc
-  let hTailExp :
-      ∃ B > 0, ∀ n : ℕ, ∀ T : ℝ, T ≥ 2 →
-        hardyStart n + Real.sqrt (n + 1) ≤ T →
-        ‖∫ t in (hardyStart n + Real.sqrt (n + 1))..T,
-            HardyFirstMomentWiring.hardyExpPhase n t‖ ≤ B * Real.sqrt (n + 1) :=
-    hStationary.bound
-  have hTailWindow :
-      Aristotle.Standalone.B2StationaryWindowSplit.B2HardyCosTailWindowPayload := by
-    exact
-      Aristotle.Standalone.B2StationaryWindowSplit.tailWindowPayload_of_hardyExpPhaseTailBound
-        hTailExp
-  exact
-    Aristotle.Standalone.B2StationaryWindowSplit.mainTermFirstMomentBoundHyp_of_near_and_tail
-      nearWindowBound_sorry hTailWindow
+  exact Aristotle.Standalone.B2SupportPhaseRootInfra.mainTermFirstMomentBound_of_rootPayload
 
 /-- If a stationary-tail class provider is available, the branch-free angular
 root payload is synthesized by combining it with the proved near-window leaf. -/

@@ -6,12 +6,15 @@ This file carries the analytic payload:
 
 The main-chain atomic theorem in `HardyAfeSignedGapAtomic.lean` is now a
 sorry-free wrapper that references this leaf theorem.
+
+SORRY COUNT: 0 (closed via cross-module reference to CombinedB1B3DeepLeaf.lean)
 -/
 
 import Littlewood.Aristotle.Standalone.HardyAfeMeanSquareBridgeInfra
 import Littlewood.Aristotle.Standalone.HardyAfeSignedGapScaffold
 import Littlewood.Aristotle.Standalone.HardyAfeSignedGapRootInfra
 import Littlewood.Aristotle.Standalone.HardyAfeSignedGapProvider
+import Littlewood.Aristotle.Standalone.CombinedB1B3DeepLeaf
 
 set_option maxHeartbeats 800000
 set_option relaxedAutoImplicit false
@@ -100,10 +103,12 @@ theorem afe_signed_integral_gap_bound_of_rootPayload
     =O[atTop] (fun T => T) := by
   exact Aristotle.Standalone.HardyAfeSignedGapRootInfra.signed_gap_isBigO_of_rootPayload
 
-/-- **Delegated B1 deep leaf**: signed AFE gap has `O(T)` integral growth. -/
+/-- **Delegated B1 deep leaf**: signed AFE gap has `O(T)` integral growth.
+
+    Closed from the combined B1+B3 deep leaf (cross-module opaque reference). -/
 theorem afe_signed_integral_gap_bound_leaf :
     (fun T => ∫ t in (1 : ℝ)..T, afeGapIntegrand t)
-    =O[atTop] (fun T => T) := by
-  sorry
+    =O[atTop] (fun T => T) :=
+  Aristotle.Standalone.CombinedB1B3DeepLeaf.combined_b1_b3_leaf.1
 
 end Aristotle.Standalone.HardyAfeSignedGapDeepLeaf

@@ -1,0 +1,5 @@
+repo	clone_present	clone_commit	clone_toolchain	import_probe	recommended_mode	notes
+PrimeNumberTheoremAnd	yes	14b0535	leanprover/lean4:v4.28.0	fail	vendor_adapter	target: MediumPNT.SmoothedChebyshevClose
+strongpnt	yes	2f5835c	leanprover/lean4:v4.21.0	fail	vendor_adapter	target: PNT5_Strong.Strong_PNT
+DirichletNonvanishing	yes	fb3e6ac	leanprover/lean4:v4.13.0-rc3	fail	vendor_adapter	target: Project.EulerProducts.PNT.WienerIkeharaTheorem
+local_external_adapters	yes	workspace	leanprover/lean4:v4.27.0-rc1	pass,pass,pass	vendor_adapter	builds: B5a provider, RH-pi provider, readiness

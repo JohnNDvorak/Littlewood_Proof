@@ -1,11 +1,12 @@
 /- 
-Delegated deep leaf for B2 (tail-localized VdC sqrt-mode package).
+Deprecated historical reference for the old B2 tail-localized VdC sqrt-mode
+package.
 
 This file carries the analytic payload:
 `HardyExpPhaseVdcSqrtModeOnTailSupportHyp`.
 
-The main-chain B2 assembly in `B2StationaryWindowLeaves.lean` is kept
-sorry-free except for this dedicated leaf import.
+It is kept in-tree for future reference while the active B2 closure is being
+rewired away from this route.
 -/
 
 import Littlewood.Bridge.HardyFirstMomentWiring
@@ -161,8 +162,8 @@ theorem tailVdcSqrtModeClass_of_noncircular_support_constructor
 stationary-window complement. -/
 theorem tailVdcSqrtModeClass_leaf :
     HardyFirstMomentWiring.HardyExpPhaseVdcSqrtModeOnTailSupportHyp := by
-  -- Drop-in closure once an unconditional support payload provider is available:
-  -- `exact tailVdcSqrtModeClass_candidate_of_supportRootPayload`
+  -- Historical placeholder retained only as reference while B2 is rewired away
+  -- from this route.
   sorry
 
 end Aristotle.Standalone.B2TailVdcDeepLeaf

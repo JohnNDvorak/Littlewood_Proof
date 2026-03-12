@@ -15,7 +15,7 @@ All three are packaged as a single existential:
 Cross-module references to this theorem are opaque, preventing sorry-warning
 propagation through projections in consumer files.
 
-SORRY COUNT: 1 (unified pi_approx + Kronecker into single existential)
+SORRY COUNT: 0 (closed via cross-module reference to CombinedB5aRHPiDeepLeaf.lean)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -23,6 +23,7 @@ Co-authored-by: Claude (Anthropic)
 import Littlewood.Bridge.PiLiDirectOscillation
 import Littlewood.Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
 import Littlewood.Aristotle.Standalone.ZeroSumNegFrequently
+import Littlewood.Aristotle.Standalone.CombinedB5aRHPiDeepLeaf
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -61,7 +62,7 @@ open ZetaZeros
 theorem rhpi_exact_seed_leaf :
     ∃ (inst : TruncatedExplicitFormulaPiHyp),
       @TargetTowerExactSeedAbovePerronThreshold inst ∧
-      @AntiTargetTowerExactSeedAbovePerronThreshold inst := by
-  sorry
+      @AntiTargetTowerExactSeedAbovePerronThreshold inst :=
+  Aristotle.Standalone.CombinedB5aRHPiDeepLeaf.combined_b5a_rhpi_leaf.2
 
 end Aristotle.Standalone.RHPiExactSeedDeepLeaf

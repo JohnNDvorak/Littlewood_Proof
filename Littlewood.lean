@@ -226,6 +226,7 @@ import Littlewood.Bridge.WiringTests               -- Compilation tests for avai
 import Littlewood.Bridge.HardyZTransfer            -- Hardy Z type transfer bridge (0 sorries) ✓
 import Littlewood.Bridge.HardyBuildingBlocksInstance  -- BuildingBlocks 4/6 fields template (0 sorries) ✓
 import Littlewood.Bridge.HardyZDefinitionMap          -- Hardy Z variant equivalences (0 sorries) ✓
+import Littlewood.Bridge.RSDefinitionBridge            -- ErrorTermRsApproxBridgeHyp instance (0 sorries) ✓
 -- import Littlewood.Bridge.HardyCriticalLineWiring      -- MERGED: bypassed by HardyCriticalLineZerosDirect
 import Littlewood.Bridge.HardyCriticalLineZerosDirect  -- Direct atomic sorry for Hardy's theorem (1 sorry)
 import Littlewood.Bridge.HardyFirstMomentWiring      -- Hardy first-moment plumbing (0 sorries) ✓

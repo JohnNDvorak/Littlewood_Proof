@@ -173,7 +173,7 @@ private lemma inv_sqrt_le_two_sqrt_diff (n : ℕ) :
   nlinarith
 
 /-- Telescoping: ∑_{n<M} (n+1)^{-1/2} ≤ 2√M. -/
-private lemma sum_rpow_neg_half_le (M : ℕ) :
+lemma sum_rpow_neg_half_le (M : ℕ) :
     ∑ n ∈ Finset.range M, ((↑n + 1 : ℝ) ^ (-(1:ℝ)/2)) ≤ 2 * Real.sqrt ↑M := by
   calc ∑ n ∈ Finset.range M, ((↑n + 1 : ℝ) ^ (-(1:ℝ)/2))
       ≤ ∑ n ∈ Finset.range M, (2 * (Real.sqrt (↑n + 1) - Real.sqrt ↑n)) :=
@@ -470,16 +470,44 @@ theorem rsPsi_continuousOn : ContinuousOn rsPsi (Icc 0 1) := by
 theorem rsPsi_integrableOn : IntegrableOn rsPsi (Ioc 0 1) := by
   exact rsPsi_continuousOn.integrableOn_Icc.mono_set Ioc_subset_Icc_self
 
-/-- The integral of Ψ over [0,1] is positive.
-    With the +1/4 phase convention, Ψ > 0 on all of [0,1] since the argument
-    π(2p²-2p+1/4) ∈ [-π/4, π/4] ⊂ (-π/2, π/2) where cos is positive. -/
-theorem rsPsi_integral_pos : 0 < ∫ p in Ioc 0 1, rsPsi p := by
-  -- cos(π/4) > 0
-  have hcos_pos : (0 : ℝ) < Real.cos (Real.pi / 4) := by
-    rw [Real.cos_pi_div_four]; positivity
+/-- Ψ is strictly positive on [0,1].
+    The argument π(2p²-2p+1/4) lies in [-π/4, π/4] ⊂ (-π/2, π/2) where cos > 0.
+    In fact cos(π/4) ≤ Ψ(p) for all p ∈ [0,1].
+
+    This is a key ingredient for proving c(k) ≥ 0 in the B3 block analysis:
+    monotonicity of √(k+1+p) in p combined with Ψ(p) > 0 gives
+    ∫₀¹ √(k+1+p)·Ψ(p) dp ≥ √(k+1)·∫₀¹ Ψ(p) dp. -/
+theorem rsPsi_pos_on (p : ℝ) (hp : p ∈ Icc (0 : ℝ) 1) : 0 < rsPsi p := by
   have hpi4_le_pi : Real.pi / 4 ≤ Real.pi :=
     div_le_self (le_of_lt Real.pi_pos) (by norm_num : (1 : ℝ) ≤ 4)
-  -- cos(π/4) ≤ rsPsi(p) for p ∈ Ioc 0 1
+  have ⟨hp0, hp1⟩ := hp
+  simp only [rsPsi]
+  have harg_abs : |Real.pi * (2 * p ^ 2 - 2 * p + 1/4)| ≤ Real.pi / 4 := by
+    rw [abs_le]; constructor
+    · have h1 : 0 ≤ 2 * (p - 1/2) ^ 2 := by positivity
+      nlinarith [Real.pi_pos]
+    · have h2 : 2 * p * (p - 1) ≤ 0 := by nlinarith
+      nlinarith [Real.pi_pos]
+  have hcos_lb : Real.cos (Real.pi / 4) ≤
+      Real.cos (Real.pi * (2 * p ^ 2 - 2 * p + 1 / 4)) := by
+    rw [← Real.cos_abs (Real.pi * (2 * p ^ 2 - 2 * p + 1/4))]
+    exact Real.strictAntiOn_cos.antitoneOn
+      (Set.mem_Icc.mpr ⟨abs_nonneg _, le_trans harg_abs hpi4_le_pi⟩)
+      (Set.mem_Icc.mpr ⟨le_of_lt (div_pos Real.pi_pos (by norm_num : (0:ℝ) < 4)), hpi4_le_pi⟩)
+      harg_abs
+  have hcos_pos : (0 : ℝ) < Real.cos (Real.pi / 4) := by
+    rw [Real.cos_pi_div_four]; positivity
+  linarith
+
+/-- Ψ is nonneg on [0,1] (weaker form of `rsPsi_pos_on`). -/
+theorem rsPsi_nonneg_on (p : ℝ) (hp : p ∈ Icc (0 : ℝ) 1) : 0 ≤ rsPsi p :=
+  le_of_lt (rsPsi_pos_on p hp)
+
+/-- The integral of Ψ over [0,1] is positive.
+    Follows from pointwise positivity `rsPsi_pos_on`. -/
+theorem rsPsi_integral_pos : 0 < ∫ p in Ioc 0 1, rsPsi p := by
+  have hcos_pos : (0 : ℝ) < Real.cos (Real.pi / 4) := by
+    rw [Real.cos_pi_div_four]; positivity
   have h_lower : ∀ p ∈ Ioc (0 : ℝ) 1, Real.cos (Real.pi / 4) ≤ rsPsi p := by
     intro p hp
     have ⟨hp0, hp1⟩ := Ioc_subset_Icc_self hp
@@ -490,13 +518,13 @@ theorem rsPsi_integral_pos : 0 < ∫ p in Ioc 0 1, rsPsi p := by
         nlinarith [Real.pi_pos]
       · have h2 : 2 * p * (p - 1) ≤ 0 := by nlinarith
         nlinarith [Real.pi_pos]
-    -- cos is even and antitone on [0,π]: |arg| ≤ π/4 → cos(arg) ≥ cos(π/4)
     rw [← Real.cos_abs (Real.pi * (2 * p ^ 2 - 2 * p + 1/4))]
+    have hpi4_le_pi : Real.pi / 4 ≤ Real.pi :=
+      div_le_self (le_of_lt Real.pi_pos) (by norm_num : (1 : ℝ) ≤ 4)
     exact Real.strictAntiOn_cos.antitoneOn
       (Set.mem_Icc.mpr ⟨abs_nonneg _, le_trans harg_abs hpi4_le_pi⟩)
       (Set.mem_Icc.mpr ⟨le_of_lt (div_pos Real.pi_pos (by norm_num : (0:ℝ) < 4)), hpi4_le_pi⟩)
       harg_abs
-  -- ∫ rsPsi ≥ ∫ cos(π/4) = cos(π/4) > 0 via ae monotonicity
   have h_ae : ∀ᵐ p ∂(volume.restrict (Ioc (0 : ℝ) 1)),
       (fun _ => Real.cos (Real.pi / 4)) p ≤ rsPsi p :=
     (ae_restrict_mem measurableSet_Ioc).mono (fun p hp => h_lower p hp)
@@ -508,6 +536,38 @@ theorem rsPsi_integral_pos : 0 < ∫ p in Ioc 0 1, rsPsi p := by
   have h_const_val : ∫ _ in Ioc (0 : ℝ) 1, Real.cos (Real.pi / 4)
       = Real.cos (Real.pi / 4) := by
     simp
+  linarith
+
+/-- The weighted RS integral ∫₀¹ √(k+1+p)·Ψ(p) dp is at least √(k+1)·∫₀¹ Ψ(p) dp.
+    This follows from √(k+1+p) ≥ √(k+1) for p ≥ 0 and Ψ(p) ≥ 0 on [0,1].
+    Key ingredient for c(k) ≥ 0 in the B3 block analysis. -/
+theorem rsPsi_weighted_integral_lower (k : ℕ) :
+    Real.sqrt ((k : ℝ) + 1) * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)
+      ≤ ∫ p in Ioc (0 : ℝ) 1, Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p := by
+  -- Step 1: ∫ √(k+1)·Ψ ≤ ∫ √(k+1+p)·Ψ
+  have h_mono : ∫ p in Ioc (0 : ℝ) 1, Real.sqrt ((k : ℝ) + 1) * rsPsi p
+      ≤ ∫ p in Ioc (0 : ℝ) 1, Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p := by
+    apply integral_mono_ae
+    · exact rsPsi_integrableOn.const_mul _
+    · have hcont : ContinuousOn (fun p => Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p) (Icc 0 1) := by
+        apply ContinuousOn.mul
+        · apply ContinuousOn.sqrt
+          exact continuousOn_const.add continuousOn_id
+        · exact rsPsi_continuousOn
+      exact hcont.integrableOn_Icc.mono_set Ioc_subset_Icc_self
+    · apply (ae_restrict_mem measurableSet_Ioc).mono
+      intro p hp
+      have hpsi_nn : 0 ≤ rsPsi p := rsPsi_nonneg_on p (Ioc_subset_Icc_self hp)
+      apply mul_le_mul_of_nonneg_right _ hpsi_nn
+      apply Real.sqrt_le_sqrt
+      linarith [hp.1]
+  -- Step 2: √(k+1)·∫ Ψ = ∫ √(k+1)·Ψ (via smul on restricted measure)
+  have h_eq : Real.sqrt ((k : ℝ) + 1) * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)
+      = ∫ p in Ioc (0 : ℝ) 1, Real.sqrt ((k : ℝ) + 1) * rsPsi p := by
+    have := integral_smul (𝕜 := ℝ) (Real.sqrt ((k : ℝ) + 1))
+      (fun p => rsPsi p) (μ := volume.restrict (Ioc 0 1))
+    simp only [smul_eq_mul] at this
+    exact this.symm
   linarith
 
 end Aristotle.ErrorTermExpansion
