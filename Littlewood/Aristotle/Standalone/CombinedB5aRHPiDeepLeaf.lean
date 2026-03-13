@@ -22,6 +22,7 @@ Co-authored-by: Claude (Anthropic)
 -/
 
 import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aDefs
+import Littlewood.Aristotle.Standalone.ExternalPort.B5aExternalConcreteComponentsLane
 import Littlewood.Bridge.PiLiDirectOscillation
 import Littlewood.Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
 

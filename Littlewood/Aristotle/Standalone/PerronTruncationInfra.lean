@@ -13,10 +13,11 @@ Key results:
 - `vonMangoldt_lseries_eq_neg_zeta_logderiv`: L(Λ,s) = -ζ'/ζ(s) (Mathlib bridge)
 - `perron_per_term_large_bound_with_R`: per-term bound (R-parametric) — PROVED
 - `perron_per_term_large_bound`: per-term bound for y > 1 (Davenport form) — PROVED
-- `perron_per_term_small_bound`: per-term bound for 0 < y < 1
+- `perron_per_term_small_bound_with_R`: per-term bound for y < 1, R-parametric — PROVED
+- `perron_per_term_small_bound`: per-term bound for 0 < y < 1 (Davenport form) — PROVED
 - `dirichlet_series_perron_exchange`: sum-integral interchange
 
-SORRY COUNT: 2
+SORRY COUNT: 1
 
 References: Davenport Ch. 17; Montgomery-Vaughan §5.1.
 
@@ -280,16 +281,231 @@ theorem perron_per_term_large_bound (y : ℝ) (hy : 1 < y) (c : ℝ) (hc : 0 < c
         linarith [div_nonneg (mul_nonneg (by linarith : (0:ℝ) ≤ 2) hy_rpow_pos.le)
           (mul_pos hc hT).le]
 
+/-- For 0 < y < 1 and c > 0 and R > c, the per-term Perron integral satisfies a
+    bound via the rectangle contour to the RIGHT (Re(s) = R).
+    The rectangle integral is 0 (no pole inside), so the vertical integral
+    is bounded by the other three sides. -/
+theorem perron_per_term_small_bound_with_R (y : ℝ) (hy0 : 0 < y) (hy1 : y < 1)
+    (c : ℝ) (hc : 0 < c) (T : ℝ) (hT : 0 < T) (R : ℝ) (hR : c < R) :
+    |perronPerTermIntegral y c T| ≤
+      (2 * Real.pi)⁻¹ *
+        (2 * (y ^ c - y ^ R) / (T * |Real.log y|) + 2 * T * y ^ R / R) := by
+  have hpi : 0 < 2 * Real.pi := by positivity
+  have hR_pos : 0 < R := by linarith
+  -- The integrand is continuous (hence integrable)
+  have hcont : Continuous (fun t : ℝ =>
+      PerronVerticalFromRectangle.perronIntegrand y c t) := by
+    unfold PerronVerticalFromRectangle.perronIntegrand
+    apply Continuous.div
+    · exact Continuous.cpow continuous_const
+        (by continuity)
+        (fun t => Or.inl (by simp; linarith))
+    · continuity
+    · intro t
+      have : ((c : ℂ) + (t : ℂ) * Complex.I).re = c := by
+        simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re,
+          Complex.I_re, mul_zero, Complex.ofReal_im, Complex.I_im,
+          mul_one, sub_zero, add_zero]
+      exact ne_of_apply_ne Complex.re (by rw [this, Complex.zero_re]; linarith)
+  have hint : IntervalIntegrable (fun t =>
+      PerronVerticalFromRectangle.perronIntegrand y c t) volume (-T) T :=
+    hcont.intervalIntegrable _ _
+  -- perronPerTermIntegral = (2π)⁻¹ * Re(∫ perronIntegrand)
+  have h_eq : perronPerTermIntegral y c T =
+      (2 * Real.pi)⁻¹ *
+        (∫ t in (-T)..T, PerronVerticalFromRectangle.perronIntegrand y c t).re := by
+    unfold perronPerTermIntegral
+    congr 1
+    have h_re_comm := Complex.reCLM.intervalIntegral_comp_comm hint
+    simp only [Complex.reCLM_apply] at h_re_comm
+    exact h_re_comm
+  rw [h_eq]
+  -- Bound: |(2π)⁻¹ * Re(z)| ≤ (2π)⁻¹ * ‖z‖
+  have h_re_le : |(2 * Real.pi)⁻¹ *
+      (∫ t in (-T)..T, PerronVerticalFromRectangle.perronIntegrand y c t).re| ≤
+      (2 * Real.pi)⁻¹ *
+        ‖∫ t in (-T)..T, PerronVerticalFromRectangle.perronIntegrand y c t‖ := by
+    rw [abs_mul, abs_of_pos (inv_pos.mpr hpi)]
+    gcongr
+    exact Complex.abs_re_le_norm _
+  apply le_trans h_re_le
+  gcongr
+  -- Now bound ‖∫ perronIntegrand‖ using the rectangle = 0 identity.
+  -- From integral_boundary_rect_perron_neg: the full rectangle integral = 0.
+  -- Rewrite: vert * I = -(top + right*I + bottom)
+  -- Step 1: Connect ∫ perronIntegrand to the rectangle's vertical term.
+  have h_vert_rewrite : ∀ t : ℝ,
+      ((↑y : ℂ) ^ ((↑c : ℂ) + I * (↑t : ℂ)) / ((↑c : ℂ) + I * (↑t : ℂ))) * I =
+      PerronVerticalFromRectangle.perronIntegrand y c t * I := by
+    intro t; unfold PerronVerticalFromRectangle.perronIntegrand; ring
+  have hRect := integral_boundary_rect_perron_neg y hy0 hy1 c hc T hT R hR
+  simp_rw [h_vert_rewrite] at hRect
+  rw [intervalIntegral.integral_mul_const] at hRect
+  -- hRect : (∫ perronIntegrand) * I + top + right*I + bottom = 0
+  -- Define the three boundary integrals
+  set topI := ∫ x_var in (c : ℝ)..(R : ℝ),
+    ((y : ℂ) ^ ((x_var : ℂ) + Complex.I * (T : ℂ)) /
+     ((x_var : ℂ) + Complex.I * (T : ℂ)))
+  set rightI := ∫ t in (T : ℝ)..((-T : ℝ)),
+    ((y : ℂ) ^ ((R : ℂ) + Complex.I * (t : ℂ)) /
+     ((R : ℂ) + Complex.I * (t : ℂ))) * Complex.I
+  set bottomI := ∫ x_var in (R : ℝ)..(c : ℝ),
+    ((y : ℂ) ^ ((x_var : ℂ) - Complex.I * (T : ℂ)) /
+     ((x_var : ℂ) - Complex.I * (T : ℂ)))
+  -- Extract: vert * I = -(topI + rightI + bottomI)
+  have h_vert_eq : (∫ t in (-T)..T,
+      PerronVerticalFromRectangle.perronIntegrand y c t) * Complex.I =
+      -(topI + rightI + bottomI) := by
+    have h_sum : (∫ t in (-T)..T,
+        PerronVerticalFromRectangle.perronIntegrand y c t) * Complex.I +
+        topI + rightI + bottomI = 0 := hRect
+    linear_combination h_sum
+  -- ‖vert‖ = ‖vert * I‖ (since ‖I‖ = 1)
+  have h_norm_I : ‖(Complex.I : ℂ)‖ = 1 := Complex.norm_I
+  have h_vert_norm : ‖∫ t in (-T)..T,
+      PerronVerticalFromRectangle.perronIntegrand y c t‖ =
+      ‖(∫ t in (-T)..T,
+        PerronVerticalFromRectangle.perronIntegrand y c t) * Complex.I‖ := by
+    rw [norm_mul, h_norm_I, mul_one]
+  rw [h_vert_norm, h_vert_eq, norm_neg]
+  -- Triangle inequality
+  calc ‖topI + rightI + bottomI‖
+      ≤ ‖topI‖ + ‖rightI‖ + ‖bottomI‖ := by
+        calc ‖topI + rightI + bottomI‖
+            ≤ ‖topI + rightI‖ + ‖bottomI‖ := norm_add_le _ _
+          _ ≤ (‖topI‖ + ‖rightI‖) + ‖bottomI‖ := by gcongr; exact norm_add_le _ _
+    _ ≤ (y ^ c - y ^ R) / (T * |Real.log y|) +
+        2 * T * y ^ R / R +
+        (y ^ c - y ^ R) / (T * |Real.log y|) := by
+      gcongr
+      -- Top horizontal: ∫ c..R ‖y^{x+iT}/(x+iT)‖ ≤ (y^c - y^R)/(T·|log y|)
+      · calc ‖topI‖ ≤ ∫ x_var in (c : ℝ)..(R : ℝ),
+              ‖((y : ℂ) ^ ((x_var : ℂ) + Complex.I * (T : ℂ)) /
+               ((x_var : ℂ) + Complex.I * (T : ℂ)))‖ :=
+            intervalIntegral.norm_integral_le_integral_norm (by linarith)
+          _ ≤ (y ^ c - y ^ R) / (T * |Real.log y|) :=
+            integral_norm_bound_small_y y hy0 hy1 c T hT R hR.le
+      -- Right vertical: ‖∫ T..-T y^{R+it}/(R+it) * I‖ ≤ 2T·y^R/R
+      · -- Factor out * I
+        rw [show rightI = (∫ t in (T : ℝ)..((-T : ℝ)),
+            ((y : ℂ) ^ ((R : ℂ) + Complex.I * (t : ℂ)) /
+             ((R : ℂ) + Complex.I * (t : ℂ)))) * Complex.I from
+          intervalIntegral.integral_mul_const _ _]
+        rw [norm_mul, Complex.norm_I, mul_one]
+        -- ∫ T..-T = -(∫ -T..T)
+        rw [intervalIntegral.integral_symm, norm_neg]
+        exact vertical_integral_bound_far_right y hy0 R hR_pos T hT
+      -- Bottom horizontal: same bound as top by norm equality
+      · show ‖∫ x_var in (R : ℝ)..(c : ℝ),
+              ((y : ℂ) ^ ((x_var : ℂ) - Complex.I * (T : ℂ)) /
+               ((x_var : ℂ) - Complex.I * (T : ℂ)))‖ ≤ _
+        rw [intervalIntegral.integral_symm, norm_neg]
+        calc ‖∫ x_var in (c : ℝ)..(R : ℝ),
+              ((y : ℂ) ^ ((x_var : ℂ) - Complex.I * (T : ℂ)) /
+               ((x_var : ℂ) - Complex.I * (T : ℂ)))‖
+            ≤ ∫ x_var in (c : ℝ)..(R : ℝ),
+              ‖((y : ℂ) ^ ((x_var : ℂ) - Complex.I * (T : ℂ)) /
+               ((x_var : ℂ) - Complex.I * (T : ℂ)))‖ :=
+            intervalIntegral.norm_integral_le_integral_norm (by linarith)
+          _ = ∫ x_var in (c : ℝ)..(R : ℝ),
+              ‖((y : ℂ) ^ ((x_var : ℂ) + Complex.I * (T : ℂ)) /
+               ((x_var : ℂ) + Complex.I * (T : ℂ)))‖ := by
+            congr 1; ext x_var
+            exact PerronVerticalFromRectangle.norm_integrand_conj_eq y hy0 x_var T
+          _ ≤ (y ^ c - y ^ R) / (T * |Real.log y|) :=
+            integral_norm_bound_small_y y hy0 hy1 c T hT R hR.le
+    _ = 2 * (y ^ c - y ^ R) / (T * |Real.log y|) + 2 * T * y ^ R / R := by ring
+
 /-- For 0 < y < 1 and c > 0, the per-term Perron integral is bounded.
     This follows from the rectangle contour: the full rectangle integral
     equals 0 (Cauchy), so the vertical segment is bounded by the other segments.
 
-    SORRY: requires connecting interval integrals to rectangle contour (V2). -/
+    The bound `(y^c + 1)/(T·|log y|) + 2·y^c/(c·T)` is Davenport's form
+    (Ch. 17), obtained by taking R → ∞ in the rectangle bound. -/
 theorem perron_per_term_small_bound (y : ℝ) (hy0 : 0 < y) (hy1 : y < 1) (c : ℝ)
     (hc : 0 < c) (T : ℝ) (hT : 0 < T) :
     |perronPerTermIntegral y c T| ≤
       (y ^ c + 1) / (T * |Real.log y|) + 2 * y ^ c / (c * T) := by
-  sorry
+  -- Take R → ∞ strategy: for every ε > 0, the R-dependent bound < target + ε
+  apply le_of_forall_pos_lt_add
+  intro ε hε
+  have hlog_neg : Real.log y < 0 := Real.log_neg hy0 hy1
+  have habs_log_pos : 0 < |Real.log y| := abs_pos.mpr (ne_of_lt hlog_neg)
+  have hTlog : 0 < T * |Real.log y| := mul_pos hT habs_log_pos
+  have hy_rpow_pos : 0 < y ^ c := rpow_pos_of_pos hy0 c
+  -- Pick R large enough: y^R < min(ε·T·|log y|/4, ε·R/(4T)) — use R = -log(δ)/log(y⁻¹) with δ small
+  -- Simpler: pick R so that (2π)⁻¹ * bound < target + ε
+  -- The bound with R is: (2π)⁻¹ * (2(y^c - y^R)/(T|log y|) + 2T·y^R/R)
+  -- ≤ (2π)⁻¹ * (2·y^c/(T|log y|) + 2T·y^R/R)    [since y^R > 0]
+  -- = y^c/(π·T·|log y|) + T·y^R/(π·R)
+  -- ≤ y^c/(T·|log y|) + T·y^R/(π·R)    [since π > 1]
+  -- For the second term, pick R large enough that y^R/(π·R) < ε·c/(2T)
+  -- i.e. T·y^R/(π·R) < ε/2
+  -- Since y^R → 0 as R → ∞ (y < 1), we can find such R.
+  -- Actually, let's just pick R = c + 1 + enough, and use a cleaner approach:
+  -- Since y < 1, y^R ≤ y^(c+1) for R ≥ c + 1.
+  -- Pick R = max(c+1, 2T·y^(c+1)/(ε·π) + 1) so T·y^R/(πR) < ε.
+  -- But actually we can be simpler: use the limit argument like the large case.
+  set R := max (c + 1) (2 * T / (Real.pi * ε) + 1) with hR_def
+  have hR_gt_c : c < R := by
+    simp only [hR_def, lt_max_iff]; left; linarith
+  have hR_pos : 0 < R := by linarith
+  -- Apply the R-dependent bound
+  have h_bound := perron_per_term_small_bound_with_R y hy0 hy1 c hc T hT R hR_gt_c
+  -- Key facts about y^R
+  have hy_rpow_R_nonneg : 0 ≤ y ^ R := rpow_nonneg hy0.le R
+  have hy_rpow_R_le_yc : y ^ R ≤ y ^ c := by
+    apply rpow_le_rpow_of_exponent_ge hy0 hy1.le
+    exact hR_gt_c.le
+  have hy_rpow_c_sub_R : 0 ≤ y ^ c - y ^ R := by linarith
+  have hpi_gt_one : 1 < Real.pi := by linarith [Real.pi_gt_three]
+  have h2pi_inv_pos : 0 < (2 * Real.pi)⁻¹ := by positivity
+  -- Bound piece 1: (2π)⁻¹ * 2(y^c - y^R)/(T|log y|) ≤ y^c/(T|log y|)
+  have h_piece1 : (2 * Real.pi)⁻¹ * (2 * (y ^ c - y ^ R) / (T * |Real.log y|)) ≤
+      y ^ c / (T * |Real.log y|) := by
+    have h1 : y ^ c - y ^ R ≤ y ^ c := by linarith
+    calc (2 * Real.pi)⁻¹ * (2 * (y ^ c - y ^ R) / (T * |Real.log y|))
+        ≤ (2 * Real.pi)⁻¹ * (2 * y ^ c / (T * |Real.log y|)) := by
+          gcongr
+      _ = y ^ c / (Real.pi * (T * |Real.log y|)) := by ring
+      _ ≤ y ^ c / (1 * (T * |Real.log y|)) := by
+          apply div_le_div_of_nonneg_left (by positivity) (by positivity)
+          exact mul_le_mul_of_nonneg_right hpi_gt_one.le (by positivity)
+      _ = y ^ c / (T * |Real.log y|) := by ring
+  -- Bound piece 2: (2π)⁻¹ * 2T·y^R/R ≤ T/(πR)
+  have h_piece2 : (2 * Real.pi)⁻¹ * (2 * T * y ^ R / R) ≤ T / (Real.pi * R) := by
+    calc (2 * Real.pi)⁻¹ * (2 * T * y ^ R / R)
+        ≤ (2 * Real.pi)⁻¹ * (2 * T * 1 / R) := by
+          gcongr
+          calc y ^ R ≤ y ^ c := hy_rpow_R_le_yc
+            _ ≤ y ^ (0 : ℝ) := rpow_le_rpow_of_exponent_ge hy0 hy1.le hc.le
+            _ = 1 := rpow_zero y
+      _ = T / (Real.pi * R) := by ring
+  -- Bound T/(πR): since R ≥ 2T/(πε) + 1 > 2T/(πε), we have T/(πR) < ε/2
+  have h_R_bound : T / (Real.pi * R) < ε := by
+    have hR_ge : R ≥ 2 * T / (Real.pi * ε) + 1 := le_max_right _ _
+    rw [div_lt_iff₀ (by positivity : 0 < Real.pi * R)]
+    have h1 : T < Real.pi * (2 * T / (Real.pi * ε) + 1) * ε := by
+      have : 2 * T / (Real.pi * ε) * (Real.pi * ε) = 2 * T := by field_simp
+      nlinarith [mul_pos Real.pi_pos hε]
+    have h2 : Real.pi * (2 * T / (Real.pi * ε) + 1) ≤ Real.pi * R := by
+      exact mul_le_mul_of_nonneg_left hR_ge Real.pi_pos.le
+    nlinarith
+  -- Combine
+  calc |perronPerTermIntegral y c T|
+      ≤ (2 * Real.pi)⁻¹ *
+          (2 * (y ^ c - y ^ R) / (T * |Real.log y|) + 2 * T * y ^ R / R) :=
+        h_bound
+    _ = (2 * Real.pi)⁻¹ * (2 * (y ^ c - y ^ R) / (T * |Real.log y|)) +
+        (2 * Real.pi)⁻¹ * (2 * T * y ^ R / R) := by ring
+    _ ≤ y ^ c / (T * |Real.log y|) + T / (Real.pi * R) := by
+        linarith [h_piece1, h_piece2]
+    _ < y ^ c / (T * |Real.log y|) + ε := by linarith
+    _ ≤ (y ^ c + 1) / (T * |Real.log y|) + 2 * y ^ c / (c * T) + ε := by
+        have : y ^ c / (T * |Real.log y|) ≤ (y ^ c + 1) / (T * |Real.log y|) := by
+          gcongr; linarith
+        linarith [div_nonneg (mul_nonneg (by linarith : (0:ℝ) ≤ 2) hy_rpow_pos.le)
+          (mul_pos hc hT).le]
 
 /-! ## Dirichlet series exchange -/
 
