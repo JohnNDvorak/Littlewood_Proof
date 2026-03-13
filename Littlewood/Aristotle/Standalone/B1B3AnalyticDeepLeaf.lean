@@ -118,6 +118,151 @@ theorem mainTerm_abs_le (t : ℝ) (ht : 0 ≤ t) :
     linarith
   linarith
 
+/-! ## RS pointwise bound from expansion -/
+
+open Aristotle.RSBlockParam Aristotle.HardyNProperties
+open Aristotle.Standalone.OscPieceBigOAssembly (exists_block_of_ge_hardyStart0)
+
+/-- On [1, hardyStart 0), MainTerm = 0 (empty sum since hardyN = 0). -/
+private theorem mainTerm_eq_zero_below_hardyStart0 (t : ℝ)
+    (ht : t < hardyStart 0) : MainTerm t = 0 := by
+  unfold MainTerm
+  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
+  have h_div : t / (2 * Real.pi) < 1 := by
+    rw [div_lt_one hpi]
+    rw [hardyStart_formula] at ht
+    have : ((0 : ℕ) + 1 : ℝ) ^ 2 = 1 := by push_cast; norm_num
+    rw [this] at ht; linarith
+  have h_sqrt_lt : Real.sqrt (t / (2 * Real.pi)) < 1 := by
+    by_cases h_nn : 0 ≤ t / (2 * Real.pi)
+    · calc Real.sqrt (t / (2 * Real.pi)) < Real.sqrt 1 := Real.sqrt_lt_sqrt h_nn h_div
+        _ = 1 := Real.sqrt_one
+    · push_neg at h_nn
+      calc Real.sqrt (t / (2 * Real.pi)) = 0 := Real.sqrt_eq_zero_of_nonpos (le_of_lt h_nn)
+        _ < 1 := one_pos
+  have h_floor : Nat.floor (Real.sqrt (t / (2 * Real.pi))) = 0 :=
+    Nat.floor_eq_zero.mpr h_sqrt_lt
+  simp [h_floor]
+
+/-- ErrorTerm = hardyZ on [1, hardyStart 0). -/
+private theorem errorTerm_eq_hardyZ_below (t : ℝ)
+    (ht : t < hardyStart 0) : ErrorTerm t = hardyZ t := by
+  unfold ErrorTerm; rw [mainTerm_eq_zero_below_hardyStart0 t ht]; ring
+
+/-- hardyZ is continuous. -/
+private theorem continuous_hardyZ_real : Continuous hardyZ := by
+  have h_eq : hardyZ = fun t => (hardyZV2 t).re :=
+    funext HardyZTransfer.hardyZ_eq_hardyZV2_re
+  rw [h_eq]; exact Complex.continuous_re.comp continuous_hardyZV2
+
+/-- The RS pointwise bound |ErrorTerm(t)| ≤ C·t^{-1/4} follows from the
+    block-wise RS expansion via triangle inequality.
+    - For t >= hardyStart 0: use the expansion on the containing block
+    - For t in [1, hardyStart 0]: ErrorTerm = hardyZ, bounded by compactness -/
+theorem rs_pointwise_bound_of_expansion
+    (h_exp : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4)) :
+    ∃ C_rs > (0 : ℝ), ∀ t : ℝ, t ≥ 1 →
+      |ErrorTerm t| ≤ C_rs * t ^ (-(1 : ℝ)/4) := by
+  obtain ⟨C_R, hCR_pos, h_expansion⟩ := h_exp
+  -- Step 1: Compact bound on [1, hardyStart 0]
+  obtain ⟨M₀, hM₀⟩ := (isCompact_Icc (a := (1 : ℝ)) (b := hardyStart 0)).exists_bound_of_continuousOn
+    continuous_hardyZ_real.continuousOn
+  -- Step 2: Combine into a single constant
+  set C_block := (2 * Real.pi) ^ ((1 : ℝ)/4) + C_R
+  set C_compact := M₀ * (hardyStart 0) ^ ((1 : ℝ)/4)
+  refine ⟨max C_block C_compact + 1, by positivity, fun t ht => ?_⟩
+  by_cases h_large : hardyStart 0 ≤ t
+  · -- Case: t >= hardyStart 0. Use the block expansion.
+    obtain ⟨k, hk_lo, hk_hi⟩ := exists_block_of_ge_hardyStart0 t h_large
+    have ht_pos : (0 : ℝ) < t := by linarith
+    have h_exp_k := h_expansion k t hk_lo hk_hi ht_pos
+    -- |ErrorTerm(t)| <= |leading| + |remainder|
+    have h_tri : |ErrorTerm t| ≤
+        |(-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)| +
+        C_R * t ^ (-(3 : ℝ) / 4) := by
+      have h1 : |ErrorTerm t| = |(ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)) + ((-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t))| := by ring_nf
+      calc |ErrorTerm t|
+          = |(ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+              rsPsi (blockParam k t)) + ((-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+              rsPsi (blockParam k t))| := h1
+        _ ≤ |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+              rsPsi (blockParam k t)| +
+            |(-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+              rsPsi (blockParam k t)| := abs_add_le _ _
+        _ ≤ C_R * t ^ (-(3 : ℝ) / 4) +
+            |(-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+              rsPsi (blockParam k t)| := by linarith [h_exp_k]
+        _ = |(-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+              rsPsi (blockParam k t)| + C_R * t ^ (-(3 : ℝ) / 4) := by ring
+    -- Bound the leading term
+    have h_lead : |(-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+        rsPsi (blockParam k t)| ≤ (2 * Real.pi) ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) := by
+      have h_neg1 : |(-1 : ℝ) ^ k| = 1 := by simp [abs_pow, abs_neg, abs_one]
+      have h_rsPsi : |rsPsi (blockParam k t)| ≤ 1 := by
+        unfold rsPsi; exact Real.abs_cos_le_one _
+      have h_factor : (2 * Real.pi / t) ^ ((1 : ℝ) / 4) =
+          (2 * Real.pi) ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) := by
+        rw [show 2 * Real.pi / t = 2 * Real.pi * t⁻¹ from div_eq_mul_inv _ _,
+            Real.mul_rpow (by positivity : (0 : ℝ) ≤ 2 * Real.pi) (inv_nonneg.mpr ht_pos.le)]
+        congr 1
+        rw [show (-(1:ℝ)/4) = -((1:ℝ)/4) from by ring, Real.rpow_neg ht_pos.le,
+            Real.inv_rpow ht_pos.le]
+      calc |(-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)|
+          = |(-1 : ℝ) ^ k| * |(2 * Real.pi / t) ^ ((1 : ℝ) / 4)| * |rsPsi (blockParam k t)| := by
+            rw [abs_mul, abs_mul]
+        _ = 1 * |(2 * Real.pi / t) ^ ((1 : ℝ) / 4)| * |rsPsi (blockParam k t)| := by
+            rw [h_neg1]
+        _ ≤ 1 * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * 1 := by
+            have h_rpow_nn : 0 ≤ (2 * Real.pi / t) ^ ((1 : ℝ) / 4) :=
+              Real.rpow_nonneg (div_nonneg (by positivity) ht_pos.le) _
+            rw [abs_of_nonneg h_rpow_nn]
+            exact mul_le_mul_of_nonneg_left h_rsPsi (by linarith)
+        _ = (2 * Real.pi) ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) := by
+            rw [one_mul, mul_one, h_factor]
+    -- Combine: t^{-3/4} <= t^{-1/4} for t >= 1
+    have h_rpow_mono : t ^ (-(3 : ℝ)/4) ≤ t ^ (-(1 : ℝ)/4) :=
+      Real.rpow_le_rpow_of_exponent_le ht (by norm_num)
+    calc |ErrorTerm t|
+        ≤ (2 * Real.pi) ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) + C_R * t ^ (-(3 : ℝ)/4) := by
+          linarith [h_tri, h_lead]
+      _ ≤ (2 * Real.pi) ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) + C_R * t ^ (-(1 : ℝ)/4) := by
+          linarith [mul_le_mul_of_nonneg_left h_rpow_mono hCR_pos.le]
+      _ = C_block * t ^ (-(1 : ℝ)/4) := by simp only [C_block]; ring
+      _ ≤ (max C_block C_compact + 1) * t ^ (-(1 : ℝ)/4) := by
+          have : 0 ≤ t ^ (-(1 : ℝ)/4) := Real.rpow_nonneg (by linarith) _
+          nlinarith [le_max_left C_block C_compact]
+  · -- Case: t < hardyStart 0. ErrorTerm = hardyZ here, bounded by compactness.
+    push_neg at h_large
+    have ht_in : t ∈ Icc (1 : ℝ) (hardyStart 0) := ⟨ht, le_of_lt h_large⟩
+    have h_eq : ErrorTerm t = hardyZ t := errorTerm_eq_hardyZ_below t h_large
+    have h_bound_Z : ‖hardyZ t‖ ≤ M₀ := hM₀ t ht_in
+    rw [Real.norm_eq_abs] at h_bound_Z
+    have h_bound : |ErrorTerm t| ≤ M₀ := by rw [h_eq]; exact h_bound_Z
+    have ht_pos : (0 : ℝ) < t := lt_of_lt_of_le one_pos ht
+    have h_rpow_inv : t ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) = 1 := by
+      rw [show (-(1 : ℝ)/4) = -((1 : ℝ)/4) from by ring,
+          ← Real.rpow_add ht_pos, add_neg_cancel, Real.rpow_zero]
+    have h_t14_le : t ^ ((1 : ℝ)/4) ≤ (hardyStart 0) ^ ((1 : ℝ)/4) :=
+      Real.rpow_le_rpow (by linarith) (le_of_lt h_large) (by norm_num)
+    calc |ErrorTerm t|
+        ≤ M₀ := h_bound
+      _ = M₀ * (t ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4)) := by rw [h_rpow_inv, mul_one]
+      _ = M₀ * t ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) := by ring
+      _ ≤ M₀ * (hardyStart 0) ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) := by
+          have h_nn : 0 ≤ t ^ (-(1 : ℝ)/4) := Real.rpow_nonneg (by linarith) _
+          have hM₀_nn : 0 ≤ M₀ := le_trans (abs_nonneg _) h_bound
+          exact mul_le_mul_of_nonneg_right
+            (mul_le_mul_of_nonneg_left h_t14_le hM₀_nn) h_nn
+      _ = C_compact * t ^ (-(1 : ℝ)/4) := by simp only [C_compact]
+      _ ≤ (max C_block C_compact + 1) * t ^ (-(1 : ℝ)/4) := by
+          have : 0 ≤ t ^ (-(1 : ℝ)/4) := Real.rpow_nonneg (by linarith) _
+          nlinarith [le_max_right C_block C_compact]
+
 /-! ## Main theorem -/
 
 /-- **Unified analytic deep leaf**: three obligations from the RS approximate
@@ -164,14 +309,22 @@ theorem b1_b3_analytic_deep_leaf :
     (∀ ε : ℝ, ε > 0 →
       ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
         |∫ t in Set.Ioc 1 T, MainTerm t| ≤ C * T ^ (1 / 2 + ε))) := by
+  -- ═══════════════════════════════════════════════════════
+  -- Single analytic sorry: RS expansion (Siegel 1932 §3)
+  -- ═══════════════════════════════════════════════════════
+  have h_expansion : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) := sorry
   refine ⟨?_, ?_, ?_⟩
   · -- ═══════════════════════════════════════════════════════
     -- Part 1: Second moment from three sub-goals
     -- ═══════════════════════════════════════════════════════
-    -- (a) RS pointwise bound (Siegel 1932)
+    -- (a) RS pointwise bound — DERIVED from expansion
     have h_rs : ∃ (C_rs : ℝ), C_rs > 0 ∧
         ∀ (t : ℝ), t ≥ 1 →
-          |ErrorTerm t| ≤ C_rs * t ^ (-(1:ℝ)/4) := sorry
+          |ErrorTerm t| ≤ C_rs * t ^ (-(1:ℝ)/4) :=
+      rs_pointwise_bound_of_expansion h_expansion
     -- (b) VdC oscillatory cancellation: ∫(M² - 2·partialMs) = O(T)
     have h_osc : (fun T => ∫ t in (1:ℝ)..T,
         ((MainTerm t) ^ 2 - 2 * partialMsIntegrand t))
