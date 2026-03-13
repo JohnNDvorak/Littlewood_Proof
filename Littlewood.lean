@@ -143,6 +143,8 @@ import Littlewood.Aristotle.VdcFirstDerivTest            -- Van der Corput first
 import Littlewood.Aristotle.AbelSummation                -- Abel summation + alternating series bound (0 sorries) ✓
 import Littlewood.Aristotle.CosPiSqSign                  -- cos(πn²) = (-1)^n + alternating sqrt sum bound (0 sorries) ✓
 import Littlewood.Aristotle.DirichletPhaseAlignment     -- Simultaneous Dirichlet phase-alignment infrastructure (0 sorries) ✓
+import Littlewood.Aristotle.Standalone.KroneckerEquidistribution  -- Kronecker 1D density + phase alignment (0 sorries) ✓
+import Littlewood.Aristotle.Standalone.UniformRiemannVonMangoldt  -- N(T) = T/(2π)log(T/(2πe)) + O(log T) (0 sorries) ✓
 import Littlewood.Aristotle.GammaGrowthGeneral          -- General Gamma growth bounds (0 sorries) ✓
 import Littlewood.Aristotle.ZetaBoundGtOne              -- ζ(s) bounded for Re(s) > 1 infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.RiemannSiegelBound          -- Riemann-Siegel style Z-function bounds (0 sorries) ✓
