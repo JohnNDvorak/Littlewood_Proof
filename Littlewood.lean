@@ -148,6 +148,7 @@ import Littlewood.Aristotle.ZetaBoundGtOne              -- ζ(s) bounded for Re(
 import Littlewood.Aristotle.RiemannSiegelBound          -- Riemann-Siegel style Z-function bounds (0 sorries) ✓
 import Littlewood.Aristotle.IntervalPartition          -- Finite Ioc integral partition lemmas (0 sorries) ✓
 import Littlewood.Aristotle.HardyNProperties           -- hardyN/hardyStart breakpoint properties (0 sorries) ✓
+import Littlewood.Aristotle.HardyThetaSmooth           -- Smooth theta via integral of thetaDeriv (0 sorries) ✓
 -- import Littlewood.Aristotle.RSBlockDecomposition       -- MERGED into HardyFirstMomentDirect (was 1 sorry)
 import Littlewood.Aristotle.RSBlockAmplitude           -- Crude RS block amplitude / O(T^(3/4)) infrastructure
 import Littlewood.Aristotle.RSBlockWiring             -- Wiring RSBoundProp + bridge hypothesis to crude ErrorTerm first moment
