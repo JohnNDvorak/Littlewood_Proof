@@ -27,7 +27,7 @@ exact Aristotle.Standalone.DeepBlockersResolved.combined_atoms_resolved
 
 DEEP BLOCKER STATUS (2 direct sorries in this file, 3 delegated):
   B1 HardyMeanSquareAsymptoticHyp    — WIRED via HardyMeanSquareAsymptoticFromZetaMoment + HardyAfeSignedGapAtomic (1 sorry)
-  B2 MainTermFirstMomentBoundHyp     — sorry (oscillatory sum cancellation, Heath-Brown 1978)
+  B2 MainTermFirstMomentBoundHyp     — WIRED via CombinedB1B3DeepLeaf (Part 3 of unified leaf)
   B3 PerBlockSignedBoundHyp          — WIRED via RSCompleteBlockAsymptotic (2 sorries)
   B5a ExplicitFormulaPsiGeneralHyp   — WIRED via ExplicitFormulaPsiSkeleton + ExplicitFormulaPsiB5aShiftedBoundAtomic (1 sorry)
   B5b PsiZeroSumOscillationHyp       — WIRED via PsiZeroSumOscillationFromIngham (depends on B5a)
@@ -40,6 +40,7 @@ PROVED INFRASTRUCTURE (0 sorry):
   All 40+ standalone infrastructure   — sorry-free
 -/
 
+import Littlewood.Aristotle.Standalone.CombinedB1B3DeepLeaf
 import Littlewood.Aristotle.Standalone.DeepBlockerAssembly
 import Littlewood.Aristotle.Standalone.SigmaLtOneFromPringsheimExtension
 import Littlewood.Aristotle.Standalone.PiCorrectedCoreFromPrimeZetaExtension
@@ -112,11 +113,11 @@ private theorem deep_blocker_B1 :
   Aristotle.Standalone.HardyMeanSquareAsymptoticFromZetaMoment.hardyMeanSquareAsymptoticHyp_proved
 
 /-- **Deep blocker B2**: First moment bound.
-|∫₁ᵀ MainTerm(t) dt| ≤ C·T^{1/2+ε} (Heath-Brown 1978, collective oscillation). -/
+|∫₁ᵀ MainTerm(t) dt| ≤ C·T^{1/2+ε} (Heath-Brown 1978, collective oscillation).
+Routed through the unified B1+B3+B2 analytic deep leaf (Part 3). -/
 private theorem deep_blocker_B2 :
-    HardyFirstMomentWiring.MainTermFirstMomentBoundHyp := by
-  exact
-    Aristotle.Standalone.B2StationaryWindowLeaves.mainTermFirstMomentBoundHyp_from_windowLeaves
+    HardyFirstMomentWiring.MainTermFirstMomentBoundHyp :=
+  Aristotle.Standalone.CombinedB1B3DeepLeaf.mainTermFirstMomentBoundHyp_from_analytic_leaf
 
 /-- Non-circular constructor route for B2:
 if the support-side Gamma/phase classes are available upstream, B2 closes

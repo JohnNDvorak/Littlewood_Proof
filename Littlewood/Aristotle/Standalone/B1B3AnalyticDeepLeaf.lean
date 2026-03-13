@@ -120,8 +120,8 @@ theorem mainTerm_abs_le (t : ℝ) (ht : 0 ≤ t) :
 
 /-! ## Main theorem -/
 
-/-- **Unified analytic deep leaf**: two obligations from the RS approximate
-    functional equation.
+/-- **Unified analytic deep leaf**: three obligations from the RS approximate
+    functional equation and oscillatory sum analysis.
 
     Part 1 (Second moment): ∫₁ᵀ |ζ(½+it)|² dt = T log T + O(T).
       Derived from three sub-goals:
@@ -132,29 +132,39 @@ theorem mainTerm_abs_le (t : ℝ) (ht : 0 ≤ t) :
     Part 2 (B3): Block integral sign structure (Siegel 1932 §3).
       Block integrals decompose via rsPsi with ≥ 0 correction — sorry.
 
+    Part 3 (B2): First moment bound |∫₁ᵀ MainTerm(t) dt| ≤ C·T^{1/2+ε}.
+      Collective oscillatory sum cancellation (Heath-Brown 1978) — sorry.
+      This consolidates B2 into the analytic deep leaf, replacing the
+      previously false B2TailVdcDeepLeaf route (VdC with √(n+1) tail
+      width is mathematically incorrect near stationary points).
+
     B1 (∫ afeGap = O(T)) is derived in CombinedB1B3DeepLeaf from Part 1
     combined with the proved ∫|S_N|² = ½T log T + O(T).
 
     Reference: Hardy-Littlewood 1918; Siegel 1932; Titchmarsh §7.2;
-    Montgomery-Vaughan §9.1. -/
+    Montgomery-Vaughan §9.1; Heath-Brown 1978. -/
 theorem b1_b3_analytic_deep_leaf :
     -- Part 1: Second moment ∫|ζ(½+it)|² = T log T + O(T)
     ((fun T => (∫ t in (1:ℝ)..T, zetaMsIntegrand t) - T * Real.log T)
       =O[atTop] (fun T => T)) ∧
     -- Part 2: B3 block structure
-    (let A_val := 4 * Real.pi * ∫ p in Ioc (0 : ℝ) 1, rsPsi p
-     let c_fn := fun k : ℕ =>
-       (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
-         - A_val * Real.sqrt ((k : ℝ) + 1)
-     (∀ k : ℕ, 0 ≤ c_fn k) ∧
-     AntitoneOn c_fn (Ici (1 : ℕ)) ∧
-     ∃ C₂ : ℝ, C₂ ≥ 0 ∧
-     (∀ k : ℕ, ∀ T : ℝ, hardyStart k ≤ T → T ≤ hardyStart (k + 1) →
-       ∃ β : ℝ, 0 ≤ β ∧ β ≤ 1 ∧
-         |(∫ t in Ioc (hardyStart k) T, ErrorTerm t)
-           - β * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
-                    ErrorTerm t)| ≤ C₂)) := by
-  constructor
+    ((let A_val := 4 * Real.pi * ∫ p in Ioc (0 : ℝ) 1, rsPsi p
+      let c_fn := fun k : ℕ =>
+        (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
+          - A_val * Real.sqrt ((k : ℝ) + 1)
+      (∀ k : ℕ, 0 ≤ c_fn k) ∧
+      AntitoneOn c_fn (Ici (1 : ℕ)) ∧
+      ∃ C₂ : ℝ, C₂ ≥ 0 ∧
+      (∀ k : ℕ, ∀ T : ℝ, hardyStart k ≤ T → T ≤ hardyStart (k + 1) →
+        ∃ β : ℝ, 0 ≤ β ∧ β ≤ 1 ∧
+          |(∫ t in Ioc (hardyStart k) T, ErrorTerm t)
+            - β * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+                     ErrorTerm t)| ≤ C₂)) ∧
+    -- Part 3: B2 first moment bound (Heath-Brown 1978)
+    (∀ ε : ℝ, ε > 0 →
+      ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+        |∫ t in Set.Ioc 1 T, MainTerm t| ≤ C * T ^ (1 / 2 + ε))) := by
+  refine ⟨?_, ?_, ?_⟩
   · -- ═══════════════════════════════════════════════════════
     -- Part 1: Second moment from three sub-goals
     -- ═══════════════════════════════════════════════════════
@@ -348,6 +358,13 @@ theorem b1_b3_analytic_deep_leaf :
     exact (isBigO_congr h_integral_eq EventuallyEq.rfl).mpr h_sum
   · -- ═══════════════════════════════════════════════════════
     -- Part 2: B3 block structure (Siegel 1932 §3)
+    -- ═══════════════════════════════════════════════════════
+    sorry
+  · -- ═══════════════════════════════════════════════════════
+    -- Part 3: B2 first moment bound (Heath-Brown 1978)
+    -- |∫₁ᵀ MainTerm(t) dt| ≤ C·T^{1/2+ε}
+    -- Collective oscillatory sum cancellation: modes interfere
+    -- destructively when integrated over t, giving sublinear growth.
     -- ═══════════════════════════════════════════════════════
     sorry
 

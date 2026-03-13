@@ -1,12 +1,19 @@
-/- 
+/-
 Deprecated historical reference for the old B2 tail-localized VdC sqrt-mode
 package.
 
-This file carries the analytic payload:
+This file carries candidate closure routes for
 `HardyExpPhaseVdcSqrtModeOnTailSupportHyp`.
 
-It is kept in-tree for future reference while the active B2 closure is being
-rewired away from this route.
+WARNING: The tail VdC typeclass with √(n+1) tail width is mathematically
+incorrect — near the stationary point t ≈ 2π(n+1)², the phase derivative
+φ'(t) = θ'(t) - log(n+1) ≈ O(1/(n+1)^{3/2}), so 1/φ' ≈ n^{3/2} which
+exceeds the B₀·√(n+1) endpoint bound. The B2 obligation has been rewired
+through the unified analytic deep leaf (B1B3AnalyticDeepLeaf, Part 3)
+via CombinedB1B3DeepLeaf.mainTermFirstMomentBoundHyp_from_analytic_leaf.
+
+The `tailVdcSqrtModeClass_leaf` sorry has been removed. Candidate closure
+routes remain for use when the underlying typeclass instances are provided.
 -/
 
 import Littlewood.Bridge.HardyFirstMomentWiring
@@ -158,12 +165,8 @@ theorem tailVdcSqrtModeClass_of_noncircular_support_constructor
       Aristotle.Standalone.B2SupportPhaseRootInfra.B2SupportPhaseRootPayload := hSupportRoot
   exact tailVdcSqrtModeClass_candidate_of_supportRootPayload
 
-/-- **Delegated B2 deep leaf**: tail-localized VdC `sqrt`-mode package on the
-stationary-window complement. -/
-theorem tailVdcSqrtModeClass_leaf :
-    HardyFirstMomentWiring.HardyExpPhaseVdcSqrtModeOnTailSupportHyp := by
-  -- Historical placeholder retained only as reference while B2 is rewired away
-  -- from this route.
-  sorry
+-- **DEPRECATED**: The tail VdC √(n+1)-mode typeclass is mathematically
+-- incorrect (φ' ≈ 0 at tail start). B2 is now routed through
+-- CombinedB1B3DeepLeaf.mainTermFirstMomentBoundHyp_from_analytic_leaf.
 
 end Aristotle.Standalone.B2TailVdcDeepLeaf

@@ -25,9 +25,10 @@ B1 follows from:
   Total: T log T + O(T) − (T log T + O(T)) = O(T)
 
 ## Internal sorry's (0)
-Both obligations now reference B1B3AnalyticDeepLeaf via cross-module opaque projections:
+All obligations reference B1B3AnalyticDeepLeaf via cross-module opaque projections:
 1. h_second_moment := b1_b3_analytic_deep_leaf.1
-2. h_b3 := b1_b3_analytic_deep_leaf.2
+2. h_b3 := b1_b3_analytic_deep_leaf.2.1
+3. h_b2 := b1_b3_analytic_deep_leaf.2.2 (first moment bound, Heath-Brown 1978)
 
 WARNING COUNT: 0 (cross-module opaque references)
 
@@ -36,6 +37,7 @@ Reference: Ingham 1926; Siegel 1932 §3; Titchmarsh §4.16-4.17, §7.2.
 Co-authored-by: Claude (Anthropic)
 -/
 
+import Littlewood.Bridge.HardyFirstMomentWiring
 import Littlewood.Aristotle.Standalone.HardyAfeMeanSquareBridgeInfra
 import Littlewood.Aristotle.Standalone.PartialZetaMeanSquareCoeff
 import Littlewood.Aristotle.Standalone.B1B3AnalyticDeepLeaf
@@ -380,7 +382,7 @@ theorem combined_b1_b3_leaf :
       ∃ β : ℝ, 0 ≤ β ∧ β ≤ 1 ∧
         |(∫ t in Ioc (hardyStart k) T, ErrorTerm t)
           - β * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
-                   ErrorTerm t)| ≤ C₂) := b1_b3_analytic_deep_leaf.2
+                   ErrorTerm t)| ≤ C₂) := b1_b3_analytic_deep_leaf.2.1
   -- ═══════════════════════════════════════════════════════════════════
   -- Assembly: B1 from ∫|ζ|² = TlogT + O(T) minus 2·∫|S_N|² = TlogT + O(T)
   -- ═══════════════════════════════════════════════════════════════════
@@ -406,5 +408,19 @@ theorem combined_b1_b3_leaf :
   -- f₁ - 2·f₂ = O(T)
   have h_diff := h_second_moment.sub h_2pm
   exact (Asymptotics.isBigO_congr h_afe_eq.symm EventuallyEq.rfl).mp h_diff
+
+-- ============================================================
+-- B2 extraction: MainTermFirstMomentBoundHyp from the unified leaf
+-- ============================================================
+
+/-- **B2 extraction**: the first moment bound from the unified analytic deep leaf.
+
+    The B2 obligation (Heath-Brown 1978) is packaged as Part 3 of
+    `b1_b3_analytic_deep_leaf`. This theorem extracts it as an instance
+    of `MainTermFirstMomentBoundHyp`, replacing the previously false
+    B2TailVdcDeepLeaf route. -/
+theorem mainTermFirstMomentBoundHyp_from_analytic_leaf :
+    HardyFirstMomentWiring.MainTermFirstMomentBoundHyp :=
+  ⟨b1_b3_analytic_deep_leaf.2.2⟩
 
 end Aristotle.Standalone.CombinedB1B3DeepLeaf

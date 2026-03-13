@@ -3,6 +3,7 @@ import Littlewood.Aristotle.Standalone.B2StationaryWindowSplit
 import Littlewood.Aristotle.Standalone.B2AngularTailRootInfra
 import Littlewood.Aristotle.Standalone.B2TailStationaryBranchFree
 import Littlewood.Aristotle.Standalone.B2TailVdcDeepLeaf
+import Littlewood.Aristotle.Standalone.CombinedB1B3DeepLeaf
 
 set_option linter.mathlibStandardSet false
 
@@ -104,42 +105,12 @@ private theorem stationaryTailClass_of_tailVdcClass
   let _ : HardyFirstMomentWiring.HardyExpPhaseVdcSqrtModeOnTailSupportHyp := hTailVdc
   infer_instance
 
-private theorem stationaryTailClass_sorry :
-    HardyFirstMomentWiring.HardyExpPhaseStationaryTailIntegralSqrtModeBoundOnSupportHyp := by
-  exact
-    stationaryTailClass_of_tailVdcClass
-      Aristotle.Standalone.B2TailVdcDeepLeaf.tailVdcSqrtModeClass_leaf
-
-private theorem hardyCosExpTailBound_sorry :
-    ∃ B > 0, ∀ n : ℕ, ∀ T : ℝ, T ≥ 2 →
-      hardyStart n + Real.sqrt (n + 1) ≤ T →
-      ‖∫ t in (hardyStart n + Real.sqrt (n + 1))..T,
-          HardyCosSmooth.hardyCosExp n t‖ ≤ B * Real.sqrt (n + 1) := by
-  letI :
-      HardyFirstMomentWiring.HardyExpPhaseStationaryTailIntegralSqrtModeBoundOnSupportHyp :=
-    stationaryTailClass_sorry
-  exact hardyCosExpTailBound_of_stationaryTailClass
-
-/-- Existential tail bound extracted from `stationaryTailClass_sorry`. -/
-private theorem tailHardyExpPhaseBound_sorry :
-    ∃ B > 0, ∀ n : ℕ, ∀ T : ℝ, T ≥ 2 →
-      hardyStart n + Real.sqrt (n + 1) ≤ T →
-      ‖∫ t in (hardyStart n + Real.sqrt (n + 1))..T,
-          HardyFirstMomentWiring.hardyExpPhase n t‖ ≤ B * Real.sqrt (n + 1) :=
-  stationaryTailClass_sorry.bound
-
-theorem tailWindowBound_sorry :
-    Aristotle.Standalone.B2StationaryWindowSplit.B2HardyCosTailWindowPayload := by
-  exact
-    Aristotle.Standalone.B2StationaryWindowSplit.tailWindowPayload_of_hardyExpPhaseTailBound
-      tailHardyExpPhaseBound_sorry
-
-/-- Consolidated B2 output assembled from the two split-window leaves. -/
+/-- Consolidated B2 output: routed through unified analytic deep leaf (Part 3).
+The old split-window route via tailVdcSqrtModeClass_leaf is deprecated
+(VdC with √(n+1) tail width is mathematically incorrect). -/
 theorem mainTermFirstMomentBoundHyp_from_windowLeaves :
-    HardyFirstMomentWiring.MainTermFirstMomentBoundHyp := by
-  exact
-    Aristotle.Standalone.B2StationaryWindowSplit.mainTermFirstMomentBoundHyp_of_near_and_tail
-      nearWindowBound_sorry tailWindowBound_sorry
+    HardyFirstMomentWiring.MainTermFirstMomentBoundHyp :=
+  Aristotle.Standalone.CombinedB1B3DeepLeaf.mainTermFirstMomentBoundHyp_from_analytic_leaf
 
 /-- Non-circular B2 endpoint: once the support-side Gamma/phase package is
 provided, the split-window assembly closes without the delegated leaf. -/
