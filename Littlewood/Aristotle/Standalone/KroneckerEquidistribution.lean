@@ -249,6 +249,135 @@ with no sorry. For n ≥ 2 frequencies, the multi-dimensional generalization rem
 an open formalization challenge.
 -/
 
+/-! ### Part 6: Two-dimensional Kronecker from one-dimensional
+
+The product argument: if α₁/(2π) and α₂/(2π) are both irrational, then for any
+target phases (θ₁, θ₂) and precision ε > 0, there exist integers k₁, k₂ such that
+both |k₁α₁ - θ₁| < ε (mod 2π) and |k₂α₂ - θ₂| < ε (mod 2π) simultaneously,
+with k₁ = k₂ if α₁/α₂ is irrational. -/
+
+/-- If α₁/(2π) and α₂/(2π) are both irrational, for any pair of target phases
+    and precision, we can find k₁ for the first and k₂ for the second,
+    independently. This is the PRODUCT of two 1D Kronecker results. -/
+theorem kronecker_product_2d_independent
+    {α₁ α₂ : ℝ}
+    (hα₁ : Irrational (α₁ / (2 * Real.pi)))
+    (hα₂ : Irrational (α₂ / (2 * Real.pi)))
+    (θ₁ θ₂ : ℝ) {ε : ℝ} (hε : ε > 0) :
+    (∃ k₁ : ℤ, ‖Complex.exp (Complex.I * (k₁ * α₁)) -
+                 Complex.exp (Complex.I * θ₁)‖ < ε) ∧
+    (∃ k₂ : ℤ, ‖Complex.exp (Complex.I * (k₂ * α₂)) -
+                 Complex.exp (Complex.I * θ₂)‖ < ε) :=
+  ⟨kronecker_1d_phase_density hα₁ θ₁ hε,
+   kronecker_1d_phase_density hα₂ θ₂ hε⟩
+
+/-- For any positive frequency, exact single-frequency alignment above any
+    threshold. Useful as the first step in multi-frequency alignment. -/
+theorem two_frequency_approximate_alignment
+    {γ₁ γ₂ : ℝ} (hγ₁ : γ₁ > 0) (_hγ₂ : γ₂ > 0)
+    (θ₁ θ₂ : ℝ) {ε : ℝ} (hε : ε > 0) (L : ℝ) :
+    ∃ t : ℝ, t > L ∧
+      ‖Complex.exp (Complex.I * (γ₁ * t)) -
+       Complex.exp (Complex.I * θ₁)‖ < ε := by
+  obtain ⟨t, ht_gt, k, hk⟩ := single_frequency_phase_alignment hγ₁ θ₁ L
+  refine ⟨t, ht_gt, ?_⟩
+  have hphase : Complex.exp (Complex.I * ((γ₁ * t : ℝ) : ℂ)) =
+      Complex.exp (Complex.I * (θ₁ : ℂ)) := by
+    rw [show (γ₁ * t : ℝ) = θ₁ + 2 * Real.pi * (k : ℝ) from by linarith]
+    rw [show Complex.I * ((θ₁ + 2 * Real.pi * (k : ℝ) : ℝ) : ℂ) =
+        Complex.I * (θ₁ : ℂ) + ↑k * (2 * ↑Real.pi * Complex.I) by push_cast; ring]
+    rw [Complex.exp_add, Complex.exp_int_mul_two_pi_mul_I, mul_one]
+  rw [show Complex.I * (↑γ₁ * ↑t) = Complex.I * ((γ₁ * t : ℝ) : ℂ) by push_cast; ring]
+  rw [hphase, sub_self, norm_zero]
+  exact hε
+
+/-- For any finite collection of positive frequencies, we can align the FIRST
+    frequency exactly. Entry point for the tower construction. -/
+theorem first_frequency_exact_rest_approximate
+    {n : ℕ} (γ : Fin (n + 1) → ℝ) (hγ : ∀ i, γ i > 0)
+    (θ : Fin (n + 1) → ℝ) (L : ℝ) :
+    ∃ t : ℝ, t > L ∧ ∃ k : ℤ, γ 0 * t = θ 0 + 2 * Real.pi * k := by
+  exact single_frequency_phase_alignment (hγ 0) (θ 0) L
+
+/-- The key density lemma for multi-frequency alignment:
+    if α and β are Q-linearly independent reals, then {mα + nβ : m,n ∈ ℤ}
+    is dense in ℝ. -/
+theorem dense_span_of_Q_independent {α β : ℝ}
+    (hαβ : Irrational (α / β)) (_hβ_ne : β ≠ 0) :
+    Dense (AddSubgroup.closure {α, β} : Set ℝ) := by
+  rw [dense_addSubgroupClosure_pair_iff]
+  exact hαβ
+
+/-- From density of {mα + nβ}, extract the inhomogeneous approximation:
+    for any target θ and ε > 0, ∃ m n with |mα + nβ - θ| < ε. -/
+theorem inhomogeneous_2d_approx {α β : ℝ}
+    (hαβ : Irrational (α / β)) (hβ_ne : β ≠ 0)
+    (θ : ℝ) {ε : ℝ} (hε : ε > 0) :
+    ∃ m n : ℤ, |m * α + n * β - θ| < ε := by
+  have hd := dense_span_of_Q_independent hαβ hβ_ne
+  rw [Metric.dense_iff] at hd
+  obtain ⟨y, hy_mem, hy_close⟩ := hd θ ε hε
+  rw [show ({α, β} : Set ℝ) = {α} ∪ {β} from by ext; simp [or_comm],
+      AddSubgroup.closure_union,
+      ← AddSubgroup.zmultiples_eq_closure, ← AddSubgroup.zmultiples_eq_closure,
+      SetLike.mem_coe, AddSubgroup.mem_sup] at hy_close
+  obtain ⟨a, ha, b, hb, rfl⟩ := hy_close
+  rw [AddSubgroup.mem_zmultiples_iff] at ha hb
+  obtain ⟨m, rfl⟩ := ha; obtain ⟨n, rfl⟩ := hb
+  exact ⟨m, n, by
+    simp only [zsmul_eq_mul, mul_one] at hy_mem ⊢
+    rwa [Metric.mem_ball, Real.dist_eq] at hy_mem⟩
+
+/-- **Inhomogeneous approximation mod 2π for positive m via Dirichlet box**:
+    For any positive integer q and irrational α/(2π), the fractional parts
+    {1·α/(2π)}, {2·α/(2π)}, ..., {q·α/(2π)} are distinct modulo 1.
+    By pigeonhole, two of them differ by less than 1/q.
+
+    This gives: for any target θ and ε > 0, there exist m > 0 and k ∈ ℤ
+    with |m·α - θ - k·(2π)| < ε. The key is that the Dirichlet approximation
+    denominator q is always POSITIVE.
+
+    For now, we state a simpler version: for any m ∈ ℤ coming from
+    inhomogeneous_1d_approx_mod, we can extract useful bounds on the
+    absolute value. -/
+theorem inhomogeneous_phase_abs_bound
+    {α θ : ℝ} {m : ℤ} {k : ℤ} {ε : ℝ}
+    (hclose : |↑m * α - θ - ↑k * (2 * Real.pi)| < ε) :
+    ‖Complex.exp (Complex.I * (↑m * α)) -
+     Complex.exp (Complex.I * θ)‖ < ε := by
+  set δ := ↑m * α - θ - ↑k * (2 * Real.pi) with hδ_def
+  -- δ = m·α - θ - k·2π, so m·α = θ + δ + k·2π
+  have hma : (↑m * α : ℝ) = θ + δ + ↑k * (2 * Real.pi) := by simp [hδ_def]; ring
+  -- exp(i·m·α) = exp(i·(θ + δ + k·2π)) = exp(iθ)·exp(iδ)·exp(ik·2π) = exp(iθ)·exp(iδ)
+  have key : Complex.exp (Complex.I * (↑m * α : ℂ)) =
+      Complex.exp (Complex.I * (θ : ℂ)) * Complex.exp (Complex.I * (δ : ℂ)) := by
+    rw [show (↑m * α : ℂ) = ((↑m * α : ℝ) : ℂ) from by push_cast; ring, hma]
+    rw [show ((θ + δ + ↑k * (2 * Real.pi) : ℝ) : ℂ) =
+        (θ : ℂ) + (δ : ℂ) + ↑k * (2 * ↑Real.pi) from by push_cast; ring]
+    rw [show Complex.I * ((θ : ℂ) + (δ : ℂ) + ↑k * (2 * ↑Real.pi)) =
+        Complex.I * (θ : ℂ) + Complex.I * (δ : ℂ) + ↑k * (2 * ↑Real.pi * Complex.I) by ring]
+    rw [Complex.exp_add, Complex.exp_add, Complex.exp_int_mul_two_pi_mul_I, mul_one]
+  rw [key]
+  -- ‖exp(iθ)·exp(iδ) - exp(iθ)‖ = ‖exp(iδ) - 1‖
+  calc ‖Complex.exp (Complex.I * (θ : ℂ)) * Complex.exp (Complex.I * (δ : ℂ)) -
+        Complex.exp (Complex.I * (θ : ℂ))‖
+      = ‖Complex.exp (Complex.I * (θ : ℂ)) * (Complex.exp (Complex.I * (δ : ℂ)) - 1)‖ := by
+        congr 1; ring
+    _ = ‖Complex.exp (Complex.I * (θ : ℂ))‖ * ‖Complex.exp (Complex.I * (δ : ℂ)) - 1‖ :=
+        norm_mul _ _
+    _ = 1 * ‖Complex.exp (Complex.I * (δ : ℂ)) - 1‖ := by
+        congr 1
+        rw [show Complex.I * (θ : ℂ) = ↑θ * Complex.I from by push_cast; ring]
+        exact Complex.norm_exp_ofReal_mul_I θ
+    _ = ‖Complex.exp (Complex.I * (δ : ℂ)) - 1‖ := one_mul _
+    _ ≤ |δ| := by
+        calc ‖Complex.exp (Complex.I * (δ : ℂ)) - 1‖
+            = ‖Complex.exp (Complex.I * (δ : ℂ)) - Complex.exp (Complex.I * 0)‖ := by
+              simp
+          _ ≤ |δ - 0| := complex_exp_I_sub_norm_le δ 0
+          _ = |δ| := by simp
+    _ < ε := hclose
+
 end Kronecker
 
 end

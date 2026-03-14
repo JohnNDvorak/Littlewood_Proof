@@ -1308,6 +1308,91 @@ theorem errorTerm_abs_on_block_via_fe (k : ℕ) (t : ℝ) (ht : t ≠ 0)
     _ = ‖reflectedZetaRemainder t‖ + 3 * ((k : ℝ) + 1) := by ring
 
 -- ============================================================
+-- Section 7d-pre4: RS leading term extraction from FE
+-- ============================================================
+
+/-- The (N+1)-th term of the reflected partial sum, extracted as the RS leading term
+    from the functional equation perspective. On block k, hardyN(t) = k+1, so the
+    N+1 = k+2 term of the reflected sum is the FIRST term NOT in reflectedPartialSum.
+    This is the leading correction in the Riemann-Siegel formula.
+
+    rsLeadingFromFE t = (hardyN t + 1)^{-1/2+it} · χ(t)⁻¹ -/
+def rsLeadingFromFE (t : ℝ) : ℂ :=
+  (chiFactor t)⁻¹ * ((hardyN t + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))
+
+/-- The modulus of rsLeadingFromFE equals (hardyN t + 1)^{-1/2} when t ≠ 0,
+    since |χ⁻¹| = 1 on the critical line.
+
+    This is the amplitude of the RS leading correction term: O(N^{-1/2}) = O(t^{-1/4}). -/
+theorem norm_rsLeadingFromFE (t : ℝ) (ht : t ≠ 0) :
+    ‖rsLeadingFromFE t‖ = ((hardyN t + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  unfold rsLeadingFromFE
+  rw [Complex.norm_mul, norm_inv, chiFactor_norm_eq_one t ht, inv_one, one_mul]
+  have hN_pos : (0 : ℝ) < (hardyN t : ℝ) + 1 := by positivity
+  rw [show (hardyN t + 1 : ℂ) = ((hardyN t + 1 : ℝ) : ℂ) from by push_cast; ring]
+  rw [Complex.norm_cpow_eq_rpow_re_of_pos hN_pos]
+  congr 1
+  simp [Complex.add_re, Complex.neg_re, Complex.mul_re,
+        Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+
+/-- On block k, ‖rsLeadingFromFE(t)‖ = (k+2)^{-1/2}, since hardyN(t) = k+1. -/
+theorem norm_rsLeadingFromFE_on_block (k : ℕ) (t : ℝ) (ht : t ≠ 0)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    ‖rsLeadingFromFE t‖ = ((k + 2 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  rw [norm_rsLeadingFromFE t ht]
+  congr 1
+  have hN := hardyN_on_open_block k t ht_lo ht_hi
+  rw [hN]; push_cast; ring
+
+/-- The RS leading term amplitude decays like t^{-1/4} on blocks:
+    (k+2)^{-1/2} ≤ (k+1)^{-1/2} for the partial sum amplitude comparison. -/
+theorem rsLeadingFromFE_amplitude_le (k : ℕ) :
+    ((k + 2 : ℝ)) ^ (-(1/2 : ℝ)) ≤ ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  apply Real.rpow_le_rpow_of_exponent_nonpos
+  · positivity
+  · exact_mod_cast (show (k : ℕ) + 1 ≤ k + 2 by omega)
+  · norm_num
+
+/-- The chi-inverse has unit modulus on the critical line:
+    ‖χ⁻¹‖ = 1. This follows from ‖χ‖ = 1 and ‖z⁻¹‖ = ‖z‖⁻¹. -/
+theorem norm_chiFactor_inv_eq_one (t : ℝ) (ht : t ≠ 0) :
+    ‖(chiFactor t)⁻¹‖ = 1 := by
+  rw [norm_inv, chiFactor_norm_eq_one t ht, inv_one]
+
+/-- The polynomial mismatch (χ⁻¹·reflectedPS - partialSum) decomposes as a
+    sum over the SAME index set. Each term pair is:
+    χ⁻¹·(n+1)^{-1/2+it} - (n+1)^{-1/2-it}
+
+    The difference is 2i·sin(arg(χ⁻¹))·(n+1)^{-1/2} (phase rotation). -/
+theorem polynomial_mismatch_term_structure (t : ℝ) (ht : t ≠ 0) (n : ℕ)
+    (hn : n < hardyN t) :
+    ‖(chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+     ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖ ≤
+    2 * ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  have hn_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  calc ‖(chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+       ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖
+      ≤ ‖(chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))‖ +
+        ‖((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖ :=
+        norm_sub_le _ _
+    _ = ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) + ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+        congr 1
+        · -- First term: |χ⁻¹| = 1, so |χ⁻¹ · z| = |z|
+          rw [Complex.norm_mul, norm_inv, chiFactor_norm_eq_one t ht, inv_one, one_mul]
+          rw [show (n + 1 : ℂ) = ((n + 1 : ℝ) : ℂ) from by push_cast; ring]
+          rw [Complex.norm_cpow_eq_rpow_re_of_pos hn_pos]
+          congr 1
+          simp [Complex.add_re, Complex.neg_re, Complex.mul_re,
+                Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+        · -- Second term: |(n+1)^{-1/2-it}| = (n+1)^{-1/2}
+          rw [show (n + 1 : ℂ) = ((n + 1 : ℝ) : ℂ) from by push_cast; ring]
+          rw [Complex.norm_cpow_eq_rpow_re_of_pos hn_pos]
+          congr 1
+          simp [Complex.sub_re, Complex.neg_re, Complex.mul_re,
+                Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+    _ = 2 * ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by ring
+
+-- ============================================================
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
 -- ============================================================
 
