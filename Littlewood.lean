@@ -142,6 +142,7 @@ import Littlewood.Aristotle.VanDerCorputInfra           -- Van der Corput oscill
 import Littlewood.Aristotle.VdcFirstDerivTest            -- Van der Corput first derivative test: |∫cos(φ)| ≤ 3/m (0 sorries) ✓
 import Littlewood.Aristotle.AbelSummation                -- Abel summation + alternating series bound (0 sorries) ✓
 import Littlewood.Aristotle.Standalone.ZeroTailAbelSummation  -- Zero tail Abel summation for Hadamard route (0 sorries) ✓
+import Littlewood.Aristotle.Standalone.AbelSummationPsiPi    -- ψ→π Abel summation asymptotics for pi_approx (0 sorries) ✓
 import Littlewood.Aristotle.CosPiSqSign                  -- cos(πn²) = (-1)^n + alternating sqrt sum bound (0 sorries) ✓
 import Littlewood.Aristotle.DirichletPhaseAlignment     -- Simultaneous Dirichlet phase-alignment infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.Standalone.KroneckerEquidistribution  -- Kronecker 1D density + phase alignment (0 sorries) ✓

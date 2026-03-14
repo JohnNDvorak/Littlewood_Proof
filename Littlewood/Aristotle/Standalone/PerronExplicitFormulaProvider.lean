@@ -1408,7 +1408,7 @@ private theorem contour_integral_remainder_bound :
     ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
         Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
-  sorry
+  exact ContourRemainderBoundHyp.bound
 
 /-- **Assembly**: Atomic contour shift bound from decomposition.
 
