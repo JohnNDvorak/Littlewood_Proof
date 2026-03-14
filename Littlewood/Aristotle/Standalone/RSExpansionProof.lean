@@ -1393,6 +1393,105 @@ theorem polynomial_mismatch_term_structure (t : ℝ) (ht : t ≠ 0) (n : ℕ)
     _ = 2 * ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by ring
 
 -- ============================================================
+-- Section 7c++: RS leading term phase decomposition
+-- ============================================================
+
+/-- The RS leading term on block k: substituting hardyN(t) = k+1. -/
+theorem rsLeadingFromFE_on_block_structure (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    rsLeadingFromFE t =
+      (chiFactor t)⁻¹ * ((k + 2 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) := by
+  unfold rsLeadingFromFE
+  have hN := hardyN_on_open_block k t ht_lo ht_hi
+  congr 1
+  rw [hN]
+  push_cast
+  ring_nf
+
+/-- The imaginary-power factor (k+2)^{it} has unit modulus. -/
+theorem cpow_I_mul_t_norm (k : ℕ) (t : ℝ) :
+    ‖((k + 2 : ℝ) : ℂ) ^ (Complex.I * (t : ℂ))‖ = 1 := by
+  have hk2 : (0 : ℝ) < (k : ℝ) + 2 := by positivity
+  rw [Complex.norm_cpow_eq_rpow_re_of_pos hk2]
+  simp [Complex.mul_re, Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+
+/-- The RS leading term decomposes into amplitude and phase on block k:
+    rsLeadingFromFE t = (k+2)^{-1/2} cdot (chi(t)^{-1} cdot (k+2)^{it}).
+    The first factor is real amplitude, the second is unit-modulus phase. -/
+theorem rsLeadingFromFE_amplitude_phase_split (k : ℕ) (t : ℝ)
+    (ht : t ≠ 0) (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    rsLeadingFromFE t =
+      (((k + 2 : ℝ) : ℂ) ^ (-(1/2 : ℂ))) *
+        ((chiFactor t)⁻¹ * ((k + 2 : ℝ) : ℂ) ^ (Complex.I * (t : ℂ))) := by
+  rw [rsLeadingFromFE_on_block_structure k t ht_lo ht_hi]
+  have hk2 : (0 : ℝ) < (k : ℝ) + 2 := by positivity
+  rw [show ((k + 2 : ℂ)) = ((k + 2 : ℝ) : ℂ) from by push_cast; ring]
+  rw [show (-(1/2 : ℂ) + Complex.I * (t : ℂ)) = (-(1/2 : ℂ)) + (Complex.I * (t : ℂ)) from by ring]
+  rw [Complex.cpow_add _ _ (by exact_mod_cast hk2.ne')]
+  ring
+
+/-- The unit-modulus phase factor chi^{-1}(t) cdot (k+2)^{it} has norm 1. -/
+theorem rsLeading_phase_factor_norm (k : ℕ) (t : ℝ) (ht : t ≠ 0) :
+    ‖(chiFactor t)⁻¹ * ((k + 2 : ℝ) : ℂ) ^ (Complex.I * (t : ℂ))‖ = 1 := by
+  rw [Complex.norm_mul, norm_inv, chiFactor_norm_eq_one t ht, inv_one, one_mul]
+  exact cpow_I_mul_t_norm k t
+
+/-- The rsPsi phase on block k at parameter p equals
+    cos(pi(2p^2 - 2p + 1/4)). This is definitional but useful as a rewrite. -/
+theorem rsPsi_eq_cos_on_block (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t ≤ hardyStart (k + 1)) :
+    rsPsi (blockParam k t) =
+      Real.cos (Real.pi * (2 * (blockParam k t) ^ 2 - 2 * blockParam k t + 1/4)) := by
+  rfl
+
+/-- On each block, the RS phase function rsPsi(p) oscillates between
+    cos(-pi/4) and cos(pi/4). The frequency of this oscillation is
+    controlled by the quadratic 2p^2 - 2p + 1/4, which has a minimum
+    at p = 1/2 with value -1/4, so the argument stays in [-pi/4, pi/4].
+
+    This means the RS correction has the SAME SIGN throughout each block,
+    and the sign alternates between blocks via (-1)^k. -/
+theorem rsPsi_argument_bounded (p : ℝ) (hp : p ∈ Set.Icc (0 : ℝ) 1) :
+    |Real.pi * (2 * p ^ 2 - 2 * p + 1/4)| ≤ Real.pi / 4 := by
+  rw [abs_le]; constructor
+  · have h1 : 0 ≤ 2 * (p - 1/2) ^ 2 := by positivity
+    nlinarith [Real.pi_pos, hp.1, hp.2]
+  · have h2 : 2 * p * (p - 1) ≤ 0 := by nlinarith [hp.1, hp.2]
+    nlinarith [Real.pi_pos]
+
+/-- At p = 1/2 (midpoint of each block), rsPsi achieves its maximum
+    cos(-pi/4) = cos(pi/4) = sqrt(2)/2. This is the saddle point. -/
+theorem rsPsi_at_midpoint : rsPsi (1/2) = Real.cos (Real.pi / 4) := by
+  unfold rsPsi
+  rw [show Real.pi * (2 * (1 / 2 : ℝ) ^ 2 - 2 * (1 / 2) + 1 / 4) = -(Real.pi / 4) from by ring]
+  rw [Real.cos_neg]
+
+-- The RS leading phase connection to block parameter:
+-- on block k, t = 2pi(k+1+p)^2, and the Stirling-level identity is:
+-- t log(k+2) - theta(t) - pi/4 ~ pi(2p^2-2p+1/4) + k*pi.
+-- The k*pi term accounts for the (-1)^k sign alternation.
+-- Below we verify endpoint consistency.
+
+/-- At p = 0 (start of block k), blockParam = 0. -/
+theorem blockParam_at_start (k : ℕ) :
+    blockParam k (hardyStart k) = 0 := by
+  unfold blockParam hardyStart
+  have hpi := Real.pi_pos
+  rw [show 2 * Real.pi * ((k : ℝ) + 1) ^ 2 / (2 * Real.pi) = ((k : ℝ) + 1) ^ 2 from by
+    field_simp]
+  rw [Real.sqrt_sq (by positivity : (0 : ℝ) ≤ (k : ℝ) + 1)]
+  ring
+
+/-- rsPsi at block start equals cos(pi/4) = sqrt(2)/2. -/
+theorem rsPsi_at_block_start : rsPsi 0 = Real.cos (Real.pi / 4) := by
+  unfold rsPsi; ring_nf
+
+/-- rsPsi at block end also equals cos(pi/4), by symmetry of
+    2p^2-2p+1/4 under p -> 1-p (the parabola is symmetric about p=1/2). -/
+theorem rsPsi_at_block_end : rsPsi 1 = Real.cos (Real.pi / 4) := by
+  unfold rsPsi; ring_nf
+
+-- ============================================================
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
 -- ============================================================
 
