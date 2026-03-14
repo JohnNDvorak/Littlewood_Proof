@@ -28,14 +28,15 @@ The proof decomposes into:
 ### Atomic sorrys (genuine mathematical content)
 - `chi_modulus_critical_line`: |χ(1/2+it)| = 1 on the critical line (1 sorry)
 - `saddle_point_remainder` / `rs_saddle_point_bound`: Siegel 1932 saddle-point (1 sorry)
-- `signed_block_integral_expansion`: CoV + RS expansion on blocks (1 sorry)
+- `leading_term_cov`: CoV identity for RS leading term on blocks (1 sorry)
 - `rs_block_antitone`: Block monotonicity from c_fn_expansion (1 sorry)
 
 ### Proved (was sorry)
+- `signed_block_integral_expansion`: CLOSED via leading_term_cov + pointwise RS bound
 - `c_fn_expansion`: algebraic from signed_block_integral_expansion (CLOSED)
 - `weighted_sqrt_monotone`: ∫√(k+1+p)·Ψ increasing in k (NEW)
 
-SORRY COUNT: 4 (chi_modulus, saddle_point, signed_block, rs_block_antitone)
+SORRY COUNT: 4 (chi_modulus, saddle_point, leading_term_cov, rs_block_antitone)
 WARNING COUNT: 4
 
 Reference: Siegel 1932 §3; Edwards Ch. 7 (pp. 136-145);
@@ -578,6 +579,53 @@ private theorem signed_integral_factor (k : ℕ) :
   simp_rw [← smul_eq_mul]
   exact (integral_smul _ _).symm
 
+/-- Helper: the RS leading term integrated over the block via CoV equals
+    4π · ∫₀¹ √(k+1+p) · Ψ(p) dp.
+
+    Proof: CoV t = blockCoord k p = 2π(k+1+p)², dt = blockJacobian k p = 4π(k+1+p).
+    (2π/t)^{1/4} = (2π/(2π(k+1+p)²))^{1/4} = ((k+1+p)²)^{-1/4} = (k+1+p)^{-1/2}.
+    So (2π/t)^{1/4} · Ψ(blockParam k t) · blockJacobian = (k+1+p)^{-1/2} · Ψ(p) · 4π(k+1+p)
+    = 4π · √(k+1+p) · Ψ(p). -/
+private theorem leading_term_cov (k : ℕ) :
+    ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+      (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t) =
+    4 * Real.pi * ∫ p in Ioc (0 : ℝ) 1,
+      Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p := by
+  sorry
+
+/-- Helper: on the block, t^{-3/4} ≤ (hardyStart k)^{-3/4} since t ≥ hardyStart k and
+    x ↦ x^{-3/4} is decreasing for positive reals. -/
+private theorem rpow_neg_three_quarter_antitone (k : ℕ) (t : ℝ)
+    (ht : hardyStart k ≤ t) :
+    t ^ (-(3 : ℝ) / 4) ≤ (hardyStart k) ^ (-(3 : ℝ) / 4) := by
+  have hk_pos : (0 : ℝ) < hardyStart k := hardyStart_pos' k
+  have ht_pos : (0 : ℝ) < t := lt_of_lt_of_le hk_pos ht
+  -- x^{-3/4} = (x^{3/4})^{-1} is decreasing for positive x
+  -- Use: for 0 < a ≤ b and r ≤ 0, b^r ≤ a^r
+  rw [show -(3 : ℝ) / 4 = -((3 : ℝ) / 4) from by ring]
+  exact Real.rpow_le_rpow_of_nonpos hk_pos
+    ht (by norm_num : -((3 : ℝ) / 4) ≤ 0)
+
+/-- Helper: ErrorTerm is integrable on the block (from continuity of errorTermOnBlock). -/
+private theorem errorTerm_integrableOn_block (k : ℕ) :
+    IntegrableOn ErrorTerm (Ioc (hardyStart k) (hardyStart (k + 1))) := by
+  -- errorTermOnBlock is continuous on Icc hence integrable on Ioo
+  have h_int_Ioo : IntegrableOn (errorTermOnBlock k) (Ioo (hardyStart k) (hardyStart (k + 1))) :=
+    (errorTermOnBlock_continuousOn k).integrableOn_Icc.mono_set Ioo_subset_Icc_self
+  -- On Ioo, errorTermOnBlock = ErrorTerm pointwise (use ae_restrict to Ioo)
+  have h_ae : ∀ᵐ t ∂(volume.restrict (Ioo (hardyStart k) (hardyStart (k + 1)))),
+      errorTermOnBlock k t = ErrorTerm t := by
+    exact (ae_restrict_mem measurableSet_Ioo).mono fun t ht =>
+      Aristotle.ErrorTermExpansion.errorTermOnBlock_eq_errorTerm k t (le_of_lt ht.1) ht.2
+  have h_eq_Ioo : IntegrableOn ErrorTerm (Ioo (hardyStart k) (hardyStart (k + 1))) :=
+    h_int_Ioo.congr h_ae
+  -- Transfer from Ioo to Ioc (Ioo =ᵃᵉ Ioc)
+  exact h_eq_Ioo.congr_set_ae Ioo_ae_eq_Ioc.symm
+
+/-- Helper: (-1)^k has absolute value 1. -/
+private theorem abs_neg_one_pow (k : ℕ) : |(-1 : ℝ) ^ k| = 1 := by
+  simp [abs_pow, abs_neg, abs_one]
+
 theorem signed_block_integral_expansion (k : ℕ) (_hk : 1 ≤ k) :
     ∃ R_k : ℝ,
     (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t) =
@@ -589,29 +637,110 @@ theorem signed_block_integral_expansion (k : ℕ) (_hk : 1 ≤ k) :
         (hardyStart k) ^ (-(3 : ℝ) / 4) := by
   -- Step 1: Get the saddle-point remainder from the RS expansion
   obtain ⟨C_R, hCR_pos, hCR_le, h_rs⟩ := saddle_point_remainder
-  -- Step 2: Define R_k existentially as the difference
-  set leading := 4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1,
-    Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p) with hleading_def
-  set signed_integral := (-1 : ℝ) ^ k *
-    (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t) with hsi_def
-  refine ⟨signed_integral - leading, by ring, C_R, hCR_pos, hCR_le, ?_⟩
-  -- Step 3: Bound |R_k| = |signed_integral - leading|
-  -- Use the CoV to rewrite the block integral in terms of p ∈ [0,1]
-  have h_cov := Aristotle.RSBlockParam.block_integral_cov k (errorTermOnBlock k)
-    (errorTermOnBlock_continuousOn k)
-  -- ∫_block ErrorTerm = ∫₀¹ errorTermOnBlock(k, blockCoord k p) * blockJacobian(k,p) dp
-  have h_et_eq := Aristotle.ErrorTermExpansion.errorTermOnBlock_integral_eq k
-  -- signed_integral = (-1)^k * ∫₀¹ errorTermOnBlock(k, blockCoord k p) * blockJacobian(k,p) dp
-  rw [hsi_def, ← h_et_eq, h_cov]
-  -- Now: (-1)^k * ∫₀¹ etob(blockCoord k p) * bJ(k,p) dp
-  -- From h_rs: |ErrorTerm(t) - (-1)^k·(2π/t)^{1/4}·Ψ(p)| ≤ C_R·t^{-3/4}
-  -- On block: errorTermOnBlock = ErrorTerm (on open block, ae)
-  -- The leading term: (-1)^k · (-1)^k · (2π/t)^{1/4} · Ψ(p) · bJ(k,p)
-  --   = (2π/(2π(k+1+p)²))^{1/4} · Ψ(p) · 4π(k+1+p)
-  --   = (k+1+p)^{-1/2} · Ψ(p) · 4π(k+1+p)
-  --   = 4π · √(k+1+p) · Ψ(p)
-  -- Remainder after integration: ≤ C_R · ∫_block t^{-3/4} dt ≤ C_R · BL · hs(k)^{-3/4}
-  sorry
+  -- Step 2: Define the leading term and R_k as the difference
+  refine ⟨(-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t) -
+    4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1,
+      Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p), by ring, C_R, hCR_pos, hCR_le, ?_⟩
+  -- Step 3: Bound |R_k| = |signed - leading|
+  have hk_pos : (0 : ℝ) < hardyStart k := hardyStart_pos' k
+  have h_block_le : hardyStart k ≤ hardyStart (k + 1) := hardyStart_le_succ' k
+  -- Use leading_term_cov: ∫_block (2π/t)^{1/4}Ψ(blockParam) = 4π ∫₀¹ √(k+1+p)Ψ(p)
+  have h_lcov := leading_term_cov k
+
+  -- (-1)^{2k} = 1
+  have h_neg_one_sq : (-1 : ℝ) ^ k * (-1 : ℝ) ^ k = 1 := by
+    rw [← pow_add, show k + k = 2 * k from by ring,
+        pow_mul, neg_one_sq, one_pow]
+
+  -- Strategy: bound the difference using the pointwise RS bound.
+  -- The bound ≤ C_R · BL · hs(k)^{-3/4} follows from:
+  -- |signed - leading| ≤ ∫_block |ET - (-1)^k(2π/t)^{1/4}Ψ| ≤ C_R · BL · hs(k)^{-3/4}
+  -- after showing signed - leading = (-1)^k · ∫_block remainder
+
+  -- Bound using intervalIntegral.norm_integral_le_of_norm_le_const
+  -- First convert to interval integral form
+  set a := hardyStart k
+  set b := hardyStart (k + 1)
+  -- Convert Ioc to interval integral (they are equal for a ≤ b)
+  have h_Ioc_eq_interval : ∀ f : ℝ → ℝ,
+      (∫ t in Ioc a b, f t) = ∫ t in a..b, f t :=
+    fun f => (intervalIntegral.integral_of_le h_block_le).symm
+  rw [h_Ioc_eq_interval] at h_lcov
+  rw [h_Ioc_eq_interval]
+  -- Goal: |(-1)^k · ∫_{a..b} ET - 4π · ∫ √·Ψ| ≤ C_R · BL · hs(k)^{-3/4}
+  -- Rewrite 4π·∫√·Ψ = ∫_{a..b} (2π/t)^{1/4}·Ψ via h_lcov
+  rw [h_lcov.symm]
+  -- Goal: |(-1)^k · ∫_{a..b} ET - ∫_{a..b} f| ≤ C_R · BL · hs(k)^{-3/4}
+  -- Combine into single integral: (-1)^k · ∫ET - ∫f = ∫[(-1)^k · ET - f]
+  have h_ET_ii : IntervalIntegrable ErrorTerm volume a b := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le h_block_le]
+    exact errorTerm_integrableOn_block k
+  have h_f_ii : IntervalIntegrable
+      (fun t => (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)) volume a b := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le h_block_le]
+    apply IntegrableOn.mono_set _ Ioc_subset_Icc_self
+    apply ContinuousOn.integrableOn_Icc
+    apply ContinuousOn.mul
+    · -- (2π/t)^{1/4} is continuous on Icc since t > 0 on block
+      apply ContinuousOn.rpow_const
+      · exact ContinuousOn.div continuousOn_const continuousOn_id
+            (fun t ht => ne_of_gt (pos_of_in_block k t ht.1))
+      · intro t ht; left
+        exact ne_of_gt (div_pos (by positivity : 0 < 2 * Real.pi)
+          (pos_of_in_block k t ht.1))
+    · -- Ψ(blockParam k t) is continuous on Icc
+      exact rsPsi_continuousOn.comp
+        (ContinuousOn.sub
+          (ContinuousOn.sqrt (ContinuousOn.div continuousOn_id continuousOn_const
+            (fun _ _ => ne_of_gt (by positivity : (0 : ℝ) < 2 * Real.pi))))
+          continuousOn_const)
+        (fun t ht => blockParam_mem_Icc k t ht.1 ht.2)
+  -- Pull (-1)^k inside the integral: (-1)^k * ∫ ET = ∫ (-1)^k * ET
+  rw [show (-1 : ℝ) ^ k * (∫ t in a..b, ErrorTerm t) =
+    ∫ t in a..b, (-1 : ℝ) ^ k * ErrorTerm t from by
+    simp_rw [← smul_eq_mul]; exact (intervalIntegral.integral_smul _ _).symm]
+  -- Now combine: ∫ (-1)^k*ET - ∫ f = ∫ ((-1)^k*ET - f)
+  rw [← intervalIntegral.integral_sub (h_ET_ii.const_mul _) h_f_ii]
+  -- Goal: |∫_{a..b} g| ≤ C_R · BL · a^{-3/4}
+  -- Pointwise bound: for t ∈ [[a,b]], ‖g(t)‖ ≤ C_R · a^{-3/4}
+  have h_pw : ∀ t, t ∈ Set.uIcc a b →
+      ‖(-1 : ℝ) ^ k * ErrorTerm t -
+        (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)‖ ≤
+      C_R * a ^ (-(3 : ℝ) / 4) := by
+    intro t ht
+    rw [Real.norm_eq_abs]
+    -- Extract t ∈ [a, b] from uIcc (since a ≤ b)
+    have ht_Icc : t ∈ Icc a b := by rwa [uIcc_of_le h_block_le] at ht
+    -- Factor: (-1)^k · ET - f = (-1)^k · (ET - (-1)^k · f)
+    have h_factor : (-1 : ℝ) ^ k * ErrorTerm t -
+        (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t) =
+      (-1 : ℝ) ^ k * (ErrorTerm t - (-1 : ℝ) ^ k *
+        (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)) := by
+      rw [mul_sub]; congr 1
+      rw [show (-1 : ℝ) ^ k * ((-1 : ℝ) ^ k *
+          (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)) =
+        ((-1 : ℝ) ^ k * (-1 : ℝ) ^ k) *
+          ((2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)) from by ring,
+        h_neg_one_sq, one_mul]
+    rw [h_factor, abs_mul, abs_neg_one_pow, one_mul]
+    calc |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+            rsPsi (blockParam k t)|
+        ≤ C_R * t ^ (-(3 : ℝ) / 4) :=
+          h_rs k t ht_Icc.1 ht_Icc.2 (lt_of_lt_of_le hk_pos ht_Icc.1)
+      _ ≤ C_R * a ^ (-(3 : ℝ) / 4) := by
+          apply mul_le_mul_of_nonneg_left _ (le_of_lt hCR_pos)
+          exact rpow_neg_three_quarter_antitone k t ht_Icc.1
+  -- Apply norm_integral_le_of_norm_le_const and convert to abs
+  calc |∫ t in a..b, ((-1 : ℝ) ^ k * ErrorTerm t -
+          (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t))|
+      = ‖∫ t in a..b, ((-1 : ℝ) ^ k * ErrorTerm t -
+          (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t))‖ :=
+        (Real.norm_eq_abs _).symm
+    _ ≤ C_R * a ^ (-(3 : ℝ) / 4) * |b - a| :=
+        intervalIntegral.norm_integral_le_of_norm_le_const
+          (fun t ht => h_pw t (Set.uIoc_subset_uIcc ht))
+    _ = C_R * (b - a) * a ^ (-(3 : ℝ) / 4) := by
+        rw [abs_of_nonneg (by linarith : 0 ≤ b - a)]; ring
 
 /-- **Sub-lemma: c_fn expansion in terms of weighted √-increments**.
 
