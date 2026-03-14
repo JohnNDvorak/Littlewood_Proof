@@ -606,6 +606,241 @@ theorem rs_phase_match (k : ℕ) (t : ℝ)
   rfl
 
 -- ============================================================
+-- Section 7c+: Additional sub-lemmas for the saddle-point bound
+-- ============================================================
+
+/-- |Ψ(p)| ≤ 1 for all p (Ψ is a cosine function). -/
+theorem rsPsi_abs_le_one (p : ℝ) : |rsPsi p| ≤ 1 := by
+  unfold rsPsi
+  exact abs_cos_le_one _
+
+/-- Ψ(p) ≥ cos(π/4) for p ∈ [0,1].
+    The argument π(2p²-2p+1/4) lies in [-π/4, π/4] where cos is decreasing,
+    so Ψ(p) ≥ cos(π/4) = √2/2.
+
+    This is the key quantitative lower bound used in `signed_errorTerm_nonneg_on_block`
+    to show the RS leading term dominates the remainder. -/
+theorem rsPsi_ge_cos_pi_four (p : ℝ) (hp : p ∈ Icc (0 : ℝ) 1) :
+    Real.cos (Real.pi / 4) ≤ rsPsi p := by
+  have ⟨hp0, hp1⟩ := hp
+  simp only [rsPsi]
+  have harg_abs : |Real.pi * (2 * p ^ 2 - 2 * p + 1/4)| ≤ Real.pi / 4 := by
+    rw [abs_le]; constructor
+    · have h1 : 0 ≤ 2 * (p - 1/2) ^ 2 := by positivity
+      nlinarith [Real.pi_pos]
+    · have h2 : 2 * p * (p - 1) ≤ 0 := by nlinarith
+      nlinarith [Real.pi_pos]
+  have hpi4_le_pi : Real.pi / 4 ≤ Real.pi :=
+    div_le_self (le_of_lt Real.pi_pos) (by norm_num : (1 : ℝ) ≤ 4)
+  rw [← Real.cos_abs (Real.pi * (2 * p ^ 2 - 2 * p + 1/4))]
+  exact Real.strictAntiOn_cos.antitoneOn
+    (Set.mem_Icc.mpr ⟨abs_nonneg _, le_trans harg_abs hpi4_le_pi⟩)
+    (Set.mem_Icc.mpr ⟨le_of_lt (div_pos Real.pi_pos (by norm_num : (0:ℝ) < 4)), hpi4_le_pi⟩)
+    harg_abs
+
+/-- Ψ(p) ≤ 1 for all p ∈ [0,1].
+    Combined with `rsPsi_ge_cos_pi_four`, gives cos(π/4) ≤ Ψ(p) ≤ 1. -/
+theorem rsPsi_le_one (p : ℝ) : rsPsi p ≤ 1 := by
+  have h := rsPsi_abs_le_one p
+  exact le_of_abs_le h
+
+/-- The absolute value of the RS leading correction is bounded by (2π/t)^{1/4}.
+    This is because |(-1)^k| = 1 and |Ψ(p)| ≤ 1. -/
+theorem rs_correction_abs_le (k : ℕ) (t : ℝ) (ht : 0 < t) :
+    |(-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)| ≤
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) := by
+  rw [abs_mul, abs_mul]
+  have h_neg_one : |(-1 : ℝ) ^ k| = 1 := by
+    simp [abs_pow, abs_neg, abs_one]
+  rw [h_neg_one, one_mul]
+  have h_rpow_nonneg : 0 ≤ (2 * Real.pi / t) ^ ((1 : ℝ) / 4) := by
+    apply Real.rpow_nonneg
+    exact div_nonneg (by positivity) (le_of_lt ht)
+  calc |((2 * Real.pi / t) ^ ((1 : ℝ) / 4))| * |rsPsi (blockParam k t)|
+      = (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * |rsPsi (blockParam k t)| := by
+        rw [abs_of_nonneg h_rpow_nonneg]
+    _ ≤ (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * 1 := by
+        apply mul_le_mul_of_nonneg_left (rsPsi_abs_le_one _) h_rpow_nonneg
+    _ = (2 * Real.pi / t) ^ ((1 : ℝ) / 4) := mul_one _
+
+/-- ‖e^{iθ}‖ = 1 for any real θ (unit modulus of phase rotation). -/
+theorem norm_exp_I_mul_real (θ : ℝ) :
+    ‖Complex.exp (Complex.I * (θ : ℂ))‖ = 1 := by
+  rw [mul_comm, Complex.norm_exp_ofReal_mul_I]
+
+/-- The RS correction on block k with parameter p ∈ [0,1] satisfies
+    (-1)^k · Ψ(p) > 0 when we multiply by (-1)^k.
+    That is, (-1)^{2k} · Ψ(p) = Ψ(p) > 0.
+    Equivalently: ((-1)^k)² · Ψ(p) = Ψ(p). -/
+theorem neg_one_pow_sq_mul_rsPsi (k : ℕ) (p : ℝ) (_hp : p ∈ Icc (0 : ℝ) 1) :
+    (-1 : ℝ) ^ k * ((-1 : ℝ) ^ k * rsPsi p) = rsPsi p := by
+  rw [← mul_assoc]
+  have h1 : (-1 : ℝ) ^ k * (-1 : ℝ) ^ k = 1 := by
+    rw [← pow_add]; simp
+  rw [h1, one_mul]
+
+/-- hardyN(t) ≥ 1 for t ≥ 2π (i.e., when √(t/2π) ≥ 1).
+    This ensures the partial sum has at least one term. -/
+theorem hardyN_ge_one (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    1 ≤ hardyN t := by
+  unfold hardyN
+  apply Nat.one_le_iff_ne_zero.mpr
+  intro h
+  have h_floor := Nat.floor_eq_zero.mp h
+  have h_div : 1 ≤ t / (2 * Real.pi) := by
+    rw [le_div_iff₀ (by positivity : (0 : ℝ) < 2 * Real.pi)]
+    linarith
+  have h_sqrt : 1 ≤ Real.sqrt (t / (2 * Real.pi)) := by
+    rw [show (1 : ℝ) = Real.sqrt 1 from (Real.sqrt_one).symm]
+    exact Real.sqrt_le_sqrt h_div
+  linarith
+
+/-- The (2π/t) factor is at most 1 for t ≥ 2π. -/
+theorem two_pi_div_t_le_one (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    2 * Real.pi / t ≤ 1 := by
+  rw [div_le_one (lt_of_lt_of_le (by positivity) ht)]
+  exact ht
+
+/-- (2π/t)^{1/4} is at most 1 for t ≥ 2π. -/
+theorem two_pi_div_t_rpow_quarter_le_one (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) ≤ 1 := by
+  apply Real.rpow_le_one
+  · exact div_nonneg (by positivity) (le_of_lt (lt_of_lt_of_le (by positivity) ht))
+  · exact two_pi_div_t_le_one t ht
+  · norm_num
+
+/-- (2π/t)^{1/4} = (2π)^{1/4} · t^{-1/4} for t > 0.
+    Factoring the rpow for matching the t^{-3/4} remainder scale. -/
+theorem two_pi_div_t_rpow_factor (t : ℝ) (ht : 0 < t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) =
+    (2 * Real.pi) ^ ((1 : ℝ) / 4) * t ^ (-(1 : ℝ) / 4) := by
+  have h2pi : (0 : ℝ) ≤ 2 * Real.pi := by positivity
+  have ht_nn : (0 : ℝ) ≤ t := le_of_lt ht
+  rw [show (2 * Real.pi / t : ℝ) = 2 * Real.pi * t⁻¹ from div_eq_mul_inv _ _]
+  rw [mul_rpow h2pi (inv_nonneg.mpr ht_nn)]
+  congr 1
+  rw [show -(1 : ℝ) / 4 = -((1 : ℝ) / 4) from by ring]
+  rw [Real.rpow_neg ht_nn, Real.inv_rpow ht_nn]
+
+/-- t^{-3/4} = t^{-1/4} · t^{-1/2} for t > 0.
+    Used to factor the remainder bound relative to the leading term. -/
+theorem t_neg_three_quarter_factor (t : ℝ) (ht : 0 < t) :
+    t ^ (-(3 : ℝ) / 4) = t ^ (-(1 : ℝ) / 4) * t ^ (-(1 : ℝ) / 2) := by
+  rw [← Real.rpow_add ht]
+  congr 1; ring
+
+/-- The remainder-to-leading ratio: C_R · t^{-3/4} / ((2π/t)^{1/4})
+    = C_R / (2π)^{1/4} · t^{-1/2} → 0 as t → ∞.
+
+    This shows the saddle-point remainder is genuinely lower order than
+    the leading RS correction, quantitatively: the ratio scales as t^{-1/2}. -/
+theorem remainder_to_leading_ratio (C_R t : ℝ) (ht : 0 < t) :
+    C_R * t ^ (-(3 : ℝ) / 4) =
+    C_R / (2 * Real.pi) ^ ((1 : ℝ) / 4) *
+    ((2 * Real.pi) ^ ((1 : ℝ) / 4) * t ^ (-(1 : ℝ) / 4) * t ^ (-(1 : ℝ) / 2)) := by
+  rw [t_neg_three_quarter_factor t ht]
+  have h2pi_ne : (2 * Real.pi) ^ ((1 : ℝ) / 4) ≠ 0 := ne_of_gt (by positivity)
+  field_simp
+
+/-- The ErrorTerm on a block is bounded by the leading term plus remainder.
+    From the triangle inequality applied to the RS expansion:
+    |ErrorTerm(t)| ≤ (2π/t)^{1/4} + C_R · t^{-3/4}
+
+    This follows formally from saddle_point_remainder; here we state it as a
+    consequence schema that any proof of the RS bound yields. -/
+theorem errorTerm_abs_from_rs
+    (C_R : ℝ) (hCR : 0 < C_R)
+    (h_rs : ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4))
+    (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t ≤ hardyStart (k + 1)) (ht : 0 < t) :
+    |ErrorTerm t| ≤ (2 * Real.pi / t) ^ ((1 : ℝ) / 4) + C_R * t ^ (-(3 : ℝ) / 4) := by
+  have h1 := h_rs k t ht_lo ht_hi ht
+  have h2 := rs_correction_abs_le k t ht
+  -- |ET| ≤ |ET - correction| + |correction| ≤ C_R·t^{-3/4} + (2π/t)^{1/4}
+  calc |ErrorTerm t|
+      = |(ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)) +
+          (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| := by ring_nf
+    _ ≤ |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| +
+        |(-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| := abs_add_le _ _
+    _ ≤ C_R * t ^ (-(3 : ℝ) / 4) + (2 * Real.pi / t) ^ ((1 : ℝ) / 4) := by linarith
+    _ = (2 * Real.pi / t) ^ ((1 : ℝ) / 4) + C_R * t ^ (-(3 : ℝ) / 4) := by ring
+
+/-- The signed ErrorTerm (-1)^k · ErrorTerm(t) is bounded below by the signed RS correction
+    minus the remainder. This is the key quantitative estimate used to show that
+    the signed error has a definite sign on each block. -/
+theorem signed_errorTerm_lower_bound
+    (C_R : ℝ) (_hCR : 0 < C_R) (_hCR_le : C_R ≤ 1 / 2)
+    (h_rs : ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4))
+    (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t ≤ hardyStart (k + 1)) (ht : 0 < t)
+    (_hp : blockParam k t ∈ Icc (0 : ℝ) 1) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t) - C_R * t ^ (-(3 : ℝ) / 4) ≤
+    (-1 : ℝ) ^ k * ErrorTerm t := by
+  have h_abs := h_rs k t ht_lo ht_hi ht
+  -- From |ET - L| ≤ R where L = (-1)^k·(2π/t)^{1/4}·Ψ(p) and R = C_R·t^{-3/4}:
+  -- L - R ≤ ET (from |ET - L| ≤ R)
+  have h_lower : (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+      rsPsi (blockParam k t) - C_R * t ^ (-(3 : ℝ) / 4) ≤ ErrorTerm t := by
+    linarith [neg_abs_le (ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+        rsPsi (blockParam k t))]
+  -- Also ET ≤ L + R
+  have h_upper : ErrorTerm t ≤
+      (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+      rsPsi (blockParam k t) + C_R * t ^ (-(3 : ℝ) / 4) := by
+    linarith [le_abs_self (ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+        rsPsi (blockParam k t))]
+  -- Now multiply by (-1)^k. Use (-1)^k ∈ {-1, 1}
+  have h_sq : ((-1 : ℝ) ^ k) ^ 2 = 1 := by
+    rw [← pow_mul]; simp
+  -- (-1)^k · ET ≥ (-1)^k · ((-1)^k · leading · Ψ - R)
+  --             = ((-1)^k)^2 · leading · Ψ - (-1)^k · R
+  -- For the lower bound, we need to handle the sign of (-1)^k · R.
+  -- Actually, we can prove it differently:
+  -- |(-1)^k · ET - leading · Ψ| = |(-1)^k| · |ET - (-1)^k · leading · Ψ| ≤ R
+  -- Wait, let's use the fact that (-1)^k · ((-1)^k · L) = L.
+  -- From h_lower: (-1)^k · L - R ≤ ET
+  -- Multiply by (-1)^k:
+  -- If (-1)^k = 1: L - R ≤ ET = (-1)^k · ET ✓
+  -- If (-1)^k = -1: -L + R ≥ -ET, i.e., (-1)·ET ≥ L - R ✓... wait
+  -- Actually let's just use: (-1)^k · ET - Ψ(p)·(2π/t)^{1/4} =
+  --   (-1)^k · (ET - (-1)^k · (2π/t)^{1/4} · Ψ), and |this| ≤ R
+  -- Direct approach: (-1)^k · |ET - (-1)^k · L · Ψ| = |(-1)^k · ET - ((-1)^k)^2 · L · Ψ|
+  --                                                    = |(-1)^k · ET - L · Ψ|
+  have h_neg_one_abs : |(-1 : ℝ) ^ k| = 1 := by simp [abs_pow, abs_neg, abs_one]
+  have key : |(-1 : ℝ) ^ k * ErrorTerm t -
+      (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)| ≤
+      C_R * t ^ (-(3 : ℝ) / 4) := by
+    -- |(-1)^k · ET - L·Ψ| = |(-1)^k| · |ET - (-1)^k · L · Ψ| since (-1)^{2k} = 1
+    rw [show (-1 : ℝ) ^ k * ErrorTerm t -
+        (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t) =
+        (-1 : ℝ) ^ k * ErrorTerm t -
+        ((-1 : ℝ) ^ k) ^ 2 * ((2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t))
+        from by rw [h_sq]; ring]
+    rw [show (-1 : ℝ) ^ k * ErrorTerm t -
+        ((-1 : ℝ) ^ k) ^ 2 * ((2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)) =
+        (-1 : ℝ) ^ k * (ErrorTerm t -
+        (-1 : ℝ) ^ k * ((2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)))
+        from by ring]
+    rw [abs_mul, h_neg_one_abs, one_mul]
+    rw [show ErrorTerm t - (-1 : ℝ) ^ k *
+        ((2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)) =
+        ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+        rsPsi (blockParam k t) from by ring]
+    exact h_abs
+  linarith [neg_abs_le ((-1 : ℝ) ^ k * ErrorTerm t -
+      (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t))]
+
+-- ============================================================
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
 -- ============================================================
 
