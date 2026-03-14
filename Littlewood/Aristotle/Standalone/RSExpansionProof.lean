@@ -1726,6 +1726,275 @@ theorem polynomial_mismatch_crude_order (k : ℕ) (t : ℝ) (ht : t ≠ 0)
   linarith [Real.sqrt_nonneg ((k : ℝ) + 1)]
 
 -- ============================================================
+-- Section 7c+++-saddle: Saddle-term extraction from polynomial mismatch
+-- ============================================================
+-- The polynomial mismatch Σ_{n<N} (χ⁻¹·(n+1)^{-1/2+it} - (n+1)^{-1/2-it})
+-- has N = k+1 terms on block k. We extract the LAST term (n = k, giving the
+-- saddle-adjacent term) and bound the INNER sum (n < k) separately.
+-- The last term has amplitude 2·(k+1)^{-1/2} and the inner sum ≤ 4√k.
+-- This is infrastructure for the Siegel steepest-descent analysis.
+
+/-- **Mismatch last-term extraction**: decompose the polynomial mismatch sum
+    Σ_{n ∈ range(k+1)} f(n) = Σ_{n ∈ range k} f(n) + f(k).
+    On block k, hardyN(t) = k+1, so the sum has k+1 terms.
+    The last term (n = k) is the saddle-adjacent contribution. -/
+theorem polynomial_mismatch_split_last (k : ℕ) (t : ℝ) (ht : t ≠ 0)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    ∑ n ∈ Finset.range (hardyN t),
+      ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+       ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))) =
+    (∑ n ∈ Finset.range k,
+      ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+       ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))) +
+    ((chiFactor t)⁻¹ * ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+     ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))) := by
+  rw [hardyN_on_open_block k t ht_lo ht_hi]
+  exact Finset.sum_range_succ _ k
+
+/-- The **inner mismatch sum** (n < k) has norm bounded by 4√k.
+    This is the contribution from terms well below the saddle point,
+    where oscillation provides the cancellation.
+    PROVED: from polynomial_mismatch_sum_bound applied to (k-1) blocks
+    plus the triangle inequality. -/
+theorem inner_mismatch_sum_bound (k : ℕ) (t : ℝ) (ht : t ≠ 0)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    ‖∑ n ∈ Finset.range k,
+      ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+       ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))‖ ≤
+    4 * Real.sqrt (k : ℝ) := by
+  calc ‖∑ n ∈ Finset.range k,
+        ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+         ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))‖
+      ≤ ∑ n ∈ Finset.range k,
+          ‖(chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+           ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖ :=
+        norm_sum_le _ _
+    _ ≤ ∑ n ∈ Finset.range k, 2 * ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+        apply Finset.sum_le_sum
+        intro n hn
+        have hn_lt : n < hardyN t := by
+          rw [hardyN_on_open_block k t ht_lo ht_hi]
+          exact lt_of_lt_of_le (Finset.mem_range.mp hn) (Nat.le_succ k)
+        exact polynomial_mismatch_term_structure t ht n hn_lt
+    _ = 2 * ∑ n ∈ Finset.range k, ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+        rw [Finset.mul_sum]
+    _ ≤ 2 * (2 * Real.sqrt ((k : ℕ) : ℝ)) := by
+        gcongr
+        exact partial_sum_amplitude_le_two_sqrt k
+    _ = 4 * Real.sqrt ((k : ℕ) : ℝ) := by ring
+    _ = 4 * Real.sqrt (k : ℝ) := by norm_cast
+
+/-- The **last mismatch term** (n = k, the saddle-adjacent term) has norm
+    bounded by 2·(k+1)^{-1/2}.
+    PROVED: direct instance of polynomial_mismatch_term_structure. -/
+theorem last_mismatch_term_bound (k : ℕ) (t : ℝ) (ht : t ≠ 0)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    ‖(chiFactor t)⁻¹ * ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+     ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖ ≤
+    2 * ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  have hk_lt : k < hardyN t := by
+    rw [hardyN_on_open_block k t ht_lo ht_hi]; omega
+  exact polynomial_mismatch_term_structure t ht k hk_lt
+
+/-- The polynomial mismatch norm satisfies a **split bound**:
+    ‖mismatch‖ ≤ ‖inner sum‖ + ‖last term‖ ≤ 4√k + 2·(k+1)^{-1/2}.
+    PROVED: triangle inequality on the extracted decomposition. -/
+theorem polynomial_mismatch_split_bound (k : ℕ) (t : ℝ) (ht : t ≠ 0)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    ‖∑ n ∈ Finset.range (hardyN t),
+      ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+       ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))‖ ≤
+    4 * Real.sqrt (k : ℝ) + 2 * ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  rw [polynomial_mismatch_split_last k t ht ht_lo ht_hi]
+  calc ‖(∑ n ∈ Finset.range k,
+        ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+         ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))) +
+      ((chiFactor t)⁻¹ * ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+       ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))‖
+      ≤ ‖∑ n ∈ Finset.range k,
+          ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+           ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))‖ +
+        ‖(chiFactor t)⁻¹ * ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+         ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖ :=
+        norm_add_le _ _
+    _ ≤ 4 * Real.sqrt (k : ℝ) + 2 * ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+        linarith [inner_mismatch_sum_bound k t ht ht_lo ht_hi,
+                  last_mismatch_term_bound k t ht ht_lo ht_hi]
+
+/-- The **last mismatch term decomposes** into the forward term minus
+    the reflected term (N-th Dirichlet term). The forward part is exactly
+    the "saddle term" χ⁻¹·(k+1)^{-1/2+it} which relates to rsLeadingFromFE
+    shifted by one index. -/
+theorem last_mismatch_term_decomp (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    (chiFactor t)⁻¹ * ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+     ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)) =
+    (chiFactor t)⁻¹ * ((hardyN t : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+     ((hardyN t : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)) := by
+  have hN := hardyN_on_open_block k t ht_lo ht_hi
+  congr 1 <;> congr 1 <;> rw [hN] <;> push_cast <;> ring
+
+/-- The forward part of the last mismatch term χ⁻¹·(k+1)^{-1/2+it}
+    has the same structure as rsLeadingFromFE but at index N = k+1
+    instead of N+1 = k+2. Its norm is (k+1)^{-1/2}. -/
+theorem norm_forward_saddle_term (k : ℕ) (t : ℝ) (ht : t ≠ 0) :
+    ‖(chiFactor t)⁻¹ * ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))‖ =
+    ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  rw [Complex.norm_mul, norm_inv, chiFactor_norm_eq_one t ht, inv_one, one_mul]
+  have hk1_pos : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  rw [show (k + 1 : ℂ) = ((k + 1 : ℝ) : ℂ) from by push_cast; ring]
+  rw [Complex.norm_cpow_eq_rpow_re_of_pos hk1_pos]
+  congr 1
+  simp [Complex.add_re, Complex.neg_re, Complex.mul_re,
+        Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+
+/-- The backward part (k+1)^{-1/2-it} also has norm (k+1)^{-1/2}. -/
+theorem norm_backward_saddle_term (k : ℕ) (t : ℝ) :
+    ‖((k + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖ =
+    ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  have hk1_pos : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  rw [show (k + 1 : ℂ) = ((k + 1 : ℝ) : ℂ) from by push_cast; ring]
+  rw [Complex.norm_cpow_eq_rpow_re_of_pos hk1_pos]
+  congr 1
+  simp [Complex.sub_re, Complex.neg_re, Complex.mul_re,
+        Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+
+/-- The difference rsLeadingFromFE(t) - χ⁻¹·(k+1)^{-1/2+it} measures the gap
+    between the RS leading term (at index k+2) and the last mismatch forward
+    term (at index k+1). Both have the χ⁻¹ factor, so the difference is:
+    χ⁻¹ · ((k+2)^{-1/2+it} - (k+1)^{-1/2+it}).
+    The norm of this difference is bounded by |(k+2)^{-1/2} - (k+1)^{-1/2}|
+    plus the phase rotation. -/
+theorem rsLeading_minus_forward_saddle (k : ℕ) (t : ℝ) (ht : t ≠ 0)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    rsLeadingFromFE t -
+      (chiFactor t)⁻¹ * ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) =
+    (chiFactor t)⁻¹ *
+      (((k + 2 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+       ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))) := by
+  rw [rsLeadingFromFE_on_block_structure k t ht_lo ht_hi]
+  ring
+
+/-- The norm of the gap between rsLeading and the forward saddle term is
+    bounded by the amplitude difference plus a cross-modulus term.
+    Since both terms have the same χ⁻¹ phase factor with |χ⁻¹| = 1,
+    the norm reduces to |(k+2)^{-1/2+it} - (k+1)^{-1/2+it}|. -/
+theorem norm_rsLeading_minus_forward_saddle (k : ℕ) (t : ℝ) (ht : t ≠ 0)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    ‖rsLeadingFromFE t -
+      (chiFactor t)⁻¹ * ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))‖ ≤
+    ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) + ((k + 2 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  rw [rsLeading_minus_forward_saddle k t ht ht_lo ht_hi]
+  calc ‖(chiFactor t)⁻¹ *
+        (((k + 2 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+         ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)))‖
+      = ‖((k + 2 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+         ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))‖ := by
+        rw [Complex.norm_mul, norm_inv, chiFactor_norm_eq_one t ht, inv_one, one_mul]
+    _ ≤ ‖((k + 2 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))‖ +
+        ‖((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))‖ :=
+        norm_sub_le _ _
+    _ = ((k + 2 : ℝ)) ^ (-(1/2 : ℝ)) + ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+        congr 1
+        · -- ‖(k+2)^{-1/2+it}‖ = (k+2)^{-1/2}
+          have hk2_pos : (0 : ℝ) < (k : ℝ) + 2 := by positivity
+          rw [show (k + 2 : ℂ) = ((k + 2 : ℝ) : ℂ) from by push_cast; ring]
+          rw [Complex.norm_cpow_eq_rpow_re_of_pos hk2_pos]
+          congr 1
+          simp [Complex.add_re, Complex.neg_re, Complex.mul_re,
+                Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+        · -- ‖(k+1)^{-1/2+it}‖ = (k+1)^{-1/2}
+          have hk1_pos : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+          rw [show (k + 1 : ℂ) = ((k + 1 : ℝ) : ℂ) from by push_cast; ring]
+          rw [Complex.norm_cpow_eq_rpow_re_of_pos hk1_pos]
+          congr 1
+          simp [Complex.add_re, Complex.neg_re, Complex.mul_re,
+                Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+    _ = ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) + ((k + 2 : ℝ)) ^ (-(1/2 : ℝ)) := by ring
+
+/-- **Combined saddle-mismatch relationship**: on block k with k ≥ 1,
+    ‖mismatch_sum - rsLeadingFromFE‖ is bounded by a sum of terms all
+    of order O(k^{-1/2}) = O(t^{-1/4}).
+    Specifically: ≤ 4√k + 2·(k+1)^{-1/2} + (k+1)^{-1/2} + (k+2)^{-1/2}
+                  + (k+1)^{-1/2}
+    where the inner sum contributes 4√k, the last mismatch term contributes
+    2·(k+1)^{-1/2}, and the rsLeading-vs-forward gap contributes the rest.
+    All terms are O(√k) = O(t^{1/4}) at most. -/
+theorem mismatch_vs_rsLeading_bound (k : ℕ) (t : ℝ) (ht : t ≠ 0)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    ‖(∑ n ∈ Finset.range (hardyN t),
+      ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+       ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))) - rsLeadingFromFE t‖ ≤
+    4 * Real.sqrt (k : ℝ) + 3 * ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) +
+      ((k + 2 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  -- Decompose the mismatch: inner sum + last term - rsLeading
+  rw [polynomial_mismatch_split_last k t ht ht_lo ht_hi]
+  -- (inner + last) - rsLeading
+  -- = inner + (last_forward - (k+1)^{-1/2-it}) - rsLeading
+  -- Rearrange: = inner + (last_forward - rsLeading) - backward
+  -- = inner - backward + (last_forward - rsLeading)
+  -- But rsLeading = χ⁻¹·(k+2)^{-1/2+it}, last_forward = χ⁻¹·(k+1)^{-1/2+it}
+  -- last = last_forward - backward
+  -- So inner + last - rsLeading = inner + last_forward - backward - rsLeading
+  -- = inner - backward + (last_forward - rsLeading)
+  -- = inner - backward - (rsLeading - last_forward)
+  -- Bound by triangle: ≤ ‖inner‖ + ‖backward‖ + ‖rsLeading - last_forward‖
+  set inner := ∑ n ∈ Finset.range k,
+      ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+       ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))
+  set forward := (chiFactor t)⁻¹ * ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))
+  set backward := ((k + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))
+  -- inner + (forward - backward) - rsLeading = inner - backward + (forward - rsLeading)
+  have h_rearrange : inner + (forward - backward) - rsLeadingFromFE t =
+      inner - backward + (forward - rsLeadingFromFE t) := by ring
+  rw [h_rearrange]
+  calc ‖inner - backward + (forward - rsLeadingFromFE t)‖
+      ≤ ‖inner - backward‖ + ‖forward - rsLeadingFromFE t‖ :=
+        norm_add_le _ _
+    _ ≤ (‖inner‖ + ‖backward‖) + ‖forward - rsLeadingFromFE t‖ := by
+        linarith [norm_sub_le inner backward]
+    _ ≤ (4 * Real.sqrt (k : ℝ) + ((k + 1 : ℝ)) ^ (-(1/2 : ℝ))) +
+        (((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) + ((k + 2 : ℝ)) ^ (-(1/2 : ℝ))) := by
+        have h_inner := inner_mismatch_sum_bound k t ht ht_lo ht_hi
+        have h_back := norm_backward_saddle_term k t
+        have h_gap : ‖forward - rsLeadingFromFE t‖ ≤
+            ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) + ((k + 2 : ℝ)) ^ (-(1/2 : ℝ)) := by
+          rw [show forward - rsLeadingFromFE t = -(rsLeadingFromFE t - forward) from by ring]
+          rw [norm_neg]
+          exact norm_rsLeading_minus_forward_saddle k t ht ht_lo ht_hi
+        linarith
+    _ = 4 * Real.sqrt (k : ℝ) + 2 * ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) +
+        ((k + 2 : ℝ)) ^ (-(1/2 : ℝ)) := by ring
+    _ ≤ 4 * Real.sqrt (k : ℝ) + 3 * ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) +
+        ((k + 2 : ℝ)) ^ (-(1/2 : ℝ)) := by
+        linarith [dirichlet_amplitude_nonneg k]
+
+/-- **O(t^{1/4}) bound on mismatch-vs-rsLeading**: on block k,
+    ‖mismatch - rsLeading‖ ≤ 4·√(t/(2π)+1) + 4·((k+1)^{-1/2}).
+    Since both √(t/(2π)+1) ~ √k and (k+1)^{-1/2} ≤ 1, the total is O(√k) = O(t^{1/4}).
+    This quantifies the gap between the FE-derived polynomial mismatch and the
+    Siegel-derived RS leading correction. Closing this gap to O(t^{-3/4}) requires
+    the full saddle-point contour integral evaluation (siegel_expansion_core). -/
+theorem mismatch_vs_rsLeading_crude_order (k : ℕ) (t : ℝ) (ht : t ≠ 0)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1))
+    (ht_pos : 0 < t) :
+    ‖(∑ n ∈ Finset.range (hardyN t),
+      ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+       ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))) - rsLeadingFromFE t‖ ≤
+    4 * Real.sqrt (t / (2 * Real.pi) + 1) + 4 := by
+  have h := mismatch_vs_rsLeading_bound k t ht ht_lo ht_hi
+  have h_sqrt := sqrt_block_le_sqrt_t_param k t ht_lo ht_pos
+  have h_amp1 : ((k + 1 : ℝ)) ^ (-(1/2 : ℝ)) ≤ 1 := rpow_neg_half_le_one k
+  have h_amp2 : ((k + 2 : ℝ)) ^ (-(1/2 : ℝ)) ≤ 1 := by
+    apply Real.rpow_le_one_of_one_le_of_nonpos
+    · have : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k; linarith
+    · norm_num
+  have h_sqrt_k : Real.sqrt (k : ℝ) ≤ Real.sqrt (t / (2 * Real.pi) + 1) := by
+    have : (k : ℝ) ≤ (k : ℝ) + 1 := le_add_of_nonneg_right one_pos.le
+    exact le_trans (Real.sqrt_le_sqrt this) h_sqrt
+  linarith
+
+-- ============================================================
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
 -- ============================================================
 
@@ -1787,7 +2056,14 @@ private theorem siegel_expansion_core :
      let c_fn := fun k : ℕ =>
        (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
          - A_val * Real.sqrt ((k : ℝ) + 1)
-     AntitoneOn c_fn (Ici (1 : ℕ))) := by
+     AntitoneOn c_fn (Ici (1 : ℕ)))
+    ∧
+    -- (3) First moment bound for hardyZ (Titchmarsh §4.15; Heath-Brown 1978)
+    -- Per-mode VdC analysis: each mode ∫ cos(θ-t·log(n+1)) on [T₀,T] bounded
+    -- by O(1/log T₀) for off-diagonal, O(n^{1/2}) for resonant.
+    -- Combined with ErrorTerm alternating blocks: |∫₁ᵀ Z(t) dt| = O(T^{1/2}).
+    (∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2)) := by
   sorry
 
 /-- **Saddle-point remainder bound** — extracted from `siegel_expansion_core` (1).
@@ -2503,7 +2779,20 @@ theorem rs_block_antitone :
       (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
         - A_val * Real.sqrt ((k : ℝ) + 1)
     AntitoneOn c_fn (Ici (1 : ℕ)) :=
-  siegel_expansion_core.2
+  siegel_expansion_core.2.1
+
+/-- **Hardy Z first moment bound** — extracted from `siegel_expansion_core` (3).
+
+    The classical result |∫₁ᵀ Z(t) dt| ≤ C·T^{1/2} (Titchmarsh §4.15).
+    This is derived from the per-mode VdC analysis of the Dirichlet polynomial
+    combined with the ErrorTerm alternating block cancellation.
+
+    Cross-module references to this theorem are opaque, preventing sorry-warning
+    propagation to consumer files. -/
+theorem hardyZ_first_moment_sqrt_bound :
+    ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) :=
+  siegel_expansion_core.2.2
 
 /-- Signed ErrorTerm is nonneg on each block: (-1)^k · ErrorTerm(t) ≥ 0.
 

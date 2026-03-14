@@ -939,6 +939,133 @@ private lemma three_segment_from_zfr {x T : ℝ} (hx : x ≥ 2) (hT : T ≥ 2) :
   have := C_crit_pos
   exact le_of_lt (mul_pos (by linarith) (mainErrTerm_pos hx hT))
 
+/-! #### Part E: Conditional reduction of contour_integral_remainder_bound
+
+The sorry reduces to three independent segment bounds via the Perron contour
+rectangle identity.  Given abstract segment contributions `S_top`, `S_bot`,
+`S_vert` satisfying:
+
+1. **Decomposition**: `shiftedRemainderRe x T = S_top x T + S_bot x T + S_vert x T`
+2. **Top horizontal bound**: `|S_top x T| ≤ C₁ · E(x,T)`
+3. **Bottom horizontal bound**: `|S_bot x T| ≤ C₂ · E(x,T)`
+4. **Critical-line vertical bound**: `|S_vert x T| ≤ C₃ · E(x,T)`
+
+where `E(x,T) = √x · (log T)² / √T`, the triangle inequality gives
+`|shiftedRemainderRe x T| ≤ (C₁ + C₂ + C₃) · E(x,T)`.
+
+This section proves this conditional reduction sorry-free, isolating the
+genuine analytic content into the three segment bound hypotheses.
+-/
+
+/-- Conditional reduction: if `shiftedRemainderRe` decomposes additively into
+    three segment contributions, each bounded by `Cᵢ · E(x,T)`, then the
+    full remainder is bounded by `(C₁+C₂+C₃) · E(x,T)`.
+
+    This is the structural skeleton of `contour_integral_remainder_bound`:
+    supply the decomposition and three bounds to close the sorry. -/
+private lemma contour_integral_remainder_of_three_segments
+    (S_top S_bot S_vert : ℝ → ℝ → ℝ)
+    (h_decomp : ∀ x T : ℝ, shiftedRemainderRe x T = S_top x T + S_bot x T + S_vert x T)
+    (C₁ C₂ C₃ : ℝ) (hC₁ : 0 < C₁) (hC₂ : 0 < C₂) (hC₃ : 0 < C₃)
+    (h_top : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |S_top x T| ≤ C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+    (h_bot : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |S_bot x T| ≤ C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+    (h_vert : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |S_vert x T| ≤ C₃ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  refine ⟨C₁ + C₂ + C₃, by positivity, fun x T hx hT => ?_⟩
+  -- Rewrite using decomposition
+  rw [h_decomp x T]
+  -- Triangle inequality: |a + b + c| ≤ |a| + |b| + |c|
+  calc |S_top x T + S_bot x T + S_vert x T|
+      ≤ |S_top x T + S_bot x T| + |S_vert x T| := abs_add_le _ _
+    _ ≤ (|S_top x T| + |S_bot x T|) + |S_vert x T| := by
+        gcongr; exact abs_add_le _ _
+    _ ≤ (C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) +
+         C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) +
+        C₃ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+        gcongr
+        · exact h_top x T hx hT
+        · exact h_bot x T hx hT
+        · exact h_vert x T hx hT
+    _ = (C₁ + C₂ + C₃) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by ring
+
+/-- Conditional reduction (symmetric form): if a single function `F` equals
+    `shiftedRemainderRe` and is bounded by `C · E(x,T)`, the sorry closes.
+
+    This is a specialization of `contour_bound_of_function_bound` with
+    explicit positivity witnessing. -/
+private lemma contour_integral_remainder_of_pointwise_bound
+    (C : ℝ) (hC : 0 < C)
+    (h_bound : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T| ≤
+        C * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+  ⟨C, hC, h_bound⟩
+
+/-- Bridge from any function equal to `shiftedRemainderRe`: if `F = shiftedRemainderRe`
+    and `|F x T| ≤ C · E(x,T)`, the sorry closes. This covers the
+    `contourRemainderRe` route (since `contourRemainderRe = shiftedRemainderRe`
+    with the placeholder Perron integral). -/
+private lemma contour_integral_remainder_of_equiv_function
+    (F : ℝ → ℝ → ℝ) (C : ℝ) (hC : 0 < C)
+    (h_eq : ∀ x T : ℝ, F x T = shiftedRemainderRe x T)
+    (h_bound : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |F x T| ≤ C * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+  ⟨C, hC, fun x T hx hT => by rw [← h_eq]; exact h_bound x T hx hT⟩
+
+/-- Strengthened three-segment assembly with the correct constants.
+
+    With `C_horiz` for each horizontal segment and `C_crit` for the critical
+    line, the total bound constant is `2 * C_horiz + C_crit`.
+
+    PROVED: pure arithmetic from `three_segment_bound_add`. -/
+private lemma three_segment_total_constant_bound {B₁ B₂ B₃ E : ℝ}
+    (h₁ : B₁ ≤ C_horiz * E) (h₂ : B₂ ≤ C_horiz * E) (h₃ : B₃ ≤ C_crit * E) :
+    B₁ + B₂ + B₃ ≤ (2 * C_horiz + C_crit) * E := by
+  have := C_horiz_pos
+  have := C_crit_pos
+  nlinarith
+
+/-- The three-segment constant `2 * C_horiz + C_crit` is positive.
+
+    PROVED: from `C_horiz_pos` and `C_crit_pos`. -/
+private lemma three_segment_constant_pos : 0 < 2 * C_horiz + C_crit := by
+  have := C_horiz_pos
+  have := C_crit_pos
+  linarith
+
+/-- Conditional closure of the sorry from three segment abs-bounds using
+    the concrete constants `C_horiz` and `C_crit`.
+
+    This is the most granular conditional reduction: supply
+    `|S_top|, |S_bot| ≤ C_horiz · E` and `|S_vert| ≤ C_crit · E`
+    to close `contour_integral_remainder_bound`. -/
+private lemma contour_integral_remainder_of_concrete_segments
+    (S_top S_bot S_vert : ℝ → ℝ → ℝ)
+    (h_decomp : ∀ x T : ℝ, shiftedRemainderRe x T = S_top x T + S_bot x T + S_vert x T)
+    (h_top : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |S_top x T| ≤ C_horiz * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+    (h_bot : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |S_bot x T| ≤ C_horiz * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+    (h_vert : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |S_vert x T| ≤ C_crit * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+  contour_integral_remainder_of_three_segments
+    S_top S_bot S_vert h_decomp
+    C_horiz C_horiz C_crit C_horiz_pos C_horiz_pos C_crit_pos
+    h_top h_bot h_vert
+
 /-- **Contour integral remainder bound**: the genuine Perron content.
 
     After Cauchy residue extraction at s = 1 (contributing x) and s = ρ for
@@ -947,22 +1074,21 @@ private lemma three_segment_from_zfr {x T : ℝ} (hx : x ≥ 2) (hT : T ≥ 2) :
 
     |shiftedRemainderRe x T| ≤ Cc · (√x · (log T)² / √T)
 
-    **Proof (Cycle 28)**: Three-segment decomposition via ZFR wiring.
-    1. Top horizontal (Im = T): O(√x · (log T)² / √T) — PROVED via Davenport
-    2. Bottom horizontal (Im = -T): O(√x · (log T)² / √T) — PROVED by symmetry
-    3. Critical line vertical (Re = 1/2): O(√x · (log T)² / √T) — PROVED via
-       ZeroFreeRegionV3.zeta_log_deriv_bound_near_one + 3-4-1 inequality +
-       PerronCriticalLineBridge infrastructure + zero extraction argument
+    **Proof (Cycle 33)**: Reduced to three segment bounds via
+    `contour_integral_remainder_of_three_segments` (Part E).
 
-    The ZFR connection: `zeta_log_deriv_bound_near_one` gives
-    -Re(ζ'/ζ(σ)) ≤ 1/(σ-1) + C at σ = 1+1/logT. Via the 3-4-1 inequality
-    (`norm_zeta_log_deriv_ineq`), this extends to ζ'/ζ(σ+it) bounds. The
-    Phragmén-Lindelöf convexity principle and the Hadamard product connect
-    these bounds to the critical-line estimate after zero extraction.
+    To close: supply the three-segment decomposition and pointwise bounds.
+    Route 1: `contour_integral_remainder_of_concrete_segments` with
+             `S_top`, `S_bot` bounded by `C_horiz · E` and
+             `S_vert` bounded by `C_crit · E`.
+    Route 2: `contour_integral_remainder_of_equiv_function` with
+             any `F = shiftedRemainderRe` and bound on `|F x T|`.
+    Route 3: `contour_integral_remainder_of_pointwise_bound` with
+             a direct bound on `|shiftedRemainderRe x T|`.
 
     Reference: Davenport Ch. 17, eqs. (8)-(12); Montgomery-Vaughan §12.5.
 
-    Sub-sorry count: 0 -/
+    Sub-sorry count: 1 -/
 private theorem contour_integral_remainder_bound :
     ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
@@ -1152,6 +1278,36 @@ The conversion uses Abel summation:
 combined with θ(x) = ψ(x) - O(√x) and the ψ explicit formula.
 
 Reference: Davenport Ch. 17; Montgomery-Vaughan §15.2.
+
+### LIVENESS ANALYSIS (C33-D, 2026-03-14)
+
+The sorry at `pi_approx` and the two seed sorrys below are LIVE — NOT dead code.
+
+**Why `pi_approx` is not killed by LandauOscillation (priority 2000)**:
+
+  The LandauOscillation instance provides `PiLiOscillationSqrtHyp` (priority 2000),
+  which gives `π(x) - li(x) = Ω±(√x / log x)`. This DOES win typeclass resolution
+  for `PiLiOscillationSqrtHyp`, making the `PiLiDirectOscillation` instance (which
+  consumes `TruncatedExplicitFormulaPiHyp`) dead code FOR THAT PURPOSE.
+
+  However, `pi_approx` feeds a DIFFERENT chain — the B7 quantitative RH-pi witness:
+    PerronExplicitFormulaProvider.pi_explicit_formula_from_perron
+    → RHPiExactSeedConstructive.truncatedPiHypInstance
+    → CombinedB5aRHPiDeepLeaf.combined_b5a_rhpi_leaf
+    → RHPiExactSeedDeepLeaf.rhpi_exact_seed_leaf
+    → RHPiUnconditionalExactSeedExistence (global instances)
+    → RHPiExactSeedToPerronThresholdArgApprox (arg-approximation bridge)
+    → RHPiCorrectedCanonicalWitnessClasses (corrected phase coupling)
+    → RHPiCoeffControlClassInstances (coefficient control)
+    → DeepBlockersResolved.deep_blocker_B7_coeff_control_leaf
+    → combined_atoms_resolved_unconditional
+
+  This chain produces `RhPiWitnessData`, which provides the full-strength
+  `π(x) - li(x) = Ω±((√x / log x) · log log log x)` under RH.
+  Without `pi_approx`, the theorem weakens to `Ω±(√x / log x)` (no lll factor).
+
+**Summary**: `pi_approx` is dead for `PiLiOscillationSqrtHyp`, but LIVE for the
+quantitative `lll x` strengthening factor in the final theorem.
 -/
 
 /-- The truncated explicit formula for π(x) at the √x/log x scale,
@@ -1322,6 +1478,9 @@ private lemma assemble_anti_target_seed
     `tower_cap_unbounded_with_eps` gives tower_cap → ∞, but bounding
     `perronThreshold` as a function of T requires additional analysis
     of the explicit formula convergence rate.
+
+    LIVENESS (C33-D): LIVE — consumed by B7 chain via
+    `RHPiExactSeedConstructive.exact_seed_target`. Same chain as `pi_approx`.
     Sub-sorry count: 1 -/
 theorem target_exact_seed_from_perron :
     @TargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
@@ -1331,6 +1490,9 @@ theorem target_exact_seed_from_perron :
 
     Same structure as target_exact_seed_from_perron with phase shifted by π.
     Vacuous-congruence assembly: `assemble_anti_target_seed`.
+
+    LIVENESS (C33-D): LIVE — consumed by B7 chain via
+    `RHPiExactSeedConstructive.exact_seed_anti_target`. Same chain as `pi_approx`.
     Sub-sorry count: 1 -/
 theorem anti_target_exact_seed_from_perron :
     @AntiTargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
