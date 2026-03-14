@@ -1327,6 +1327,28 @@ theorem errorTerm_abs_on_block_via_fe (k : ℕ) (t : ℝ) (ht : t ≠ 0)
     3. Gaussian integral gives (2π/t)^{1/4} · Ψ(p) at leading order
     4. Next-order correction is bounded by C · t^{-3/4}
 
+    **CIRCULARITY ANALYSIS (Cycle 22)**:
+    The user identified a potential circularity: bounding ‖reflectedRemainder‖
+    (the Dirichlet tail Σ_{n>N} n^{-1/2+it}) requires the AFE itself, since the
+    critical-line Dirichlet series doesn't converge absolutely.
+
+    Resolution: this concern applies to the NAIVE approach of bounding ErrorTerm
+    via the triangle inequality on the FE decomposition. The CORRECT approach —
+    steepest descent on the Riemann-Siegel integral representation — avoids
+    this entirely:
+    - Start from ζ(s) = (1/2πi) ∫_C Γ(w)·(πn²)^{-w} dw (Siegel's integral)
+    - Deform the contour to pass through the saddle w₀ = √(t/2π)
+    - Taylor-expand the phase around w₀: quadratic term → Gaussian → Ψ(p)
+    - Higher-order terms in the Taylor expansion → O(t^{-3/4})
+
+    The key point: Siegel's integral representation is VALID on the critical line
+    (it converges absolutely) and does NOT require prior knowledge of the AFE tail.
+    The saddle-point method directly produces the bound on ErrorTerm.
+
+    This is NOT circular with the Perron contour approach (which operates on
+    ψ(x) via (-ζ'/ζ) and produces the explicit formula remainder). The two
+    feed into separate chains: saddle-point → Hardy chain; Perron → ψ chain.
+
     Reference: Siegel 1932 §3; Gabcke 1979 Satz 1 (C_R ≈ 0.127). -/
 theorem saddle_point_remainder :
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
