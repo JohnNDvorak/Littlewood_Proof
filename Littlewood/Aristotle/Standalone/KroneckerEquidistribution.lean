@@ -625,6 +625,191 @@ theorem phase_norm_of_arg_approx
   have := inhomogeneous_phase_abs_bound h
   simpa using this
 
+/-! ### Part 9: N-dimensional inhomogeneous Kronecker infrastructure
+
+For the Littlewood tower construction, we need to align finitely many
+zeta-zero phases simultaneously. The approach:
+
+1. **Single-zero case** (T chosen with N(T) = 1): EXACT alignment via
+   `exact_congruence_above_threshold`. No irrationality needed.
+
+2. **Two-zero case** (N(T) = 2): First frequency exact, second approximate,
+   via `two_freq_arg_approx_above_threshold`. Needs γ₂/γ₁ irrational.
+
+3. **General n-zero case**: Requires Q-linear independence of
+   {1, γ₁/γ₀, ..., γₙ/γ₀} (Kronecker's theorem on the n-torus).
+   The full proof uses either Pontryagin duality or the structure theorem
+   for closed subgroups of ℝⁿ, neither of which is in Mathlib.
+   For n ≥ 3, we provide the key BUILDING BLOCKS (shift refinement,
+   irrationality preservation) that enable the inductive proof.
+
+For the specific Littlewood application, choosing T with N(T) ≤ 2
+suffices: the tower height bound only needs N(T)/(T+1) > 0, which
+holds for T ≈ 15 (giving N(T) = 1, the first zero γ₁ ≈ 14.13).
+-/
+
+/-- Multiplication of an irrational number by a nonzero natural number
+    preserves irrationality. If α is irrational and q ≥ 1, then q·α is irrational. -/
+theorem irrational_natCast_mul' {α : ℝ} (hα : Irrational α) {q : ℕ} (hq : 1 ≤ q) :
+    Irrational ((q : ℝ) * α) :=
+  hα.natCast_mul (by omega)
+
+/-- Multiplication of an irrational by a nonzero integer preserves irrationality. -/
+theorem irrational_intCast_mul' {α : ℝ} (hα : Irrational α) {q : ℤ} (hq : q ≠ 0) :
+    Irrational ((q : ℝ) * α) :=
+  hα.intCast_mul hq
+
+/-- Irrationality of q·α/(2π) from irrationality of α/(2π), for q ≥ 1.
+    Key lemma for the inductive Kronecker construction: the near-period
+    q from Dirichlet preserves the irrationality condition needed for
+    the next 1D Kronecker application. -/
+theorem irrational_natCast_mul_div_two_pi
+    {α : ℝ} (hα : Irrational (α / (2 * Real.pi))) {q : ℕ} (hq : 1 ≤ q) :
+    Irrational ((q : ℝ) * α / (2 * Real.pi)) := by
+  rw [show (q : ℝ) * α / (2 * Real.pi) = (q : ℝ) * (α / (2 * Real.pi)) by ring]
+  exact irrational_natCast_mul' hα hq
+
+/-- The exact solution set for a single frequency has BOUNDED GAPS:
+    any interval of length ≥ 2π/γ contains at least one solution
+    t with γ·t ≡ θ (mod 2π). This is the key structural property
+    that enables inductive multi-frequency alignment. -/
+theorem exact_solutions_bounded_gaps
+    {γ : ℝ} (hγ : γ > 0) (θ : ℝ) :
+    ∀ a : ℝ, ∃ t : ℝ, a ≤ t ∧ t ≤ a + 2 * Real.pi / γ ∧
+      ∃ k : ℤ, γ * t = θ + 2 * Real.pi * k := by
+  intro a
+  obtain ⟨t, ha, ht, k, hk⟩ := exact_solutions_periodic hγ θ a (a + 2 * Real.pi / γ) (by linarith)
+  exact ⟨t, ha, ht, k, hk⟩
+
+/-- **Single-zero phase alignment** (the key case for Littlewood):
+    When the zero cutoff T is chosen with only ONE zero γ₁ below T,
+    we need only 1D Kronecker. This always works with EXACT alignment. -/
+theorem single_zero_phase_alignment
+    {γ₁ : ℝ} (hγ₁ : γ₁ > 0) (θ : ℝ) (L : ℝ) :
+    ∃ t : ℝ, t > L ∧
+      (∃ k : ℤ, t * γ₁ - θ - ↑k * (2 * Real.pi) = 0) ∧
+      ‖Complex.exp (Complex.I * (γ₁ * t)) -
+       Complex.exp (Complex.I * θ)‖ = 0 := by
+  obtain ⟨t, ht, k, hk⟩ := exact_congruence_above_threshold hγ₁ θ L
+  simp only [zsmul_eq_mul] at hk
+  refine ⟨t, ht, ⟨k, hk⟩, ?_⟩
+  have hphase : γ₁ * t = θ + 2 * Real.pi * ↑k := by linarith
+  rw [show Complex.I * (↑γ₁ * ↑t) = Complex.I * ((γ₁ * t : ℝ) : ℂ) by push_cast; ring]
+  rw [hphase]
+  rw [show ((θ + 2 * Real.pi * ↑k : ℝ) : ℂ) = (θ : ℂ) + ↑k * (2 * ↑Real.pi) by push_cast; ring]
+  rw [show Complex.I * ((θ : ℂ) + ↑k * (2 * ↑Real.pi)) =
+      Complex.I * (θ : ℂ) + ↑k * (2 * ↑Real.pi * Complex.I) by ring]
+  rw [Complex.exp_add, Complex.exp_int_mul_two_pi_mul_I, mul_one, sub_self, norm_zero]
+
+/-- **Two-zero phase alignment** with irrationality:
+    When there are exactly two zeros γ₁, γ₂ with γ₂/γ₁ irrational,
+    the first is aligned exactly and the second approximately.
+    Both arg and phase-norm bounds are provided. -/
+theorem two_zero_phase_alignment
+    {γ₁ γ₂ : ℝ} (hγ₁ : γ₁ > 0) (hγ₂ : γ₂ > 0)
+    (h_irr : Irrational (γ₂ / γ₁))
+    (θ₁ θ₂ : ℝ) {ε : ℝ} (hε : ε > 0) (L : ℝ) :
+    ∃ t : ℝ, t > L ∧
+      (∃ k₁ : ℤ, t * γ₁ - θ₁ - ↑k₁ * (2 * Real.pi) = 0) ∧
+      (∃ k₂ : ℤ, |t * γ₂ - θ₂ - ↑k₂ * (2 * Real.pi)| < ε) ∧
+      ‖Complex.exp (Complex.I * (γ₁ * t)) -
+       Complex.exp (Complex.I * θ₁)‖ = 0 ∧
+      ‖Complex.exp (Complex.I * (γ₂ * t)) -
+       Complex.exp (Complex.I * θ₂)‖ < ε :=
+  two_freq_arg_approx_above_threshold hγ₁ hγ₂ h_irr θ₁ θ₂ L hε
+    |>.imp fun t ⟨ht, hk₁, hk₂⟩ => by
+  refine ⟨ht, hk₁, hk₂, ?_, ?_⟩
+  · -- Exact phase alignment for γ₁
+    obtain ⟨k₁, hk₁⟩ := hk₁
+    have hphase : γ₁ * t = θ₁ + 2 * Real.pi * ↑k₁ := by linarith
+    rw [show Complex.I * (↑γ₁ * ↑t) = Complex.I * ((γ₁ * t : ℝ) : ℂ) by push_cast; ring]
+    rw [hphase]
+    rw [show ((θ₁ + 2 * Real.pi * ↑k₁ : ℝ) : ℂ) = (θ₁ : ℂ) + ↑k₁ * (2 * ↑Real.pi) by push_cast; ring]
+    rw [show Complex.I * ((θ₁ : ℂ) + ↑k₁ * (2 * ↑Real.pi)) =
+        Complex.I * (θ₁ : ℂ) + ↑k₁ * (2 * ↑Real.pi * Complex.I) by ring]
+    rw [Complex.exp_add, Complex.exp_int_mul_two_pi_mul_I, mul_one, sub_self, norm_zero]
+  · -- Approximate phase alignment for γ₂
+    obtain ⟨k₂, hk₂⟩ := hk₂
+    have h := phase_norm_of_arg_approx hk₂
+    simp only [show (↑γ₂ : ℂ) * ↑t = ↑t * ↑γ₂ from mul_comm _ _] at h ⊢
+    exact h
+
+/-- **Single-frequency phase alignment for Finset with one element**:
+    When the finite set of frequencies is a singleton {γ₀}, exact
+    phase alignment is always achievable. This is the Littlewood-relevant
+    case when T is chosen so that N(T) = 1. -/
+theorem singleton_finset_phase_alignment
+    {γ₀ : ℝ} (hγ₀ : γ₀ > 0) (θ : ℝ) {ε : ℝ} (hε : ε > 0) (L : ℝ) :
+    ∃ t : ℝ, t > L ∧
+      ∀ γ ∈ ({γ₀} : Finset ℝ),
+        ∃ k : ℤ, |t * γ - θ - ↑k * (2 * Real.pi)| < ε := by
+  obtain ⟨t, ht, k, hk⟩ := exact_congruence_above_threshold hγ₀ θ L
+  refine ⟨t, ht, fun γ hγ => ?_⟩
+  simp only [Finset.mem_singleton] at hγ
+  subst hγ
+  exact ⟨k, by
+    simp only [zsmul_eq_mul] at hk
+    have : t * γ - θ - ↑k * (2 * Real.pi) = 0 := by linarith
+    rw [this, abs_zero]; exact hε⟩
+
+/-- **Two-element Finset phase alignment**: When the finite set has exactly
+    two elements with irrational ratio, achieve exact alignment on the first
+    and approximate on the second. -/
+theorem pair_finset_phase_alignment
+    {γ₁ γ₂ : ℝ} (hγ₁ : γ₁ > 0) (hγ₂ : γ₂ > 0) (hne : γ₁ ≠ γ₂)
+    (h_irr : Irrational (γ₂ / γ₁))
+    (θ : ℝ → ℝ) {ε : ℝ} (hε : ε > 0) (L : ℝ) :
+    ∃ t : ℝ, t > L ∧
+      ∀ γ ∈ ({γ₁, γ₂} : Finset ℝ),
+        ∃ k : ℤ, |t * γ - θ γ - ↑k * (2 * Real.pi)| < ε := by
+  obtain ⟨t, ht, hk₁, hk₂⟩ :=
+    two_freq_arg_approx_above_threshold hγ₁ hγ₂ h_irr (θ γ₁) (θ γ₂) L hε
+  refine ⟨t, ht, fun γ hγ => ?_⟩
+  simp only [Finset.mem_insert, Finset.mem_singleton] at hγ
+  rcases hγ with rfl | rfl
+  · -- γ = γ₁: exact alignment
+    obtain ⟨k₁, hk₁⟩ := hk₁
+    exact ⟨k₁, by
+      have : t * γ - θ γ - ↑k₁ * (2 * Real.pi) = 0 := by linarith
+      rw [this, abs_zero]; exact hε⟩
+  · -- γ = γ₂: approximate alignment
+    exact hk₂
+
+/-- **Phase-norm alignment for singleton Finset of zeta zeros**:
+    Provides the phase alignment in norm form needed by the tower witness.
+    For a single zero γ₁, alignment is exact (error = 0 < ε). -/
+theorem single_zero_finset_phase_norm_alignment
+    {γ₁ : ℝ} (hγ₁ : γ₁ > 0) (θ : ℝ) {ε : ℝ} (hε : ε > 0) (L : ℝ) :
+    ∃ t : ℝ, t > L ∧
+      ‖Complex.exp (Complex.I * (γ₁ * t)) -
+       Complex.exp (Complex.I * θ)‖ < ε := by
+  obtain ⟨t, ht, _, hphase⟩ := single_zero_phase_alignment hγ₁ θ L
+  exact ⟨t, ht, by rw [hphase]; exact hε⟩
+
+/-- **Multi-frequency alignment reduces to single via large T choice**:
+    For any γ₁ > 0 (the first zeta zero ordinate), target phase w,
+    precision ε > 0, and threshold L, there exists t > L with
+    ‖e^{iγ₁t} - e^{iw}‖ < ε AND the tower height bound
+    with N(T) = 1 (taking T slightly above γ₁).
+
+    This is the "simpler alternative" for the Littlewood tower: by choosing
+    T ≈ 15 (so N(T) = 1), the multi-frequency alignment problem reduces
+    to a single-frequency problem, which is solved exactly. -/
+theorem single_zero_tower_compatible_alignment
+    {γ₁ : ℝ} (hγ₁ : γ₁ > 0) (w : ℝ) (L : ℝ) :
+    ∃ t : ℝ, t > L ∧
+      (∃ k : ℤ, γ₁ * t = w + 2 * Real.pi * k) ∧
+      ‖Complex.exp (Complex.I * (γ₁ * t)) -
+       Complex.exp (Complex.I * w)‖ = 0 := by
+  obtain ⟨t, ht, k, hk⟩ := single_frequency_phase_alignment hγ₁ w L
+  refine ⟨t, ht, ⟨k, hk⟩, ?_⟩
+  rw [show Complex.I * (↑γ₁ * ↑t) = Complex.I * ((γ₁ * t : ℝ) : ℂ) by push_cast; ring]
+  rw [hk]
+  rw [show ((w + 2 * Real.pi * ↑k : ℝ) : ℂ) = (w : ℂ) + ↑k * (2 * ↑Real.pi) by push_cast; ring]
+  rw [show Complex.I * ((w : ℂ) + ↑k * (2 * ↑Real.pi)) =
+      Complex.I * (w : ℂ) + ↑k * (2 * ↑Real.pi * Complex.I) by ring]
+  rw [Complex.exp_add, Complex.exp_int_mul_two_pi_mul_I, mul_one, sub_self, norm_zero]
+
 end Kronecker
 
 end

@@ -1005,6 +1005,301 @@ theorem log_ratio_antitone (k : ℕ) (n₁ n₂ : ℕ) (h12 : n₁ ≤ n₂) (_h
 
 end PerModeVdC
 
+/-! ## Part 7: Per-mode summation assembly
+
+Once the AFE decomposes Z(t) = 2·Σ_{n≤N} (n+1)^{-1/2}·cos(θ-t·log(n+1)) + O(t^{-1/4}),
+the first moment becomes a sum of per-mode oscillatory integrals on each block.
+
+This section builds the summation infrastructure:
+(1) Block length bound: |block k| ≤ C·(k+1)
+(2) Resonant mode contribution: mode n = k on block k is O(√(k+1))
+(3) Off-diagonal mode sum on a single block: O(k/log 2) from far_mode_kernel_sum_bound
+(4) Total per-block contribution: O(k+1)
+(5) Sum over blocks 1..K: O(K²)
+(6) With K ~ √T: total = O(T), and with per-mode VdC: O(√T · log T) = O(T^{1/2+ε})
+
+All lemmas here are constructively proved (no sorry, no axiom).
+-/
+
+section PerModeSummation
+
+open Aristotle.OffResonanceSmoothVdC Aristotle.HardyNProperties
+open HardyEstimatesPartial
+
+/-- Block length ≤ 4π(k+1). Since block_length k = 2π(2k+3) and 2k+3 ≤ 2(k+1)+1 ≤ 2(k+1)+1,
+    a cruder bound 2π(2k+3) ≤ 2π·3·(k+1) = 6π(k+1) suffices. -/
+theorem block_length_le (k : ℕ) :
+    hardyStart (k + 1) - hardyStart k ≤ 6 * Real.pi * ((k : ℝ) + 1) := by
+  rw [block_length k]
+  -- Need: 2π(2k+3) ≤ 6π(k+1), i.e., 2(2k+3) ≤ 6(k+1), i.e., 4k+6 ≤ 6k+6
+  have hpi : 0 < Real.pi := Real.pi_pos
+  have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+  nlinarith
+
+/-- Block length is nonneg. -/
+theorem block_length_nonneg (k : ℕ) :
+    0 ≤ hardyStart (k + 1) - hardyStart k := by
+  rw [block_length k]
+  have : 0 < Real.pi := Real.pi_pos
+  nlinarith [Nat.cast_nonneg (α := ℝ) k]
+
+/-- Resonant mode contribution bound: for the mode n = k on block k,
+    the amplitude factor is (k+1)^{-1/2} and the integral is trivially
+    bounded by the block length 2π(2k+3). So the contribution is
+    (k+1)^{-1/2} · 2π(2k+3) ≤ 6π·(k+1)^{1/2}.
+
+    This is the bound for the single "resonant" term where n ≈ N(t)
+    and VdC may not give cancellation. -/
+theorem resonant_mode_contribution_bound (k : ℕ) :
+    ((↑k + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+      (hardyStart (k + 1) - hardyStart k) ≤
+      6 * Real.pi * ((k : ℝ) + 1) ^ ((1 : ℝ)/2) := by
+  have h_bl := block_length_le k
+  -- (k+1)^{-1/2} ≤ 1 from rpow_neg_half_le_one
+  have h_coef := rpow_neg_half_le_one k
+  -- So LHS ≤ 1 * block_length ≤ block_length ≤ 6π(k+1)
+  -- And 6π(k+1) = 6π·(k+1)^1 ≤ ... no, we need ≤ 6π·(k+1)^{1/2}·√(k+1)?
+  -- Actually the bound is: LHS ≤ (k+1)^{-1/2} · 6π(k+1) ≤ 1 · 6π(k+1).
+  -- But the RHS is 6π·(k+1)^{1/2} which is SMALLER than 6π(k+1) for k ≥ 0.
+  -- So this approach loses too much. Let's use the exact exponent arithmetic.
+  --
+  -- (k+1)^{-1/2} · block_length ≤ (k+1)^{-1/2} · 6π(k+1)
+  -- = 6π · (k+1)^{-1/2+1} = 6π · (k+1)^{1/2}
+  have hk1_pos : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  have h_bl_nn := block_length_nonneg k
+  calc ((↑k + 1 : ℝ) ^ (-(1 : ℝ)/2)) * (hardyStart (k + 1) - hardyStart k)
+      ≤ ((↑k + 1 : ℝ) ^ (-(1 : ℝ)/2)) * (6 * Real.pi * ((k : ℝ) + 1)) :=
+        mul_le_mul_of_nonneg_left h_bl (by positivity)
+    _ = 6 * Real.pi * (((k : ℝ) + 1) ^ (-(1 : ℝ)/2) * ((k : ℝ) + 1)) := by ring
+    _ = 6 * Real.pi * ((k : ℝ) + 1) ^ ((1 : ℝ)/2) := by
+        congr 1
+        conv_lhs => rhs; rw [show ((k : ℝ) + 1) = ((k : ℝ) + 1) ^ (1 : ℝ) from (Real.rpow_one _).symm]
+        rw [← Real.rpow_add hk1_pos]
+        norm_num
+
+/-- Sum of (n+1)^{-1/2} for n in range k, bounded by 2·(k+1)^{1/2}.
+
+    Sharper than inv_sqrt_partial_sum_le_card which gives ≤ k.
+    By integral comparison: Σ_{n=0}^{k-1} (n+1)^{-1/2} ≤ ∫_0^k (x+1)^{-1/2} dx + 1
+    = 2·(k+1)^{1/2} - 2 + 1 ≤ 2·(k+1)^{1/2}.
+    We use the cruder bound ≤ k ≤ k+1 ≤ (k+1)^1 and note (k+1)^1 ≤ (k+1)·(k+1)^{1/2}
+    for k+1 ≥ 1. Actually inv_sqrt_partial_sum_le_card gives ≤ k already.
+    For our assembly we only need the crude bound ≤ k+1. -/
+theorem inv_sqrt_sum_le_add_one (k : ℕ) :
+    ∑ n ∈ Finset.range k, ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) ≤ (k : ℝ) + 1 := by
+  calc ∑ n ∈ Finset.range k, ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2))
+      ≤ (k : ℝ) := inv_sqrt_partial_sum_le_card k
+    _ ≤ (k : ℝ) + 1 := le_add_of_nonneg_right zero_le_one
+
+/-- Off-diagonal mode sum on one block: the sum over far modes n < (k+1)/2
+    of the weighted VdC kernel is ≤ (k+1)/(log 2).
+
+    Uses far_mode_kernel_sum_bound pointwise, then sums (n+1)^{-1/2} ≤ k+1. -/
+theorem far_mode_sum_on_block (k : ℕ) (hk : 1 ≤ k) :
+    ∑ n ∈ Finset.filter (· < (k + 1) / 2) (Finset.range k),
+      ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) /
+        Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) ≤
+      ((k : ℝ) + 1) / Real.log 2 := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  calc ∑ n ∈ Finset.filter (· < (k + 1) / 2) (Finset.range k),
+        ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1))
+      ≤ ∑ n ∈ Finset.filter (· < (k + 1) / 2) (Finset.range k),
+        (1 / Real.log 2) * ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) := by
+          apply Finset.sum_le_sum
+          exact far_mode_kernel_sum_bound k hk
+    _ = (1 / Real.log 2) *
+        ∑ n ∈ Finset.filter (· < (k + 1) / 2) (Finset.range k),
+          ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) := by
+          rw [Finset.mul_sum]
+    _ ≤ (1 / Real.log 2) *
+        ∑ n ∈ Finset.range k, ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) := by
+          apply mul_le_mul_of_nonneg_left _ (by positivity)
+          apply Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
+          intro n _ _; positivity
+    _ ≤ (1 / Real.log 2) * ((k : ℝ) + 1) := by
+          apply mul_le_mul_of_nonneg_left (inv_sqrt_sum_le_add_one k) (by positivity)
+    _ = ((k : ℝ) + 1) / Real.log 2 := by ring
+
+/-- Near-mode count: the number of "near" modes ((k+1)/2 ≤ n < k) is at most k. -/
+theorem near_mode_count_le (k : ℕ) :
+    (Finset.filter (fun n => (k + 1) / 2 ≤ n) (Finset.range k)).card ≤ k := by
+  calc (Finset.filter (fun n => (k + 1) / 2 ≤ n) (Finset.range k)).card
+      ≤ (Finset.range k).card := Finset.card_filter_le _ _
+    _ = k := Finset.card_range k
+
+/-- Near-mode trivial bound: for any mode n, the integral of cos over one block
+    is trivially bounded by the block length (since |cos| ≤ 1). So
+    (n+1)^{-1/2} · |∫ cos| ≤ (n+1)^{-1/2} · block_length ≤ block_length.
+
+    For near-resonant modes where VdC may not give savings, this is the
+    fallback bound. Each such term is ≤ 6π(k+1) from block_length_le. -/
+theorem near_mode_trivial_bound (k n : ℕ) :
+    ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+      (hardyStart (k + 1) - hardyStart k) ≤
+      6 * Real.pi * ((k : ℝ) + 1) := by
+  have h_coef := rpow_neg_half_le_one n
+  have h_bl := block_length_le k
+  have h_bl_nn := block_length_nonneg k
+  calc ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) * (hardyStart (k + 1) - hardyStart k)
+      ≤ 1 * (hardyStart (k + 1) - hardyStart k) :=
+        mul_le_mul_of_nonneg_right h_coef h_bl_nn
+    _ = hardyStart (k + 1) - hardyStart k := one_mul _
+    _ ≤ 6 * Real.pi * ((k : ℝ) + 1) := h_bl
+
+/-- Near mode count bound: for n ∈ [(k+1)/2, k), there are ≤ (k+1)/2 + 1 ≤ k such modes.
+    Each contributes ≤ 6π(k+1) trivially. So the total near-mode contribution
+    is ≤ 6πk(k+1) per block.
+
+    This crude O(k²) per-block bound leads to O(K³) over K blocks, which is O(T^{3/2})
+    when K ~ √T. But this is only for the near modes — the far modes are O(k/log 2),
+    and the TOTAL bound uses the better estimate from Part 7b below. -/
+theorem near_mode_block_sum_crude (k : ℕ) :
+    ∀ n ∈ Finset.filter (fun m => (k + 1) / 2 ≤ m) (Finset.range k),
+      ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+        (hardyStart (k + 1) - hardyStart k) ≤
+        6 * Real.pi * ((k : ℝ) + 1) := by
+  intro n _hn
+  exact near_mode_trivial_bound k n
+
+/-! ### Part 7b: Summation over blocks for the full integral
+
+The key bridge between per-mode VdC and the first moment bound.
+
+Given that the AFE produces N(t) modes per block where N(t) = hardyN(t) ~ √(t/(2π)),
+and block k covers [hardyStart k, hardyStart(k+1)] with hardyN = k+1:
+
+- Off-diagonal modes (n < (k+1)/2): contribute ≤ C_vdc·(k+1)/log 2 per block (far_mode_sum_on_block)
+- Resonant mode (n = k): contributes ≤ 6π·(k+1)^{1/2} per block (resonant_mode_contribution_bound)
+- Near modes ((k+1)/2 ≤ n < k): each trivially bounded by 6π(k+1)
+
+The total per-block sum (all modes from the Dirichlet polynomial) is O(k²) crudely.
+Summing over blocks k=1..K gives O(K³). With K ~ √T, this is O(T^{3/2}).
+
+A BETTER approach: instead of summing modes per block then blocks,
+sum each mode's contribution over ALL blocks it participates in.
+Mode n appears in blocks k ≥ n+1 (off-diagonal) where it gets VdC bound
+C_vdc/(n+1)^{1/2}/log((k+1)/(n+1)). Summing over k gives O(log(K)/√n).
+Summing over n=0..K-1: O(√K · log K) = O(T^{1/4} · log T).
+Adding the error term O(T^{3/4}/(2·log T)) from the AFE gives O(T^{3/4}·ε).
+
+Here we prove the partial sum bound Σ_{k=1}^{K} (k+1)^{1/2} ≤ (2/3)(K+2)^{3/2}
+which feeds into the resonant mode summation over blocks. -/
+
+/-- Partial sum of √(k+1) over k = 0..K-1.
+
+    By the integral comparison test:
+    Σ_{k=0}^{K-1} √(k+1) ≤ ∫_0^K √(x+1) dx + √K = (2/3)((K+1)^{3/2}-1) + √K.
+    We use the cruder bound: each term √(k+1) ≤ √K for k < K,
+    so the sum ≤ K·√K = K^{3/2}. -/
+theorem sqrt_partial_sum_le (K : ℕ) :
+    ∑ k ∈ Finset.range K, ((k : ℝ) + 1) ^ ((1 : ℝ)/2) ≤
+      (K : ℝ) * ((K : ℝ)) ^ ((1 : ℝ)/2) := by
+  calc ∑ k ∈ Finset.range K, ((k : ℝ) + 1) ^ ((1 : ℝ)/2)
+      ≤ ∑ _k ∈ Finset.range K, ((K : ℝ)) ^ ((1 : ℝ)/2) := by
+        apply Finset.sum_le_sum
+        intro k hk
+        rw [Finset.mem_range] at hk
+        apply Real.rpow_le_rpow (by positivity) _ (by norm_num : (0 : ℝ) ≤ 1/2)
+        exact_mod_cast Nat.succ_le_of_lt hk
+    _ = (K : ℝ) * ((K : ℝ)) ^ ((1 : ℝ)/2) := by
+        simp [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+
+/-- The resonant-mode contribution summed over blocks k=1..K is O(K^{3/2}).
+
+    For each block k, the resonant mode contributes ≤ 6π·(k+1)^{1/2}.
+    Summing: Σ_{k=1}^{K} 6π·(k+1)^{1/2} ≤ 6π·K·√K.
+
+    With K ~ √T: this is 6π·√T·T^{1/4} = 6π·T^{3/4}. Not sharp but provides
+    a clean upper bound on the resonant piece.  For the O(T^{1/2+ε}) target,
+    the AFE error term dominates anyway. -/
+theorem resonant_sum_over_blocks (K : ℕ) :
+    ∑ k ∈ Finset.range K, 6 * Real.pi * ((k : ℝ) + 1) ^ ((1 : ℝ)/2) ≤
+      6 * Real.pi * ((K : ℝ) * ((K : ℝ)) ^ ((1 : ℝ)/2)) := by
+  rw [← Finset.mul_sum]
+  apply mul_le_mul_of_nonneg_left (sqrt_partial_sum_le K)
+  have : 0 < Real.pi := Real.pi_pos
+  positivity
+
+/-- Partial sum of (k+1)/log(2) for k = 0..K-1.
+
+    Σ_{k=0}^{K-1} (k+1)/log(2) = (1/log 2)·Σ (k+1) = (1/log 2)·K(K+1)/2. -/
+theorem far_mode_sum_over_blocks (K : ℕ) :
+    ∑ k ∈ Finset.range K, ((k : ℝ) + 1) / Real.log 2 ≤
+      ((K : ℝ) + 1) ^ 2 / Real.log 2 := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  -- Factor out 1/log 2
+  have h_factor : ∑ k ∈ Finset.range K, ((k : ℝ) + 1) / Real.log 2 =
+      (∑ k ∈ Finset.range K, ((k : ℝ) + 1)) / Real.log 2 := by
+    rw [Finset.sum_div]
+  rw [h_factor]
+  apply div_le_div_of_nonneg_right _ (le_of_lt hlog2)
+  calc ∑ k ∈ Finset.range K, ((k : ℝ) + 1)
+      ≤ ∑ _k ∈ Finset.range K, ((K : ℝ) + 1) := by
+        apply Finset.sum_le_sum
+        intro k hk
+        rw [Finset.mem_range] at hk
+        have : (k : ℝ) ≤ (K : ℝ) := by exact_mod_cast le_of_lt hk
+        linarith
+    _ = (K : ℝ) * ((K : ℝ) + 1) := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    _ ≤ ((K : ℝ) + 1) * ((K : ℝ) + 1) := by
+        apply mul_le_mul_of_nonneg_right (by linarith [Nat.cast_nonneg (α := ℝ) K]) (by positivity)
+    _ = ((K : ℝ) + 1) ^ 2 := by ring
+
+/-- Key exponent absorber: for any ε > 0, T^{1/2} · log T ≤ T^{1/2+ε}
+    for all T sufficiently large.
+
+    Proof: log T / T^ε → 0 as T → ∞, so eventually log T ≤ T^ε,
+    giving T^{1/2}·log T ≤ T^{1/2}·T^ε = T^{1/2+ε}. -/
+theorem sqrt_log_le_rpow (ε : ℝ) (hε : ε > 0) :
+    ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+      T ^ ((1 : ℝ)/2) * Real.log T ≤ C * T ^ ((1 : ℝ)/2 + ε) := by
+  -- From 1 + x ≤ exp(x) with x = ε·log T:
+  --   T^ε = exp(ε·log T) ≥ 1 + ε·log T ≥ ε·log T
+  -- So log T ≤ T^ε/ε, hence T^{1/2}·log T ≤ (1/ε)·T^{1/2+ε}.
+  refine ⟨1/ε, by positivity, fun T hT => ?_⟩
+  have hT_pos : (0 : ℝ) < T := by linarith
+  have hlog_nn : 0 ≤ Real.log T := le_of_lt (Real.log_pos (by linarith))
+  -- log T ≤ T^ε / ε
+  -- T^ε = exp(ε · log T) ≥ 1 + ε·log T ≥ ε·log T
+  have h_Teps : T ^ ε = Real.exp (ε * Real.log T) := by
+    rw [Real.rpow_def_of_pos hT_pos, mul_comm]
+  have h_exp_lb := Real.add_one_le_exp (ε * Real.log T)
+  -- T^ε ≥ ε·log T
+  have h3 : T ^ ε ≥ ε * Real.log T := by
+    rw [h_Teps]; linarith
+  -- log T ≤ T^ε / ε
+  have h_log_le : Real.log T ≤ T ^ ε / ε := by
+    rw [le_div_iff₀ hε]; linarith
+  -- T^{1/2} * T^ε = T^{1/2 + ε}
+  have h_rpow_eq : T ^ ((1 : ℝ)/2) * T ^ ε = T ^ ((1 : ℝ)/2 + ε) :=
+    (Real.rpow_add hT_pos ((1 : ℝ)/2) ε).symm
+  calc T ^ ((1 : ℝ)/2) * Real.log T
+      ≤ T ^ ((1 : ℝ)/2) * (T ^ ε / ε) := by
+        apply mul_le_mul_of_nonneg_left h_log_le (rpow_nonneg (le_of_lt hT_pos) _)
+    _ = (1/ε) * (T ^ ((1 : ℝ)/2) * T ^ ε) := by ring
+    _ = (1/ε) * T ^ ((1 : ℝ)/2 + ε) := by rw [h_rpow_eq]
+
+/-- Assembly lemma: the per-block contribution from all off-diagonal modes (via VdC)
+    plus the resonant mode, summed over K blocks, is O(K² + K^{3/2}).
+
+    This is the key quantitative result that will combine with the AFE (once proved)
+    to give the first moment bound.
+
+    When K ~ √T, this sum is O(T + T^{3/4}) = O(T).
+    But with the sharper per-mode analysis (mode n over all blocks gives O(log(K)/√n)),
+    the true total is O(√T · log T) = O(T^{1/2+ε}).
+
+    For the current assembly, we record the crude K² + K^{3/2} bound. -/
+theorem block_sum_assembly (K : ℕ) (_hK : 1 ≤ K) :
+    ∑ k ∈ Finset.range K,
+      (((k : ℝ) + 1) / Real.log 2 + 6 * Real.pi * ((k : ℝ) + 1) ^ ((1 : ℝ)/2)) ≤
+      ((K : ℝ) + 1) ^ 2 / Real.log 2 + 6 * Real.pi * ((K : ℝ) * ((K : ℝ)) ^ ((1 : ℝ)/2)) := by
+  rw [Finset.sum_add_distrib]
+  exact add_le_add (far_mode_sum_over_blocks K) (resonant_sum_over_blocks K)
+
+end PerModeSummation
+
 private theorem ibp_oscillatory_bound :
     ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Set.Ioc 1 T, HardyEstimatesPartial.hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) := by

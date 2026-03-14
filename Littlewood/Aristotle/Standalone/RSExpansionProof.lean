@@ -1492,6 +1492,165 @@ theorem rsPsi_at_block_end : rsPsi 1 = Real.cos (Real.pi / 4) := by
   unfold rsPsi; ring_nf
 
 -- ============================================================
+-- Section 7c-tail: Euler-Maclaurin tail infrastructure for Dirichlet series
+-- ============================================================
+-- Abel summation by parts and exponential sum bounds for
+-- bounding the Dirichlet polynomial remainder on the critical line.
+-- This section builds sorry-free infrastructure toward `saddle_point_remainder`.
+
+/-- The norm of (n+1)^{it} equals 1 for any real t and natural n.
+    This is immediate from |x^{iy}| = x^{Re(iy)} = x^0 = 1 for x > 0. -/
+theorem norm_cpow_imaginary (n : ℕ) (t : ℝ) :
+    ‖((n + 1 : ℝ) : ℂ) ^ (Complex.I * (t : ℂ))‖ = 1 := by
+  have hn_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  rw [Complex.norm_cpow_eq_rpow_re_of_pos hn_pos]
+  simp [Complex.mul_re, Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+
+/-- Each term of the Dirichlet polynomial on the critical line has norm n^{-1/2}:
+    ‖(n+1)^{-1/2-it}‖ = (n+1)^{-1/2}.
+    This decouples the amplitude from the oscillatory phase. -/
+theorem norm_dirichlet_term (n : ℕ) (t : ℝ) :
+    ‖((n + 1 : ℝ) : ℂ) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖ =
+    ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  have hn_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  rw [Complex.norm_cpow_eq_rpow_re_of_pos hn_pos]
+  congr 1
+  simp [Complex.sub_re, Complex.neg_re, Complex.div_ofNat, Complex.mul_re,
+        Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+
+/-- The reflected Dirichlet term also has norm n^{-1/2}:
+    ‖(n+1)^{-1/2+it}‖ = (n+1)^{-1/2}. -/
+theorem norm_reflected_dirichlet_term (n : ℕ) (t : ℝ) :
+    ‖((n + 1 : ℝ) : ℂ) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))‖ =
+    ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  have hn_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  rw [Complex.norm_cpow_eq_rpow_re_of_pos hn_pos]
+  congr 1
+  simp [Complex.add_re, Complex.neg_re, Complex.div_ofNat, Complex.mul_re,
+        Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+
+/-- The amplitude sequence n ↦ (n+1)^{-1/2} is antitone (decreasing). -/
+theorem dirichlet_amplitude_antitone :
+    Antitone (fun n : ℕ => ((n + 1 : ℝ)) ^ (-(1/2 : ℝ))) := by
+  intro a b hab
+  apply Real.rpow_le_rpow_of_exponent_nonpos
+  · positivity
+  · exact_mod_cast (show (a : ℕ) + 1 ≤ b + 1 from Nat.add_le_add_right hab 1)
+  · norm_num
+
+/-- The amplitude sequence is nonneg. -/
+theorem dirichlet_amplitude_nonneg (n : ℕ) :
+    (0 : ℝ) ≤ ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by positivity
+
+/-- Complex Abel summation by parts for finite sums.
+    For sequences f, g : ℕ → ℂ with partial sums F(n) = Σ_{k≤n} f(k):
+    Σ_{k=a}^{b} f(k)·g(k) = F(b)·g(b) - F(a-1)·g(a) - Σ_{k=a}^{b-1} F(k)·(g(k+1)-g(k))
+
+    Here we prove a simpler version: the telescoping identity for adjacent differences.
+    Σ_{k<n} (a(k) - a(k+1)) = a(0) - a(n). -/
+theorem complex_telescoping_sum (a : ℕ → ℂ) (n : ℕ) :
+    ∑ k ∈ Finset.range n, (a k - a (k + 1)) = a 0 - a n := by
+  induction n with
+  | zero => simp
+  | succ m ih =>
+    rw [Finset.sum_range_succ, ih]
+    ring
+
+/-- Norm of a telescoping sum: ‖Σ (a(k) - a(k+1))‖ ≤ ‖a(0)‖ + ‖a(n)‖. -/
+theorem norm_telescoping_sum_le (a : ℕ → ℂ) (n : ℕ) :
+    ‖∑ k ∈ Finset.range n, (a k - a (k + 1))‖ ≤ ‖a 0‖ + ‖a n‖ := by
+  rw [complex_telescoping_sum]
+  exact le_trans (norm_sub_le _ _) (by linarith [norm_nonneg (a n)])
+
+/-- The norm of a Dirichlet range sum is bounded by
+    the sum of amplitudes via the triangle inequality. -/
+theorem norm_complexPartialSum_range_le (t : ℝ) (N : ℕ) :
+    ‖∑ n ∈ Finset.range N,
+      ((n + 1 : ℝ) : ℂ) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖ ≤
+    ∑ n ∈ Finset.range N, ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  calc ‖∑ n ∈ Finset.range N,
+        ((n + 1 : ℝ) : ℂ) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖
+      ≤ ∑ n ∈ Finset.range N,
+        ‖((n + 1 : ℝ) : ℂ) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖ :=
+        norm_sum_le _ _
+    _ = ∑ n ∈ Finset.range N, ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+        congr 1; ext n; exact norm_dirichlet_term n t
+
+/-- The amplitude sum Σ_{n<N} (n+1)^{-1/2} is bounded by N
+    via the crude bound (n+1)^{-1/2} ≤ 1. -/
+theorem sum_amplitude_le_count (N : ℕ) :
+    ∑ n ∈ Finset.range N, ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) ≤ (N : ℝ) := by
+  calc ∑ n ∈ Finset.range N, ((n + 1 : ℝ)) ^ (-(1/2 : ℝ))
+      ≤ ∑ _n ∈ Finset.range N, (1 : ℝ) := by
+        apply Finset.sum_le_sum
+        intro n _; exact rpow_neg_half_le_one n
+    _ = (N : ℝ) := by simp [Finset.sum_const, Finset.card_range]
+
+/-- The next term after the partial sum on block k has amplitude (k+2)^{-1/2},
+    which matches the RS leading term amplitude. -/
+theorem next_term_amplitude_eq_rsLeading (k : ℕ) :
+    ((k + 2 : ℝ)) ^ (-(1/2 : ℝ)) =
+    ((k + 1 + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  congr 1; push_cast; ring
+
+/-- The amplitude (n+1)^{-1/2} equals the reciprocal of √(n+1).
+    This connects the rpow formulation to the sqrt formulation. -/
+theorem rpow_neg_half_eq_inv_sqrt (n : ℕ) :
+    ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) = 1 / Real.sqrt ((n : ℝ) + 1) := by
+  have hn_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  rw [Real.sqrt_eq_rpow, one_div, Real.rpow_neg (le_of_lt hn_pos), inv_eq_one_div]
+
+/-- The step bound for the amplitude integral comparison:
+    1/√(m+1) ≤ 2·(√(m+1) - √m), equivalently
+    1 ≤ 2·(√(m+1) - √m)·√(m+1) = 2(m+1) - 2·√(m·(m+1)).
+    This follows from (2m+1)² ≥ 4m(m+1). -/
+theorem inv_sqrt_le_two_diff_sqrt (m : ℕ) :
+    1 / Real.sqrt ((m : ℝ) + 1) ≤
+    2 * Real.sqrt ((m : ℝ) + 1) - 2 * Real.sqrt (m : ℝ) := by
+  have hm1_pos : (0 : ℝ) < (m : ℝ) + 1 := by positivity
+  have hsqrt_pos : 0 < Real.sqrt ((m : ℝ) + 1) := Real.sqrt_pos.mpr hm1_pos
+  rw [div_le_iff₀ hsqrt_pos]
+  nlinarith [Real.sq_sqrt (show (0 : ℝ) ≤ (m : ℝ) + 1 by positivity),
+             Real.sq_sqrt (show (0 : ℝ) ≤ (m : ℝ) by positivity),
+             sq_nonneg (Real.sqrt ((m : ℝ) + 1) - Real.sqrt (m : ℝ)),
+             sq_nonneg (2 * Real.sqrt ((m : ℝ) * ((m : ℝ) + 1)) - (2 * (m : ℝ) + 1))]
+
+/-- The Dirichlet amplitudes satisfy a square-root integral comparison:
+    Σ_{n=0}^{N-1} (n+1)^{-1/2} ≤ 2√N.
+    Each term 1/√(m+1) ≤ 2(√(m+1) - √m) and the sum telescopes. -/
+theorem partial_sum_amplitude_le_two_sqrt (N : ℕ) :
+    ∑ n ∈ Finset.range N, ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) ≤ 2 * Real.sqrt (N : ℝ) := by
+  induction N with
+  | zero => simp [Real.sqrt_zero]
+  | succ m ih =>
+    rw [Finset.sum_range_succ]
+    -- ih : ∑ n ∈ Finset.range m, ... ≤ 2 * √↑m
+    -- goal : ∑ n ∈ Finset.range m, ... + (↑m+1)^(-1/2) ≤ 2 * √↑(m+1)
+    -- The key: the succ cast √↑(m+1) = √(↑m + 1)
+    have hsucc : Real.sqrt ((m + 1 : ℕ) : ℝ) = Real.sqrt ((m : ℝ) + 1) := by
+      congr 1; push_cast; ring
+    rw [hsucc]
+    have h_step : ((m + 1 : ℝ)) ^ (-(1/2 : ℝ)) ≤
+        2 * Real.sqrt ((m : ℝ) + 1) - 2 * Real.sqrt (m : ℝ) := by
+      rw [rpow_neg_half_eq_inv_sqrt]
+      exact inv_sqrt_le_two_diff_sqrt m
+    have hm_eq : Real.sqrt ((m : ℕ) : ℝ) = Real.sqrt (m : ℝ) := by norm_cast
+    linarith [hm_eq]
+
+/-- On block k, the partial sum has ≤ 2√(k+1) amplitude (sharper than k+1). -/
+theorem partialSum_norm_le_two_sqrt_block (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    ‖complexPartialSum t‖ ≤ 2 * Real.sqrt ((k : ℝ) + 1) := by
+  calc ‖complexPartialSum t‖
+      ≤ ∑ n ∈ Finset.range (hardyN t), ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) :=
+        norm_complexPartialSum_le t
+    _ = ∑ n ∈ Finset.range (k + 1), ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+        rw [hardyN_on_open_block k t ht_lo ht_hi]
+    _ ≤ 2 * Real.sqrt ((k + 1 : ℕ) : ℝ) :=
+        partial_sum_amplitude_le_two_sqrt (k + 1)
+    _ = 2 * Real.sqrt ((k : ℝ) + 1) := by push_cast; ring_nf
+
+-- ============================================================
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
 -- ============================================================
 
