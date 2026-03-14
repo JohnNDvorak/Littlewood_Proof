@@ -678,6 +678,126 @@ theorem vonMangoldt_le_log (n : ℕ) (hn : 1 ≤ n) :
   · -- Not a prime power: vonMangoldt n = 0 ≤ log n
     exact Real.log_nonneg (by exact_mod_cast hn)
 
+/-! ### Tail-term bounds and summability infrastructure
+
+For n > floor(x), we have x/n < 1, so `perron_per_term_small_bound` bounds each term.
+Combined with Λ(n) ≤ log n, this gives geometrically decaying tail terms.
+
+For the Fubini interchange, each weighted Perron term is dominated by
+T·Λ(n)·(x/n)^c/(π·c), and the series Σ Λ(n)/n^c converges for c > 1
+(from Mathlib's `LSeriesSummable_vonMangoldt`). -/
+
+/-- Λ(n) is nonneg for all n.
+    PROVED: Λ(n) = log(minFac n) ≥ 0 if n is a prime power, else Λ(n) = 0. -/
+theorem vonMangoldt_nonneg (n : ℕ) : 0 ≤ ArithmeticFunction.vonMangoldt n := by
+  simp only [ArithmeticFunction.vonMangoldt_apply]
+  split_ifs with h
+  · exact Real.log_nonneg (by exact_mod_cast Nat.minFac_pos n)
+  · exact le_refl _
+
+/-- For n > floor(x) with x ≥ 2, we have 0 < x/n < 1.
+    PROVED: n ≥ floor(x) + 1 > x gives x/n < 1; x > 0 gives x/n > 0. -/
+theorem xdivn_in_unit_interval_of_tail (x : ℝ) (hx : 2 ≤ x) (n : ℕ)
+    (hn : Nat.floor x + 1 ≤ n) (hn_pos : 1 ≤ n) :
+    0 < x / (n : ℝ) ∧ x / (n : ℝ) < 1 := by
+  have hx_pos : (0 : ℝ) < x := by linarith
+  have hn_real_pos : (0 : ℝ) < (n : ℝ) := Nat.cast_pos.mpr hn_pos
+  constructor
+  · exact div_pos hx_pos hn_real_pos
+  · rw [div_lt_one hn_real_pos]
+    have h_floor_lt : x < (Nat.floor x : ℝ) + 1 := by
+      exact_mod_cast Nat.lt_floor_add_one x
+    calc x < (Nat.floor x : ℝ) + 1 := h_floor_lt
+      _ ≤ (n : ℝ) := by exact_mod_cast hn
+
+/-- Per-term tail bound: for n > floor(x) with n ≥ 1, the weighted Perron
+    |Λ(n) · perronPerTermIntegral(x/n, c, T)| is bounded by
+    Λ(n) · [(x/n)^c + 1)/(T·|log(x/n)|) + 2(x/n)^c/(cT)].
+
+    PROVED: from vonMangoldt_nonneg + perron_per_term_small_bound + abs_mul. -/
+theorem tail_term_perron_bound (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T)
+    (n : ℕ) (hn : Nat.floor x + 1 ≤ n) (hn_pos : 1 ≤ n) :
+    |ArithmeticFunction.vonMangoldt n *
+      perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| ≤
+    ArithmeticFunction.vonMangoldt n *
+      ((x / n) ^ (1 + 1 / Real.log x) + 1) /
+        (T * |Real.log (x / n)|) +
+    ArithmeticFunction.vonMangoldt n *
+      (2 * (x / n) ^ (1 + 1 / Real.log x)) /
+        ((1 + 1 / Real.log x) * T) := by
+  have ⟨hxn_pos, hxn_lt⟩ := xdivn_in_unit_interval_of_tail x hx n hn hn_pos
+  have hc_pos := c_param_pos x hx
+  set c := 1 + 1 / Real.log x
+  rw [abs_mul, abs_of_nonneg (vonMangoldt_nonneg n)]
+  have h_bound := perron_per_term_small_bound (x / n) hxn_pos hxn_lt c hc_pos T hT
+  calc ArithmeticFunction.vonMangoldt n * |perronPerTermIntegral (x / ↑n) c T|
+      ≤ ArithmeticFunction.vonMangoldt n *
+          (((x / ↑n) ^ c + 1) / (T * |Real.log (x / ↑n)|) +
+            2 * (x / ↑n) ^ c / (c * T)) := by
+        apply mul_le_mul_of_nonneg_left h_bound (vonMangoldt_nonneg n)
+    _ = ArithmeticFunction.vonMangoldt n *
+          ((x / ↑n) ^ c + 1) / (T * |Real.log (x / ↑n)|) +
+        ArithmeticFunction.vonMangoldt n *
+          (2 * (x / ↑n) ^ c) / (c * T) := by ring
+
+/-- The domination bound: for n ≥ 1, the weighted Perron integral satisfies
+    |Λ(n) · perronPerTermIntegral(x/n, c, T)| ≤ T/(π·c) · Λ(n) · (x/n)^c.
+
+    This bounds EVERY term (not just tail), enabling summability arguments.
+
+    PROVED: from vonMangoldt_nonneg + perron_per_term_abs_bound_general. -/
+theorem weighted_perron_term_domination (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T)
+    (n : ℕ) (hn : 1 ≤ n) :
+    |ArithmeticFunction.vonMangoldt n *
+      perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| ≤
+    ArithmeticFunction.vonMangoldt n *
+      (T * (x / n) ^ (1 + 1 / Real.log x) / (Real.pi * (1 + 1 / Real.log x))) := by
+  rw [abs_mul, abs_of_nonneg (vonMangoldt_nonneg n)]
+  exact mul_le_mul_of_nonneg_left
+    (perron_per_term_abs_bound_general x hx T hT n hn)
+    (vonMangoldt_nonneg n)
+
+/-- The Λ-weighted (x/n)^c factorizes as x^c · Λ(n)/n^c.
+    PROVED: algebraic identity using div_rpow. -/
+theorem weighted_rpow_factor (x : ℝ) (hx : 2 ≤ x) (n : ℕ) (hn : 1 ≤ n) :
+    ArithmeticFunction.vonMangoldt n *
+      (x / n) ^ (1 + 1 / Real.log x) =
+    x ^ (1 + 1 / Real.log x) *
+      (ArithmeticFunction.vonMangoldt n / (n : ℝ) ^ (1 + 1 / Real.log x)) := by
+  have hx_pos : (0 : ℝ) < x := by linarith
+  have hn_pos : (0 : ℝ) < (n : ℝ) := Nat.cast_pos.mpr hn
+  rw [div_rpow hx_pos.le hn_pos.le]
+  ring
+
+/-- The von Mangoldt L-series is summable at c = 1 + 1/log x > 1.
+    Each term Λ(n)/n^c has real norm equal to the complex L-series norm,
+    so real summability follows from Mathlib's `LSeriesSummable_vonMangoldt`.
+
+    PROVED: wrapper around Mathlib's L-series summability. -/
+theorem vonMangoldt_weighted_summable (x : ℝ) (hx : 2 ≤ x) :
+    Summable (fun n : ℕ =>
+      ArithmeticFunction.vonMangoldt n / (n : ℝ) ^ (1 + 1 / Real.log x)) := by
+  have hc := c_param_gt_one x hx
+  set c := 1 + 1 / Real.log x with hc_def
+  have h_ls := vonMangoldt_lseries_summable
+    (s := (c : ℂ)) (by simp [Complex.ofReal_re]; exact hc)
+  have h_eq : (fun n : ℕ => ArithmeticFunction.vonMangoldt n / (n : ℝ) ^ c) =
+      (fun n : ℕ => ‖LSeries.term (↗ArithmeticFunction.vonMangoldt) (↑c) n‖) := by
+    ext n
+    by_cases hn : n = 0
+    · subst hn; simp [LSeries.term]
+    · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn
+      -- Goal: Λ(n)/n^c = ‖↗Λ(n) / n^c‖ where ↗ is the nat-coe to ℂ
+      -- ‖a/b‖ = ‖a‖/‖b‖, ‖(r:ℂ)‖ = |r|, ‖n^s‖ = n^(Re s)
+      simp only [LSeries.term, if_neg hn]
+      rw [norm_div, norm_natCast_cpow_of_pos hn_pos,
+          show ((c : ℂ)).re = c from Complex.ofReal_re c]
+      -- Goal: Λ(n)/n^c = ‖↗Λ(n)‖/n^c, suffices ‖↗Λ(n)‖ = Λ(n)
+      congr 1
+      simp [Complex.norm_real, abs_of_nonneg (vonMangoldt_nonneg n)]
+  rw [h_eq]
+  exact h_ls.norm
+
 /-- **Fubini sub-lemma 1**: The Perron vertical integral equals the infinite
     Dirichlet series of per-term Perron integrals weighted by Λ(n).
 

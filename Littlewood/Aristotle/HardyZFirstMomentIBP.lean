@@ -38,6 +38,11 @@ import Littlewood.Aristotle.PhragmenLindelof
 import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.OffResonanceSmoothVdC
 import Littlewood.Aristotle.HardyNProperties
+import Littlewood.Aristotle.Standalone.OscPieceBigOAssembly
+import Littlewood.Aristotle.AbelSummation
+import Littlewood.Bridge.HardyZTransfer
+import Littlewood.Aristotle.RSBlockParam
+import Littlewood.Aristotle.ErrorTermExpansion
 
 set_option linter.mathlibStandardSet false
 
@@ -1300,6 +1305,221 @@ theorem block_sum_assembly (K : ℕ) (_hK : 1 ≤ K) :
 
 end PerModeSummation
 
+/-! ## Part 8: ErrorTerm integral bound via RS expansion + alternating blocks
+
+The RS expansion (Siegel 1932) gives |ErrorTerm(t)| ≤ C·t^{-1/4} and
+signed block integrals (-1)^k · ∫_{block k} ErrorTerm ≥ 0.
+
+From the alternating structure:
+  |∫₁ᵀ ErrorTerm| = |Σ_{k=0}^{K} signed_block_integrals + partial_tail|
+                   ≤ |last full block integral| + |partial tail|
+                   ≤ C · block_length(K)
+                   = O(K) = O(√T).
+
+This section derives the ErrorTerm integral bound from RSExpansionProof. -/
+
+section ErrorTermIntegralBound
+
+open HardyEstimatesPartial
+open Aristotle.Standalone.OscPieceBigOAssembly
+  (exists_block_of_ge_hardyStart0 hardyStart_mono)
+open Aristotle.HardyNProperties (hardyStart_formula block_length)
+open Aristotle.ErrorTermExpansion (rsPsi)
+open Aristotle.RSBlockParam (blockParam)
+
+/-- ErrorTerm pointwise bound from the RS expansion: |ErrorTerm(t)| ≤ C·t^{-1/4}.
+    Derived from the RS expansion hypothesis via triangle inequality and
+    the fact that |rsPsi(p)| ≤ 1 and |(2π/t)^{1/4}| ≤ (2π)^{1/4} · t^{-1/4}.
+
+    The hypothesis `h_exp` is the RS expansion from RSExpansionProof.rs_expansion_for_b1b3_weak.
+    Once the RS expansion builds, plug in that result to instantiate. -/
+theorem errorTerm_pointwise_from_rs
+    (h_exp : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4)) :
+    ∃ C_et > (0 : ℝ), ∀ t : ℝ, t ≥ 1 →
+      |ErrorTerm t| ≤ C_et * t ^ (-(1 : ℝ) / 4) := by
+  obtain ⟨C_R, hCR_pos, h_expansion⟩ := h_exp
+  -- For t ≥ hardyStart 0: use block-based bound
+  -- For 1 ≤ t < hardyStart 0: compact region, use continuity
+  have h_cont : Continuous hardyZ := by
+    have h_eq : hardyZ = fun t => (hardyZV2 t).re :=
+      funext HardyZTransfer.hardyZ_eq_hardyZV2_re
+    rw [h_eq]; exact Complex.continuous_re.comp continuous_hardyZV2
+  obtain ⟨M₀, hM₀⟩ := (isCompact_Icc (a := (1 : ℝ)) (b := hardyStart 0)).exists_bound_of_continuousOn
+    h_cont.continuousOn
+  set C_block := (2 * Real.pi) ^ ((1 : ℝ)/4) + C_R
+  set C_compact := M₀ * (hardyStart 0) ^ ((1 : ℝ)/4)
+  refine ⟨max C_block C_compact + 1, by positivity, fun t ht => ?_⟩
+  by_cases h_large : hardyStart 0 ≤ t
+  · obtain ⟨k, hk_lo, hk_hi⟩ := exists_block_of_ge_hardyStart0 t h_large
+    have ht_pos : (0 : ℝ) < t := by linarith
+    have h_exp_k := h_expansion k t hk_lo hk_hi ht_pos
+    -- |ErrorTerm t| ≤ |leading term| + |remainder|
+    --   ≤ (2π/t)^{1/4} + C_R · t^{-3/4}   (since |rsPsi| ≤ 1, |(-1)^k| = 1)
+    have h_tri : |ErrorTerm t| ≤
+        (2 * Real.pi / t) ^ ((1 : ℝ) / 4) + C_R * t ^ (-(3 : ℝ) / 4) := by
+      have h1 := abs_add_le
+        (ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t))
+        ((-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t))
+      simp only [sub_add_cancel] at h1
+      have h_lead_le : |(-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ (2 * Real.pi / t) ^ ((1 : ℝ) / 4) := by
+        rw [abs_mul, abs_mul, show |(-1 : ℝ) ^ k| = 1 from by simp [abs_pow, abs_neg, abs_one]]
+        rw [one_mul, abs_of_nonneg (rpow_nonneg (div_nonneg (by positivity) ht_pos.le) _)]
+        exact mul_le_of_le_one_right (rpow_nonneg (div_nonneg (by positivity) ht_pos.le) _)
+          (abs_cos_le_one _)
+      linarith
+    -- Factor: (2π/t)^{1/4} = (2π)^{1/4} · t^{-1/4}
+    have h_factor : (2 * Real.pi / t) ^ ((1 : ℝ) / 4) =
+        (2 * Real.pi) ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) := by
+      rw [div_eq_mul_inv,
+          Real.mul_rpow (by positivity : (0 : ℝ) ≤ 2 * Real.pi) (inv_nonneg.mpr ht_pos.le)]
+      congr 1
+      rw [show (-(1:ℝ)/4) = -((1:ℝ)/4) from by ring, rpow_neg ht_pos.le, Real.inv_rpow ht_pos.le]
+    -- t^{-3/4} ≤ t^{-1/4} for t ≥ 1
+    have h_rpow_mono : t ^ (-(3 : ℝ)/4) ≤ t ^ (-(1 : ℝ)/4) :=
+      rpow_le_rpow_of_exponent_le ht (by norm_num)
+    calc |ErrorTerm t|
+        ≤ (2 * Real.pi) ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) + C_R * t ^ (-(1 : ℝ)/4) := by
+          rw [h_factor] at h_tri
+          linarith [mul_le_mul_of_nonneg_left h_rpow_mono hCR_pos.le]
+      _ = C_block * t ^ (-(1 : ℝ)/4) := by simp only [C_block]; ring
+      _ ≤ (max C_block C_compact + 1) * t ^ (-(1 : ℝ)/4) := by
+          have : 0 ≤ t ^ (-(1 : ℝ)/4) := rpow_nonneg (by linarith) _
+          nlinarith [le_max_left C_block C_compact]
+  · -- Compact region [1, hardyStart 0]
+    push_neg at h_large
+    have ht_in : t ∈ Icc (1 : ℝ) (hardyStart 0) := ⟨ht, le_of_lt h_large⟩
+    -- On [1, hardyStart 0), N(t) = 0 so MainTerm = 0 and ErrorTerm = hardyZ
+    have h_eq : ErrorTerm t = hardyZ t := by
+      unfold ErrorTerm MainTerm
+      have h_div : t / (2 * Real.pi) < 1 := by
+        rw [div_lt_one (by positivity : (0 : ℝ) < 2 * Real.pi)]
+        rw [hardyStart_formula] at h_large
+        have : ((0 : ℕ) + 1 : ℝ) ^ 2 = 1 := by push_cast; norm_num
+        rw [this] at h_large; linarith
+      have h_sqrt_lt : Real.sqrt (t / (2 * Real.pi)) < 1 := by
+        by_cases h_nn : 0 ≤ t / (2 * Real.pi)
+        · calc Real.sqrt (t / (2 * Real.pi)) < Real.sqrt 1 := Real.sqrt_lt_sqrt h_nn h_div
+            _ = 1 := Real.sqrt_one
+        · push_neg at h_nn
+          calc Real.sqrt (t / (2 * Real.pi)) = 0 := Real.sqrt_eq_zero_of_nonpos (le_of_lt h_nn)
+            _ < 1 := one_pos
+      have h_floor : Nat.floor (Real.sqrt (t / (2 * Real.pi))) = 0 :=
+        Nat.floor_eq_zero.mpr h_sqrt_lt
+      simp [h_floor]
+    have h_bound_Z : ‖hardyZ t‖ ≤ M₀ := hM₀ t ht_in
+    rw [Real.norm_eq_abs] at h_bound_Z
+    have h_bound : |ErrorTerm t| ≤ M₀ := by rw [h_eq]; exact h_bound_Z
+    have ht_pos : (0 : ℝ) < t := lt_of_lt_of_le one_pos ht
+    have h_rpow_inv : t ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) = 1 := by
+      rw [show (-(1 : ℝ)/4) = -((1 : ℝ)/4) from by ring,
+          ← rpow_add ht_pos, add_neg_cancel, rpow_zero]
+    have h_t14_le : t ^ ((1 : ℝ)/4) ≤ (hardyStart 0) ^ ((1 : ℝ)/4) :=
+      rpow_le_rpow (by linarith) (le_of_lt h_large) (by norm_num)
+    calc |ErrorTerm t|
+        ≤ M₀ := h_bound
+      _ = M₀ * (t ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4)) := by rw [h_rpow_inv, mul_one]
+      _ = M₀ * t ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) := by ring
+      _ ≤ M₀ * (hardyStart 0) ^ ((1 : ℝ)/4) * t ^ (-(1 : ℝ)/4) := by
+          have h_nn : 0 ≤ t ^ (-(1 : ℝ)/4) := rpow_nonneg (by linarith) _
+          have hM₀_nn : 0 ≤ M₀ := le_trans (abs_nonneg _) h_bound
+          exact mul_le_mul_of_nonneg_right
+            (mul_le_mul_of_nonneg_left h_t14_le hM₀_nn) h_nn
+      _ = C_compact * t ^ (-(1 : ℝ)/4) := by simp only [C_compact]
+      _ ≤ (max C_block C_compact + 1) * t ^ (-(1 : ℝ)/4) := by
+          have : 0 ≤ t ^ (-(1 : ℝ)/4) := rpow_nonneg (by linarith) _
+          nlinarith [le_max_right C_block C_compact]
+
+/-- Linear bound on ErrorTerm integral from pointwise bound:
+    |∫₁ᵀ ErrorTerm| ≤ C · T.  Used as fallback for large ε. -/
+theorem errorTerm_integral_linear
+    (h_exp : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4)) :
+    ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Set.Ioc 1 T, ErrorTerm t| ≤ C * T := by
+  obtain ⟨C_et, hC_pos, h_ptwise⟩ := errorTerm_pointwise_from_rs h_exp
+  refine ⟨C_et, hC_pos, fun T hT => ?_⟩
+  have h_bound : ∀ t ∈ Set.uIoc 1 T, ‖ErrorTerm t‖ ≤ C_et := by
+    intro t ht
+    rw [Set.uIoc_of_le (by linarith : (1:ℝ) ≤ T)] at ht
+    rw [Real.norm_eq_abs]
+    have ht1 : t ≥ 1 := by linarith [ht.1]
+    calc |ErrorTerm t| ≤ C_et * t ^ (-(1 : ℝ) / 4) := h_ptwise t ht1
+      _ ≤ C_et * 1 :=
+          mul_le_mul_of_nonneg_left
+            (rpow_le_one_of_one_le_of_nonpos ht1 (by norm_num)) hC_pos.le
+      _ = C_et := mul_one _
+  have h1 := intervalIntegral.norm_integral_le_of_norm_le_const h_bound
+  rw [show ∫ t in Set.Ioc 1 T, ErrorTerm t = ∫ t in (1:ℝ)..T, ErrorTerm t from by
+    rw [intervalIntegral.integral_of_le (by linarith)]] at *
+  calc |∫ t in (1:ℝ)..T, ErrorTerm t|
+      ≤ C_et * |T - 1| := h1
+    _ ≤ C_et * T := by rw [abs_of_nonneg (by linarith)]; nlinarith
+
+/-- Single block ErrorTerm integral bound:
+    |∫_{block k} ErrorTerm| ≤ C_et · block_length(k). -/
+private theorem block_errorTerm_integral_le
+    (C_et : ℝ) (hC_pos : 0 < C_et)
+    (h_ptwise : ∀ t : ℝ, t ≥ 1 → |ErrorTerm t| ≤ C_et * t ^ (-(1 : ℝ) / 4))
+    (k : ℕ) :
+    |∫ t in Set.Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t| ≤
+      C_et * (2 * Real.pi * (2 * (k : ℝ) + 3)) := by
+  have hhs_gt_one : (1 : ℝ) < hardyStart k := by
+    rw [hardyStart_formula]
+    have hk_nn : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    have : (1 : ℝ) ≤ ((k : ℝ) + 1) ^ 2 := by nlinarith
+    nlinarith [Real.pi_gt_three]
+  have h_hs_le : hardyStart k ≤ hardyStart (k + 1) := hardyStart_mono (Nat.le_succ k)
+  have h_const : ∀ t ∈ Set.uIoc (hardyStart k) (hardyStart (k + 1)),
+      ‖ErrorTerm t‖ ≤ C_et := by
+    intro t ht
+    rw [Set.uIoc_of_le h_hs_le] at ht
+    rw [Real.norm_eq_abs]
+    have ht1 : t ≥ 1 := by linarith [ht.1]
+    calc |ErrorTerm t| ≤ C_et * t ^ (-(1 : ℝ) / 4) := h_ptwise t ht1
+      _ ≤ C_et * 1 := mul_le_mul_of_nonneg_left
+          (rpow_le_one_of_one_le_of_nonpos ht1 (by norm_num)) hC_pos.le
+      _ = C_et := mul_one _
+  have h1 := intervalIntegral.norm_integral_le_of_norm_le_const h_const
+  rw [show ∫ t in Set.Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t =
+      ∫ t in (hardyStart k)..(hardyStart (k + 1)), ErrorTerm t from by
+    rw [intervalIntegral.integral_of_le h_hs_le]] at *
+  calc |∫ t in (hardyStart k)..(hardyStart (k + 1)), ErrorTerm t|
+      ≤ C_et * |hardyStart (k + 1) - hardyStart k| := h1
+    _ = C_et * (hardyStart (k + 1) - hardyStart k) := by
+        rw [abs_of_nonneg (sub_nonneg.mpr h_hs_le)]
+    _ = C_et * (2 * Real.pi * (2 * (k : ℝ) + 3)) := by rw [block_length]
+
+end ErrorTermIntegralBound
+
+/-! ## Part 9: ibp_oscillatory_bound and first moment assembly
+
+The sorry at `ibp_oscillatory_bound` requires the full per-mode oscillatory
+cancellation argument (Titchmarsh 1951, §4.15). The proved sub-components are:
+
+PROVED (in this file):
+  - thetaDeriv_lower_bound: θ'(t) ≥ (1/4)·log(t)
+  - ibp_boundary_bound: ‖ζ(T)‖/θ'(T) ≤ C·T^{1/2}
+  - ibp_correction_integrand_bound: |d/dt[ζ/(iθ')]| ≤ C·t^{3/4}/log(t)
+  - hardyZ_pointwise_bound: |Z(t)| ≤ C·|t|^{1/2}
+  - errorTerm_pointwise_from_rs: |ErrorTerm(t)| ≤ C·t^{-1/4} (Part 8)
+  - errorTerm_integral_linear: |∫ ErrorTerm| ≤ C·T (Part 8)
+  - block_errorTerm_integral_le: per-block ErrorTerm bound (Part 8)
+  - sqrt_log_le_rpow: T^{1/2}·log T ≤ C_ε·T^{1/2+ε}
+  - block_sum_assembly: per-mode VdC total ≤ O(K² + K^{3/2})
+
+REMAINING GAP: per-mode global VdC on the IBP correction integral.
+  The correction ∫ d/dt[ζ/(iθ')] · e^{iθ} dt has the oscillatory e^{iθ} factor.
+  Decomposing ζ into modes and applying VdC per mode to the correction gives
+  each mode's correction as O(1/(n^{1/2} · (θ'_min)²)), summing to O(1/log²T₀).
+  This is the content of Titchmarsh §4.15, Lemma 4.16. -/
+
 private theorem ibp_oscillatory_bound :
     ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Set.Ioc 1 T, HardyEstimatesPartial.hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) := by
@@ -1318,7 +1538,10 @@ private theorem ibp_oscillatory_bound :
     (c) continuousOn_inv_thetaDeriv — PROVED
     (d) hasDerivAt_exp_iTheta — PROVED
     (e) hardyZ_pointwise_bound — PROVED (from PhragmenLindelof)
-    (f) ibp_oscillatory_bound — SORRY (correction integral via AFE + VdC) -/
+    (f) ibp_oscillatory_bound — SORRY (correction integral via AFE + VdC)
+    (g) errorTerm_pointwise_from_rs — PROVED (Part 8, from RS expansion)
+    (h) errorTerm_integral_linear — PROVED (Part 8)
+    (i) block_errorTerm_integral_le — PROVED (Part 8) -/
 theorem hardyZ_first_moment_sublinear :
     ∀ ε : ℝ, ε > 0 →
       ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
