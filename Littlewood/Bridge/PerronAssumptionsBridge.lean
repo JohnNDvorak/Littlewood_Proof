@@ -423,4 +423,97 @@ The remaining genuine content (to close `contour_integral_remainder_bound`):
 Both require complex analysis infrastructure (contour integrals) not yet
 in Mathlib. The algebraic SHELL is now complete. -/
 
+/-! ### 5g: Asymptotic infrastructure for pi_approx (C39)
+
+The `pi_approx` sorry in PerronExplicitFormulaProvider requires converting the ψ-level
+explicit formula to a π-level formula via Abel summation. The key asymptotic facts:
+
+1. `(log x)² = o(√x)` as x → ∞  — needed for `(logx)² / (√x/logx) = (logx)³/√x → 0`
+2. `(log x)³ = o(√x)` as x → ∞  — directly shows `(logx)²/(√x/logx) → 0`
+3. `(logT)²/√T → 0` as T → ∞   — needed to choose T making Perron error < ε
+4. `∀ ε > 0, ∀ᶠ x, (logx)² ≤ ε·√x` — quantitative form of (1)
+
+These are sorry-free Mathlib consequences via `isLittleO_log_rpow_atTop`.
+
+Reference: standard asymptotic analysis (Hardy, "Orders of Infinity").
+-/
+
+section PiApproxAsymptotics
+
+open Real Filter Asymptotics
+
+/-- `(log x)² = o(√x)` as x → ∞.
+    Proof: `log x = o(x^{1/4})` from Mathlib, squared gives `log² x = o(x^{1/2}) = o(√x)`. -/
+theorem log_sq_isLittleO_sqrt :
+    (fun x : ℝ => (Real.log x) ^ 2) =o[atTop] (fun x => Real.sqrt x) := by
+  have h1 : (fun x : ℝ => Real.log x) =o[atTop] (fun x => x ^ ((1 : ℝ) / 4)) :=
+    isLittleO_log_rpow_atTop (by norm_num : (0 : ℝ) < 1 / 4)
+  exact ((by simp_rw [sq]; exact h1.mul h1 :
+    (fun x : ℝ => (Real.log x) ^ 2) =o[atTop]
+      (fun x => x ^ ((1 : ℝ) / 4) * x ^ ((1 : ℝ) / 4)))).trans_isBigO (by
+    apply IsBigO.of_bound 1
+    filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
+    rw [one_mul, ← rpow_add hx,
+        show (1 : ℝ) / 4 + 1 / 4 = 1 / 2 from by norm_num, ← sqrt_eq_rpow])
+
+/-- `(log x)³ = o(√x)` as x → ∞.
+    This directly gives `(logx)²/(√x/logx) = (logx)³/√x → 0`, needed for
+    the Abel summation step in `pi_approx`. -/
+theorem log_cube_isLittleO_sqrt :
+    (fun x : ℝ => (Real.log x) ^ 3) =o[atTop] (fun x => Real.sqrt x) := by
+  have h1 : (fun x : ℝ => Real.log x) =o[atTop] (fun x => x ^ ((1 : ℝ) / 6)) :=
+    isLittleO_log_rpow_atTop (by norm_num : (0 : ℝ) < 1 / 6)
+  have hlog_o : (fun x : ℝ => (Real.log x) ^ 3) =o[atTop]
+      (fun x => x ^ ((1 : ℝ) / 6) * (x ^ ((1 : ℝ) / 6) * x ^ ((1 : ℝ) / 6))) := by
+    have : (fun x : ℝ => (Real.log x) ^ 3) = (fun x => Real.log x * (Real.log x * Real.log x)) :=
+      funext (fun x => by ring)
+    rw [this]; exact h1.mul (h1.mul h1)
+  exact hlog_o.trans_isBigO (by
+    apply IsBigO.of_bound 1
+    filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
+    rw [one_mul, ← rpow_add hx, ← rpow_add hx,
+        show (1 : ℝ) / 6 + ((1 : ℝ) / 6 + 1 / 6) = 1 / 2 from by norm_num,
+        ← sqrt_eq_rpow])
+
+/-- `(logT)²/√T → 0` as T → ∞.
+    This is the key fact for choosing T in `pi_approx`: for any ε > 0,
+    pick T so that `C·(logT)²/√T < ε/2`, then the Perron error at height T
+    is eventually ≤ ε·(√x/logx)`. -/
+theorem logT_sq_div_sqrtT_tendsto_zero :
+    Tendsto (fun T : ℝ => (Real.log T) ^ 2 / Real.sqrt T)
+      atTop (nhds 0) :=
+  IsLittleO.tendsto_div_nhds_zero log_sq_isLittleO_sqrt
+
+/-- Quantitative form: for any ε > 0, eventually `(logx)² ≤ ε·√x`.
+    Needed for showing the explicit formula remainder is eventually small
+    at the `√x/logx` scale. -/
+theorem log_sq_eventually_le_eps_sqrt (ε : ℝ) (hε : 0 < ε) :
+    ∀ᶠ x in atTop, (Real.log x) ^ 2 ≤ ε * Real.sqrt x := by
+  filter_upwards [log_sq_isLittleO_sqrt.def hε, eventually_ge_atTop (0 : ℝ)]
+    with x hx _
+  calc (Real.log x) ^ 2 = ‖(Real.log x) ^ 2‖ := by
+        rw [norm_of_nonneg (sq_nonneg _)]
+    _ ≤ ε * ‖Real.sqrt x‖ := hx
+    _ = ε * Real.sqrt x := by rw [norm_of_nonneg (sqrt_nonneg _)]
+
+/-- For any C > 0 and ε > 0, there exists T₀ ≥ 2 such that
+    `C · (logT₀)² / √T₀ < ε`.
+    This is the "choose T" step in the pi_approx proof: pick T₀ so that
+    the Perron error coefficient at height T₀ is smaller than ε/2. -/
+theorem exists_T_perron_error_small (C_coeff : ℝ) (hC : 0 < C_coeff) (ε : ℝ) (hε : 0 < ε) :
+    ∃ T₀ : ℝ, 2 ≤ T₀ ∧ C_coeff * ((Real.log T₀) ^ 2 / Real.sqrt T₀) < ε := by
+  have h_tend := logT_sq_div_sqrtT_tendsto_zero
+  rw [Metric.tendsto_nhds] at h_tend
+  obtain ⟨S, hS⟩ := eventually_atTop.1 (h_tend (ε / C_coeff) (div_pos hε hC))
+  set T₀ := max S 2
+  refine ⟨T₀, le_max_right _ _, ?_⟩
+  have h_close := hS T₀ (le_max_left _ _)
+  rw [Real.dist_eq] at h_close
+  simp only [sub_zero, abs_of_nonneg (div_nonneg (sq_nonneg _) (sqrt_nonneg _))] at h_close
+  calc C_coeff * ((Real.log T₀) ^ 2 / Real.sqrt T₀)
+      < C_coeff * (ε / C_coeff) := mul_lt_mul_of_pos_left h_close hC
+    _ = ε := by field_simp
+
+end PiApproxAsymptotics
+
 end Littlewood.Bridge.PerronAssumptionsBridge
