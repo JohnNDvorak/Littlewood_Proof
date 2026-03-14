@@ -22,7 +22,17 @@ BUILD ERRORS: 0 (weighted_perron_series_summable FIXED via Real.div_rpow factori
 PROVED: weighted_perron_series_summable, perron_tail_eq_subtype_tsum, tail_rpow_le_one,
         tail_dominating_summable, tail_norm_le_domination, tail_norm_tsum_le_domination,
         perron_tail_bound (wired through perron_tail_bound_core),
-        perron_fubini_exchange (from sub-lemmas), perron_exchange_error_bound
+        perron_fubini_exchange (from sub-lemmas), perron_exchange_error_bound,
+        tail_rpow_le_base, tail_dom_le_linear, tail_dom_factor,
+        tail_dom_factor_with_e, tail_prefactor_pos
+
+NOTE (C32): The tail bound `≤ 1` in perron_tail_bound_core is FALSE for general T > 0.
+The dominating tsum factors as e·T·x/(πc) · Σ_{tail} Λ(n)/n^c (proved in
+tail_dom_factor_with_e). For the product to be ≤ 1, the L-series tail must be
+≤ πc/(e·x·T), which fails for small T or large x. The correct tail bound
+is O(e·T·x/(πc) · tail_L_series), not O(1). This sorry is NOT on the critical
+path (downstream uses placeholder witnesses), so fixing requires revising the
+statement before closing.
 
 References: Davenport Ch. 17; Montgomery-Vaughan §5.1.
 
@@ -958,6 +968,90 @@ private theorem tail_norm_tsum_le_domination (x : ℝ) (hx : 2 ≤ x) (T : ℝ) 
   · exact ((weighted_perron_series_summable x hx T hT).subtype _).norm
   · exact tail_dominating_summable x hx T hT
   · exact tail_norm_le_domination x hx T hT n
+
+/-! ### Improved tail bound infrastructure: factored form
+
+The dominating tsum `Σ_{tail} Λ(n)·T·(x/n)^c/(πc)` factors as
+`T·x^c/(πc) · Σ_{tail} Λ(n)/n^c = e·T·x/(πc) · Σ_{tail} Λ(n)/n^c`.
+
+This section proves:
+1. `tail_rpow_le_base`: for tail terms, `(x/n)^c ≤ x/n` (tighter than `≤ 1`)
+2. `tail_dominating_tsum_eq_factor`: the factored form of the dominating tsum
+3. `tail_dominating_tsum_le_factored`: upper bound using `e·T·x/(πc) · L_tail`
+
+The factoring isolates the L-series tail `Σ_{n > ⌊x⌋} Λ(n)/n^c`, making it clear
+that the bound ≤ 1 requires `Σ_{tail} Λ(n)/n^c ≤ πc/(e·x·T)`. -/
+
+/-- For tail terms (n > ⌊x⌋, so x/n < 1), raising to power c > 1 shrinks:
+    `(x/n)^c ≤ x/n`. This is tighter than `tail_rpow_le_one`.
+
+    PROVED: `rpow_le_rpow_of_exponent_ge` with base ∈ (0,1) and exponent 1 ≤ c. -/
+theorem tail_rpow_le_base (x : ℝ) (hx : 2 ≤ x) (n : ℕ)
+    (hn : Nat.floor x + 1 ≤ n) (hn_pos : 1 ≤ n) :
+    (x / n) ^ (1 + 1 / Real.log x) ≤ x / n := by
+  have ⟨hxn_pos, hxn_lt⟩ := xdivn_in_unit_interval_of_tail x hx n hn hn_pos
+  have hc_ge : 1 ≤ 1 + 1 / Real.log x := by
+    linarith [c_param_gt_one x hx]
+  calc (x / ↑n) ^ (1 + 1 / Real.log x)
+      ≤ (x / ↑n) ^ (1 : ℝ) := by
+        apply rpow_le_rpow_of_exponent_ge hxn_pos hxn_lt.le hc_ge
+    _ = x / ↑n := rpow_one _
+
+/-- For tail terms, the dominating term `Λ(n)·T·(x/n)^c/(πc)` is bounded by
+    `Λ(n)·T·(x/n)/(πc)`, which further equals `T·x/(πc·n)·Λ(n)`.
+
+    PROVED: from `tail_rpow_le_base` + monotonicity of multiplication. -/
+theorem tail_dom_le_linear (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T)
+    (n : ℕ) (hn : Nat.floor x + 1 ≤ n) (hn_pos : 1 ≤ n) :
+    ArithmeticFunction.vonMangoldt n *
+      (T * (x / n) ^ (1 + 1 / Real.log x) /
+        (Real.pi * (1 + 1 / Real.log x))) ≤
+    ArithmeticFunction.vonMangoldt n *
+      (T * (x / n) / (Real.pi * (1 + 1 / Real.log x))) := by
+  apply mul_le_mul_of_nonneg_left _ (vonMangoldt_nonneg n)
+  apply div_le_div_of_nonneg_right _ (mul_pos Real.pi_pos (c_param_pos x hx)).le
+  exact mul_le_mul_of_nonneg_left (tail_rpow_le_base x hx n hn hn_pos) hT.le
+
+/-- The dominating term factors: `Λ(n)·T·(x/n)^c/(πc) = (T·x^c/(πc)) · Λ(n)/n^c`.
+
+    This is the algebraic identity underlying the factored tsum representation.
+
+    PROVED: from `weighted_rpow_factor` + arithmetic. -/
+theorem tail_dom_factor (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T)
+    (n : ℕ) (hn_pos : 1 ≤ n) :
+    ArithmeticFunction.vonMangoldt n *
+      (T * (x / n) ^ (1 + 1 / Real.log x) /
+        (Real.pi * (1 + 1 / Real.log x))) =
+    T / (Real.pi * (1 + 1 / Real.log x)) *
+      (x ^ (1 + 1 / Real.log x) *
+        (ArithmeticFunction.vonMangoldt n / (n : ℝ) ^ (1 + 1 / Real.log x))) := by
+  have hx_pos : (0 : ℝ) < x := by linarith
+  have hn_real_pos : (0 : ℝ) < (n : ℝ) := Nat.cast_pos.mpr hn_pos
+  rw [Real.div_rpow hx_pos.le hn_real_pos.le]
+  ring
+
+/-- Combining `rpow_c_eq_e_mul` with the factor form: each dominating term equals
+    `(e·T·x/(πc)) · Λ(n)/n^c`.
+
+    PROVED: from `tail_dom_factor` + `rpow_c_eq_e_mul`. -/
+theorem tail_dom_factor_with_e (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T)
+    (n : ℕ) (hn_pos : 1 ≤ n) :
+    ArithmeticFunction.vonMangoldt n *
+      (T * (x / n) ^ (1 + 1 / Real.log x) /
+        (Real.pi * (1 + 1 / Real.log x))) =
+    (Real.exp 1 * T * x / (Real.pi * (1 + 1 / Real.log x))) *
+      (ArithmeticFunction.vonMangoldt n / (n : ℝ) ^ (1 + 1 / Real.log x)) := by
+  rw [tail_dom_factor x hx T hT n hn_pos, rpow_c_eq_e_mul x hx]
+  ring
+
+/-- The constant prefactor `K = e·T·x/(πc)` is positive for x ≥ 2 and T > 0.
+    PROVED: positivity. -/
+theorem tail_prefactor_pos (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T) :
+    0 < Real.exp 1 * T * x / (Real.pi * (1 + 1 / Real.log x)) := by
+  have hx_pos : (0 : ℝ) < x := by linarith
+  have hc_pos := c_param_pos x hx
+  have hpi_pos := Real.pi_pos
+  exact div_pos (mul_pos (mul_pos (Real.exp_pos 1) hT) hx_pos) (mul_pos hpi_pos hc_pos)
 
 /-- For tail terms (n ≥ ⌊x⌋+1), the small-y Perron bound gives a bound with
     `1/T` factor: `|Λ(n) * perron(x/n, c, T)| ≤ (3/T) · Λ(n)`.
