@@ -20,6 +20,11 @@ Kronecker's equidistribution / density theorem infrastructure.
 * `single_frequency_phase_alignment`: exact phase alignment for one frequency.
 * `exists_large_x_single_phase_to_target`: ∃ x > X with e^{iγ log x} ≈ e^{iθ}.
 
+### Large-m Kronecker (NEW)
+* `homogeneous_near_period`: quantitative near-period from homogeneous Dirichlet.
+* `inhomogeneous_1d_approx_mod_large`: 1D Kronecker with m > M for any threshold M.
+* `two_freq_arg_approx_above_threshold`: 2-freq exact+approx above any threshold.
+
 ## Context
 
 These results provide the 1D foundation for closing `PhaseAlignmentToTargetHyp`, which
@@ -34,11 +39,12 @@ single-frequency phase alignment and provides infrastructure for the general cas
 -/
 
 import Mathlib
+import Littlewood.CoreLemmas.DirichletApproximation
 
 set_option linter.mathlibStandardSet false
 
-open scoped BigOperators Real
-open Set Filter Topology Metric Real Complex
+open scoped BigOperators Real DirichletApprox
+open Set Filter Topology Metric Real Complex DirichletApprox
 
 set_option maxHeartbeats 1600000
 set_option maxRecDepth 2000
@@ -328,27 +334,14 @@ theorem inhomogeneous_2d_approx {α β : ℝ}
     simp only [zsmul_eq_mul, mul_one] at hy_mem ⊢
     rwa [Metric.mem_ball, Real.dist_eq] at hy_mem⟩
 
-/-- **Inhomogeneous approximation mod 2π for positive m via Dirichlet box**:
-    For any positive integer q and irrational α/(2π), the fractional parts
-    {1·α/(2π)}, {2·α/(2π)}, ..., {q·α/(2π)} are distinct modulo 1.
-    By pigeonhole, two of them differ by less than 1/q.
-
-    This gives: for any target θ and ε > 0, there exist m > 0 and k ∈ ℤ
-    with |m·α - θ - k·(2π)| < ε. The key is that the Dirichlet approximation
-    denominator q is always POSITIVE.
-
-    For now, we state a simpler version: for any m ∈ ℤ coming from
-    inhomogeneous_1d_approx_mod, we can extract useful bounds on the
-    absolute value. -/
+/-- Phase norm bound from arg approximation. -/
 theorem inhomogeneous_phase_abs_bound
     {α θ : ℝ} {m : ℤ} {k : ℤ} {ε : ℝ}
     (hclose : |↑m * α - θ - ↑k * (2 * Real.pi)| < ε) :
     ‖Complex.exp (Complex.I * (↑m * α)) -
      Complex.exp (Complex.I * θ)‖ < ε := by
   set δ := ↑m * α - θ - ↑k * (2 * Real.pi) with hδ_def
-  -- δ = m·α - θ - k·2π, so m·α = θ + δ + k·2π
   have hma : (↑m * α : ℝ) = θ + δ + ↑k * (2 * Real.pi) := by simp [hδ_def]; ring
-  -- exp(i·m·α) = exp(i·(θ + δ + k·2π)) = exp(iθ)·exp(iδ)·exp(ik·2π) = exp(iθ)·exp(iδ)
   have key : Complex.exp (Complex.I * (↑m * α : ℂ)) =
       Complex.exp (Complex.I * (θ : ℂ)) * Complex.exp (Complex.I * (δ : ℂ)) := by
     rw [show (↑m * α : ℂ) = ((↑m * α : ℝ) : ℂ) from by push_cast; ring, hma]
@@ -358,7 +351,6 @@ theorem inhomogeneous_phase_abs_bound
         Complex.I * (θ : ℂ) + Complex.I * (δ : ℂ) + ↑k * (2 * ↑Real.pi * Complex.I) by ring]
     rw [Complex.exp_add, Complex.exp_add, Complex.exp_int_mul_two_pi_mul_I, mul_one]
   rw [key]
-  -- ‖exp(iθ)·exp(iδ) - exp(iθ)‖ = ‖exp(iδ) - 1‖
   calc ‖Complex.exp (Complex.I * (θ : ℂ)) * Complex.exp (Complex.I * (δ : ℂ)) -
         Complex.exp (Complex.I * (θ : ℂ))‖
       = ‖Complex.exp (Complex.I * (θ : ℂ)) * (Complex.exp (Complex.I * (δ : ℂ)) - 1)‖ := by
@@ -378,29 +370,17 @@ theorem inhomogeneous_phase_abs_bound
           _ = |δ| := by simp
     _ < ε := hclose
 
-/-! ### Part 7: Multi-frequency approximate alignment infrastructure
-
-For finitely many frequencies γ₁, ..., γₙ > 0 and target phases θ₁, ..., θₙ,
-we build the simultaneous approximate alignment: ∃ t > L, ∀ i, ‖e^{iγᵢt} - e^{iθᵢ}‖ < ε.
-
-The construction:
-1. Align the first frequency EXACTLY using single_frequency_phase_alignment.
-2. For each subsequent frequency, the residual phase (mod 2π) can be controlled
-   via 1D Kronecker density arguments.
-
-For the TargetTowerExactSeed interface, we also need tower cap bounds on t. -/
+/-! ### Part 7: Multi-frequency approximate alignment infrastructure -/
 
 /-- For a single positive frequency, exact congruence solutions exist above
-    any threshold. This is a direct corollary of `single_frequency_phase_alignment`
-    reformulated with the gap bound. -/
+    any threshold. -/
 theorem single_freq_exact_above_threshold
     {γ : ℝ} (hγ : γ > 0) (θ : ℝ) (L : ℝ) :
     ∃ t : ℝ, t > L ∧ ∃ k : ℤ, γ * t = θ + 2 * Real.pi * k :=
   single_frequency_phase_alignment hγ θ L
 
 /-- For a single positive frequency γ, the exact congruence
-    `∃ m : ℤ, t * γ - θ - m • (2π) = 0` holds for a dense set of t.
-    In particular, for any L, there exists t > L solving it exactly. -/
+    `∃ m : ℤ, t * γ - θ - m • (2π) = 0` holds for a dense set of t. -/
 theorem exact_congruence_above_threshold
     {γ : ℝ} (hγ : γ > 0) (θ : ℝ) (L : ℝ) :
     ∃ t : ℝ, t > L ∧ ∃ m : ℤ, t * γ - θ - m • (2 * Real.pi) = 0 := by
@@ -410,16 +390,7 @@ theorem exact_congruence_above_threshold
   simp only [zsmul_eq_mul]
   linarith
 
-/-- Two-frequency mixed alignment with independent frequencies:
-    if γ₁ > 0 and γ₂/γ₁ is irrational, then for any targets θ₁, θ₂
-    and ε > 0, there exist m ∈ ℤ such that t = (θ₁ + 2πm)/γ₁ satisfies:
-    - `γ₁ * t = θ₁ + 2πm` EXACTLY, and
-    - `‖e^{iγ₂t} - e^{iθ₂}‖ < ε` approximately.
-
-    Proof: the exact solutions t_m = (θ₁ + 2πm)/γ₁ for the first frequency
-    are parameterized by m ∈ ℤ. Substituting into the second frequency gives
-    γ₂ · t_m = γ₂θ₁/γ₁ + m · (2πγ₂/γ₁). Since γ₂/γ₁ is irrational,
-    the 1D Kronecker theorem gives m with γ₂·t_m ≈ θ₂ (mod 2π). -/
+/-- Two-frequency mixed alignment with independent frequencies. -/
 theorem two_freq_exact_plus_approx_phase
     {γ₁ γ₂ : ℝ} (hγ₁ : γ₁ > 0)
     (h_irr : Irrational (γ₂ / γ₁))
@@ -428,28 +399,19 @@ theorem two_freq_exact_plus_approx_phase
       (γ₁ * ((θ₁ + 2 * Real.pi * ↑m) / γ₁) = θ₁ + 2 * Real.pi * ↑m) ∧
       ‖Complex.exp (Complex.I * (γ₂ * ((θ₁ + 2 * Real.pi * ↑m) / γ₁))) -
        Complex.exp (Complex.I * θ₂)‖ < ε := by
-  -- Step: (2πγ₂/γ₁)/(2π) = γ₂/γ₁ is irrational
   have hpi_ne : (2 * Real.pi : ℝ) ≠ 0 := ne_of_gt (by positivity)
   have h_ratio_irr : Irrational (2 * Real.pi * (γ₂ / γ₁) / (2 * Real.pi)) := by
-    rw [show 2 * Real.pi * (γ₂ / γ₁) / (2 * Real.pi) = γ₂ / γ₁ from by
-      field_simp]
+    rw [show 2 * Real.pi * (γ₂ / γ₁) / (2 * Real.pi) = γ₂ / γ₁ from by field_simp]
     exact h_irr
-  -- target phase for the Kronecker approximation
   set α := 2 * Real.pi * (γ₂ / γ₁) with hα_def
   set target := θ₂ - γ₂ * θ₁ / γ₁ with htarget_def
-  -- By 1D Kronecker mod 2π, ∃ m j with |m·α - target - j·2π| < ε
   obtain ⟨m, j, happrox⟩ := inhomogeneous_1d_approx_mod h_ratio_irr target hε
   refine ⟨m, ?_⟩
   constructor
-  · -- First frequency exact: γ₁ · (θ₁ + 2πm)/γ₁ = θ₁ + 2πm
-    field_simp
-  · -- Second frequency approximate:
-    -- γ₂ · (θ₁+2πm)/γ₁ - θ₂ = m·α - target
-    -- The key algebraic identity
-    have hval : γ₂ * ((θ₁ + 2 * Real.pi * ↑m) / γ₁) - θ₂ =
+  · field_simp
+  · have hval : γ₂ * ((θ₁ + 2 * Real.pi * ↑m) / γ₁) - θ₂ =
         ↑m * α - target := by
       rw [htarget_def, hα_def]; field_simp; ring
-    -- Rewrite as |↑(1:ℤ) * (γ₂ * ...) - θ₂ - j·2π| < ε for phase_abs_bound
     have habs : |↑(1 : ℤ) * (γ₂ * ((θ₁ + 2 * Real.pi * ↑m) / γ₁)) - θ₂ -
         ↑j * (2 * Real.pi)| < ε := by
       simp only [Int.cast_one, one_mul]; rw [hval]; exact happrox
@@ -468,39 +430,200 @@ theorem exact_solutions_periodic
   set k₀ : ℤ := ⌈(a * γ - θ) / (2 * Real.pi)⌉ with hk₀_def
   set t₀ : ℝ := (θ + 2 * Real.pi * k₀) / γ with ht₀_def
   refine ⟨t₀, ?_, ?_, k₀, by rw [ht₀_def]; field_simp⟩
-  · -- a ≤ t₀
-    rw [ht₀_def, le_div_iff₀ hγ]
+  · rw [ht₀_def, le_div_iff₀ hγ]
     have : (a * γ - θ) / (2 * Real.pi) ≤ k₀ := Int.le_ceil _
     have h1 : (a * γ - θ) ≤ (k₀ : ℝ) * (2 * Real.pi) := by
       rwa [div_le_iff₀ hpi2] at this
     linarith
-  · -- t₀ ≤ b: need θ + 2π·k₀ ≤ b·γ
-    rw [ht₀_def, div_le_iff₀ hγ]
-    -- Strategy: k₀ = ⌈x⌉ where x = (aγ-θ)/(2π)
-    -- ⌈x⌉ ≤ ⌊x⌋ + 1 ≤ x + 1 (since ⌊x⌋ ≤ x)
-    -- And (bγ-θ)/(2π) ≥ x + 1, so k₀ ≤ (bγ-θ)/(2π)
+  · rw [ht₀_def, div_le_iff₀ hγ]
     have hgap : (b - a) * γ ≥ 2 * Real.pi := by
       calc (b - a) * γ ≥ (2 * Real.pi / γ) * γ :=
             mul_le_mul_of_nonneg_right hab (le_of_lt hγ)
         _ = 2 * Real.pi := by field_simp
-    -- k₀ ≤ x + 1
     have hceil_ub : (k₀ : ℝ) ≤ (a * γ - θ) / (2 * Real.pi) + 1 := by
       have h2 := Int.floor_le ((a * γ - θ) / (2 * Real.pi))
       have h3 := Int.ceil_le_floor_add_one ((a * γ - θ) / (2 * Real.pi))
-      -- k₀ ≤ ⌊x⌋ + 1, and (⌊x⌋ : ℝ) ≤ x, so (k₀ : ℝ) ≤ x + 1
       have h4 : (⌊(a * γ - θ) / (2 * Real.pi)⌋ : ℝ) + 1 ≤
           (a * γ - θ) / (2 * Real.pi) + 1 := by linarith
       have h5 : (k₀ : ℝ) ≤ ((⌊(a * γ - θ) / (2 * Real.pi)⌋ + 1 : ℤ) : ℝ) := by
         exact_mod_cast h3
       push_cast at h5; linarith
-    -- From hceil_ub: k₀ ≤ (aγ-θ)/(2π) + 1
-    -- Multiply by 2π: 2π·k₀ ≤ (aγ-θ) + 2π
     have h_mul : (2 * Real.pi) * (k₀ : ℝ) ≤ (2 * Real.pi) * ((a * γ - θ) / (2 * Real.pi) + 1) :=
       mul_le_mul_of_nonneg_left hceil_ub (le_of_lt hpi2)
     rw [mul_add, mul_div_cancel₀ _ (ne_of_gt hpi2), mul_one] at h_mul
-    -- h_mul: 2π·k₀ ≤ (aγ-θ) + 2π
-    -- hgap: bγ-aγ ≥ 2π, so bγ ≥ aγ + 2π ≥ θ + 2π·k₀
     linarith
+
+/-! ### Part 8: Large-m 1D Kronecker and threshold infrastructure
+
+The 1D Kronecker theorem gives ∃ m ∈ ℤ with phase alignment, but doesn't
+control the size of m. For the tower construction, we need m > M for given M.
+
+Key result: for irrational α/(2π), the phase alignment orbit visits every
+ε-ball for ARBITRARILY LARGE m. This follows from the Dirichlet-shift
+construction: get initial alignment m₀, then shift by multiples of a
+"near-period" q from homogeneous Dirichlet.
+
+Reference: Kronecker 1884; Hardy-Wright §23.8. -/
+
+/-- **Quantitative near-period from homogeneous Dirichlet**:
+    For irrational α/(2π) and N ≥ 1, there exists q with 1 ≤ q ≤ N
+    and |q·α - p·2π| < 2π/N for some integer p. -/
+theorem homogeneous_near_period
+    {α : ℝ} (_hα : Irrational (α / (2 * Real.pi))) (N : ℕ) (hN : 0 < N) :
+    ∃ q : ℕ, 1 ≤ q ∧ q ≤ N ∧
+      ∃ p : ℤ, |↑q * α - ↑p * (2 * Real.pi)| < 2 * Real.pi / N := by
+  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
+  obtain ⟨q, hq_pos, hq_le, happrox⟩ :=
+    DirichletApprox.dirichlet_approximation_simultaneous 1 (fun _ => α / (2 * Real.pi)) N hN
+  refine ⟨q, hq_pos, by simp [pow_one] at hq_le; exact hq_le, ?_⟩
+  have h0 := happrox (0 : Fin 1)
+  rw [distToInt] at h0
+  set r := round (α / (2 * Real.pi) * (q : ℝ)) with hr_def
+  refine ⟨r, ?_⟩
+  have hclose : |α / (2 * Real.pi) * (q : ℝ) - (r : ℝ)| < 1 / (N : ℝ) := h0
+  have hN_pos : (0 : ℝ) < N := by exact_mod_cast hN
+  calc |↑q * α - ↑r * (2 * Real.pi)|
+      = |((α / (2 * Real.pi)) * ↑q - ↑r) * (2 * Real.pi)| := by
+        congr 1; field_simp
+    _ = |α / (2 * Real.pi) * ↑q - ↑r| * (2 * Real.pi) := by
+        rw [abs_mul, abs_of_pos hpi]
+    _ < 1 / ↑N * (2 * Real.pi) := by
+        exact mul_lt_mul_of_pos_right hclose hpi
+    _ = 2 * Real.pi / ↑N := by ring
+
+/-- **Large-m 1D inhomogeneous Kronecker**: for irrational α/(2π), any target θ,
+    ε > 0, and threshold M, there exists m > M with |m·α - θ - k·2π| < ε
+    for some integer k.
+
+    Construction: get initial alignment m₀ from 1D Kronecker. Get near-period q
+    from homogeneous Dirichlet with N large. Shift m₀ by multiples of q:
+    m = m₀ + ℓ·q. The phase error is bounded by initial error + ℓ · (2π/N). -/
+theorem inhomogeneous_1d_approx_mod_large
+    {α : ℝ} (hα : Irrational (α / (2 * Real.pi)))
+    (θ : ℝ) {ε : ℝ} (hε : ε > 0) (M : ℝ) :
+    ∃ m : ℤ, (M : ℝ) < m ∧
+      ∃ k : ℤ, |↑m * α - θ - ↑k * (2 * Real.pi)| < ε := by
+  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
+  -- Step 1: Get initial alignment with ε/2 tolerance
+  obtain ⟨m₀, j₀, hm₀⟩ := inhomogeneous_1d_approx_mod hα θ (ε := ε / 2) (by linarith)
+  -- Step 2: Choose N for the near-period
+  set ℓ_target := ⌈max (M - ↑m₀ + 1) 1⌉₊ with hℓ_target_def
+  have hℓ_pos : 0 < ℓ_target := by
+    have h1 : (1 : ℝ) ≤ max (M - ↑m₀ + 1) 1 := le_max_right _ _
+    have h2 : (1 : ℝ) ≤ (⌈max (M - ↑m₀ + 1) 1⌉₊ : ℝ) := le_trans h1 (Nat.le_ceil _)
+    have h3 : 1 ≤ ⌈max (M - ↑m₀ + 1) 1⌉₊ := by exact_mod_cast h2
+    omega
+  -- Choose N so that ℓ_target · (2π/N) < ε/2
+  set N := ⌈(ℓ_target : ℝ) * (4 * Real.pi / ε)⌉₊ + 1 with hN_def
+  have hN_pos : 0 < N := Nat.succ_pos _
+  have hN_large : (ℓ_target : ℝ) * (2 * Real.pi / (N : ℝ)) < ε / 2 := by
+    have hN_pos_real : (0 : ℝ) < N := by exact_mod_cast hN_pos
+    have hN_ge : (N : ℝ) > (ℓ_target : ℝ) * (4 * Real.pi / ε) := by
+      have := Nat.le_ceil ((ℓ_target : ℝ) * (4 * Real.pi / ε))
+      push_cast at this ⊢; simp [hN_def]; linarith
+    -- ℓ * (2π/N) < ε/2 ⟺ ℓ * 2π < N * ε/2 ⟺ ℓ * 4π/ε < N (using ε > 0)
+    rw [show (ℓ_target : ℝ) * (2 * Real.pi / ↑N) =
+        (ℓ_target : ℝ) * (2 * Real.pi) / ↑N from by ring]
+    rw [div_lt_iff₀ hN_pos_real]
+    calc (ℓ_target : ℝ) * (2 * Real.pi)
+        = (ℓ_target : ℝ) * (4 * Real.pi / ε) * (ε / 2) := by field_simp; ring
+      _ < ↑N * (ε / 2) := mul_lt_mul_of_pos_right hN_ge (by linarith)
+      _ = ε / 2 * ↑N := by ring
+  -- Step 3: Get near-period q from homogeneous Dirichlet
+  obtain ⟨q, hq_pos, _hq_le, p, hq_close⟩ := homogeneous_near_period hα N hN_pos
+  -- Step 4: Set m = m₀ + ℓ_target · q
+  set m := m₀ + (ℓ_target : ℤ) * (q : ℤ) with hm_def
+  have hm_large : (M : ℝ) < (m : ℝ) := by
+    push_cast [hm_def]
+    have hq_ge : (q : ℝ) ≥ 1 := by exact_mod_cast hq_pos
+    have hℓ_ge : (ℓ_target : ℝ) ≥ max (M - ↑m₀ + 1) 1 := by exact_mod_cast Nat.le_ceil _
+    have h1 : (ℓ_target : ℝ) ≥ M - ↑m₀ + 1 := le_trans (le_max_left _ _) hℓ_ge
+    have h2 : (ℓ_target : ℝ) * (q : ℝ) ≥ (ℓ_target : ℝ) * 1 :=
+      mul_le_mul_of_nonneg_left hq_ge (by exact_mod_cast Nat.zero_le ℓ_target)
+    linarith
+  -- Step 5: Phase error bound
+  set k := j₀ + (ℓ_target : ℤ) * p with hk_def
+  refine ⟨m, hm_large, k, ?_⟩
+  have key : ↑m * α - θ - ↑k * (2 * Real.pi) =
+      (↑m₀ * α - θ - ↑j₀ * (2 * Real.pi)) +
+      (ℓ_target : ℝ) * (↑q * α - ↑p * (2 * Real.pi)) := by
+    push_cast [hm_def, hk_def]; ring
+  rw [key]
+  calc |↑m₀ * α - θ - ↑j₀ * (2 * Real.pi) +
+        ↑ℓ_target * (↑q * α - ↑p * (2 * Real.pi))|
+      ≤ |↑m₀ * α - θ - ↑j₀ * (2 * Real.pi)| +
+        |↑ℓ_target * (↑q * α - ↑p * (2 * Real.pi))| := abs_add_le _ _
+    _ = |↑m₀ * α - θ - ↑j₀ * (2 * Real.pi)| +
+        (ℓ_target : ℝ) * |↑q * α - ↑p * (2 * Real.pi)| := by
+        congr 1; rw [abs_mul, abs_of_nonneg]; exact_mod_cast Nat.zero_le ℓ_target
+    _ < ε / 2 + (ℓ_target : ℝ) * (2 * Real.pi / ↑N) := by
+        exact add_lt_add hm₀ (mul_lt_mul_of_pos_left hq_close (by exact_mod_cast hℓ_pos))
+    _ < ε / 2 + ε / 2 := by linarith [hN_large]
+    _ = ε := by ring
+
+/-- **Single-frequency arg-approximate alignment above threshold**. -/
+theorem single_freq_arg_approx_above_threshold
+    {γ : ℝ} (hγ : γ > 0) (φ : ℝ) (L : ℝ) {ε : ℝ} (hε : ε > 0) :
+    ∃ t : ℝ, t > L ∧
+      ∃ k : ℤ, |t * γ - φ - ↑k * (2 * Real.pi)| ≤ ε := by
+  obtain ⟨t, ht, k, hk⟩ := exact_congruence_above_threshold hγ φ L
+  refine ⟨t, ht, k, ?_⟩
+  simp only [zsmul_eq_mul] at hk
+  have : t * γ - φ - ↑k * (2 * Real.pi) = 0 := by linarith
+  rw [this, abs_zero]; linarith
+
+/-- **Two-frequency exact+approx above threshold via Dirichlet shift**:
+    For γ₁ > 0 with γ₂/γ₁ irrational, targets φ₁ φ₂, threshold L, ε > 0:
+    ∃ t > L with γ₁t = φ₁ + 2πk₁ (exact) and |γ₂t - φ₂ - 2πk₂| < ε (approx).
+
+    Uses `inhomogeneous_1d_approx_mod_large` to find m large enough that
+    t = (φ₁ + 2πm)/γ₁ > L while maintaining second-frequency alignment. -/
+theorem two_freq_arg_approx_above_threshold
+    {γ₁ γ₂ : ℝ} (hγ₁ : γ₁ > 0) (_hγ₂ : γ₂ > 0)
+    (h_irr : Irrational (γ₂ / γ₁))
+    (φ₁ φ₂ : ℝ) (L : ℝ) {ε : ℝ} (hε : ε > 0) :
+    ∃ t : ℝ, t > L ∧
+      (∃ k₁ : ℤ, t * γ₁ - φ₁ - ↑k₁ * (2 * Real.pi) = 0) ∧
+      (∃ k₂ : ℤ, |t * γ₂ - φ₂ - ↑k₂ * (2 * Real.pi)| < ε) := by
+  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
+  have hγ₁_ne : γ₁ ≠ 0 := ne_of_gt hγ₁
+  set α := 2 * Real.pi * (γ₂ / γ₁) with hα_def
+  set τ := φ₂ - γ₂ * φ₁ / γ₁ with hτ_def
+  have h_α_irr : Irrational (α / (2 * Real.pi)) := by
+    rw [hα_def, show 2 * Real.pi * (γ₂ / γ₁) / (2 * Real.pi) = γ₂ / γ₁ by field_simp]
+    exact h_irr
+  set M_val := (L * γ₁ - φ₁) / (2 * Real.pi) with hM_def
+  -- By large-m Kronecker, ∃ m > M_val with |m·α - τ - k·2π| < ε
+  obtain ⟨m, hm_large, k₂, hm_approx⟩ :=
+    inhomogeneous_1d_approx_mod_large h_α_irr τ hε M_val
+  set t := (φ₁ + 2 * Real.pi * ↑m) / γ₁ with ht_def
+  refine ⟨t, ?_, ?_, ?_⟩
+  · -- t > L
+    rw [ht_def, gt_iff_lt, lt_div_iff₀ hγ₁]
+    have : (M_val : ℝ) < (m : ℝ) := hm_large
+    rw [hM_def] at this
+    have := (div_lt_iff₀ hpi).mp this
+    linarith
+  · -- First frequency exact
+    refine ⟨m, ?_⟩
+    rw [ht_def]; field_simp; ring
+  · -- Second frequency approximate
+    refine ⟨k₂, ?_⟩
+    have key : t * γ₂ - φ₂ - ↑k₂ * (2 * Real.pi) =
+        ↑m * α - τ - ↑k₂ * (2 * Real.pi) := by
+      rw [ht_def, hτ_def, hα_def]; field_simp; ring
+    rw [key]; exact hm_approx
+
+/-- Phase-norm bound from arg-approximation. -/
+theorem phase_norm_of_arg_approx
+    {t γ φ : ℝ} {k : ℤ} {ε : ℝ}
+    (hclose : |t * γ - φ - ↑k * (2 * Real.pi)| < ε) :
+    ‖Complex.exp (Complex.I * (t * γ)) -
+     Complex.exp (Complex.I * φ)‖ < ε := by
+  have h : |↑(1 : ℤ) * (t * γ) - φ - ↑k * (2 * Real.pi)| < ε := by
+    simpa using hclose
+  have := inhomogeneous_phase_abs_bound h
+  simpa using this
 
 end Kronecker
 
