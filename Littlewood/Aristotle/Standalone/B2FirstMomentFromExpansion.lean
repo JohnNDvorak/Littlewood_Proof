@@ -206,7 +206,19 @@ private theorem block_integral_le_length
 /-- Monotonicity of signed block integrals: b(k) := (-1)^k · ∫_{block k} ErrorTerm is
     nonneg and monotone increasing.
 
-    SUB-SORRY: requires per-block analysis of the leading RS term integral.
+    **BLOCKER ANALYSIS (Cycle 14)**:
+    From `signed_block_integral_expansion`:
+      b(k) = 4π · ∫₀¹ √(k+1+p) · Ψ(p) dp + R(k)
+    The integral ∫₀¹ √(k+1+p) · Ψ(p) dp is INCREASING in k (PROVED: `weighted_sqrt_monotone`).
+    But b(k+1) - b(k) = 4π · (∫√(k+2+p)·Ψ - ∫√(k+1+p)·Ψ) + (R(k+1) - R(k)).
+    The first term is positive (weighted_sqrt_monotone). But |R(k+1) - R(k)| could dominate.
+    Same remainder coupling issue as `rs_block_antitone`:
+      |R(k)| ≤ C_R · BL(k) · hs(k)^{-3/4} ~ O(k^{1/2})
+    while ∫√(k+2+p)·Ψ - ∫√(k+1+p)·Ψ ~ O(k^{-1/2}).
+    So |R(k+1)-R(k)| ~ O(k^{1/2}) >> O(k^{-1/2}), and the bound does NOT close.
+    Requires: either a signed remainder identity showing R is also monotone,
+    or a tighter coupling showing R(k+1) - R(k) ≥ 0.
+    This is the same fundamental blocker as `rs_block_antitone`.
     Reference: Siegel 1932 §3; Titchmarsh §4.16. -/
 private theorem signed_block_integrals_monotone
     (h_exp : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,

@@ -49,6 +49,8 @@ import Littlewood.Aristotle.HardyNProperties
 import Littlewood.Aristotle.ErrorTermExpansion
 import Littlewood.Aristotle.RSBlockParam
 import Littlewood.Aristotle.FunctionalEquationV2
+import Littlewood.Bridge.HardyZTransfer
+import Littlewood.Aristotle.HardyThetaSmooth
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -520,16 +522,62 @@ theorem weighted_sqrt_monotone (k : ℕ) :
     apply mul_le_mul_of_nonneg_right _ (rsPsi_nonneg_on p (Ioc_subset_Icc_self hp))
     exact Real.sqrt_le_sqrt (by linarith)
 
-/-- **Sub-lemma: Signed block integral via change of variables**.
+/-- cos(hardyTheta t - t*log(n+1)) = cos(hardyPhaseSmooth n t), hence continuous.
+    From exp_hardyPhaseSmooth_eq: exp(I*smooth) = exp(I*(theta-t*log(n+1))),
+    so Re gives cos equality. -/
+private lemma re_exp_I_mul_ofReal (x : ℝ) :
+    (Complex.exp (Complex.I * (x : ℂ))).re = Real.cos x := by
+  rw [mul_comm, Complex.exp_mul_I]
+  simp [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+    Complex.I_re, Complex.I_im, Complex.cos_ofReal_re, Complex.sin_ofReal_im]
 
-    Under t = 2π(k+1+p)², the signed block integral becomes:
-    (-1)^k · ∫_{block k} ErrorTerm(t) dt
-      = 4π · ∫₀¹ √(k+1+p) · Ψ(p) dp + R_k
+private theorem cos_hardyPhase_eq_cos_smooth (n : ℕ) (t : ℝ) :
+    Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1)) =
+    Real.cos (HardyThetaSmooth.hardyPhaseSmooth n t) := by
+  -- exp(I*smooth) = exp(I*(theta-t*log(n+1))) from the bridge.
+  -- Re(exp(I*↑x)) = cos(x), so Re parts give cos equality.
+  have h := HardyThetaSmooth.exp_hardyPhaseSmooth_eq n t
+  rw [← re_exp_I_mul_ofReal, ← re_exp_I_mul_ofReal, h]
 
-    where |R_k| is bounded by
-      C_R · (hardyStart(k+1) - hardyStart(k)) · hardyStart(k)^{-3/4}.
+/-- Helper: the cos sum in errorTermOnBlock is continuous (using smooth phase bridge). -/
+private theorem continuous_cosSum (k : ℕ) :
+    Continuous (fun t => (2 : ℝ) * ∑ n ∈ Finset.range (k + 1),
+      ((n + 1 : ℝ) ^ (-(1/2 : ℝ))) * Real.cos (hardyTheta t - t * Real.log (n + 1))) := by
+  apply continuous_const.mul
+  apply continuous_finset_sum
+  intro n _
+  apply continuous_const.mul
+  -- cos(hardyTheta t - t*log(n+1)) = cos(hardyPhaseSmooth n t), which is continuous
+  have h_eq : (fun t => Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))) =
+      (fun t => Real.cos (HardyThetaSmooth.hardyPhaseSmooth n t)) :=
+    funext (cos_hardyPhase_eq_cos_smooth n)
+  rw [h_eq]
+  exact Real.continuous_cos.comp (HardyThetaSmooth.differentiable_hardyPhaseSmooth n).continuous
 
-    Reference: Edwards Ch. 7, pp. 136-145. -/
+/-- errorTermOnBlock is continuous on the block (and in fact everywhere).
+    Proved by decomposing into hardyZ (continuous via HardyZTransfer) minus
+    a finite sum of continuous cos terms (via hardyPhaseSmooth bridge). -/
+private theorem errorTermOnBlock_continuousOn (k : ℕ) :
+    ContinuousOn (errorTermOnBlock k) (Icc (hardyStart k) (hardyStart (k + 1))) := by
+  -- errorTermOnBlock k t = hardyZ t - 2 * ∑ n, (n+1)^{-1/2} * cos(θ(t) - t·log(n+1))
+  unfold errorTermOnBlock
+  apply Continuous.continuousOn
+  apply Continuous.sub
+  · -- hardyZ is continuous
+    have h_eq : hardyZ = fun t => (hardyZV2 t).re :=
+      funext HardyZTransfer.hardyZ_eq_hardyZV2_re
+    rw [h_eq]
+    exact Complex.continuous_re.comp continuous_hardyZV2
+  · exact continuous_cosSum k
+
+/-- Helper: the signed ErrorTerm integral via signed block integral.
+    Factor: (-1)^k * ∫ ET = ∫ (-1)^k * ET. -/
+private theorem signed_integral_factor (k : ℕ) :
+    (-1 : ℝ) ^ k * ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t =
+    ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), (-1 : ℝ) ^ k * ErrorTerm t := by
+  simp_rw [← smul_eq_mul]
+  exact (integral_smul _ _).symm
+
 theorem signed_block_integral_expansion (k : ℕ) (_hk : 1 ≤ k) :
     ∃ R_k : ℝ,
     (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t) =
@@ -539,6 +587,30 @@ theorem signed_block_integral_expansion (k : ℕ) (_hk : 1 ≤ k) :
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧
       |R_k| ≤ C_R * (hardyStart (k + 1) - hardyStart k) *
         (hardyStart k) ^ (-(3 : ℝ) / 4) := by
+  -- Step 1: Get the saddle-point remainder from the RS expansion
+  obtain ⟨C_R, hCR_pos, hCR_le, h_rs⟩ := saddle_point_remainder
+  -- Step 2: Define R_k existentially as the difference
+  set leading := 4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1,
+    Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p) with hleading_def
+  set signed_integral := (-1 : ℝ) ^ k *
+    (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t) with hsi_def
+  refine ⟨signed_integral - leading, by ring, C_R, hCR_pos, hCR_le, ?_⟩
+  -- Step 3: Bound |R_k| = |signed_integral - leading|
+  -- Use the CoV to rewrite the block integral in terms of p ∈ [0,1]
+  have h_cov := Aristotle.RSBlockParam.block_integral_cov k (errorTermOnBlock k)
+    (errorTermOnBlock_continuousOn k)
+  -- ∫_block ErrorTerm = ∫₀¹ errorTermOnBlock(k, blockCoord k p) * blockJacobian(k,p) dp
+  have h_et_eq := Aristotle.ErrorTermExpansion.errorTermOnBlock_integral_eq k
+  -- signed_integral = (-1)^k * ∫₀¹ errorTermOnBlock(k, blockCoord k p) * blockJacobian(k,p) dp
+  rw [hsi_def, ← h_et_eq, h_cov]
+  -- Now: (-1)^k * ∫₀¹ etob(blockCoord k p) * bJ(k,p) dp
+  -- From h_rs: |ErrorTerm(t) - (-1)^k·(2π/t)^{1/4}·Ψ(p)| ≤ C_R·t^{-3/4}
+  -- On block: errorTermOnBlock = ErrorTerm (on open block, ae)
+  -- The leading term: (-1)^k · (-1)^k · (2π/t)^{1/4} · Ψ(p) · bJ(k,p)
+  --   = (2π/(2π(k+1+p)²))^{1/4} · Ψ(p) · 4π(k+1+p)
+  --   = (k+1+p)^{-1/2} · Ψ(p) · 4π(k+1+p)
+  --   = 4π · √(k+1+p) · Ψ(p)
+  -- Remainder after integration: ≤ C_R · ∫_block t^{-3/4} dt ≤ C_R · BL · hs(k)^{-3/4}
   sorry
 
 /-- **Sub-lemma: c_fn expansion in terms of weighted √-increments**.
@@ -636,6 +708,20 @@ theorem c_fn_expansion (k : ℕ) (hk : 1 ≤ k) :
 
     The leading term is antitone by `weighted_increment_antitone` (concavity of √).
     The remainder is bounded and inherited from `saddle_point_remainder`.
+
+    **BLOCKER ANALYSIS (Cycle 14)**:
+    From `c_fn_expansion`: c(k) = 4π · g(k) + R(k) where
+      g(k) = ∫₀¹ (√(k+1+p) - √(k+1)) · Ψ(p) dp is antitone (PROVED).
+    But R(k) is the actual remainder from the RS expansion, not its absolute bound.
+    We only know |R(k)| ≤ R_bound(k) where R_bound is antitone.
+    For antitone c: c(k₁) - c(k₂) = 4π(g(k₁)-g(k₂)) + (R(k₁)-R(k₂)) ≥ 0.
+    The worst case |R(k₁)-R(k₂)| ≤ 2·R_bound(k₁), and we need
+      4π(g(k₁)-g(k₂)) ≥ 2·R_bound(k₁).
+    From `correction_dominates_remainder`: R_bound(k) ≤ 4π·g(k).
+    But g(k₁)-g(k₂) ~ O(k^{-3/2}) vs 2·R_bound(k₁) ~ O(k^{-1/2}).
+    The bound does NOT close from pointwise estimates alone.
+    Requires: either a SIGNED remainder identity (R(k) itself antitone),
+    or a tighter coupling between consecutive block remainders.
 
     Reference: Siegel 1932 §3; Gabcke 1979 Satz 4. -/
 theorem rs_block_antitone :
