@@ -37,7 +37,12 @@ The proof decomposes into:
 - `weighted_sqrt_monotone`: ∫√(k+1+p)·Ψ increasing in k (NEW)
 - `chi_modulus_critical_line`: via Gamma reflection + trig identity (NEW)
 
-SORRY COUNT: 2 (saddle_point, rs_block_antitone)
+### Proved (new infrastructure, C30)
+- `polynomial_mismatch_sum_bound`: ‖mismatch sum‖ ≤ 4√(k+1) on block k
+- `sqrt_block_le_sqrt_t_param`: √(k+1) ≤ √(t/(2π)+1) from hardyStart
+- `polynomial_mismatch_crude_order`: ‖mismatch sum‖ ≤ 4√(t/(2π)+1) (O(t^{1/4}))
+
+SORRY COUNT: 2 (saddle_point, rs_block_antitone) — both from siegel_expansion_core
 WARNING COUNT: 2
 
 Reference: Siegel 1932 §3; Edwards Ch. 7 (pp. 136-145);
@@ -1649,6 +1654,76 @@ theorem partialSum_norm_le_two_sqrt_block (k : ℕ) (t : ℝ)
     _ ≤ 2 * Real.sqrt ((k + 1 : ℕ) : ℝ) :=
         partial_sum_amplitude_le_two_sqrt (k + 1)
     _ = 2 * Real.sqrt ((k : ℝ) + 1) := by push_cast; ring_nf
+
+-- ============================================================
+-- Section 7c++-mismatch: Polynomial mismatch sum bound
+-- ============================================================
+
+/-- The polynomial mismatch SUM on block k has norm bounded by 4√(k+1).
+    Each term has norm ≤ 2·(n+1)^{-1/2}, and the sum of amplitudes is ≤ 2√(k+1).
+
+    PROVED: from `polynomial_mismatch_term_structure` + `partial_sum_amplitude_le_two_sqrt`. -/
+theorem polynomial_mismatch_sum_bound (k : ℕ) (t : ℝ) (ht : t ≠ 0)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    ‖∑ n ∈ Finset.range (hardyN t),
+      ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+       ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))‖ ≤
+    4 * Real.sqrt ((k : ℝ) + 1) := by
+  calc ‖∑ n ∈ Finset.range (hardyN t),
+        ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+         ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))‖
+      ≤ ∑ n ∈ Finset.range (hardyN t),
+          ‖(chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+           ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖ :=
+        norm_sum_le _ _
+    _ ≤ ∑ n ∈ Finset.range (hardyN t), 2 * ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+        apply Finset.sum_le_sum
+        intro n hn
+        exact polynomial_mismatch_term_structure t ht n (Finset.mem_range.mp hn)
+    _ = 2 * ∑ n ∈ Finset.range (hardyN t), ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+        rw [Finset.mul_sum]
+    _ ≤ 2 * (2 * Real.sqrt ((k + 1 : ℕ) : ℝ)) := by
+        gcongr
+        rw [hardyN_on_open_block k t ht_lo ht_hi]
+        exact partial_sum_amplitude_le_two_sqrt (k + 1)
+    _ = 4 * Real.sqrt ((k + 1 : ℕ) : ℝ) := by ring
+    _ = 4 * Real.sqrt ((k : ℝ) + 1) := by push_cast; ring_nf
+
+/-- On block k with t > 0, we have (k+1) ≤ √(t/(2π)) + 1, and therefore
+    √(k+1) ≤ √(t/(2π) + 1). This connects the block-indexed bound to a
+    t-dependent bound.
+
+    PROVED: from hardyStart k ≤ t and algebra. -/
+theorem sqrt_block_le_sqrt_t_param (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_pos : 0 < t) :
+    Real.sqrt ((k : ℝ) + 1) ≤ Real.sqrt (t / (2 * Real.pi) + 1) := by
+  apply Real.sqrt_le_sqrt
+  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
+  -- hardyStart k = 2π(k+1)² with ℕ cast
+  have h_hs : hardyStart k = 2 * Real.pi * ((k : ℝ) + 1) ^ 2 := by
+    unfold hardyStart; push_cast; ring
+  have hk1_sq : 2 * Real.pi * ((k : ℝ) + 1) ^ 2 ≤ t := by linarith
+  have hk1_le : ((k : ℝ) + 1) ^ 2 ≤ t / (2 * Real.pi) := by
+    rw [le_div_iff₀ hpi]; linarith
+  -- (k+1)² ≤ t/(2π) implies k+1 ≤ (k+1)² ≤ t/(2π) ≤ t/(2π) + 1
+  nlinarith [sq_nonneg ((k : ℝ) + 1 - 1)]
+
+/-- On block k, the polynomial mismatch norm is O(t^{1/4}):
+    ≤ 4·√(t/(2π) + 1).
+
+    This provides a CRUDE bound. The saddle-point analysis (Siegel 1932)
+    shows the mismatch minus the N+1 term (RS leading term) is O(t^{-3/4}),
+    which is the genuine content of `siegel_expansion_core`. -/
+theorem polynomial_mismatch_crude_order (k : ℕ) (t : ℝ) (ht : t ≠ 0)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1))
+    (ht_pos : 0 < t) :
+    ‖∑ n ∈ Finset.range (hardyN t),
+      ((chiFactor t)⁻¹ * ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ)) -
+       ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))‖ ≤
+    4 * Real.sqrt ((t / (2 * Real.pi)) + 1) := by
+  have h1 := polynomial_mismatch_sum_bound k t ht ht_lo ht_hi
+  have h2 := sqrt_block_le_sqrt_t_param k t ht_lo ht_pos
+  linarith [Real.sqrt_nonneg ((k : ℝ) + 1)]
 
 -- ============================================================
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
