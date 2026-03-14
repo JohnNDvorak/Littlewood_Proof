@@ -841,6 +841,124 @@ theorem signed_errorTerm_lower_bound
       (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t))]
 
 -- ============================================================
+-- Section 7d-pre: AFE sub-lemmas toward saddle-point remainder
+-- ============================================================
+
+/-- The ErrorTerm is bounded by the norm of the zeta remainder plus partial sum.
+
+    |ErrorTerm(t)| = |Re(e^{iθ}·R) - Re(e^{iθ}·Σ)|
+                   ≤ |Re(e^{iθ}·R)| + |Re(e^{iθ}·Σ)|
+                   ≤ ‖R‖ + ‖Σ‖
+
+    where R = complexZetaRemainder(t) and Σ = complexPartialSum(t).
+    This is the basic triangle inequality decomposition. -/
+theorem errorTerm_abs_le_norm_remainder_plus_sum (t : ℝ) :
+    |ErrorTerm t| ≤ ‖Complex.exp (Complex.I * hardyTheta t) * complexZetaRemainder t‖ +
+      ‖Complex.exp (Complex.I * hardyTheta t) * complexPartialSum t‖ := by
+  rw [errorTerm_eq_re_remainder]
+  exact le_trans (abs_sub _ _) (add_le_add (Complex.abs_re_le_norm _) (Complex.abs_re_le_norm _))
+
+/-- The phase factor e^{iθ} has unit modulus, so ‖e^{iθ}·z‖ = ‖z‖.
+    Applied to the complexZetaRemainder. -/
+theorem norm_phase_mul_remainder (t : ℝ) :
+    ‖Complex.exp (Complex.I * hardyTheta t) * complexZetaRemainder t‖ =
+    ‖complexZetaRemainder t‖ := by
+  rw [Complex.norm_mul, norm_exp_I_mul_real, one_mul]
+
+/-- The phase factor e^{iθ} has unit modulus, so ‖e^{iθ}·z‖ = ‖z‖.
+    Applied to the complexPartialSum. -/
+theorem norm_phase_mul_partialSum (t : ℝ) :
+    ‖Complex.exp (Complex.I * hardyTheta t) * complexPartialSum t‖ =
+    ‖complexPartialSum t‖ := by
+  rw [Complex.norm_mul, norm_exp_I_mul_real, one_mul]
+
+/-- Simplified ErrorTerm bound using phase cancellation:
+    |ErrorTerm(t)| ≤ ‖complexZetaRemainder(t)‖ + ‖complexPartialSum(t)‖ -/
+theorem errorTerm_abs_le_norms (t : ℝ) :
+    |ErrorTerm t| ≤ ‖complexZetaRemainder t‖ + ‖complexPartialSum t‖ := by
+  calc |ErrorTerm t|
+      ≤ ‖Complex.exp (Complex.I * hardyTheta t) * complexZetaRemainder t‖ +
+        ‖Complex.exp (Complex.I * hardyTheta t) * complexPartialSum t‖ :=
+        errorTerm_abs_le_norm_remainder_plus_sum t
+    _ = ‖complexZetaRemainder t‖ + ‖complexPartialSum t‖ := by
+        rw [norm_phase_mul_remainder, norm_phase_mul_partialSum]
+
+/-- The zeta remainder decomposes via the functional equation.
+    For t ≠ 0:
+      ζ(1/2 + it) = χ-factor · ζ(1/2 + it) (from the functional equation)
+
+    The complexZetaRemainder = ζ(s) - Σ n^{-s} where s = 1/2 + it.
+    This is purely definitional — it unpacks the definition. -/
+theorem complexZetaRemainder_eq (t : ℝ) :
+    complexZetaRemainder t =
+    riemannZeta (1/2 + Complex.I * (t : ℂ)) - complexPartialSum t := rfl
+
+/-- The ErrorTerm can be written as a difference of two Re terms involving
+    the zeta function and the partial sum, with the remainder split.
+
+    ErrorTerm(t) = Re(e^{iθ} · ζ(s)) - Re(e^{iθ} · Σ) - Re(e^{iθ} · Σ)
+                 = Re(e^{iθ} · (ζ(s) - Σ)) - Re(e^{iθ} · Σ)
+
+    This is the "one remainder + one sum" form used in the RS analysis.  -/
+theorem errorTerm_as_remainder_minus_sum (t : ℝ) :
+    ErrorTerm t = (Complex.exp (Complex.I * hardyTheta t) *
+      complexZetaRemainder t).re -
+      (Complex.exp (Complex.I * hardyTheta t) * complexPartialSum t).re :=
+  errorTerm_eq_re_remainder t
+
+/-- The norm of the partial sum is bounded by a sum of inverse square roots.
+    ‖Σ_{n≤N} (n+1)^{-1/2-it}‖ ≤ Σ_{n≤N} (n+1)^{-1/2}
+
+    This follows from the triangle inequality and |(n+1)^{-it}| = 1 for real t. -/
+theorem norm_complexPartialSum_le (t : ℝ) :
+    ‖complexPartialSum t‖ ≤
+    ∑ n ∈ Finset.range (hardyN t), ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  unfold complexPartialSum
+  calc ‖∑ n ∈ Finset.range (hardyN t),
+        ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖
+      ≤ ∑ n ∈ Finset.range (hardyN t),
+        ‖((n + 1 : ℂ)) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ))‖ :=
+        norm_sum_le _ _
+    _ = ∑ n ∈ Finset.range (hardyN t), ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+        congr 1; ext n
+        -- ‖(n+1)^{-1/2-it}‖ = (n+1)^{-1/2} since |z^w| = |z|^{Re(w)} for z > 0
+        have hn_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+        rw [show (n + 1 : ℂ) = ((n + 1 : ℝ) : ℂ) from by push_cast; ring]
+        rw [Complex.norm_cpow_eq_rpow_re_of_pos hn_pos]
+        congr 1
+        simp [Complex.sub_re, Complex.neg_re, Complex.mul_re,
+              Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+
+/-- On block k (open interval), the partial sum has exactly k+1 terms.
+    Combined with the inverse square root bound, this gives:
+    ‖complexPartialSum(t)‖ ≤ Σ_{n=1}^{k+1} n^{-1/2}
+    which is bounded above by 2√(k+1) (integral comparison). -/
+theorem partialSum_term_count (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    Finset.card (Finset.range (hardyN t)) = k + 1 := by
+  rw [Finset.card_range, hardyN_on_open_block k t ht_lo ht_hi]
+
+/-- The error term representation via the remainder has bounded real parts.
+    |Re(e^{iθ} · R)| ≤ ‖R‖ where R = complexZetaRemainder(t).
+    This is the basic abs_re_le_norm applied to our specific terms. -/
+theorem abs_re_phase_remainder_le (t : ℝ) :
+    |(Complex.exp (Complex.I * hardyTheta t) * complexZetaRemainder t).re| ≤
+    ‖complexZetaRemainder t‖ := by
+  calc |(Complex.exp (Complex.I * hardyTheta t) * complexZetaRemainder t).re|
+      ≤ ‖Complex.exp (Complex.I * hardyTheta t) * complexZetaRemainder t‖ :=
+        Complex.abs_re_le_norm _
+    _ = ‖complexZetaRemainder t‖ := norm_phase_mul_remainder t
+
+/-- Similarly for the partial sum term. -/
+theorem abs_re_phase_partialSum_le (t : ℝ) :
+    |(Complex.exp (Complex.I * hardyTheta t) * complexPartialSum t).re| ≤
+    ‖complexPartialSum t‖ := by
+  calc |(Complex.exp (Complex.I * hardyTheta t) * complexPartialSum t).re|
+      ≤ ‖Complex.exp (Complex.I * hardyTheta t) * complexPartialSum t‖ :=
+        Complex.abs_re_le_norm _
+    _ = ‖complexPartialSum t‖ := norm_phase_mul_partialSum t
+
+-- ============================================================
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
 -- ============================================================
 

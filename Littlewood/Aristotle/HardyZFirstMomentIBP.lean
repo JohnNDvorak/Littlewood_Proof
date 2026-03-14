@@ -36,6 +36,8 @@ import Littlewood.Aristotle.HardyThetaSmooth
 import Littlewood.Aristotle.HardyEstimatesPartial
 import Littlewood.Aristotle.PhragmenLindelof
 import Littlewood.Aristotle.HardyZFirstMoment
+import Littlewood.Aristotle.OffResonanceSmoothVdC
+import Littlewood.Aristotle.HardyNProperties
 
 set_option linter.mathlibStandardSet false
 
@@ -789,7 +791,7 @@ private theorem ibp_correction_integrand_bound :
         16 * C_z * M * t ^ ((3:ℝ)/4) / Real.log t := add_le_add h_term1 h_term2
     _ = (4 * C_d + 16 * C_z * M) * t ^ ((3:ℝ)/4) / Real.log t := by ring
 
-/-- **Main oscillatory integral bound** (sorry — requires AFE-based VdC argument).
+/- **Main oscillatory integral bound** (sorry — requires AFE-based VdC argument).
 
     REMAINING ATOMIC OBLIGATION: |∫₁ᵀ Z(t) dt| ≤ C · T^{1/2}.
 
@@ -826,6 +828,183 @@ private theorem ibp_correction_integrand_bound :
     This is why the sorry cannot be closed without `rs_saddle_point_bound`.
 
     Reference: Titchmarsh (1951), §4.15; Ivić (2003), §4.2. -/
+
+/-! ## Part 6: Per-mode VdC infrastructure for S1
+
+When the RS expansion (S2) closes, each mode n of the Dirichlet polynomial
+produces an oscillatory integral ∫ n^{-1/2} · e^{i(θ(t) - t·log(n+1))} dt.
+
+The per-mode phase is φ_n(t) = θ(t) - t·log(n+1), with derivative
+φ'_n(t) = θ'(t) - log(n+1) = modeOmega n t.
+
+Off-diagonal modes (n far from k on block k) have |φ'_n| ≥ δ > 0,
+so VdC gives O(1/δ) per mode. The weighted sum over modes converges.
+
+This section builds the infrastructure that connects the existing
+`OffResonanceSmoothVdC.off_resonance_integral_bound_smooth` to the
+first-moment analysis. All lemmas here are constructively proved (no sorry).
+-/
+
+section PerModeVdC
+
+open Aristotle.OffResonanceSmoothVdC Aristotle.HardyNProperties
+open HardyEstimatesPartial
+
+/-! ### 6a. Per-mode phase derivative: relationship to modeOmega -/
+
+/-- The per-mode phase derivative φ'_n(t) = θ'(t) - log(n+1).
+    This is exactly `modeOmega n t` from OffResonanceSmoothVdC. -/
+theorem perMode_phaseDeriv_eq_modeOmega (n : ℕ) (t : ℝ) :
+    thetaDeriv t - Real.log (↑n + 1) = modeOmega n t := rfl
+
+/-- For t ≥ T₀ (from thetaDeriv_lower_bound), the per-mode phase derivative
+    satisfies φ'_n(t) ≥ (1/4)·log(t) - log(n+1). -/
+theorem perMode_phaseDeriv_lower :
+    ∃ T₀ > 0, ∀ (n : ℕ) (t : ℝ), t ≥ T₀ →
+      modeOmega n t ≥ (1/4) * Real.log t - Real.log (↑n + 1) := by
+  obtain ⟨T₀, hT₀, hbd⟩ := thetaDeriv_lower_bound
+  exact ⟨T₀, hT₀, fun n t ht => sub_le_sub_right (hbd t ht) _⟩
+
+/-- Off-diagonal criterion: if log(n+1) ≤ (1/8)·log(t),
+    then modeOmega n t ≥ (1/8)·log(t) for t ≥ T₀.
+
+    Proof: θ'(t) ≥ (1/4)log(t) and log(n+1) ≤ (1/8)log(t),
+    so modeOmega = θ' - log(n+1) ≥ (1/4 - 1/8)log(t) = (1/8)log(t). -/
+theorem modeOmega_lower_off_diagonal :
+    ∃ T₀ > 0, ∀ (n : ℕ) (t : ℝ), t ≥ T₀ →
+      Real.log (↑n + 1) ≤ (1/8) * Real.log t →
+        modeOmega n t ≥ (1/8) * Real.log t := by
+  obtain ⟨T₀, hT₀, hbd⟩ := thetaDeriv_lower_bound
+  refine ⟨T₀, hT₀, fun n t ht hlog_n => ?_⟩
+  have h1 := hbd t ht
+  show thetaDeriv t - Real.log (↑n + 1) ≥ _
+  linarith
+
+/-- The modeOmega is monotone increasing on (0,∞) for each mode n,
+    inherited from thetaDeriv_strictMonoOn. -/
+theorem modeOmega_monotoneOn_Ioi (n : ℕ) :
+    MonotoneOn (modeOmega n) (Set.Ioi 0) := by
+  intro x hx y hy hxy
+  show thetaDeriv x - _ ≤ thetaDeriv y - _
+  linarith [thetaDeriv_strictMonoOn.monotoneOn hx hy hxy]
+
+/-! ### 6b. VdC bound per off-diagonal mode on a single block
+
+The key bridge: `off_resonance_integral_bound_smooth` gives
+  |∫_{block k} cos(θ(t) - t·log(n+1)) dt| ≤ C_vdc / log((k+1)/(n+1))
+for all k ≥ 1 and n < k.
+
+When we multiply by the amplitude (n+1)^{-1/2} from the Dirichlet polynomial,
+we get:
+  (n+1)^{-1/2} · |∫_{block k} cos(φ_n)| ≤ C_vdc · (n+1)^{-1/2} / log((k+1)/(n+1))
+-/
+
+/-- Weighted off-diagonal mode bound: the contribution of mode n < k
+    to block k is bounded by C · (n+1)^{-1/2} / log((k+1)/(n+1)). -/
+theorem weighted_mode_bound_on_block :
+    ∃ C > 0, ∀ k : ℕ, ∀ n : ℕ, n < k → 1 ≤ k →
+      ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+        |∫ t in Set.Ioc (HardyEstimatesPartial.hardyStart k)
+            (HardyEstimatesPartial.hardyStart (k + 1)),
+          Real.cos (HardyEstimatesPartial.hardyTheta t -
+            t * Real.log ((n : ℝ) + 1))| ≤
+      C * ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) /
+        Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) := by
+  obtain ⟨C_vdc, hC_pos, hbd⟩ := off_resonance_integral_bound_smooth
+  refine ⟨C_vdc, hC_pos, fun k n hnk hk => ?_⟩
+  have hn1_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  have hkn : (n : ℝ) + 1 < (k : ℝ) + 1 := by exact_mod_cast Nat.succ_lt_succ hnk
+  have hlog_pos : 0 < Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) :=
+    Real.log_pos (by rw [one_lt_div hn1_pos]; linarith)
+  have hcoef_nonneg : (0 : ℝ) ≤ ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) := by positivity
+  have h_mode := hbd k n hnk hk
+  calc ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+        |∫ t in Set.Ioc (HardyEstimatesPartial.hardyStart k)
+            (HardyEstimatesPartial.hardyStart (k + 1)),
+          Real.cos (HardyEstimatesPartial.hardyTheta t -
+            t * Real.log ((n : ℝ) + 1))|
+      ≤ ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) *
+        (C_vdc / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1))) :=
+        mul_le_mul_of_nonneg_left h_mode hcoef_nonneg
+    _ = C_vdc * ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) /
+        Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) := by ring
+
+/-! ### 6c. Harmonic kernel sum infrastructure
+
+The key analytic estimate: for the off-diagonal sum over modes n < k,
+  Σ_{n=0}^{k-1} (n+1)^{-1/2} / log((k+1)/(n+1)) ≤ C · √(k+1)
+
+We prove the "far modes" half (n < (k+1)/2) where log((k+1)/(n+1)) ≥ log 2,
+giving each term ≤ (n+1)^{-1/2}/log 2. The crude sum bound Σ (n+1)^{-1/2} ≤ N
+then gives the far-mode contribution ≤ k/log 2.
+-/
+
+/-- Each term (n+1)^{-1/2} ≤ 1 for all n : ℕ. -/
+theorem rpow_neg_half_le_one (n : ℕ) :
+    ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) ≤ 1 := by
+  have h1 : (1 : ℝ) ≤ (↑n : ℝ) + 1 := by linarith [Nat.cast_nonneg (α := ℝ) n]
+  calc ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2))
+      ≤ ((↑n + 1 : ℝ) ^ (0 : ℝ)) :=
+        Real.rpow_le_rpow_of_exponent_le h1 (by norm_num)
+    _ = 1 := rpow_zero _
+
+/-- Crude bound: Σ_{n<N} (n+1)^{-1/2} ≤ N.
+    Each term ≤ 1, so the sum ≤ N. -/
+theorem inv_sqrt_partial_sum_le_card (N : ℕ) :
+    ∑ n ∈ Finset.range N, ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) ≤ (N : ℝ) := by
+  calc ∑ n ∈ Finset.range N, ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2))
+      ≤ ∑ _n ∈ Finset.range N, (1 : ℝ) :=
+        Finset.sum_le_sum (fun n _ => rpow_neg_half_le_one n)
+    _ = (N : ℝ) := by simp
+
+/-- Partial sum bound for the "far" modes n < (k+1)/2.
+    Each term has log((k+1)/(n+1)) ≥ log(2), so the weighted kernel sum is
+    bounded by (1/log 2) · Σ (n+1)^{-1/2} ≤ k/log 2. -/
+theorem far_mode_kernel_sum_bound (k : ℕ) (_hk : 1 ≤ k) :
+    ∀ n ∈ Finset.filter (· < (k + 1) / 2) (Finset.range k),
+      ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) /
+        Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) ≤
+      (1 / Real.log 2) * ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) := by
+  intro n hn
+  rw [Finset.mem_filter] at hn
+  have hn_half := hn.2
+  have hn1_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  -- (k+1)/(n+1) ≥ 2 since n < (k+1)/2 means 2(n+1) ≤ k+1
+  have h_ratio_ge_2 : 2 ≤ ((k : ℝ) + 1) / ((n : ℝ) + 1) := by
+    rw [le_div_iff₀ hn1_pos]
+    have : 2 * (n + 1) ≤ k + 1 := by omega
+    exact_mod_cast this
+  have hlog_ge : Real.log 2 ≤ Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) :=
+    Real.log_le_log (by norm_num) h_ratio_ge_2
+  have hlog2_pos : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  calc ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) /
+        Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1))
+      ≤ ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) / Real.log 2 :=
+        div_le_div_of_nonneg_left (by positivity) hlog2_pos hlog_ge
+    _ = (1 / Real.log 2) * ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) := by ring
+
+/-- The log ratio log((k+1)/(n+1)) is positive for n < k. -/
+theorem log_ratio_pos (k n : ℕ) (hnk : n < k) :
+    0 < Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) := by
+  have hn1_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  have hkn : (n : ℝ) + 1 < (k : ℝ) + 1 := by exact_mod_cast Nat.succ_lt_succ hnk
+  exact Real.log_pos (by rw [one_lt_div hn1_pos]; linarith)
+
+/-- The log ratio is monotone decreasing in n: if n₁ ≤ n₂ < k, then
+    log((k+1)/(n₁+1)) ≥ log((k+1)/(n₂+1)). -/
+theorem log_ratio_antitone (k : ℕ) (n₁ n₂ : ℕ) (h12 : n₁ ≤ n₂) (_h2k : n₂ < k) :
+    Real.log (((k : ℝ) + 1) / ((n₂ : ℝ) + 1)) ≤
+      Real.log (((k : ℝ) + 1) / ((n₁ : ℝ) + 1)) := by
+  have hn1_pos : (0 : ℝ) < (n₁ : ℝ) + 1 := by positivity
+  have hn2_pos : (0 : ℝ) < (n₂ : ℝ) + 1 := by positivity
+  have hk1_pos : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  have h_le : (n₁ : ℝ) + 1 ≤ (n₂ : ℝ) + 1 := by exact_mod_cast Nat.succ_le_succ h12
+  apply Real.log_le_log (by positivity)
+  rw [div_le_div_iff₀ hn2_pos hn1_pos]
+  exact mul_le_mul_of_nonneg_left h_le (le_of_lt hk1_pos)
+
+end PerModeVdC
+
 private theorem ibp_oscillatory_bound :
     ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Set.Ioc 1 T, HardyEstimatesPartial.hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) := by
