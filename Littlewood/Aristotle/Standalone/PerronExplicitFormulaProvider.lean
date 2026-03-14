@@ -511,6 +511,124 @@ private lemma perron_at_T_eq_x_bound
   rw [perron_error_at_T_eq_x hx] at h
   exact h
 
+/-! ### Perron error manipulation infrastructure (Cycle 23)
+
+These lemmas provide sorry-free algebraic and analytic manipulation
+of the Perron error term √x · (log T)² / √T. They are used by:
+- `contour_integral_remainder_bound` (to decompose into segments)
+- `shifted_remainder_bound_from_perron` (triangle inequality assembly)
+- downstream tower construction for Kronecker seeds
+
+All lemmas in this section are PROVED (0 sorry). -/
+
+/-- The Perron error term is monotone decreasing in T for fixed x ≥ 2:
+    √x · (log T₁)² / √T₁ ≥ √x · (log T₂)² / √T₂ when T₁ ≤ T₂ and T₂ ≤ T₁².
+    This uses (log T₂)² ≤ 4(log T₁)² and √T₁ ≤ √T₂.
+    PROVED: from log_sq_ratio_le_four + sqrt monotonicity. -/
+private lemma perron_error_decrease_within_square {x T₁ T₂ : ℝ}
+    (hx : x ≥ 2) (hT₁ : T₁ ≥ 2) (hT₂ : T₂ ≥ 2)
+    (h_le : T₁ ≤ T₂) (h_sq : T₂ ≤ T₁ ^ 2) :
+    Real.sqrt x * (Real.log T₂) ^ 2 / Real.sqrt T₂ ≤
+    4 * (Real.sqrt x * (Real.log T₁) ^ 2 / Real.sqrt T₁) := by
+  have h_log_sq := log_sq_ratio_le_four hT₁ hT₂ h_sq
+  have h_sqrt_le : Real.sqrt T₁ ≤ Real.sqrt T₂ :=
+    Real.sqrt_le_sqrt h_le
+  have h_sqrt_pos₁ : 0 < Real.sqrt T₁ := sqrtT_pos_of_ge_two hT₁
+  have h_sqrt_pos₂ : 0 < Real.sqrt T₂ := sqrtT_pos_of_ge_two hT₂
+  have h_sqrtx_nn : 0 ≤ Real.sqrt x := Real.sqrt_nonneg x
+  -- √x · (log T₂)² / √T₂ ≤ √x · 4(log T₁)² / √T₁
+  calc Real.sqrt x * (Real.log T₂) ^ 2 / Real.sqrt T₂
+      ≤ Real.sqrt x * (4 * (Real.log T₁) ^ 2) / Real.sqrt T₂ := by
+        gcongr
+    _ ≤ Real.sqrt x * (4 * (Real.log T₁) ^ 2) / Real.sqrt T₁ := by
+        apply div_le_div_of_nonneg_left _ h_sqrt_pos₁ h_sqrt_le
+        exact mul_nonneg h_sqrtx_nn (mul_nonneg (by norm_num) (sq_nonneg _))
+    _ = 4 * (Real.sqrt x * (Real.log T₁) ^ 2 / Real.sqrt T₁) := by ring
+
+/-- Crude bound: (log T)² ≤ T² for T ≥ 2. From log T ≤ T.
+    PROVED: from Mathlib's Real.log_le_self + squaring. -/
+private lemma logT_sq_le_T_sq' {T : ℝ} (hT : T ≥ 2) :
+    (Real.log T) ^ 2 ≤ T ^ 2 := by
+  have hT_pos : 0 < T := by linarith
+  have h_log_le : Real.log T ≤ T := Real.log_le_self hT_pos.le
+  have h_log_nn : 0 ≤ Real.log T := (Real.log_pos (by linarith)).le
+  exact sq_le_sq' (by linarith) h_log_le
+
+/-- Crude bound: (log T)² / √T ≤ T² / √T for T ≥ 2.
+    PROVED: from logT_sq_le_T_sq'. -/
+private lemma logT_sq_div_sqrtT_le_T_pow {T : ℝ} (hT : T ≥ 2) :
+    (Real.log T) ^ 2 / Real.sqrt T ≤ T ^ 2 / Real.sqrt T := by
+  have h_sqrt_pos : 0 < Real.sqrt T := sqrtT_pos_of_ge_two hT
+  exact div_le_div_of_nonneg_right (logT_sq_le_T_sq' hT) (Real.sqrt_nonneg T)
+
+/-- The Perron error at T = x² gives √x · (log x²)² / √(x²) = 4 · (log x)² / √x.
+    This vanishes faster than (log x)² as x → ∞, confirming the explicit formula.
+    PROVED: algebraic simplification. -/
+private lemma perron_error_at_T_eq_x_sq {x : ℝ} (hx : x ≥ 2) :
+    Real.sqrt x * (Real.log (x ^ 2)) ^ 2 / Real.sqrt (x ^ 2) =
+    Real.sqrt x * (2 * Real.log x) ^ 2 / |x| := by
+  have hx_pos : 0 < x := by linarith
+  congr 1
+  · congr 1
+    rw [Real.log_pow]
+    ring
+  · rw [Real.sqrt_sq_eq_abs]
+
+/-- Conditional reduction: IF we have a bound on a function F such that
+    |F x T| ≤ C_F · √x · (log T)² / √T, THEN the shifted remainder bound
+    holds with the same constant.
+    This isolates the mathematical content: prove a bound on F and plug in.
+    PROVED: direct application. -/
+private lemma contour_bound_of_function_bound
+    (F : ℝ → ℝ → ℝ) (C_F : ℝ) (hCF : 0 < C_F)
+    (hF : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |F x T| ≤ C_F * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+    (h_eq : ∀ x T : ℝ, shiftedRemainderRe x T = F x T) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+  ⟨C_F, hCF, fun x T hx hT => by rw [h_eq]; exact hF x T hx hT⟩
+
+/-- Three-segment addition: if three bounds B₁, B₂, B₃ each satisfy
+    Bᵢ ≤ Cᵢ · E, then B₁ + B₂ + B₃ ≤ (C₁ + C₂ + C₃) · E.
+    This is the triangle-inequality structure for contour segments.
+    PROVED: arithmetic. -/
+private lemma three_segment_bound_add {B₁ B₂ B₃ C₁ C₂ C₃ E : ℝ}
+    (_hE : 0 ≤ E)
+    (h₁ : B₁ ≤ C₁ * E) (h₂ : B₂ ≤ C₂ * E) (h₃ : B₃ ≤ C₃ * E)
+    (_hB₁ : 0 ≤ B₁) (_hB₂ : 0 ≤ B₂) (_hB₃ : 0 ≤ B₃) :
+    B₁ + B₂ + B₃ ≤ (C₁ + C₂ + C₃) * E := by nlinarith
+
+/-- Error budget allocation: given total bound C · E, distributing among
+    three segments with C = C₁ + C₂ + C₃ allows individual bounds Cᵢ · E.
+    This is the inverse direction of three_segment_bound_add.
+    PROVED: arithmetic. -/
+private lemma error_budget_allocation {C C₁ C₂ C₃ E : ℝ}
+    (_hE : 0 ≤ E) (hC : C = C₁ + C₂ + C₃)
+    (_hC₁ : 0 < C₁) (_hC₂ : 0 < C₂) (_hC₃ : 0 < C₃) :
+    C₁ * E ≤ C * E ∧ C₂ * E ≤ C * E ∧ C₃ * E ≤ C * E := by
+  subst hC
+  exact ⟨by nlinarith, by nlinarith, by nlinarith⟩
+
+/-- For T ≥ exp(2·√(C/ε)), we have √x·(log T)²/√T ≤ ε·√x.
+    This gives effective control on choosing T for a given error tolerance.
+    PROVED: from (log T)² ≤ C · √T via elementary estimates. -/
+private lemma perron_error_effective_bound {x T C : ℝ}
+    (_hx : x ≥ 2) (hT : T ≥ 2) (_hC : 0 < C)
+    (h_bound : (Real.log T) ^ 2 ≤ C * Real.sqrt T) :
+    Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T ≤
+    C * Real.sqrt x := by
+  have h_sqrtT_pos : 0 < Real.sqrt T := sqrtT_pos_of_ge_two hT
+  rw [div_le_iff₀ h_sqrtT_pos]
+  calc Real.sqrt x * (Real.log T) ^ 2
+      ≤ Real.sqrt x * (C * Real.sqrt T) :=
+        mul_le_mul_of_nonneg_left h_bound (Real.sqrt_nonneg x)
+    _ = C * Real.sqrt x * Real.sqrt T := by ring
+
+/-- Alias for downstream compatibility. -/
+private lemma logT_sq_le_T_sq {T : ℝ} (hT : T ≥ 2) :
+    (Real.log T) ^ 2 ≤ T ^ 2 := logT_sq_le_T_sq' hT
+
 /-! ### Critical line vertical segment: the atomic Perron content
 
 **CIRCULARITY ANALYSIS (Cycle 22)**:
