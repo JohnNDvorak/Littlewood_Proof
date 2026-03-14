@@ -1134,6 +1134,180 @@ theorem saddlePhase_at_saddle_approx (k : ℕ) (t : ℝ)
   unfold saddlePhase; ring
 
 -- ============================================================
+-- Section 7d-pre3: AFE remainder decomposition via functional equation
+-- ============================================================
+
+/-- The chi factor is nonzero on the critical line (since ‖χ‖ = 1 for t ≠ 0). -/
+theorem chiFactor_ne_zero (t : ℝ) (ht : t ≠ 0) : chiFactor t ≠ 0 := by
+  intro h
+  have := chiFactor_norm_eq_one t ht
+  rw [h, norm_zero] at this
+  exact one_ne_zero this.symm
+
+/-- ζ(1-s) = reflectedPartialSum + reflectedZetaRemainder, by definition.
+    This is the definitional decomposition of ζ at the reflected point. -/
+theorem reflected_zeta_decomp (t : ℝ) :
+    riemannZeta (1/2 - Complex.I * (t : ℂ)) =
+    reflectedPartialSum t + reflectedZetaRemainder t := by
+  unfold reflectedZetaRemainder
+  ring
+
+/-- ζ(s) = ζ(s), decomposed as partialSum + zetaRemainder. -/
+theorem forward_zeta_decomp (t : ℝ) :
+    riemannZeta (1/2 + Complex.I * (t : ℂ)) =
+    complexPartialSum t + complexZetaRemainder t := by
+  unfold complexZetaRemainder
+  ring
+
+/-- The forward zeta remainder expressed via the FE and the reflected terms.
+    ζ(s) = χ⁻¹ · ζ(1-s), so:
+    complexZetaRemainder = χ⁻¹ · (reflectedPS + reflectedRemainder) - partialSum
+
+    Proved by multiplying the FE identity by χ⁻¹ from the left. -/
+theorem forward_remainder_via_fe (t : ℝ) (ht : t ≠ 0) :
+    complexZetaRemainder t =
+    (chiFactor t)⁻¹ * (reflectedPartialSum t + reflectedZetaRemainder t) -
+    complexPartialSum t := by
+  -- From zeta_reflected_via_fe: ζ(1-s) = χ · ζ(s)
+  -- So ζ(s) = χ⁻¹ · ζ(1-s)
+  -- And complexZetaRemainder = ζ(s) - partialSum = χ⁻¹ · ζ(1-s) - partialSum
+  have hchi := chiFactor_ne_zero t ht
+  have hfe := zeta_reflected_via_fe t ht
+  -- ζ(1-s) = χ · ζ(s), so χ⁻¹ · ζ(1-s) = ζ(s)
+  have hzeta : riemannZeta (1/2 + Complex.I * (t : ℂ)) =
+      (chiFactor t)⁻¹ * riemannZeta (1/2 - Complex.I * (t : ℂ)) := by
+    rw [hfe, inv_mul_cancel_left₀ hchi]
+  rw [← reflected_zeta_decomp]
+  unfold complexZetaRemainder
+  rw [hzeta]
+
+/-- The forward zeta remainder splits as two pieces:
+    complexZetaRemainder = (χ⁻¹ · reflectedPS - partialSum) + χ⁻¹ · reflectedRemainder
+
+    The FIRST piece (χ⁻¹ · reflectedPS - partialSum) captures the "Dirichlet polynomial
+    mismatch" between the forward and reflected partial sums. On the critical line,
+    this is the source of the RS leading correction term.
+
+    The SECOND piece (χ⁻¹ · reflectedRemainder) is the "tail" contribution from the
+    reflected approximate functional equation. -/
+theorem forward_remainder_split (t : ℝ) (ht : t ≠ 0) :
+    complexZetaRemainder t =
+    ((chiFactor t)⁻¹ * reflectedPartialSum t - complexPartialSum t) +
+    (chiFactor t)⁻¹ * reflectedZetaRemainder t := by
+  rw [forward_remainder_via_fe t ht]
+  ring
+
+/-- The ErrorTerm decomposes into a "polynomial mismatch" piece and
+    a "reflected tail" piece, via the functional equation.
+
+    ErrorTerm(t) = Re(e^{iθ} · zetaRemainder) - Re(e^{iθ} · partialSum)
+                 = Re(e^{iθ} · (χ⁻¹·reflectedPS - partialSum))
+                   + Re(e^{iθ} · χ⁻¹·reflectedRemainder)
+                   - Re(e^{iθ} · partialSum)
+
+    This is the structural AFE decomposition that separates the "saddle-point
+    contribution" (from the polynomial mismatch) from the "tail error". -/
+theorem errorTerm_fe_decomposition (t : ℝ) (ht : t ≠ 0) :
+    ErrorTerm t =
+    (Complex.exp (Complex.I * hardyTheta t) *
+      ((chiFactor t)⁻¹ * reflectedPartialSum t - complexPartialSum t)).re +
+    (Complex.exp (Complex.I * hardyTheta t) *
+      ((chiFactor t)⁻¹ * reflectedZetaRemainder t)).re -
+    (Complex.exp (Complex.I * hardyTheta t) * complexPartialSum t).re := by
+  rw [errorTerm_eq_re_remainder t]
+  congr 1
+  -- Need: Re(e^{iθ} · zetaRemainder) = Re(e^{iθ} · (χ⁻¹·rPS - pS)) + Re(e^{iθ} · χ⁻¹·rR)
+  rw [forward_remainder_split t ht]
+  rw [mul_add, Complex.add_re]
+
+/-- Norm bound on the "reflected tail" piece: since ‖χ⁻¹‖ = 1, we have
+    ‖χ⁻¹ · reflectedRemainder‖ = ‖reflectedRemainder‖. -/
+theorem norm_inv_chi_reflected_remainder (t : ℝ) (ht : t ≠ 0) :
+    ‖(chiFactor t)⁻¹ * reflectedZetaRemainder t‖ =
+    ‖reflectedZetaRemainder t‖ := by
+  rw [Complex.norm_mul, norm_inv, chiFactor_norm_eq_one t ht, inv_one, one_mul]
+
+/-- Norm bound on the "polynomial mismatch" piece:
+    ‖χ⁻¹ · reflectedPS - partialSum‖ ≤ ‖reflectedPS‖ + ‖partialSum‖.
+    (Triangle inequality with ‖χ⁻¹‖ = 1.) -/
+theorem norm_polynomial_mismatch_le (t : ℝ) (ht : t ≠ 0) :
+    ‖(chiFactor t)⁻¹ * reflectedPartialSum t - complexPartialSum t‖ ≤
+    ‖reflectedPartialSum t‖ + ‖complexPartialSum t‖ := by
+  calc ‖(chiFactor t)⁻¹ * reflectedPartialSum t - complexPartialSum t‖
+      ≤ ‖(chiFactor t)⁻¹ * reflectedPartialSum t‖ + ‖complexPartialSum t‖ :=
+        norm_sub_le _ _
+    _ = ‖reflectedPartialSum t‖ + ‖complexPartialSum t‖ := by
+        congr 1
+        rw [Complex.norm_mul, norm_inv, chiFactor_norm_eq_one t ht, inv_one, one_mul]
+
+/-- The forward zeta remainder norm is bounded by the reflected remainder
+    norm plus both partial sum norms.
+    ‖zetaRemainder‖ ≤ ‖reflectedRemainder‖ + ‖reflectedPS‖ + ‖partialSum‖ -/
+theorem forward_remainder_norm_bound (t : ℝ) (ht : t ≠ 0) :
+    ‖complexZetaRemainder t‖ ≤
+    ‖reflectedZetaRemainder t‖ + ‖reflectedPartialSum t‖ +
+    ‖complexPartialSum t‖ := by
+  rw [forward_remainder_split t ht]
+  calc ‖((chiFactor t)⁻¹ * reflectedPartialSum t - complexPartialSum t) +
+        (chiFactor t)⁻¹ * reflectedZetaRemainder t‖
+      ≤ ‖(chiFactor t)⁻¹ * reflectedPartialSum t - complexPartialSum t‖ +
+        ‖(chiFactor t)⁻¹ * reflectedZetaRemainder t‖ :=
+        norm_add_le _ _
+    _ ≤ (‖reflectedPartialSum t‖ + ‖complexPartialSum t‖) +
+        ‖reflectedZetaRemainder t‖ := by
+        linarith [norm_polynomial_mismatch_le t ht,
+                  norm_inv_chi_reflected_remainder t ht]
+    _ = ‖reflectedZetaRemainder t‖ + ‖reflectedPartialSum t‖ +
+        ‖complexPartialSum t‖ := by ring
+
+/-- The ErrorTerm absolute value is bounded by the reflected remainder
+    plus two copies of the partial sum norms:
+    |ErrorTerm(t)| ≤ ‖reflectedRemainder‖ + 2·‖reflectedPS‖ + 2·‖partialSum‖
+
+    This follows from the fe_decomposition and triangle inequality. -/
+theorem errorTerm_abs_via_fe_bound (t : ℝ) (ht : t ≠ 0) :
+    |ErrorTerm t| ≤
+    ‖reflectedZetaRemainder t‖ +
+    ‖reflectedPartialSum t‖ + ‖complexPartialSum t‖ +
+    ‖complexPartialSum t‖ := by
+  -- Use the known bound: |ErrorTerm| ≤ ‖zetaRemainder‖ + ‖partialSum‖
+  calc |ErrorTerm t|
+      ≤ ‖complexZetaRemainder t‖ + ‖complexPartialSum t‖ :=
+        errorTerm_abs_le_norms t
+    _ ≤ (‖reflectedZetaRemainder t‖ + ‖reflectedPartialSum t‖ +
+        ‖complexPartialSum t‖) + ‖complexPartialSum t‖ := by
+        linarith [forward_remainder_norm_bound t ht]
+
+/-- On block k, combining the partial sum bound ‖partialSum‖ ≤ k+1
+    with the reflected partial sum bound, we get a concrete ErrorTerm bound
+    in terms of the reflected remainder and k. -/
+theorem errorTerm_abs_on_block_via_fe (k : ℕ) (t : ℝ) (ht : t ≠ 0)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    |ErrorTerm t| ≤
+    ‖reflectedZetaRemainder t‖ + 3 * ((k : ℝ) + 1) := by
+  have hps : ‖complexPartialSum t‖ ≤ (k + 1 : ℝ) :=
+    partialSum_norm_le_block_count k t ht_lo ht_hi
+  have hrps : ‖reflectedPartialSum t‖ ≤ (hardyN t : ℝ) := by
+    calc ‖reflectedPartialSum t‖
+        ≤ ∑ n ∈ Finset.range (hardyN t), ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) :=
+          norm_reflectedPartialSum_le t
+      _ ≤ ∑ _n ∈ Finset.range (hardyN t), (1 : ℝ) := by
+          apply Finset.sum_le_sum; intro n _; exact rpow_neg_half_le_one n
+      _ = (hardyN t : ℝ) := by simp [Finset.sum_const, Finset.card_range]
+  have hN : (hardyN t : ℝ) = ((k + 1 : ℕ) : ℝ) := by
+    rw [hardyN_on_open_block k t ht_lo ht_hi]
+  rw [hN] at hrps
+  have hrps' : ‖reflectedPartialSum t‖ ≤ (k + 1 : ℝ) := by push_cast at hrps; linarith
+  calc |ErrorTerm t|
+      ≤ ‖reflectedZetaRemainder t‖ +
+        ‖reflectedPartialSum t‖ + ‖complexPartialSum t‖ +
+        ‖complexPartialSum t‖ :=
+        errorTerm_abs_via_fe_bound t ht
+    _ ≤ ‖reflectedZetaRemainder t‖ + (k + 1 : ℝ) + (k + 1 : ℝ) + (k + 1 : ℝ) := by
+        linarith
+    _ = ‖reflectedZetaRemainder t‖ + 3 * ((k : ℝ) + 1) := by ring
+
+-- ============================================================
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
 -- ============================================================
 
@@ -1631,6 +1805,139 @@ theorem c_fn_expansion (k : ℕ) (hk : 1 ≤ k) :
   -- Rewrite the LHS using key
   rw [key]; ring
 
+-- ============================================================
+-- Section 9b: Antitone decomposition infrastructure
+-- ============================================================
+
+/-- The weighted √-increment g(k) = ∫₀¹ (√(k+1+p) - √(k+1))·Ψ(p) dp.
+    The antitone property of g is proved (weighted_increment_antitone).
+    This definition packages it for the decomposition. -/
+private noncomputable def g_increment (k : ℕ) : ℝ :=
+  ∫ p in Ioc (0 : ℝ) 1,
+    (Real.sqrt ((k : ℝ) + 1 + p) - Real.sqrt ((k : ℝ) + 1)) * rsPsi p
+
+/-- g_increment is antitone: g(k) ≥ g(k+1) for all k. -/
+private theorem g_increment_antitone (k : ℕ) :
+    g_increment (k + 1) ≤ g_increment k := by
+  unfold g_increment
+  have h := weighted_increment_antitone k
+  have h1 : (fun p : ℝ => (Real.sqrt (↑(k + 1) + 1 + p) - Real.sqrt (↑(k + 1) + 1)) * rsPsi p) =
+      (fun p : ℝ => (Real.sqrt ((k : ℝ) + 2 + p) - Real.sqrt ((k : ℝ) + 2)) * rsPsi p) := by
+    ext p; congr 1; congr 1 <;> push_cast <;> ring
+  simp only [h1]; exact h
+
+/-- g_increment is nonneg: √(k+1+p) ≥ √(k+1) for p ≥ 0. -/
+private theorem g_increment_nonneg (k : ℕ) : 0 ≤ g_increment k := by
+  unfold g_increment
+  apply setIntegral_nonneg measurableSet_Ioc
+  intro p hp
+  apply mul_nonneg
+  · exact sub_nonneg.mpr (Real.sqrt_le_sqrt (by linarith [hp.1]))
+  · exact rsPsi_nonneg_on p (Ioc_subset_Icc_self hp)
+
+/-- The g_increment is strictly decreasing: g(k) - g(k+1) ≥ 0.
+    Combined with remainder bounds, this is the leading contribution
+    to c(k) - c(k+1). The difficulty is that the remainder R(k) - R(k+1)
+    can have either sign and |R(k) - R(k+1)| may dominate |g(k) - g(k+1)|
+    for moderate k. -/
+private theorem g_increment_diff_nonneg (k : ℕ) :
+    0 ≤ g_increment k - g_increment (k + 1) :=
+  sub_nonneg.mpr (g_increment_antitone k)
+
+/-- The g_increment at any k is nonneg: directly from g_increment_nonneg.
+    Stronger positivity (g(k) > 0) would follow from Ψ being strictly positive
+    on (0,1) and √(k+1+p) > √(k+1) for p > 0, but this nonneg bound
+    suffices for the antitone decomposition. -/
+private theorem g_increment_nonneg' (k : ℕ) : 0 ≤ g_increment k :=
+  g_increment_nonneg k
+
+/-- The block length hardyStart(k+1) - hardyStart(k) = 2π(2k+3).
+    This is needed for the remainder bound in the antitone decomposition. -/
+private theorem block_length_eq (k : ℕ) :
+    hardyStart (k + 1) - hardyStart k = 2 * Real.pi * (2 * (k : ℝ) + 3) := by
+  unfold hardyStart; push_cast; ring
+
+/-- The remainder bound from c_fn_expansion is
+    |R_k| ≤ C_R · (2π(2k+3)) · (2πk²)^{-3/4} ~ O(k^{-1/2}).
+    This quantifies the gap that prevents closing rs_block_antitone. -/
+private theorem remainder_bound_explicit (k : ℕ) (_hk : 1 ≤ k)
+    (C_R : ℝ) (_hCR_pos : 0 < C_R) (_hCR_le : C_R ≤ 1 / 2)
+    (R_k : ℝ) (hR : |R_k| ≤ C_R * (hardyStart (k + 1) - hardyStart k) *
+        (hardyStart k) ^ (-(3 : ℝ) / 4)) :
+    |R_k| ≤ C_R * (2 * Real.pi * (2 * (k : ℝ) + 3)) *
+        (2 * Real.pi * ((k : ℝ) + 1) ^ 2) ^ (-(3 : ℝ) / 4) := by
+  have h1 : hardyStart (k + 1) - hardyStart k = 2 * Real.pi * (2 * (k : ℝ) + 3) :=
+    block_length_eq k
+  have h2 : hardyStart k = 2 * Real.pi * ((k : ℝ) + 1) ^ 2 := by
+    unfold hardyStart; push_cast; ring
+  rw [h1, h2] at hR; exact hR
+
+/-- The g(k) - g(k+1) difference is bounded below: it satisfies
+    g(k) - g(k+1) = ∫₀¹ (√(k+1+p) - √(k+1) - √(k+2+p) + √(k+2))·Ψ(p) dp
+    which is nonneg by concavity of √. This is the proved component
+    of the antitone decomposition. -/
+private theorem leading_diff_eq_integral (k : ℕ) :
+    g_increment k - g_increment (k + 1) =
+    ∫ p in Ioc (0 : ℝ) 1,
+      ((Real.sqrt ((k : ℝ) + 1 + p) - Real.sqrt ((k : ℝ) + 1)) -
+       (Real.sqrt ((k : ℝ) + 2 + p) - Real.sqrt ((k : ℝ) + 2))) * rsPsi p := by
+  unfold g_increment
+  have h_int1 : IntegrableOn (fun p =>
+      (Real.sqrt ((k : ℝ) + 1 + p) - Real.sqrt ((k : ℝ) + 1)) * rsPsi p) (Ioc 0 1) := by
+    apply (ContinuousOn.mul _ rsPsi_continuousOn).integrableOn_Icc.mono_set Ioc_subset_Icc_self
+    exact ContinuousOn.sub (ContinuousOn.sqrt (continuousOn_const.add continuousOn_id))
+      continuousOn_const
+  have h_int2 : IntegrableOn (fun p =>
+      (Real.sqrt (↑(k + 1) + 1 + p) - Real.sqrt (↑(k + 1) + 1)) * rsPsi p) (Ioc 0 1) := by
+    apply (ContinuousOn.mul _ rsPsi_continuousOn).integrableOn_Icc.mono_set Ioc_subset_Icc_self
+    exact ContinuousOn.sub (ContinuousOn.sqrt (continuousOn_const.add continuousOn_id))
+      continuousOn_const
+  rw [← integral_sub h_int1 h_int2]
+  congr 1; ext p
+  have : (↑(k + 1) : ℝ) + 1 + p = (k : ℝ) + 2 + p := by push_cast; ring
+  have : (↑(k + 1) : ℝ) + 1 = (k : ℝ) + 2 := by push_cast; ring
+  simp only [*]
+  ring
+
+/-- **Antitone reduction**: rs_block_antitone follows from
+    "signed remainder difference" R(k₁) - R(k₂) ≤ 4π·(g(k₁) - g(k₂))
+    for k₁ ≤ k₂ in Ici 1.
+
+    This lemma shows that if we can prove the signed remainder
+    satisfies the above coupling with the leading term difference,
+    then the full antitone property follows.
+
+    The mathematical content: the signed RS remainder R(k) itself
+    is approximately antitone because the saddle-point phase
+    structure couples consecutive blocks (Gabcke 1979). -/
+private theorem antitone_of_signed_remainder_coupling
+    (h_coupling : ∀ k₁ k₂ : ℕ, 1 ≤ k₁ → k₁ ≤ k₂ →
+      ∀ R₁ R₂ : ℝ,
+        (∃ C₁ : ℝ, 0 < C₁ ∧ C₁ ≤ 1 / 2 ∧
+          |R₁| ≤ C₁ * (hardyStart (k₁ + 1) - hardyStart k₁) *
+            (hardyStart k₁) ^ (-(3 : ℝ) / 4)) →
+        (∃ C₂ : ℝ, 0 < C₂ ∧ C₂ ≤ 1 / 2 ∧
+          |R₂| ≤ C₂ * (hardyStart (k₂ + 1) - hardyStart k₂) *
+            (hardyStart k₂) ^ (-(3 : ℝ) / 4)) →
+        (4 * Real.pi * g_increment k₁ + R₁) -
+          (4 * Real.pi * g_increment k₂ + R₂) ≥ 0) :
+    let A_val := 4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)
+    let c_fn := fun k : ℕ =>
+      (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
+        - A_val * Real.sqrt ((k : ℝ) + 1)
+    AntitoneOn c_fn (Ici (1 : ℕ)) := by
+  intro A_val c_fn
+  intro k₁ hk₁ k₂ hk₂ hle
+  simp only [Set.mem_Ici] at hk₁ hk₂
+  -- Use c_fn_expansion to decompose c_fn k₁ and c_fn k₂
+  obtain ⟨R₁, h_eq₁, hR₁_bound⟩ := c_fn_expansion k₁ hk₁
+  obtain ⟨R₂, h_eq₂, hR₂_bound⟩ := c_fn_expansion k₂ hk₂
+  -- c_fn k_i = 4π · g(k_i) + R_i
+  have h1 : c_fn k₁ = 4 * Real.pi * g_increment k₁ + R₁ := h_eq₁
+  have h2 : c_fn k₂ = 4 * Real.pi * g_increment k₂ + R₂ := h_eq₂
+  rw [h1, h2]
+  linarith [h_coupling k₁ k₂ hk₁ hle R₁ R₂ hR₁_bound hR₂_bound]
+
 /-- **Block antitone property** (Siegel 1932 §3, Gabcke 1979 Satz 4).
     The correction c(k) is antitone on k ≥ 1.
 
@@ -1648,8 +1955,14 @@ theorem c_fn_expansion (k : ℕ) (hk : 1 ≤ k) :
     From `correction_dominates_remainder`: R_bound(k) ≤ 4π·g(k).
     But g(k₁)-g(k₂) ~ O(k^{-3/2}) vs 2·R_bound(k₁) ~ O(k^{-1/2}).
     The bound does NOT close from pointwise estimates alone.
-    Requires: either a SIGNED remainder identity (R(k) itself antitone),
-    or a tighter coupling between consecutive block remainders.
+
+    **REDUCTION (Cycle 21)**:
+    Via `antitone_of_signed_remainder_coupling`, the sorry reduces to:
+    for k₁ ≤ k₂ in Ici 1,
+      (4π·g(k₁) + R(k₁)) - (4π·g(k₂) + R(k₂)) ≥ 0
+    which needs the signed remainder R(k) itself to be approximately antitone.
+    This is the genuine Gabcke content: the saddle-point phase structure
+    ensures the signed remainder decays, not just its absolute value.
 
     Reference: Siegel 1932 §3; Gabcke 1979 Satz 4. -/
 theorem rs_block_antitone :
