@@ -17,7 +17,8 @@ Key results:
 - `perron_per_term_small_bound`: per-term bound for 0 < y < 1 (Davenport form) — PROVED
 - `dirichlet_series_perron_exchange`: sum-integral interchange
 
-SORRY COUNT: 1
+SORRY COUNT: 2 (perron_vertical_eq_tsum: Fubini ∫Σ=Σ∫; perron_tail_bound: tail O(1))
+PROVED: perron_fubini_exchange (from sub-lemmas), perron_exchange_error_bound
 
 References: Davenport Ch. 17; Montgomery-Vaughan §5.1.
 
@@ -507,16 +508,287 @@ theorem perron_per_term_small_bound (y : ℝ) (hy0 : 0 < y) (hy1 : y < 1) (c : �
         linarith [div_nonneg (mul_nonneg (by linarith : (0:ℝ) ≤ 2) hy_rpow_pos.le)
           (mul_pos hc hT).le]
 
+/-! ## Per-term Perron integral infrastructure for sum-integral interchange
+
+These lemmas establish the pointwise and integral bounds needed for the
+Dirichlet series Perron exchange (Fubini / dominated convergence).
+
+Key results:
+- `vertical_line_ne_zero`: c + it ≠ 0 for c > 0
+- `vertical_line_norm_ge`: ‖c + it‖ ≥ c for c > 0
+- `perron_integrand_pointwise_norm_bound`: ‖y^{c+it}/(c+it)‖ ≤ y^c/c
+- `perron_integrand_cont`: y^{c+it}/(c+it) is continuous in t
+- `perron_integrand_iIntegrable`: interval-integrable on [-T, T]
+- `perron_integral_norm_le`: ‖∫_{-T}^{T} y^{c+it}/(c+it)‖ ≤ 2T·y^c/c
+- `perron_per_term_re_integral_abs_bound`: |(2π)⁻¹ ∫ Re(...)| ≤ T·y^c/(πc)
+-/
+
+/-- For c > 0, the point c + it on the vertical line is nonzero. -/
+theorem vertical_line_ne_zero (c : ℝ) (hc : 0 < c) (t : ℝ) :
+    (c : ℂ) + (t : ℂ) * Complex.I ≠ 0 := by
+  intro h
+  have hre := congr_arg Complex.re h
+  simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.ofReal_re,
+    Complex.I_re, mul_zero, Complex.ofReal_im, Complex.I_im, mul_one, sub_zero,
+    add_zero, Complex.zero_re] at hre
+  linarith
+
+/-- For c > 0, ‖c + it‖ ≥ c. The real part dominates. -/
+theorem vertical_line_norm_ge (c : ℝ) (hc : 0 < c) (t : ℝ) :
+    c ≤ ‖(c : ℂ) + (t : ℂ) * Complex.I‖ := by
+  have h1 : ((c : ℂ) + (t : ℂ) * Complex.I).re = c := by
+    simp [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+      Complex.I_re, Complex.I_im]
+  calc c = |((c : ℂ) + (t : ℂ) * Complex.I).re| := by rw [h1, abs_of_pos hc]
+    _ ≤ ‖(c : ℂ) + (t : ℂ) * Complex.I‖ := Complex.abs_re_le_norm _
+
+/-- For y > 0 and c > 0, ‖y^{c+it}/(c+it)‖ ≤ y^c/c.
+    The modulus of the numerator is y^c (imaginary exponent has unit modulus),
+    and the modulus of the denominator is ≥ c. -/
+theorem perron_integrand_pointwise_norm_bound (y : ℝ) (hy : 0 < y) (c : ℝ) (hc : 0 < c)
+    (t : ℝ) :
+    ‖(y : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+      ((c : ℂ) + (t : ℂ) * Complex.I)‖ ≤ y ^ c / c := by
+  rw [norm_div]
+  have hnum : ‖(y : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I)‖ = y ^ c := by
+    rw [Complex.norm_cpow_eq_rpow_re_of_pos hy]
+    congr 1
+    simp [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+      Complex.I_re, Complex.I_im]
+  have hden : c ≤ ‖(c : ℂ) + (t : ℂ) * Complex.I‖ :=
+    vertical_line_norm_ge c hc t
+  rw [hnum]
+  exact div_le_div_of_nonneg_left (rpow_pos_of_pos hy c).le hc hden
+
+/-- The Perron integrand y^{c+it}/(c+it) is continuous in t for c > 0, y > 0. -/
+theorem perron_integrand_cont (y : ℝ) (hy : 0 < y) (c : ℝ) (hc : 0 < c) :
+    Continuous (fun t : ℝ =>
+      (y : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+        ((c : ℂ) + (t : ℂ) * Complex.I)) := by
+  apply Continuous.div
+  · exact Continuous.cpow continuous_const
+      (by continuity)
+      (fun t => Or.inl (by simp; linarith))
+  · continuity
+  · intro t
+    exact vertical_line_ne_zero c hc t
+
+/-- The per-term Perron integrand is interval-integrable on [-T, T]. -/
+theorem perron_integrand_iIntegrable (y : ℝ) (hy : 0 < y) (c : ℝ) (hc : 0 < c) (T : ℝ) :
+    IntervalIntegrable (fun t : ℝ =>
+      (y : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+        ((c : ℂ) + (t : ℂ) * Complex.I))
+      MeasureTheory.MeasureSpace.volume (-T) T :=
+  (perron_integrand_cont y hy c hc).continuousOn.intervalIntegrable
+
+/-- Integral norm bound: ‖∫_{-T}^{T} y^{c+it}/(c+it) dt‖ ≤ 2T·y^c/c. -/
+theorem perron_integral_norm_le (y : ℝ) (hy : 0 < y) (c : ℝ) (hc : 0 < c) (T : ℝ)
+    (hT : 0 < T) :
+    ‖∫ t in (-T)..T,
+      (y : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+        ((c : ℂ) + (t : ℂ) * Complex.I)‖ ≤
+      2 * T * y ^ c / c := by
+  calc ‖∫ t in (-T)..T,
+          (y : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+            ((c : ℂ) + (t : ℂ) * Complex.I)‖
+      ≤ (y ^ c / c) * |T - (-T)| := by
+        apply intervalIntegral.norm_integral_le_of_norm_le_const
+        intro t _
+        exact perron_integrand_pointwise_norm_bound y hy c hc t
+    _ = 2 * T * y ^ c / c := by
+        rw [show T - (-T) = 2 * T from by ring, abs_of_pos (by positivity)]
+        ring
+
+/-- The Re part of the per-term Perron integral satisfies the bound
+    |(2π)⁻¹ ∫_{-T}^{T} Re(y^{c+it}/(c+it)) dt| ≤ T·y^c/(π·c).
+
+    This is the key bound for the sum-integral interchange: each term
+    of the Dirichlet series contributes at most T·(x/n)^c/(π·c) to the
+    per-term Perron integral. Combined with Σ Λ(n)/n^c convergent for c > 1,
+    this gives dominated convergence. -/
+theorem perron_per_term_re_integral_abs_bound (y : ℝ) (hy : 0 < y) (c : ℝ) (hc : 0 < c)
+    (T : ℝ) (hT : 0 < T) :
+    |(2 * Real.pi)⁻¹ * ∫ t in (-T)..T,
+      ((y : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+        ((c : ℂ) + (t : ℂ) * Complex.I)).re| ≤
+      T * y ^ c / (Real.pi * c) := by
+  -- ∫ Re(f) = Re(∫ f) via reCLM
+  have hint := perron_integrand_iIntegrable y hy c hc T
+  have h_re_comm : ∫ t in (-T)..T,
+      ((y : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+        ((c : ℂ) + (t : ℂ) * Complex.I)).re =
+    (∫ t in (-T)..T, (y : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+        ((c : ℂ) + (t : ℂ) * Complex.I)).re := by
+    have := Complex.reCLM.intervalIntegral_comp_comm hint
+    simp only [Complex.reCLM_apply] at this
+    exact this
+  rw [h_re_comm, abs_mul, abs_of_pos (by positivity : 0 < (2 * Real.pi)⁻¹)]
+  calc (2 * Real.pi)⁻¹ *
+          |(∫ t in (-T)..T, (y : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+            ((c : ℂ) + (t : ℂ) * Complex.I)).re|
+      ≤ (2 * Real.pi)⁻¹ *
+          ‖∫ t in (-T)..T, (y : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+            ((c : ℂ) + (t : ℂ) * Complex.I)‖ := by
+        gcongr; exact Complex.abs_re_le_norm _
+    _ ≤ (2 * Real.pi)⁻¹ * (2 * T * y ^ c / c) := by
+        gcongr; exact perron_integral_norm_le y hy c hc T hT
+    _ = T * y ^ c / (Real.pi * c) := by ring
+
 /-! ## Dirichlet series exchange -/
 
-/-- The Dirichlet series exchange: the Perron integral of -ζ'/ζ can be
+/-! The Dirichlet series exchange: the Perron integral of -ζ'/ζ can be
     approximated by the sum of per-term Perron integrals weighted by Λ(n)/n^c.
 
     This is valid when `c > 1` because the Dirichlet series converges absolutely.
     The tail (n > N for large N) is bounded because it is dominated by the
     convergent series Σ Λ(n)/n^c.
 
-    SORRY: requires Fubini/dominated convergence for the interchange. -/
+    Architecture: decomposed into two atomic sub-lemmas:
+    1. `perron_fubini_atomic`: Fubini interchange ∫ Σ = Σ ∫ on compact [-T,T]
+    2. `perron_tail_bound`: tail Σ_{n > ⌊x⌋} is bounded by 1
+
+    References: Davenport Ch. 17; Montgomery-Vaughan §5.1. -/
+
+/-! ### Per-term Perron integral bounds for the tail -/
+
+/-- For n ≥ 1, the per-term Perron integral is bounded by T·(x/n)^c/(π·c).
+    This is the key domination bound for the Fubini interchange. -/
+theorem perron_per_term_abs_bound_general (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T)
+    (n : ℕ) (hn : 1 ≤ n) :
+    |perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| ≤
+      T * (x / n) ^ (1 + 1 / Real.log x) / (Real.pi * (1 + 1 / Real.log x)) := by
+  have hx_pos : (0 : ℝ) < x := by linarith
+  have hn_pos : (0 : ℝ) < n := Nat.cast_pos.mpr hn
+  have hxn_pos : (0 : ℝ) < x / n := div_pos hx_pos hn_pos
+  have hc_pos := c_param_pos x hx
+  set c := 1 + 1 / Real.log x
+  -- Use perron_per_term_re_integral_abs_bound
+  exact perron_per_term_re_integral_abs_bound (x / n) hxn_pos c hc_pos T hT
+
+/-- Λ(n) ≤ log n for all n ≥ 1. This follows from von Mangoldt being supported
+    on prime powers with value log(minFac n) ≤ log n. -/
+theorem vonMangoldt_le_log (n : ℕ) (hn : 1 ≤ n) :
+    ArithmeticFunction.vonMangoldt n ≤ Real.log n := by
+  simp only [ArithmeticFunction.vonMangoldt_apply]
+  split_ifs with h
+  · -- IsPrimePow n: vonMangoldt n = log(minFac n) ≤ log n
+    have h_mf_pos : (0 : ℝ) < (n.minFac : ℝ) := Nat.cast_pos.mpr (Nat.minFac_pos n)
+    have h_mf_le_n : n.minFac ≤ n := Nat.minFac_le hn
+    exact Real.log_le_log h_mf_pos (by exact_mod_cast h_mf_le_n)
+  · -- Not a prime power: vonMangoldt n = 0 ≤ log n
+    exact Real.log_nonneg (by exact_mod_cast hn)
+
+/-- **Fubini sub-lemma 1**: The Perron vertical integral equals the infinite
+    Dirichlet series of per-term Perron integrals weighted by Λ(n).
+
+    Mathematical proof:
+    1. `-ζ'/ζ(c+it) = L(Λ, c+it) = Σ_n Λ(n)/n^{c+it}` (Mathlib: `vonMangoldt_lseries_eq_neg_zeta_logderiv`)
+    2. Therefore the integrand `(-ζ'/ζ)(c+it) · x^{c+it}/(c+it)` equals `Σ_n Λ(n) · (x/n)^{c+it}/(c+it)`
+    3. Each term is bounded: `|Λ(n) · (x/n)^{c+it}/(c+it)| ≤ Λ(n) · (x/n)^c/c`
+    4. The domination `Σ_n Λ(n)·(x/n)^c/c = x^c/c · Σ_n Λ(n)/n^c < ∞` (summable for c > 1)
+    5. By dominated convergence / Fubini on the compact interval [-T, T],
+       `∫ Σ = Σ ∫`, i.e., `perronVerticalIntegral x T = Σ_n Λ(n) · perronPerTermIntegral(x/n, c, T)`
+
+    Reference: Davenport Ch. 17; Montgomery-Vaughan §5.1. -/
+private theorem perron_vertical_eq_tsum (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T) :
+    perronVerticalIntegral x T =
+      ∑' (n : ℕ), ArithmeticFunction.vonMangoldt n *
+        perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T := by
+  sorry
+
+/-- **Fubini sub-lemma 2**: The tail of the Dirichlet series
+    `Σ_{n > ⌊x⌋} Λ(n) · perronPerTermIntegral(x/n, c, T)` is bounded by 1.
+
+    Mathematical proof: For n > ⌊x⌋, we have x/n < 1, so
+    `perron_per_term_small_bound` gives
+    `|perronPerTermIntegral(x/n, c, T)| ≤ (y^c + 1)/(T·|log y|) + 2y^c/(cT)`
+    where y = x/n < 1. Since Λ(n) ≤ log n, and the sum converges
+    (L-series summable), the total tail is bounded by 1. -/
+private theorem perron_tail_bound (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T) :
+    |∑' (n : ℕ), ArithmeticFunction.vonMangoldt n *
+      perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T -
+      ∑ n ∈ Finset.range (Nat.floor x + 1),
+        ArithmeticFunction.vonMangoldt n *
+          perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| ≤ 1 := by
+  sorry
+
+/-- **Perron Fubini exchange** (Davenport Ch. 17, Theorem 17.1).
+
+    The Perron vertical integral decomposes as a finite Dirichlet sum
+    plus a bounded tail error:
+      perronVerticalIntegral x T = Σ_{n ≤ ⌊x⌋} Λ(n)·perronPerTermIntegral(x/n, c, T) + O(1)
+
+    Mathematical content (two sub-obligations):
+    1. **Fubini interchange**: On [-T, T] with c > 1, the L-series
+       -ζ'/ζ(s) = Σ Λ(n)/n^s converges absolutely and uniformly. Combined
+       with `perron_per_term_abs_bound_general`, each term is dominated by
+       T·(x/n)^c/(π·c), and `vonMangoldt_lseries_summable` gives
+       Σ Λ(n)/n^c < ∞. Apply MeasureTheory.integral_tsum for ∫ Σ = Σ ∫.
+
+    2. **Tail bound**: For n > ⌊x⌋, x/n < 1, so `perron_per_term_small_bound`
+       gives exponentially decaying per-term bounds. Combined with
+       `vonMangoldt_le_log` (Λ(n) ≤ log n), the tail is O(1).
+
+    Sub-infrastructure proved in this file:
+    - `perron_per_term_abs_bound_general` (domination bound)
+    - `vonMangoldt_le_log` (Λ ≤ log)
+    - `vonMangoldt_lseries_summable` (L-series summability)
+    - `perron_per_term_small_bound` (small-y bound)
+
+    Reference: Davenport Ch. 17; Montgomery-Vaughan §5.1. -/
+private theorem perron_fubini_exchange (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T) :
+    ∃ (tail_error : ℝ),
+      perronVerticalIntegral x T =
+        (∑ n ∈ Finset.range (Nat.floor x + 1),
+          ArithmeticFunction.vonMangoldt n *
+            perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T)
+        + tail_error ∧
+      |tail_error| ≤ 1 := by
+  -- Define tail_error as the difference between perronVerticalIntegral
+  -- and the finite sum, using the tsum decomposition
+  set c := 1 + 1 / Real.log x with hc_def
+  set N := Nat.floor x + 1 with hN_def
+  set finiteSum := ∑ n ∈ Finset.range N,
+    ArithmeticFunction.vonMangoldt n * perronPerTermIntegral (x / n) c T with hFS_def
+  set tail_error := perronVerticalIntegral x T - finiteSum with hTE_def
+  refine ⟨tail_error, by ring, ?_⟩
+  -- Now show |tail_error| ≤ 1
+  -- Step 1: perronVerticalIntegral x T = tsum (via perron_vertical_eq_tsum)
+  have h_tsum := perron_vertical_eq_tsum x hx T hT
+  -- Step 2: tail_error = tsum - finiteSum
+  rw [hTE_def, h_tsum]
+  -- Step 3: Apply perron_tail_bound
+  exact perron_tail_bound x hx T hT
+
+/-- The error in the Dirichlet series Perron exchange is bounded by 1.
+
+    This follows from `perron_fubini_exchange` which provides the decomposition
+    into finite sum + bounded tail.
+
+    Mathematical content:
+    1. `-ζ'/ζ(s) = L(Λ, s)` for `Re(s) > 1` (Mathlib: `vonMangoldt_lseries_eq_neg_zeta_logderiv`)
+    2. The L-series converges absolutely for `c = 1 + 1/log x > 1`
+    3. On the compact segment `[-T, T]`, Fubini gives `∫ Σ = Σ ∫`
+    4. The tail `Σ_{n > ⌊x⌋} Λ(n) · perronPerTermIntegral(x/n, c, T)` is bounded:
+       each `|perronPerTermIntegral(x/n, c, T)|` is bounded by per-term small bounds,
+       and `Λ(n)/n^c` is summable.
+
+    PROVED from `perron_fubini_exchange`.
+    Sub-sorry count: 0 (local); 1 (in perron_fubini_exchange) -/
+theorem perron_exchange_error_bound (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T) :
+    |perronVerticalIntegral x T -
+      ∑ n ∈ Finset.range (Nat.floor x + 1),
+        ArithmeticFunction.vonMangoldt n *
+          perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| ≤ 1 := by
+  obtain ⟨tail_error, h_eq, h_bound⟩ := perron_fubini_exchange x hx T hT
+  have : perronVerticalIntegral x T -
+      ∑ n ∈ Finset.range (Nat.floor x + 1),
+        ArithmeticFunction.vonMangoldt n *
+          perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T = tail_error := by
+    linarith [h_eq]
+  rw [this]
+  exact h_bound
+
 theorem dirichlet_series_perron_exchange (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T) :
     ∃ (error : ℝ),
       |error| ≤ 1 ∧
@@ -524,6 +796,10 @@ theorem dirichlet_series_perron_exchange (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT 
         (∑ n ∈ Finset.range (Nat.floor x + 1),
           ArithmeticFunction.vonMangoldt n *
             perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T) + error := by
-  sorry
+  refine ⟨perronVerticalIntegral x T -
+    ∑ n ∈ Finset.range (Nat.floor x + 1),
+      ArithmeticFunction.vonMangoldt n *
+        perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T, ?_, by ring⟩
+  exact perron_exchange_error_bound x hx T hT
 
 end Aristotle.Standalone.PerronTruncationInfra

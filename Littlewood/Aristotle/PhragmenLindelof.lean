@@ -1479,4 +1479,24 @@ theorem zeta_large_sigma_bound (σ : ℝ) (hσ : 2 ≤ σ) (t : ℝ) :
   exact one_div_le_one_div_of_le (rpow_pos_of_pos h_base_pos _)
     (rpow_le_rpow_of_exponent_le h_base_ge_one (by exact_mod_cast hσ))
 
+/-- Uniform convexity bound on the critical strip:
+    ‖ζ(σ+it)‖ ≤ C·|t|^{3/4} for ALL σ ∈ [0,1] and |t| ≥ 1.
+
+    Uses zeta_pl_interpolation with δ = 1/4: the exponent is
+    (1-σ)/2 + 1/4 ≤ 1/2 + 1/4 = 3/4 for all σ ∈ [0,1].
+    This gives a single constant C valid for the entire strip,
+    essential for Cauchy estimates where σ varies on a disk. -/
+theorem zeta_strip_bound :
+    ∃ C : ℝ, 0 < C ∧ ∀ (σ : ℝ) (t : ℝ),
+      0 ≤ σ → σ ≤ 1 → 1 ≤ |t| →
+        ‖riemannZeta (↑σ + ↑t * I)‖ ≤ C * |t| ^ ((3 : ℝ)/4) := by
+  obtain ⟨C₀, hC₀, h_pl⟩ := zeta_pl_interpolation (1/4) (by norm_num) (by norm_num)
+  refine ⟨C₀, hC₀, fun σ t hσ0 hσ1 ht => ?_⟩
+  have h_exp : (1 - σ) / 2 + 1 / 4 ≤ 3 / 4 := by linarith
+  calc ‖riemannZeta (↑σ + ↑t * I)‖
+      ≤ C₀ * |t| ^ ((1 - σ) / 2 + 1 / 4) := h_pl σ t hσ0 hσ1 ht
+    _ ≤ C₀ * |t| ^ ((3 : ℝ) / 4) := by
+        apply mul_le_mul_of_nonneg_left _ (le_of_lt hC₀)
+        exact rpow_le_rpow_of_exponent_le ht h_exp
+
 end

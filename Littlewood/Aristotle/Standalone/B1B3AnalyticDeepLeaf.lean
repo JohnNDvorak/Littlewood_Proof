@@ -1,7 +1,7 @@
 /-
-Analytic deep leaf for B1 (second moment) and B3 (block structure).
+Analytic deep leaf for B1 (second moment), B3 (block structure), and B2 (first moment).
 
-Two obligations from the Riemann-Siegel approximate functional equation:
+Three obligations from the Riemann-Siegel approximate functional equation:
 
 1. **Second moment** (Hardy-Littlewood 1918):
    ∫₁ᵀ |ζ(½+it)|² dt = T log T + O(T)
@@ -10,12 +10,15 @@ Two obligations from the Riemann-Siegel approximate functional equation:
    Block integrals of ErrorTerm satisfy sign-definite corrections,
    antitone decay, and partial-block interpolation.
 
+3. **B2 first moment** (Heath-Brown 1978):
+   |∫₁ᵀ MainTerm(t) dt| ≤ C · T^{1/2+ε} for all ε > 0.
+
 ## Proof structure
 
 ### Second moment (obligation 1)
 Derived from three sub-obligations:
-  (a) RS pointwise bound: |ErrorTerm(t)| ≤ C · t^{-1/4} (Siegel 1932) — SORRY
-  (b) ∫(MainTerm² − 2|S_N|²) = O(T) (VdC oscillatory cancellation) — SORRY
+  (a) RS pointwise bound: |ErrorTerm(t)| ≤ C · t^{-1/4} (from h_expansion)
+  (b) ∫(MainTerm² − 2|S_N|²) = O(T) (OscPieceBigOAssembly)
   (c) ∫|S_N|² = ½T log T + O(T) (PROVED: PartialZetaMeanSquareCoeff)
 Assembly:
   ∫|ζ|² = ∫(M+E)² = ∫M² + 2∫ME + ∫E²
@@ -23,7 +26,12 @@ Assembly:
   ∫2ME = O(T), ∫E² = O(T)                                  [by (a)]
 
 ### B3 block structure (obligation 2)
-  Block change of variables + rsPsi positivity + correction decay — SORRY
+  Block change of variables + rsPsi positivity + correction decay.
+  Delegated to B3BlockStructureFromExpansion.
+
+### B2 first moment (obligation 3)
+  Block decomposition + classical Z first moment.
+  Delegated to B2FirstMomentFromExpansion.
 
 ## Derivation of B1
 
@@ -31,11 +39,13 @@ B1 (∫afeGap = O(T)) is derived in CombinedB1B3DeepLeaf from the
 second moment via subtraction:
   ∫ afeGap = ∫|ζ|² − 2∫|S_N|² = (TlogT + O(T)) − (TlogT + O(T)) = O(T)
 
-SORRY COUNT: 1 (unified analytic deep leaf — 2 obligations)
+SORRY COUNT: 1 internal sorry (h_expansion, RS expansion from RSExpansionProof).
+  Parts 2 and 3 delegated to B3BlockStructureFromExpansion and
+  B2FirstMomentFromExpansion respectively (each with 1 sorry).
 WARNING COUNT: 1
 
 Reference: Hardy-Littlewood 1918; Siegel 1932 §3; Titchmarsh §7.2;
-Montgomery-Vaughan §9.1.
+Montgomery-Vaughan §9.1; Heath-Brown 1978.
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -46,6 +56,9 @@ import Littlewood.Aristotle.Standalone.PartialZetaMeanSquareCoeff
 import Littlewood.Bridge.HardyZTransfer
 import Littlewood.Aristotle.HardyZRealV2
 import Littlewood.Aristotle.Standalone.OscPieceBigOAssembly
+import Littlewood.Aristotle.Standalone.B3BlockStructureFromExpansion
+import Littlewood.Aristotle.Standalone.B2FirstMomentFromExpansion
+import Littlewood.Aristotle.Standalone.RSExpansionProof
 
 set_option maxHeartbeats 800000
 set_option relaxedAutoImplicit false
@@ -278,10 +291,10 @@ theorem rs_pointwise_bound_of_expansion
       Block integrals decompose via rsPsi with ≥ 0 correction — sorry.
 
     Part 3 (B2): First moment bound |∫₁ᵀ MainTerm(t) dt| ≤ C·T^{1/2+ε}.
-      Collective oscillatory sum cancellation (Heath-Brown 1978) — sorry.
-      This consolidates B2 into the analytic deep leaf, replacing the
-      previously false B2TailVdcDeepLeaf route (VdC with √(n+1) tail
-      width is mathematically incorrect near stationary points).
+      Delegated to B2FirstMomentFromExpansion via block decomposition
+      + classical Z first moment (Heath-Brown 1978, Titchmarsh §4.15).
+      Replaces the previously false B2TailVdcDeepLeaf route (VdC with
+      √(n+1) tail width is mathematically incorrect near stationary points).
 
     B1 (∫ afeGap = O(T)) is derived in CombinedB1B3DeepLeaf from Part 1
     combined with the proved ∫|S_N|² = ½T log T + O(T).
@@ -312,10 +325,18 @@ theorem b1_b3_analytic_deep_leaf :
   -- ═══════════════════════════════════════════════════════
   -- Single analytic sorry: RS expansion (Siegel 1932 §3)
   -- ═══════════════════════════════════════════════════════
+  -- Strong form with C_R bound (for B3 block structure)
+  have h_expansion_strong : ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) :=
+    Aristotle.Standalone.RSExpansionProof.rs_expansion_for_b1b3
+  -- Weak form without C_R bound (for pointwise bound derivation)
   have h_expansion : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
       hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
-          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) := sorry
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) := by
+    obtain ⟨C_R, hpos, _, h⟩ := h_expansion_strong; exact ⟨C_R, hpos, h⟩
   refine ⟨?_, ?_, ?_⟩
   · -- ═══════════════════════════════════════════════════════
     -- Part 1: Second moment from three sub-goals
@@ -511,14 +532,19 @@ theorem b1_b3_analytic_deep_leaf :
     exact (isBigO_congr h_integral_eq EventuallyEq.rfl).mpr h_sum
   · -- ═══════════════════════════════════════════════════════
     -- Part 2: B3 block structure (Siegel 1932 §3)
+    -- Derived from h_expansion via change of variables + rsPsi analysis.
+    -- See B3BlockStructureFromExpansion.lean for the proof sketch.
     -- ═══════════════════════════════════════════════════════
-    sorry
+    exact Aristotle.Standalone.B3BlockStructureFromExpansion.b3_block_structure_core
+      h_expansion_strong
+      Aristotle.Standalone.RSExpansionProof.rs_block_antitone
+      Aristotle.Standalone.RSExpansionProof.rs_block_interpolation
   · -- ═══════════════════════════════════════════════════════
     -- Part 3: B2 first moment bound (Heath-Brown 1978)
     -- |∫₁ᵀ MainTerm(t) dt| ≤ C·T^{1/2+ε}
-    -- Collective oscillatory sum cancellation: modes interfere
-    -- destructively when integrated over t, giving sublinear growth.
+    -- Derived from h_expansion via block decomposition + classical Z first moment.
+    -- See B2FirstMomentFromExpansion.lean for the proof structure.
     -- ═══════════════════════════════════════════════════════
-    sorry
+    exact Aristotle.Standalone.B2FirstMomentFromExpansion.b2_first_moment_core h_expansion
 
 end Aristotle.Standalone.B1B3AnalyticDeepLeaf

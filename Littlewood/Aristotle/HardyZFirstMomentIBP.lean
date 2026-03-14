@@ -1,0 +1,850 @@
+/-
+Hardy Z first moment bound via integration by parts.
+
+TARGET:
+  ∀ ε > 0, ∃ C > 0, ∀ T ≥ 2, |∫₁ᵀ Z(t) dt| ≤ C · T^{1/2+ε}
+
+Actually we prove the stronger O(T^{1/2}) bound.
+
+PROOF SKETCH (Titchmarsh §4.15):
+
+Z(t) = Re(e^{iθ(t)} ζ(1/2+it)).
+
+Using the smooth theta:
+  e^{iθ(t)} = (d/dt)[e^{iθ(t)}] / (iθ'(t))
+
+Integration by parts on ∫ e^{iθ(t)} ζ(1/2+it) dt with:
+  u = ζ(1/2+it) / (iθ'(t)),  dv = e^{iθ(t)} θ'(t) dt
+
+gives boundary terms + correction integral, both controlled by:
+  - |ζ(1/2+it)| ≤ C t^{1/6} (convexity bound, already in ConvexityBounds)
+  - θ'(t) ≥ c log t (from theta_deriv_asymptotic + monotonicity)
+  - |d/dt[ζ/θ']| controlled by convexity + θ' bounds
+
+KEY INFRASTRUCTURE BUILT HERE:
+  1. thetaDeriv_lower_bound: θ'(t) ≥ c·log(t) for large t
+  2. thetaDeriv_inv_bound: 1/θ'(t) = O(1/log t) for large t
+  3. hardyZ_first_moment_sqrt: |∫₁ᵀ Z(t) dt| ≤ C · T^{1/2+ε}
+
+Co-authored-by: Claude (Anthropic)
+-/
+
+import Mathlib
+import Littlewood.Aristotle.ThetaDerivAsymptotic
+import Littlewood.Aristotle.ThetaDerivMonotone
+import Littlewood.Aristotle.HardyThetaSmooth
+import Littlewood.Aristotle.HardyEstimatesPartial
+import Littlewood.Aristotle.PhragmenLindelof
+import Littlewood.Aristotle.HardyZFirstMoment
+
+set_option linter.mathlibStandardSet false
+
+open scoped BigOperators Real Nat Classical Pointwise
+
+set_option maxHeartbeats 800000
+set_option maxRecDepth 4000
+
+set_option relaxedAutoImplicit false
+set_option autoImplicit false
+
+noncomputable section
+
+namespace HardyZFirstMomentIBP
+
+open Complex Real Set Filter Topology MeasureTheory
+open ThetaDerivAsymptotic ThetaDerivMonotone HardyThetaSmooth
+
+/-! ## Part 1: Lower bound for θ'(t)
+
+From theta_deriv_asymptotic: θ'(t) = (1/2)·log(t/(2π)) + O(1/t).
+This gives θ'(t) ≥ (1/4)·log(t) for sufficiently large t.
+-/
+
+/-- θ'(t) ≥ (1/4)·log(t) for sufficiently large t.
+    This is the key lower bound needed for the IBP denominator. -/
+theorem thetaDeriv_lower_bound :
+    ∃ T₀ > 0, ∀ t : ℝ, t ≥ T₀ →
+      thetaDeriv t ≥ (1/4) * Real.log t := by
+  -- From theta_deriv_asymptotic: θ'(t) = (1/2)·log(t/(2π)) + O(1/t)
+  -- log(t/(2π)) = log t - log(2π)
+  -- So θ'(t) ≥ (1/2)·log(t) - (1/2)·log(2π) - C/t
+  -- For t large enough, (1/2)·log(t) - (1/2)·log(2π) - C/t ≥ (1/4)·log(t)
+  -- i.e., (1/4)·log(t) ≥ (1/2)·log(2π) + C/t
+  have h_asymp := theta_deriv_asymptotic
+  rw [Asymptotics.isBigO_iff] at h_asymp
+  obtain ⟨C, hC⟩ := h_asymp
+  rw [Filter.eventually_atTop] at hC
+  obtain ⟨T₁, hT₁⟩ := hC
+  -- Choose T₀ large enough that:
+  -- (1) t ≥ T₁ (asymptotic applies)
+  -- (2) (1/4)·log t ≥ (1/2)·log(2π) + |C|/t + 1
+  --     which is ensured by t ≥ exp(4·(log(2π) + 2)) and t ≥ 4·|C|
+  set T₀ := max T₁ (max (Real.exp (4 * (Real.log (2 * Real.pi) + 2))) (max (4 * |C| + 1) 2))
+  refine ⟨T₀, by positivity, fun t ht => ?_⟩
+  have ht_ge_T₁ : t ≥ T₁ := by
+    calc T₁ ≤ T₀ := le_max_left _ _
+      _ ≤ t := ht
+  have ht_ge_exp : t ≥ Real.exp (4 * (Real.log (2 * Real.pi) + 2)) := by
+    calc Real.exp _ ≤ max (Real.exp _) (max (4 * |C| + 1) 2) := le_max_left _ _
+      _ ≤ T₀ := le_max_right _ _
+      _ ≤ t := ht
+  have ht_ge_C : t ≥ 4 * |C| + 1 := by
+    calc 4 * |C| + 1 ≤ max (4 * |C| + 1) 2 := le_max_left _ _
+      _ ≤ max (Real.exp _) (max (4 * |C| + 1) 2) := le_max_right _ _
+      _ ≤ T₀ := le_max_right _ _
+      _ ≤ t := ht
+  have ht_ge_2 : t ≥ 2 := by
+    calc (2 : ℝ) ≤ max (4 * |C| + 1) 2 := le_max_right _ _
+      _ ≤ max (Real.exp _) (max (4 * |C| + 1) 2) := le_max_right _ _
+      _ ≤ T₀ := le_max_right _ _
+      _ ≤ t := ht
+  have ht_pos : (0 : ℝ) < t := by linarith
+  have hpi_pos : (0 : ℝ) < 2 * Real.pi := by positivity
+  -- Get the bound
+  have h_bd := hT₁ t ht_ge_T₁
+  rw [Real.norm_eq_abs, Real.norm_eq_abs] at h_bd
+  -- θ'(t) ≥ (1/2)·log(t/(2π)) - |C|/t
+  have h_lower : thetaDeriv t ≥ (1/2) * Real.log (t / (2 * Real.pi)) - |C| / t := by
+    have h1 : thetaDeriv t - 1/2 * Real.log (t / (2 * Real.pi)) ≥ -(|C| / t) := by
+      have := neg_abs_le (thetaDeriv t - 1/2 * Real.log (t / (2 * Real.pi)))
+      have h2 : |C| / t ≥ C * |1/t| := by
+        rw [abs_of_pos (div_pos one_pos ht_pos), one_div]
+        calc C * t⁻¹ ≤ |C| * t⁻¹ := by
+              exact mul_le_mul_of_nonneg_right (le_abs_self C) (inv_nonneg.mpr (le_of_lt ht_pos))
+          _ = |C| / t := by rw [div_eq_mul_inv]
+      linarith [h_bd]
+    linarith
+  -- log(t/(2π)) = log t - log(2π)
+  have h_log_split : Real.log (t / (2 * Real.pi)) = Real.log t - Real.log (2 * Real.pi) := by
+    rw [Real.log_div (ne_of_gt ht_pos) (ne_of_gt hpi_pos)]
+  rw [h_log_split] at h_lower
+  -- Need: (1/2)(log t - log(2π)) - |C|/t ≥ (1/4)·log t
+  -- i.e., (1/4)·log t ≥ (1/2)·log(2π) + |C|/t
+  suffices h : (1/4 : ℝ) * Real.log t ≥ (1/2) * Real.log (2 * Real.pi) + |C| / t by linarith
+  -- log t ≥ 4·(log(2π) + 2) from our choice of T₀
+  have h_log_t : Real.log t ≥ 4 * (Real.log (2 * Real.pi) + 2) := by
+    calc 4 * (Real.log (2 * Real.pi) + 2) =
+          Real.log (Real.exp (4 * (Real.log (2 * Real.pi) + 2))) := (Real.log_exp _).symm
+      _ ≤ Real.log t := Real.log_le_log (Real.exp_pos _) ht_ge_exp
+  -- |C|/t ≤ 1 from our choice of T₀
+  have h_Ct : |C| / t ≤ 1 := by
+    rw [div_le_one ht_pos]
+    linarith
+  -- (1/4)·log t ≥ log(2π) + 2 ≥ (1/2)·log(2π) + 1 ≥ (1/2)·log(2π) + |C|/t
+  have hge1 : (1 : ℝ) ≤ 2 * Real.pi := by
+    have := Real.pi_gt_three; linarith
+  have h_log_2pi_nonneg : 0 ≤ Real.log (2 * Real.pi) := Real.log_nonneg hge1
+  have h1 : (1/4 : ℝ) * Real.log t ≥ Real.log (2 * Real.pi) + 2 := by linarith
+  linarith
+
+/-- θ'(t) > 0 for all t ≥ T₀ (a specific computable T₀). -/
+theorem thetaDeriv_pos_of_large :
+    ∃ T₀ > 0, ∀ t : ℝ, t ≥ T₀ → 0 < thetaDeriv t := by
+  obtain ⟨T₀, hT₀, h⟩ := thetaDeriv_lower_bound
+  refine ⟨max T₀ 2, by positivity, fun t ht => ?_⟩
+  have ht_ge_T₀ : t ≥ T₀ := le_trans (le_max_left _ _) ht
+  have ht_ge_2 : t ≥ 2 := le_trans (le_max_right _ _) ht
+  have hlog : 0 < Real.log t := Real.log_pos (by linarith)
+  linarith [h t ht_ge_T₀]
+
+/-- 1/θ'(t) ≤ 4/log(t) for large t. -/
+theorem inv_thetaDeriv_le :
+    ∃ T₀ > 0, ∀ t : ℝ, t ≥ T₀ →
+      1 / thetaDeriv t ≤ 4 / Real.log t := by
+  obtain ⟨T₀, hT₀, h⟩ := thetaDeriv_lower_bound
+  refine ⟨max T₀ 2, by positivity, fun t ht => ?_⟩
+  have ht_ge_T₀ : t ≥ T₀ := le_trans (le_max_left _ _) ht
+  have ht_ge_2 : t ≥ 2 := le_trans (le_max_right _ _) ht
+  have hlog : 0 < Real.log t := Real.log_pos (by linarith)
+  have htheta : 0 < thetaDeriv t := by linarith [h t ht_ge_T₀]
+  rw [div_le_div_iff₀ htheta hlog]
+  linarith [h t ht_ge_T₀]
+
+/-! ## Part 2: Continuity and regularity of 1/θ'(t)
+
+For IBP we need 1/θ'(t) to be well-defined and continuous. Since θ'
+is continuous (from HardyThetaSmooth.continuous_thetaDeriv) and eventually
+positive (from Part 1), 1/θ' is continuous on [T₀, ∞).
+-/
+
+/-- 1/thetaDeriv is continuous on the set where thetaDeriv > 0. -/
+theorem continuousOn_inv_thetaDeriv (T₀ : ℝ) (hT₀ : ∀ t ≥ T₀, 0 < thetaDeriv t) :
+    ContinuousOn (fun t => 1 / thetaDeriv t) (Set.Ici T₀) := by
+  apply ContinuousOn.div continuousOn_const
+  · exact continuous_thetaDeriv.continuousOn
+  · intro t ht
+    exact ne_of_gt (hT₀ t ht)
+
+/-! ## Part 3: The IBP identity for ∫ Z(t) dt
+
+The key identity: since Z(t) = Re(e^{iθ(t)} ζ(1/2+it)) and
+d/dt[e^{iθ(t)}] = iθ'(t) e^{iθ(t)}, we can write:
+
+  e^{iθ(t)} = d/dt[e^{iθ(t)}] / (iθ'(t))
+
+So ∫ Z dt = Re ∫ e^{iθ} ζ dt can be handled by IBP.
+
+We formalize the IBP approach using the smooth theta to avoid
+branch-cut issues.
+-/
+
+/-- The phase exponential e^{iθ_smooth(t)} has derivative iθ'(t)·e^{iθ_smooth(t)}. -/
+theorem hasDerivAt_exp_iTheta (t : ℝ) :
+    HasDerivAt (fun u => Complex.exp (I * ↑(hardyThetaSmooth u)))
+      (I * ↑(thetaDeriv t) * Complex.exp (I * ↑(hardyThetaSmooth t))) t := by
+  have h1 : HasDerivAt (fun u => I * ↑(hardyThetaSmooth u)) (I * ↑(thetaDeriv t)) t :=
+    (hasDerivAt_hardyThetaSmooth t).ofReal_comp.const_mul I
+  exact (h1.cexp).congr_deriv (by ring)
+
+-- The antiderivative of e^{iθ(t)}·θ'(t) is e^{iθ(t)}/i = -i·e^{iθ(t)}.
+--
+-- More precisely: d/dt[e^{iθ(t)}/(iθ'(t))] involves correction terms from θ'(t)
+-- varying. The clean version: d/dt[e^{iθ(t)}] = iθ'(t)·e^{iθ(t)}.
+--
+-- For the IBP of ∫ e^{iθ}·f dt where f = ζ(1/2+it), we write:
+--   e^{iθ}·f = (d/dt[e^{iθ}])·(f/(iθ'))
+-- and integrate by parts.
+
+-- The product rule for the IBP integrand.
+-- If F(t) = e^{iθ(t)} and G(t) = f(t)/(iθ'(t)), then
+-- F'·G + F·G' = e^{iθ}·f + F·G'
+
+/-! ## Part 4: Hardy Z first moment bound
+
+The classical approach bounds |∫₁ᵀ Z(t) dt| by splitting [1,T] into
+[1, T₀] (compact, bounded) and [T₀, T] (IBP applies).
+
+On [T₀, T]:
+  |∫ Z dt| = |Re ∫ e^{iθ} ζ dt|
+  ≤ |∫ e^{iθ} ζ dt|
+
+IBP with u = ζ/(iθ'), dv = e^{iθ}·θ' dt gives:
+  = |[ζ·e^{iθ}/(iθ')]_{T₀}^{T} - ∫ d/dt[ζ/(iθ')]·e^{iθ}/iθ' dt|
+
+Boundary terms: |ζ(1/2+it)|·1/|θ'(t)| = O(t^{1/6}/log t) → 0 not needed,
+we just bound them.
+
+For T^{1/2+ε}, we use a simpler approach: partial summation / Dirichlet
+polynomial mean value. The cleanest self-contained proof uses the
+fact that θ' is monotone increasing, so van der Corput's lemma
+(first derivative test) applies directly to each mode.
+
+We state the result using the infrastructure we have.
+-/
+
+/-! ### θ'' bounds via trigamma
+
+From ThetaDerivMonotone.thetaDeriv_hasDerivAt:
+  θ'(t) has derivative -(1/4)·Im(Σ 1/(s+n)²) at every t.
+
+For t > 0, this derivative is positive (θ' is strictly increasing).
+We can also bound it: 0 ≤ θ''(t) ≤ C/t for large t. -/
+
+/-- θ''(t) exists everywhere and equals -(1/4)·Im(trigamma(s(t))). -/
+theorem thetaDeriv_deriv_eq (t : ℝ) :
+    deriv thetaDeriv t = -(1/4 : ℝ) *
+      (∑' n : ℕ, 1 / (sOfT t + (↑n : ℂ)) ^ 2).im :=
+  (thetaDeriv_hasDerivAt t).deriv
+
+/-- θ''(t) ≥ 0 for all t > 0 (θ' is increasing). -/
+theorem thetaDeriv_deriv_nonneg (t : ℝ) (ht : 0 < t) :
+    0 ≤ deriv thetaDeriv t := by
+  obtain ⟨d, hd, hd_pos⟩ := thetaDeriv_deriv_pos t ht
+  rw [hd.deriv]
+  exact le_of_lt hd_pos
+
+/-- θ''(t) is bounded: |θ''(t)| ≤ C for some absolute constant.
+
+    This follows from the trigamma series representation:
+    θ''(t) = -(1/4)·Im(Σ 1/(s+n)²)
+    where |Im(1/(s+n)²)| ≤ 1/|s+n|² ≤ 1/(n+1/4)²,
+    and Σ 1/(n+1/4)² converges. -/
+-- Helper: |Im(Σ 1/(s+n)²)| is bounded by the convergent sum Σ 1/(n+1/4)²
+-- Summability of 16/(n+1)^2.
+private lemma summable_sixteen_div_sq' :
+    Summable (fun n : ℕ => 16 / ((↑n : ℝ) + 1) ^ 2) := by
+  have h := (summable_nat_add_iff (f := fun n : ℕ => 1 / (↑n : ℝ) ^ 2) 1).mpr
+    (Real.summable_one_div_nat_pow.mpr (by norm_num : 1 < 2))
+  simp only [Nat.cast_add, Nat.cast_one] at h
+  exact (h.mul_left 16).congr (fun n => by ring)
+
+-- Summability of 1/(n+1/4)^2.
+private lemma summable_inv_quarter_shift_sq :
+    Summable (fun n : ℕ => 1 / ((↑n : ℝ) + 1/4) ^ 2) := by
+  apply Summable.of_nonneg_of_le (fun n => by positivity) _ summable_sixteen_div_sq'
+  intro n
+  rw [div_le_div_iff₀ (by positivity : (0 : ℝ) < ((↑n : ℝ) + 1/4) ^ 2) (by positivity)]
+  nlinarith [Nat.cast_nonneg (α := ℝ) n]
+
+-- The norm of each term 1/(s+n)^2 is bounded by 1/(n+1/4)^2.
+private lemma norm_inv_sq_sOfT_le (t : ℝ) (n : ℕ) :
+    ‖1 / (sOfT t + (↑n : ℂ)) ^ 2‖ ≤ 1 / ((↑n : ℝ) + 1/4) ^ 2 := by
+  rw [one_div, norm_inv, norm_pow, one_div]
+  apply inv_anti₀ (by positivity : (0 : ℝ) < ((↑n : ℝ) + 1/4) ^ 2)
+  exact sq_le_sq' (by linarith [norm_nonneg (sOfT t + (↑n : ℂ))]) (norm_sOfT_add_nat_ge t n)
+
+-- Norm bound on the trigamma sum.
+private lemma norm_trigamma_le (t : ℝ) :
+    ‖∑' n : ℕ, 1 / (sOfT t + (↑n : ℂ)) ^ 2‖ ≤
+      ∑' n : ℕ, 1 / ((↑n : ℝ) + 1/4) ^ 2 := by
+  have hsumm := summable_inv_sq_sOfT t
+  calc ‖∑' n : ℕ, 1 / (sOfT t + (↑n : ℂ)) ^ 2‖
+      ≤ ∑' n : ℕ, ‖1 / (sOfT t + (↑n : ℂ)) ^ 2‖ :=
+        norm_tsum_le_tsum_norm hsumm.norm
+    _ ≤ ∑' n : ℕ, 1 / ((↑n : ℝ) + 1/4) ^ 2 := by
+        exact hsumm.norm.tsum_le_tsum (fun n => norm_inv_sq_sOfT_le t n) summable_inv_quarter_shift_sq
+
+theorem thetaDeriv_deriv_bounded :
+    ∃ M > 0, ∀ t : ℝ, |deriv thetaDeriv t| ≤ M := by
+  -- θ''(t) = -(1/4)·Im(Σ 1/(s+n)²)
+  -- |θ''(t)| = (1/4)·|Im(Σ ·)| ≤ (1/4)·‖Σ ·‖ ≤ (1/4)·Σ 1/(n+1/4)²
+  set S := ∑' n : ℕ, 1 / ((↑n : ℝ) + 1/4) ^ 2
+  refine ⟨(1/4) * S + 1, by positivity, fun t => ?_⟩
+  rw [thetaDeriv_deriv_eq]
+  have h_im_le : |(∑' n : ℕ, 1 / (sOfT t + (↑n : ℂ)) ^ 2).im| ≤ S := by
+    calc |(∑' n : ℕ, 1 / (sOfT t + (↑n : ℂ)) ^ 2).im|
+        ≤ ‖∑' n : ℕ, 1 / (sOfT t + (↑n : ℂ)) ^ 2‖ := Complex.abs_im_le_norm _
+      _ ≤ S := norm_trigamma_le t
+  calc |-(1/4 : ℝ) * (∑' n : ℕ, 1 / (sOfT t + (↑n : ℂ)) ^ 2).im|
+      = (1/4) * |(∑' n : ℕ, 1 / (sOfT t + (↑n : ℂ)) ^ 2).im| := by
+        rw [abs_mul, show |-(1/4 : ℝ)| = 1/4 from by norm_num]
+    _ ≤ (1/4) * S := by gcongr
+    _ ≤ (1/4) * S + 1 := by linarith
+
+/-- θ''(t) = O(1/t) as t → ∞.
+
+    Tighter bound from the trigamma sum: the dominant contribution is
+    Im(1/s²) = O(1/t³) and the full sum is O(1/t) by careful estimation.
+    Even a crude O(1) bound suffices for the IBP because θ'/θ'² = O(1/log²t). -/
+theorem thetaDeriv_deriv_isBigO :
+    (fun t : ℝ => deriv thetaDeriv t) =O[atTop] (fun _ => (1 : ℝ)) := by
+  -- θ''(t) is bounded, hence O(1)
+  obtain ⟨M, _hM_pos, hM⟩ := thetaDeriv_deriv_bounded
+  exact Asymptotics.IsBigO.of_bound M (Filter.Eventually.of_forall fun t => by
+    rw [Real.norm_eq_abs, norm_one, mul_one]; exact hM t)
+
+/-! ## Part 5: Uniform pointwise bound for Z(t) via PhragmenLindelof
+
+From PhragmenLindelof.zeta_critical_line_bound:
+  ∃ C > 0, ∀ t, |t| ≥ 1 → ‖ζ(1/2+t·I)‖ ≤ C · |t|^{1/2}
+
+Combined with hardyZ_abs_le: |Z(t)| ≤ ‖ζ(1/2+I·t)‖
+
+This gives the uniform pointwise bound |Z(t)| ≤ C · t^{1/2} for t ≥ 1.
+-/
+
+/-- Uniform pointwise bound: |Z(t)| ≤ C · |t|^{1/2} for |t| ≥ 1. -/
+theorem hardyZ_pointwise_bound :
+    ∃ C > 0, ∀ t : ℝ, |t| ≥ 1 →
+      |HardyEstimatesPartial.hardyZ t| ≤ C * |t| ^ ((1 : ℝ) / 2) := by
+  obtain ⟨C, hC, hbound⟩ := zeta_critical_line_bound
+  refine ⟨C, hC, fun t ht => ?_⟩
+  calc |HardyEstimatesPartial.hardyZ t|
+      ≤ ‖riemannZeta (1 / 2 + I * ↑t)‖ := HardyEstimatesPartial.hardyZ_abs_le t
+    _ ≤ C * |t| ^ ((1 : ℝ) / 2) := by
+        have hbd := hbound t ht
+        convert hbd using 2; ring
+
+/-! ## Part 5b: Cauchy estimate for ζ' on the critical line
+
+Using Mathlib's `norm_deriv_le_of_forall_mem_sphere_norm_le`:
+  If f is DiffContOnCl on ball(c, R) and ‖f‖ ≤ M on sphere(c, R),
+  then ‖f'(c)‖ ≤ M/R.
+
+Applied to ζ at c = 1/2 + t·I with R = 1/2:
+  ‖ζ'(1/2+t·I)‖ ≤ 2·sup_{|w-c|=1/2} ‖ζ(w)‖
+  ≤ 2·C_ε·(|t|+1)^{1/2+ε}    (from convexity bound on the sphere)
+
+This gives the derivative convexity bound needed for the IBP correction integral.
+-/
+
+-- The Cauchy estimate for ζ' requires DiffContOnCl ℂ riemannZeta (ball c R)
+-- for c = 1/2 + t·I, R = 1/2. The key ingredients are:
+--   (a) differentiableAt_riemannZeta for s ≠ 1 (Mathlib)
+--   (b) riemannZeta is continuous everywhere (Mathlib: continuous_riemannZeta or
+--       the fact that the pole at s=1 is removable in the completed zeta)
+--   (c) norm_deriv_le_of_forall_mem_sphere_norm_le (Mathlib)
+-- Combined with zeta_convexity_bound on the sphere, this gives
+-- ‖ζ'(1/2+t·I)‖ ≤ C_ε · |t|^{1/2+ε} for any ε > 0.
+-- This infrastructure is recorded for future formalization.
+
+/-! ## Part 5c: IBP oscillatory integral bound
+
+The core bound |∫₁ᵀ Z(t) dt| ≤ C · T^{1/2}.
+
+PROOF STRUCTURE (Titchmarsh §4.15):
+1. Split [1,T] = [1,T₀] ∪ [T₀,T]
+2. [1,T₀]: bounded by continuity of Z on compact interval
+3. [T₀,T]: IBP with u = ζ/(iθ'), dv = d(e^{iθ})
+   - Boundary: |ζ(T)/(iθ'(T))| ≤ C·T^{1/2}/log T — proved below
+   - Correction: requires VdC or AFE decomposition
+
+Sub-obligations proved constructively:
+  (a) ibp_compact_piece_bound: |∫₁^{T₀} Z| ≤ C (compactness) — PROVED
+  (b) ibp_boundary_norm_bound: ‖ζ(½+iT)‖/θ'(T) ≤ C·T^{1/2}/log(T) — PROVED
+  (c) zeta_critical_norm_div_thetaDeriv_le_sqrt: combined bound — PROVED
+
+Remaining atomic sorry: ibp_oscillatory_bound.
+Reference: Titchmarsh 1951, §4.15; Ingham 1932, §5.2.
+-/
+
+/-- The compact piece [1, T₀] contributes a bounded constant.
+    Since hardyZ is continuous and [1, T₀] is compact, the integral is
+    bounded by a fixed constant. -/
+private theorem ibp_compact_piece_bound (T₀ : ℝ) (_hT₀ : 2 ≤ T₀) :
+    ∃ C₀ > 0, |∫ t in Set.Ioc 1 T₀, HardyEstimatesPartial.hardyZ t| ≤ C₀ := by
+  set val := |∫ t in Set.Ioc 1 T₀, HardyEstimatesPartial.hardyZ t|
+  exact ⟨val + 1, by positivity, by linarith⟩
+
+/-- The IBP boundary quotient ‖ζ(½+iT)‖/θ'(T) is bounded by C·T^{1/2}/log(T).
+    From hardyZ_pointwise_bound: ‖ζ(½+iT)‖ ≤ C·T^{1/2}
+    From thetaDeriv_lower_bound: θ'(T) ≥ (1/4)·log(T)
+    Combined: ‖ζ‖/θ' ≤ C·T^{1/2} / ((1/4)·log T) = 4C·T^{1/2}/log(T). -/
+theorem zeta_critical_norm_div_thetaDeriv_le_sqrt :
+    ∃ C > 0, ∃ T₀ ≥ 2, ∀ T : ℝ, T ≥ T₀ →
+      ‖riemannZeta (1/2 + I * ↑T)‖ * (1 / thetaDeriv T) ≤
+        C * T ^ ((1 : ℝ) / 2) / Real.log T := by
+  obtain ⟨C_z, hCz, hzeta⟩ := zeta_critical_line_bound
+  obtain ⟨T₁, hT₁, htheta⟩ := thetaDeriv_lower_bound
+  set T₀ := max T₁ 2
+  refine ⟨4 * C_z, by positivity, T₀, le_max_right _ _, fun T hT => ?_⟩
+  have hT_ge_T₁ : T ≥ T₁ := le_trans (le_max_left _ _) hT
+  have hT_ge_2 : T ≥ (2 : ℝ) := le_trans (le_max_right _ _) hT
+  have hT_pos : (0 : ℝ) < T := by linarith
+  have hlog_pos : 0 < Real.log T := Real.log_pos (by linarith)
+  have htheta_lb := htheta T hT_ge_T₁
+  have htheta_pos : 0 < thetaDeriv T := by linarith
+  -- ‖ζ‖ ≤ C_z · |T|^{1/2} = C_z · T^{1/2}
+  have h_abs_T : |T| = T := abs_of_pos hT_pos
+  have h_zeta_bd : ‖riemannZeta (1/2 + I * ↑T)‖ ≤ C_z * T ^ ((1 : ℝ) / 2) := by
+    have h1 := hzeta T (by rw [h_abs_T]; linarith)
+    rw [h_abs_T] at h1
+    convert h1 using 2; ring
+  -- 1/θ'(T) ≤ 4/log(T)
+  have h_inv_theta : 1 / thetaDeriv T ≤ 4 / Real.log T := by
+    rw [div_le_div_iff₀ htheta_pos hlog_pos]
+    linarith
+  -- Product: ‖ζ‖ · (1/θ') ≤ C_z·T^{1/2} · 4/log T = 4C_z · T^{1/2}/log T
+  calc ‖riemannZeta (1/2 + I * ↑T)‖ * (1 / thetaDeriv T)
+      ≤ (C_z * T ^ ((1 : ℝ) / 2)) * (4 / Real.log T) := by
+        apply mul_le_mul h_zeta_bd h_inv_theta (by positivity) (by positivity)
+    _ = 4 * C_z * T ^ ((1 : ℝ) / 2) / Real.log T := by ring
+
+/-! ### Sub-lemma: VdC for the pure phase integral ∫ e^{iθ(t)} dt on [T₀, T].
+
+From `vdc_first_deriv_exp` (VanDerCorputGeneric):
+  if θ'(t) ≥ λ > 0 on [a,b], θ' monotone, θ ∈ C²,
+  then ‖∫_a^b e^{iθ(t)} dt‖ ≤ 4/λ.
+
+Here θ = hardyThetaSmooth, θ' = thetaDeriv with:
+  θ' monotone on (0,∞)   (thetaDeriv_strictMonoOn)
+  θ'(t) ≥ (1/4)·log(t)   (thetaDeriv_lower_bound)
+-/
+
+/-- thetaDeriv is differentiable everywhere (from thetaDeriv_hasDerivAt). -/
+private theorem differentiable_thetaDeriv : Differentiable ℝ thetaDeriv :=
+  fun t => (thetaDeriv_hasDerivAt t).differentiableAt
+
+/-- θ' is C¹ (i.e., θ'' is continuous).
+    From the explicit formula θ''(t) = -(1/4)·Im(Σ 1/(s(t)+n)²):
+    each term is continuous in t, the series Σ ‖1/(s(t)+n)²‖ ≤ Σ 1/(n+1/4)²
+    converges uniformly, so the tsum is continuous.
+    TODO: formalize via Weierstrass M-test (uniform convergence of trigamma). -/
+-- Each summand t ↦ 1/(sOfT(t)+n)² is continuous in t.
+private lemma continuous_inv_sq_summand (n : ℕ) :
+    Continuous (fun t : ℝ => (1 : ℂ) / (sOfT t + (↑n : ℂ)) ^ 2) := by
+  apply Continuous.div continuous_const
+  · apply Continuous.pow
+    apply Continuous.add _ continuous_const
+    show Continuous fun t => sOfT t
+    exact continuous_const.add (continuous_const.mul
+      (Complex.continuous_ofReal.comp continuous_id |>.div_const 2))
+  · intro t; exact pow_ne_zero 2 (sOfT_add_nat_ne_zero t n)
+
+private theorem continuous_deriv_thetaDeriv : Continuous (deriv thetaDeriv) := by
+  have h_eq : deriv thetaDeriv = fun t =>
+      -(1 / 4 : ℝ) * (∑' n : ℕ, 1 / (sOfT t + (↑n : ℂ)) ^ 2).im := by
+    ext t; exact (thetaDeriv_hasDerivAt t).deriv
+  rw [h_eq]
+  -- Each term is continuous and uniformly bounded by 16/(n+1)².
+  -- By the Weierstrass M-test (continuous_tsum), the tsum is continuous.
+  apply Continuous.mul continuous_const
+  exact Complex.continuous_im.comp
+    (continuous_tsum (fun n => continuous_inv_sq_summand n)
+      summable_sixteen_div_sq' (fun n t => by
+        -- Need ‖1/(sOfT t + n)²‖ ≤ 16/(n+1)²
+        have h14 := norm_sOfT_add_nat_ge t n
+        have h14_pos : (0 : ℝ) < ↑n + 1/4 := by linarith [Nat.cast_nonneg (α := ℝ) n]
+        have h1_pos : (0 : ℝ) < ↑n + 1 := by linarith [Nat.cast_nonneg (α := ℝ) n]
+        have hstep1 : ‖(1 : ℂ) / (sOfT t + (↑n : ℂ)) ^ 2‖ ≤ 1 / ((↑n : ℝ) + 1/4) ^ 2 := by
+          rw [one_div, norm_inv, norm_pow, one_div]
+          apply inv_anti₀ (by positivity)
+          exact sq_le_sq' (by linarith [norm_nonneg (sOfT t + (↑n : ℂ))]) h14
+        have hstep2 : 1 / ((↑n : ℝ) + 1/4) ^ 2 ≤ 16 / ((↑n : ℝ) + 1) ^ 2 := by
+          rw [div_le_div_iff₀ (by positivity) (by positivity)]
+          nlinarith [Nat.cast_nonneg (α := ℝ) n]
+        linarith))
+
+/-- θ' is monotone on [a,b] ⊂ (0,∞), inherited from thetaDeriv_strictMonoOn. -/
+private theorem thetaDeriv_monotoneOn_Icc {a b : ℝ} (ha : 0 < a) :
+    MonotoneOn thetaDeriv (Icc a b) :=
+  (thetaDeriv_strictMonoOn.monotoneOn).mono
+    (fun _ hx => lt_of_lt_of_le ha hx.1)
+
+/-- The compact piece ∫₁^{T₀} Z is bounded by a constant. -/
+private theorem compact_piece_abs_bounded (T₀ : ℝ) :
+    ∃ C₀ : ℝ, |∫ t in Set.Ioc 1 T₀, HardyEstimatesPartial.hardyZ t| ≤ C₀ :=
+  ⟨|∫ t in Set.Ioc 1 T₀, HardyEstimatesPartial.hardyZ t|, le_refl _⟩
+
+/-- |∫ Z| ≤ ‖∫ e^{iθ}·ζ‖ since Z = Re(e^{iθ}·ζ) and |Re(z)| ≤ ‖z‖.
+
+    Proof: Z(t) = Re(e^{iθ(t)}·ζ(1/2+it)) by definition, so
+    ∫ Z = ∫ Re(f) = Re(∫ f) (by reCLM.integral_comp_comm), and
+    |Re(∫ f)| ≤ ‖∫ f‖ (by Complex.abs_re_le_norm). -/
+private theorem integral_hardyZ_le_norm_complex_integral (a b : ℝ)
+    (hint : IntegrableOn (fun t =>
+      Complex.exp (I * ↑(HardyEstimatesPartial.hardyTheta t)) *
+      riemannZeta (1/2 + I * ↑t)) (Set.Ioc a b)) :
+    |∫ t in Set.Ioc a b, HardyEstimatesPartial.hardyZ t| ≤
+      ‖∫ t in Set.Ioc a b,
+        Complex.exp (I * ↑(HardyEstimatesPartial.hardyTheta t)) *
+        riemannZeta (1/2 + I * ↑t)‖ := by
+  have h_eq : (fun t => HardyEstimatesPartial.hardyZ t) = (fun t =>
+      (Complex.exp (I * ↑(HardyEstimatesPartial.hardyTheta t)) *
+        riemannZeta (1/2 + I * ↑t)).re) := by
+    ext t; rfl
+  rw [h_eq]
+  -- ∫ Re(f) = Re(∫ f) by reCLM.integral_comp_comm, then |Re(z)| ≤ ‖z‖
+  have h_comm : ∫ t in Set.Ioc a b,
+      (Complex.exp (I * ↑(HardyEstimatesPartial.hardyTheta t)) *
+        riemannZeta (1/2 + I * ↑t)).re =
+      (∫ t in Set.Ioc a b,
+        Complex.exp (I * ↑(HardyEstimatesPartial.hardyTheta t)) *
+        riemannZeta (1/2 + I * ↑t)).re :=
+    Complex.reCLM.integral_comp_comm hint
+  rw [h_comm]
+  exact Complex.abs_re_le_norm _
+
+-- ════════════════════════════════════════════════════════════
+-- Tail integral analysis
+-- ════════════════════════════════════════════════════════════
+--
+-- On [T₀, T] where T₀ from thetaDeriv_lower_bound:
+--   θ'(t) ≥ (1/4)·log(T₀), θ' monotone, |Z(t)| ≤ C·t^{1/2}.
+--
+-- The sharp O(T^{1/2}) bound requires the AFE decomposition of ζ
+-- into a Dirichlet polynomial Σ_{n≤N} n^{-s} + controlled error,
+-- then applying VdC to each mode individually (Titchmarsh §4.15).
+--
+-- IBP alone gives O(T^{3/2}/log T) for the correction integral,
+-- which is too large. The sub-lemmas below capture the proved
+-- components of the IBP approach.
+-- ════════════════════════════════════════════════════════════
+
+/-- The derivative of ζ on the critical line satisfies a convexity bound.
+    By Cauchy's estimate with radius 1/4:
+    ‖ζ'(1/2+it)‖ ≤ (1/R) · sup_{|w-c|=R} ‖ζ(w)‖.
+    The uniform strip bound (zeta_strip_bound) gives ‖ζ(w)‖ ≤ C|τ|^{3/4}
+    on the sphere, yielding ‖ζ'(1/2+it)‖ ≤ 4C·(|t|+1)^{3/4}. -/
+private theorem zeta_deriv_critical_line_bound :
+    ∃ C > 0, ∀ t : ℝ, |t| ≥ 2 →
+      ‖deriv riemannZeta (1/2 + I * ↑t)‖ ≤ C * |t| ^ ((3 : ℝ)/4) := by
+  -- Step 1: Get uniform strip bound
+  obtain ⟨C_s, hC_s, h_strip⟩ := zeta_strip_bound
+  -- Step 2: The Cauchy estimate at c = 1/2 + t*I with R = 1/4
+  -- gives ‖ζ'(c)‖ ≤ (sup on sphere) / R = 4 · sup on sphere
+  refine ⟨4 * C_s * 2 ^ ((3 : ℝ)/4), by positivity, fun t ht => ?_⟩
+  set c := (1 : ℂ)/2 + I * (↑t : ℂ)
+  have hR : (0 : ℝ) < 1/4 := by norm_num
+  -- DiffContOnCl: ζ is differentiable on ball(c, 1/4), continuous on closedBall
+  -- All points in closedBall(c, 1/4) have Re ∈ [1/4, 3/4], hence ≠ 1
+  have h_ne_one : ∀ w ∈ Metric.closedBall c (1/4), w ≠ 1 := by
+    intro w hw
+    rw [Metric.mem_closedBall] at hw
+    intro h_eq
+    rw [h_eq] at hw
+    simp only [c, dist_comm] at hw
+    have : (1/4 : ℝ) < dist (1 : ℂ) (1/2 + I * ↑t) := by
+      rw [Complex.dist_eq]
+      have : (1 : ℂ) - (1/2 + I * ↑t) = 1/2 - I * ↑t := by ring
+      rw [this]
+      calc (1/4 : ℝ) < 1/2 := by norm_num
+        _ ≤ ‖(1/2 : ℂ) - I * ↑t‖ := by
+            calc (1/2 : ℝ) = |(1/2 : ℂ).re| := by norm_num [Complex.ofReal_re]
+              _ = |((1/2 : ℂ) - I * ↑t).re| := by
+                  congr 1; simp [Complex.sub_re, Complex.mul_re, Complex.I_re, Complex.I_im]
+              _ ≤ ‖(1/2 : ℂ) - I * ↑t‖ := Complex.abs_re_le_norm _
+    linarith
+  have h_diff_on : DifferentiableOn ℂ riemannZeta (Metric.closedBall c (1/4)) := by
+    intro w hw
+    exact (differentiableAt_riemannZeta (h_ne_one w hw)).differentiableWithinAt
+  have h_diffcont : DiffContOnCl ℂ riemannZeta (Metric.ball c (1/4)) :=
+    h_diff_on.diffContOnCl_ball (le_refl _)
+  -- Bound on sphere: for w ∈ sphere(c, 1/4), bound ‖ζ(w)‖
+  have h_sphere_bound : ∀ w ∈ Metric.sphere c (1/4), ‖riemannZeta w‖ ≤
+      C_s * (|t| + 1) ^ ((3 : ℝ)/4) := by
+    intro w hw
+    rw [Metric.mem_sphere] at hw
+    -- w = c + (1/4)·e^{iα} for some α, so w.re ∈ [1/4, 3/4] and w.im = t + ...
+    have h_re_dist : |w.re - (1/2 : ℝ)| ≤ 1/4 := by
+      calc |w.re - 1/2| = |(w - c).re| := by
+            simp [c, Complex.sub_re, Complex.add_re, Complex.div_ofNat,
+                  Complex.mul_re, Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+        _ ≤ ‖w - c‖ := Complex.abs_re_le_norm _
+        _ = 1/4 := by rw [← Complex.dist_eq]; exact hw
+    have h_im_dist : |w.im - t| ≤ 1/4 := by
+      calc |w.im - t| = |(w - c).im| := by
+            simp [c, Complex.sub_im, Complex.add_im, Complex.div_ofNat,
+                  Complex.mul_im, Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+        _ ≤ ‖w - c‖ := Complex.abs_im_le_norm _
+        _ = 1/4 := by rw [← Complex.dist_eq]; exact hw
+    have hσ_range : 0 ≤ w.re ∧ w.re ≤ 1 := by
+      constructor <;> linarith [(abs_le.mp h_re_dist).1, (abs_le.mp h_re_dist).2]
+    have hτ_ge : 1 ≤ |w.im| := by
+      have : |t| - 1/4 ≤ |w.im| := by
+        have h_tri : |t| ≤ |t - w.im| + |w.im| := by
+          calc |t| = |(t - w.im) + w.im| := by congr 1; ring
+            _ ≤ |t - w.im| + |w.im| := abs_add_le _ _
+        linarith [abs_sub_comm t w.im, h_im_dist]
+      linarith
+    -- Write w = w.re + w.im * I
+    have hw_eq : w = ↑w.re + ↑w.im * I := (Complex.re_add_im w).symm
+    rw [hw_eq]
+    calc ‖riemannZeta (↑w.re + ↑w.im * I)‖
+        ≤ C_s * |w.im| ^ ((3 : ℝ)/4) := h_strip w.re w.im hσ_range.1 hσ_range.2 hτ_ge
+      _ ≤ C_s * (|t| + 1) ^ ((3 : ℝ)/4) := by
+          apply mul_le_mul_of_nonneg_left _ (le_of_lt hC_s)
+          apply rpow_le_rpow (abs_nonneg _) _ (by norm_num : (0 : ℝ) ≤ 3/4)
+          calc |w.im| = |(w.im - t) + t| := by congr 1; ring
+            _ ≤ |w.im - t| + |t| := abs_add_le _ _
+            _ ≤ 1/4 + |t| := by linarith [h_im_dist]
+            _ ≤ |t| + 1 := by linarith
+  -- Apply Cauchy estimate
+  have h_cauchy := norm_deriv_le_of_forall_mem_sphere_norm_le hR h_diffcont h_sphere_bound
+  -- h_cauchy : ‖deriv riemannZeta c‖ ≤ C_s * (|t| + 1)^{3/4} / (1/4)
+  --          = 4 * C_s * (|t| + 1)^{3/4}
+  calc ‖deriv riemannZeta (1/2 + I * ↑t)‖
+      = ‖deriv riemannZeta c‖ := rfl
+    _ ≤ C_s * (|t| + 1) ^ ((3 : ℝ)/4) / (1/4) := h_cauchy
+    _ = 4 * C_s * (|t| + 1) ^ ((3 : ℝ)/4) := by ring
+    _ ≤ 4 * C_s * (2 * |t|) ^ ((3 : ℝ)/4) := by
+        gcongr
+        linarith
+    _ = 4 * C_s * (2 ^ ((3 : ℝ)/4) * |t| ^ ((3 : ℝ)/4)) := by
+        rw [mul_rpow (by norm_num : (0 : ℝ) ≤ 2) (abs_nonneg t)]
+    _ = 4 * C_s * 2 ^ ((3 : ℝ)/4) * |t| ^ ((3 : ℝ)/4) := by ring
+
+/-- The IBP boundary quotient ‖ζ(½+iT)‖/θ'(T) ≤ C·T^{1/2}.
+    Follows from zeta_critical_norm_div_thetaDeriv_le_sqrt (which gives
+    the bound C·T^{1/2}/log(T)) and log(T) ≥ 1 for T ≥ e. -/
+private theorem ibp_boundary_bound :
+    ∃ C > 0, ∃ T₀ ≥ (2 : ℝ), ∀ T : ℝ, T ≥ T₀ →
+      ‖riemannZeta (1/2 + I * ↑T)‖ / thetaDeriv T ≤ C * T ^ ((1:ℝ)/2) := by
+  obtain ⟨C, hC, T₀, hT₀, hbd⟩ := zeta_critical_norm_div_thetaDeriv_le_sqrt
+  -- Increase T₀ to ensure log(T) ≥ 1
+  set T₁ := max T₀ (Real.exp 1) with hT₁_def
+  refine ⟨C, hC, T₁, le_trans hT₀ (le_max_left _ _), fun T hT => ?_⟩
+  have hT_ge_T₀ : T ≥ T₀ := le_trans (le_max_left _ _) hT
+  have hT_ge_exp : T ≥ Real.exp 1 := le_trans (le_max_right _ _) hT
+  have hT_pos : (0 : ℝ) < T := lt_of_lt_of_le (by positivity) hT_ge_exp
+  have hlog_ge_one : 1 ≤ Real.log T := by
+    calc (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
+      _ ≤ Real.log T := Real.log_le_log (Real.exp_pos 1) hT_ge_exp
+  have hbd' := hbd T hT_ge_T₀
+  -- ‖ζ‖ * (1/θ') ≤ C * T^{1/2} / log T ≤ C * T^{1/2} * 1 = C * T^{1/2}
+  have h_nonneg : 0 ≤ C * T ^ ((1:ℝ)/2) :=
+    mul_nonneg (le_of_lt hC) (rpow_nonneg (le_of_lt hT_pos) _)
+  calc ‖riemannZeta (1/2 + I * ↑T)‖ / thetaDeriv T
+      = ‖riemannZeta (1/2 + I * ↑T)‖ * (1 / thetaDeriv T) := by
+        rw [div_eq_mul_inv]; ring
+    _ ≤ C * T ^ ((1:ℝ)/2) / Real.log T := hbd'
+    _ ≤ C * T ^ ((1:ℝ)/2) := div_le_self h_nonneg hlog_ge_one
+
+/-- The correction integrand |d/dt[ζ/(iθ')]| is bounded by C·t^{3/4}/log(t).
+
+    From |d/dt[ζ/(iθ')]| ≤ |ζ'|/|θ'| + |ζ|·|θ''|/|θ'|² and:
+    - |ζ'(1/2+it)| ≤ C₁·t^{3/4} (zeta_deriv_critical_line_bound)
+    - |ζ(1/2+it)| ≤ C₂·t^{1/2} (zeta_critical_line_bound)
+    - |θ''(t)| ≤ M (thetaDeriv_deriv_bounded)
+    - θ'(t) ≥ (1/4)·log(t) (thetaDeriv_lower_bound)
+
+    Combined: O(t^{3/4}/log t) + O(t^{1/2}/log²t) = O(t^{3/4}/log t). -/
+private theorem ibp_correction_integrand_bound :
+    ∃ C > 0, ∃ T₀ ≥ (2 : ℝ), ∀ t : ℝ, t ≥ T₀ →
+      ‖deriv riemannZeta (1/2 + I * ↑t)‖ / thetaDeriv t +
+      ‖riemannZeta (1/2 + I * ↑t)‖ * |deriv thetaDeriv t| / (thetaDeriv t) ^ 2
+        ≤ C * t ^ ((3:ℝ)/4) / Real.log t := by
+  -- Get the sub-lemma bounds
+  obtain ⟨C_d, hC_d, h_deriv⟩ := zeta_deriv_critical_line_bound
+  obtain ⟨C_z, hC_z, h_zeta⟩ := zeta_critical_line_bound
+  obtain ⟨M, hM_pos, hM⟩ := thetaDeriv_deriv_bounded
+  obtain ⟨T₁, hT₁, h_theta⟩ := thetaDeriv_lower_bound
+  -- Choose T₀ large enough that log(T₀) ≥ 1 (so θ'(T₀) ≥ 1/4)
+  set T₀ := max (max T₁ 2) (Real.exp 1)
+  have hT₀_ge_2 : (2 : ℝ) ≤ T₀ := le_trans (le_max_right T₁ 2) (le_max_left _ _)
+  refine ⟨4 * C_d + 16 * C_z * M, by positivity,
+         T₀, hT₀_ge_2, fun t ht => ?_⟩
+  have ht_T₁ : t ≥ T₁ := le_trans (le_trans (le_max_left T₁ 2) (le_max_left _ _)) ht
+  have ht_2 : t ≥ 2 := le_trans hT₀_ge_2 ht
+  have ht_exp : t ≥ Real.exp 1 := le_trans (le_max_right _ _) ht
+  have ht_pos : (0 : ℝ) < t := by linarith
+  have h_abs_t : |t| = t := abs_of_pos ht_pos
+  have hlog : 0 < Real.log t := Real.log_pos (by linarith)
+  have htheta_lb := h_theta t ht_T₁
+  have htheta_pos : 0 < thetaDeriv t := by linarith
+  -- Term 1: ‖ζ'‖/θ' ≤ C_d·t^{3/4} / ((1/4)·log t) = 4·C_d·t^{3/4}/log t
+  have h_term1 : ‖deriv riemannZeta (1/2 + I * ↑t)‖ / thetaDeriv t ≤
+      4 * C_d * t ^ ((3:ℝ)/4) / Real.log t := by
+    rw [div_le_div_iff₀ htheta_pos hlog]
+    have h1 := h_deriv t (by rw [h_abs_t]; linarith)
+    rw [h_abs_t] at h1
+    have h_rpow_nonneg : 0 ≤ t ^ ((3:ℝ)/4) := rpow_nonneg (le_of_lt ht_pos) _
+    calc ‖deriv riemannZeta (1/2 + I * ↑t)‖ * Real.log t
+        ≤ C_d * t ^ ((3:ℝ)/4) * Real.log t := by
+          apply mul_le_mul_of_nonneg_right h1 (le_of_lt hlog)
+      _ ≤ 4 * C_d * t ^ ((3:ℝ)/4) * thetaDeriv t := by
+          -- Need: C_d * r * log t ≤ 4 * C_d * r * θ'(t) where r = t^{3/4}
+          -- From θ' ≥ (1/4) log t: 4 * θ' ≥ log t
+          -- So 4 * C_d * r * θ' ≥ C_d * r * 4 * θ' ≥ C_d * r * log t
+          have : Real.log t ≤ 4 * thetaDeriv t := by linarith [htheta_lb]
+          calc C_d * t ^ ((3:ℝ)/4) * Real.log t
+              ≤ C_d * t ^ ((3:ℝ)/4) * (4 * thetaDeriv t) := by
+                apply mul_le_mul_of_nonneg_left this (mul_nonneg (le_of_lt hC_d) h_rpow_nonneg)
+            _ = 4 * C_d * t ^ ((3:ℝ)/4) * thetaDeriv t := by ring
+  -- Term 2: ‖ζ‖·|θ''|/θ'² ≤ C_z·t^{1/2}·M/((1/4)log t)² = 16·C_z·M·t^{1/2}/log²t
+  --       ≤ 16·C_z·M·t^{3/4}/log t  (since t^{1/2}/log t ≤ t^{3/4}/log t for t ≥ 1)
+  have h_term2 : ‖riemannZeta (1/2 + I * ↑t)‖ * |deriv thetaDeriv t| / (thetaDeriv t) ^ 2 ≤
+      16 * C_z * M * t ^ ((3:ℝ)/4) / Real.log t := by
+    have h_zeta_bd' := h_zeta t (by rw [h_abs_t]; linarith)
+    rw [h_abs_t] at h_zeta_bd'
+    have h_zeta_bd : ‖riemannZeta (1/2 + I * ↑t)‖ ≤ C_z * t ^ ((1:ℝ)/2) := by
+      convert h_zeta_bd' using 2; ring
+    have h_theta_sq : (thetaDeriv t) ^ 2 ≥ ((1/4) * Real.log t) ^ 2 := by
+      exact sq_le_sq' (by linarith) htheta_lb
+    have h_theta_sq_pos : 0 < (thetaDeriv t) ^ 2 := by positivity
+    rw [div_le_div_iff₀ h_theta_sq_pos hlog]
+    -- LHS = ‖ζ‖ * |θ''| * log t
+    -- RHS = 16 * C_z * M * t^{3/4} * θ'^2
+    -- ‖ζ‖ ≤ C_z * t^{1/2}, |θ''| ≤ M
+    -- So LHS ≤ C_z * t^{1/2} * M * log t
+    -- RHS ≥ 16 * C_z * M * t^{3/4} * ((1/4)·log t)^2 = C_z * M * t^{3/4} * log²t
+    -- Need: t^{1/2} * log t ≤ t^{3/4} * log²t, i.e., 1 ≤ t^{1/4} * log t
+    -- For t ≥ 2: t^{1/4} ≥ 2^{1/4} > 1 and log t ≥ log 2 > 0, so product > 0.
+    -- Actually need: C_z * t^{1/2} * M * log t ≤ 16 * C_z * M * t^{3/4} * θ'^2
+    -- Upper bound on LHS: ‖ζ‖ * |θ''| * log t ≤ C_z * t^{1/2} * M * log t
+    have h_zeta_nonneg : 0 ≤ ‖riemannZeta (1/2 + I * ↑t)‖ := norm_nonneg _
+    have h_deriv_nonneg : 0 ≤ |deriv thetaDeriv t| := abs_nonneg _
+    have h_rpow_nonneg12 : 0 ≤ t ^ ((1:ℝ)/2) := rpow_nonneg (le_of_lt ht_pos) _
+    have h_rpow_nonneg34 : 0 ≤ t ^ ((3:ℝ)/4) := rpow_nonneg (le_of_lt ht_pos) _
+    have h_rpow_le : t ^ ((1:ℝ)/2) ≤ t ^ ((3:ℝ)/4) :=
+      rpow_le_rpow_of_exponent_le (by linarith) (by norm_num)
+    -- ‖ζ‖ * |θ''| * log t ≤ C_z * t^{3/4} * M * 4 * θ' ≤ 16 * C_z * M * t^{3/4} * θ'^2
+    -- Step-by-step bound
+    have h_abs_deriv_le_M : |deriv thetaDeriv t| ≤ M := hM t
+    have h_log_le_4theta : Real.log t ≤ 4 * thetaDeriv t := by linarith [htheta_lb]
+    -- ‖ζ‖ * |θ''| ≤ ‖ζ‖ * M ≤ C_z * t^{1/2} * M ≤ C_z * t^{3/4} * M
+    have h_prod_le : ‖riemannZeta (1/2 + I * ↑t)‖ * |deriv thetaDeriv t| ≤
+        C_z * t ^ ((3:ℝ)/4) * M := by
+      calc ‖riemannZeta (1/2 + I * ↑t)‖ * |deriv thetaDeriv t|
+          ≤ ‖riemannZeta (1/2 + I * ↑t)‖ * M :=
+            mul_le_mul_of_nonneg_left h_abs_deriv_le_M h_zeta_nonneg
+        _ ≤ (C_z * t ^ ((1:ℝ)/2)) * M :=
+            mul_le_mul_of_nonneg_right h_zeta_bd (le_of_lt hM_pos)
+        _ ≤ C_z * t ^ ((3:ℝ)/4) * M := by
+            apply mul_le_mul_of_nonneg_right _ (le_of_lt hM_pos)
+            exact mul_le_mul_of_nonneg_left h_rpow_le (le_of_lt hC_z)
+    -- Now: (C_z * r * M) * log t ≤ (C_z * r * M) * (4 * θ') ≤ 16 * C_z * M * r * θ'^2
+    calc ‖riemannZeta (1/2 + I * ↑t)‖ * |deriv thetaDeriv t| * Real.log t
+        ≤ (C_z * t ^ ((3:ℝ)/4) * M) * Real.log t :=
+          mul_le_mul_of_nonneg_right h_prod_le (le_of_lt hlog)
+      _ ≤ (C_z * t ^ ((3:ℝ)/4) * M) * (4 * thetaDeriv t) :=
+          mul_le_mul_of_nonneg_left h_log_le_4theta (by positivity)
+      _ = 4 * C_z * M * t ^ ((3:ℝ)/4) * thetaDeriv t := by ring
+      _ ≤ 16 * C_z * M * t ^ ((3:ℝ)/4) * (thetaDeriv t) ^ 2 := by
+          -- Need: 4 * a * θ' ≤ 16 * a * θ'^2 where a = C_z * M * t^{3/4}
+          -- i.e., θ' ≤ 4 * θ'^2, i.e., 1 ≤ 4 * θ'
+          -- θ' ≥ (1/4) * log t ≥ (1/4) * log 2 > 1/4 ≥ 1/4
+          -- We need 1/4 ≤ θ', so 1 ≤ 4θ'
+          have h_theta_ge_quarter : (1/4 : ℝ) ≤ thetaDeriv t := by
+            have hlog_ge_1 : (1 : ℝ) ≤ Real.log t := by
+              calc (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
+                _ ≤ Real.log t := Real.log_le_log (Real.exp_pos 1) ht_exp
+            calc (1/4 : ℝ) ≤ (1/4) * Real.log t := le_mul_of_one_le_right (by norm_num) hlog_ge_1
+              _ ≤ thetaDeriv t := htheta_lb
+          -- Goal: 4 * C_z * M * t^{3/4} * θ' ≤ 16 * C_z * M * t^{3/4} * θ'^2
+          -- Factor: 4 * a * θ' ≤ 4 * a * 4 * θ' * θ' where a = C_z * M * t^{3/4} ≥ 0
+          -- Since θ' ≥ 1/4, 4*θ' ≥ 1, so θ' ≤ 4*θ'^2
+          have h_theta_sq_bound : thetaDeriv t ≤ 4 * thetaDeriv t ^ 2 := by
+            have h1 : 1 ≤ 4 * thetaDeriv t := by linarith
+            nlinarith [sq_nonneg (thetaDeriv t)]
+          have h_coeff_nonneg : 0 ≤ 4 * C_z * M * t ^ ((3:ℝ)/4) := by positivity
+          calc 4 * C_z * M * t ^ ((3:ℝ)/4) * thetaDeriv t
+              ≤ 4 * C_z * M * t ^ ((3:ℝ)/4) * (4 * thetaDeriv t ^ 2) :=
+                mul_le_mul_of_nonneg_left h_theta_sq_bound h_coeff_nonneg
+            _ = 16 * C_z * M * t ^ ((3:ℝ)/4) * thetaDeriv t ^ 2 := by ring
+  -- Combine
+  calc ‖deriv riemannZeta (1/2 + I * ↑t)‖ / thetaDeriv t +
+      ‖riemannZeta (1/2 + I * ↑t)‖ * |deriv thetaDeriv t| / (thetaDeriv t) ^ 2
+      ≤ 4 * C_d * t ^ ((3:ℝ)/4) / Real.log t +
+        16 * C_z * M * t ^ ((3:ℝ)/4) / Real.log t := add_le_add h_term1 h_term2
+    _ = (4 * C_d + 16 * C_z * M) * t ^ ((3:ℝ)/4) / Real.log t := by ring
+
+/-- **Main oscillatory integral bound** (sorry — requires AFE-based VdC argument).
+
+    REMAINING ATOMIC OBLIGATION: |∫₁ᵀ Z(t) dt| ≤ C · T^{1/2}.
+
+    PROVED SUB-COMPONENTS:
+    (a) thetaDeriv_lower_bound: θ'(t) ≥ (1/4)·log(t) for large t
+    (b) thetaDeriv_deriv_nonneg: θ''(t) ≥ 0 (θ' is increasing)
+    (c) thetaDeriv_deriv_bounded: |θ''(t)| ≤ M
+    (d) hardyZ_pointwise_bound: |Z(t)| ≤ C·|t|^{1/2}
+    (e) ibp_compact_piece_bound: |∫₁^{T₀} Z| ≤ C₀
+    (f) zeta_critical_norm_div_thetaDeriv_le_sqrt: IBP boundary terms
+    (g) ibp_boundary_bound: ‖ζ(T)‖/θ'(T) ≤ C·T^{1/2}
+    (h) integral_hardyZ_le_norm_complex_integral: |∫ Z| ≤ ‖∫ e^{iθ}·ζ‖
+
+    The sharp O(T^{1/2}) requires the Riemann-Siegel approximate functional
+    equation to decompose ζ into a Dirichlet polynomial Σ_{n≤N} n^{-s} plus
+    a controlled remainder, then apply VdC first-derivative test to each
+    mode (phase = θ(t) - t·log(n)) individually. Each mode contributes
+    O(1/√n · 1/log(T₀)) and the sum converges.
+
+    Reference: Titchmarsh (1951), §4.15; Ivić (2003), §4.2. -/
+private theorem ibp_oscillatory_bound :
+    ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Set.Ioc 1 T, HardyEstimatesPartial.hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) := by
+  sorry
+
+/-- **Hardy Z first moment bound**: |∫₁ᵀ Z(t) dt| ≤ C · T^{1/2+ε}.
+
+    This is the classical result of Titchmarsh (1951, §4.15).
+
+    The proof uses the IBP oscillatory bound (O(T^{1/2})) and absorbs
+    it into the T^{1/2+ε} envelope.
+
+    SUB-OBLIGATIONS:
+    (a) thetaDeriv_lower_bound: θ'(t) ≥ (1/4)·log(t) — PROVED
+    (b) inv_thetaDeriv_le: 1/θ'(t) ≤ 4/log(t) — PROVED
+    (c) continuousOn_inv_thetaDeriv — PROVED
+    (d) hasDerivAt_exp_iTheta — PROVED
+    (e) hardyZ_pointwise_bound — PROVED (from PhragmenLindelof)
+    (f) ibp_oscillatory_bound — SORRY (correction integral via AFE + VdC) -/
+theorem hardyZ_first_moment_sublinear :
+    ∀ ε : ℝ, ε > 0 →
+      ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+        |∫ t in Set.Ioc 1 T, HardyEstimatesPartial.hardyZ t| ≤ C * T ^ (1/2 + ε) := by
+  intro ε hε
+  -- Get the O(T^{1/2}) bound from IBP
+  obtain ⟨C, hC, h_ibp⟩ := ibp_oscillatory_bound
+  -- Use C as our constant; T^{1/2} ≤ T^{1/2+ε} for T ≥ 1
+  refine ⟨C, hC, fun T hT => ?_⟩
+  have hT_pos : (0 : ℝ) < T := by linarith
+  have hT_one : (1 : ℝ) ≤ T := by linarith
+  calc |∫ t in Set.Ioc 1 T, HardyEstimatesPartial.hardyZ t|
+      ≤ C * T ^ ((1 : ℝ) / 2) := h_ibp T hT
+    _ ≤ C * T ^ (1 / 2 + ε) := by
+        apply mul_le_mul_of_nonneg_left _ (le_of_lt hC)
+        apply Real.rpow_le_rpow_of_exponent_le hT_one
+        linarith
+
+end HardyZFirstMomentIBP
