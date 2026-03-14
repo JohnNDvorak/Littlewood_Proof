@@ -802,12 +802,28 @@ private theorem ibp_correction_integrand_bound :
     (f) zeta_critical_norm_div_thetaDeriv_le_sqrt: IBP boundary terms
     (g) ibp_boundary_bound: ‖ζ(T)‖/θ'(T) ≤ C·T^{1/2}
     (h) integral_hardyZ_le_norm_complex_integral: |∫ Z| ≤ ‖∫ e^{iθ}·ζ‖
+    (i) ibp_correction_integrand_bound: |d/dt[ζ/(iθ')]| ≤ C·t^{3/4}/log(t)
 
-    The sharp O(T^{1/2}) requires the Riemann-Siegel approximate functional
-    equation to decompose ζ into a Dirichlet polynomial Σ_{n≤N} n^{-s} plus
-    a controlled remainder, then apply VdC first-derivative test to each
-    mode (phase = θ(t) - t·log(n)) individually. Each mode contributes
-    O(1/√n · 1/log(T₀)) and the sum converges.
+    DEPENDENCY: This sorry genuinely depends on the RS expansion
+    (`rs_saddle_point_bound` in RSExpansionProof.lean).
+
+    WHY IBP/VdC ON THE FULL FUNCTION FAILS:
+    - IBP with correction integral: ∫ C·t^{3/4}/log(t) dt = O(T^{7/4}/log T).
+      Too large by a factor of T^{5/4}.
+    - Per-block VdC (blocks of length L ~ √t): per block ≤ 8C√2·√a/log(a),
+      summing over ~√T blocks gives O(T/log T). Still too large.
+    - Fundamental issue: |ζ(1/2+it)| = O(t^{1/2}) pointwise, and no IBP or
+      VdC on the FULL function can beat pointwise_size × length / oscillation_rate.
+
+    CORRECT APPROACH (Titchmarsh §4.15):
+    1. Use the AFE: ζ(1/2+it) = Σ_{n≤N} n^{-1/2-it} + χ·Σ_{m≤M} m^{-1/2+it}
+       + O(t^{-1/4}) where N ≈ √(t/2π).
+    2. Each mode e^{i(θ(t) - t·log n)} has phase derivative θ'(t) - log(n).
+    3. VdC first-derivative test per mode: contribution O(1/(√n · log(T₀))).
+    4. Sum Σ_{n≤N} 1/(√n · log T₀) = O(N^{1/2}/log T₀) = O(T^{1/4}/log T₀).
+    5. This gives |∫_{T₀}^T Z(t) dt| = O(T^{1/4}/log T₀) = O(T^{1/2}).
+
+    This is why the sorry cannot be closed without `rs_saddle_point_bound`.
 
     Reference: Titchmarsh (1951), §4.15; Ivić (2003), §4.2. -/
 private theorem ibp_oscillatory_bound :

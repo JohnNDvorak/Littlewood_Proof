@@ -282,7 +282,9 @@ private theorem errorTerm_signed_integral_sublinear
     -- Step 2: Prove the √T bound using block decomposition + alternating cancellation
     -- Constant: absorbs head (C_et * hs0) + middle (C_et * 4π(2K+3)) via √T ≥ 1
     set C_sq := C_et * hardyStart 0 + C_et * 4 * Real.pi * 3 + C_et * 8 * Real.pi + 1
-    refine ⟨C_sq, by positivity, fun T hT => ?_⟩
+    have hC_sq_pos : 0 < C_sq := by
+      simp only [C_sq]; nlinarith [Real.pi_pos, hhs_gt1 0]
+    refine ⟨C_sq, hC_sq_pos, fun T hT => ?_⟩
     have h_sqrtT_ge1 : (1 : ℝ) ≤ Real.sqrt T := by
       rw [← Real.sqrt_one]; exact Real.sqrt_le_sqrt (by linarith)
     by_cases hT_ge_hs0 : hardyStart 0 ≤ T
@@ -293,7 +295,7 @@ private theorem errorTerm_signed_integral_sublinear
       have hK1_le_sqrtT : (K : ℝ) + 1 ≤ Real.sqrt T := by
         have hK1_sq := Aristotle.Standalone.OscPieceBigOAssembly.block_index_sq_le K T hK_le
         rw [← Real.sqrt_sq (by positivity : (0 : ℝ) ≤ (K : ℝ) + 1)]
-        exact Real.sqrt_le_sqrt (le_trans hK1_sq (div_le_self (by linarith) (by positivity)))
+        exact Real.sqrt_le_sqrt (le_trans hK1_sq (div_le_self (by linarith) (by nlinarith [Real.pi_gt_three])))
       -- 2K+3 ≤ 2√T + 1
       have h2K3_le : 2 * (K : ℝ) + 3 ≤ 2 * Real.sqrt T + 1 := by linarith
       -- Integrability setup
@@ -304,13 +306,13 @@ private theorem errorTerm_signed_integral_sublinear
       have h_E_head : IntegrableOn ErrorTerm (Set.Ioc 1 (hardyStart 0)) :=
         h_E_intble.mono_set (fun t ht => ⟨ht.1, le_trans ht.2 hT_ge_hs0⟩)
       have h_E_tail : IntegrableOn ErrorTerm (Set.Ioc (hardyStart 0) T) :=
-        h_E_intble.mono_set (fun t ht => ⟨lt_of_lt_of_le (hhs_gt1 0) ht.1, ht.2⟩)
+        h_E_intble.mono_set (fun t ht => ⟨lt_of_lt_of_le (hhs_gt1 0) (le_of_lt ht.1), ht.2⟩)
       have h_E_mid : IntegrableOn ErrorTerm (Set.Ioc (hardyStart 0) (hardyStart K)) :=
-        h_E_intble.mono_set (fun t ht => ⟨lt_of_lt_of_le (hhs_gt1 0) ht.1,
+        h_E_intble.mono_set (fun t ht => ⟨lt_of_lt_of_le (hhs_gt1 0) (le_of_lt ht.1),
           le_trans ht.2 hK_le⟩)
       have h_E_partial : IntegrableOn ErrorTerm (Set.Ioc (hardyStart K) T) :=
         h_E_intble.mono_set (fun t ht => ⟨lt_of_lt_of_le (hhs_gt1 0)
-          (lt_of_lt_of_le (hhs_gt1 K) ht.1), ht.2⟩)
+          (le_trans h_hs0_le_hsK (le_of_lt ht.1)), ht.2⟩)
       -- Split ∫₁ᵀ = ∫₁^{hs0} + ∫_{hs0}^T
       have h_split1 : ∫ t in Set.Ioc 1 T, ErrorTerm t =
           (∫ t in Set.Ioc 1 (hardyStart 0), ErrorTerm t) +
@@ -326,7 +328,8 @@ private theorem errorTerm_signed_integral_sublinear
       -- |head| ≤ C_et * hs0
       have h_head_le : |∫ t in Set.Ioc 1 (hardyStart 0), ErrorTerm t| ≤
           C_et * hardyStart 0 :=
-        h_linear (hardyStart 0) (by rw [hardyStart_formula]; nlinarith [Real.pi_gt_three])
+        h_linear (hardyStart 0) (by
+          have := hardyStart_formula 0; push_cast at this; nlinarith [Real.pi_gt_three])
       -- |partial tail| ≤ C_et * BL(K) = C_et * 2π(2K+3)
       have h_partial_le : |∫ t in Set.Ioc (hardyStart K) T, ErrorTerm t| ≤
           C_et * (2 * Real.pi * (2 * (K : ℝ) + 3)) := by
@@ -351,7 +354,13 @@ private theorem errorTerm_signed_integral_sublinear
       have h_mid_le : |∫ t in Set.Ioc (hardyStart 0) (hardyStart K), ErrorTerm t| ≤
           C_et * (2 * Real.pi * (2 * (K : ℝ) + 3)) := by
         rcases Nat.eq_zero_or_pos K with hK0 | hK_pos
-        · subst hK0; simp [Set.Ioc_self]; exact mul_nonneg hCet_pos.le (by positivity)
+        · subst hK0
+          convert_to |((0 : ℝ))| ≤ _
+          · congr 1
+            have : Set.Ioc (hardyStart 0) (hardyStart 0) = ∅ := Set.Ioc_self _
+            simp [this]
+          · rw [abs_zero]
+            exact mul_nonneg hCet_pos.le (by nlinarith [Real.pi_pos])
         · -- K ≥ 1: block decomposition + alternating_sum_le_last
           have h_bp_mono : ∀ k, k < K → hardyStart k ≤ hardyStart (k + 1) :=
             fun k _ => Aristotle.Standalone.OscPieceBigOAssembly.hardyStart_mono (Nat.le_succ k)
@@ -378,10 +387,12 @@ private theorem errorTerm_signed_integral_sublinear
                 ∑ k ∈ Finset.range K, (-1 : ℝ) ^ k * b k := by
             congr 1; ext k; exact h_block_eq k
           -- Apply alternating_sum_le_last: |∑_{k<K} (-1)^k b(k)| ≤ b(K-1)
-          rw [h_mid_split, h_sum_eq, show K = (K - 1) + 1 from by omega]
-          calc |∑ k ∈ Finset.range ((K - 1) + 1), (-1 : ℝ) ^ k * b k|
-              ≤ b (K - 1) :=
-                AbelSummation.alternating_sum_le_last b hb_nonneg hb_mono (K - 1)
+          rw [h_mid_split, h_sum_eq]
+          have hK_eq : K = (K - 1) + 1 := by omega
+          calc |∑ k ∈ Finset.range K, (-1 : ℝ) ^ k * b k|
+              ≤ b (K - 1) := by
+                rw [hK_eq]
+                exact AbelSummation.alternating_sum_le_last b hb_nonneg hb_mono (K - 1)
             _ ≤ C_et * (2 * Real.pi * (2 * ((K - 1 : ℕ) : ℝ) + 3)) := hb_le (K - 1)
             _ ≤ C_et * (2 * Real.pi * (2 * (K : ℝ) + 3)) := by
                 gcongr; push_cast; omega
@@ -402,27 +413,36 @@ private theorem errorTerm_signed_integral_sublinear
             C_et * (2 * Real.pi * (2 * ↑K + 3))) := by gcongr
         _ = C_et * hardyStart 0 + C_et * 4 * Real.pi * (2 * ↑K + 3) := by ring
         _ ≤ C_et * hardyStart 0 + C_et * 4 * Real.pi * (2 * Real.sqrt T + 1) := by
-            gcongr; linarith [h2K3_le]
+            have h23 : (2 : ℝ) * ↑K + 3 ≤ 2 * Real.sqrt T + 1 := h2K3_le
+            have hpi := Real.pi_pos
+            have h_m : C_et * 4 * Real.pi * (2 * ↑K + 3) ≤ C_et * 4 * Real.pi * (2 * Real.sqrt T + 1) :=
+              mul_le_mul_of_nonneg_left h23 (by nlinarith)
+            linarith
         _ = (C_et * hardyStart 0 + C_et * 4 * Real.pi) +
             C_et * 8 * Real.pi * Real.sqrt T := by ring
         _ ≤ (C_et * hardyStart 0 + C_et * 4 * Real.pi) * Real.sqrt T +
             C_et * 8 * Real.pi * Real.sqrt T := by
-            gcongr
-            · exact mul_nonneg (by positivity) (Real.sqrt_nonneg T)
-            · exact h_sqrtT_ge1
+            have h_nn : 0 ≤ C_et * hardyStart 0 + C_et * 4 * Real.pi := by
+              nlinarith [hhs_gt1 0, Real.pi_pos]
+            nlinarith [mul_le_mul_of_nonneg_left h_sqrtT_ge1 h_nn]
         _ = (C_et * hardyStart 0 + C_et * 4 * Real.pi + C_et * 8 * Real.pi) *
             Real.sqrt T := by ring
         _ ≤ C_sq * Real.sqrt T := by
-            gcongr; simp only [C_sq]; linarith [Real.pi_pos]
+            apply mul_le_mul_of_nonneg_right _ (Real.sqrt_nonneg T)
+            simp only [C_sq]; nlinarith [Real.pi_pos]
     · -- T < hardyStart 0: constant bound absorbed into √T
       push_neg at hT_ge_hs0
+      have hT_lt_hs0 := hT_ge_hs0
       calc |∫ t in Set.Ioc 1 T, ErrorTerm t|
           ≤ C_et * T := h_linear T hT
-        _ ≤ C_et * hardyStart 0 := by gcongr; linarith
+        _ ≤ C_et * hardyStart 0 := by
+            have : T ≤ hardyStart 0 := le_of_lt hT_lt_hs0
+            exact mul_le_mul_of_nonneg_left this hCet_pos.le
         _ ≤ C_et * hardyStart 0 * Real.sqrt T :=
-            le_mul_of_one_le_right (by positivity) h_sqrtT_ge1
+            le_mul_of_one_le_right (mul_nonneg hCet_pos.le (by linarith [hhs_gt1 0])) h_sqrtT_ge1
         _ ≤ C_sq * Real.sqrt T := by
-            gcongr; simp only [C_sq]; linarith [hCet_pos, Real.pi_pos]
+            apply mul_le_mul_of_nonneg_right _ (Real.sqrt_nonneg T)
+            simp only [C_sq]; nlinarith [Real.pi_pos]
 
 -- ============================================================
 -- Step 4: Assembly via MainTerm = hardyZ - ErrorTerm

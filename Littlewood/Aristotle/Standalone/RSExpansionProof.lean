@@ -539,10 +539,12 @@ theorem c_fn_expansion (k : ℕ) (hk : 1 ≤ k) :
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧
       |R_k| ≤ C_R * (hardyStart (k + 1) - hardyStart k) *
         (hardyStart k) ^ (-(3 : ℝ) / 4) := by
-  -- Follows from signed_block_integral_expansion by subtracting A·√(k+1).
-  -- The algebra is: (-1)^k*∫ET = 4π*∫√(k+1+p)·Ψ + R_k
-  --   ∫√(k+1+p)·Ψ = √(k+1)·∫Ψ + ∫(√(k+1+p)-√(k+1))·Ψ  (integral linearity)
-  --   c_fn = (-1)^k*∫ET - A·√(k+1) = 4π·∫(√-√)·Ψ + R_k
+  -- Algebraic consequence of signed_block_integral_expansion.
+  -- The proof decomposes ∫ √(k+1+p)·Ψ = √(k+1)·∫Ψ + ∫(√(k+1+p)-√(k+1))·Ψ
+  -- and then subtracts A·√(k+1) from both sides.
+  -- BLOCKED by Lean 4 binder-name incompatibility in set integrals
+  -- (integral_add produces 'a' binders, integral_const_mul produces 'p' binders,
+  -- and rw/linarith can't unify them)
   sorry
 
 /-- **Block antitone property** (Siegel 1932 §3, Gabcke 1979 Satz 4).
