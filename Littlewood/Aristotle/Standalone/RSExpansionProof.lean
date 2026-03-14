@@ -29,11 +29,14 @@ The proof decomposes into:
 - `chi_modulus_critical_line`: |χ(1/2+it)| = 1 on the critical line (1 sorry)
 - `saddle_point_remainder` / `rs_saddle_point_bound`: Siegel 1932 saddle-point (1 sorry)
 - `signed_block_integral_expansion`: CoV + RS expansion on blocks (1 sorry)
-- `c_fn_expansion`: algebraic from signed_block_integral_expansion (1 sorry)
 - `rs_block_antitone`: Block monotonicity from c_fn_expansion (1 sorry)
 
-SORRY COUNT: 5 (chi_modulus, saddle_point, signed_block, c_fn, rs_block_antitone)
-WARNING COUNT: 5
+### Proved (was sorry)
+- `c_fn_expansion`: algebraic from signed_block_integral_expansion (CLOSED)
+- `weighted_sqrt_monotone`: ∫√(k+1+p)·Ψ increasing in k (NEW)
+
+SORRY COUNT: 4 (chi_modulus, saddle_point, signed_block, rs_block_antitone)
+WARNING COUNT: 4
 
 Reference: Siegel 1932 §3; Edwards Ch. 7 (pp. 136-145);
 Titchmarsh §4.16-4.17; Gabcke 1979.
@@ -500,6 +503,23 @@ theorem weighted_increment_antitone (k : ℕ) :
     apply mul_le_mul_of_nonneg_right _ (rsPsi_nonneg_on p (Ioc_subset_Icc_self hp))
     exact sqrt_increment_antitone k p (le_of_lt hp.1)
 
+/-- The weighted integral ∫₀¹ √(k+1+p)·Ψ(p) dp is monotone increasing in k.
+    This follows from √ being increasing: √(k+2+p) ≥ √(k+1+p) for all p. -/
+theorem weighted_sqrt_monotone (k : ℕ) :
+    ∫ p in Ioc (0 : ℝ) 1,
+      Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p
+    ≤ ∫ p in Ioc (0 : ℝ) 1,
+      Real.sqrt ((k : ℝ) + 2 + p) * rsPsi p := by
+  apply setIntegral_mono_on
+  · apply (ContinuousOn.mul _ rsPsi_continuousOn).integrableOn_Icc.mono_set Ioc_subset_Icc_self
+    exact ContinuousOn.sqrt (continuousOn_const.add continuousOn_id)
+  · apply (ContinuousOn.mul _ rsPsi_continuousOn).integrableOn_Icc.mono_set Ioc_subset_Icc_self
+    exact ContinuousOn.sqrt (continuousOn_const.add continuousOn_id)
+  · exact measurableSet_Ioc
+  · intro p hp
+    apply mul_le_mul_of_nonneg_right _ (rsPsi_nonneg_on p (Ioc_subset_Icc_self hp))
+    exact Real.sqrt_le_sqrt (by linarith)
+
 /-- **Sub-lemma: Signed block integral via change of variables**.
 
     Under t = 2π(k+1+p)², the signed block integral becomes:
@@ -513,8 +533,8 @@ theorem weighted_increment_antitone (k : ℕ) :
 theorem signed_block_integral_expansion (k : ℕ) (_hk : 1 ≤ k) :
     ∃ R_k : ℝ,
     (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t) =
-      4 * Real.pi * ∫ p in Ioc (0 : ℝ) 1,
-        Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p
+      4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1,
+        Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p)
       + R_k ∧
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧
       |R_k| ≤ C_R * (hardyStart (k + 1) - hardyStart k) *
@@ -528,24 +548,88 @@ theorem signed_block_integral_expansion (k : ℕ) (_hk : 1 ≤ k) :
     Proved from `signed_block_integral_expansion` by subtracting
     A·√(k+1) = 4π·√(k+1)·∫Ψ from both sides. -/
 theorem c_fn_expansion (k : ℕ) (hk : 1 ≤ k) :
-    let A_val := 4 * Real.pi * ∫ p in Ioc (0 : ℝ) 1, rsPsi p
+    let A_val := 4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)
     let c_fn := fun k : ℕ =>
       (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
         - A_val * Real.sqrt ((k : ℝ) + 1)
     ∃ R_k : ℝ,
-    c_fn k = 4 * Real.pi * ∫ p in Ioc (0 : ℝ) 1,
-        (Real.sqrt ((k : ℝ) + 1 + p) - Real.sqrt ((k : ℝ) + 1)) * rsPsi p
+    c_fn k = 4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1,
+        (Real.sqrt ((k : ℝ) + 1 + p) - Real.sqrt ((k : ℝ) + 1)) * rsPsi p)
       + R_k ∧
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧
       |R_k| ≤ C_R * (hardyStart (k + 1) - hardyStart k) *
         (hardyStart k) ^ (-(3 : ℝ) / 4) := by
-  -- Algebraic consequence of signed_block_integral_expansion.
-  -- The proof decomposes ∫ √(k+1+p)·Ψ = √(k+1)·∫Ψ + ∫(√(k+1+p)-√(k+1))·Ψ
-  -- and then subtracts A·√(k+1) from both sides.
-  -- BLOCKED by Lean 4 binder-name incompatibility in set integrals
-  -- (integral_add produces 'a' binders, integral_const_mul produces 'p' binders,
-  -- and rw/linarith can't unify them)
-  sorry
+  -- From signed_block_integral_expansion, extract the R_k and the identity.
+  obtain ⟨R_k, h_signed, hR_bound⟩ := signed_block_integral_expansion k hk
+  refine ⟨R_k, ?_, hR_bound⟩
+  -- Goal: c_fn k = 4π∫(√(k+1+p)-√(k+1))·Ψ(p)dp + R_k
+  -- where c_fn k = (-1)^k·∫_block E - A_val·√(k+1)
+  -- and h_signed: (-1)^k·∫_block E = 4π∫√(k+1+p)·Ψ(p)dp + R_k
+  -- So c_fn k = 4π∫√(k+1+p)·Ψ(p)dp + R_k - A_val·√(k+1)
+  --           = 4π∫√(k+1+p)·Ψ(p)dp + R_k - 4π·(∫Ψ)·√(k+1)
+  --           = 4π·(∫√(k+1+p)·Ψ(p)dp - √(k+1)·∫Ψ) + R_k
+  --           = 4π·∫(√(k+1+p)-√(k+1))·Ψ(p)dp + R_k
+  show (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
+    - (4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)) * Real.sqrt ((k : ℝ) + 1)
+    = 4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1,
+        (Real.sqrt ((k : ℝ) + 1 + p) - Real.sqrt ((k : ℝ) + 1)) * rsPsi p)
+      + R_k
+  -- Substitute h_signed into the LHS
+  rw [h_signed]
+  -- LHS becomes: (4π∫√(k+1+p)·Ψ + R_k) - 4π·(∫Ψ)·√(k+1)
+  -- We need: ∫√(k+1+p)·Ψ - (∫Ψ)·√(k+1) = ∫(√(k+1+p)-√(k+1))·Ψ
+  -- Rewrite the constant term: (∫Ψ)·√(k+1) = ∫(√(k+1)·Ψ)
+  set c_val := Real.sqrt ((k : ℝ) + 1) with hc_def
+  -- Integrability of the pieces
+  have h_sqrt_psi_int : IntegrableOn (fun p => Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p)
+      (Ioc (0 : ℝ) 1) := by
+    apply (ContinuousOn.mul _ rsPsi_continuousOn).integrableOn_Icc.mono_set Ioc_subset_Icc_self
+    exact ContinuousOn.sqrt (continuousOn_const.add continuousOn_id)
+  have h_const_psi_int : IntegrableOn (fun p => c_val * rsPsi p)
+      (Ioc (0 : ℝ) 1) := by
+    exact (ContinuousOn.mul continuousOn_const rsPsi_continuousOn).integrableOn_Icc.mono_set
+      Ioc_subset_Icc_self
+  -- Key step: show the integral decomposition
+  -- ∫√(k+1+p)·Ψ = ∫(√(k+1+p)-c_val)·Ψ + ∫c_val·Ψ = ∫(√(k+1+p)-c_val)·Ψ + c_val·∫Ψ
+  -- Step 1: ∫(f·g) = ∫((f-c)·g) + ∫(c·g) via integral_add
+  have h_decomp : ∀ (p : ℝ),
+      Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p =
+      (Real.sqrt ((k : ℝ) + 1 + p) - c_val) * rsPsi p + c_val * rsPsi p := by
+    intro p; ring
+  have h_int_decomp :
+      (∫ p in Ioc (0 : ℝ) 1, Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p) =
+      (∫ p in Ioc (0 : ℝ) 1, (Real.sqrt ((k : ℝ) + 1 + p) - c_val) * rsPsi p) +
+      (∫ p in Ioc (0 : ℝ) 1, c_val * rsPsi p) := by
+    rw [show (fun p => Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p) =
+        (fun p => (Real.sqrt ((k : ℝ) + 1 + p) - c_val) * rsPsi p + c_val * rsPsi p) from
+      funext h_decomp]
+    have h_diff_int : IntegrableOn (fun p => (Real.sqrt ((k : ℝ) + 1 + p) - c_val) * rsPsi p)
+        (Ioc (0 : ℝ) 1) := by
+      apply (ContinuousOn.mul _ rsPsi_continuousOn).integrableOn_Icc.mono_set Ioc_subset_Icc_self
+      exact ContinuousOn.sub (ContinuousOn.sqrt (continuousOn_const.add continuousOn_id))
+        continuousOn_const
+    exact integral_add h_diff_int h_const_psi_int
+  -- Step 2: Pull constant out: ∫ c_val * Ψ = c_val * ∫ Ψ
+  have h_const_pull : (∫ p in Ioc (0 : ℝ) 1, c_val * rsPsi p) =
+      c_val * ∫ p in Ioc (0 : ℝ) 1, rsPsi p := by
+    simp_rw [show (fun p => c_val * rsPsi p) = (fun p => c_val • rsPsi p) from
+      funext (fun p => (smul_eq_mul c_val (rsPsi p)).symm)]
+    exact integral_smul c_val (fun p => rsPsi p)
+  -- Combine: substitute h_int_decomp and h_const_pull to get the equality
+  -- LHS = 4π·∫√·Ψ + R_k - 4π·(∫Ψ)·c_val
+  -- RHS = 4π·∫(√-c)·Ψ + R_k
+  -- By h_int_decomp: ∫√·Ψ = ∫(√-c)·Ψ + ∫c·Ψ
+  -- By h_const_pull: ∫c·Ψ = c_val·∫Ψ
+  -- So LHS = 4π·(∫(√-c)·Ψ + c_val·∫Ψ) + R_k - 4π·(∫Ψ)·c_val = RHS
+  have key : (∫ p in Ioc (0 : ℝ) 1, Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p) =
+      (∫ p in Ioc (0 : ℝ) 1, (Real.sqrt ((k : ℝ) + 1 + p) - c_val) * rsPsi p) +
+      c_val * ∫ p in Ioc (0 : ℝ) 1, rsPsi p := by
+    rw [← h_const_pull]; exact h_int_decomp
+  -- Direct rewriting approach to avoid binder name issues
+  -- From key: ∫√·Ψ = ∫(√-c)·Ψ + c·∫Ψ
+  -- Goal: 4π·∫√·Ψ + R_k - (4π·∫Ψ)·c = 4π·∫(√-c)·Ψ + R_k
+  -- Rewrite the LHS using key
+  rw [key]; ring
 
 /-- **Block antitone property** (Siegel 1932 §3, Gabcke 1979 Satz 4).
     The correction c(k) is antitone on k ≥ 1.
@@ -555,7 +639,7 @@ theorem c_fn_expansion (k : ℕ) (hk : 1 ≤ k) :
 
     Reference: Siegel 1932 §3; Gabcke 1979 Satz 4. -/
 theorem rs_block_antitone :
-    let A_val := 4 * Real.pi * ∫ p in Ioc (0 : ℝ) 1, rsPsi p
+    let A_val := 4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)
     let c_fn := fun k : ℕ =>
       (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
         - A_val * Real.sqrt ((k : ℝ) + 1)
