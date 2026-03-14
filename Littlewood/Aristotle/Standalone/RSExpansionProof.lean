@@ -28,7 +28,7 @@ The proof decomposes into:
 ### Atomic sorrys (genuine mathematical content)
 - `chi_modulus_critical_line`: |χ(1/2+it)| = 1 on the critical line (1 sorry)
 - `saddle_point_remainder` / `rs_saddle_point_bound`: Siegel 1932 saddle-point (1 sorry)
-- `leading_term_cov`: CoV identity for RS leading term on blocks (1 sorry)
+- `leading_term_cov`: CoV identity for RS leading term on blocks (CLOSED)
 - `rs_block_antitone`: Block monotonicity from c_fn_expansion (1 sorry)
 
 ### Proved (was sorry)
@@ -36,7 +36,7 @@ The proof decomposes into:
 - `c_fn_expansion`: algebraic from signed_block_integral_expansion (CLOSED)
 - `weighted_sqrt_monotone`: ∫√(k+1+p)·Ψ increasing in k (NEW)
 
-SORRY COUNT: 4 (chi_modulus, saddle_point, leading_term_cov, rs_block_antitone)
+SORRY COUNT: 3 (chi_modulus, saddle_point, rs_block_antitone)
 WARNING COUNT: 4
 
 Reference: Siegel 1932 §3; Edwards Ch. 7 (pp. 136-145);
@@ -330,6 +330,37 @@ theorem sqrt_increment_antitone (k : ℕ) (p : ℝ) (hp : 0 ≤ p) :
 -- Section 7a: Sub-lemma 1 — Chi modulus on the critical line
 -- ============================================================
 
+/-- Norm of a purely imaginary power of a positive real is 1.
+    This is used in the chi modulus proof: ‖π^{it}‖ = 1. -/
+theorem norm_cpow_I_mul_ofReal (a : ℝ) (ha : 0 < a) (t : ℝ) :
+    ‖((a : ℂ) ^ (Complex.I * (t : ℂ)))‖ = 1 := by
+  rw [Complex.norm_cpow_eq_rpow_re_of_pos ha]
+  simp [Complex.mul_re, Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+
+/-- Conjugation of 1/2+it: star(1/2+it) = 1/2-it. -/
+theorem star_half_add_it (t : ℝ) :
+    starRingEnd ℂ (1/2 + Complex.I * (t : ℂ)) = 1/2 - Complex.I * (t : ℂ) := by
+  simp [map_add, map_mul, Complex.conj_I, Complex.conj_ofReal, map_ofNat]
+  ring
+
+/-- ζ(1/2-it) = conj(ζ(1/2+it)) by the conjugation symmetry of ζ. -/
+theorem riemannZeta_conj_critical_line (t : ℝ) :
+    riemannZeta (1/2 - Complex.I * (t : ℂ)) =
+    starRingEnd ℂ (riemannZeta (1/2 + Complex.I * (t : ℂ))) := by
+  rw [← star_half_add_it t]
+  exact riemannZeta_conj (1/2 + Complex.I * (t : ℂ))
+
+/-- From the functional equation and conjugation: χ(1/2+it) · ζ(1/2+it) = conj(ζ(1/2+it)).
+    Combined from `zeta_fe_critical_line` and `riemannZeta_conj_critical_line`. -/
+theorem chi_zeta_eq_conj_zeta (t : ℝ) (ht : t ≠ 0) :
+    (2 : ℂ) * (2 * ↑Real.pi) ^ (-(1/2 + Complex.I * (t : ℂ))) *
+      Complex.Gamma (1/2 + Complex.I * (t : ℂ)) *
+      Complex.cos (↑Real.pi * (1/2 + Complex.I * (t : ℂ)) / 2) *
+      riemannZeta (1/2 + Complex.I * (t : ℂ)) =
+    starRingEnd ℂ (riemannZeta (1/2 + Complex.I * (t : ℂ))) := by
+  rw [← riemannZeta_conj_critical_line t]
+  exact (zeta_fe_critical_line t ht).symm
+
 /-- Modulus of χ(1/2+it) on the critical line.
 
     From the functional equation χ(s) = 2^s π^{s-1} sin(πs/2) Γ(1-s),
@@ -591,7 +622,69 @@ private theorem leading_term_cov (k : ℕ) :
       (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t) =
     4 * Real.pi * ∫ p in Ioc (0 : ℝ) 1,
       Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p := by
-  sorry
+  -- Step 1: Apply block_integral_cov to change variables
+  have h_cont : ContinuousOn (fun t => (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+      rsPsi (blockParam k t)) (Icc (hardyStart k) (hardyStart (k + 1))) := by
+    apply ContinuousOn.mul
+    · apply ContinuousOn.rpow_const
+      · exact ContinuousOn.div continuousOn_const continuousOn_id
+            (fun t ht => ne_of_gt (pos_of_in_block k t ht.1))
+      · intro t ht; left
+        exact ne_of_gt (div_pos (by positivity : 0 < 2 * Real.pi)
+          (pos_of_in_block k t ht.1))
+    · exact rsPsi_continuousOn.comp
+        (ContinuousOn.sub
+          (ContinuousOn.sqrt (ContinuousOn.div continuousOn_id continuousOn_const
+            (fun _ _ => ne_of_gt (by positivity : (0 : ℝ) < 2 * Real.pi))))
+          continuousOn_const)
+        (fun t ht => blockParam_mem_Icc k t ht.1 ht.2)
+  rw [block_integral_cov k _ h_cont]
+  -- Step 2: Show the two sides are equal via pointwise identity on Ioc 0 1
+  -- Key lemma: the integrand after CoV = 4π·√(k+1+p)·Ψ(p)
+  have h_pw : ∀ p ∈ Ioc (0 : ℝ) 1,
+      (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
+        rsPsi (blockParam k (blockCoord k p)) * blockJacobian k p =
+      4 * Real.pi * (Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p) := by
+    intro p hp
+    have hp_nn : (0 : ℝ) ≤ p := le_of_lt hp.1
+    have hkp_pos : (0 : ℝ) < (k : ℝ) + 1 + p := by positivity
+    -- blockParam k (blockCoord k p) = p
+    rw [blockParam_blockCoord k p hp_nn]
+    -- Unfold definitions
+    simp only [blockCoord, blockJacobian]
+    -- Simplify 2π/(2π·(k+1+p)²) = 1/(k+1+p)²
+    have hpi_ne : (2 : ℝ) * Real.pi ≠ 0 := ne_of_gt (by positivity)
+    have h_div : 2 * Real.pi / (2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2) =
+        1 / ((k : ℝ) + 1 + p) ^ 2 := by field_simp
+    rw [h_div]
+    -- (1/(k+1+p)²)^{1/4} = (√(k+1+p))⁻¹
+    have h_rpow : (1 / ((k : ℝ) + 1 + p) ^ 2) ^ ((1 : ℝ) / 4) =
+        (Real.sqrt ((k : ℝ) + 1 + p))⁻¹ := by
+      rw [Real.sqrt_eq_rpow, one_div]
+      rw [show ((k : ℝ) + 1 + p) ^ 2 = ((k : ℝ) + 1 + p) ^ (2 : ℝ) from by
+        rw [← Real.rpow_natCast]; norm_cast]
+      rw [← Real.rpow_neg hkp_pos.le (2 : ℝ), ← Real.rpow_mul hkp_pos.le,
+          ← Real.rpow_neg hkp_pos.le ((1 : ℝ) / 2)]
+      congr 1; norm_num
+    rw [h_rpow]
+    -- (√x)⁻¹ * Ψ * 4π·x = 4π * (√x * Ψ)
+    have h_sqrt_pos : (0 : ℝ) < Real.sqrt ((k : ℝ) + 1 + p) := Real.sqrt_pos.mpr hkp_pos
+    have key : (Real.sqrt ((k : ℝ) + 1 + p))⁻¹ * ((k : ℝ) + 1 + p) =
+        Real.sqrt ((k : ℝ) + 1 + p) := by
+      rw [inv_mul_eq_div, div_eq_iff h_sqrt_pos.ne']
+      exact (Real.mul_self_sqrt hkp_pos.le).symm
+    have : (Real.sqrt ((k : ℝ) + 1 + p))⁻¹ * rsPsi p *
+        (4 * Real.pi * ((k : ℝ) + 1 + p)) =
+      ((Real.sqrt ((k : ℝ) + 1 + p))⁻¹ * ((k : ℝ) + 1 + p)) *
+        rsPsi p * (4 * Real.pi) := by ring
+    rw [this, key]; ring
+  -- Apply the pointwise identity to get integral equality
+  have h_eq := MeasureTheory.setIntegral_congr_fun (μ := MeasureTheory.MeasureSpace.volume)
+    measurableSet_Ioc h_pw
+  rw [h_eq]
+  -- Pull 4π out of the integral: 4π * ∫ f = ∫ 4π * f (already in this form, just reverse)
+  simp_rw [← smul_eq_mul (4 * Real.pi)]
+  rw [MeasureTheory.integral_smul]
 
 /-- Helper: on the block, t^{-3/4} ≤ (hardyStart k)^{-3/4} since t ≥ hardyStart k and
     x ↦ x^{-3/4} is decreasing for positive reals. -/
