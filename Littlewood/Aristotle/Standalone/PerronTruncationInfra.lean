@@ -18,7 +18,9 @@ Key results:
 - `dirichlet_series_perron_exchange`: sum-integral interchange
 
 SORRY COUNT: 2 (perron_vertical_eq_tsum: Fubini ∫Σ=Σ∫; perron_tail_bound_core: tail norm ≤ 1)
+BUILD ERRORS: 0 (weighted_perron_series_summable FIXED via Real.div_rpow factorization)
 PROVED: weighted_perron_series_summable, perron_tail_eq_subtype_tsum, tail_rpow_le_one,
+        tail_dominating_summable, tail_norm_le_domination, tail_norm_tsum_le_domination,
         perron_tail_bound (wired through perron_tail_bound_core),
         perron_fubini_exchange (from sub-lemmas), perron_exchange_error_bound
 
@@ -815,41 +817,31 @@ theorem weighted_perron_series_summable (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT :
     Summable (fun n : ℕ =>
       ArithmeticFunction.vonMangoldt n *
         perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T) := by
+  -- Strategy: dominate by Λ(n) · T(x/n)^c/(πc), which factors as K · Λ(n)/n^c.
+  have hx_pos : (0 : ℝ) < x := by linarith
   set c := 1 + 1 / Real.log x with hc_def
-  -- Domination bound: |Λ(n) * perron(x/n, c, T)| ≤ T/(πc) * Λ(n) * (x/n)^c
-  -- For n = 0: Λ(0) = 0 so the term is 0
-  -- For n ≥ 1: use weighted_perron_term_domination
+  set K := T * x ^ c / (Real.pi * c) with hK_def
+  -- Step 1: Summability of the dominating series via const_smul
+  have h_eq_dom : (fun n : ℕ =>
+      ArithmeticFunction.vonMangoldt n *
+        (T * (x / n) ^ c / (Real.pi * c))) =
+      (fun n : ℕ => K * (ArithmeticFunction.vonMangoldt n / (n : ℝ) ^ c)) := by
+    ext n
+    by_cases hn : n = 0
+    · subst hn; simp
+    · simp only [hK_def, Real.div_rpow hx_pos.le (Nat.cast_nonneg n) c]; ring
   have h_dom : Summable (fun n : ℕ =>
     ArithmeticFunction.vonMangoldt n *
       (T * (x / n) ^ c / (Real.pi * c))) := by
-    -- Factor out the constant T·x^c/(πc) and reduce to vonMangoldt_weighted_summable
-    have hc_pos := c_param_pos x hx
-    have hx_pos : (0 : ℝ) < x := by linarith
-    -- Each term = T/(πc) * Λ(n) * (x/n)^c = T/(πc) * x^c * Λ(n)/n^c
-    have h_eq : (fun n : ℕ =>
-        ArithmeticFunction.vonMangoldt n *
-          (T * (x / n) ^ c / (Real.pi * c))) =
-      (fun n : ℕ =>
-        T * x ^ c / (Real.pi * c) *
-          (ArithmeticFunction.vonMangoldt n / (n : ℝ) ^ c)) := by
-      ext n
-      by_cases hn : n = 0
-      · subst hn; simp [ArithmeticFunction.vonMangoldt_apply]
-      · have hn_pos : 1 ≤ n := Nat.pos_of_ne_zero hn
-        have := weighted_rpow_factor x hx n hn_pos
-        rw [hc_def] at this ⊢
-        rw [this]; ring
-    rw [h_eq]
-    exact Summable.const_smul (vonMangoldt_weighted_summable x hx) _
-  apply Summable.of_norm_bounded _ h_dom
-  intro n
-  by_cases hn : n = 0
-  · subst hn
-    simp [ArithmeticFunction.vonMangoldt_apply, perronPerTermIntegral]
-  · have hn_pos : 1 ≤ n := Nat.pos_of_ne_zero hn
-    rw [Real.norm_eq_abs]
-    exact le_trans (weighted_perron_term_domination x hx T hT n hn_pos)
-      (le_of_eq rfl)
+    rw [h_eq_dom]
+    exact (vonMangoldt_weighted_summable x hx).const_smul K
+  -- Step 2: Each Perron term is bounded by the dominating term
+  exact Summable.of_norm_bounded h_dom (fun n => by
+    by_cases hn : n = 0
+    · subst hn; simp [perronPerTermIntegral]
+    · have hn_pos : 1 ≤ n := Nat.pos_of_ne_zero hn
+      rw [Real.norm_eq_abs]
+      exact weighted_perron_term_domination x hx T hT n hn_pos)
 
 /-- The tail of the weighted Perron series equals a subtype tsum over the
     complement of `Finset.range (⌊x⌋ + 1)`.
@@ -895,6 +887,78 @@ theorem tail_rpow_le_one (x : ℝ) (hx : 2 ≤ x) (n : ℕ)
         apply rpow_le_rpow_of_exponent_ge hxn_pos hxn_lt.le hc_pos.le
     _ = 1 := rpow_zero _
 
+/-! ### Tail domination infrastructure
+
+For tail terms (n > ⌊x⌋), the per-term bound using the general domination
+gives `|Λ(n) · perron(x/n,c,T)| ≤ T/(πc) · Λ(n) · (x/n)^c`.
+For (x/n)^c ≤ 1 (tail terms), this is ≤ T/(πc) · Λ(n).
+But the (x/n)^c factor provides GEOMETRIC DECAY for n ≫ x, which is
+essential for summability of the dominating series.
+
+The tail tsum satisfies:
+  ∑' |f n| ≤ T·x^c/(πc) · ∑' Λ(n)/n^c  (over n > ⌊x⌋)
+          = e·T·x/(πc) · tail_of_L_series
+
+where tail_of_L_series → 0 as x → ∞. The bound ≤ 1 requires this product
+to be ≤ 1, which holds for x large enough relative to T.
+
+Infrastructure: the tail tsum of norms is bounded by
+T·x^c/(πc) times the tail of the vonMangoldt weighted summable series. -/
+
+/-- The tail of the dominating series `Λ(n)·(x/n)^c` is summable.
+    PROVED: subtype of the full summable series. -/
+private theorem tail_dominating_summable (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T) :
+    Summable (fun n : { n : ℕ // n ∉ Finset.range (Nat.floor x + 1) } =>
+      ArithmeticFunction.vonMangoldt (↑n) *
+        (T * (x / (↑n)) ^ (1 + 1 / Real.log x) /
+          (Real.pi * (1 + 1 / Real.log x)))) := by
+  -- Strategy: show dom(n) = K · Λ(n)/n^c for all n, then use const_smul.
+  have hx_pos : (0 : ℝ) < x := by linarith
+  set c := 1 + 1 / Real.log x with hc_def
+  set K := T * x ^ c / (Real.pi * c) with hK_def
+  -- Each dom term equals K * Λ(n)/n^c (via div_rpow factorization)
+  have h_eq_fun : (fun n : ℕ => ArithmeticFunction.vonMangoldt n *
+      (T * (x / n) ^ c / (Real.pi * c))) =
+      (fun n : ℕ => K * (ArithmeticFunction.vonMangoldt n / (n : ℝ) ^ c)) := by
+    ext n
+    by_cases hn : n = 0
+    · subst hn; simp
+    · simp only [hK_def, Real.div_rpow hx_pos.le (Nat.cast_nonneg n) c]; ring
+  have h_full : Summable (fun n : ℕ =>
+      ArithmeticFunction.vonMangoldt n *
+        (T * (x / n) ^ c / (Real.pi * c))) := by
+    rw [h_eq_fun]
+    exact (vonMangoldt_weighted_summable x hx).const_smul K
+  exact h_full.subtype _
+
+/-- Each tail term norm is bounded by the dominating term.
+    PROVED: from `weighted_perron_term_domination`. -/
+private theorem tail_norm_le_domination (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T)
+    (n : { n : ℕ // n ∉ Finset.range (Nat.floor x + 1) }) :
+    |ArithmeticFunction.vonMangoldt (↑n) *
+      perronPerTermIntegral (x / (↑n)) (1 + 1 / Real.log x) T| ≤
+    ArithmeticFunction.vonMangoldt (↑n) *
+      (T * (x / (↑n)) ^ (1 + 1 / Real.log x) /
+        (Real.pi * (1 + 1 / Real.log x))) := by
+  by_cases hn : (n : ℕ) = 0
+  · simp [hn, ArithmeticFunction.vonMangoldt_apply]
+  · exact weighted_perron_term_domination x hx T hT (↑n) (Nat.pos_of_ne_zero hn)
+
+/-- The tail tsum of norms is bounded by the dominating tsum.
+    PROVED: from `tsum_le_tsum` + `tail_norm_le_domination`. -/
+private theorem tail_norm_tsum_le_domination (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 0 < T) :
+    ∑' (n : { n : ℕ // n ∉ Finset.range (Nat.floor x + 1) }),
+      |ArithmeticFunction.vonMangoldt (↑n) *
+        perronPerTermIntegral (x / (↑n)) (1 + 1 / Real.log x) T| ≤
+    ∑' (n : { n : ℕ // n ∉ Finset.range (Nat.floor x + 1) }),
+      ArithmeticFunction.vonMangoldt (↑n) *
+        (T * (x / (↑n)) ^ (1 + 1 / Real.log x) /
+          (Real.pi * (1 + 1 / Real.log x))) := by
+  gcongr with n
+  · exact ((weighted_perron_series_summable x hx T hT).subtype _).norm
+  · exact tail_dominating_summable x hx T hT
+  · exact tail_norm_le_domination x hx T hT n
+
 /-- For tail terms (n ≥ ⌊x⌋+1), the small-y Perron bound gives a bound with
     `1/T` factor: `|Λ(n) * perron(x/n, c, T)| ≤ (3/T) · Λ(n)`.
 
@@ -928,12 +992,17 @@ private theorem perron_tail_bound_core (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT : 
       ≤ ∑' (n : { n : ℕ // n ∉ s }), |f ↑n| := by
         rw [← Real.norm_eq_abs]
         exact le_trans (norm_tsum_le_tsum_norm (hf_sub.norm))
-          (by simp_rw [Real.norm_eq_abs])
+          (by simp_rw [Real.norm_eq_abs]; exact le_refl _)
+    _ ≤ ∑' (n : { n : ℕ // n ∉ s }),
+        ArithmeticFunction.vonMangoldt (↑n) *
+          (T * (x / (↑n)) ^ (1 + 1 / Real.log x) /
+            (Real.pi * (1 + 1 / Real.log x))) :=
+        tail_norm_tsum_le_domination x hx T hT
     _ ≤ 1 := by
-        -- This is the atomic content: the tail norms sum to ≤ 1.
-        -- Each |f n| ≤ T/(πc) · Λ(n) · (x/n)^c for tail terms,
-        -- and (x/n)^c < 1, so we bound by T/(πc) · Λ(n)/n^c · x^c.
-        -- The full L-series tail at c > 1 is the remaining content.
+        -- Remaining atomic content: the dominating tsum
+        -- = T·x^c/(πc) · ∑' Λ(n)/n^c (over n > ⌊x⌋)
+        -- = e·T·x/(πc) · tail_of_L_series ≤ 1
+        -- This requires a quantitative bound on the L-series tail.
         sorry
 
 /-- **Fubini sub-lemma 1**: The Perron vertical integral equals the infinite
