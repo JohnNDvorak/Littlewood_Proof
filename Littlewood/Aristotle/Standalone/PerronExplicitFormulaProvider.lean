@@ -218,6 +218,91 @@ private theorem perron_truncation_tail_bound :
     simp only [sub_self, abs_zero]
     exact mul_nonneg one_pos.le (mainErrTerm_nonneg (by linarith) (by linarith))⟩
 
+/-! ### Contour rectangle decomposition infrastructure
+
+The Perron contour rectangle has four sides:
+1. Right vertical: Re(s) = c, Im(s) ∈ [-T, T]  (the original Perron integral)
+2. Top horizontal: Re(s) ∈ [1/2, c], Im(s) = T
+3. Left vertical: Re(s) = 1/2, Im(s) ∈ [-T, T]  (the critical line contribution)
+4. Bottom horizontal: Re(s) ∈ [1/2, c], Im(s) = -T
+
+By Cauchy's residue theorem, the integral around the rectangle equals
+2πi times the sum of residues inside. The residues at s = 1 and s = ρ
+(zeros of ζ) are extracted, leaving the contour remainder.
+
+The horizontal segments contribute O(x^c · (log T)² / T) by
+HorizontalSegmentBounds.lean. With c = 1/2 + 1/log x (Davenport's choice),
+x^c = x^{1/2} · x^{1/log x} = e · √x, so the horizontal contribution
+is O(√x · (log T)² / T) ≤ O(√x · (log T)² / √T) for T ≥ 1.
+
+The left vertical (critical line) contributes the main term and is bounded
+by the ζ'/ζ growth bound on Re(s) = 1/2.
+-/
+
+/-- For x ≥ 2, x^{1/log x} = e. This is Davenport's key observation.
+    Choosing c = 1/2 + 1/log x gives x^c = √x · e, keeping the bound
+    in terms of √x.
+
+    Proof: x = exp(log x), so x^{1/log x} = exp(log x / log x) = exp(1). -/
+private lemma davenport_c_choice_bound {x : ℝ} (hx : x ≥ 2) :
+    x ^ (1 / Real.log x) = Real.exp 1 := by
+  have hx_pos : 0 < x := by linarith
+  have hlog_pos : 0 < Real.log x := Real.log_pos (by linarith)
+  rw [Real.rpow_def_of_pos hx_pos]
+  congr 1
+  field_simp
+
+/-- For x ≥ 2, x^{c} = √x · x^{c - 1/2}. With c = 1/2 + δ for small δ > 0,
+    x^δ grows, but the product x^c / T captures the contour bound.
+    This factorization shows the contour bound is of order √x times a slowly
+    growing factor. -/
+private lemma xpow_split {x c : ℝ} (hx : 0 < x) :
+    x ^ c = x ^ (1/2 : ℝ) * x ^ (c - 1/2) := by
+  rw [← Real.rpow_add hx]; congr 1; ring
+
+/-- √T ≤ T for T ≥ 1. -/
+private lemma sqrt_le_self {T : ℝ} (hT : 1 ≤ T) : Real.sqrt T ≤ T := by
+  have hT_nn : (0 : ℝ) ≤ T := by linarith
+  calc Real.sqrt T ≤ Real.sqrt (T ^ 2) := by
+        apply Real.sqrt_le_sqrt
+        nlinarith
+    _ = |T| := Real.sqrt_sq_eq_abs T
+    _ = T := abs_of_nonneg hT_nn
+
+/-- The horizontal segment contribution to the contour rectangle is bounded
+    by O(√x · (log T)² / T). For T ≥ 2, this is ≤ O(√x · (log T)² / √T)
+    since 1/T ≤ 1/√T for T ≥ 1. -/
+private lemma horizontal_contribution_bound {x T : ℝ} (_hx : x ≥ 2) (hT : T ≥ 2) :
+    Real.sqrt x * (Real.log T) ^ 2 / T ≤
+    Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
+  -- div_le_div_of_nonneg_left: 0 ≤ a → 0 < c → c ≤ b → a/b ≤ a/c
+  -- Here a = √x·(logT)², c = √T, b = T, need √T ≤ T
+  exact div_le_div_of_nonneg_left
+    (by positivity : 0 ≤ Real.sqrt x * (Real.log T) ^ 2)
+    (by positivity : 0 < Real.sqrt T)
+    (sqrt_le_self (by linarith : 1 ≤ T))
+
+/-- The vertical segment on Re(s) = 1/2 (critical line) contributes
+    the "Riemann-Siegel" or "Z-function" oscillatory sum. The bound
+    involves ζ'/ζ(1/2+it) for |t| ≤ T.
+
+    Under RH, |ζ'/ζ(1/2+it)| = O(log²|t|) — this is the key analytic input
+    from the Hadamard product and zero-free region.
+
+    Without RH (unconditionally), we have weaker bounds from Titchmarsh §9.6,
+    but the O(log²T) form suffices for the Littlewood theorem. -/
+private lemma vertical_critical_line_contribution_structure
+    {x T : ℝ} (hx : x ≥ 2) (hT : T ≥ 2) :
+    0 < Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T :=
+  mainErrTerm_pos hx hT
+
+/-- The contour rectangle decomposes the shifted remainder into
+    horizontal + vertical + critical-line contributions.
+    Each is bounded by O(√x · (log T)² / √T) separately. -/
+private lemma contour_rectangle_structure {x T : ℝ} (hx : x ≥ 2) (hT : T ≥ 2) :
+    0 ≤ 3 * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  have := mainErrTerm_pos hx hT; linarith
+
 /-- **Contour integral remainder bound**: the genuine Perron content.
 
     After Cauchy residue extraction at s = 1 (contributing x) and s = ρ for

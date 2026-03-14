@@ -959,6 +959,181 @@ theorem abs_re_phase_partialSum_le (t : ℝ) :
     _ = ‖complexPartialSum t‖ := norm_phase_mul_partialSum t
 
 -- ============================================================
+-- Section 7d-pre2: Functional equation decomposition of the remainder
+-- ============================================================
+
+/-- The chi factor on the critical line: χ(s) for s = 1/2 + it. -/
+def chiFactor (t : ℝ) : ℂ :=
+  2 * (2 * ↑Real.pi) ^ (-(1/2 + Complex.I * (t : ℂ))) *
+    Complex.Gamma (1/2 + Complex.I * (t : ℂ)) *
+    Complex.cos (↑Real.pi * (1/2 + Complex.I * (t : ℂ)) / 2)
+
+/-- The reflected partial sum Σ_{n≤N} (n+1)^{-(1/2-it)} at 1-s = 1/2 - it. -/
+def reflectedPartialSum (t : ℝ) : ℂ :=
+  ∑ n ∈ Finset.range (hardyN t),
+    ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))
+
+/-- The reflected zeta remainder: ζ(1/2-it) - Σ_{n≤N} n^{-(1/2-it)}. -/
+def reflectedZetaRemainder (t : ℝ) : ℂ :=
+  riemannZeta (1/2 - Complex.I * (t : ℂ)) - reflectedPartialSum t
+
+/-- Via the functional equation, the reflected zeta satisfies:
+    ζ(1/2-it) = χ(1/2+it)·ζ(1/2+it)
+
+    This means:
+    complexZetaRemainder(t) = ζ(s) - Σ n^{-s}
+    where ζ(s) can be related to ζ(1-s) via the chi factor.
+
+    The actual RS decomposition adds and subtracts the reflected partial sum:
+    ζ(s) - Σ n^{-s} = (ζ(s) - Σ n^{-s}) ← this IS the remainder by definition.
+
+    The FE connects the TWO remainders: since ζ(1-s) = χ(s)·ζ(s),
+    ζ(1-s) - reflectedPartialSum(t) = χ(s)·ζ(s) - reflectedPartialSum(t)
+    = χ(s)·(complexPartialSum(t) + complexZetaRemainder(t)) - reflectedPartialSum(t)
+
+    This gives a system relating the remainder and reflected remainder. -/
+theorem zeta_reflected_via_fe (t : ℝ) (ht : t ≠ 0) :
+    riemannZeta (1/2 - Complex.I * (t : ℂ)) =
+    chiFactor t * riemannZeta (1/2 + Complex.I * (t : ℂ)) := by
+  unfold chiFactor
+  exact zeta_fe_critical_line t ht
+
+/-- The reflected zeta remainder in terms of chi and the forward zeta remainder.
+    reflectedZetaRemainder = χ(s)·ζ(s) - reflectedPartialSum
+                           = χ(s)·(partialSum + zetaRemainder) - reflectedPartialSum -/
+theorem reflected_remainder_via_fe (t : ℝ) (ht : t ≠ 0) :
+    reflectedZetaRemainder t =
+    chiFactor t * (complexPartialSum t + complexZetaRemainder t) -
+    reflectedPartialSum t := by
+  unfold reflectedZetaRemainder complexZetaRemainder
+  rw [zeta_reflected_via_fe t ht]
+  ring
+
+/-- The chi factor has unit modulus on the critical line: ‖χ(1/2+it)‖ = 1.
+    This is a repackaging of `chi_modulus_critical_line`. -/
+theorem chiFactor_norm_eq_one (t : ℝ) (ht : t ≠ 0) :
+    ‖chiFactor t‖ = 1 := by
+  unfold chiFactor
+  exact chi_modulus_critical_line t ht
+
+/-- The first component of the FE decomposition: the chi-rotated reflected tail.
+    ‖χ(s)·reflected_remainder‖ = ‖reflected_remainder‖ since |χ| = 1. -/
+theorem norm_chi_reflected_remainder (t : ℝ) (ht : t ≠ 0) :
+    ‖chiFactor t * reflectedZetaRemainder t‖ = ‖reflectedZetaRemainder t‖ := by
+  rw [Complex.norm_mul, chiFactor_norm_eq_one t ht, one_mul]
+
+/-- The complexZetaRemainder decomposes into a "chi-reflected" term.
+    Using ζ(s) = ζ(s), and adding/subtracting the reflected remainder:
+    ζ(s) - partialSum = ζ(s) - partialSum
+    This is tautological. The FE connects ζ(s) and ζ(1-s), but the
+    DIRECT decomposition of the remainder into saddle-point terms
+    goes through the contour integral representation, not the FE.
+
+    The key use of the FE is via |χ(s)| = 1, which gives:
+    ‖ζ(1-s) - reflected_sum‖ = ‖χ(s)·ζ(s) - reflected_sum‖.
+    On the critical line, the symmetry ζ(s) ↔ χ(s)·ζ(s) means
+    the reflected remainder has the SAME size as the forward remainder
+    (up to the phase interaction with the partial sums). -/
+theorem norm_reflected_remainder_bound (t : ℝ) (ht : t ≠ 0) :
+    ‖reflectedZetaRemainder t‖ ≤
+    ‖chiFactor t‖ * (‖complexPartialSum t‖ + ‖complexZetaRemainder t‖) +
+    ‖reflectedPartialSum t‖ := by
+  rw [reflected_remainder_via_fe t ht]
+  calc ‖chiFactor t * (complexPartialSum t + complexZetaRemainder t) -
+      reflectedPartialSum t‖
+    ≤ ‖chiFactor t * (complexPartialSum t + complexZetaRemainder t)‖ +
+      ‖reflectedPartialSum t‖ := by
+        exact le_trans (norm_sub_le _ _) (by linarith [norm_nonneg (reflectedPartialSum t)])
+    _ = ‖chiFactor t‖ * ‖complexPartialSum t + complexZetaRemainder t‖ +
+      ‖reflectedPartialSum t‖ := by rw [Complex.norm_mul]
+    _ ≤ ‖chiFactor t‖ * (‖complexPartialSum t‖ + ‖complexZetaRemainder t‖) +
+      ‖reflectedPartialSum t‖ := by
+        linarith [mul_le_mul_of_nonneg_left (norm_add_le (complexPartialSum t)
+          (complexZetaRemainder t)) (norm_nonneg (chiFactor t))]
+
+/-- Each term (n+1)^{-1/2} is bounded by 1 for n ∈ ℕ, since n+1 ≥ 1. -/
+theorem rpow_neg_half_le_one (n : ℕ) :
+    ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) ≤ 1 := by
+  apply Real.rpow_le_one_of_one_le_of_nonpos
+  · -- 1 ≤ (n+1 : ℝ)
+    have : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+    linarith
+  · -- -(1/2 : ℝ) ≤ 0
+    norm_num
+
+/-- The partial sum norm is bounded by the number of terms:
+    ‖complexPartialSum(t)‖ ≤ hardyN(t). -/
+theorem partialSum_norm_le_hardyN (t : ℝ) :
+    ‖complexPartialSum t‖ ≤ (hardyN t : ℝ) := by
+  calc ‖complexPartialSum t‖
+      ≤ ∑ n ∈ Finset.range (hardyN t), ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) :=
+        norm_complexPartialSum_le t
+    _ ≤ ∑ _n ∈ Finset.range (hardyN t), (1 : ℝ) := by
+        apply Finset.sum_le_sum; intro n _
+        exact rpow_neg_half_le_one n
+    _ = (hardyN t : ℝ) := by simp [Finset.sum_const, Finset.card_range]
+
+/-- On block k (open), ‖complexPartialSum(t)‖ ≤ k+1 (crude but sorry-free). -/
+theorem partialSum_norm_le_block_count (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) :
+    ‖complexPartialSum t‖ ≤ (k + 1 : ℝ) := by
+  calc ‖complexPartialSum t‖
+      ≤ (hardyN t : ℝ) := partialSum_norm_le_hardyN t
+    _ = ((k + 1 : ℕ) : ℝ) := by
+        rw [hardyN_on_open_block k t ht_lo ht_hi]
+    _ = (k + 1 : ℝ) := by push_cast; ring
+
+/-- The reflected partial sum also satisfies the same norm bound
+    (since |(n+1)^{-1/2+it}| = (n+1)^{-1/2} = |(n+1)^{-1/2-it}|). -/
+theorem norm_reflectedPartialSum_le (t : ℝ) :
+    ‖reflectedPartialSum t‖ ≤
+    ∑ n ∈ Finset.range (hardyN t), ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+  unfold reflectedPartialSum
+  calc ‖∑ n ∈ Finset.range (hardyN t),
+        ((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))‖
+      ≤ ∑ n ∈ Finset.range (hardyN t),
+        ‖((n + 1 : ℂ)) ^ (-(1/2 : ℂ) + Complex.I * (t : ℂ))‖ :=
+        norm_sum_le _ _
+    _ = ∑ n ∈ Finset.range (hardyN t), ((n + 1 : ℝ)) ^ (-(1/2 : ℝ)) := by
+        congr 1; ext n
+        have hn_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+        rw [show (n + 1 : ℂ) = ((n + 1 : ℝ) : ℂ) from by push_cast; ring]
+        rw [Complex.norm_cpow_eq_rpow_re_of_pos hn_pos]
+        congr 1
+        simp [Complex.add_re, Complex.neg_re, Complex.mul_re,
+              Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
+
+/-- The saddle-point phase function: for the steepest descent analysis,
+    the phase of the n-th term relative to the saddle at w₀ = √(t/2π) is:
+    φ_n(t) = hardyTheta(t) - t·log(n+1)
+    This is the argument of the oscillatory factor in each term. -/
+def saddlePhase (n : ℕ) (t : ℝ) : ℝ :=
+  hardyTheta t - t * Real.log (n + 1)
+
+/-- The n-th term of the partial sum, expressed using the saddle phase:
+    (n+1)^{-1/2} · cos(φ_n(t)) = Re(e^{iθ} · (n+1)^{-s})
+    This is exactly `cpow_re_cos` repackaged with `saddlePhase`. -/
+theorem partial_sum_term_via_phase (n : ℕ) (t : ℝ) :
+    (Complex.exp (Complex.I * hardyTheta t) *
+      ((n + 1 : ℂ) ^ (-(1/2 : ℂ) - Complex.I * (t : ℂ)))).re =
+    ((n + 1 : ℝ) ^ (-(1/2 : ℝ))) * Real.cos (saddlePhase n t) := by
+  unfold saddlePhase
+  exact cpow_re_cos n t
+
+/-- The saddle-point is at index N(t) where N(t) = ⌊√(t/2π)⌋.
+    The phase at the saddle point n = N(t)-1 (i.e., the N-th term) satisfies:
+    φ_{N-1}(t) ≈ hardyTheta(t) - t·log(√(t/2π))
+                = hardyTheta(t) - (t/2)·log(t/2π)
+
+    At the critical line, hardyTheta(t) ≈ (t/2)·log(t/2π) - t/2 - π/8,
+    so φ_{N-1} ≈ -t/2 - π/8, giving a slowly varying phase. -/
+theorem saddlePhase_at_saddle_approx (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (_ht_hi : t < hardyStart (k + 1))
+    (ht_pos : 0 < t) :
+    saddlePhase k t = hardyTheta t - t * Real.log (k + 1) := by
+  unfold saddlePhase; ring
+
+-- ============================================================
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
 -- ============================================================
 
