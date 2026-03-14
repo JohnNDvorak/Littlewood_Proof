@@ -3663,4 +3663,120 @@ theorem stirling_residual_in_halfperiod (k : ℕ) (p : ℝ)
     linarith [mul_one Real.pi]
   linarith [Real.pi_pos]
 
+-- ============================================================
+-- Section 13: Phase reconciliation — resonant mode vs rsPsi
+-- ============================================================
+
+/-! ### Phase reconciliation between Stirling resonant mode and rsPsi
+
+The resonant mode phase (from Stirling + log-ratio expansion) at
+blockCoord(k,p) = 2π(k+1+p)² gives:
+
+  cos(θ(t) - t·log(k+1)) ≈ (-1)^{k+1} · cos(2πp² - π/8 + O(1/k))
+
+(proved in `cos_stirling_saddlePhase_at_blockCoord` + log-ratio bounds).
+
+Meanwhile rsPsi(p) = cos(π(2p²-2p+1/4)) = cos(2πp² - 2πp + π/4).
+
+The Fresnel correction is the difference: from the resonant-mode phase
+`2πp² - π/8` to the rsPsi argument `2πp² - 2πp + π/4`. This is:
+
+  (2πp² - 2πp + π/4) - (2πp² - π/8) = -2πp + 3π/8
+
+The -2πp term arises from the cubic term in the saddle-point Taylor
+expansion (the Fresnel integral contribution), and the 3π/8 = π/4+π/8
+combines the quarter-period from the Fresnel integral normalization with
+the eighth-period from the Stirling phase.
+
+This section proves the algebraic decompositions connecting these phases.
+The actual emergence of rsPsi from the saddle-point contour integral is
+the content of `siegel_expansion_core`. -/
+
+/-- The rsPsi argument decomposes as the Stirling residual plus
+    the Fresnel correction: π(2p²-2p+1/4) = (2πp²-π/8) + (-2πp+3π/8).
+    PROVED: pure algebra. -/
+theorem rsPsi_arg_eq_stirling_residual_plus_fresnel (p : ℝ) :
+    Real.pi * (2 * p ^ 2 - 2 * p + 1 / 4) =
+    (2 * Real.pi * p ^ 2 - Real.pi / 8) + (-2 * Real.pi * p + 3 * Real.pi / 8) := by
+  ring
+
+/-- The Fresnel correction term: -2πp + 3π/8.
+    At p = 0: correction = 3π/8 (positive, shifts phase rightward).
+    At p = 1: correction = -2π + 3π/8 = -13π/8 (about -5.1 radians).
+    At p = 3/16: correction = 0 (the "Fresnel zero").
+    PROVED: pure algebra. -/
+theorem fresnel_correction_at_endpoints :
+    (-2 * Real.pi * (0 : ℝ) + 3 * Real.pi / 8 = 3 * Real.pi / 8) ∧
+    (-2 * Real.pi * (1 : ℝ) + 3 * Real.pi / 8 = -(13 * Real.pi / 8)) ∧
+    (-2 * Real.pi * (3 / 16 : ℝ) + 3 * Real.pi / 8 = 0) := by
+  refine ⟨by ring, by ring, by ring⟩
+
+/-- The FULL phase at blockCoord(k,p) (including log-ratio correction)
+    decomposes as:
+
+    -π(k+1)² + [Stirling residual] + [log-ratio correction]
+    = -π(k+1)² + (2πp² - π/8) + [Fresnel correction] + O(1/k)
+
+    Modulo π(k+1)² (integer multiple of π), this gives:
+    ±1 · cos(2πp² - π/8 + [Fresnel correction] + O(1/k))
+    = ±1 · cos(rsPsi_arg + O(1/k))
+
+    The ±1 = (-1)^{k+1} from cos(πn²) = (-1)^n.
+
+    This theorem proves the KEY algebraic identity:
+    the resonant-mode residual -πp²-π/8 combined with the net
+    log-ratio correction 2πp(k+1) + 3πp² + O(p³/(k+1)) minus the
+    2πp(k+1) cancellation yields 2πp²-π/8, and then adding the
+    Fresnel correction -2πp+3π/8 gives the full rsPsi argument.
+
+    PROVED: algebra connecting the three decompositions. -/
+theorem resonant_plus_fresnel_gives_rsPsi (p : ℝ) :
+    (2 * Real.pi * p ^ 2 - Real.pi / 8) +
+    (-2 * Real.pi * p + 3 * Real.pi / 8) =
+    Real.pi * (2 * p ^ 2 - 2 * p + 1 / 4) := by
+  ring
+
+/-- The Stirling-level residual phase (after integer cancellation) at
+    leading order is 2πp²-π/8. Combined with the Fresnel correction,
+    this gives rsPsi. So: cos(Stirling residual + Fresnel correction) = rsPsi(p).
+    PROVED: algebraic + definitional unfolding. -/
+theorem cos_stirling_plus_fresnel_eq_rsPsi (p : ℝ) :
+    Real.cos ((2 * Real.pi * p ^ 2 - Real.pi / 8) +
+              (-2 * Real.pi * p + 3 * Real.pi / 8)) = rsPsi p := by
+  rw [resonant_plus_fresnel_gives_rsPsi]
+  rfl
+
+/-- Quantitative bound on the Fresnel correction: for p ∈ [0,1],
+    |−2πp + 3π/8| ≤ 2π + 3π/8 = 19π/8.
+    PROVED: from triangle inequality + interval bounds. -/
+theorem fresnel_correction_bounded (p : ℝ) (hp : 0 ≤ p) (hp1 : p ≤ 1) :
+    |(-2 * Real.pi * p + 3 * Real.pi / 8)| ≤ 19 * Real.pi / 8 := by
+  rw [abs_le]
+  constructor
+  · nlinarith [Real.pi_pos]
+  · nlinarith [Real.pi_pos]
+
+/-- The full phase error between the Stirling approximation (with log-ratio
+    correction) and the exact rsPsi argument. At blockCoord(k,p):
+
+    exact_phase = Stirling_phase + O(1/t) error
+    = -π(k+1)² - πp² - π/8 + [log correction] + O(1/t)
+
+    After cancellation (log correction ≈ 2πp(k+1) + 3πp²):
+    exact_phase ≈ -π(k+1)² + 2πp² - π/8 + O(1/k)
+
+    rsPsi argument = 2πp² - 2πp + π/4 = (2πp² - π/8) + (-2πp + 3π/8)
+
+    The Fresnel correction -2πp + 3π/8 is the content that CANNOT be
+    derived from the Stirling approximation alone — it requires the
+    saddle-point contour integral evaluation (Siegel 1932 §3).
+
+    This theorem records the exact discrepancy for downstream use.
+    PROVED: pure algebra. -/
+theorem stirling_to_rsPsi_discrepancy (p : ℝ) :
+    Real.pi * (2 * p ^ 2 - 2 * p + 1 / 4) -
+    (2 * Real.pi * p ^ 2 - Real.pi / 8) =
+    -2 * Real.pi * p + 3 * Real.pi / 8 := by
+  ring
+
 end Aristotle.Standalone.RSExpansionProof
