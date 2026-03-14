@@ -26,7 +26,7 @@ The proof decomposes into:
 - `weighted_increment_antitone`: ∫(√(k+2+p)-√(k+2))Ψ ≤ ∫(√(k+1+p)-√(k+1))Ψ (concavity)
 
 ### Atomic sorrys (genuine mathematical content)
-- `chi_modulus_critical_line`: |χ(1/2+it)| = 1 on the critical line (1 sorry)
+- `chi_modulus_critical_line`: |χ(1/2+it)| = 1 on the critical line (CLOSED)
 - `saddle_point_remainder` / `rs_saddle_point_bound`: Siegel 1932 saddle-point (1 sorry)
 - `leading_term_cov`: CoV identity for RS leading term on blocks (CLOSED)
 - `rs_block_antitone`: Block monotonicity from c_fn_expansion (1 sorry)
@@ -35,9 +35,10 @@ The proof decomposes into:
 - `signed_block_integral_expansion`: CLOSED via leading_term_cov + pointwise RS bound
 - `c_fn_expansion`: algebraic from signed_block_integral_expansion (CLOSED)
 - `weighted_sqrt_monotone`: ∫√(k+1+p)·Ψ increasing in k (NEW)
+- `chi_modulus_critical_line`: via Gamma reflection + trig identity (NEW)
 
-SORRY COUNT: 3 (chi_modulus, saddle_point, rs_block_antitone)
-WARNING COUNT: 4
+SORRY COUNT: 2 (saddle_point, rs_block_antitone)
+WARNING COUNT: 2
 
 Reference: Siegel 1932 §3; Edwards Ch. 7 (pp. 136-145);
 Titchmarsh §4.16-4.17; Gabcke 1979.
@@ -361,26 +362,203 @@ theorem chi_zeta_eq_conj_zeta (t : ℝ) (ht : t ≠ 0) :
   rw [← riemannZeta_conj_critical_line t]
   exact (zeta_fe_critical_line t ht).symm
 
+/-- The argument of 2π (a positive real) is not π. -/
+private lemma two_pi_arg_ne_pi : (2 * (Real.pi : ℂ)).arg ≠ Real.pi := by
+  have h2pi : (0 : ℝ) ≤ 2 * Real.pi := by positivity
+  rw [show (2 : ℂ) * (Real.pi : ℂ) = ((2 * Real.pi : ℝ) : ℂ) by push_cast; ring]
+  rw [Complex.arg_ofReal_of_nonneg h2pi]
+  exact Real.pi_pos.ne
+
+/-- Conjugation of the chi factor on the critical line:
+    conj(χ(1/2+it)) = χ(1/2-it) = χ(1-(1/2+it)).
+    Each factor conjugates: 2 is real, (2π)^{-s} → (2π)^{-s̄},
+    Γ(s) → Γ(s̄), cos(πs/2) → cos(πs̄/2). -/
+private lemma chi_conj_eq (t : ℝ) :
+    starRingEnd ℂ ((2 : ℂ) * (2 * ↑Real.pi) ^ (-(1/2 + Complex.I * (t : ℂ))) *
+      Complex.Gamma (1/2 + Complex.I * (t : ℂ)) *
+      Complex.cos (↑Real.pi * (1/2 + Complex.I * (t : ℂ)) / 2)) =
+    (2 : ℂ) * (2 * ↑Real.pi) ^ (-(1/2 - Complex.I * (t : ℂ))) *
+      Complex.Gamma (1/2 - Complex.I * (t : ℂ)) *
+      Complex.cos (↑Real.pi * (1/2 - Complex.I * (t : ℂ)) / 2) := by
+  -- conj((2π)^{-s}) = (2π)^{-(1/2-it)}
+  have h_cpow : (starRingEnd ℂ) ((2 * ↑Real.pi) ^ (-(1/2 + Complex.I * (t : ℂ)))) =
+      (2 * ↑Real.pi) ^ (-(1/2 - Complex.I * (t : ℂ))) := by
+    -- Use cpow_conj: x ^ conj n = conj (conj x ^ n) with x = 2π, n = -(1/2+it)
+    -- Since conj(2π) = 2π and conj(-(1/2+it)) = -(1/2-it):
+    -- (2π)^{-(1/2-it)} = conj((2π)^{-(1/2+it)})
+    -- conj(x^n) = x^(conj n) when conj(x) = x (positive real base)
+    -- cpow_conj: x ^ conj n = conj (conj x ^ n)
+    -- With conj(2π) = 2π: (2π)^{conj n} = conj((2π)^n)
+    -- i.e., conj((2π)^n) = (2π)^{conj n}
+    have h_conj_base : starRingEnd ℂ ((2 : ℂ) * ↑Real.pi) = (2 : ℂ) * ↑Real.pi := by
+      simp [map_mul, Complex.conj_ofReal, map_ofNat]
+    have h_conj_exp : starRingEnd ℂ (-(1/2 + Complex.I * (t : ℂ))) =
+        -(1/2 - Complex.I * (t : ℂ)) := by
+      rw [map_neg, star_half_add_it]
+    -- From cpow_conj: (2π)^{conj(-(1/2+it))} = conj(conj(2π)^{-(1/2+it)})
+    have key := Complex.cpow_conj (2 * ↑Real.pi : ℂ) (-(1/2 + Complex.I * (t : ℂ))) two_pi_arg_ne_pi
+    -- key : (2π)^{conj(-(1/2+it))} = conj(conj(2π)^{-(1/2+it)})
+    rw [h_conj_exp] at key
+    -- key : (2π)^{-(1/2-it)} = conj(conj(2π)^{-(1/2+it)})
+    rw [h_conj_base] at key
+    -- key : (2π)^{-(1/2-it)} = conj((2π)^{-(1/2+it)})
+    exact key.symm
+  -- conj(Γ(s)) = Γ(1/2-it)
+  have h_gamma : (starRingEnd ℂ) (Complex.Gamma (1/2 + Complex.I * (t : ℂ))) =
+      Complex.Gamma (1/2 - Complex.I * (t : ℂ)) := by
+    have := Complex.Gamma_conj (1/2 + Complex.I * (t : ℂ))
+    -- this : Gamma (conj (1/2+it)) = conj (Gamma (1/2+it))
+    rw [star_half_add_it] at this
+    exact this.symm
+  -- conj(cos(πs/2)) = cos(π(1/2-it)/2)
+  have h_cos : (starRingEnd ℂ) (Complex.cos (↑Real.pi * (1/2 + Complex.I * (t : ℂ)) / 2)) =
+      Complex.cos (↑Real.pi * (1/2 - Complex.I * (t : ℂ)) / 2) := by
+    have := Complex.cos_conj (↑Real.pi * (1/2 + Complex.I * (t : ℂ)) / 2)
+    -- this : cos(conj(πs/2)) = conj(cos(πs/2))
+    -- conj(πs/2) = π·conj(s)/2 = π(1/2-it)/2
+    have h_arg : starRingEnd ℂ (↑Real.pi * (1/2 + Complex.I * (t : ℂ)) / 2) =
+        ↑Real.pi * (1/2 - Complex.I * (t : ℂ)) / 2 := by
+      have hs := star_half_add_it t
+      -- hs : starRingEnd ℂ (1/2 + I*t) = 1/2 - I*t
+      calc starRingEnd ℂ (↑Real.pi * (1/2 + Complex.I * ↑t) / 2)
+          = starRingEnd ℂ (↑Real.pi) * starRingEnd ℂ (1/2 + Complex.I * ↑t) /
+            starRingEnd ℂ (2 : ℂ) := by simp [map_div₀, map_mul]
+        _ = ↑Real.pi * (1/2 - Complex.I * ↑t) / 2 := by
+            rw [Complex.conj_ofReal, hs, map_ofNat]
+    rw [h_arg] at this
+    exact this.symm
+  -- Distribute star over products and apply each component
+  simp only [map_mul, map_ofNat, h_cpow, h_gamma, h_cos]
+
+/-- cos(πs/2) · cos(π(1-s)/2) = sin(πs)/2.
+    This uses cos(π/2-x) = sin(x) and cos(x)sin(x) = sin(2x)/2. -/
+private lemma cos_mul_cos_one_sub (s : ℂ) :
+    Complex.cos (↑Real.pi * s / 2) * Complex.cos (↑Real.pi * (1 - s) / 2) =
+    Complex.sin (↑Real.pi * s) / 2 := by
+  -- cos(π(1-s)/2) = cos(π/2 - πs/2) = sin(πs/2)
+  have step1 : Complex.cos (↑Real.pi * (1 - s) / 2) = Complex.sin (↑Real.pi * s / 2) := by
+    rw [show ↑Real.pi * (1 - s) / 2 = ↑Real.pi / 2 - ↑Real.pi * s / 2 by ring]
+    rw [Complex.cos_pi_div_two_sub]
+  rw [step1]
+  -- cos(x) * sin(x) = sin(2x)/2
+  rw [show ↑Real.pi * s = 2 * (↑Real.pi * s / 2) by ring]
+  rw [Complex.sin_two_mul]
+  ring
+
+/-- The product χ(s)·χ(1-s) = 1 for s not a non-negative integer.
+    Uses the Gamma reflection formula and the trig product identity. -/
+private lemma chi_product_eq_one (s : ℂ) (_hs_nat : ∀ n : ℕ, s ≠ -(n : ℂ))
+    (_hs1_nat : ∀ n : ℕ, (1 - s) ≠ -(n : ℂ))
+    (h_sin : Complex.sin (↑Real.pi * s) ≠ 0) :
+    ((2 : ℂ) * (2 * ↑Real.pi) ^ (-s) * Complex.Gamma s *
+      Complex.cos (↑Real.pi * s / 2)) *
+    ((2 : ℂ) * (2 * ↑Real.pi) ^ (-(1 - s)) * Complex.Gamma (1 - s) *
+      Complex.cos (↑Real.pi * (1 - s) / 2)) = 1 := by
+  -- Rearrange to group factors
+  -- Product = 4 · (2π)^{-s} · (2π)^{-(1-s)} · Γ(s)·Γ(1-s) · cos(πs/2)·cos(π(1-s)/2)
+  have h2pi_ne : (2 * ↑Real.pi : ℂ) ≠ 0 := by
+    apply mul_ne_zero two_ne_zero
+    exact Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
+  -- (2π)^{-s} · (2π)^{-(1-s)} = (2π)^{-1}
+  have cpow_add_eq : ((2 : ℂ) * ↑Real.pi) ^ (-s) * ((2 : ℂ) * ↑Real.pi) ^ (-(1 - s)) =
+      ((2 : ℂ) * ↑Real.pi) ^ ((-1 : ℂ)) := by
+    rw [← Complex.cpow_add _ _ h2pi_ne]
+    congr 1; ring
+  -- Γ(s)·Γ(1-s) = π/sin(πs)
+  have gamma_refl := Complex.Gamma_mul_Gamma_one_sub s
+  -- cos(πs/2)·cos(π(1-s)/2) = sin(πs)/2
+  have cos_prod := cos_mul_cos_one_sub s
+  -- Assemble
+  calc ((2 : ℂ) * (2 * ↑Real.pi) ^ (-s) * Complex.Gamma s *
+        Complex.cos (↑Real.pi * s / 2)) *
+      ((2 : ℂ) * (2 * ↑Real.pi) ^ (-(1 - s)) * Complex.Gamma (1 - s) *
+        Complex.cos (↑Real.pi * (1 - s) / 2))
+      = 4 * ((2 * ↑Real.pi) ^ (-s) * (2 * ↑Real.pi) ^ (-(1 - s))) *
+        (Complex.Gamma s * Complex.Gamma (1 - s)) *
+        (Complex.cos (↑Real.pi * s / 2) * Complex.cos (↑Real.pi * (1 - s) / 2)) := by ring
+    _ = 4 * ((2 : ℂ) * ↑Real.pi) ^ ((-1 : ℂ)) *
+        (↑Real.pi / Complex.sin (↑Real.pi * s)) *
+        (Complex.sin (↑Real.pi * s) / 2) := by
+        rw [cpow_add_eq, gamma_refl, cos_prod]
+    _ = 1 := by
+        have h_int : ((-1 : ℂ)) = ((-1 : ℤ) : ℂ) := by norm_cast
+        rw [h_int, Complex.cpow_intCast, zpow_neg_one]
+        have hpi_ne : (↑Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
+        field_simp
+        ring
+
+/-- sin(π·(1/2+it)) ≠ 0 for t : ℝ.
+    sin(π/2+πit) = cos(πit) = cosh(πt) ≥ 1 > 0. -/
+private lemma sin_pi_half_add_it_ne_zero (t : ℝ) :
+    Complex.sin (↑Real.pi * (1/2 + Complex.I * (t : ℂ))) ≠ 0 := by
+  -- sin(π(1/2+it)) = sin(πit + π/2) = cos(πit) = cosh(πt)
+  have h1 : ↑Real.pi * (1/2 + Complex.I * (t : ℂ)) =
+      ↑Real.pi * Complex.I * (t : ℂ) + ↑Real.pi / 2 := by ring
+  rw [h1, Complex.sin_add_pi_div_two]
+  -- Goal: cos(πit) ≠ 0
+  have h2 : (↑Real.pi : ℂ) * Complex.I * (t : ℂ) = (↑(Real.pi * t) : ℂ) * Complex.I := by
+    push_cast; ring
+  rw [h2, Complex.cos_mul_I]
+  -- Goal: cosh(πt) ≠ 0 (as a complex number)
+  exact_mod_cast (Real.cosh_pos (Real.pi * t)).ne'
+
+/-- 1/2+it ≠ -(n : ℂ) for any n : ℕ. -/
+private lemma half_add_it_ne_neg_nat (t : ℝ) (n : ℕ) :
+    (1/2 + Complex.I * (t : ℂ) : ℂ) ≠ -(n : ℂ) := by
+  intro h
+  have hre := congr_arg Complex.re h
+  simp [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re, Complex.I_im,
+        Complex.ofReal_im] at hre
+  have : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+  linarith
+
+/-- 1/2-it ≠ -(n : ℂ) for any n : ℕ. -/
+private lemma half_sub_it_ne_neg_nat (t : ℝ) (n : ℕ) :
+    (1/2 - Complex.I * (t : ℂ) : ℂ) ≠ -(n : ℂ) := by
+  intro h
+  have hre := congr_arg Complex.re h
+  simp [Complex.sub_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re, Complex.I_im,
+        Complex.ofReal_im] at hre
+  have : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+  linarith
+
 /-- Modulus of χ(1/2+it) on the critical line.
-
-    From the functional equation χ(s) = 2^s π^{s-1} sin(πs/2) Γ(1-s),
-    on s = 1/2+it, the Stirling approximation of Γ gives
-    |χ(1/2+it)| = √(t/(2π)) · (1 + O(1/t)).
-
-    For the RS formula we need the exact identity |χ(1/2+it)| = 1
-    which follows from the completed zeta Λ(s) = Λ(1-s) symmetry
-    and the fact that Λ is real on the critical line.
-
-    In fact: ζ(s) = χ(s)·ζ(1-s) and on s = 1/2+it, |χ(s)| = 1.
-    This is because completedRiemannZeta satisfies Λ(s) = Λ(1-s)
-    and |Γℝ(s)/Γℝ(1-s)| = 1 on Re(s) = 1/2.
-
+    The proof shows χ(s)·conj(χ(s)) = χ(s)·χ(1-s) = 1 using the Gamma
+    reflection formula Γ(s)Γ(1-s) = π/sin(πs), the trig identity
+    cos(πs/2)·cos(π(1-s)/2) = sin(πs)/2, and (2π)^{-s}·(2π)^{-(1-s)} = (2π)^{-1}.
     Reference: Titchmarsh §4.14, Eq. (4.14.1). -/
-theorem chi_modulus_critical_line (t : ℝ) (ht : t ≠ 0) :
+theorem chi_modulus_critical_line (t : ℝ) (_ht : t ≠ 0) :
     ‖(2 : ℂ) * (2 * ↑Real.pi) ^ (-(1/2 + Complex.I * (t : ℂ))) *
       Complex.Gamma (1/2 + Complex.I * (t : ℂ)) *
       Complex.cos (↑Real.pi * (1/2 + Complex.I * (t : ℂ)) / 2)‖ = 1 := by
-  sorry
+  -- Let χ = the expression. We show χ · conj(χ) = 1, hence ‖χ‖² = 1, hence ‖χ‖ = 1.
+  set s : ℂ := 1/2 + Complex.I * (t : ℂ) with hs_def
+  set χ : ℂ := (2 : ℂ) * (2 * ↑Real.pi) ^ (-s) *
+    Complex.Gamma s * Complex.cos (↑Real.pi * s / 2) with hχ_def
+  -- Step 1: conj(χ) = χ(1-s) where 1-s = 1/2-it on the critical line
+  have h_1ms : (1 : ℂ) - s = 1/2 - Complex.I * (t : ℂ) := by
+    rw [hs_def]; ring
+  -- Step 2: Use chi_conj_eq to get conj(χ)
+  have h_conj : starRingEnd ℂ χ =
+      (2 : ℂ) * (2 * ↑Real.pi) ^ (-(1/2 - Complex.I * (t : ℂ))) *
+        Complex.Gamma (1/2 - Complex.I * (t : ℂ)) *
+        Complex.cos (↑Real.pi * (1/2 - Complex.I * (t : ℂ)) / 2) := by
+    exact chi_conj_eq t
+  -- Step 3: χ · conj(χ) = χ(s) · χ(1-s) = 1
+  have h_prod : χ * starRingEnd ℂ χ = 1 := by
+    rw [h_conj, hχ_def, ← h_1ms]
+    exact chi_product_eq_one s (half_add_it_ne_neg_nat t)
+      (by rw [h_1ms]; exact half_sub_it_ne_neg_nat t)
+      (sin_pi_half_add_it_ne_zero t)
+  -- Step 4: From χ · conj(χ) = 1, deduce ‖χ‖ = 1
+  -- ‖χ‖² = ‖χ * conj(χ)‖ = ‖1‖ = 1
+  have h_norm_sq : ‖χ‖ * ‖χ‖ = 1 := by
+    have h1 : ‖χ * starRingEnd ℂ χ‖ = ‖(1 : ℂ)‖ := by rw [h_prod]
+    rw [norm_mul, RCLike.norm_conj, norm_one] at h1
+    exact h1
+  -- ‖χ‖ ≥ 0 and ‖χ‖² = 1 implies ‖χ‖ = 1
+  have h_nonneg : (0 : ℝ) ≤ ‖χ‖ := norm_nonneg χ
+  nlinarith [sq_nonneg (‖χ‖ - 1)]
 
 -- ============================================================
 -- Section 7b: Sub-lemma 2 — ErrorTerm via zeta remainder
