@@ -1995,6 +1995,206 @@ theorem mismatch_vs_rsLeading_crude_order (k : ℕ) (t : ℝ) (ht : t ≠ 0)
   linarith
 
 -- ============================================================
+-- Section 7d-stirling: Stirling theta approximation infrastructure
+-- ============================================================
+
+/-! ### Stirling-level θ approximation for the saddle-point construction
+
+The Stirling approximation for Hardy's θ function:
+  θ(t) = (t/2)·log(t/(2π)) - t/2 - π/8 + O(1/t)
+
+connects the phase factor exp(iθ(t)) to the RS leading term. At the block
+coordinate t = 2π(k+1+p)², this yields the phase identity:
+  θ(t) - t·log(k+1+p) = -π(k+1+p)² - π/8 + O(1/t)
+
+which, when combined with the RS phase formula, gives the Ψ(p) connection
+needed for the saddle-point bound.
+
+Reference: Edwards Ch. 6 (θ asymptotics); Siegel 1932 §3. -/
+
+/-- The Stirling approximation for Hardy's θ function:
+    θ_S(t) = (t/2)·log(t/(2π)) - t/2 - π/8.
+    This is the leading-order approximation with error O(1/t). -/
+noncomputable def thetaStirlingApprox (t : ℝ) : ℝ :=
+  (t / 2) * Real.log (t / (2 * Real.pi)) - t / 2 - Real.pi / 8
+
+/-- The Stirling approximation of θ evaluated at t = 2π·u² for u > 0
+    simplifies to: θ_S(2π·u²) = π·u²·log(u²) - π·u² - π/8
+                               = 2π·u²·log(u) - π·u² - π/8.
+    PROVED: by unfolding and simplifying log(2π·u²/(2π)) = log(u²) = 2·log(u). -/
+theorem thetaStirlingApprox_at_square (u : ℝ) (hu : 0 < u) :
+    thetaStirlingApprox (2 * Real.pi * u ^ 2) =
+    2 * Real.pi * u ^ 2 * Real.log u - Real.pi * u ^ 2 - Real.pi / 8 := by
+  unfold thetaStirlingApprox
+  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
+  have hpi_ne : (2 * Real.pi : ℝ) ≠ 0 := ne_of_gt hpi
+  -- Simplify t/(2π) = u²
+  have h_div : 2 * Real.pi * u ^ 2 / (2 * Real.pi) = u ^ 2 := by
+    field_simp
+  -- Simplify t/2 = π·u²
+  have h_half : 2 * Real.pi * u ^ 2 / 2 = Real.pi * u ^ 2 := by ring
+  rw [h_half, h_div]
+  -- log(u²) = 2·log(u) for u > 0
+  have h_log_sq : Real.log (u ^ 2) = 2 * Real.log u := by
+    rw [Real.log_pow]; push_cast; ring
+  rw [h_log_sq]; ring
+
+/-- At blockCoord(k, p) = 2π(k+1+p)², the Stirling θ approximation equals
+    2π(k+1+p)²·log(k+1+p) - π(k+1+p)² - π/8.
+    PROVED: from thetaStirlingApprox_at_square with u = k+1+p. -/
+theorem thetaStirlingApprox_at_blockCoord (k : ℕ) (p : ℝ) (hp : 0 ≤ p) :
+    thetaStirlingApprox (blockCoord k p) =
+    2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 * Real.log ((k : ℝ) + 1 + p)
+      - Real.pi * ((k : ℝ) + 1 + p) ^ 2 - Real.pi / 8 := by
+  have hu : (0 : ℝ) < (k : ℝ) + 1 + p := by positivity
+  exact thetaStirlingApprox_at_square ((k : ℝ) + 1 + p) hu
+
+/-- The saddle phase θ_S(t) - t·log(k+1+p) at blockCoord(k,p) equals
+    -π(k+1+p)² - π/8. The t·log(k+1+p) term cancels the
+    2π(k+1+p)²·log(k+1+p) from the Stirling expansion exactly.
+    PROVED: algebraic from thetaStirlingApprox_at_blockCoord. -/
+theorem stirling_saddlePhase_at_blockCoord (k : ℕ) (p : ℝ) (hp : 0 ≤ p) :
+    thetaStirlingApprox (blockCoord k p) -
+      blockCoord k p * Real.log ((k : ℝ) + 1 + p) =
+    -(Real.pi * ((k : ℝ) + 1 + p) ^ 2) - Real.pi / 8 := by
+  rw [thetaStirlingApprox_at_blockCoord k p hp]
+  unfold blockCoord; ring
+
+/-- The Stirling saddle phase at index k (not k+1+p) involves a log ratio:
+    θ_S(t) - t·log(k+1) = θ_S(t) - t·log(k+1+p) + t·log((k+1+p)/(k+1))
+    at t = blockCoord(k,p). The first part is -π(k+1+p)² - π/8 (above).
+    The second part is 2π(k+1+p)²·log(1+p/(k+1)).
+    PROVED: algebraic from stirling_saddlePhase_at_blockCoord. -/
+theorem stirling_saddlePhase_at_index_k (k : ℕ) (p : ℝ) (hp : 0 ≤ p)
+    (hk : 0 < (k : ℝ) + 1) :
+    thetaStirlingApprox (blockCoord k p) -
+      blockCoord k p * Real.log ((k : ℝ) + 1) =
+    -(Real.pi * ((k : ℝ) + 1 + p) ^ 2) - Real.pi / 8 +
+      blockCoord k p * Real.log (((k : ℝ) + 1 + p) / ((k : ℝ) + 1)) := by
+  have hu : (0 : ℝ) < (k : ℝ) + 1 + p := by linarith
+  have h_main := stirling_saddlePhase_at_blockCoord k p hp
+  -- Rewrite: log(k+1+p) = log(k+1) + log((k+1+p)/(k+1))
+  have h_log_split : Real.log ((k : ℝ) + 1 + p) =
+      Real.log ((k : ℝ) + 1) + Real.log (((k : ℝ) + 1 + p) / ((k : ℝ) + 1)) := by
+    rw [← Real.log_mul (ne_of_gt hk) (ne_of_gt (div_pos hu hk)),
+        mul_div_cancel₀ _ (ne_of_gt hk)]
+  -- The LHS equals: θ_S(bc) - bc·log(k+1+p) + bc·(log(k+1+p) - log(k+1))
+  -- = h_main + bc·log((k+1+p)/(k+1))
+  have h_rearrange : thetaStirlingApprox (blockCoord k p) -
+      blockCoord k p * Real.log ((k : ℝ) + 1) =
+    (thetaStirlingApprox (blockCoord k p) -
+      blockCoord k p * Real.log ((k : ℝ) + 1 + p)) +
+    blockCoord k p * Real.log (((k : ℝ) + 1 + p) / ((k : ℝ) + 1)) := by
+    rw [h_log_split]; ring
+  rw [h_rearrange, h_main]
+
+/-- The t·log(1+p/(k+1)) term at blockCoord(k,p) = 2π(k+1+p)² equals
+    2π(k+1+p)²·log(1+p/(k+1)). For p ∈ [0,1] and large k, this is
+    approximately 2πp(k+1+p)² / (k+1) ≈ 2πp(k+1).
+    PROVED: definitional unfolding. -/
+theorem blockCoord_log_ratio (k : ℕ) (p : ℝ) :
+    blockCoord k p * Real.log (((k : ℝ) + 1 + p) / ((k : ℝ) + 1)) =
+    2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 *
+      Real.log (((k : ℝ) + 1 + p) / ((k : ℝ) + 1)) := by
+  unfold blockCoord; ring
+
+/-- The Stirling saddle phase differs between indices (k+1+p) and (k+1) by
+    the block coordinate times a logarithmic ratio. When expressed modulo π,
+    this gives the RS phase connection.
+
+    The quadratic phase identity: for u = k+1+p, v = k+1,
+    -π·u² + 2π·u²·log(u/v) = -π·v² + 2π·u²·log(u/v) - π(u²-v²)
+    = -π·v² + 2π·u²·log(u/v) - 2πp·v - πp².
+    PROVED: algebra. -/
+theorem stirling_phase_quadratic_decomp (k : ℕ) (p : ℝ) :
+    -(Real.pi * ((k : ℝ) + 1 + p) ^ 2) =
+    -(Real.pi * ((k : ℝ) + 1) ^ 2) - 2 * Real.pi * p * ((k : ℝ) + 1)
+      - Real.pi * p ^ 2 := by
+  ring
+
+/-- Combined: the Stirling saddle phase at index k on blockCoord(k,p) equals
+    -π(k+1)² - 2πp(k+1) - πp² - π/8 + 2π(k+1+p)²·log(1+p/(k+1)).
+    PROVED: combining stirling_saddlePhase_at_index_k with quadratic decomp. -/
+theorem stirling_saddlePhase_expanded (k : ℕ) (p : ℝ) (hp : 0 ≤ p)
+    (hk : 0 < (k : ℝ) + 1) :
+    thetaStirlingApprox (blockCoord k p) -
+      blockCoord k p * Real.log ((k : ℝ) + 1) =
+    -(Real.pi * ((k : ℝ) + 1) ^ 2) - 2 * Real.pi * p * ((k : ℝ) + 1) -
+      Real.pi * p ^ 2 - Real.pi / 8 +
+      blockCoord k p * Real.log (((k : ℝ) + 1 + p) / ((k : ℝ) + 1)) := by
+  rw [stirling_saddlePhase_at_index_k k p hp hk, stirling_phase_quadratic_decomp]
+
+/-- The RS phase argument is π(2p²-2p+1/4). When the Stirling saddle phase
+    is reduced modulo π, the dominant terms -π(k+1)² and -2πp(k+1) are
+    integer multiples of π. What remains (modulo π) is:
+    -πp² - π/8 + small correction.
+
+    This lemma records the key algebraic identity that for INTEGER k+1,
+    -π(k+1)² ≡ 0 (mod π) and -2πp(k+1) ≡ 0 (mod π) when k+1 ∈ ℤ.
+    So the residual phase is -πp² - π/8 + [log correction].
+    PROVED: (k+1) is a positive integer, so (k+1)² ∈ ℤ. -/
+theorem pi_mul_nat_sq_div_pi (k : ℕ) :
+    Real.pi * ((k : ℝ) + 1) ^ 2 / Real.pi = ((k : ℝ) + 1) ^ 2 := by
+  rw [mul_div_cancel_left₀ _ (ne_of_gt Real.pi_pos)]
+
+/-- 2π·p·(k+1) / π = 2·p·(k+1). -/
+theorem two_pi_p_k_div_pi (k : ℕ) (p : ℝ) :
+    2 * Real.pi * p * ((k : ℝ) + 1) / Real.pi = 2 * p * ((k : ℝ) + 1) := by
+  have hpi_ne : Real.pi ≠ 0 := ne_of_gt Real.pi_pos
+  field_simp
+
+/-- The cosine of the Stirling saddle phase at index k reduces via
+    cos(-π(k+1)² - 2πp(k+1) - πp² - π/8 + correction)
+    = cos(-πp² - π/8 + correction) · cos(π(k+1)² + 2πp(k+1))
+      + sin correction · sin(π(k+1)² + 2πp(k+1)).
+    Since cos(πn) = (-1)^n for integer n, and (k+1)² + 2p(k+1) is
+    an integer when p ∈ ℤ (e.g. at endpoints), this shows sign alternation.
+
+    Here we prove the endpoint case p = 0:
+    cos(-π(k+1)² - π/8) = (-1)^{(k+1)²} · cos(π/8).
+    Since (k+1)² ≡ (k+1) (mod 2) [because n² ≡ n (mod 2)],
+    this gives (-1)^{k+1} = -(-1)^k. -/
+theorem nat_sq_mod_two (n : ℕ) : n ^ 2 % 2 = n % 2 := by
+  rcases Nat.even_or_odd n with ⟨m, hm⟩ | ⟨m, hm⟩ <;> subst hm <;> ring_nf <;> omega
+
+/-- (-1)^{n²} = (-1)^n for natural numbers.
+    Since n² has the same parity as n, the signs agree. -/
+theorem neg_one_pow_sq (n : ℕ) : (-1 : ℝ) ^ (n ^ 2) = (-1 : ℝ) ^ n := by
+  rcases Nat.even_or_odd n with he | ho
+  · have he2 : Even (n ^ 2) := Nat.even_pow.mpr ⟨he, by omega⟩
+    rw [he.neg_one_pow, he2.neg_one_pow]
+  · have ho2 : Odd (n ^ 2) := ho.pow
+    rw [ho.neg_one_pow, ho2.neg_one_pow]
+
+/-- The cosine of integer multiples of π: cos(πn) = (-1)^n.
+    PROVED: by induction on n. -/
+theorem cos_pi_nat (n : ℕ) : Real.cos (Real.pi * n) = (-1 : ℝ) ^ n := by
+  induction n with
+  | zero => simp
+  | succ k ih =>
+    rw [Nat.cast_succ, mul_add, mul_one, Real.cos_add, ih, Real.cos_pi, Real.sin_pi,
+        mul_zero, sub_zero, pow_succ]
+
+/-- cos(π · (k+1)²) = (-1)^(k+1) = -(-1)^k.
+    PROVED: cos_pi_nat + neg_one_pow_sq. -/
+theorem cos_pi_succ_sq (k : ℕ) :
+    Real.cos (Real.pi * ((k : ℝ) + 1) ^ 2) = -(-1 : ℝ) ^ k := by
+  have h_nat : ((k : ℝ) + 1) ^ 2 = ((k + 1) ^ 2 : ℕ) := by push_cast; ring
+  rw [h_nat, cos_pi_nat, neg_one_pow_sq, pow_succ]; ring
+
+/-- sin(π · (k+1)²) = 0 since (k+1)² is a natural number.
+    PROVED: sin(πn) = 0 for n ∈ ℕ. -/
+theorem sin_pi_succ_sq (k : ℕ) :
+    Real.sin (Real.pi * ((k : ℝ) + 1) ^ 2) = 0 := by
+  have h_nat : ((k : ℝ) + 1) ^ 2 = ((k + 1) ^ 2 : ℕ) := by push_cast; ring
+  rw [h_nat]
+  induction (k + 1) ^ 2 with
+  | zero => simp
+  | succ n ih =>
+    rw [Nat.cast_succ, mul_add, mul_one, Real.sin_add, ih, Real.sin_pi, Real.cos_pi]
+    ring
+
+-- ============================================================
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
 -- ============================================================
 
