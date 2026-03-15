@@ -3304,6 +3304,20 @@ private theorem rsPsi_integral_pos :
         · exact measurableSet_Ioc
         · exact h_lower
 
+/-- **Psi integral upper bound**: ∫₀¹ Ψ(p) dp ≤ 1 since Ψ(p) ≤ 1 on [0,1]. -/
+private theorem rsPsi_integral_le_one :
+    ∫ p in Ioc (0 : ℝ) 1, rsPsi p ≤ 1 := by
+  calc ∫ p in Ioc (0 : ℝ) 1, rsPsi p
+      ≤ ∫ p in Ioc (0 : ℝ) 1, (1 : ℝ) := by
+        apply setIntegral_mono_on
+        · exact rsPsi_continuousOn.integrableOn_Icc.mono_set Ioc_subset_Icc_self
+        · exact (ContinuousOn.integrableOn_Icc continuousOn_const).mono_set Ioc_subset_Icc_self
+        · exact measurableSet_Ioc
+        · intro p _; exact rsPsi_le_one p
+    _ = 1 := by
+        rw [integral_const]
+        simp [smul_eq_mul, ENNReal.toReal_ofReal (show (0 : ℝ) ≤ 1 by linarith)]
+
 /-- **Sqrt-weighted Psi integral upper bound**:
     integral_01 sqrt(k+1+p) Psi(p) dp <= sqrt(k+2) integral_01 Psi(p) dp.
     Since sqrt(k+1+p) <= sqrt(k+2) for p in [0,1] and Psi >= 0. -/
