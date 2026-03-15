@@ -1004,7 +1004,7 @@ theorem log_sq_le_mul_sqrt (x : ℝ) (hx : 1 ≤ x) :
   have h1 : Real.log x ≤ 4 * x ^ ((1:ℝ)/4) := by
     have := Real.log_le_rpow_div hx0 (show (0:ℝ) < 1/4 by positivity); linarith
   calc (Real.log x) ^ 2
-      ≤ (4 * x ^ ((1:ℝ)/4)) ^ 2 := by nlinarith [Real.log_nonneg hx]
+      ≤ (4 * x ^ ((1:ℝ)/4)) ^ 2 := pow_le_pow_left₀ (Real.log_nonneg hx) h1 2
     _ = 16 * (x ^ ((1:ℝ)/4)) ^ (2:ℕ) := by ring
     _ = 16 * x ^ ((1:ℝ)/2) := by
         rw [← Real.rpow_natCast (x ^ ((1:ℝ)/4)) 2, ← Real.rpow_mul hx0]; norm_num
@@ -1022,11 +1022,22 @@ theorem log_sq_absorbed_by_error (x T : ℝ) (hx : 1 ≤ x) (hT_lo : 2 ≤ T) (h
   have hsqrtT_le : Real.sqrt T ≤ 4 := by
     calc Real.sqrt T ≤ Real.sqrt 16 := Real.sqrt_le_sqrt (by linarith)
       _ = 4 := by rw [show (16 : ℝ) = 4 ^ 2 by norm_num, Real.sqrt_sq (by norm_num : (0:ℝ) ≤ 4)]
+  have hlog2_nn : 0 ≤ Real.log 2 := (Real.log_pos (by norm_num)).le
+  have h_sq_mono : (Real.log 2) ^ 2 ≤ (Real.log T) ^ 2 :=
+    pow_le_pow_left₀ hlog2_nn hlogT 2
   have h_key : (Real.log 2) ^ 2 * Real.sqrt T ≤ 4 * (Real.log T) ^ 2 := by
-    nlinarith [sq_nonneg (Real.log T - Real.log 2)]
+    calc (Real.log 2) ^ 2 * Real.sqrt T
+        ≤ (Real.log T) ^ 2 * Real.sqrt T :=
+          mul_le_mul_of_nonneg_right h_sq_mono hsqrtT_pos.le
+      _ ≤ (Real.log T) ^ 2 * 4 :=
+          mul_le_mul_of_nonneg_left hsqrtT_le (sq_nonneg _)
+      _ = 4 * (Real.log T) ^ 2 := by ring
   have h_16 : 16 ≤ 64 / (Real.log 2) ^ 2 * ((Real.log T) ^ 2 / Real.sqrt T) := by
     rw [div_mul_div_comm, le_div_iff₀ (mul_pos hlog2_sq hsqrtT_pos)]
-    nlinarith
+    -- Goal: 16 * (log2² * √T) ≤ 64 * logT²
+    -- From h_key: log2² * √T ≤ 4 * logT², so 16 * (log2² * √T) ≤ 16 * 4 * logT² = 64 * logT²
+    have := mul_le_mul_of_nonneg_left h_key (show (0:ℝ) ≤ 16 by norm_num)
+    linarith
   calc (Real.log x) ^ 2
       ≤ 16 * Real.sqrt x := log_sq_le_mul_sqrt x hx
     _ ≤ (64 / (Real.log 2) ^ 2 * ((Real.log T) ^ 2 / Real.sqrt T)) * Real.sqrt x :=
