@@ -1088,3 +1088,79 @@ theorem antitone_triangle_sum_le (a : ℕ → ℝ)
     (mul_le_mul_of_nonneg_left hM (Nat.cast_nonneg K))
 
 end AbelSummationPsiPi_BlockTriangle
+
+-- ============================================================
+-- Part 18: Reciprocal log-ratio sum bound for per-mode VdC analysis
+-- ============================================================
+
+namespace AbelSummationPsiPi_LogRatioSum
+
+open Real Finset
+
+/-- For k > n ≥ 0 and k ≥ 2(n+1), the log ratio log((k+1)/(n+1)) ≥ log 2.
+    This means the reciprocal 1/log((k+1)/(n+1)) ≤ 1/log 2. -/
+theorem inv_log_ratio_le_inv_log2 (n k : ℕ) (hn : 2 * (n + 1) ≤ k) :
+    1 / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) ≤ 1 / Real.log 2 := by
+  have hn1_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  have h_ratio : 2 ≤ ((k : ℝ) + 1) / ((n : ℝ) + 1) := by
+    rw [le_div_iff₀ hn1_pos]
+    have : 2 * ((n : ℝ) + 1) ≤ (k : ℝ) + 1 := by
+      have h1 : (2 * (n + 1) : ℝ) ≤ (k : ℝ) := by exact_mod_cast hn
+      linarith
+    linarith
+  have hlog2_pos : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlog_ge : Real.log 2 ≤ Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) :=
+    Real.log_le_log (by norm_num) h_ratio
+  exact one_div_le_one_div_of_le hlog2_pos hlog_ge
+
+/-- Far-block count: the number of blocks k in [2(n+1), K) is at most K. -/
+theorem far_block_count (n K : ℕ) :
+    (Finset.Ico (2 * (n + 1)) K).card ≤ K := by
+  have h : Finset.Ico (2 * (n + 1)) K ⊆ Finset.range K := by
+    intro k hk; simp only [Finset.mem_Ico] at hk; simp only [Finset.mem_range]; omega
+  calc (Finset.Ico (2 * (n + 1)) K).card
+      ≤ (Finset.range K).card := Finset.card_le_card h
+    _ = K := Finset.card_range K
+
+/-- Near-block count: the number of blocks k in [n+1, 2(n+1)) is exactly n+1. -/
+theorem near_block_count (n : ℕ) :
+    (Finset.Ico (n + 1) (2 * (n + 1))).card = n + 1 := by simp; omega
+
+/-- Sum of 1/log((k+1)/(n+1)) over far blocks k ∈ [2(n+1), K) is ≤ K/log 2.
+    On these blocks, log ratio ≥ log 2, so each reciprocal ≤ 1/log 2.
+    Summing K terms gives ≤ K/log 2. -/
+theorem far_block_log_ratio_sum (n K : ℕ) :
+    ∑ k ∈ Finset.Ico (2 * (n + 1)) K,
+      (1 / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1))) ≤
+      (K : ℝ) / Real.log 2 := by
+  have hlog2_pos : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  calc ∑ k ∈ Finset.Ico (2 * (n + 1)) K,
+        (1 / Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)))
+      ≤ ∑ _k ∈ Finset.Ico (2 * (n + 1)) K, (1 / Real.log 2) := by
+        apply Finset.sum_le_sum
+        intro k hk
+        rw [Finset.mem_Ico] at hk
+        exact inv_log_ratio_le_inv_log2 n k hk.1
+    _ = ((Finset.Ico (2 * (n + 1)) K).card : ℝ) * (1 / Real.log 2) := by
+        rw [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ (K : ℝ) * (1 / Real.log 2) := by
+        apply mul_le_mul_of_nonneg_right _ (by positivity)
+        exact_mod_cast far_block_count n K
+    _ = (K : ℝ) / Real.log 2 := by ring
+
+/-- For the near blocks k ∈ [n+1, 2(n+1)), the log ratio satisfies
+    log((k+1)/(n+1)) > 0 (since k > n). The reciprocal is bounded by
+    the largest value 1/log((n+2)/(n+1)) ≈ n+1, giving a crude sum
+    bound of (n+1) · (n+1) = (n+1)² on these blocks.
+
+    For the per-mode analysis, the near blocks use the trivial bound
+    |∫ cos| ≤ block_length rather than VdC, so this reciprocal-log sum
+    is not actually needed. The near-block contribution is handled
+    separately via block_length_le. -/
+theorem near_block_log_ratio_pos (n k : ℕ) (hnk : n < k) :
+    0 < Real.log (((k : ℝ) + 1) / ((n : ℝ) + 1)) := by
+  have hn1_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  have hkn : (n : ℝ) + 1 < (k : ℝ) + 1 := by exact_mod_cast Nat.succ_lt_succ hnk
+  exact Real.log_pos (by rw [one_lt_div hn1_pos]; linarith)
+
+end AbelSummationPsiPi_LogRatioSum

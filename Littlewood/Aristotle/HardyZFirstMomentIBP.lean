@@ -45,6 +45,7 @@ import Littlewood.Aristotle.RSBlockParam
 import Littlewood.Aristotle.ErrorTermExpansion
 import Littlewood.Aristotle.Standalone.RSExpansionProof
 import Littlewood.Aristotle.IntervalPartition
+import Littlewood.Aristotle.StationaryPhasePerMode
 
 set_option linter.mathlibStandardSet false
 
@@ -2184,5 +2185,160 @@ theorem cos_integral_trivial_global_bound (n : ℕ) (T : ℝ) (hT : 2 ≤ T) :
     simp; linarith
 
 end PerModeCosIntegralBound
+
+/-! ## Part 9b: Van der Corput sub-lemmas for per_mode_sqrt_cos_bound
+
+These sorry-free lemmas build the infrastructure for proving
+  |hardyCosIntegral n T| ≤ B · √(n+1)
+via the stationary phase decomposition:
+  1. Split at a threshold point t₁ where modeOmega n t₁ ≥ λ
+  2. Near-stationary: trivial bound |∫_{hs(n)}^{t₁} cos| ≤ t₁ - hs(n)
+  3. Far-from-stationary: VdC first-derivative test |∫_{t₁}^T cos| ≤ 3/λ
+  4. Optimize λ to minimize (t₁ - hs(n)) + 3/λ
+
+Key mathematical fact: the phase derivative
+  modeOmega n t = θ'(t) - log(n+1) ≈ (1/2)log(t/(2π)) - log(n+1)
+vanishes at t* = 2π(n+1)² = hardyStart n, and increases like 1/(2t) near there.
+So modeOmega n (hs(n) + δ) ≈ δ/(2·hs(n)) = δ/(4π(n+1)²).
+Choosing λ = δ/(4π(n+1)²) with δ = c·(n+1)^α balances the two terms.
+
+Reference: Titchmarsh 1951, §4.15; Ivic 1985, Ch. 4. -/
+
+section VdCSublemmas
+
+open HardyEstimatesPartial
+open Aristotle.OffResonanceSmoothVdC (modeOmega differentiable_modeOmega
+  deriv_modeOmega deriv_modeOmega_nonneg)
+open Aristotle.HardyNProperties (hardyStart_formula block_length)
+open HardyCosSmooth (hardyCosExp hardyCos_eq_re_hardyCosExp
+  continuous_hardyCos differentiable_hardyCos)
+
+/-- Splitting lemma for Ioc integrals: if a ≤ c ≤ b then
+    ∫_{Ioc a b} f = ∫_{Ioc a c} f + ∫_{Ioc c b} f.
+    This is a direct consequence of MeasureTheory.integral_union_adjacent.
+    Uses interval integrals for the proof. -/
+theorem integral_Ioc_split_at (f : ℝ → ℝ) (a c b : ℝ) (hac : a ≤ c) (hcb : c ≤ b)
+    (hf_ac : IntegrableOn f (Set.Ioc a c))
+    (hf_cb : IntegrableOn f (Set.Ioc c b)) :
+    ∫ t in Set.Ioc a b, f t =
+      (∫ t in Set.Ioc a c, f t) + (∫ t in Set.Ioc c b, f t) := by
+  have hf_ab : IntegrableOn f (Set.Ioc a b) := by
+    rw [show Set.Ioc a b = Set.Ioc a c ∪ Set.Ioc c b from
+      (Set.Ioc_union_Ioc_eq_Ioc hac hcb).symm]
+    exact hf_ac.union hf_cb
+  rw [show Set.Ioc a b = Set.Ioc a c ∪ Set.Ioc c b from
+    (Set.Ioc_union_Ioc_eq_Ioc hac hcb).symm]
+  exact MeasureTheory.setIntegral_union (Set.Ioc_disjoint_Ioc.mpr (by simp))
+    measurableSet_Ioc hf_ac hf_cb
+
+/-- Splitting hardyCosIntegral at an intermediate point:
+    hardyCosIntegral n T = ∫_{hs(n)}^{t₁} + ∫_{t₁}^T when hs(n) ≤ t₁ ≤ T. -/
+theorem hardyCosIntegral_split (n : ℕ) (T t₁ : ℝ)
+    (ht₁_lo : hardyStart n ≤ t₁) (ht₁_hi : t₁ ≤ T) :
+    hardyCosIntegral n T =
+      (∫ t in Set.Ioc (hardyStart n) t₁, hardyCos n t) +
+      (∫ t in Set.Ioc t₁ T, hardyCos n t) := by
+  unfold hardyCosIntegral
+  exact integral_Ioc_split_at (hardyCos n) (hardyStart n) t₁ T ht₁_lo ht₁_hi
+    (continuous_hardyCos n).integrableOn_Ioc
+    (continuous_hardyCos n).integrableOn_Ioc
+
+/-- Near-stationary trivial bound: |∫_{hs(n)}^{t₁} hardyCos n| ≤ t₁ - hs(n).
+    Since |cos| ≤ 1, this follows from the trivial integral bound. -/
+theorem near_stationary_trivial (n : ℕ) (t₁ : ℝ)
+    (ht₁ : hardyStart n ≤ t₁) :
+    |∫ t in Set.Ioc (hardyStart n) t₁, hardyCos n t| ≤ t₁ - hardyStart n := by
+  rw [← intervalIntegral.integral_of_le ht₁]
+  have hbd : ∀ t ∈ Set.uIoc (hardyStart n) t₁, ‖hardyCos n t‖ ≤ 1 := by
+    intro t _; rw [Real.norm_eq_abs]; exact abs_cos_le_one _
+  calc |∫ t in (hardyStart n)..t₁, hardyCos n t|
+      ≤ 1 * |t₁ - hardyStart n| :=
+        intervalIntegral.norm_integral_le_of_norm_le_const hbd
+    _ = t₁ - hardyStart n := by
+        rw [one_mul, abs_of_nonneg (sub_nonneg.mpr ht₁)]
+
+/-- Far-from-stationary VdC bound via StationaryPhasePerMode:
+    |∫_{t₁}^T hardyCos n| ≤ 3/m when the phase φ(t) = θ(t) - t·log(n+1)
+    satisfies the VdC first-derivative test conditions on [t₁, T].
+
+    The phase regularity hypotheses (C², φ' ≥ m, φ'' ≥ 0) are passed
+    explicitly. These must be verified using the specific structure of
+    hardyTheta — see per_mode_tail_bound in StationaryPhasePerMode.lean. -/
+theorem far_from_stationary_vdc (n : ℕ) (t₁ T m : ℝ)
+    (ht₁T : t₁ ≤ T) (hm : 0 < m)
+    (hphi : Differentiable ℝ (fun t => hardyTheta t - t * Real.log (↑n + 1)))
+    (hphi' : Differentiable ℝ (deriv (fun t => hardyTheta t - t * Real.log (↑n + 1))))
+    (hphi'' : Continuous (deriv (deriv (fun t => hardyTheta t - t * Real.log (↑n + 1)))))
+    (hphi'_lower : ∀ t ∈ Set.Icc t₁ T,
+      m ≤ deriv (fun t => hardyTheta t - t * Real.log (↑n + 1)) t)
+    (hphi''_nn : ∀ t ∈ Set.Icc t₁ T,
+      0 ≤ deriv (deriv (fun t => hardyTheta t - t * Real.log (↑n + 1))) t) :
+    |∫ t in Set.Ioc t₁ T, hardyCos n t| ≤ 3 / m := by
+  rw [← intervalIntegral.integral_of_le ht₁T]
+  exact Aristotle.StationaryPhasePerMode.per_mode_tail_bound n t₁ T m ht₁T hm
+    hphi hphi' hphi'' hphi'_lower hphi''_nn
+
+/-- Combined split-and-bound: |hardyCosIntegral n T| ≤ (t₁ - hs(n)) + 3/m.
+    This is the pre-optimization version. To get O(√(n+1)), choose t₁ and m
+    so that both terms are O(√(n+1)).
+
+    Phase regularity hypotheses (C², φ' ≥ m, φ'' ≥ 0) are for [t₁, T] only. -/
+theorem hardyCosIntegral_split_bound (n : ℕ) (T t₁ m : ℝ)
+    (ht₁_lo : hardyStart n ≤ t₁) (ht₁_hi : t₁ ≤ T) (hm : 0 < m)
+    (hphi : Differentiable ℝ (fun t => hardyTheta t - t * Real.log (↑n + 1)))
+    (hphi' : Differentiable ℝ (deriv (fun t => hardyTheta t - t * Real.log (↑n + 1))))
+    (hphi'' : Continuous (deriv (deriv (fun t => hardyTheta t - t * Real.log (↑n + 1)))))
+    (hphi'_lower : ∀ t ∈ Set.Icc t₁ T,
+      m ≤ deriv (fun t => hardyTheta t - t * Real.log (↑n + 1)) t)
+    (hphi''_nn : ∀ t ∈ Set.Icc t₁ T,
+      0 ≤ deriv (deriv (fun t => hardyTheta t - t * Real.log (↑n + 1))) t) :
+    |hardyCosIntegral n T| ≤ (t₁ - hardyStart n) + 3 / m := by
+  rw [hardyCosIntegral_split n T t₁ ht₁_lo ht₁_hi]
+  calc |(∫ t in Set.Ioc (hardyStart n) t₁, hardyCos n t) +
+        (∫ t in Set.Ioc t₁ T, hardyCos n t)|
+      ≤ |∫ t in Set.Ioc (hardyStart n) t₁, hardyCos n t| +
+        |∫ t in Set.Ioc t₁ T, hardyCos n t| := abs_add_le _ _
+    _ ≤ (t₁ - hardyStart n) + 3 / m := by
+        linarith [near_stationary_trivial n t₁ ht₁_lo,
+                  far_from_stationary_vdc n t₁ T m ht₁_hi hm
+                    hphi hphi' hphi'' hphi'_lower hphi''_nn]
+
+/-- Degenerate case: when T < hardyStart n, the integral is zero. -/
+theorem hardyCosIntegral_zero_of_lt (n : ℕ) (T : ℝ) (h : T < hardyStart n) :
+    hardyCosIntegral n T = 0 := by
+  unfold hardyCosIntegral
+  rw [show Set.Ioc (hardyStart n) T = ∅ from
+    Set.Ioc_eq_empty (not_lt.mpr (le_of_lt h))]
+  simp
+
+/-- When T < hardyStart n, the bound holds trivially for any B > 0. -/
+theorem hardyCosIntegral_bound_trivial_of_lt (n : ℕ) (T : ℝ) (B : ℝ) (hB : 0 < B)
+    (h : T < hardyStart n) :
+    |hardyCosIntegral n T| ≤ B * Real.sqrt ((n : ℝ) + 1) := by
+  rw [hardyCosIntegral_zero_of_lt n T h]
+  simp
+  exact mul_nonneg (le_of_lt hB) (Real.sqrt_nonneg _)
+
+end VdCSublemmas
+
+/-! ## Part 9c: Phase regularity notes
+
+The VdC sub-lemmas require regularity hypotheses on the phase function
+φ(t) = θ(t) - t·log(n+1). These are satisfied because:
+
+1. hardyTheta is smooth away from branch cuts (t > 0 suffices)
+2. thetaDeriv = (1/2)log(t/(2π)) + O(1/t) is C^∞ for t > 0
+3. The phase φ' = thetaDeriv - log(n+1) = modeOmega n is
+   monotone increasing (θ'' > 0 for t > 0)
+
+The regularity certificates (Differentiable φ, Differentiable φ', Continuous φ'')
+are available via the hardyThetaSmooth pathway in HardyThetaSmooth.lean:
+  differentiable_hardyThetaSmooth, hasDerivAt_hardyThetaSmooth,
+  continuous_thetaDeriv.
+
+To use `hardyCosIntegral_split_bound` for `per_mode_sqrt_cos_bound`, one needs
+to instantiate these regularity hypotheses and choose the threshold t₁ optimally.
+The key quantitative input is the modeOmega growth rate near the stationary point
+t* = hardyStart n. -/
 
 end HardyZFirstMomentIBP
