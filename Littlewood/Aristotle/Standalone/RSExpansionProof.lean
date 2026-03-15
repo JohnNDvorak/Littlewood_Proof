@@ -3325,14 +3325,98 @@ private theorem weighted_sqrt_psi_le_sqrt_times_integral (k : ℕ) :
     apply mul_le_mul_of_nonneg_right _ (rsPsi_nonneg_on p (Ioc_subset_Icc_self hp))
     exact Real.sqrt_le_sqrt (by linarith [hp.2])
 
+/-- On block k, t^{-3/4} ≤ 1/√(k+1). Chain: t^{-3/4} ≤ t^{-1/4} ≤ (2π/t)^{1/4} ≤ 1/√(k+1). -/
+private theorem rpow_neg_three_quarter_le_inv_sqrt_block (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_pos : 0 < t) :
+    t ^ (-(3 : ℝ) / 4) ≤ 1 / Real.sqrt ((k : ℝ) + 1) := by
+  -- 1 ≤ 2π ≤ hardyStart k ≤ t
+  have hk1_pos : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  have hk1_sq : (1 : ℝ) ≤ ((k : ℝ) + 1) ^ 2 := by nlinarith [hk1_pos]
+  have h_2pi_le_hs : 2 * Real.pi ≤ hardyStart k := by
+    unfold hardyStart; nlinarith [Real.pi_pos]
+  have ht_ge_one : 1 ≤ t := by linarith [Real.pi_gt_three]
+  -- Chain: t^{-3/4} ≤ t^{-1/4} ≤ (2π/t)^{1/4} ≤ 1/√(k+1)
+  calc t ^ (-(3 : ℝ) / 4)
+      ≤ t ^ (-(1 : ℝ) / 4) := rpow_neg_three_quarter_le_neg_quarter ht_ge_one
+    _ ≤ (2 * Real.pi / t) ^ ((1 : ℝ) / 4) := by
+        -- t^{-1/4} = (t⁻¹)^{1/4} ≤ (2π/t)^{1/4} since t⁻¹ ≤ 2π/t
+        have h_eq : t ^ (-(1 : ℝ) / 4) = (t⁻¹) ^ ((1 : ℝ) / 4) := by
+          rw [show -(1 : ℝ) / 4 = -((1 : ℝ) / 4) from by ring]
+          rw [Real.rpow_neg ht_pos.le, Real.inv_rpow ht_pos.le]
+        rw [h_eq]
+        apply Real.rpow_le_rpow (inv_nonneg.mpr ht_pos.le) _ (by norm_num)
+        rw [inv_eq_one_div]
+        exact div_le_div_of_nonneg_right (by linarith [Real.pi_gt_three]) ht_pos.le
+    _ ≤ 1 / Real.sqrt ((k : ℝ) + 1) := quarter_power_le_inv_sqrt k t ht_lo ht_pos
+
+/-- Pointwise bound: |ErrorTerm t| ≤ (3/2)/√(k+1) on block k.
+    From saddle_pointwise_bound_from_cubic + quarter_power_le_inv_sqrt. -/
+private theorem errorTerm_abs_le_on_block (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t ≤ hardyStart (k + 1)) (ht_pos : 0 < t) :
+    |ErrorTerm t| ≤ 3 / (2 * Real.sqrt ((k : ℝ) + 1)) := by
+  obtain ⟨C_R, hCR_pos, hCR_le, h_rs⟩ := saddle_pointwise_bound_from_cubic
+  have h_pw := errorTerm_abs_from_rs C_R hCR_pos h_rs k t ht_lo ht_hi ht_pos
+  have h_amp := quarter_power_le_inv_sqrt k t ht_lo ht_pos
+  have h_rem := rpow_neg_three_quarter_le_inv_sqrt_block k t ht_lo ht_pos
+  have h_sqrt_pos : 0 < Real.sqrt ((k : ℝ) + 1) := Real.sqrt_pos_of_pos (by positivity)
+  calc |ErrorTerm t|
+      ≤ (2 * Real.pi / t) ^ ((1 : ℝ) / 4) + C_R * t ^ (-(3 : ℝ) / 4) := h_pw
+    _ ≤ 1 / Real.sqrt ((k : ℝ) + 1) + C_R * (1 / Real.sqrt ((k : ℝ) + 1)) := by
+        linarith [mul_le_mul_of_nonneg_left h_rem hCR_pos.le]
+    _ = (1 + C_R) / Real.sqrt ((k : ℝ) + 1) := by ring
+    _ ≤ (1 + 1 / 2) / Real.sqrt ((k : ℝ) + 1) := by
+        exact div_le_div_of_nonneg_right (by linarith) h_sqrt_pos.le
+    _ = 3 / (2 * Real.sqrt ((k : ℝ) + 1)) := by ring
+
+/-- Block length bound: hardyStart(k+1) - hardyStart(k) ≤ 6π(k+1). -/
+private theorem block_length_le (k : ℕ) :
+    hardyStart (k + 1) - hardyStart k ≤ 6 * Real.pi * ((k : ℝ) + 1) := by
+  -- hardyStart(k+1) - hardyStart(k) = 2π((k+2)² - (k+1)²) = 2π(2k+3)
+  have h_bl : hardyStart (k + 1) - hardyStart k = 2 * Real.pi * (2 * (k : ℝ) + 3) := by
+    unfold hardyStart; push_cast; ring
+  rw [h_bl]
+  -- 2π(2k+3) ≤ 6π(k+1) ⟺ 2k+3 ≤ 3(k+1) = 3k+3 ⟺ 0 ≤ k
+  have : (2 * (k : ℝ) + 3) ≤ 3 * ((k : ℝ) + 1) := by linarith
+  nlinarith [Real.pi_pos]
+
 /-- **Per-block error integral bound**: the signed block integral
     abs(integral_block ErrorTerm) is bounded by C sqrt(k+2).
-    Via signed_block_integral_expansion and weighted_sqrt_psi_le_sqrt_times_integral. -/
+    Via saddle_point pointwise bound + block length estimate. -/
 private theorem error_block_integral_bound :
     ∃ C_block > 0, ∀ k : ℕ,
       |∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t| ≤
         C_block * Real.sqrt ((k : ℝ) + 2) := by
-  sorry
+  refine ⟨9 * Real.pi, by positivity, fun k => ?_⟩
+  have h1T : hardyStart k ≤ hardyStart (k + 1) := hardyStart_le_succ' k
+  have hk_pos : 0 < hardyStart k := hardyStart_pos' k
+  -- Convert to interval integral
+  rw [← intervalIntegral.integral_of_le h1T]
+  -- Bound |∫| ≤ sup · |b - a| via norm_integral_le_of_norm_le_const
+  have h_pw : ∀ t ∈ Set.uIoc (hardyStart k) (hardyStart (k + 1)),
+      ‖ErrorTerm t‖ ≤ 3 / (2 * Real.sqrt ((k : ℝ) + 1)) := by
+    intro t ht
+    rw [Set.uIoc_of_le h1T] at ht
+    rw [Real.norm_eq_abs]
+    exact errorTerm_abs_le_on_block k t (le_of_lt ht.1) ht.2 (lt_trans hk_pos ht.1)
+  calc |∫ t in hardyStart k..hardyStart (k + 1), ErrorTerm t|
+      = ‖∫ t in hardyStart k..hardyStart (k + 1), ErrorTerm t‖ :=
+        (Real.norm_eq_abs _).symm
+    _ ≤ 3 / (2 * Real.sqrt ((k : ℝ) + 1)) * |hardyStart (k + 1) - hardyStart k| :=
+        intervalIntegral.norm_integral_le_of_norm_le_const h_pw
+    _ = 3 / (2 * Real.sqrt ((k : ℝ) + 1)) * (hardyStart (k + 1) - hardyStart k) := by
+        rw [abs_of_nonneg (by linarith)]
+    _ ≤ 3 / (2 * Real.sqrt ((k : ℝ) + 1)) * (6 * Real.pi * ((k : ℝ) + 1)) := by
+        apply mul_le_mul_of_nonneg_left (block_length_le k)
+        exact div_nonneg (by norm_num) (by positivity)
+    _ = 9 * Real.pi * (((k : ℝ) + 1) / Real.sqrt ((k : ℝ) + 1)) := by ring
+    _ = 9 * Real.pi * Real.sqrt ((k : ℝ) + 1) := by
+        congr 1
+        have h_sqrt_ne : Real.sqrt ((k : ℝ) + 1) ≠ 0 :=
+          ne_of_gt (Real.sqrt_pos_of_pos (by positivity : (0 : ℝ) < (k : ℝ) + 1))
+        rw [div_eq_iff h_sqrt_ne]
+        exact (Real.mul_self_sqrt (by positivity : (0 : ℝ) ≤ (k : ℝ) + 1)).symm
+    _ ≤ 9 * Real.pi * Real.sqrt ((k : ℝ) + 2) := by
+        apply mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt (by linarith)) (by positivity)
 
 /-- **Error term first moment via block alternation**: the error term
     integral benefits from alternating signs on consecutive blocks.
