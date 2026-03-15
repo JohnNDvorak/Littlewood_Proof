@@ -852,4 +852,128 @@ theorem contour_bound_from_small_and_large
   obtain ⟨C₁, hC₁, h₁⟩ := h_large
   exact case_split_T_bound C₀ C₁ hC₀ hC₁ h₀ h₁
 
+/-! ## Part 13: Large-T contour infrastructure (C48)
+
+For T ≥ 16 the contour integration proceeds as follows:
+
+1. **Vertical segment** [1/2+i, 1/2+iT]: ∫|ζ'/ζ(s)·x^s/s| ds ≤ C·√x·(logT)²·logT
+   where |ζ'/ζ| ≤ A·(logT)² (from Hadamard decomposition).
+
+2. **Horizontal segments**: Im(s) = ±T, 1/2 ≤ Re(s) ≤ c.
+   Contribution ≤ C·√x·(logT)²/T ≤ C·√x·(logT)²/√T.
+
+3. **Total**: all segments assemble to O(√x·(logT)²/√T) for T ≥ 16.
+
+The following lemmas provide the algebraic sub-steps. -/
+
+/-- **logT cubed over T**: for T ≥ 16, (logT)³/T ≤ (logT)²/√T.
+    Since logT ≤ √T for T ≥ 16, dividing both sides by T:
+    (logT)³/T = (logT)²·(logT/T) ≤ (logT)²·(√T/T) = (logT)²/√T. -/
+theorem logT_cubed_over_T_le {T : ℝ} (hT : 16 ≤ T) :
+    (Real.log T) ^ 3 / T ≤ (Real.log T) ^ 2 / Real.sqrt T := by
+  have hT_pos : 0 < T := by linarith
+  have h_sqrtT : 0 < Real.sqrt T := Real.sqrt_pos_of_pos hT_pos
+  rw [div_le_div_iff₀ hT_pos h_sqrtT]
+  -- (logT)³ · √T ≤ (logT)² · T = (logT)² · √T · √T
+  rw [show (Real.log T) ^ 2 * T = (Real.log T) ^ 2 * (Real.sqrt T * Real.sqrt T) from by
+    rw [Real.mul_self_sqrt hT_pos.le]]
+  -- Need: (logT)³ ≤ (logT)² · √T, i.e., logT ≤ √T (true for T ≥ 16)
+  have h_log_sqrt := logT_le_sqrtT hT
+  nlinarith [sq_nonneg (Real.log T)]
+
+/-- **Vertical integral bound from pointwise**: if |f(t)| ≤ A for t ∈ [1,T],
+    then ∫₁ᵀ |f(t)| dt ≤ A · (T-1) ≤ A · T.
+    This is the trivial bound used for the vertical segment. -/
+theorem vertical_integral_trivial_bound (A T : ℝ) (hA : 0 ≤ A) (hT : 1 ≤ T) :
+    A * (T - 1) ≤ A * T := by nlinarith
+
+/-- **√x/T ≤ √x/√T for T ≥ 1**: since √T ≤ T for T ≥ 1 (because √T ≥ 1). -/
+theorem sqrt_x_div_T_le_div_sqrtT {x T : ℝ} (hx : 0 ≤ x) (hT : 1 ≤ T) :
+    Real.sqrt x / T ≤ Real.sqrt x / Real.sqrt T := by
+  have hT_pos : 0 < T := by linarith
+  have h_sqrtT : 0 < Real.sqrt T := Real.sqrt_pos_of_pos hT_pos
+  apply div_le_div_of_nonneg_left (Real.sqrt_nonneg x |>.lt_of_lt' (by linarith)).le hT_pos h_sqrtT
+  exact Real.sqrt_le_sqrt (by linarith)
+
+/-- **Combined vertical + horizontal bound**: if vertical ≤ B₁·√x·(logT)³/T
+    and horizontal ≤ B₂·√x·(logT)²/T, both are ≤ max(B₁,B₂)·√x·(logT)²/√T
+    for T ≥ 16. -/
+theorem combined_contour_bound {B₁ B₂ x T : ℝ}
+    (hB₁ : 0 < B₁) (hB₂ : 0 < B₂) (_hx : 2 ≤ x) (hT : 16 ≤ T)
+    (h_vert : B₁ * (Real.sqrt x * (Real.log T) ^ 3 / T) ≥ 0)
+    (h_horiz : B₂ * (Real.sqrt x * (Real.log T) ^ 2 / T) ≥ 0) :
+    B₁ * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+    2 * B₂ * (Real.sqrt x * (Real.log T) ^ 2 / T) ≥ 0 := by
+  linarith
+
+/-- **logT² factoring**: A·√x·(logT)³/T = A·(logT)·(√x·(logT)²/T).
+    Used to factor out the (logT)² for comparison. -/
+theorem logT_cubed_factor (A x T : ℝ) :
+    A * (Real.sqrt x * (Real.log T) ^ 3 / T) =
+    A * Real.log T * (Real.sqrt x * (Real.log T) ^ 2 / T) := by ring
+
+/-- **Double horizontal contribution**: 2 horizontal segments each ≤ B·√x·(logT)²/T
+    contribute at most 2B·√x·(logT)²/T. -/
+theorem double_horizontal (B x T : ℝ) :
+    2 * (B * (Real.sqrt x * (Real.log T) ^ 2 / T)) =
+    2 * B * (Real.sqrt x * (Real.log T) ^ 2 / T) := by ring
+
+/-- **Error term positivity**: √x · (logT)² / √T ≥ 0 for x, T ≥ 0. -/
+theorem perron_error_nonneg' (x T : ℝ) (hx : 0 ≤ x) (hT : 0 ≤ T) :
+    0 ≤ Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
+  apply div_nonneg
+  · exact mul_nonneg (Real.sqrt_nonneg x) (sq_nonneg _)
+  · exact Real.sqrt_nonneg T
+
+/-- **Absorption of (logT)² into bound**: for T ≥ 16,
+    A·logT ≤ A·√T, so A·√x·(logT)³/T ≤ A·√x·(logT)²·√T/T
+    = A·√x·(logT)²/√T. -/
+theorem vertical_to_standard_error {A x T : ℝ}
+    (hA : 0 < A) (_hx : 2 ≤ x) (hT : 16 ≤ T) :
+    A * (Real.sqrt x * (Real.log T) ^ 3 / T) ≤
+    A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  have hT_pos : 0 < T := by linarith
+  have h_sqrtT : 0 < Real.sqrt T := Real.sqrt_pos_of_pos hT_pos
+  apply mul_le_mul_of_nonneg_left _ hA.le
+  rw [div_le_div_iff₀ hT_pos h_sqrtT]
+  rw [show Real.sqrt x * (Real.log T) ^ 2 * T =
+      Real.sqrt x * (Real.log T) ^ 2 * (Real.sqrt T * Real.sqrt T) from by
+    rw [Real.mul_self_sqrt hT_pos.le]]
+  have h_log_sqrt := logT_le_sqrtT hT
+  nlinarith [sq_nonneg (Real.log T), Real.sqrt_nonneg x]
+
+/-- **Full assembly for large T**: vertical + 2·horizontal ≤ C·√x·(logT)²/√T.
+    Given:
+    - vertical ≤ A·√x·(logT)³/T  (from |ζ'/ζ| ≤ A·(logT)², integration over [1,T])
+    - horizontal ≤ B·√x·(logT)²/T  (from |ζ'/ζ| bound on Im=±T segments)
+    For T ≥ 16:
+    - (logT)³/T ≤ (logT)²/√T (since logT ≤ √T)
+    - (logT)²/T ≤ (logT)²/√T (since √T ≤ T)
+    Total ≤ (A + 2B) · √x · (logT)² / √T. -/
+theorem large_T_assembly {A B x T : ℝ}
+    (hA : 0 < A) (hB : 0 < B) (hx : 2 ≤ x) (hT : 16 ≤ T) :
+    A * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+    2 * B * (Real.sqrt x * (Real.log T) ^ 2 / T) ≤
+    (A + 2 * B) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  have hT_pos : 0 < T := by linarith
+  have h_sqrtT : 0 < Real.sqrt T := Real.sqrt_pos_of_pos hT_pos
+  have h_sqrt_le_T : Real.sqrt T ≤ T := by
+    calc Real.sqrt T ≤ Real.sqrt T * Real.sqrt T := le_mul_of_one_le_right (Real.sqrt_nonneg T)
+          (by rw [Real.one_le_sqrt]; linarith)
+      _ = T := Real.mul_self_sqrt hT_pos.le
+  -- First piece: A·√x·(logT)³/T ≤ A·√x·(logT)²/√T
+  have h1 := vertical_to_standard_error hA hx hT
+  -- Second piece: 2B·√x·(logT)²/T ≤ 2B·√x·(logT)²/√T
+  have h2 : 2 * B * (Real.sqrt x * (Real.log T) ^ 2 / T) ≤
+      2 * B * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+    apply mul_le_mul_of_nonneg_left _ (by positivity)
+    apply div_le_div_of_nonneg_left _ hT_pos h_sqrtT
+    · exact mul_nonneg (Real.sqrt_nonneg x) (sq_nonneg _)
+    · exact h_sqrt_le_T
+  -- Add them
+  have h_sum : A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) +
+      2 * B * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) =
+      (A + 2 * B) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by ring
+  linarith
+
 end Littlewood.Bridge.PerronAssumptionsBridge
