@@ -25,25 +25,39 @@ The proof decomposes into:
 - `rs_block_interpolation`: wired through rs_saddle_point_bound (0 sorrys)
 - `weighted_increment_antitone`: ∫(√(k+2+p)-√(k+2))Ψ ≤ ∫(√(k+1+p)-√(k+1))Ψ (concavity)
 
-### Atomic sorrys (genuine mathematical content)
-- `chi_modulus_critical_line`: |χ(1/2+it)| = 1 on the critical line (CLOSED)
-- `saddle_point_remainder` / `rs_saddle_point_bound`: Siegel 1932 saddle-point (1 sorry)
-- `leading_term_cov`: CoV identity for RS leading term on blocks (CLOSED)
-- `rs_block_antitone`: Block monotonicity from c_fn_expansion (1 sorry)
+### Atomic sorrys (ALL 4 are irreducible mathematical content)
+- `gabcke_next_order_bound` (line ~3140): Steepest-descent remainder |c₁(p)| ≤ 1/4
+  Needs: contour deformation to saddle w₀=√(t/2π), Taylor expansion of phase,
+  Fresnel coefficient bound. Ref: Siegel 1932 §3; Gabcke 1979 Satz 1.
+- `block_correction_antitone_from_saddle` (line ~3161): Signed remainder coupling
+  Needs: phase coherence between R(k) on consecutive blocks (Gabcke Satz 4).
+  Cannot be derived from pointwise |R(k)| bounds alone.
+- `main_term_first_moment` (line ~3283): |∫₁ᵀ MainTerm| ≤ C·√T
+  Needs: oscillatory cancellation via VdC first-derivative test per mode.
+  Per-mode bound (main_term_per_mode_bound) gives O(T) per mode;
+  naive summation over N ≈ T^{1/4} modes yields O(T^{5/4}), not O(√T).
+  Requires integral-sum interchange with variable-length Finset.range.
+- `error_term_first_moment` (line ~3448): |∫₁ᵀ ErrorTerm| ≤ C·√T
+  Needs: alternating block cancellation with ANTITONE absolute values.
+  Signed block integrals alternate (signed_block_integral_nonneg: proved),
+  but |∫_block_k| ≈ C√(k+2) GROWS. Requires block_correction_antitone
+  (sorry #2) to extract the antitone remainder for Leibniz bound.
+  Pointwise |ErrorTerm| = O(t^{-1/4}) only gives ∫|E| = O(T^{3/4}).
 
 ### Proved (was sorry)
+- `chi_modulus_critical_line`: CLOSED via Gamma reflection + trig identity
 - `signed_block_integral_expansion`: CLOSED via leading_term_cov + pointwise RS bound
-- `c_fn_expansion`: algebraic from signed_block_integral_expansion (CLOSED)
-- `weighted_sqrt_monotone`: ∫√(k+1+p)·Ψ increasing in k (NEW)
-- `chi_modulus_critical_line`: via Gamma reflection + trig identity (NEW)
+- `c_fn_expansion`: CLOSED algebraically from signed_block_integral_expansion
+- `weighted_sqrt_monotone`: CLOSED, ∫√(k+1+p)·Ψ increasing in k
+- `leading_term_cov`: CLOSED, CoV identity for RS leading term on blocks
 
-### Proved (new infrastructure, C30)
+### Proved (infrastructure)
 - `polynomial_mismatch_sum_bound`: ‖mismatch sum‖ ≤ 4√(k+1) on block k
 - `sqrt_block_le_sqrt_t_param`: √(k+1) ≤ √(t/(2π)+1) from hardyStart
 - `polynomial_mismatch_crude_order`: ‖mismatch sum‖ ≤ 4√(t/(2π)+1) (O(t^{1/4}))
 
-SORRY COUNT: 2 (saddle_point, rs_block_antitone) — both from siegel_expansion_core
-WARNING COUNT: 2
+SORRY COUNT: 4 (all irreducible — no assembly sorrys remain)
+WARNING COUNT: 4
 
 Reference: Siegel 1932 §3; Edwards Ch. 7 (pp. 136-145);
 Titchmarsh §4.16-4.17; Gabcke 1979.
