@@ -16,6 +16,7 @@ Output:
 
 import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.Aristotle.DirichletPhaseAlignment
+import Littlewood.Aristotle.Standalone.AbelSummationPsiPi
 
 noncomputable section
 
@@ -48,9 +49,69 @@ class TruncatedExplicitFormulaPiHyp : Prop where
           ((∑ ρ ∈ ({ρ₀} : Finset ℂ), ((x : ℂ) ^ ρ / ρ)).re) / Real.log x
             ≤ -(c * (Real.sqrt x / Real.log x))
 
+/-! ### Decomposition of PiApproxFromExplicitFormulaHyp into Abel + ψ-level pieces
+
+The `PiApproxFromExplicitFormulaHyp` sorry decomposes into two independent
+mathematical obligations:
+
+1. **Abel correction** (partial summation ψ → π):
+   |π(x) - li(x) - (ψ(x) - x)/logx| ≤ D · √x/(logx)²
+   Classical: Davenport Ch. 17, Montgomery-Vaughan §2.2.
+
+2. **ψ-level explicit formula for arbitrary finite sets**:
+   For any S ⊆ {ρ : ρ.re = 1/2}, ∀ ε > 0, ∀ᶠ x,
+     |(ψ(x) - x + Σ_{ρ∈S} x^ρ/ρ) / logx| ≤ ε · √x/logx
+   Classical: Perron formula + contour shift (Davenport Ch. 17).
+
+The bridge: `abel_bridge_adjustable` from AbelSummationPsiPi combines these
+via the triangle inequality + asymptotic absorption:
+  |piLiError + Σ/logx| ≤ |piLiError - (ψ-x)/logx| + |(ψ-x)/logx + Σ/logx|
+                       ≤ D·√x/(logx)² + δ·√x/logx
+                       ≤ ε·√x/logx    (for large x)
+-/
+
+/-- Abel summation correction: π(x) - li(x) ≈ (ψ(x) - x)/logx with correction
+    of order O(√x/(logx)²). Classical: partial summation applied to the
+    prime-counting function (Davenport Ch. 17; Montgomery-Vaughan §2.2).
+    Not in Mathlib: requires von Mangoldt sum manipulation + integration. -/
+class AbelCorrectionPsiPiHyp : Prop where
+  /-- There exists D > 0 such that eventually the Abel correction is small. -/
+  correction_bound : ∃ D > (0 : ℝ), ∀ᶠ x in atTop,
+    |piLiError x - (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) /
+      Real.log x| ≤ D * (Real.sqrt x / (Real.log x) ^ 2)
+
+/-- ψ-level explicit formula for arbitrary finite sets of critical-line zeros.
+    For any S ⊆ {ρ : ρ.re = 1/2 ∧ ρ ∈ zetaNontrivialZeros} and any ε > 0,
+    eventually |(ψ(x) - x + Σ_{ρ∈S} x^ρ/ρ) / logx| ≤ ε · √x/logx.
+
+    Classical: the ψ-level Perron formula gives
+    |ψ(x) - x + Σ_{|γ|≤T} x^ρ/ρ| ≤ C·(√x·(logT)²/√T + (logx)²).
+    For any finite S, choosing T large enough absorbs the tail
+    Σ_{ZerosBelow T \ S} into the error.
+
+    Not in Mathlib: requires contour integration + zero-sum convergence. -/
+class PsiExplicitFormulaFinsetHyp : Prop where
+  /-- For any finite S of critical-line zeros and ε > 0, eventually the
+      ψ-level error divided by logx is ε-small at the √x/logx scale. -/
+  psi_level_bound :
+    ∀ (S : Finset ℂ),
+      (∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2) →
+      ∀ δ : ℝ, 0 < δ → ∀ᶠ x in atTop,
+        |(Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
+            (∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
+          ≤ δ * (Real.sqrt x / Real.log x)
+
+instance : AbelCorrectionPsiPiHyp where
+  correction_bound := by sorry
+
+instance : PsiExplicitFormulaFinsetHyp where
+  psi_level_bound := by sorry
+
 /-- Abel summation ψ→π: the truncated explicit formula for π at √x/logx scale.
     Classical: Davenport Ch. 17 + partial summation (ψ→π).
-    Assumption: not yet in Mathlib (requires contour integration + Abel summation). -/
+
+    PROVED from `AbelCorrectionPsiPiHyp` + `PsiExplicitFormulaFinsetHyp` via
+    the Abel bridge combinator `abel_bridge_adjustable`. -/
 class PiApproxFromExplicitFormulaHyp : Prop where
   pi_approx_bound :
     ∀ (S : Finset ℂ),
@@ -59,8 +120,44 @@ class PiApproxFromExplicitFormulaHyp : Prop where
         |piLiError x + ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
           ≤ ε * (Real.sqrt x / Real.log x)
 
-instance : PiApproxFromExplicitFormulaHyp where
-  pi_approx_bound := by sorry
+/-- The Abel bridge: combine ψ-level formula with Abel correction to get π-level.
+
+    This is the key structural lemma. For fixed S and ε:
+    1. Get D from Abel correction hypothesis
+    2. Get δ-smallness from ψ-level formula (with δ = ε/2)
+    3. Abel correction absorbed: D·√x/(logx)² ≤ (ε/2)·√x/logx for large x
+    4. Total: ε·√x/logx -/
+private theorem pi_approx_from_abel_and_psi
+    [AbelCorrectionPsiPiHyp] [PsiExplicitFormulaFinsetHyp]
+    (S : Finset ℂ)
+    (hS : ∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2)
+    (ε : ℝ) (hε : 0 < ε) :
+    ∀ᶠ x in atTop,
+      |piLiError x + ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
+        ≤ ε * (Real.sqrt x / Real.log x) := by
+  -- Extract the Abel correction bound
+  obtain ⟨D, hD, h_abel⟩ := AbelCorrectionPsiPiHyp.correction_bound
+  -- The ψ-level formula provides: for any δ > 0, eventually small
+  have h_psi : ∀ δ : ℝ, 0 < δ → ∀ᶠ x in atTop,
+      |(Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
+          (∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
+        ≤ δ * (Real.sqrt x / Real.log x) :=
+    PsiExplicitFormulaFinsetHyp.psi_level_bound S hS
+  -- Apply the Abel bridge combinator
+  -- f = piLiError, g = (ψ(x) - x) / logx, S_val = (Σ x^ρ/ρ).re / logx
+  -- We need: |f + S_val| ≤ ε · √x/logx
+  -- From: |f - g| ≤ D · √x/(logx)² and ∀ δ, |g + S_val| ≤ δ · √x/logx
+  exact AbelSummationPsiPi.abel_bridge_adjustable
+    (fun x => piLiError x)
+    (fun x => (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) / Real.log x)
+    (fun x => ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x)
+    D hD ε hε
+    h_abel
+    h_psi
+
+instance [AbelCorrectionPsiPiHyp] [PsiExplicitFormulaFinsetHyp] :
+    PiApproxFromExplicitFormulaHyp where
+  pi_approx_bound := fun S hS ε hε => pi_approx_from_abel_and_psi S hS ε hε
 
 /-- Ω₋ direction for `π(x) - li(x)` from aligned phases. -/
 private theorem omega_minus_from_zeros
