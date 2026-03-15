@@ -3296,6 +3296,15 @@ private theorem weighted_sqrt_psi_le_sqrt_times_integral (k : ℕ) :
     apply mul_le_mul_of_nonneg_right _ (rsPsi_nonneg_on p (Ioc_subset_Icc_self hp))
     exact Real.sqrt_le_sqrt (by linarith [hp.2])
 
+/-- **(k+1)^{-1/2} <= 1** for all k : N. -/
+private theorem rpow_neg_half_le_one (k : ℕ) :
+    ((k : ℝ) + 1) ^ (-(1 : ℝ) / 2) ≤ 1 := by
+  have h1 : (1 : ℝ) ≤ (k : ℝ) + 1 := by linarith [Nat.cast_nonneg k]
+  calc ((k : ℝ) + 1) ^ (-(1 : ℝ) / 2)
+      ≤ (1 : ℝ) ^ (-(1 : ℝ) / 2) :=
+        Real.rpow_le_rpow_of_nonpos (by norm_num) h1 (by norm_num)
+    _ = 1 := one_rpow _
+
 /-- **Per-block error integral bound**: the signed block integral
     abs(integral_block ErrorTerm) is bounded by C sqrt(k+2).
     Via signed_block_integral_expansion and weighted_sqrt_psi_le_sqrt_times_integral. -/
