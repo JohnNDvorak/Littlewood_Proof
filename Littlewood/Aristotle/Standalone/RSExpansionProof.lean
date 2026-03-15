@@ -5084,6 +5084,11 @@ theorem alternating_pair_cancel_v2 (k : ℕ) (Ak Ak1 : ℝ) :
     show |(-1 : ℝ) * Ak + -(-1 : ℝ) * Ak1| = |Ak - Ak1|
     rw [show (-1 : ℝ) * Ak + -(-1 : ℝ) * Ak1 = -(Ak - Ak1) from by ring, abs_neg]
 
+/-- T^{1/4} ≤ T^{1/2} for T ≥ 1. Monotonicity of rpow in exponent. -/
+theorem rpow_quarter_le_half {T : ℝ} (hT : 1 ≤ T) :
+    T ^ ((1 : ℝ) / 4) ≤ T ^ ((1 : ℝ) / 2) := by
+  exact Real.rpow_le_rpow_of_exponent_le hT (by norm_num)
+
 -- ============================================================
 -- Section 15: Saddle-point remainder mechanism (C48)
 -- ============================================================
