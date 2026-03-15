@@ -176,19 +176,14 @@ class PiApproxFromExplicitFormulaHyp : Prop where
         (x : ℂ) ^ ρ / ρ).re / Real.log x| ≤ D * (Real.sqrt x / Real.log x)
 
 /-- Abel summation correction: π(x) - li(x) ≈ (ψ(x) - x)/logx at √x/logx scale.
-
-    SORRY: Mathematically true (classical Abel/partial summation, Davenport Ch. 17).
-    The dominant correction is (ψ(x) - θ(x))/logx ≈ √x/logx. -/
+    SORRY: Mathematically true (classical Abel/partial summation, Davenport Ch. 17). -/
 instance : AbelCorrectionPsiPiHyp where
   correction_bound := by sorry
 
 /-- Instance for PiApproxFromExplicitFormulaHyp (T-parameterized O-bound).
-
-    Proof: For fixed T ≥ 2, combine:
-    1. ContourRemainderBoundHyp.bound → |ψ(x)-x+Σ_{ZerosBelow T}| ≤ Cc·√x·(logT)²/√T
-       Dividing by logx: ≤ Cc·(logT)²/√T · √x/logx  (for x ≥ 2, logx ≥ 1)
-    2. AbelCorrectionPsiPiHyp → |π(x)-li(x)-(ψ(x)-x)/logx| ≤ D_abel·√x/logx
-    3. Triangle: D = Cc·(logT)²/√T + D_abel -/
+    Proof: triangle inequality combining the ψ-level Perron bound (divided by logx)
+    with the Abel summation correction. For fixed T ≥ 2:
+    D_T = Cc·(logT)²/√T + D_abel + 1. -/
 instance : PiApproxFromExplicitFormulaHyp where
   pi_approx_bound := by
     intro T hT
@@ -197,74 +192,48 @@ instance : PiApproxFromExplicitFormulaHyp where
       Aristotle.Standalone.ExplicitFormulaPsiSkeleton.ContourRemainderBoundHyp.bound
     -- Get Abel correction bound
     obtain ⟨Da, hDa_pos, hDa_bound⟩ := AbelCorrectionPsiPiHyp.correction_bound
-    -- Set D = Cc·(logT)²/√T + Da + 1 (the +1 handles the logx denominator issue)
-    set C_T := Cc * ((Real.log T) ^ 2 / Real.sqrt T) with hC_T_def
+    -- D = Cc·(logT)²/√T + Da + 1
+    set C_T := Cc * ((Real.log T) ^ 2 / Real.sqrt T)
     refine ⟨C_T + Da + 1, by positivity, ?_⟩
     -- Combine the bounds eventually
     filter_upwards [hDa_bound, AbelSummationPsiPi.log_eventually_pos,
-                    Filter.eventually_ge_atTop (2 : ℝ),
-                    AbelSummationPsiPi.log_eventually_ge_one] with x hAbel hlog_pos hx_ge2 hlog_ge1
-    -- Key identity: piLiError x + Σ/logx
-    --   = (piLiError x - (ψ-x)/logx) + ((ψ-x)/logx + Σ/logx)
-    --   = Abel_correction + shiftedRemainderRe/logx
-    have h_psi_bound := hCc_bound x T hx_ge2 hT
-    -- shiftedRemainderRe x T = chebyshevPsi x - x + zeroSumRe x T
+                    Filter.eventually_ge_atTop (2 : ℝ)] with x hAbel hlog_pos hx_ge2
+    -- Algebraic identity for the remainder
     have h_remainder_eq :
         Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T =
         Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
           (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T, (↑x : ℂ) ^ ρ / ρ).re := by
       simp only [Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe,
                   Aristotle.Standalone.ExplicitFormulaPsiSkeleton.zeroSumRe]
-    -- Triangle inequality decomposition
-    have h_triangle :
-        |piLiError x + (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T,
-          (↑x : ℂ) ^ ρ / ρ).re / Real.log x| ≤
-        |piLiError x - (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) /
-          Real.log x| +
-        |(Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
-            (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T,
-              (↑x : ℂ) ^ ρ / ρ).re) / Real.log x| := by
-      have : piLiError x + (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T,
-          (↑x : ℂ) ^ ρ / ρ).re / Real.log x =
-        (piLiError x - (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) /
-          Real.log x) +
-        ((Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
-            (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T,
-              (↑x : ℂ) ^ ρ / ρ).re) / Real.log x) := by
-        field_simp
-      rw [this]
-      exact abs_add_le _ _
-    -- Bound the ψ-level piece: |shiftedRemainderRe/logx| ≤ Cc·(logT)²/√T · √x/logx
-    have h_psi_scaled :
-        |(Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
-            (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T,
-              (↑x : ℂ) ^ ρ / ρ).re) / Real.log x| ≤
-        C_T * (Real.sqrt x / Real.log x) := by
-      rw [abs_div, abs_of_pos hlog_pos]
-      rw [div_le_div_iff₀ hlog_pos hlog_pos]
-      rw [← h_remainder_eq]
-      calc |Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T| *
-              Real.log x
-          ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) * Real.log x := by
-            exact mul_le_mul_of_nonneg_right h_psi_bound hlog_pos.le
-        _ = C_T * (Real.sqrt x * Real.log x) := by
-            rw [hC_T_def]; ring
-        _ = C_T * Real.sqrt x * Real.log x := by ring
-    -- Combine
-    calc |piLiError x + (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T,
-            (↑x : ℂ) ^ ρ / ρ).re / Real.log x|
+    -- ψ-level bound for this T
+    have h_psi_bound := hCc_bound x T hx_ge2 hT
+    -- Triangle: split piLiError x + Σ/logx into Abel correction + remainder/logx
+    have h_split : piLiError x + (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T,
+        (↑x : ℂ) ^ ρ / ρ).re / Real.log x =
+      (piLiError x - (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) /
+        Real.log x) +
+      (Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T /
+        Real.log x) := by
+      rw [h_remainder_eq]; field_simp
+    rw [h_split]
+    -- Bound |A + B| ≤ |A| + |B|
+    calc |_ + _|
         ≤ |piLiError x - (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) /
             Real.log x| +
-          |(Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
-              (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T,
-                (↑x : ℂ) ^ ρ / ρ).re) / Real.log x| := h_triangle
+          |Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T /
+            Real.log x| := abs_add_le _ _
       _ ≤ Da * (Real.sqrt x / Real.log x) +
-          C_T * (Real.sqrt x / Real.log x) := add_le_add hAbel h_psi_scaled
-      _ = (C_T + Da) * (Real.sqrt x / Real.log x) := by ring
+          C_T * (Real.sqrt x / Real.log x) := by
+          apply add_le_add hAbel
+          rw [abs_div, abs_of_pos hlog_pos]
+          apply div_le_div_of_nonneg_right _ hlog_pos.le
+          calc |Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T|
+              ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := h_psi_bound
+            _ = C_T * Real.sqrt x := by ring
       _ ≤ (C_T + Da + 1) * (Real.sqrt x / Real.log x) := by
-          have : 0 ≤ Real.sqrt x / Real.log x :=
+          have hsql : 0 ≤ Real.sqrt x / Real.log x :=
             div_nonneg (Real.sqrt_nonneg x) hlog_pos.le
-          linarith [mul_nonneg (by linarith : (0:ℝ) ≤ 1) this]
+          nlinarith
 
 /-- Ω₋ direction for `π(x) - li(x)` from aligned phases. -/
 private theorem omega_minus_from_zeros

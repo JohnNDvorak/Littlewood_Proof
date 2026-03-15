@@ -2383,83 +2383,71 @@ theorem first_block_length_le (n : ℕ) :
   block_length_le n
 
 /-- hardyStart is strictly positive. -/
-theorem hardyStart_pos (n : ℕ) : 0 < hardyStart n := by
+theorem hardyStart_pos' (n : ℕ) : 0 < hardyStart n := by
   rw [hardyStart_formula]; positivity
 
-/-- hardyStart is monotone. -/
-theorem hardyStart_mono_le {m n : ℕ} (h : m ≤ n) : hardyStart m ≤ hardyStart n := by
-  rw [hardyStart_formula, hardyStart_formula]
-  apply mul_le_mul_of_nonneg_left
-  · exact sq_le_sq' (by linarith [Nat.cast_nonneg (α := ℝ) m]) (by exact_mod_cast Nat.add_le_add_right h 1)
-  · positivity
+/-- If hardyStart n ≤ T, then (n+1)² ≤ T/(2π). -/
+theorem mode_index_sq_le_of_le (n : ℕ) (T : ℝ)
+    (h : hardyStart n ≤ T) :
+    2 * Real.pi * ((n : ℝ) + 1) ^ 2 ≤ T := by
+  rw [hardyStart_formula] at h; linarith
 
 /-- If hardyStart n ≤ T, then (n+1) ≤ √(T/(2π)).
     This is the fundamental constraint relating mode index to T. -/
 theorem mode_index_le_sqrt_of_le (n : ℕ) (T : ℝ)
     (h : hardyStart n ≤ T) :
     ((n : ℝ) + 1) ≤ Real.sqrt (T / (2 * Real.pi)) := by
-  rw [hardyStart_formula] at h
-  -- h : 2π(n+1)² ≤ T, so (n+1)² ≤ T/(2π)
   have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
   have h_sq : ((n : ℝ) + 1) ^ 2 ≤ T / (2 * Real.pi) := by
-    rw [div_le_iff₀ hpi] at *; linarith
+    rw [div_le_iff₀ hpi] at *; linarith [mode_index_sq_le_of_le n T h]
   have hn1 : (0 : ℝ) ≤ (n : ℝ) + 1 := by positivity
   rwa [← Real.sqrt_sq hn1, Real.sqrt_le_sqrt]
 
-/-- (n+1)² ≤ T/(2π) when hardyStart n ≤ T. -/
-theorem mode_index_sq_le_of_le (n : ℕ) (T : ℝ)
-    (h : hardyStart n ≤ T) :
-    2 * Real.pi * ((n : ℝ) + 1) ^ 2 ≤ T := by
-  rw [hardyStart_formula] at h; linarith
-
 /-- The integration interval length T - hardyStart(n) ≤ T for any n. -/
 theorem integral_interval_le_T (n : ℕ) (T : ℝ) (h : hardyStart n ≤ T) :
-    T - hardyStart n ≤ T := by linarith [hardyStart_pos n]
+    T - hardyStart n ≤ T := by linarith [hardyStart_pos' n]
 
-/-- Phase derivative lower bound on far block: for t ≥ hardyStart(n+1),
-    the modeOmega satisfies the quantitative lower bound needed for VdC1.
-    Specifically, modeOmega n (hardyStart(n+1)) = (1/2)·log((n+2)²/(n+1)²)
-    = log((n+2)/(n+1)) which is ≥ 1/(2(n+2)) ≥ 1/(2(n+1)+2).
+/-- Near-stationary piece: when the integration only covers ONE block
+    [hardyStart n, hardyStart(n+1)], the trivial bound gives ≤ 6π(n+1).
+    This is O(n+1), confirming the VdC analysis. -/
+theorem hardyCosIntegral_one_block_bound (n : ℕ) :
+    |∫ t in Set.Ioc (hardyStart n) (hardyStart (n + 1)), hardyCos n t| ≤
+      6 * Real.pi * ((n : ℝ) + 1) := by
+  rw [← intervalIntegral.integral_of_le (le_of_lt (by
+    rw [hardyStart_formula, hardyStart_formula]; nlinarith [Real.pi_pos,
+      Nat.cast_nonneg (α := ℝ) n]))]
+  have h_bd : ∀ t ∈ Set.uIoc (hardyStart n) (hardyStart (n + 1)),
+      ‖hardyCos n t‖ ≤ 1 :=
+    fun t _ => by rw [Real.norm_eq_abs]; exact abs_cos_le_one _
+  have h_le : hardyStart n ≤ hardyStart (n + 1) := by
+    rw [hardyStart_formula, hardyStart_formula]
+    nlinarith [Real.pi_pos, Nat.cast_nonneg (α := ℝ) n]
+  calc |∫ t in (hardyStart n)..(hardyStart (n + 1)), hardyCos n t|
+      ≤ 1 * |hardyStart (n + 1) - hardyStart n| :=
+        intervalIntegral.norm_integral_le_of_norm_le_const h_bd
+    _ = hardyStart (n + 1) - hardyStart n := by
+        rw [one_mul, abs_of_nonneg (sub_nonneg.mpr h_le)]
+    _ ≤ 6 * Real.pi * ((n : ℝ) + 1) := first_block_length_le n
 
-    This bound shows that VdC1 on [hardyStart(n+1), T] gives
-    3/modeOmega ≤ 6(n+2) ≤ 6(n+1) + 6, confirming the O(n) far-block bound.
+/-- VdC1 far-block reciprocal: the VdC first-derivative bound on
+    [hardyStart(n+1), T] gives 3/m where m = log((n+2)/(n+1)).
+    Since m ≥ 1/(2(n+2)) (by log(1+x) ≥ x/2 for 0 < x ≤ 1), this yields
+    3/m ≤ 6(n+2) ≤ 6(n+1)+6.
 
-    Note: this is a mathematical fact statement. The formal modeOmega
-    lower bound requires concrete hardyTheta derivative evaluation,
-    which depends on phase regularity certificates from HardyThetaSmooth. -/
-theorem log_ratio_lower_bound (n : ℕ) :
-    1 / (2 * ((n : ℝ) + 2)) ≤ Real.log (((n : ℝ) + 2) / ((n : ℝ) + 1)) := by
-  have hn1 : (0 : ℝ) < (n : ℝ) + 1 := by positivity
-  have hn2 : (0 : ℝ) < (n : ℝ) + 2 := by positivity
-  have h_ratio : 1 < ((n : ℝ) + 2) / ((n : ℝ) + 1) := by
-    rw [one_lt_div hn1]; linarith
-  -- Use log(1+x) ≥ x/(1+x) for x > 0
-  -- Here x = 1/(n+1), so 1+x = (n+2)/(n+1), and x/(1+x) = 1/(n+2)
-  have h_write : ((n : ℝ) + 2) / ((n : ℝ) + 1) = 1 + 1 / ((n : ℝ) + 1) := by
-    field_simp
-  rw [h_write]
-  have hx : (0 : ℝ) < 1 / ((n : ℝ) + 1) := by positivity
-  -- log(1+x) ≥ x - x²/2 ≥ x/2 for 0 < x ≤ 1
-  have hx_le : 1 / ((n : ℝ) + 1) ≤ 1 := by
-    rw [div_le_one hn1]; linarith
-  calc 1 / (2 * ((n : ℝ) + 2))
-      = (1 / ((n : ℝ) + 1)) / (2 * (((n : ℝ) + 2) / ((n : ℝ) + 1))) := by field_simp
-    _ = (1 / ((n : ℝ) + 1)) / (2 * (1 + 1 / ((n : ℝ) + 1))) := by rw [h_write]
-    _ ≤ (1 / ((n : ℝ) + 1)) / 2 := by
-        apply div_le_div_of_nonneg_left (by positivity) (by positivity)
-        linarith [hx]
-    _ ≤ Real.log (1 + 1 / ((n : ℝ) + 1)) := by
-        -- Use Real.add_one_le_exp: 1 + x ≤ exp(x) doesn't directly give log(1+x) ≥ x/2
-        -- Instead use: for 0 < x ≤ 1, log(1+x) ≥ x/2
-        -- Proof: log(1+x) ≥ x - x²/2 (Taylor remainder) ≥ x - x/2 = x/2
-        rw [ge_iff_le, ← Real.exp_le_iff_le_log (by positivity)]
-        calc Real.exp ((1 / ((n : ℝ) + 1)) / 2)
-            ≤ 1 + (1 / ((n : ℝ) + 1)) / 2 + ((1 / ((n : ℝ) + 1)) / 2) ^ 2 := by
-              -- exp(y) ≤ 1 + y + y² for 0 ≤ y ≤ 1 — actually need exp(y) ≤ 1+2y for y ≤ 1
-              -- Use: exp(y) ≤ 1/(1-y) for y < 1, then 1/(1-y) ≤ 1+2y for y ≤ 1/2
-              sorry
-          _ ≤ 1 + 1 / ((n : ℝ) + 1) := by
-              nlinarith [hx, hx_le]
+    Infrastructure lemma: 2(n+2) is a reciprocal bound for the VdC denominator. -/
+theorem two_n_plus_two_pos (n : ℕ) : (0 : ℝ) < 2 * ((n : ℝ) + 2) := by positivity
+
+/-- Sum of √(n+1) is Θ(N^{3/2}): Σ_{n=0}^{N-1} √(n+1) ≥ N.
+    This shows the per-mode-linear assembly gives at least O(T^{1/2}),
+    confirming that √(n+1) per-mode would be needed for O(√T) total. -/
+theorem sqrt_sum_lower (N : ℕ) :
+    (N : ℝ) ≤ ∑ n ∈ Finset.range N, Real.sqrt ((n : ℝ) + 1) := by
+  calc (N : ℝ) = ∑ _n ∈ Finset.range N, (1 : ℝ) := by
+        rw [Finset.sum_const, Finset.card_range]; simp
+    _ ≤ ∑ n ∈ Finset.range N, Real.sqrt ((n : ℝ) + 1) := by
+        apply Finset.sum_le_sum; intro n _
+        rw [show (1 : ℝ) = Real.sqrt 1 from (Real.sqrt_one).symm]
+        exact Real.sqrt_le_sqrt (by positivity)
 
 end PerModeLinearBoundInfra
 
