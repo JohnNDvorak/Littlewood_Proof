@@ -388,18 +388,107 @@ theorem contour_from_small_T
   obtain ⟨C₁, hC₁, h₁⟩ := contour_large_T_available
   exact contour_case_split C₀ C₁ hC₀ hC₁ h₀ h₁
 
-/-- Instance wired through `contour_from_small_T`: the large-T case is closed
-    via `LargeTContourBoundHyp`, so only the small-T sub-goal remains as sorry.
-    The small-T bound is PROVED in the bridge (`small_T_contour_bound`) but
-    cannot be imported here due to import direction. -/
+/-! ### Log² absorption — key algebraic step for small-T closure
+
+For the small-T case (T ∈ [2, 16]), the general explicit formula gives
+  |shiftedRemainderRe x T| ≤ C₂ · (√x·(logT)²/√T + (logx)²)
+The (logx)² term can be absorbed into the error shape because:
+  (logx)² ≤ 16·√x  (from log x ≤ 4·x^{1/4})
+  √x ≤ (64/(log2)²) · (√x·(logT)²/√T)  for T ∈ [2,16]
+These are pure algebra — no contour integration needed. -/
+
+/-- For x ≥ 1, (logx)² ≤ 16·√x.
+    Proof: log x ≤ x^{1/4}/(1/4) = 4·x^{1/4} (Real.log_le_rpow_div),
+    so (logx)² ≤ 16·x^{1/2} = 16·√x. -/
+theorem log_sq_le_mul_sqrt (x : ℝ) (hx : 1 ≤ x) :
+    (Real.log x) ^ 2 ≤ 16 * Real.sqrt x := by
+  rw [Real.sqrt_eq_rpow]
+  have hx0 : 0 ≤ x := by linarith
+  have h1 : Real.log x ≤ 4 * x ^ ((1:ℝ)/4) := by
+    have := Real.log_le_rpow_div hx0 (show (0:ℝ) < 1/4 by positivity); linarith
+  calc (Real.log x) ^ 2
+      ≤ (4 * x ^ ((1:ℝ)/4)) ^ 2 := pow_le_pow_left₀ (Real.log_nonneg hx) h1 2
+    _ = 16 * (x ^ ((1:ℝ)/4)) ^ (2:ℕ) := by ring
+    _ = 16 * x ^ ((1:ℝ)/2) := by
+        rw [← Real.rpow_natCast (x ^ ((1:ℝ)/4)) 2, ← Real.rpow_mul hx0]; norm_num
+
+/-- For x ≥ 1 and T ∈ [2,16], (logx)² ≤ (64/(log2)²) · (√x·(logT)²/√T).
+    Uses `log_sq_le_mul_sqrt` + the denominator bound (log2)²·√T ≤ 4·(logT)². -/
+theorem log_sq_absorbed_by_error (x T : ℝ) (hx : 1 ≤ x) (hT_lo : 2 ≤ T) (hT_hi : T ≤ 16) :
+    (Real.log x) ^ 2 ≤ (64 / (Real.log 2) ^ 2) *
+      (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  have hT_pos : 0 < T := by linarith
+  have hsqrtT_pos : 0 < Real.sqrt T := Real.sqrt_pos_of_pos hT_pos
+  have hlog2_sq : 0 < (Real.log 2) ^ 2 := sq_pos_of_pos (Real.log_pos (by norm_num))
+  have hlogT : Real.log 2 ≤ Real.log T := Real.log_le_log (by norm_num) (by linarith)
+  have hsqrtT_le : Real.sqrt T ≤ 4 := by
+    calc Real.sqrt T ≤ Real.sqrt 16 := Real.sqrt_le_sqrt (by linarith)
+      _ = 4 := by rw [show (16 : ℝ) = 4 ^ 2 by norm_num, Real.sqrt_sq (by norm_num : (0:ℝ) ≤ 4)]
+  have hlog2_nn : 0 ≤ Real.log 2 := (Real.log_pos (by norm_num)).le
+  have h_sq_mono : (Real.log 2) ^ 2 ≤ (Real.log T) ^ 2 :=
+    pow_le_pow_left₀ hlog2_nn hlogT 2
+  have h_key : (Real.log 2) ^ 2 * Real.sqrt T ≤ 4 * (Real.log T) ^ 2 := by
+    calc (Real.log 2) ^ 2 * Real.sqrt T
+        ≤ (Real.log T) ^ 2 * Real.sqrt T :=
+          mul_le_mul_of_nonneg_right h_sq_mono hsqrtT_pos.le
+      _ ≤ (Real.log T) ^ 2 * 4 :=
+          mul_le_mul_of_nonneg_left hsqrtT_le (sq_nonneg _)
+      _ = 4 * (Real.log T) ^ 2 := by ring
+  have h_16 : 16 ≤ 64 / (Real.log 2) ^ 2 * ((Real.log T) ^ 2 / Real.sqrt T) := by
+    rw [div_mul_div_comm, le_div_iff₀ (mul_pos hlog2_sq hsqrtT_pos)]
+    have := mul_le_mul_of_nonneg_left h_key (show (0:ℝ) ≤ 16 by norm_num)
+    linarith
+  calc (Real.log x) ^ 2
+      ≤ 16 * Real.sqrt x := log_sq_le_mul_sqrt x hx
+    _ ≤ (64 / (Real.log 2) ^ 2 * ((Real.log T) ^ 2 / Real.sqrt T)) * Real.sqrt x :=
+        mul_le_mul_of_nonneg_right h_16 (Real.sqrt_nonneg x)
+    _ = (64 / (Real.log 2) ^ 2) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by ring
+
+/-- **Small-T conditional closure**: given the general explicit formula bound
+    |shiftedRemainderRe x T| ≤ C₂·(√x·(logT)²/√T + (logx)²)
+    for T ∈ [2, 16], the log² term can be absorbed via `log_sq_absorbed_by_error`
+    to produce the standard error shape. -/
+theorem small_T_from_general_formula
+    (C₂ : ℝ) (hC₂ : 0 < C₂)
+    (h_gen : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)) :
+    ∃ C₀ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |shiftedRemainderRe x T| ≤
+        C₀ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  refine ⟨C₂ * (1 + 64 / (Real.log 2) ^ 2), by positivity, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hx1 : (1 : ℝ) ≤ x := by linarith
+  have h_abs := h_gen x T hx hT_lo hT_hi
+  have h_la := log_sq_absorbed_by_error x T hx1 hT_lo hT_hi
+  calc |shiftedRemainderRe x T|
+      ≤ C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := h_abs
+    _ ≤ C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+        (64 / (Real.log 2) ^ 2) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) := by
+        apply mul_le_mul_of_nonneg_left _ hC₂.le
+        exact add_le_add_right h_la _
+    _ = C₂ * (1 + 64 / (Real.log 2) ^ 2) *
+        (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by ring
+
+/-- Instance wired through `contour_from_small_T` + `small_T_from_general_formula`:
+    the large-T case is closed via `LargeTContourBoundHyp`, and the small-T
+    case reduces to the general explicit formula (available in PerronExplicit
+    but not importable here). The remaining sorry covers ONLY:
+      ∀ x T, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+        |shiftedRemainderRe x T| ≤ C₂·(√x·(logT)²/√T + (logx)²)
+    i.e., the general Perron explicit formula restricted to T ∈ [2,16]. -/
 instance : ContourRemainderBoundHyp where
   bound := by
-    exact contour_from_small_T ⟨1, one_pos, fun x T hx hT_lo hT_hi => by
-      -- Small-T case (T ∈ [2, 16]): proved in bridge via general_formula_accessible +
-      -- log²/√x absorption. Cannot import bridge here (import direction).
-      -- This sorry is STRICTLY WEAKER than a bare sorry on the full bound:
-      -- only T ∈ [2, 16] range, not all T ≥ 2.
-      sorry⟩
+    apply contour_from_small_T
+    have h_gen : ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+        |shiftedRemainderRe x T| ≤
+          C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+      -- This is the general Perron explicit formula for T ∈ [2,16].
+      -- Proved in PerronExplicit as general_explicit_formula_from_perron but
+      -- not importable here. The content is the Perron contour shift.
+      sorry
+    obtain ⟨C₂, hC₂, hg⟩ := h_gen
+    exact small_T_from_general_formula C₂ hC₂ hg
 
 /-! ### Perron error shape toolbox
 
