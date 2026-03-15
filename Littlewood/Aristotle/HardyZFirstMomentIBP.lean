@@ -2005,4 +2005,134 @@ theorem hardyZ_first_moment_sublinear :
         apply Real.rpow_le_rpow_of_exponent_le hT_one
         linarith
 
+-- ============================================================
+-- Part 8c: Error term first moment assembly
+-- ============================================================
+
+section ErrorTermFirstMomentAssembly_v2
+
+open HardyEstimatesPartial
+open Aristotle.Standalone.OscPieceBigOAssembly
+  (exists_block_of_ge_hardyStart0 hardyStart_mono block_index_sq_le)
+open Aristotle.HardyNProperties (hardyStart_formula block_length)
+open Aristotle.IntervalPartition (integral_split_at integral_split_finitely)
+open Aristotle.ErrorTermExpansion (rsPsi)
+open Aristotle.RSBlockParam (blockParam)
+
+/-- Block count bound: K ≤ √T from hardyStart K ≤ T. -/
+private theorem block_count_le_sqrt_v2 (K : ℕ) (T : ℝ) (hK_lo : hardyStart K ≤ T) :
+    (K : ℝ) ≤ Real.sqrt T := by
+  have hK_sq : (K : ℝ) ^ 2 ≤ T := by
+    have h_hs : (K : ℝ) ^ 2 ≤ hardyStart K := by
+      rw [hardyStart_formula]; push_cast
+      have hK_nn : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg K
+      nlinarith [Real.pi_gt_three, sq_nonneg ((K : ℝ) + 1)]
+    linarith
+  rw [← Real.sqrt_sq (Nat.cast_nonneg K)]
+  exact Real.sqrt_le_sqrt hK_sq
+
+/-- **Error term first moment O(√T) assembly**.
+
+    Given the RS expansion hypothesis and the antitone property of block
+    integral absolute values, derives |∫₁ᵀ ErrorTerm| ≤ C · √T.
+
+    Strategy: split into head + block sum + tail.
+    - Head (∫₁^{hs0}): bounded by constant (error_head_bound)
+    - Block sum (∑ blocks): antitone ⇒ each ≤ first ≤ C·√2, K terms ⇒ K·C·√2
+    - Tail (∫_{hsK}^T): bounded by C·√T (error_tail_bound)
+    - K ≤ √T, so total ≤ O(1) + O(√T) + O(√T) = O(√T). -/
+theorem error_term_first_moment_assembly
+    (h_exp : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4))
+    (h_blk_anti : Antitone (fun k : ℕ =>
+        |∫ t in Set.Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t|)) :
+    ∃ C_E > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Set.Ioc 1 T, ErrorTerm t| ≤ C_E * T ^ ((1 : ℝ) / 2) := by
+  obtain ⟨C_head, hCh_pos, h_head⟩ := error_head_bound h_exp
+  obtain ⟨C_tail, hCt_pos, h_tail⟩ := error_tail_bound h_exp
+  obtain ⟨C_blk, hCb_pos, h_blk_bound⟩ := error_block_abs_le_sqrt h_exp
+  obtain ⟨C_lin, hClin_pos, h_lin⟩ := errorTerm_integral_linear h_exp
+  set a_fn := (fun k : ℕ =>
+    |∫ t in Set.Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t|) with ha_fn_def
+  have ha0_le : a_fn 0 ≤ C_blk * Real.sqrt 2 := by
+    have h0 := h_blk_bound 0
+    simp only [Nat.cast_zero, zero_add] at h0
+    exact h0
+  set C_main := C_head + C_blk * Real.sqrt 2 + C_tail + 1 with hCmain_def
+  set C_small := C_lin * hardyStart 0 + 1 with hCsmall_def
+  set C_E := max C_main C_small with hCE_def
+  refine ⟨C_E, by positivity, fun T hT => ?_⟩
+  have hT_pos : (0 : ℝ) < T := by linarith
+  by_cases hT_ge_hs0 : hardyStart 0 ≤ T
+  · -- Large T case: use block decomposition
+    obtain ⟨K, hK_lo, hK_hi⟩ := exists_block_of_ge_hardyStart0 T hT_ge_hs0
+    have hK_ge0 : hardyStart 0 ≤ hardyStart K := hardyStart_mono (Nat.zero_le K)
+    have h_3part := error_integral_three_part K T hT hK_lo hK_ge0
+    have h_middle := error_middle_as_block_sum K
+    have h_block_sum : |∑ k ∈ Finset.range K,
+        ∫ t in Set.Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t| ≤
+        (K : ℝ) * (C_blk * Real.sqrt 2) := by
+      calc |∑ k ∈ Finset.range K,
+            ∫ t in Set.Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t|
+          ≤ ∑ k ∈ Finset.range K,
+              |∫ t in Set.Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t| :=
+            Finset.abs_sum_le_sum_abs _ _
+        _ ≤ ∑ _k ∈ Finset.range K, (C_blk * Real.sqrt 2) := by
+            apply Finset.sum_le_sum; intro k _
+            exact le_trans (h_blk_anti (Nat.zero_le k)) ha0_le
+        _ = (K : ℝ) * (C_blk * Real.sqrt 2) := by
+            rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    have hK_le := block_count_le_sqrt_v2 K T hK_lo
+    have h_sqrtT_pos : 0 < Real.sqrt T := Real.sqrt_pos_of_pos hT_pos
+    have h_sqrtT_ge1 : 1 ≤ Real.sqrt T := by
+      rw [← Real.sqrt_one]; exact Real.sqrt_le_sqrt (by linarith)
+    rw [h_3part]
+    have h_mid_le : |∫ t in Set.Ioc (hardyStart 0) (hardyStart K), ErrorTerm t| ≤
+        (K : ℝ) * (C_blk * Real.sqrt 2) := by rw [h_middle]; exact h_block_sum
+    calc |(∫ t in Set.Ioc 1 (hardyStart 0), ErrorTerm t) +
+          (∫ t in Set.Ioc (hardyStart 0) (hardyStart K), ErrorTerm t) +
+          (∫ t in Set.Ioc (hardyStart K) T, ErrorTerm t)|
+        ≤ |∫ t in Set.Ioc 1 (hardyStart 0), ErrorTerm t| +
+          |∫ t in Set.Ioc (hardyStart 0) (hardyStart K), ErrorTerm t| +
+          |∫ t in Set.Ioc (hardyStart K) T, ErrorTerm t| := by
+          linarith [abs_add_le
+            ((∫ t in Set.Ioc 1 (hardyStart 0), ErrorTerm t) +
+             (∫ t in Set.Ioc (hardyStart 0) (hardyStart K), ErrorTerm t))
+            (∫ t in Set.Ioc (hardyStart K) T, ErrorTerm t),
+            abs_add_le
+            (∫ t in Set.Ioc 1 (hardyStart 0), ErrorTerm t)
+            (∫ t in Set.Ioc (hardyStart 0) (hardyStart K), ErrorTerm t)]
+      _ ≤ C_head + ((K : ℝ) * (C_blk * Real.sqrt 2)) + (C_tail * Real.sqrt T) := by
+          linarith [h_head, h_tail K T hT hK_lo hK_hi]
+      _ ≤ (C_head + C_blk * Real.sqrt 2 + C_tail) * Real.sqrt T := by
+          nlinarith [le_mul_of_one_le_right hCh_pos.le h_sqrtT_ge1,
+            mul_le_mul_of_nonneg_right hK_le
+              (mul_nonneg hCb_pos.le (Real.sqrt_nonneg 2))]
+      _ ≤ C_main * Real.sqrt T := by
+          apply mul_le_mul_of_nonneg_right _ h_sqrtT_pos.le; linarith
+      _ = C_main * T ^ ((1 : ℝ) / 2) := by rw [Real.sqrt_eq_rpow]
+      _ ≤ C_E * T ^ ((1 : ℝ) / 2) := by
+          apply mul_le_mul_of_nonneg_right (le_max_left _ _) (rpow_nonneg hT_pos.le _)
+  · -- Small T case: T < hardyStart 0, use linear bound
+    push_neg at hT_ge_hs0
+    have h_sqrtT_ge1 : (1 : ℝ) ≤ T ^ ((1 : ℝ) / 2) := by
+      rw [← Real.rpow_zero T]
+      exact Real.rpow_le_rpow_of_exponent_le (by linarith) (by norm_num)
+    calc |∫ t in Set.Ioc 1 T, ErrorTerm t|
+        ≤ C_lin * T := h_lin T hT
+      _ ≤ C_lin * hardyStart 0 :=
+          mul_le_mul_of_nonneg_left (le_of_lt hT_ge_hs0) hClin_pos.le
+      _ ≤ C_small := by linarith
+      _ = C_small * 1 := (mul_one _).symm
+      _ ≤ C_small * T ^ ((1 : ℝ) / 2) := by
+          apply mul_le_mul_of_nonneg_left h_sqrtT_ge1
+          have h_hs0_pos : 0 < hardyStart 0 := by rw [hardyStart_formula]; positivity
+          simp only [hCsmall_def]; nlinarith
+      _ ≤ C_E * T ^ ((1 : ℝ) / 2) :=
+          mul_le_mul_of_nonneg_right (le_max_right _ _) (rpow_nonneg hT_pos.le _)
+
+end ErrorTermFirstMomentAssembly_v2
+
 end HardyZFirstMomentIBP
