@@ -1000,6 +1000,58 @@ theorem vdc_mode_sum_le_C_sqrt (N : ℕ) (T : ℝ) (hT : 2 ≤ T)
   rw [show T ^ ((1 : ℝ)/2) = Real.sqrt T from (Real.sqrt_eq_rpow T).symm]
   exact vdc_mode_sum_bound N T hT hN
 
+/-- The AFE truncation satisfies N ≤ √(T/(2π)) ≤ √T for T ≥ 2.
+    This connects the Dirichlet polynomial length to the integral range. -/
+theorem afe_N_le_sqrt (N : ℕ) (T : ℝ) (hT : 2 ≤ T)
+    (hN : (N : ℝ) ≤ Real.sqrt (T / (2 * Real.pi))) :
+    (N : ℝ) ≤ Real.sqrt T := by
+  have hT_pos : (0 : ℝ) < T := by linarith
+  calc (N : ℝ) ≤ Real.sqrt (T / (2 * Real.pi)) := hN
+    _ ≤ Real.sqrt T := by
+        apply Real.sqrt_le_sqrt
+        exact div_le_self hT_pos.le (by linarith [Real.two_le_pi])
+
+/-- Assembly with AFE truncation: the weighted mode sum with N ≤ √(T/(2π))
+    is bounded by (1/log 2)·T^{1/2}.
+
+    This combines `afe_N_le_sqrt` and `vdc_mode_sum_le_C_sqrt`. -/
+theorem vdc_mode_sum_with_afe (N : ℕ) (T : ℝ) (hT : 2 ≤ T)
+    (hN : (N : ℝ) ≤ Real.sqrt (T / (2 * Real.pi))) :
+    ∑ n ∈ Finset.range N,
+      ((n : ℝ) + 1) ^ (-(1 : ℝ)/2) / Real.log ((n : ℝ) + 2) ≤
+      (1 / Real.log 2) * T ^ ((1 : ℝ)/2) :=
+  vdc_mode_sum_le_C_sqrt N T hT (afe_N_le_sqrt N T hT hN)
+
+/-- Per-mode weighted sum with multiplicative constant: if each mode bound
+    is C_vdc · (n+1)^{-1/2} / log(n+2), then the total over N modes is
+    C_vdc · (1/log 2) · T^{1/2} when N ≤ √(T/(2π)).
+
+    This is the "reduction to mode sum" lemma: given per-mode VdC bounds
+    on abstract quantities `f(n)`, the weighted total is O(√T).
+    Used in HardyZFirstMomentIBP.lean for the main term analysis. -/
+theorem weighted_mode_sum_with_constant (N : ℕ) (T : ℝ) (hT : 2 ≤ T)
+    (hN : (N : ℝ) ≤ Real.sqrt (T / (2 * Real.pi)))
+    (C_vdc : ℝ) (hC : 0 < C_vdc)
+    (f : ℕ → ℝ)
+    (h_per_mode : ∀ n ∈ Finset.range N,
+      f n ≤ C_vdc * ((n : ℝ) + 1) ^ (-(1 : ℝ)/2) / Real.log ((n : ℝ) + 2)) :
+    ∑ n ∈ Finset.range N, f n ≤
+      C_vdc * ((1 / Real.log 2) * T ^ ((1 : ℝ)/2)) := by
+  calc ∑ n ∈ Finset.range N, f n
+      ≤ ∑ n ∈ Finset.range N,
+        C_vdc * ((n : ℝ) + 1) ^ (-(1 : ℝ)/2) / Real.log ((n : ℝ) + 2) :=
+        Finset.sum_le_sum h_per_mode
+    _ = C_vdc * ∑ n ∈ Finset.range N,
+        ((n : ℝ) + 1) ^ (-(1 : ℝ)/2) / Real.log ((n : ℝ) + 2) := by
+        conv_lhs =>
+          arg 2; ext n
+          rw [show C_vdc * ((n : ℝ) + 1) ^ (-(1 : ℝ)/2) / Real.log ((n : ℝ) + 2) =
+            C_vdc * (((n : ℝ) + 1) ^ (-(1 : ℝ)/2) / Real.log ((n : ℝ) + 2)) from by ring]
+        rw [← Finset.mul_sum]
+    _ ≤ C_vdc * ((1 / Real.log 2) * T ^ ((1 : ℝ)/2)) := by
+        apply mul_le_mul_of_nonneg_left _ hC.le
+        exact vdc_mode_sum_with_afe N T hT hN
+
 end
 
 end AbelSummationPsiPi_HarmonicLog
