@@ -75,28 +75,17 @@ reduces the full sorry to just the two analytic inputs:
 (a) the Hadamard product pointwise bound |ζ'/ζ| ≤ A·(logT)²
 (b) the contour integration step converting pointwise to integral -/
 
-/-- **Sub-goal 1 (vertical)**: If the vertical segment contributes at most
-    V · √x · (logT)³ / T, and the horizontal segments contribute at most
-    H · √x · (logT)² / T each, then the total contour error satisfies the
-    pre-standard segment bound with A = max(V, H).
-
-    This factoring makes it explicit that the two segment types are
-    independently bounded — the Hadamard product provides both bounds
-    simultaneously, but the INTEGRATION is separate for each segment type. -/
+/-- **Segment bound from individual vertical + horizontal bounds**:
+    If vertical ≤ V·√x·(logT)³/T and each horizontal ≤ H·√x·(logT)²/T,
+    then total ≤ V·√x·(logT)³/T + 2H·√x·(logT)²/T, which matches the
+    pre-standard segment form with A = max(V, H). -/
 theorem segment_bound_from_vert_horiz
-    {V H x T : ℝ} (hV : 0 < V) (hH : 0 < H)
-    (hx : x ≥ 2) (hT : T ≥ 16)
-    (h_vert : |shiftedRemainderRe x T - (- zeroSumRe x T)| ≤
-      V * (Real.sqrt x * (Real.log T) ^ 3 / T))
-    (h_horiz_bound : V * (Real.sqrt x * (Real.log T) ^ 3 / T) +
-      2 * H * (Real.sqrt x * (Real.log T) ^ 2 / T) ≤
-      (V + 2 * H) * (Real.sqrt x * (Real.log T) ^ 3 / T) +
-      2 * (V + 2 * H) * (Real.sqrt x * (Real.log T) ^ 2 / T) →
-      True) :
-    True := trivial
+    {V H : ℝ} {B_v B_h1 B_h2 : ℝ}
+    (hv : B_v ≤ V) (hh1 : B_h1 ≤ H) (hh2 : B_h2 ≤ H) :
+    B_v + B_h1 + B_h2 ≤ V + 2 * H := by linarith
 
 /-- **Segment nonnegativity**: both segment bounds are nonneg for x, T ≥ 2. -/
-theorem segment_bounds_nonneg (A x T : ℝ) (hA : 0 < A) (hx : 2 ≤ x) (hT : 2 ≤ T) :
+theorem segment_bounds_nonneg (A x T : ℝ) (hA : 0 < A) (_hx : 2 ≤ x) (hT : 2 ≤ T) :
     0 ≤ A * (Real.sqrt x * (Real.log T) ^ 3 / T) ∧
     0 ≤ A * (Real.sqrt x * (Real.log T) ^ 2 / T) := by
   have hlogT : 0 ≤ Real.log T := Real.log_nonneg (by linarith)
@@ -119,9 +108,9 @@ theorem segment_triangle_ineq {R_vert R_h1 R_h2 : ℝ}
     bound holds. This is the last algebraic step before the sorry. -/
 theorem segment_form_from_individual_bounds
     (A : ℝ) (hA : 0 < A)
-    (h_vert_bound : ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+    (_h_vert_bound : ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
       A * (Real.sqrt x * (Real.log T) ^ 3 / T) ≥ 0)
-    (h_horiz_bound : ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+    (_h_horiz_bound : ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
       A * (Real.sqrt x * (Real.log T) ^ 2 / T) ≥ 0)
     (h_pointwise_to_contour : ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
       |shiftedRemainderRe x T| ≤
@@ -139,7 +128,7 @@ theorem segment_form_from_individual_bounds
     This lemma gives the pure algebra: the product of the pointwise bound
     A·(logT)² with the integral factor logT and the kernel √x/T gives the
     vertical segment bound A·√x·(logT)³/T. -/
-theorem vertical_bound_algebra (A x T : ℝ) (hA : 0 < A) (hx : 2 ≤ x) (hT : 2 ≤ T) :
+theorem vertical_bound_algebra (A x T : ℝ) :
     A * (Real.log T) ^ 2 * (Real.sqrt x * Real.log T / T) =
     A * (Real.sqrt x * (Real.log T) ^ 3 / T) := by ring
 
@@ -151,7 +140,7 @@ theorem vertical_bound_algebra (A x T : ℝ) (hA : 0 < A) (hx : 2 ≤ x) (hT : 2
 
     This lemma gives the pure algebra: the product of the pointwise bound
     A·(logT)² with the kernel factor √x/T gives the horizontal bound. -/
-theorem horizontal_bound_algebra (A x T : ℝ) (hA : 0 < A) (hx : 2 ≤ x) (hT : 2 ≤ T) :
+theorem horizontal_bound_algebra (A x T : ℝ) :
     A * (Real.log T) ^ 2 * (Real.sqrt x / T) =
     A * (Real.sqrt x * (Real.log T) ^ 2 / T) := by ring
 
