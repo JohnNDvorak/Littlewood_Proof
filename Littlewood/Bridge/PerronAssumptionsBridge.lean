@@ -1183,39 +1183,36 @@ theorem error_term_ge_quarter_sqrt_ratio {x T : ℝ} (_hx : 0 ≤ x) (hT : 2 ≤
 
 /-! ## Part 16: Large-T contour bound and full assembly (CV-C61)
 
-For T ≥ 16, the contour bound follows directly from the one-term Perron bound
-(ContourRemainderBoundHyp.bound). This is the genuine analytic content:
+For T ≥ 16, the contour bound comes from `LargeTContourBoundHyp.bound`,
+the genuine Hadamard product gap. This is the irreducible analytic content:
 Hadamard product → pointwise ζ'/ζ ≤ O(log²T) → contour integration →
 O(√x·(logT)²/√T). The (logx)² term that appears in `general_formula_accessible`
 is an artifact of the proof decomposition and CANNOT be absorbed into the standard
 error shape for large T (since (logT)²/√T → 0 as T → ∞).
 
-SORRY FLOW: The `large_T_contour_bound` theorem below obtains its bound from
-`ContourRemainderBoundHyp.bound`, which is the sorry in ExplicitFormulaPsiB5aDefs.lean.
-This is not circular — it documents the REDUCTION: once the sorry is closed
-(by providing the genuine Perron contour integration), the full assembly
-`contour_bound_fully_assembled` follows automatically. -/
+SORRY FLOW: `large_T_contour_bound` now derives directly from
+`LargeTContourBoundHyp.bound` (the precise Hadamard gap in B5aDefs).
+When that sorry is closed, the full assembly `contour_bound_fully_assembled`
+follows automatically via `small_T_contour_bound` + case split. -/
 
 /-- **Large-T contour bound**: for T ≥ 16, the Perron contour bound holds.
-    This is a restriction of the full `ContourRemainderBoundHyp.bound` to
-    the T ≥ 16 range. The bound is:
-      |shiftedRemainderRe x T| ≤ C₁ · (√x · (logT)² / √T)
-    Transits 1 sorry upstream (ContourRemainderBoundHyp.bound). -/
+    Now derives DIRECTLY from `LargeTContourBoundHyp.bound` (the genuine
+    Hadamard product gap) instead of from `ContourRemainderBoundHyp.bound`.
+    Transits 1 sorry upstream (LargeTContourBoundHyp instance in B5aDefs). -/
 theorem large_T_contour_bound :
     ∃ C₁ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
       |shiftedRemainderRe x T| ≤
-        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
-  obtain ⟨Cc, hCc, hbound⟩ := ContourRemainderBoundHyp.bound
-  exact ⟨Cc, hCc, fun x T hx hT => hbound x T hx (by linarith)⟩
+        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+  LargeTContourBoundHyp.bound
 
 /-- **Full assembly**: both the small-T (T ∈ [2,16]) and large-T (T ≥ 16) cases
     of the contour bound are handled. Combined via `contour_bound_from_small_and_large`
     to produce the full existential matching `ContourRemainderBoundHyp.bound`.
 
-    - Small-T: proved from `general_formula_accessible` + log²/√x absorption
-    - Large-T: transits `ContourRemainderBoundHyp.bound` (1 upstream sorry)
+    - Small-T: proved sorry-free from `general_formula_accessible` + log²/√x absorption
+    - Large-T: transits `LargeTContourBoundHyp.bound` (1 upstream sorry)
 
-    NET SORRY FLOW: 1 sorry (the ContourRemainderBoundHyp instance in B5aDefs).
+    NET SORRY FLOW: 1 sorry (the LargeTContourBoundHyp instance in B5aDefs).
     When that sorry is closed, this theorem becomes sorry-free automatically. -/
 theorem contour_bound_fully_assembled :
     ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
@@ -1225,28 +1222,26 @@ theorem contour_bound_fully_assembled :
 
 /-! ## Part 17: Gap specification — exactly what remains to close the sorry
 
-The ContourRemainderBoundHyp sorry in ExplicitFormulaPsiB5aDefs.lean encapsulates:
-1. Hadamard product for ζ (Davenport Ch. 12)
-2. Zero density → pointwise |ζ'/ζ(1/2+it)| ≤ A·(logT)² (Titchmarsh §9.6)
-3. Contour integration of ζ'/ζ · x^s/s over the Perron rectangle
-4. Segment estimates + assembly → O(√x·(logT)²/√T)
+The contour bound sorry now DECOMPOSES via `LargeTContourBoundHyp` (B5aDefs):
 
-Steps 3-4 are algebraic and proved sorry-free in Parts 5-16 above.
-The genuine sorry content reduces to a SINGLE primitive:
+  **LargeTContourBoundHyp** (the ONLY genuine gap):
+    ∃ C₁ > 0, ∀ x T, x ≥ 2 → T ≥ 16 →
+      |shiftedRemainderRe x T| ≤ C₁ · (√x · (logT)² / √T)
 
-  **PRIMITIVE**: For T ≥ 16, x ≥ 2:
-    |shiftedRemainderRe x T| ≤ C · (√x · (logT)² / √T)
+  Requires: Hadamard product decomposition of ζ'/ζ (Davenport Ch. 12) →
+  pointwise |ζ'/ζ(1/2+it)| ≤ A·(logT)² (Titchmarsh §9.6) → contour
+  integration of ζ'/ζ · x^s/s (complex analysis not in Mathlib).
 
-  This requires connecting shiftedRemainderRe (= ψ(x) - x + Σ Re(x^ρ/ρ))
-  to the Perron contour integral ∫ ζ'/ζ(s)·x^s/s ds:
-  - Perron's formula: ψ(x) = (1/2πi) ∫_{c-iT}^{c+iT} ζ'/ζ(s)·x^s/s ds + error
-  - Hadamard product → |ζ'/ζ(1/2+it)| ≤ A·(logT)²
-  - Complex contour integration (not in Mathlib)
+  The full `ContourRemainderBoundHyp` (T ≥ 2) follows from:
+  - `small_T_contour_bound` (sorry-free, this file) — handles T ∈ [2,16]
+  - `LargeTContourBoundHyp.bound` (sorry in B5aDefs) — handles T ≥ 16
+  - `contour_bound_from_small_and_large` (sorry-free) — case split
 
-  All ALGEBRAIC reductions from this primitive to the full bound are complete:
-  - Small-T (T ∈ [2,16]): `small_T_contour_bound` — PROVED sorry-free
-  - Large-T assembly: `large_T_assembly` — PROVED sorry-free
-  - Case split: `case_split_T_bound` — PROVED sorry-free
+  All ALGEBRAIC reductions are sorry-free:
+  - Small-T: `small_T_contour_bound` — PROVED
+  - Large-T assembly: `large_T_assembly` — PROVED
+  - Case split: `case_split_T_bound` — PROVED
+  - Full assembly: `contour_bound_fully_assembled` — PROVED (transits 1 sorry)
 
 Reference: Titchmarsh §9.6.1, Davenport Ch. 12 + Ch. 17. -/
 
