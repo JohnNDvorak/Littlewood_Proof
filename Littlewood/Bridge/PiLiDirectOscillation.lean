@@ -143,17 +143,22 @@ private theorem pi_approx_from_abel_and_psi
           (∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
         ≤ δ * (Real.sqrt x / Real.log x) :=
     PsiExplicitFormulaFinsetHyp.psi_level_bound S hS
+  -- Convert ψ-level hypothesis: (a + b)/logx = a/logx + b/logx
+  have h_psi' : ∀ δ : ℝ, 0 < δ → ∀ᶠ x in atTop,
+      |(Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) / Real.log x +
+        ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
+        ≤ δ * (Real.sqrt x / Real.log x) := by
+    intro δ hδ
+    filter_upwards [h_psi δ hδ] with x hx
+    rwa [add_div] at hx
   -- Apply the Abel bridge combinator
-  -- f = piLiError, g = (ψ(x) - x) / logx, S_val = (Σ x^ρ/ρ).re / logx
-  -- We need: |f + S_val| ≤ ε · √x/logx
-  -- From: |f - g| ≤ D · √x/(logx)² and ∀ δ, |g + S_val| ≤ δ · √x/logx
   exact AbelSummationPsiPi.abel_bridge_adjustable
     (fun x => piLiError x)
     (fun x => (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) / Real.log x)
     (fun x => ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x)
     D hD ε hε
     h_abel
-    h_psi
+    h_psi'
 
 instance [AbelCorrectionPsiPiHyp] [PsiExplicitFormulaFinsetHyp] :
     PiApproxFromExplicitFormulaHyp where

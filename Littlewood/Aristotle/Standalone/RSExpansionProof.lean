@@ -4553,4 +4553,101 @@ theorem alternating_pair_cancel_v2 (k : ℕ) (Ak Ak1 : ℝ) :
     show |(-1 : ℝ) * Ak + -(-1 : ℝ) * Ak1| = |Ak - Ak1|
     rw [show (-1 : ℝ) * Ak + -(-1 : ℝ) * Ak1 = -(Ak - Ak1) from by ring, abs_neg]
 
+-- ============================================================
+-- Section 15: Saddle-point remainder mechanism (C48)
+-- ============================================================
+
+/-! ### 15a. Amplitude × phase-error → O(t^{-3/4}) mechanism
+
+The saddle-point expansion produces the remainder exponent -3/4 via:
+  amplitude (2π/t)^{1/4}  ×  phase_error O(t^{-1/2})  =  O(t^{-3/4}).
+
+These lemmas formalize the multiplication mechanism without sorry. -/
+
+/-- **Amplitude × phase-error product**: if |δ| ≤ D and amp ≥ 0,
+    then amp · |cos(α+δ) - cos(α)| ≤ amp · D. -/
+theorem amplitude_times_phase_error (amp α δ D : ℝ) (h_amp : 0 ≤ amp)
+    (h_delta : |δ| ≤ D) :
+    amp * |Real.cos (α + δ) - Real.cos α| ≤ amp * D := by
+  have h_cos_pert := cos_perturb_sin_bound α δ
+  calc amp * |Real.cos (α + δ) - Real.cos α|
+      ≤ amp * |δ| := mul_le_mul_of_nonneg_left h_cos_pert h_amp
+    _ ≤ amp * D := mul_le_mul_of_nonneg_left h_delta h_amp
+
+/-- **Quarter-power times inv-sqrt-t gives three-quarter**: for t > 0,
+    (2π/t)^{1/4} · t^{-1/2} = (2π)^{1/4} · t^{-3/4}. -/
+theorem quarter_times_inv_sqrt_eq (t : ℝ) (ht : 0 < t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * t ^ (-(1 : ℝ) / 2) =
+    (2 * Real.pi) ^ ((1 : ℝ) / 4) * t ^ (-(3 : ℝ) / 4) := by
+  rw [Real.div_rpow (by positivity : (0 : ℝ) ≤ 2 * Real.pi) ht.le]
+  rw [div_mul_eq_mul_div, div_eq_mul_inv, mul_assoc]
+  congr 1
+  rw [← Real.rpow_neg ht.le, ← Real.rpow_add ht]
+  congr 1; norm_num
+
+/-- **Remainder exponent chain**: for C_phase ≥ 0 and t > 0,
+    (2π/t)^{1/4} · C_phase · t^{-1/2} = C_phase · (2π)^{1/4} · t^{-3/4}. -/
+theorem remainder_constant_explicit (C_phase t : ℝ) (_hC : 0 ≤ C_phase) (ht : 0 < t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * (C_phase * t ^ (-(1 : ℝ) / 2)) =
+    C_phase * ((2 * Real.pi) ^ ((1 : ℝ) / 4) * t ^ (-(3 : ℝ) / 4)) := by
+  rw [← mul_assoc, quarter_times_inv_sqrt_eq t ht, mul_left_comm]
+
+/-- **Saddle ratio bound**: √(2π/t) ≤ 1/(k+1) on block k. -/
+theorem sqrt_two_pi_div_t_le_inv_v2 (k : ℕ) (t : ℝ)
+    (ht : hardyStart k ≤ t) (ht_pos : 0 < t) :
+    Real.sqrt (2 * Real.pi / t) ≤ 1 / ((k : ℝ) + 1) := by
+  have hk : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  rw [← Real.sqrt_sq hk.le, ← Real.sqrt_inv]
+  apply Real.sqrt_le_sqrt
+  exact two_pi_div_t_le_inv_sq k t ht ht_pos
+
+/-- **Cubic coefficient crude bound**: 1/(k+1)³ ≤ 1/(k+1). -/
+theorem cubic_coefficient_crude_bound (k : ℕ) :
+    1 / ((k : ℝ) + 1) ^ 3 ≤ 1 / ((k : ℝ) + 1) := by
+  have hk : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  rw [div_le_div_iff₀ (pow_pos hk 3) hk, one_mul, one_mul]
+  exact le_self_pow₀ (by linarith : (1 : ℝ) ≤ (k : ℝ) + 1) (by omega : 3 ≠ 0)
+
+/-- **rpow product rule (neg exponents)**: t^{-1/2} · t^{-1/4} = t^{-3/4}. -/
+theorem rpow_product_neg_exponents (t : ℝ) (ht : 0 < t) :
+    t ^ (-(1 : ℝ) / 2) * t ^ (-(1 : ℝ) / 4) = t ^ (-(3 : ℝ) / 4) := by
+  rw [← Real.rpow_add ht]; congr 1; norm_num
+
+/-! ### 15b. Triangle inequality for saddle remainder -/
+
+/-- **Abstract triangle for saddle decomposition**:
+    |A - C| ≤ |A - B| + |B - C|. -/
+theorem saddle_triangle_split (A B C : ℝ) :
+    |A - C| ≤ |A - B| + |B - C| := by
+  have h : A - C = (A - B) + (B - C) := by ring
+  rw [h]; exact abs_add_le _ _
+
+/-- **Remainder chain composition**: |A - B| ≤ ε₁ ∧ |B - C| ≤ ε₂ → |A - C| ≤ ε₁ + ε₂. -/
+theorem saddle_remainder_compose (A B C ε₁ ε₂ : ℝ)
+    (h₁ : |A - B| ≤ ε₁) (h₂ : |B - C| ≤ ε₂) :
+    |A - C| ≤ ε₁ + ε₂ := by
+  linarith [saddle_triangle_split A B C]
+
+/-- **Saddle amplitude bound**: (2π/t)^{1/4} ≤ 1 for t ≥ 8π. -/
+theorem saddle_amplitude_lt_one (t : ℝ) (ht : 8 * Real.pi ≤ t) (ht_pos : 0 < t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) ≤ 1 := by
+  have h_ratio : 2 * Real.pi / t ≤ 1 := by
+    rw [div_le_one₀ ht_pos]; linarith
+  calc (2 * Real.pi / t) ^ ((1 : ℝ) / 4)
+      ≤ 1 ^ ((1 : ℝ) / 4) :=
+        Real.rpow_le_rpow (div_nonneg (by positivity) ht_pos.le) h_ratio (by norm_num)
+    _ = 1 := Real.one_rpow _
+
+/-- **Remainder absorbs into constant**: |r₁| ≤ C₁·t^{-3/4} ∧ |r₂| ≤ C₂·t^{-3/4}
+    → |r₁ + r₂| ≤ (C₁ + C₂)·t^{-3/4}. -/
+theorem remainder_absorb (C₁ C₂ t : ℝ) (ht : 0 < t)
+    (r₁ r₂ : ℝ)
+    (h₁ : |r₁| ≤ C₁ * t ^ (-(3 : ℝ) / 4))
+    (h₂ : |r₂| ≤ C₂ * t ^ (-(3 : ℝ) / 4)) :
+    |r₁ + r₂| ≤ (C₁ + C₂) * t ^ (-(3 : ℝ) / 4) := by
+  have h_rpow_nn : 0 ≤ t ^ (-(3 : ℝ) / 4) := Real.rpow_nonneg ht.le _
+  calc |r₁ + r₂| ≤ |r₁| + |r₂| := abs_add_le _ _
+    _ ≤ C₁ * t ^ (-(3 : ℝ) / 4) + C₂ * t ^ (-(3 : ℝ) / 4) := by linarith
+    _ = (C₁ + C₂) * t ^ (-(3 : ℝ) / 4) := by ring
+
 end Aristotle.Standalone.RSExpansionProof
