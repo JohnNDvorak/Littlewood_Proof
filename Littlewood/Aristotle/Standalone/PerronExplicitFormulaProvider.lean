@@ -1685,26 +1685,30 @@ private lemma pi_approx_at_fixed_height_of_psi_formula
 /-- The truncated explicit formula for π(x) at the √x/log x scale,
     derived from the ψ-level Perron contour formula via partial summation.
 
-    SORRY: Partial summation bridge from ψ explicit formula to π explicit formula.
+    SORRY: `pi_approx` field uses the ∀ε>0 (little-o) form which is
+    **mathematically false** for S=∅ (see PiLiDirectOscillation.lean analysis).
+    The correct O-bound version is in `PiApproxFromExplicitFormulaHyp`.
 
-    **Detailed proof path (C34-B)**:
-    1. Fix T such that C₂·(logT)²/√T < ε/2 (possible since (logT)²/√T → 0).
-    2. From `general_explicit_formula_from_perron`:
+    The `pi_approx` field is retained with the false ∀ε>0 type to avoid
+    breaking 50+ downstream consumers of TruncatedExplicitFormulaPiHyp.
+    The main theorem path bypasses this entirely via LandauOscillation.lean
+    (priority 2000).
+
+    **Proof path for correct O-bound version** (in PiApproxFromExplicitFormulaHyp):
+    1. From `general_explicit_formula_from_perron`:
        |ψ(x) - x + Σ_{|γ|≤T} Re(x^ρ/ρ)| ≤ C₂·(√x·(logT)²/√T + (logx)²)
-    3. For the finset S of RH zeros, Σ_{ρ∈S} ⊆ Σ_{|γ|≤T} for T large.
-    4. Dividing by logx and using Abel summation ψ → π:
-       |π(x) - li(x) + (Σ_{ρ∈S} x^ρ/ρ).re/logx| ≤ C'·(√x·(logT)²/(√T·logx) + logx)
-    5. For fixed T, as x → ∞: logx = o(ε·√x/logx) since (logx)² = o(√x).
-       Also √x·(logT)²/(√T·logx) = O(√x/logx) with coefficient (logT)²/√T < ε/2.
-    6. So eventually: error ≤ ε·(√x/logx).
+    2. Abel summation ψ → π: correction O(√x/logx) with constant D_abel
+    3. For S ⊆ ZerosBelow T: combined bound D·√x/logx where D = C₂ + D_abel
 
-    **REMAINING GAP**: Formalizing step 4 (Abel summation ψ → π in Lean/Mathlib)
-    and step 5 (the eventual domination (logx)² = o(√x)).
-
-    Sub-sorry count: 1 -/
+    Sub-sorry count: 1 (pi_approx field, mathematically false type) -/
 theorem pi_explicit_formula_from_perron :
     PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp where
-  pi_approx := PiLiDirectOscillationBridge.PiApproxFromExplicitFormulaHyp.pi_approx_bound
+  pi_approx := by
+    intro S hS ε hε
+    -- NOTE: This field has ∀ε>0 type (mathematically false for S=∅).
+    -- The correct O-bound is in PiApproxFromExplicitFormulaHyp.
+    -- Retained with sorry to avoid breaking 50+ downstream files.
+    sorry
   zero_sum_neg_frequently := by
     intro ρ₀ hρ₀_mem hρ₀_re hρ₀_im
     exact Aristotle.Standalone.ZeroSumNegFrequently.zero_sum_neg_frequently_core
@@ -2001,24 +2005,29 @@ private lemma vacuous_congruences_general {T : ℝ} (h : N T = 0)
     (c) approximate congruences for zeros ≤ T (with arbitrary phase function)
     (d) exp(t₀) ≤ tower_cap(T, ε)
 
-    PROOF STRUCTURE (C48 refactor):
+    PROOF STRUCTURE (C48 refactor, updated C48-D):
     Sets ε = 1/2, t₀ = log(max(X, perronThreshold(hRH, T)) + 1).
-    Three sub-gaps remain as sorry's:
+    Three sub-gaps, two remaining as sorry:
 
     **Gap 1 (CLOSED via haveI)**: ZeroCountingLowerBoundHyp import cycle.
-    Workaround: `haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩`.
+    Injected inline: `haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩`.
+    Justified by the proved instance in Assumptions.lean (inaccessible here).
 
-    **Gap 2 (sorry in tower_cap_dominates_perronThreshold)**:
+    **Gap 2 (sorry: perronThreshold growth bound)**:
     Need ∃ T ≥ 4 with tower_cap(T, 1/2) ≥ max(X, perronThreshold(hRH, T)) + 1.
-    Tower cap grows triple-exponentially; perronThreshold grows at most polynomially.
-    Requires unwinding Classical.choose through pi_approx for an explicit bound.
+    by_contra FAILS: perronThreshold is Classical.choose of an eventually-filter
+    and CAN grow without bound — no a priori contradiction.
+    CLOSURE: Route (A) prove perronThreshold(hRH, T) ≤ poly(T), or
+    Route (B) refactor seed type to eliminate perronThreshold.
 
-    **Gap 3 (sorry in N(T) > 0 branch)**:
+    **Gap 3 (sorry: Dirichlet simultaneous approximation for N(T) > 0)**:
     When N(T) = 0, congruences are vacuous (proved by `vacuous_congruences_general`).
-    When N(T) > 0, need inhomogeneous Cassels simultaneous Dirichlet approximation
-    (Cassels 1957, Ch. III). Not yet formalized.
+    When N(T) > 0, need inhomogeneous Dirichlet pigeonhole on interval
+    [log B, log(tower_cap)]. Length grows double-exponentially, suffices for
+    (2π/ε)^{N(T)} simultaneous approximation (Cassels 1957, Ch. III).
+    Per-zero Kronecker does NOT close: t values differ per zero.
 
-    Sub-sorry count: 1 warning (tower_cap_dominates_perronThreshold propagates) -/
+    Sub-sorry count: 2 inline sorry (Gaps 2+3), 1 haveI sorry (Gap 1) -/
 private theorem seed_witness_from_perron_core
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
     (phase : ℂ → ℝ) :
@@ -2031,15 +2040,29 @@ private theorem seed_witness_from_perron_core
         ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
         (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
-  -- Gaps 1+2: Tower-cap domination + ZeroCountingLowerBoundHyp.
-  -- tower_cap grows as exp(exp(exp(c·logT))) via N(T) ≥ T·logT/(3π).
-  -- perronThreshold(hRH, T) grows at most polynomially (pi_approx chain).
-  -- Sorry covers: (a) ZeroCountingLowerBoundHyp instance (import cycle),
-  -- (b) perronThreshold growth bound via unwinding Classical.choose.
+  -- === GAP 1: ZeroCountingLowerBoundHyp (import cycle workaround) ===
+  -- The instance lives in Assumptions.lean which transitively imports this file.
+  -- We inject it here; the sorry is justified by the proved instance in
+  -- Assumptions.lean (just inaccessible from this file).
+  haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩
+  -- === GAP 2: Tower-cap domination of perronThreshold ===
+  -- tower_cap(T, 1/2) grows as exp(exp(exp(c·N(T)/(T+1)))) which is
+  -- triple-exponential via N(T) ≥ T·logT/(3π) [ZeroCountingLowerBoundHyp].
+  -- perronThreshold(hRH, T) = Classical.choose of an eventually-filter, and
+  -- has no explicit growth bound as a function of T.
+  --
+  -- ATTEMPTED: by_contra — assume ∀ T ≥ 4, tower cap < max(X, perronThreshold)+1.
+  -- Then perronThreshold(hRH, T) ≥ tower_cap(T) - X - 1 for all large T.
+  -- Since tower_cap → ∞ (exists_T_tower_cap_exceeds), perronThreshold → ∞.
+  -- BLOCKER: perronThreshold CAN grow without bound (it's Classical.choose
+  -- of filter/atTop with no a priori bound). No contradiction available.
+  -- CLOSURE: Route (A) prove perronThreshold(hRH, T) ≤ poly(T) by unwinding
+  -- the Perron truncation error, or Route (B) refactor seed to eliminate it.
   have ⟨T, hT4, hdom⟩ : ∃ T : ℝ, 4 ≤ T ∧
       max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 ≤
         Real.exp (Real.exp (Real.exp
-          (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) := by sorry
+          (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) := by
+    sorry
   -- Set up B = max(X, perronThreshold) + 1
   set P := @perronThreshold pi_explicit_formula_from_perron hRH T with hP_def
   set B := max X P + 1 with hB_def
@@ -2057,14 +2080,23 @@ private theorem seed_witness_from_perron_core
     · exact vacuous_congruences_general hN phase _ _
     · rw [Real.exp_log hBpos]; exact hdom
   · -- N(T) > 0: need t₀ in [log B, log(tower_cap)] satisfying congruences.
-    -- Gap 3: Inhomogeneous simultaneous Dirichlet approximation.
-    -- For K = N(T) zeros with ordinates γ₁,...,γ_K and arbitrary phases,
-    -- need t₀ in an interval of length L with |t₀·γ_k - φ_k - m_k·2π| ≤ ε.
-    -- Cassels (1957, Ch. III): interval of length ≥ (2π/ε)^K suffices.
-    -- The tower cap provides L = log(tower_cap) - log B, which grows as
-    -- exp(exp(c·log T)) >> (4π)^{T·log T} for large T.
-    -- The sorry produces t₀ with all 7 required properties simultaneously.
-    -- CLOSURE: formalize inhomogeneous Cassels + verify interval length bound.
+    -- === GAP 3: Inhomogeneous simultaneous Dirichlet approximation ===
+    -- For K = N(T) zeros with ordinates γ₁,...,γ_K and arbitrary phases φ_k,
+    -- need t₀ with |t₀·γ_k - φ_k - m_k·2π| ≤ ε for all k simultaneously.
+    --
+    -- PER-ZERO INDEPENDENT approach (Kronecker per zero):
+    --   kronecker_single_freq_seed gives t_k with exact alignment for ρ_k.
+    --   But the t_k values differ per zero, and intersecting neighborhoods
+    --   fails because frequencies γ_k may be rationally dependent.
+    --
+    -- CORRECT approach (Dirichlet pigeonhole / Cassels 1957, Ch. III):
+    --   For K frequencies and tolerance ε, an interval of length ≥ (2π/ε)^K
+    --   contains t₀ satisfying ALL K congruences simultaneously.
+    --   Here K = N(T) ≤ T·logT and the available interval has length
+    --   log(tower_cap) - log(B) ≥ exp(exp(c·logT)) - log(B), which is
+    --   double-exponential and dominates (4π)^{T·logT} for large T.
+    --   The sorry covers: formalize Dirichlet simultaneous approximation
+    --   on a bounded interval + verify the interval length bound.
     exact ⟨Real.log B, T, 1 / 2, hT4, by norm_num, by norm_num,
       by rw [Real.exp_log hBpos]; simp only [hB_def, hP_def];
          linarith [le_max_left X P],
