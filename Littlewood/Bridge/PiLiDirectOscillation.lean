@@ -17,6 +17,7 @@ Output:
 import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.Aristotle.DirichletPhaseAlignment
 import Littlewood.Aristotle.Standalone.AbelSummationPsiPi
+import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aDefs
 
 noncomputable section
 
@@ -114,14 +115,43 @@ class PsiExplicitFormulaZerosHyp : Prop where
 instance : AbelCorrectionPsiPiHyp where
   correction_bound := by sorry
 
-/-- PROVABLE from `general_explicit_formula_from_perron` +
-    `psi_bound_div_log_eventually_small`. The proof path:
-    1. Get C₂ from `general_explicit_formula_from_perron`
-    2. Apply `psi_bound_div_log_eventually_small` with R(x,T) = shiftedRemainderRe x T
-    3. This gives T₀ ≥ 2 and eventually |R(x,T₀)|/logx ≤ δ·√x/logx
-    Not closed here because this file doesn't import PerronExplicitFormulaProvider. -/
+/-- PROVED from `ContourRemainderBoundHyp` (ExplicitFormulaPsiB5aDefs) +
+    `psi_bound_div_log_eventually_small` (AbelSummationPsiPi).
+    1. Get Cc from ContourRemainderBoundHyp.bound
+    2. Upgrade to two-term bound (add nonneg (logx)² term)
+    3. Apply psi_bound_div_log_eventually_small → T₀ ≥ 2, eventually small
+    4. Unfold shiftedRemainderRe = chebyshevPsi - x + zeroSumRe to match goal -/
 instance : PsiExplicitFormulaZerosHyp where
-  psi_level_bound := by sorry
+  psi_level_bound := by
+    intro δ hδ
+    -- Get Cc from ContourRemainderBoundHyp (sorry upstream in B5aDefs)
+    obtain ⟨Cc, hCc_pos, hCc_bound⟩ :=
+      Aristotle.Standalone.ExplicitFormulaPsiSkeleton.ContourRemainderBoundHyp.bound
+    -- Upgrade one-term bound to two-term bound needed by psi_bound_div_log_eventually_small
+    have hR : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+        |Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T| ≤
+          Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+      intro x T hx hT
+      calc |Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T|
+          ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := hCc_bound x T hx hT
+        _ ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+            apply mul_le_mul_of_nonneg_left _ hCc_pos.le
+            linarith [sq_nonneg (Real.log x)]
+    -- Apply the AbelSummationPsiPi workhorse to get T₀ and eventually-small
+    obtain ⟨T₀, hT₀, hev⟩ := AbelSummationPsiPi.psi_bound_div_log_eventually_small
+      (fun x T => Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T)
+      Cc hCc_pos hR δ hδ
+    refine ⟨T₀, hT₀, ?_⟩
+    -- shiftedRemainderRe x T₀ = chebyshevPsi x - x + (∑ ρ ∈ ZerosBelow T₀, (x:ℂ)^ρ/ρ).re
+    filter_upwards [hev, AbelSummationPsiPi.log_eventually_pos] with x hx hlx
+    rw [abs_div, abs_of_pos hlx]
+    have heq : Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
+        (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T₀,
+          (↑x : ℂ) ^ ρ / ρ).re =
+        Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T₀ := by
+      simp only [Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe,
+                  Aristotle.Standalone.ExplicitFormulaPsiSkeleton.zeroSumRe]
+    rw [heq]; exact hx
 
 /-- Abel summation ψ→π: the truncated explicit formula for π at √x/logx scale.
     Classical: Davenport Ch. 17 + partial summation (ψ→π).
