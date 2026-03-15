@@ -3019,34 +3019,147 @@ private theorem refined_saddle_cos_remainder (k : ℕ) (t : ℝ) (p : ℝ)
     linarith
   · exact Real.rpow_nonneg (div_nonneg (by positivity) ht_pos.le) _
 
-/-- **Saddle remainder is controlled by t^{-3/4}**: the key quantitative bound.
-    On block k, the remainder from the saddle expansion satisfies:
-    amplitude × |cos perturbation| ≤ (2π/t)^{1/4} · 4π
-    ≤ 4π/√(k+1) (from quarter_power_le_inv_sqrt)
+/-- **Saddle expansion amplitude product**: the product of the amplitude factor
+    (2π/t)^{1/4} with a next-order correction O(t^{-1/2}) gives O(t^{-3/4}).
+    This records the factorization:
+    (2π/t)^{1/4} · C·t^{-1/2} = C·(2π)^{1/4}·t^{-3/4}. -/
+private theorem saddle_amplitude_times_next_order (C : ℝ) (t : ℝ) (ht : 0 < t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * (C * t ^ (-(1 : ℝ) / 2)) =
+    C * (2 * Real.pi) ^ ((1 : ℝ) / 4) * t ^ (-(3 : ℝ) / 4) := by
+  rw [two_pi_div_t_rpow_quarter t ht]
+  rw [show (2 * Real.pi) ^ ((1 : ℝ) / 4) * t ^ (-(1 : ℝ) / 4) *
+      (C * t ^ (-(1 : ℝ) / 2)) =
+      C * (2 * Real.pi) ^ ((1 : ℝ) / 4) *
+      (t ^ (-(1 : ℝ) / 4) * t ^ (-(1 : ℝ) / 2)) from by ring]
+  congr 1
+  rw [← Real.rpow_add ht]; norm_num
 
-    To convert to t^{-3/4}: we need 1/√(k+1) ~ t^{-1/4}.
-    From t ≤ hardyStart(k+1) = 2π(k+2)²: (k+2)² ≥ t/(2π).
-    So √(k+2) ≥ (t/(2π))^{1/4}, giving 1/√(k+2) ≤ (2π/t)^{1/4}.
-    Since 1/√(k+1) ≤ 1/√k ≤ ... we use 1/√(k+1) directly.
+/-- **Next-order saddle coefficient is O(t^{-1/2})**: on block k,
+    the next-order correction in the steepest-descent expansion is bounded by
+    C₁ · t^{-1/2} where C₁ depends on the Stirling coefficients.
+    Since t ≥ 2π(k+1)², we have t^{-1/2} ≤ 1/(√(2π)·(k+1)).
+    The correction represents the departure of the Γ-function contour integral
+    from its Gaussian approximation at the saddle w₀ = √(t/(2π)).
 
-    The tighter bound uses p²/(k+1)² in the phase error:
-    remainder ≤ (2π/t)^{1/4} · p²·2π(k+1+p)²/(k+1)²
-    With p ≤ 1: ≤ (2π/t)^{1/4} · 2π·4 = 8π·(2π/t)^{1/4}
-    = 8π(2π)^{1/4}·t^{-1/4}.
+    For the overall C_R ≤ 1/2 bound:
+    remainder = (2π/t)^{1/4} · C₁·t^{-1/2} = C₁·(2π)^{1/4}·t^{-3/4}
+    We need C₁·(2π)^{1/4} ≤ 1/2, i.e., C₁ ≤ 1/(2·(2π)^{1/4}).
+    Since (2π)^{1/4} ≈ 1.534, we need C₁ ≤ 0.326.
+    Gabcke 1979 gives C₁ ≈ 0.083, well within bounds. -/
+private theorem next_order_bound_gives_t_neg_three_quarter (C₁ : ℝ) (t : ℝ)
+    (hC₁ : 0 < C₁) (ht : 0 < t)
+    (h_bound : C₁ * (2 * Real.pi) ^ ((1 : ℝ) / 4) ≤ 1 / 2) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * (C₁ * t ^ (-(1 : ℝ) / 2)) ≤
+    (1 / 2) * t ^ (-(3 : ℝ) / 4) := by
+  rw [saddle_amplitude_times_next_order C₁ t ht]
+  exact mul_le_mul_of_nonneg_right h_bound (Real.rpow_nonneg ht.le _)
 
-    For the O(t^{-3/4}) bound, the crucial extra factor comes from the
-    CUBIC Fresnel correction: the quadratic phase is absorbed into Ψ(p),
-    leaving only the cubic and higher terms which contribute O(p³/(k+1))
-    to the phase. This gives phase error O(1/(k+1)²) after averaging,
-    and combined with amplitude O(t^{-1/4}) yields O(t^{-3/4}).
+/-- **Gabcke constant compatibility**: there exists C₁ > 0 such that
+    C₁·(2π)^{1/4} ≤ 1/2. Concretely, C₁ = 1/4 works since
+    (1/4)·(2π)^{1/4} ≤ (1/4)·2 = 1/2 (using (2π)^{1/4} < 2). -/
+private theorem gabcke_constant_exists :
+    ∃ C₁ : ℝ, 0 < C₁ ∧ C₁ * (2 * Real.pi) ^ ((1 : ℝ) / 4) ≤ 1 / 2 := by
+  use 1 / 4
+  refine ⟨by norm_num, ?_⟩
+  -- Need: (1/4)·(2π)^{1/4} ≤ 1/2, i.e., (2π)^{1/4} ≤ 2
+  -- (2π)^{1/4} ≤ 2 iff 2π ≤ 16 iff π ≤ 8. True since π < 4.
+  have hpi_lt : Real.pi < 4 := by linarith [Real.pi_lt_3141593]
+  have h2pi_lt : 2 * Real.pi < 8 := by linarith
+  have h2pi_pos : (0 : ℝ) < 2 * Real.pi := by positivity
+  -- Need: (1/4)·(2π)^{1/4} ≤ 1/2, i.e., (2π)^{1/4} ≤ 2
+  -- (2π)^{1/4} ≤ 2 iff 2π ≤ 2^4 = 16. True since 2π < 8 < 16.
+  suffices h : (2 * Real.pi) ^ ((1 : ℝ) / 4) ≤ 2 by linarith
+  -- 2 = 16^{1/4}
+  have h16 : (16 : ℝ) ^ ((1 : ℝ) / 4) = 2 := by
+    rw [show (16 : ℝ) = (2 : ℝ) ^ (4 : ℕ) from by norm_num,
+        ← Real.rpow_natCast (2 : ℝ) 4,
+        ← Real.rpow_mul (by norm_num : (0:ℝ) ≤ 2)]
+    simp only [Nat.cast_ofNat]; norm_num
+  rw [← h16]
+  exact Real.rpow_le_rpow (by positivity) (by linarith) (by norm_num)
 
-    This is the irreducible steepest-descent content (Siegel 1932 §3). -/
-private theorem saddle_pointwise_bound_from_cubic :
+/-- **Saddle expansion remainder decomposition**: the remainder from the
+    steepest-descent analysis decomposes as:
+    |ErrorTerm(t) - leading(t)| ≤ amplitude(t) · |next_correction(t)|
+    where amplitude = (2π/t)^{1/4} and |next_correction| = O(t^{-1/2}).
+
+    Given ANY function bound |next_correction(t)| ≤ C₁·t^{-1/2} with
+    C₁·(2π)^{1/4} ≤ 1/2, the O(t^{-3/4}) bound follows with C_R = 1/2.
+
+    This reduces the saddle-point sorry to: "the next-order correction
+    in Siegel's integral is bounded by C₁·t^{-1/2} with C₁ ≤ 1/(2(2π)^{1/4})."
+    That is the genuine steepest-descent content. -/
+private theorem saddle_from_next_correction
+    (h_next : ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤
+        (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2))) :
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
       hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) := by
+  refine ⟨1 / 2, by norm_num, le_refl _, fun k t ht_lo ht_hi ht_pos => ?_⟩
+  have h_step := h_next k t ht_lo ht_hi ht_pos
+  -- From gabcke_constant_exists: (1/4)·(2π)^{1/4} ≤ 1/2
+  have hpi_lt : Real.pi < 4 := by linarith [Real.pi_lt_3141593]
+  have h2pi_lt16 : 2 * Real.pi < 16 := by linarith
+  have h16_rpow : (16 : ℝ) ^ ((1 : ℝ) / 4) = 2 := by
+    rw [show (16 : ℝ) = (2 : ℝ) ^ (4 : ℕ) from by norm_num,
+        ← Real.rpow_natCast (2 : ℝ) 4,
+        ← Real.rpow_mul (by norm_num : (0:ℝ) ≤ 2)]
+    simp only [Nat.cast_ofNat]; norm_num
+  have h_2pi_rpow_le_2 : (2 * Real.pi) ^ ((1 : ℝ) / 4) ≤ 2 := by
+    rw [← h16_rpow]
+    exact Real.rpow_le_rpow (by positivity) (by linarith) (by norm_num)
+  have h_quarter_bound : (1 : ℝ) / 4 * (2 * Real.pi) ^ ((1 : ℝ) / 4) ≤ 1 / 2 := by
+    linarith
+  calc |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+        rsPsi (blockParam k t)|
+      ≤ (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2)) := h_step
+    _ = (1 / 4) * (2 * Real.pi) ^ ((1 : ℝ) / 4) * t ^ (-(3 : ℝ) / 4) :=
+        saddle_amplitude_times_next_order (1 / 4) t ht_pos
+    _ ≤ (1 / 2) * t ^ (-(3 : ℝ) / 4) :=
+        mul_le_mul_of_nonneg_right h_quarter_bound (Real.rpow_nonneg ht_pos.le _)
+
+/-- **Saddle remainder is controlled by t^{-3/4}**: the key quantitative bound.
+
+    Reduced via `saddle_from_next_correction` to: the next-order correction
+    in Siegel's steepest-descent expansion is bounded by (1/4)·t^{-1/2}.
+    This is the irreducible content of Siegel 1932 §3.
+
+    The steepest descent gives:
+    I(t) = (2π/t)^{1/4} · [Ψ(p) + c₁(p)·t^{-1/2} + c₂(p)·t^{-1} + ...]
+    where c₁(p) involves the third derivative of the phase at the saddle.
+    |c₁(p)| ≤ C₁ for p ∈ [0,1] by boundedness of the Fresnel coefficients.
+    Gabcke (1979) computed C₁ ≈ 0.083 < 1/4.
+
+    Reference: Siegel 1932 §3; Gabcke 1979 Satz 1. -/
+/-- **Gabcke next-order correction bound** (Siegel 1932 §3, Gabcke 1979 Satz 1):
+    The irreducible content of the steepest-descent expansion.
+    On each block, the remainder after extracting the leading RS correction
+    is bounded by (2π/t)^{1/4} · (1/4) · t^{-1/2}.
+
+    This is the genuine analytic content: after contour deformation to the
+    saddle w₀ = √(t/2π), the next-order term in the Taylor expansion of the
+    phase involves the third derivative at the saddle, bounded by the Fresnel
+    coefficient |c₁(p)| ≤ 1/4 for p ∈ [0,1] (Gabcke computed ≈ 0.083).
+
+    Reference: Siegel 1932 §3; Gabcke 1979 Satz 1, Tabelle 1. -/
+private theorem gabcke_next_order_bound :
+    ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤
+        (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2)) := by
   sorry
+
+private theorem saddle_pointwise_bound_from_cubic :
+    ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) :=
+  saddle_from_next_correction gabcke_next_order_bound
 
 /-- **Block antitone from signed remainder coupling** (Gabcke 1979 Satz 4).
     Once the pointwise saddle-point bound is established, the block correction
@@ -3090,6 +3203,65 @@ private theorem siegel_saddle_and_antitone :
      AntitoneOn c_fn (Ici (1 : ℕ))) :=
   ⟨saddle_pointwise_bound_from_cubic, block_correction_antitone_from_saddle⟩
 
+/-- **First moment decomposition**: if MainTerm and ErrorTerm integrals are
+    each bounded by C·T^{1/2}, then the hardyZ integral is bounded by 2C·T^{1/2}.
+
+    This is the triangle inequality step:
+    |∫ Z| = |∫ Main + ∫ Error| ≤ |∫ Main| + |∫ Error| ≤ C_M·√T + C_E·√T. -/
+private theorem first_moment_from_main_and_error
+    (h_main : ∃ C_M > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2))
+    (h_error : ∃ C_E > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, ErrorTerm t| ≤ C_E * T ^ ((1 : ℝ) / 2)) :
+    ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) := by
+  obtain ⟨C_M, hCM_pos, h_M⟩ := h_main
+  obtain ⟨C_E, hCE_pos, h_E⟩ := h_error
+  refine ⟨C_M + C_E, by linarith, fun T hT => ?_⟩
+  -- hardyZ = MainTerm + ErrorTerm, so ∫ Z = ∫ Main + ∫ Error
+  have h_split : ∫ t in Ioc 1 T, hardyZ t =
+      (∫ t in Ioc 1 T, MainTerm t) + (∫ t in Ioc 1 T, ErrorTerm t) := by
+    rw [← integral_add (mainTerm_integrable T) (errorTerm_integrable T)]
+    apply setIntegral_congr_fun measurableSet_Ioc
+    intro t _; show hardyZ t = MainTerm t + ErrorTerm t
+    simp [ErrorTerm]
+  rw [h_split, add_mul]
+  exact le_trans (abs_add _ _) (add_le_add (h_M T hT) (h_E T hT))
+
+/-- **Main term first moment bound**: |∫₁ᵀ MainTerm(t) dt| ≤ C_M · √T.
+
+    Each mode n contributes ∫ (n+1)^{-1/2} cos(θ(t) - t·log(n+1)) dt.
+    The phase derivative is θ'(t) - log(n+1) ≈ (1/2)log(t/(2π)) - log(n+1),
+    which is bounded away from 0 for most n (off-diagonal modes).
+    VdC first-derivative test gives O(1/|phase'|) per mode.
+    Summing over n ≤ √(T/2π) modes: total ≤ C · ∑ n^{-1/2} = O(√T).
+
+    Reference: Titchmarsh §4.15 (oscillatory integral bounds). -/
+private theorem main_term_first_moment :
+    ∃ C_M > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) := by
+  sorry
+
+/-- **Error term first moment bound**: |∫₁ᵀ ErrorTerm(t) dt| ≤ C_E · √T.
+
+    The error term on block k has alternating sign (-1)^k and amplitude
+    that decays like 1/√(k+1). The block integrals form an alternating
+    series, so by Leibniz the partial sum is bounded by the first omitted
+    term ~ 1/√K. Since K ~ √(T/2π), the bound is O(T^{-1/4}), which is
+    much better than √T.
+
+    The crude bound C_E · √T follows from the VdC-type bound on the
+    MainTerm contribution, since ErrorTerm = hardyZ - MainTerm and
+    |∫ hardyZ| ≤ C · T (crude bound from HardyZFirstMoment), so
+    |∫ Error| ≤ |∫ Z| + |∫ Main| ≤ C·T + C_M·√T ≤ C_E · T.
+    The sharper O(T^{-1/4}) bound is not needed here.
+
+    Reference: Gabcke 1979; Heath-Brown 1978. -/
+private theorem error_term_first_moment :
+    ∃ C_E > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, ErrorTerm t| ≤ C_E * T ^ ((1 : ℝ) / 2) := by
+  sorry
+
 /-- Conjunct 3: first moment bound (independent of saddle-point analysis).
 
     |∫₁ᵀ Z(t) dt| ≤ C·√T (Titchmarsh §4.15; Heath-Brown 1978).
@@ -3108,8 +3280,8 @@ private theorem siegel_saddle_and_antitone :
     Reference: Titchmarsh §4.15; Heath-Brown, Quart. J. Math. 29 (1978). -/
 private theorem siegel_first_moment :
     ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
-      |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) := by
-  sorry
+      |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) :=
+  first_moment_from_main_and_error main_term_first_moment error_term_first_moment
 
 private theorem siegel_expansion_core :
     -- (1) Pointwise saddle-point bound
