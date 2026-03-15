@@ -2031,44 +2031,47 @@ private theorem seed_witness_from_perron_core
         ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
         (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
-  -- Gap 1: ZeroCountingLowerBoundHyp (import cycle workaround)
-  -- Gap 2: Tower-cap domination of perronThreshold
-  -- Mathematical content: tower_cap grows as exp(exp(exp(c·logT))) via
-  -- N(T) ≥ T·logT/(3π), dominating perronThreshold's polynomial growth.
-  -- Inlined sorry covers: (a) ZeroCountingLowerBoundHyp instance,
+  -- Gaps 1+2: Tower-cap domination + ZeroCountingLowerBoundHyp.
+  -- tower_cap grows as exp(exp(exp(c·logT))) via N(T) ≥ T·logT/(3π).
+  -- perronThreshold(hRH, T) grows at most polynomially (pi_approx chain).
+  -- Sorry covers: (a) ZeroCountingLowerBoundHyp instance (import cycle),
   -- (b) perronThreshold growth bound via unwinding Classical.choose.
   have ⟨T, hT4, hdom⟩ : ∃ T : ℝ, 4 ≤ T ∧
       max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 ≤
         Real.exp (Real.exp (Real.exp
           (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) := by sorry
-  -- Set ε = 1/2, t₀ = log(max(X, perronThreshold) + 1)
+  -- Set up B = max(X, perronThreshold) + 1
   set P := @perronThreshold pi_explicit_formula_from_perron hRH T with hP_def
   set B := max X P + 1 with hB_def
   have hPgt1 := perronThreshold_gt_one hRH T
   have hBpos : (0 : ℝ) < B := by
     simp only [hB_def, hP_def]; linarith [le_max_right X P]
-  refine ⟨Real.log B, T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_, ?_, ?_⟩
-  · -- X < exp(log B) = B = max(X, P) + 1 > X
-    rw [Real.exp_log hBpos]
-    simp only [hB_def, hP_def]
-    linarith [le_max_left X P]
-  · -- perronThreshold ≤ exp(log B) = B = max(X, P) + 1 > P
-    rw [Real.exp_log hBpos]
-    simp only [hB_def, hP_def]
-    linarith [le_max_right X P]
-  · -- Gap 3: Approximate congruences — case split on N(T)
-    by_cases hN : N T = 0
+  -- Case split: N(T) = 0 (vacuous congruences) vs N(T) > 0 (Dirichlet)
+  by_cases hN : N T = 0
+  · -- N(T) = 0: congruences are vacuous, use t₀ = log B
+    refine ⟨Real.log B, T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_, ?_, ?_⟩
+    · rw [Real.exp_log hBpos]; simp only [hB_def, hP_def]
+      linarith [le_max_left X P]
+    · rw [Real.exp_log hBpos]; simp only [hB_def, hP_def]
+      linarith [le_max_right X P]
     · exact vacuous_congruences_general hN phase _ _
-    · -- N(T) > 0: inhomogeneous simultaneous Dirichlet approximation needed
-      -- For K = N(T) zeros γ₁,...,γ_K and phases φ₁,...,φ_K, need t₀ in
-      -- [log B, log(tower_cap)] with |t₀·γ_k - φ_k - m_k·2π| ≤ 1/2.
-      -- Cassels (1957, Ch. III): interval of length ≥ (2π/ε)^K suffices.
-      -- tower_cap provides exp(exp(c·log T)) >> (4π)^{T·log T} for large T.
-      intro ρ hρ
-      exact ⟨0, by sorry⟩
-  · -- exp(log B) ≤ tower_cap
-    rw [Real.exp_log hBpos]
-    exact hdom
+    · rw [Real.exp_log hBpos]; exact hdom
+  · -- N(T) > 0: need t₀ in [log B, log(tower_cap)] satisfying congruences.
+    -- Gap 3: Inhomogeneous simultaneous Dirichlet approximation.
+    -- For K = N(T) zeros with ordinates γ₁,...,γ_K and arbitrary phases,
+    -- need t₀ in an interval of length L with |t₀·γ_k - φ_k - m_k·2π| ≤ ε.
+    -- Cassels (1957, Ch. III): interval of length ≥ (2π/ε)^K suffices.
+    -- The tower cap provides L = log(tower_cap) - log B, which grows as
+    -- exp(exp(c·log T)) >> (4π)^{T·log T} for large T.
+    -- The sorry produces t₀ with all 7 required properties simultaneously.
+    -- CLOSURE: formalize inhomogeneous Cassels + verify interval length bound.
+    exact ⟨Real.log B, T, 1 / 2, hT4, by norm_num, by norm_num,
+      by rw [Real.exp_log hBpos]; simp only [hB_def, hP_def];
+         linarith [le_max_left X P],
+      by rw [Real.exp_log hBpos]; simp only [hB_def, hP_def];
+         linarith [le_max_right X P],
+      by intro ρ hρ; exact ⟨0, by sorry⟩,
+      by rw [Real.exp_log hBpos]; exact hdom⟩
 
 /-- Target approximate-seed phase alignment above the Perron threshold.
 
