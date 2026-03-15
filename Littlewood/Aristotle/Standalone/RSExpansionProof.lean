@@ -32,12 +32,13 @@ The proof decomposes into:
 - `block_correction_antitone_from_saddle` (line ~3161): Signed remainder coupling
   Needs: phase coherence between R(k) on consecutive blocks (Gabcke Satz 4).
   Cannot be derived from pointwise |R(k)| bounds alone.
-- `main_term_first_moment` (line ~3283): |∫₁ᵀ MainTerm| ≤ C·√T
-  Needs: oscillatory cancellation via VdC first-derivative test per mode.
-  Per-mode bound (main_term_per_mode_bound) gives O(T) per mode;
-  naive summation over N ≈ T^{1/4} modes yields O(T^{5/4}), not O(√T).
-  Requires integral-sum interchange with variable-length Finset.range.
-- `error_term_first_moment` (line ~3448): |∫₁ᵀ ErrorTerm| ≤ C·√T
+- `per_mode_sqrt_cos_bound` (line ~3370): |∫ hardyCos n| ≤ B·√(n+1)
+  Needs: VdC first-derivative test on φ(t) = θ(t) - t·log(n+1).
+  Stationary point at t ≈ 2π(n+1)²; away from this, |φ'| ≥ c/√(n+1).
+  VdC gives O(√(n+1)) per mode. Ref: Titchmarsh §4.15; Ivic Ch. 4.
+  ASSEMBLY PROVED: main_term_first_moment_of_per_mode_sqrt wires
+  per-mode bound to O(√T) main term first moment via hardySum_integral_eq.
+- `error_term_first_moment` (line ~3548): |∫₁ᵀ ErrorTerm| ≤ C·√T
   Needs: alternating block cancellation with ANTITONE absolute values.
   Signed block integrals alternate (signed_block_integral_nonneg: proved),
   but |∫_block_k| ≈ C√(k+2) GROWS. Requires block_correction_antitone
@@ -3319,7 +3320,7 @@ private theorem main_term_first_moment_of_per_mode_sqrt
           ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) * ∫ t in Ioc (hardyStart n) T, hardyCos n t|
         ≤ 2 * |∑ n ∈ Finset.range (hardyN T),
           ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) * ∫ t in Ioc (hardyStart n) T, hardyCos n t| :=
-          abs_two_mul _
+          by rw [abs_mul, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 2)]
       _ ≤ 2 * (B * T ^ ((1 : ℝ) / 2)) := by linarith [h_inner]
       _ = (2 * B) * T ^ ((1 : ℝ) / 2) := by ring
   -- Now prove h_inner: |∑ weighted_cos_integrals| ≤ B · T^{1/2}
@@ -3348,7 +3349,7 @@ private theorem main_term_first_moment_of_per_mode_sqrt
         have : (-(1 / 2 : ℝ) + 1 / 2) = 0 := by ring
         rw [this, Real.rpow_zero, mul_one]
     _ = B * (hardyN T : ℝ) := by
-        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_comm]
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
     _ ≤ B * T ^ ((1 : ℝ) / 2) := by
         apply mul_le_mul_of_nonneg_left _ hB_pos.le
         calc (hardyN T : ℝ) ≤ Real.sqrt (T / (2 * Real.pi)) :=
