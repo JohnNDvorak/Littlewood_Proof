@@ -467,4 +467,152 @@ theorem eventually_abs_le_scale_mono
   filter_upwards [hfg, hgh] with x hfx hgx
   exact le_trans hfx (mul_le_mul_of_nonneg_left hgx hC)
 
+/-! ## Part 11: ψ-level explicit formula → π-level via division by logx
+
+The ψ-level explicit formula gives:
+  |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C₂·(√x·(logT)²/√T + (logx)²)
+
+Dividing both sides by logx:
+  |(ψ(x)-x)/logx + (Σ Re(x^ρ/ρ))/logx| ≤ C₂·(√x·(logT)²/√T + (logx)²)/logx
+
+The RHS = C₂·(√x·(logT)²/(√T·logx) + logx), which for fixed T and large x
+is eventually ≤ ε·(√x/logx) by `exists_T_and_eventually_small`.
+
+These lemmas formalize the division-by-logx step, independent of any
+project-specific definitions. -/
+
+/-- Dividing a bound by a positive quantity preserves it.
+    If |a| ≤ B and B ≥ 0 and d > 0, then |a/d| ≤ B/d. -/
+theorem abs_div_le_div_of_pos {a B d : ℝ} (hab : |a| ≤ B)
+    (hd : 0 < d) : |a / d| ≤ B / d := by
+  rw [abs_div, abs_of_pos hd]
+  exact div_le_div_of_nonneg_right hab hd.le
+
+/-- If |f(x) + g(x)| ≤ B(x) eventually, and logx > 0 eventually,
+    then |f(x)/logx + g(x)/logx| ≤ B(x)/logx eventually.
+
+    This is the core algebraic step for converting ψ-level bounds to
+    π-level bounds by dividing through by logx. -/
+theorem sum_div_log_bound
+    (f g B : ℝ → ℝ)
+    (hB : ∀ᶠ x in atTop, |f x + g x| ≤ B x) :
+    ∀ᶠ x in atTop, |f x / Real.log x + g x / Real.log x| ≤ B x / Real.log x := by
+  filter_upwards [hB, log_eventually_pos] with x hfg hlx
+  have : f x / Real.log x + g x / Real.log x = (f x + g x) / Real.log x := by
+    rw [add_div]
+  rw [this]
+  exact abs_div_le_div_of_pos hfg hlx
+
+/-- The complete π-level combinator using exists_T_and_eventually_small.
+
+    Given:
+    - A ψ-level explicit formula: for all x, T ≥ 2,
+        |R(x,T)| ≤ C₂·(√x·(logT)²/√T + (logx)²)
+    - Any ε > 0
+
+    Produces: ∃ T₀ ≥ 2 such that eventually
+        |R(x,T₀)| / logx ≤ ε · (√x / logx)
+
+    This packages the "choose T then choose x₀" argument at the divided level. -/
+theorem psi_bound_div_log_eventually_small
+    (R : ℝ → ℝ → ℝ)
+    (C₂ : ℝ) (hC₂ : 0 < C₂)
+    (hR : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |R x T| ≤ C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2))
+    (ε : ℝ) (hε : 0 < ε) :
+    ∃ T₀ : ℝ, 2 ≤ T₀ ∧
+      ∀ᶠ x in atTop, |R x T₀| / Real.log x ≤ ε * (Real.sqrt x / Real.log x) := by
+  obtain ⟨T₀, hT₀, hev⟩ := exists_T_and_eventually_small C₂ hC₂ ε hε
+  refine ⟨T₀, hT₀, ?_⟩
+  filter_upwards [hev, eventually_ge_atTop (2 : ℝ), log_eventually_pos] with x hx hx2 hlx
+  have hR_bound := hR x T₀ hx2 hT₀
+  calc |R x T₀| / Real.log x
+      ≤ (C₂ * (Real.sqrt x * (Real.log T₀) ^ 2 / Real.sqrt T₀ + (Real.log x) ^ 2))
+          / Real.log x := div_le_div_of_nonneg_right hR_bound hlx.le
+    _ = C₂ * (Real.sqrt x * (Real.log T₀) ^ 2 / Real.sqrt T₀ + (Real.log x) ^ 2)
+          / Real.log x := by ring_nf
+    _ ≤ ε * (Real.sqrt x / Real.log x) := hx
+
+/-- Variant of `psi_bound_div_log_eventually_small` that directly produces the
+    "for all ε, eventually" form needed by `PiApproxFromExplicitFormulaHyp`.
+
+    Given a ψ-level bound parameterized by a finset S (with the S-dependence
+    abstracted away), and an Abel correction bound, produces the π-level
+    eventually-small statement. -/
+theorem pi_level_from_psi_level_and_correction
+    (piErr psiDivLog sumDivLog correction : ℝ → ℝ)
+    (D : ℝ) (hD : 0 < D)
+    -- Abel correction: |π(x)-li(x) - (ψ(x)-x)/logx| ≤ D·√x/(logx)²
+    (h_abel : ∀ᶠ x in atTop,
+      |piErr x - psiDivLog x| ≤ D * (Real.sqrt x / (Real.log x) ^ 2))
+    -- ψ-level explicit formula divided by logx: for all δ > 0, eventually
+    -- |(ψ(x)-x)/logx + Σ/logx| ≤ δ·√x/logx
+    (h_psi : ∀ δ : ℝ, 0 < δ → ∀ᶠ x in atTop,
+      |psiDivLog x + sumDivLog x| ≤ δ * (Real.sqrt x / Real.log x))
+    (ε : ℝ) (hε : 0 < ε) :
+    ∀ᶠ x in atTop,
+      |piErr x + sumDivLog x| ≤ ε * (Real.sqrt x / Real.log x) :=
+  abel_bridge_adjustable piErr psiDivLog sumDivLog D hD ε hε h_abel h_psi
+
+/-! ## Part 12: Full explicit formula assembly for the π-level
+
+The final theorem packages all pieces together:
+1. ψ-level bound → divide by logx → for all δ eventually small
+2. Abel correction → O(√x/(logx)²) → o(√x/logx)
+3. Triangle inequality → π-level bound at ε·√x/logx scale
+
+This is what PerronExplicitFormulaProvider needs to close `pi_approx_bound`. -/
+
+/-- The ψ-level "for all δ eventually" statement from a fixed-T bound.
+
+    If for all x,T ≥ 2: |R(x,T)| ≤ C₂·(√x·(logT)²/√T + (logx)²),
+    and f(x) = R(x,T₀)/logx for some T₀,
+    then for all δ > 0: eventually |f(x)| ≤ δ·√x/logx.
+
+    This converts the "∃ T₀, eventually" form to the "∀ δ, eventually" form
+    needed by `abel_bridge_adjustable`. -/
+theorem psi_div_log_forall_delta_eventually
+    (R : ℝ → ℝ → ℝ)
+    (C₂ : ℝ) (hC₂ : 0 < C₂)
+    (hR : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |R x T| ≤ C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2))
+    (δ : ℝ) (hδ : 0 < δ) :
+    ∃ T₀ : ℝ, 2 ≤ T₀ ∧
+      ∀ᶠ x in atTop, |R x T₀| / Real.log x ≤ δ * (Real.sqrt x / Real.log x) :=
+  psi_bound_div_log_eventually_small R C₂ hC₂ hR δ hδ
+
+/-- Key algebraic identity: for any a, b, L with L > 0,
+    a/L + b/L = (a + b)/L. Used to merge ψ-error/logx with sum/logx. -/
+theorem add_div_eq_div (a b L : ℝ) (hL : L ≠ 0) :
+    a / L + b / L = (a + b) / L := (add_div a b L).symm
+
+/-- Scaling an eventually-bound by a positive factor.
+    If |f(x)| ≤ B(x) eventually, then C·|f(x)| ≤ C·B(x) eventually. -/
+theorem eventually_mul_le_mul_of_nonneg
+    (f B : ℝ → ℝ) (C : ℝ) (hC : 0 ≤ C)
+    (hfB : ∀ᶠ x in atTop, |f x| ≤ B x) :
+    ∀ᶠ x in atTop, C * |f x| ≤ C * B x := by
+  filter_upwards [hfB] with x hx
+  exact mul_le_mul_of_nonneg_left hx hC
+
+/-- If two eventually-bounds hold, their sum holds eventually. -/
+theorem eventually_add_le_add
+    (f₁ f₂ B₁ B₂ : ℝ → ℝ)
+    (h₁ : ∀ᶠ x in atTop, f₁ x ≤ B₁ x)
+    (h₂ : ∀ᶠ x in atTop, f₂ x ≤ B₂ x) :
+    ∀ᶠ x in atTop, f₁ x + f₂ x ≤ B₁ x + B₂ x := by
+  filter_upwards [h₁, h₂] with x hx₁ hx₂
+  exact add_le_add hx₁ hx₂
+
+/-- Half-ε absorption: if D·√x/(logx)² ≤ (ε/2)·√x/logx and
+    δ·√x/logx ≤ (ε/2)·√x/logx (with δ = ε/2),
+    then D·√x/(logx)² + δ·√x/logx ≤ ε·√x/logx.
+    This is the final combination for the Abel bridge. -/
+theorem half_eps_combination (D ε : ℝ) (hD : 0 < D) (hε : 0 < ε) :
+    ∀ᶠ x in atTop,
+      D * (Real.sqrt x / (Real.log x) ^ 2) + (ε / 2) * (Real.sqrt x / Real.log x) ≤
+        ε * (Real.sqrt x / Real.log x) := by
+  filter_upwards [correction_eventually_absorbed D hD ε hε] with x hx
+  linarith
+
 end AbelSummationPsiPi

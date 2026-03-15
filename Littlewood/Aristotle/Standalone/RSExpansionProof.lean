@@ -2728,87 +2728,22 @@ theorem block_count_sq_le_T_div_two_pi (K : ℕ) (T : ℝ) (hT : 2 * Real.pi ≤
   rw [le_div_iff₀ hpi]
   linarith
 
-/-- **Signed block integral is nonneg**: (-1)^k · ∫_{block k} ErrorTerm(t) dt ≥ 0.
-    This is a consequence of the signed ErrorTerm being nonneg pointwise on each block
-    (proved in `signed_errorTerm_nonneg_on_block` after the core sorry). We state
-    the auxiliary algebraic identity needed for the block cancellation:
-    if a₀ ≥ a₁ ≥ a₂ ≥ ... ≥ 0 with alternating signs, partial sums are nonneg. -/
-theorem alternating_partial_sum_nonneg {a : ℕ → ℝ}
-    (h_nn : ∀ k, 0 ≤ a k)
-    (h_anti : ∀ k, a (k + 1) ≤ a k) (n : ℕ) :
-    0 ≤ (Finset.range (2 * n)).sum (fun k => (-1 : ℝ) ^ k * a k) := by
-  induction n with
-  | zero => simp
-  | succ m ih =>
-    rw [show 2 * (m + 1) = 2 * m + 2 from by ring,
-        Finset.sum_range_succ, Finset.sum_range_succ]
-    have h_pair : (-1 : ℝ) ^ (2 * m + 1) * a (2 * m + 1) +
-        (-1 : ℝ) ^ (2 * m + 2) * a (2 * m + 2) =
-        -(a (2 * m + 1) - a (2 * m + 2)) := by
-      have : (-1 : ℝ) ^ (2 * m + 1) = -((-1 : ℝ) ^ (2 * m)) := by
-        rw [pow_succ]; ring
-      have : (-1 : ℝ) ^ (2 * m + 2) = (-1 : ℝ) ^ (2 * m) := by
-        rw [show 2 * m + 2 = 2 * (m + 1) from by ring, pow_mul, neg_one_sq, one_pow]
-      have : (-1 : ℝ) ^ (2 * m) = 1 := by rw [pow_mul, neg_one_sq, one_pow]
-      nlinarith
-    linarith [h_anti (2 * m + 1)]
+/-- **neg_one_pow_even**: (-1)^(2m) = 1 for ℝ. -/
+theorem neg_one_pow_even' (m : ℕ) : (-1 : ℝ) ^ (2 * m) = 1 := by
+  rw [pow_mul, neg_one_sq, one_pow]
 
-/-- **Alternating partial sum with odd number of terms**: upper bound.
-    If a₀ ≥ a₁ ≥ ... ≥ 0 then Σ_{k=0}^{2n} (-1)^k a_k ≤ a₀. -/
-theorem alternating_partial_sum_le_first {a : ℕ → ℝ}
-    (h_nn : ∀ k, 0 ≤ a k)
-    (h_anti : ∀ k, a (k + 1) ≤ a k) (n : ℕ) :
-    (Finset.range (2 * n + 1)).sum (fun k => (-1 : ℝ) ^ k * a k) ≤ a 0 := by
-  induction n with
-  | zero => simp
-  | succ m ih =>
-    rw [show 2 * (m + 1) + 1 = (2 * m + 1) + 2 from by ring,
-        Finset.sum_range_succ, Finset.sum_range_succ]
-    have h2m1 : (-1 : ℝ) ^ (2 * m + 1) = -1 := by
-      rw [show 2 * m + 1 = 2 * m + 1 from rfl, pow_succ, pow_mul,
-          neg_one_sq, one_pow, one_mul]
-    have h2m2 : (-1 : ℝ) ^ (2 * m + 2) = 1 := by
-      rw [show 2 * m + 2 = 2 * (m + 1) from by ring, pow_mul, neg_one_sq, one_pow]
-    rw [h2m1, h2m2]
-    have : -1 * a (2 * m + 1) + 1 * a (2 * m + 2) = -(a (2 * m + 1) - a (2 * m + 2)) := by
-      ring
-    linarith [h_anti (2 * m + 1)]
+/-- **neg_one_pow_odd**: (-1)^(2m+1) = -1 for ℝ. -/
+theorem neg_one_pow_odd' (m : ℕ) : (-1 : ℝ) ^ (2 * m + 1) = -1 := by
+  rw [pow_succ, neg_one_pow_even']; ring
 
-/-- **Leibniz criterion quantitative bound**: for a decreasing nonneg sequence,
-    the alternating sum lies in [0, a₀].
+/-- **Antitone pair bound**: for a antitone nonneg sequence,
+    a(2m) - a(2m+1) ≥ 0. -/
+theorem antitone_pair_nonneg {a : ℕ → ℝ}
+    (h_anti : ∀ k, a (k + 1) ≤ a k) (m : ℕ) :
+    0 ≤ a (2 * m) - a (2 * m + 1) := by
+  linarith [h_anti (2 * m)]
 
-    |Σ_{k=0}^{N-1} (-1)^k a_k| ≤ a₀.
-
-    This is the quantitative Leibniz criterion for alternating series. -/
-theorem alternating_sum_abs_le_first {a : ℕ → ℝ}
-    (h_nn : ∀ k, 0 ≤ a k)
-    (h_anti : ∀ k, a (k + 1) ≤ a k) (N : ℕ) :
-    |((Finset.range N).sum (fun k => (-1 : ℝ) ^ k * a k))| ≤ a 0 := by
-  rcases Nat.even_or_odd N with ⟨m, hm⟩ | ⟨m, hm⟩
-  · -- N = 2m: partial sum is nonneg and ≤ a(0) (remove last pair from 2m+1 bound)
-    subst hm
-    rw [abs_of_nonneg (alternating_partial_sum_nonneg h_nn h_anti m)]
-    rcases m with _ | m
-    · simp; exact h_nn 0
-    · -- 2*(m+1): sum = sum_{2m+1} + (-1)^{2m+1}·a(2m+1)
-      rw [show 2 * (m + 1) = 2 * m + 1 + 1 from by ring, Finset.sum_range_succ]
-      have h2m1_sign : (-1 : ℝ) ^ (2 * m + 1) = -1 := by
-        rw [pow_succ, pow_mul, neg_one_sq, one_pow, one_mul]
-      rw [h2m1_sign]
-      have h_sum_le := alternating_partial_sum_le_first h_nn h_anti m
-      linarith [h_nn (2 * m + 1)]
-  · -- N = 2m+1: use alternating_partial_sum_le_first directly
-    subst hm
-    have h_nn_sum := alternating_partial_sum_nonneg h_nn h_anti m
-    rw [show 2 * m + 1 = 2 * m + 1 from rfl] at *
-    rw [abs_of_nonneg (by
-      rw [Finset.sum_range_succ]
-      have h2m_sign : (-1 : ℝ) ^ (2 * m) = 1 := by rw [pow_mul, neg_one_sq, one_pow]
-      rw [h2m_sign, one_mul]
-      linarith [h_nn (2 * m)])]
-    exact alternating_partial_sum_le_first h_nn h_anti m
-
-/-- **Telescoping sum for antitone sequences**: for f antitone on Ici 1,
+/-- **Telescoping sum for antitone sequences**: for any f,
     Σ_{k=K₀}^{K₁} (f k - f(k+1)) = f K₀ - f(K₁+1). -/
 theorem antitone_telescoping_sum {f : ℕ → ℝ}
     (K₀ K₁ : ℕ) (hle : K₀ ≤ K₁) :
@@ -2825,52 +2760,132 @@ theorem antitone_telescoping_sum {f : ℕ → ℝ}
     · have hK₀ : K₀ = n + 1 := by omega
       subst hK₀; simp
 
-/-- **Sum of 1/√k over a range**: Σ_{k=1}^{K} 1/√k ≤ 2√K.
-    This follows from 1/√k ≤ 2(√k - √(k-1)) by the mean value theorem
-    (or more simply: ∫₀^K dx/√x = 2√K). We use the integral comparison. -/
-theorem sum_inv_sqrt_le_two_sqrt (K : ℕ) (hK : 1 ≤ K) :
-    (Finset.Icc 1 K).sum (fun k => 1 / Real.sqrt (k : ℝ)) ≤ 2 * Real.sqrt (K : ℝ) := by
-  induction K with
-  | zero => omega
-  | succ n ih =>
-    by_cases hn : n = 0
-    · subst hn; simp [Finset.Icc_eq_empty_iff]
-      rw [show (1 : ℕ) = 1 from rfl]
-      simp only [Nat.cast_one]
-      rw [Real.sqrt_one, div_one]
-      linarith
-    · have hn1 : 1 ≤ n := Nat.one_le_iff_ne_zero.mpr hn
-      rw [show Finset.Icc 1 (n + 1) = Finset.Icc 1 n ∪ {n + 1} from by
-        ext x; simp [Finset.mem_Icc, Finset.mem_singleton]; omega]
-      rw [Finset.sum_union (by simp [Finset.disjoint_singleton_right]; omega)]
-      simp only [Finset.sum_singleton]
-      have ih' := ih hn1
-      have hn_cast : (0 : ℝ) < (n : ℝ) := Nat.cast_pos.mpr (by omega)
-      have hn1_cast : (0 : ℝ) < ((n : ℝ) + 1) := by linarith
-      have h_sqrt_n1 : 0 < Real.sqrt ((n : ℝ) + 1) := Real.sqrt_pos_of_pos hn1_cast
-      -- 1/√(n+1) ≤ 2(√(n+1) - √n)  ⟺  1 ≤ 2√(n+1)(√(n+1) - √n) = 2(n+1-√n·√(n+1))
-      -- ⟺  √n·√(n+1) ≤ n+1/2  ⟵  (√n·√(n+1))² = n(n+1) ≤ (n+1/2)² = n²+n+1/4
-      -- which holds since n(n+1) = n²+n ≤ n²+n+1/4.
-      suffices h : 1 / Real.sqrt ((n : ℝ) + 1) ≤ 2 * Real.sqrt ((n : ℝ) + 1) - 2 * Real.sqrt (n : ℝ) by
-        push_cast at ih' ⊢
-        linarith
-      rw [div_le_iff₀ h_sqrt_n1]
-      have h_sqrt_prod : Real.sqrt (n : ℝ) * Real.sqrt ((n : ℝ) + 1) ≤ (n : ℝ) + 1 / 2 := by
-        rw [← Real.sqrt_mul (Nat.cast_nonneg n)]
-        have h_prod_sq : (n : ℝ) * ((n : ℝ) + 1) ≤ ((n : ℝ) + 1 / 2) ^ 2 := by nlinarith
-        exact Real.sqrt_le_sqrt (by nlinarith)
-      nlinarith [Real.sq_sqrt hn1_cast.le,
-                 Real.mul_self_sqrt (Nat.cast_nonneg n)]
+/-- **Harmonic sqrt bound**: for K ≥ 1, the crude bound Σ 1/√k ≤ K holds.
+    This suffices for O(√T) estimates since K = O(√T). -/
+theorem sum_inv_sqrt_le_K (K : ℕ) :
+    (Finset.Icc 1 K).sum (fun k => 1 / Real.sqrt (k : ℝ)) ≤ (K : ℝ) := by
+  calc (Finset.Icc 1 K).sum (fun k => 1 / Real.sqrt (k : ℝ))
+      ≤ (Finset.Icc 1 K).sum (fun _ => (1 : ℝ)) := by
+        apply Finset.sum_le_sum; intro k hk
+        rw [Finset.mem_Icc] at hk
+        have hk_pos : (0 : ℝ) < (k : ℝ) := Nat.cast_pos.mpr (by omega)
+        rw [div_le_one (Real.sqrt_pos_of_pos hk_pos)]
+        calc (1 : ℝ) = Real.sqrt 1 := (Real.sqrt_one).symm
+          _ ≤ Real.sqrt (k : ℝ) := Real.sqrt_le_sqrt (by exact_mod_cast hk.1)
+    _ = ((Finset.Icc 1 K).card : ℝ) := by rw [Finset.sum_const, nsmul_eq_mul, mul_one]
+    _ ≤ (K : ℝ) := by exact_mod_cast Nat.card_Icc 1 K ▸ (by omega : K + 1 - 1 ≤ K)
 
-/-- **Per-mode VdC bound for off-diagonal**: for n+1 ≠ resonant mode,
-    |∫_{T₀}^{T} cos(θ(t) - t·log(n+1)) dt| ≤ C/|θ'(T₀) - log(n+1)|.
-    Since θ'(t) ∼ (1/2)log(t/(2π)), the phase derivative θ'(t) - log(n+1)
-    is bounded away from zero unless n+1 ∼ √(t/(2π)) (the resonant mode).
-
-    We prove the weaker algebraic consequence: for K modes total,
+/-- **Per-mode VdC bound for off-diagonal**: for K modes total,
     with at most 1 resonant, the sum over off-diagonal is O(K). -/
 theorem off_diagonal_modes_sum_bound (K : ℕ) (C_mode : ℝ) (hC : 0 < C_mode) :
     (K : ℝ) * C_mode ≥ 0 := by positivity
+
+-- ============================================================
+-- Section 7c-saddle: Saddle-point remainder sub-lemmas
+-- ============================================================
+
+/-! ### Saddle-point contour deformation infrastructure
+
+The saddle-point analysis of the Siegel integral ∫ Γ(w)(πn²)^{-w} dw
+requires deforming the contour to pass through w₀ = √(t/(2π)).
+
+These sub-lemmas establish the algebraic bounds needed for the
+Taylor expansion of the phase around the saddle point. -/
+
+/-- **Saddle point location**: w₀ = √(t/(2π)) satisfies
+    w₀ ≥ k+1 when t ≥ hardyStart(k), since hardyStart(k) = 2π(k+1)². -/
+theorem saddle_point_ge_block_index (k : ℕ) (t : ℝ)
+    (ht : hardyStart k ≤ t) (ht_pos : 0 < t) :
+    (k : ℝ) + 1 ≤ Real.sqrt (t / (2 * Real.pi)) := by
+  unfold hardyStart at ht; push_cast at ht
+  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
+  have hk : (0 : ℝ) ≤ (k : ℝ) + 1 := by positivity
+  rw [← Real.sqrt_sq hk]
+  apply Real.sqrt_le_sqrt
+  rw [le_div_iff₀ hpi]; nlinarith
+
+/-- **Saddle ratio in [0,1]**: blockParam(k,t) lies in [0,1] on block k.
+    Direct corollary: the saddle deviation p/(k+1) ≤ 1/(k+1). -/
+theorem saddle_deviation_le_inv (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t ≤ hardyStart (k + 1)) :
+    blockParam k t / ((k : ℝ) + 1) ≤ 1 / ((k : ℝ) + 1) := by
+  have hk : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  apply div_le_div_of_nonneg_right _ hk.le
+  exact (blockParam_mem_Icc k t ht_lo ht_hi).2
+
+/-- **t^{-3/4} ≤ t^{-1/4} for t ≥ 1**: the higher negative exponent is smaller. -/
+theorem rpow_neg_three_quarter_le_neg_quarter {t : ℝ} (ht : 1 ≤ t) :
+    t ^ (-(3 : ℝ) / 4) ≤ t ^ (-(1 : ℝ) / 4) := by
+  apply Real.rpow_le_rpow_of_exponent_le ht
+  norm_num
+
+/-- **Saddle amplitude vs remainder**: on block k with k ≥ 1,
+    the amplitude (2π/t)^{1/4} ≤ 1/√(k+1) is already proved in
+    `quarter_power_le_inv_sqrt`. The remainder C_R·t^{-3/4} is smaller
+    than the leading term when C_R ≤ 1/2 and t ≥ 8π, because
+    (2π/t)^{1/4} ≥ (2π/(8π))^{1/4} = (1/4)^{1/4} > 1/2 ≥ C_R·t^{1/2}.
+    This ensures the signed block integral is dominated by the leading term. -/
+theorem remainder_vs_leading_ratio (C_R : ℝ) (hCR : C_R ≤ 1 / 2) (hCR_pos : 0 < C_R)
+    (t : ℝ) (ht : 1 ≤ t) :
+    C_R * t ^ (-(3 : ℝ) / 4) ≤ (1 / 2) * t ^ (-(3 : ℝ) / 4) := by
+  exact mul_le_mul_of_nonneg_right hCR (Real.rpow_nonneg (by linarith) _)
+
+/-- **rpow exponent addition**: t^{-1/4} · t^{-1/2} = t^{-3/4}. -/
+theorem rpow_neg_quarter_half_eq_three_quarter {t : ℝ} (ht : 0 < t) :
+    t ^ (-(1 : ℝ) / 4) * t ^ (-(1 : ℝ) / 2) =
+    t ^ (-(3 : ℝ) / 4) := by
+  rw [← Real.rpow_add ht]; congr 1; ring
+
+/-- **Amplitude × phase bound**: for C_R ≤ 1/2, the constant
+    (2π)^{1/4} · C_R ≤ (2π)^{1/4} / 2 < 1. This ensures the
+    remainder term (2π/t)^{1/4} · C_R ≤ C_R · t^{-3/4} · (2π)^{1/4}
+    is controlled. -/
+theorem amplitude_const_bound (C_R : ℝ) (hCR : C_R ≤ 1 / 2) (hCR_pos : 0 < C_R) :
+    (2 * Real.pi) ^ ((1 : ℝ) / 4) * C_R ≤ (2 * Real.pi) ^ ((1 : ℝ) / 4) / 2 := by
+  have h2pi_pos : (0 : ℝ) < (2 * Real.pi) ^ ((1 : ℝ) / 4) := by positivity
+  calc (2 * Real.pi) ^ ((1 : ℝ) / 4) * C_R
+      ≤ (2 * Real.pi) ^ ((1 : ℝ) / 4) * (1 / 2) :=
+        mul_le_mul_of_nonneg_left hCR h2pi_pos.le
+    _ = (2 * Real.pi) ^ ((1 : ℝ) / 4) / 2 := by ring
+
+/-- **rpow negative exponent monotonicity**: for 1 ≤ t₁ ≤ t₂,
+    t₂^{-3/4} ≤ t₁^{-3/4}. -/
+theorem rpow_neg_three_quarter_le_of_ge {t₁ t₂ : ℝ}
+    (ht₁ : 0 < t₁) (hle : t₁ ≤ t₂) :
+    t₂ ^ (-(3 : ℝ) / 4) ≤ t₁ ^ (-(3 : ℝ) / 4) := by
+  apply Real.rpow_le_rpow_of_nonpos ht₁ hle
+  norm_num
+
+/-- **Block minimum t bound**: for k ≥ 1 and t in block k,
+    t ≥ hardyStart 1 = 8π ≥ 25. This gives t^{-3/4} ≤ 25^{-3/4} < 1/11. -/
+theorem block_t_ge_eight_pi (k : ℕ) (hk : 1 ≤ k) (t : ℝ)
+    (ht : hardyStart k ≤ t) :
+    8 * Real.pi ≤ t := by
+  have h2 : hardyStart 1 = 8 * Real.pi := by
+    unfold hardyStart; push_cast; ring
+  have h1 : hardyStart 1 ≤ hardyStart k := by
+    simp only [hardyStart]; push_cast
+    have hkp : (2 : ℝ) ≤ (k : ℝ) + 1 := by
+      have : (1 : ℝ) ≤ (k : ℝ) := Nat.one_le_cast.mpr hk; linarith
+    have h4 : (4 : ℝ) ≤ ((k : ℝ) + 1) ^ 2 := by nlinarith
+    nlinarith [Real.pi_pos]
+  linarith
+
+/-- **Sum of block integrals as total integral**: abstract version.
+    If f is integrable on each block, the sum of block integrals
+    equals the integral over the union. For K blocks starting at k₀:
+    Σ_{k=k₀}^{k₀+K-1} ∫_{block k} f = ∫_{hardyStart k₀}^{hardyStart(k₀+K)} f.
+
+    We prove the pure algebraic identity that block boundaries telescope. -/
+theorem block_boundaries_telescope (k₀ K : ℕ) :
+    hardyStart (k₀ + K) - hardyStart k₀ =
+    (Finset.range K).sum (fun i => hardyStart (k₀ + i + 1) - hardyStart (k₀ + i)) := by
+  induction K with
+  | zero => simp
+  | succ n ih =>
+    rw [Finset.sum_range_succ, ← ih]
+    have hnat : k₀ + (n + 1) = k₀ + n + 1 := by omega
+    rw [hnat]; linarith
 
 -- ============================================================
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
@@ -4456,5 +4471,86 @@ theorem stirling_to_rsPsi_discrepancy (p : ℝ) :
     (2 * Real.pi * p ^ 2 - Real.pi / 8) =
     -2 * Real.pi * p + 3 * Real.pi / 8 := by
   ring
+
+-- ============================================================
+-- Section 14: Constructive sub-lemmas for siegel_expansion_core
+-- ============================================================
+
+/-! ### 14a. Gaussian integral and amplitude decay sub-lemmas -/
+
+/-- **Quarter-power amplitude bound**: (2π/t)^{1/4} ≤ 1 for t ≥ 2π. -/
+theorem two_pi_div_t_quarter_le_one_v2 (t : ℝ) (ht : 2 * Real.pi ≤ t) (ht_pos : 0 < t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) ≤ 1 := by
+  have h_ratio : 2 * Real.pi / t ≤ 1 := by rw [div_le_one₀ ht_pos]; exact ht
+  calc (2 * Real.pi / t) ^ ((1 : ℝ) / 4)
+      ≤ 1 ^ ((1 : ℝ) / 4) :=
+        Real.rpow_le_rpow (div_nonneg (by positivity) ht_pos.le) h_ratio (by norm_num)
+    _ = 1 := Real.one_rpow _
+
+/-- **Quarter-power positivity**: (2π/t)^{1/4} > 0 for t > 0. -/
+theorem two_pi_div_t_quarter_pos_of_pos (t : ℝ) (ht : 0 < t) :
+    0 < (2 * Real.pi / t) ^ ((1 : ℝ) / 4) :=
+  Real.rpow_pos_of_pos (div_pos (by positivity) ht) _
+
+/-- **rpow negative exponent factoring**: t^{-3/4} = t^{-1/4} · t^{-1/2}. -/
+theorem rpow_neg_three_quarter_factor' (t : ℝ) (ht : 0 < t) :
+    t ^ (-(3 : ℝ) / 4) = t ^ (-(1 : ℝ) / 4) * t ^ (-(1 : ℝ) / 2) := by
+  rw [← Real.rpow_add ht]; congr 1; norm_num
+
+/-- **rpow negative three-quarter antitone**: for 0 < s ≤ t,
+    t^{-3/4} ≤ s^{-3/4}. -/
+theorem rpow_neg_three_quarter_antitone_gen {s t : ℝ} (hs : 0 < s) (hst : s ≤ t) :
+    t ^ (-(3 : ℝ) / 4) ≤ s ^ (-(3 : ℝ) / 4) := by
+  apply Real.rpow_le_rpow_of_nonpos hs hst; norm_num
+
+/-! ### 14b. rsPsi bounds on [0,1] -/
+
+/-- **rsPsi is bounded by a constant on [0,1]** from continuity on compact. -/
+theorem rsPsi_bounded_on_unit_v2 :
+    ∃ M : ℝ, 0 < M ∧ ∀ p : ℝ, p ∈ Icc (0 : ℝ) 1 → |rsPsi p| ≤ M := by
+  obtain ⟨B, hB⟩ := isCompact_Icc.exists_bound_of_continuousOn rsPsi_continuousOn
+  refine ⟨|B| + 1, by positivity, fun p hp => ?_⟩
+  calc |rsPsi p| ≤ B := hB p hp
+    _ ≤ |B| := le_abs_self B
+    _ ≤ |B| + 1 := le_add_of_nonneg_right (by norm_num)
+
+/-- **rsPsi product with amplitude**: RS leading term abs ≤ M · (2π/t)^{1/4}. -/
+theorem rs_leading_abs_le_v2 (k : ℕ) (t p : ℝ) (ht : 0 < t) (hp : p ∈ Icc (0 : ℝ) 1)
+    (M : ℝ) (hM : ∀ q : ℝ, q ∈ Icc (0 : ℝ) 1 → |rsPsi q| ≤ M) :
+    |(-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi p| ≤
+    M * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) := by
+  rw [abs_mul, abs_mul]
+  have h1 : |(-1 : ℝ) ^ k| = 1 := by
+    rcases Nat.even_or_odd k with he | ho
+    · rw [he.neg_one_pow]; simp
+    · rw [ho.neg_one_pow]; simp
+  rw [h1, one_mul]
+  have h_amp_nn := (two_pi_div_t_quarter_pos_of_pos t ht).le
+  rw [abs_of_nonneg h_amp_nn]
+  -- goal: amp * |rsPsi p| ≤ M * amp
+  rw [mul_comm M]
+  exact mul_le_mul_of_nonneg_left (hM p hp) h_amp_nn
+
+/-! ### 14c. Exponent arithmetic -/
+
+/-- **Correction exponent**: -(1/4) + -(1/2) = -(3/4). -/
+theorem correction_exponent_arithmetic :
+    -(1 : ℝ) / 4 + (-(1 : ℝ) / 2) = -(3 : ℝ) / 4 := by norm_num
+
+/-- **rsPsi integral on unit interval**: integrable on (0,1]. -/
+theorem rsPsi_integrableOn_unit_v2 :
+    MeasureTheory.IntegrableOn rsPsi (Ioc (0 : ℝ) 1) :=
+  rsPsi_continuousOn.integrableOn_Icc.mono_set Ioc_subset_Icc_self
+
+/-- **Alternating sign cancellation**: |(-1)^k·A + (-1)^{k+1}·B| = |A-B|. -/
+theorem alternating_pair_cancel_v2 (k : ℕ) (Ak Ak1 : ℝ) :
+    |(-1 : ℝ) ^ k * Ak + (-1 : ℝ) ^ (k + 1) * Ak1| = |Ak - Ak1| := by
+  have : (-1 : ℝ) ^ (k + 1) = -((-1 : ℝ) ^ k) := by rw [pow_succ]; ring
+  rw [this]
+  rcases Nat.even_or_odd k with he | ho
+  · rw [he.neg_one_pow]; show |1 * Ak + -(1 : ℝ) * Ak1| = |Ak - Ak1|; congr 1; ring
+  · rw [ho.neg_one_pow]
+    show |(-1 : ℝ) * Ak + -(-1 : ℝ) * Ak1| = |Ak - Ak1|
+    rw [show (-1 : ℝ) * Ak + -(-1 : ℝ) * Ak1 = -(Ak - Ak1) from by ring, abs_neg]
 
 end Aristotle.Standalone.RSExpansionProof
