@@ -3285,19 +3285,105 @@ private theorem main_term_per_mode_bound :
     _ = T - 1 := by rw [one_mul, abs_of_nonneg (by linarith)]
     _ ≤ 2 * T + 4 := by linarith
 
+/-- **Reduction**: per-mode √(n+1) cos integral bound implies O(√T) main term first moment.
+
+    If |∫ hardyCos n on [hardyStart n, T]| ≤ B·√(n+1) for all n, then
+    |∫ MainTerm| = |hardySumInt T| ≤ 2·∑_{n<N} (n+1)^{-1/2}·B·√(n+1)
+    = 2B·N ≤ 2B·√(T/(2π)) ≤ 2B·√T.
+
+    Factored from main_term_first_moment to isolate the oscillatory analysis
+    (VdC per-mode bound) from the summation. -/
+private theorem main_term_first_moment_of_per_mode_sqrt
+    (hcos : ∃ B > 0, ∀ n : ℕ, ∀ T : ℝ, T ≥ 2 →
+      |hardyCosIntegral n T| ≤ B * Real.sqrt ((n : ℝ) + 1)) :
+    ∃ C_M > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) := by
+  obtain ⟨B, hB_pos, hcos_bound⟩ := hcos
+  refine ⟨2 * B, by positivity, fun T hT => ?_⟩
+  have hT1 : (1 : ℝ) ≤ T := by linarith
+  -- Step 1: ∫ MainTerm = hardySumInt T (integral-sum interchange)
+  have h_eq : ∫ t in Ioc 1 T, MainTerm t = hardySumInt T := by
+    calc ∫ t in Ioc 1 T, MainTerm t
+        = ∫ t in Ioc 1 T, hardySum t := by
+          apply setIntegral_congr_fun measurableSet_Ioc
+          intro t _; exact congr_fun MainTerm_eq_hardySum t
+      _ = hardySumInt T := hardySum_integral_eq T hT1
+  rw [h_eq]
+  -- Step 2: bound |hardySumInt T| ≤ 2B·√T
+  -- Suffices to show: |∑ (n+1)^{-1/2} · ∫ cos_n| ≤ B·√T
+  suffices h_inner : |∑ n ∈ Finset.range (hardyN T),
+      ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) * ∫ t in Ioc (hardyStart n) T, hardyCos n t|
+      ≤ B * T ^ ((1 : ℝ) / 2) by
+    unfold hardySumInt
+    calc |2 * ∑ n ∈ Finset.range (hardyN T),
+          ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) * ∫ t in Ioc (hardyStart n) T, hardyCos n t|
+        ≤ 2 * |∑ n ∈ Finset.range (hardyN T),
+          ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) * ∫ t in Ioc (hardyStart n) T, hardyCos n t| :=
+          abs_two_mul _
+      _ ≤ 2 * (B * T ^ ((1 : ℝ) / 2)) := by linarith [h_inner]
+      _ = (2 * B) * T ^ ((1 : ℝ) / 2) := by ring
+  -- Now prove h_inner: |∑ weighted_cos_integrals| ≤ B · T^{1/2}
+  calc |∑ n ∈ Finset.range (hardyN T),
+        ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) * ∫ t in Ioc (hardyStart n) T, hardyCos n t|
+      ≤ ∑ n ∈ Finset.range (hardyN T),
+        |((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) * ∫ t in Ioc (hardyStart n) T, hardyCos n t| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ = ∑ n ∈ Finset.range (hardyN T),
+        ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) * |∫ t in Ioc (hardyStart n) T, hardyCos n t| := by
+        apply Finset.sum_congr rfl; intro n _
+        rw [abs_mul, abs_of_nonneg (Real.rpow_nonneg (by positivity : (0 : ℝ) ≤ (n : ℝ) + 1) _)]
+    _ ≤ ∑ n ∈ Finset.range (hardyN T),
+        ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) * (B * Real.sqrt ((n : ℝ) + 1)) := by
+        apply Finset.sum_le_sum; intro n _
+        apply mul_le_mul_of_nonneg_left (hcos_bound n T hT)
+          (Real.rpow_nonneg (by positivity : (0 : ℝ) ≤ (n : ℝ) + 1) _)
+    _ = ∑ _n ∈ Finset.range (hardyN T), B := by
+        apply Finset.sum_congr rfl; intro n _
+        have hn_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+        -- (n+1)^{-1/2} * (B * √(n+1)) = B * ((n+1)^{-1/2} * (n+1)^{1/2}) = B
+        rw [show ((n + 1 : ℝ) ^ (-(1 / 2 : ℝ))) * (B * Real.sqrt ((n : ℝ) + 1))
+            = B * (((n : ℝ) + 1) ^ (-(1 / 2 : ℝ)) * Real.sqrt ((n : ℝ) + 1)) from by ring]
+        rw [Real.sqrt_eq_rpow, ← Real.rpow_add hn_pos]
+        -- -(1/2) + (1/2) = 0 and x^0 = 1
+        have : (-(1 / 2 : ℝ) + 1 / 2) = 0 := by ring
+        rw [this, Real.rpow_zero, mul_one]
+    _ = B * (hardyN T : ℝ) := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_comm]
+    _ ≤ B * T ^ ((1 : ℝ) / 2) := by
+        apply mul_le_mul_of_nonneg_left _ hB_pos.le
+        calc (hardyN T : ℝ) ≤ Real.sqrt (T / (2 * Real.pi)) :=
+              Nat.floor_le (Real.sqrt_nonneg _)
+          _ ≤ Real.sqrt T :=
+              Real.sqrt_le_sqrt (div_le_self (by linarith) (by nlinarith [Real.pi_gt_three]))
+          _ = T ^ ((1 : ℝ) / 2) := Real.sqrt_eq_rpow T
+
+/-- **Per-mode VdC bound** (Siegel 1932; Titchmarsh §4.15):
+    |∫ hardyCos n on [hardyStart n, T]| ≤ B · √(n+1).
+
+    The phase φ(t) = θ(t) - t·log(n+1) has derivative
+    φ'(t) = θ'(t) - log(n+1) ≈ (1/2)log(t/(2π)) - log(n+1),
+    with stationary point near t = 2π(n+1)². Away from this point,
+    |φ'| ≥ c/√(n+1) giving VdC first-derivative bound O(√(n+1)).
+    Near the stationary point, the second-derivative VdC test gives
+    O((n+1)^{1/4}). Combined: O(√(n+1)).
+
+    Reference: Titchmarsh §4.15; Ivic Ch. 4. -/
+private theorem per_mode_sqrt_cos_bound :
+    ∃ B > 0, ∀ n : ℕ, ∀ T : ℝ, T ≥ 2 →
+      |hardyCosIntegral n T| ≤ B * Real.sqrt ((n : ℝ) + 1) := by
+  sorry
+
 /-- **Main term first moment bound**: |∫₁ᵀ MainTerm(t) dt| ≤ C_M · √T.
 
-    Each mode n contributes ∫ (n+1)^{-1/2} cos(θ(t) - t·log(n+1)) dt.
-    The phase derivative is θ'(t) - log(n+1) ≈ (1/2)log(t/(2π)) - log(n+1),
-    which is bounded away from 0 for most n (off-diagonal modes).
-    VdC first-derivative test gives O(1/|phase'|) per mode.
-    Summing over n ≤ √(T/2π) modes: total ≤ C · ∑ n^{-1/2} = O(√T).
+    Assembled from:
+    1. per_mode_sqrt_cos_bound: |∫ hardyCos n| ≤ B·√(n+1) (VdC)
+    2. main_term_first_moment_of_per_mode_sqrt: summation + interchange
 
     Reference: Titchmarsh §4.15 (oscillatory integral bounds). -/
 private theorem main_term_first_moment :
     ∃ C_M > 0, ∀ T : ℝ, T ≥ 2 →
-      |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) := by
-  sorry
+      |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) :=
+  main_term_first_moment_of_per_mode_sqrt per_mode_sqrt_cos_bound
 
 /-- **Psi integral is positive**: since Psi(p) >= cos(pi/4) > 0 on [0,1]
     and the interval has positive measure, the integral is positive. -/
