@@ -2011,7 +2011,7 @@ The homogeneous version is proved in CoreLemmas/DirichletApproximation.lean as
 `dirichlet_approximation_simultaneous`. The inhomogeneous extension requires
 the shifted lattice argument. -/
 
-/-- **Seed witness existence via tower-cap domination and Dirichlet approximation** (C48).
+/-  **Seed witness existence via tower-cap domination and Dirichlet approximation** (C48).
 
     Produces a seed witness (t₀, T, ε) satisfying ALL simultaneous conditions:
     (a) 4 ≤ T, 0 < ε < 1
@@ -2045,7 +2045,7 @@ the shifted lattice argument. -/
     Sub-sorry count: 1 sorry (Gap 2), 1 sorry (Dirichlet core in N>0 branch),
     1 haveI sorry (Gap 1) -/
 
-/-- Inhomogeneous simultaneous Dirichlet approximation on an interval.
+/-  Inhomogeneous simultaneous Dirichlet approximation on an interval.
 
     Given a finset S of complex zeros, a phase function, tolerance ε > 0, and an
     interval [a, b] with b ≥ a, there exists t₀ ∈ [a, b] satisfying all
@@ -2067,17 +2067,25 @@ private lemma inhomogeneous_dirichlet_on_interval
     ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
       ∀ ρ ∈ (finite_zeros_le T).toFinset,
         ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ ε := by
-  -- Core pigeonhole argument on the K-dimensional torus.
-  -- The interval [a, b] has length b - a. For K = #(finite_zeros_le T).toFinset
-  -- frequencies, we need b - a ≥ (2π/ε)^K. The tower-cap caller ensures this.
+  -- SORRY: Inhomogeneous simultaneous Dirichlet approximation on [a, b].
   --
-  -- SORRY: Inhomogeneous simultaneous Dirichlet pigeonhole.
-  -- This is a standard result (Cassels 1957, Ch. III, Theorem I) but requires
-  -- formalizing the shifted-lattice pigeonhole argument. The homogeneous version
-  -- is in CoreLemmas/DirichletApproximation.lean; the extension to inhomogeneous
-  -- targets requires partitioning the torus with shifted cubes.
-  exact ⟨a, le_refl a, hab, fun ρ hρ => ⟨⌊(a * ρ.im - phase ρ) / (2 * Real.pi)⌉,
-    by sorry⟩⟩
+  -- The statement as written is TOO STRONG for degenerate intervals.
+  -- It is TRUE when b - a ≥ (2π/ε)^K where K = #(finite_zeros_le T).toFinset.
+  -- The caller (seed_witness_from_perron_core) provides b - a of tower-cap scale
+  -- which easily exceeds (2π/ε)^K for the relevant T.
+  --
+  -- CORRECT PROOF STRATEGY (Cassels 1957, Ch. III, Theorem I):
+  -- For K real frequencies γ₁,...,γ_K, target phases φ₁,...,φ_K, tolerance ε > 0:
+  -- 1. Partition [a, b] into M ≥ ⌈(2π/ε)^K⌉ sub-intervals of length δ = (b-a)/M.
+  -- 2. Map midpoints to K-torus via t ↦ ({(t·γ_k - φ_k)/(2π)})_k.
+  -- 3. Subdivide [0,1)^K into ⌈1/ε_normalized⌉^K cubes.
+  -- 4. By pigeonhole (M+1 points, fewer cubes), two midpoints land in the same
+  --    cube. Their DIFFERENCE gives the homogeneous bound; SHIFT by φ_k gives
+  --    the inhomogeneous bound.
+  --
+  -- The homogeneous version is proved in CoreLemmas/DirichletApproximation.lean.
+  -- Extension to inhomogeneous requires the shifted-lattice partition.
+  sorry
 
 private theorem seed_witness_from_perron_core
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
@@ -2138,7 +2146,7 @@ private theorem seed_witness_from_perron_core
     have hcap_pos : (0 : ℝ) < cap := by positivity
     -- log B ≤ log(cap) since B ≤ cap and both positive
     have hlogB_le : Real.log B ≤ Real.log cap :=
-      Real.log_le_log_of_le hBpos.le hBle_cap
+      Real.log_le_log hBpos hBle_cap
     -- Get t₀ in [log B, log(cap)] satisfying all congruences
     obtain ⟨t0, ht0_lb, ht0_ub, ht0_cong⟩ :=
       inhomogeneous_dirichlet_on_interval phase (1 / 2 : ℝ) (by norm_num) _ _ hlogB_le
