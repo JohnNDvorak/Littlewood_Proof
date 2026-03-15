@@ -169,17 +169,18 @@ theorem pointwise_to_segment_reduction
 
 /-! ### Perron kernel bounds — sorry-free integration infrastructure -/
 
-/-- **Perron kernel bound**: √x / √(1/4 + t²) ≤ √x / |t| for |t| ≥ 1. -/
-theorem perron_kernel_bound (x t : ℝ) (ht : 1 ≤ |t|) :
-    Real.sqrt x / Real.sqrt (1 / 4 + t ^ 2) ≤ Real.sqrt x / |t| := by
-  apply div_le_div_of_nonneg_left (Real.sqrt_nonneg x) (by positivity)
-  rw [Real.le_sqrt (by positivity)]
-  nlinarith [sq_abs t]
+/-- **Perron kernel denominator**: |t| ≤ √(1/4 + t²) for all t.
+    This is the key inequality for bounding the Perron kernel |1/(1/2+it)|. -/
+theorem abs_le_sqrt_quarter_plus_sq (t : ℝ) :
+    |t| ≤ Real.sqrt (1 / 4 + t ^ 2) := by
+  calc |t| = Real.sqrt (t ^ 2) := by rw [Real.sqrt_sq_eq_abs]
+    _ ≤ Real.sqrt (1 / 4 + t ^ 2) := Real.sqrt_le_sqrt (by nlinarith)
 
 /-- **Perron kernel integrated**: M · √x · logT ≥ 0 for M ≥ 0, x ≥ 0, T ≥ 2. -/
 theorem perron_kernel_integral_nonneg (M x T : ℝ) (hM : 0 ≤ M) (_hx : 0 ≤ x) (hT : 2 ≤ T) :
-    0 ≤ M * Real.sqrt x * Real.log T :=
-  mul_nonneg (mul_nonneg hM (Real.sqrt_nonneg x)) (Real.log_pos (by linarith)).le
+    0 ≤ M * Real.sqrt x * Real.log T := by
+  apply mul_nonneg (mul_nonneg hM (Real.sqrt_nonneg x))
+  exact (Real.log_nonneg (by linarith : (1 : ℝ) ≤ T))
 
 /-- **Vertical from pointwise + kernel algebra**. -/
 theorem vertical_from_pointwise_and_kernel (A x T : ℝ) :

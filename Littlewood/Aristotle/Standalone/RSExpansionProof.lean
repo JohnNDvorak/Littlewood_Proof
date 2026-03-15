@@ -3258,10 +3258,47 @@ private theorem main_term_first_moment :
       |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) := by
   sorry
 
+/-- **Psi integral is positive**: since Psi(p) >= cos(pi/4) > 0 on [0,1]
+    and the interval has positive measure, the integral is positive. -/
+private theorem rsPsi_integral_pos :
+    0 < ∫ p in Ioc (0 : ℝ) 1, rsPsi p := by
+  have h_lower : ∀ p ∈ Ioc (0 : ℝ) 1, Real.cos (Real.pi / 4) ≤ rsPsi p :=
+    fun p hp => rsPsi_ge_cos_pi_four p (Ioc_subset_Icc_self hp)
+  have h_cos_pos : (0 : ℝ) < Real.cos (Real.pi / 4) := by positivity
+  calc (0 : ℝ) < Real.cos (Real.pi / 4) * (1 - 0) := by positivity
+    _ = ∫ _ in Ioc (0 : ℝ) 1, Real.cos (Real.pi / 4) := by
+        rw [integral_const]; simp [smul_eq_mul, mul_comm]; left; linarith
+    _ ≤ ∫ p in Ioc (0 : ℝ) 1, rsPsi p := by
+        apply setIntegral_mono_on
+        · exact integrableOn_const.mono_set Ioc_subset_Icc_self
+        · exact rsPsi_continuousOn.integrableOn_Icc.mono_set Ioc_subset_Icc_self
+        · exact measurableSet_Ioc
+        · exact h_lower
+
+/-- **Sqrt-weighted Psi integral upper bound**:
+    integral_01 sqrt(k+1+p) Psi(p) dp <= sqrt(k+2) integral_01 Psi(p) dp.
+    Since sqrt(k+1+p) <= sqrt(k+2) for p in [0,1] and Psi >= 0. -/
+private theorem weighted_sqrt_psi_le_sqrt_times_integral (k : ℕ) :
+    ∫ p in Ioc (0 : ℝ) 1, Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p ≤
+    Real.sqrt ((k : ℝ) + 2) * ∫ p in Ioc (0 : ℝ) 1, rsPsi p := by
+  have h_pull : Real.sqrt ((k : ℝ) + 2) * ∫ p in Ioc (0 : ℝ) 1, rsPsi p =
+      ∫ p in Ioc (0 : ℝ) 1, Real.sqrt ((k : ℝ) + 2) * rsPsi p := by
+    simp_rw [← smul_eq_mul (Real.sqrt ((k : ℝ) + 2))]
+    exact (integral_smul _ _).symm
+  rw [h_pull]
+  apply setIntegral_mono_on
+  · apply (ContinuousOn.mul _ rsPsi_continuousOn).integrableOn_Icc.mono_set Ioc_subset_Icc_self
+    exact ContinuousOn.sqrt (continuousOn_const.add continuousOn_id)
+  · apply (ContinuousOn.mul _ rsPsi_continuousOn).integrableOn_Icc.mono_set Ioc_subset_Icc_self
+    exact continuousOn_const
+  · exact measurableSet_Ioc
+  · intro p hp
+    apply mul_le_mul_of_nonneg_right _ (rsPsi_nonneg_on p (Ioc_subset_Icc_self hp))
+    exact Real.sqrt_le_sqrt (by linarith [hp.2])
+
 /-- **Per-block error integral bound**: the signed block integral
-    |∫_{block k} ErrorTerm| is bounded by C · √(k+1).
-    This follows from |ErrorTerm| ≤ |leading| + C_R·t^{-3/4}
-    and ∫_block |leading| = 4π·∫₀¹ √(k+1+p)·Ψ(p)dp ≤ C·√(k+2). -/
+    abs(integral_block ErrorTerm) is bounded by C sqrt(k+2).
+    Via signed_block_integral_expansion and weighted_sqrt_psi_le_sqrt_times_integral. -/
 private theorem error_block_integral_bound :
     ∃ C_block > 0, ∀ k : ℕ,
       |∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t| ≤
