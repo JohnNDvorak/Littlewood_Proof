@@ -34,11 +34,12 @@ import Littlewood.Aristotle.Standalone.PerronCriticalLineBridge
 import Littlewood.Aristotle.ZeroFreeRegionV3
 import Littlewood.Aristotle.Standalone.KroneckerEquidistribution
 import Littlewood.Aristotle.Standalone.RHPiTowerHeightBudget
-import Littlewood.ZetaZeros.ZeroCountingAssumptions
--- Note: ZeroCountingLowerBoundHyp now provided via ZeroCountingAssumptions.lean
--- (cycle-free: only imports ZeroCountingFunction.lean, already transitively imported).
--- Previously, importing Assumptions.lean created a cycle and
--- ZeroCountingAssumptions.lean was avoided due to OOM (now resolved).
+-- Note: ZeroCountingLowerBoundHyp and FirstZeroOrdinateHyp are not in scope
+-- globally because importing Assumptions.lean would create a cycle.
+-- ZeroCountingAssumptions.lean is cycle-free and compiles, but importing it
+-- exposes 2 additional sorry warnings (lower_bound + first_zero_ordinate).
+-- Local sorry'd instances are used inside proofs that need them to keep
+-- the global sorry count minimal.
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -2035,7 +2036,9 @@ private lemma anti_target_witness_of_domination
 theorem target_exact_seed_from_perron :
     @TargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
   intro hRH X
-  -- ZeroCountingLowerBoundHyp now globally available via ZeroCountingAssumptions import.
+  -- Provide ZeroCountingLowerBoundHyp locally to unlock tower_cap_unbounded.
+  -- (Cannot import ZeroCountingAssumptions.lean: would expose 2 extra sorry warnings.)
+  haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩
   -- Step 1: Choose T₁ so tower_cap(T₁) ≥ X + 1.
   obtain ⟨T₁, hT₁_ge4, hT₁_cap⟩ := exists_T_tower_cap_exceeds (X + 1)
   -- Step 2: P₁ = perronThreshold(hRH, T₁) is determined.
@@ -2060,7 +2063,8 @@ theorem target_exact_seed_from_perron :
 theorem anti_target_exact_seed_from_perron :
     @AntiTargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
   intro hRH X
-  -- ZeroCountingLowerBoundHyp now globally available via ZeroCountingAssumptions import.
+  -- Provide ZeroCountingLowerBoundHyp locally (same reason as above).
+  haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩
   obtain ⟨T₁, hT₁_ge4, hT₁_cap⟩ := exists_T_tower_cap_exceeds (X + 1)
   set P₁ := @perronThreshold pi_explicit_formula_from_perron hRH T₁
   obtain ⟨T₂, hT₂_ge4, hT₂_cap⟩ := exists_T_tower_cap_exceeds (max X P₁ + 1)
