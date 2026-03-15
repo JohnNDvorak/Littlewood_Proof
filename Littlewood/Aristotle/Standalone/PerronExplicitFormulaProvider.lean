@@ -2025,10 +2025,34 @@ private lemma anti_target_witness_of_domination
     given T ≥ 4 with N(T) = 0 and tower_cap(T, 1/2) ≥ max(X, perronThreshold(hRH,T)) + 1,
     the full existential witness follows with vacuous congruences.
 
-    SORRY: producing the domination witness requires:
-    1. ZeroCountingLowerBoundHyp (import cycle with Assumptions.lean blocks access)
-    2. Bounding perronThreshold(hRH, T) by the tower cap at the same T
-    These are resolved once the import cycle is broken; see closure path (A)–(C) above.
+    SORRY ANALYSIS (CV-C59): Two interdependent blockers prevent closure:
+
+    1. **ZeroCountingLowerBoundHyp** (import cycle): The instance lives in
+       Assumptions.lean which transitively imports this file. Local sorry
+       provides the instance to unlock `tower_cap_unbounded`.
+
+    2. **Self-referential domination + congruences**: The goal requires finding
+       a single T satisfying both `tower_cap(T) ≥ max(X, perronThreshold(hRH,T)) + 1`
+       AND `N(T) = 0` (for vacuous congruences). These are contradictory for
+       large X: when N(T) = 0, tower_cap(T) = exp(exp(1)) ≈ 15.15, so the
+       domination condition fails for X > 14.
+
+       For N(T) > 0, tower_cap grows triple-exponentially and can dominate any
+       fixed perronThreshold, but the congruences become non-vacuous and require
+       multi-dimensional Kronecker (not in Mathlib).
+
+       The `perronThreshold_antitone` strategy (making P(T₂) ≤ P(T₁) for
+       T₂ ≥ T₁) is also blocked: adding more zeros to piMainFromZeros can
+       increase |piLiErr + piMainFromZeros|, so the pointwise error implication
+       P(x,T₁) → P(x,T₂) fails.
+
+    CLOSURE ROUTES (in order of feasibility):
+    (B) Refactor TargetTowerExactSeedAbovePerronThreshold to use approximate
+        congruences. Then 1D Kronecker per zero + triangle inequality handles
+        the finset, and large T gives tower_cap >> perronThreshold.
+    (A) Prove explicit upper bound on perronThreshold(hRH,T) by unwinding
+        pi_approx through abel_bridge_adjustable.
+    (C) Prove multi-dimensional Kronecker (closed subgroup theorem for ℝⁿ).
 
     LIVENESS (C33-D): LIVE — consumed by B7 chain via
     `RHPiExactSeedConstructive.exact_seed_target`. Same chain as `pi_approx`.
@@ -2045,17 +2069,18 @@ theorem target_exact_seed_from_perron :
   set P₁ := @perronThreshold pi_explicit_formula_from_perron hRH T₁
   -- Step 3: Choose T₂ so tower_cap(T₂) ≥ max(X, P₁) + 1.
   obtain ⟨T₂, hT₂_ge4, hT₂_cap⟩ := exists_T_tower_cap_exceeds (max X P₁ + 1)
-  -- Step 4: P₂ = perronThreshold(hRH, T₂) is determined.
-  -- We need tower_cap(T₂) ≥ max(X, P₂) + 1.
-  -- We know tower_cap(T₂) ≥ max(X, P₁) + 1, but P₂ ≠ P₁ in general.
-  -- The remaining sorry captures: ∃ T where tower_cap(T) dominates
-  -- perronThreshold(hRH, T) at the same T, plus congruences.
+  -- Step 4: The remaining sorry captures the self-referential gap:
+  -- tower_cap(T₂) ≥ max(X, P₁) + 1, but we need
+  -- tower_cap(T) ≥ max(X, perronThreshold(hRH, T)) + 1 at the SAME T,
+  -- together with congruences for zeros up to T.
+  -- See blocker analysis above for why this cannot be closed with current infra.
   sorry
 
 /-- Anti-target exact-seed phase alignment above the Perron threshold.
 
     Same structure as `target_exact_seed_from_perron` with anti-target phase shift.
-    Uses `anti_target_witness_of_domination`.
+    Uses `anti_target_witness_of_domination`. See `target_exact_seed_from_perron`
+    for full blocker analysis (CV-C59).
 
     LIVENESS (C33-D): LIVE — consumed by B7 chain via
     `RHPiExactSeedConstructive.exact_seed_anti_target`. Same chain as `pi_approx`.
@@ -2068,6 +2093,7 @@ theorem anti_target_exact_seed_from_perron :
   obtain ⟨T₁, hT₁_ge4, hT₁_cap⟩ := exists_T_tower_cap_exceeds (X + 1)
   set P₁ := @perronThreshold pi_explicit_formula_from_perron hRH T₁
   obtain ⟨T₂, hT₂_ge4, hT₂_cap⟩ := exists_T_tower_cap_exceeds (max X P₁ + 1)
+  -- See target_exact_seed_from_perron for full blocker analysis.
   sorry
 
 end Aristotle.Standalone.PerronExplicitFormulaProvider
