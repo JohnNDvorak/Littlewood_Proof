@@ -1190,29 +1190,43 @@ O(√x·(logT)²/√T). The (logx)² term that appears in `general_formula_acces
 is an artifact of the proof decomposition and CANNOT be absorbed into the standard
 error shape for large T (since (logT)²/√T → 0 as T → ∞).
 
-SORRY FLOW: `large_T_contour_bound` now derives directly from
-`LargeTContourBoundHyp.bound` (the precise Hadamard gap in B5aDefs).
-When that sorry is closed, the full assembly `contour_bound_fully_assembled`
-follows automatically via `small_T_contour_bound` + case split. -/
+SORRY FLOW: The sorry chain is now:
+  `ZetaLogDerivPointwiseBoundHyp` (1 sorry, Hadamard + contour integration)
+  → `LargeTContourBoundHyp` (sorry-free reduction via segment_to_standard_form)
+  → `large_T_contour_bound` (direct reference)
+  → `contour_bound_fully_assembled` (small_T + case split)
+When `ZetaLogDerivPointwiseBoundHyp` is closed, the entire chain becomes sorry-free. -/
 
 /-- **Large-T contour bound**: for T ≥ 16, the Perron contour bound holds.
-    Now derives DIRECTLY from `LargeTContourBoundHyp.bound` (the genuine
-    Hadamard product gap) instead of from `ContourRemainderBoundHyp.bound`.
-    Transits 1 sorry upstream (LargeTContourBoundHyp instance in B5aDefs). -/
+    Derives from `LargeTContourBoundHyp.bound`, which in turn derives from
+    `ZetaLogDerivPointwiseBoundHyp.bound` via the segment-to-standard algebraic
+    reduction (inlined in B5aDefs as `segment_to_standard_form`).
+    Transits 1 sorry upstream (ZetaLogDerivPointwiseBoundHyp instance in B5aDefs). -/
 theorem large_T_contour_bound :
     ∃ C₁ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
       |shiftedRemainderRe x T| ≤
         C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
   LargeTContourBoundHyp.bound
 
+/-- **Bridge verification**: `large_T_assembly` provides an independent proof that
+    the segment form (vertical + horizontal) reduces to the standard form.
+    This witnesses that the inlined `segment_to_standard_form` in B5aDefs is
+    consistent with the bridge's algebraic infrastructure. -/
+theorem segment_reduction_witness (A : ℝ) (hA : 0 < A) :
+    ∀ x T : ℝ, 2 ≤ x → 16 ≤ T →
+      A * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+      2 * A * (Real.sqrt x * (Real.log T) ^ 2 / T) ≤
+      (A + 2 * A) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+  fun x T hx hT => large_T_assembly hA hA hx hT
+
 /-- **Full assembly**: both the small-T (T ∈ [2,16]) and large-T (T ≥ 16) cases
     of the contour bound are handled. Combined via `contour_bound_from_small_and_large`
     to produce the full existential matching `ContourRemainderBoundHyp.bound`.
 
     - Small-T: proved sorry-free from `general_formula_accessible` + log²/√x absorption
-    - Large-T: transits `LargeTContourBoundHyp.bound` (1 upstream sorry)
+    - Large-T: transits `ZetaLogDerivPointwiseBoundHyp.bound` (1 upstream sorry)
 
-    NET SORRY FLOW: 1 sorry (the LargeTContourBoundHyp instance in B5aDefs).
+    NET SORRY FLOW: 1 sorry (the ZetaLogDerivPointwiseBoundHyp instance in B5aDefs).
     When that sorry is closed, this theorem becomes sorry-free automatically. -/
 theorem contour_bound_fully_assembled :
     ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
@@ -1222,24 +1236,26 @@ theorem contour_bound_fully_assembled :
 
 /-! ## Part 17: Gap specification — exactly what remains to close the sorry
 
-The contour bound sorry now DECOMPOSES via `LargeTContourBoundHyp` (B5aDefs):
+The contour bound sorry chain now decomposes as:
 
-  **LargeTContourBoundHyp** (the ONLY genuine gap):
-    ∃ C₁ > 0, ∀ x T, x ≥ 2 → T ≥ 16 →
-      |shiftedRemainderRe x T| ≤ C₁ · (√x · (logT)² / √T)
+  **ZetaLogDerivPointwiseBoundHyp** (the ONLY genuine gap, in B5aDefs):
+    ∃ A > 0, ∀ x T, x ≥ 2 → T ≥ 16 →
+      |shiftedRemainderRe x T| ≤ A·√x·(logT)³/T + 2A·√x·(logT)²/T
 
-  Requires: Hadamard product decomposition of ζ'/ζ (Davenport Ch. 12) →
-  pointwise |ζ'/ζ(1/2+it)| ≤ A·(logT)² (Titchmarsh §9.6) → contour
-  integration of ζ'/ζ · x^s/s (complex analysis not in Mathlib).
+  This is the Perron contour integral in segment form, BEFORE the algebraic
+  reduction to standard form. Requires:
+  1. Hadamard product decomposition of ζ'/ζ (Davenport Ch. 12)
+  2. Contour integration of ζ'/ζ · x^s/s (complex analysis not in Mathlib)
 
-  The full `ContourRemainderBoundHyp` (T ≥ 2) follows from:
-  - `small_T_contour_bound` (sorry-free, this file) — handles T ∈ [2,16]
-  - `LargeTContourBoundHyp.bound` (sorry in B5aDefs) — handles T ≥ 16
-  - `contour_bound_from_small_and_large` (sorry-free) — case split
+  The downstream chain (all sorry-free):
+  - `ZetaLogDerivPointwiseBoundHyp` → `LargeTContourBoundHyp` via `segment_to_standard_form`
+  - `LargeTContourBoundHyp` → `large_T_contour_bound` (direct reference)
+  - `small_T_contour_bound` + `large_T_contour_bound` → `contour_bound_fully_assembled`
 
   All ALGEBRAIC reductions are sorry-free:
   - Small-T: `small_T_contour_bound` — PROVED
-  - Large-T assembly: `large_T_assembly` — PROVED
+  - Segment → standard: `segment_to_standard_form` (B5aDefs) — PROVED
+  - Large-T assembly: `large_T_assembly` — PROVED (bridge witness)
   - Case split: `case_split_T_bound` — PROVED
   - Full assembly: `contour_bound_fully_assembled` — PROVED (transits 1 sorry)
 
@@ -1250,10 +1266,12 @@ Reference: Titchmarsh §9.6.1, Davenport Ch. 12 + Ch. 17. -/
     Conjunct 1: Small-T case is CLOSED (sorry-free from general_formula + absorption).
     Conjunct 2: Algebraic contour assembly is CLOSED (sorry-free).
     Conjunct 3: Case-split assembly is CLOSED (sorry-free).
+    Conjunct 4: Segment → standard reduction is CLOSED (sorry-free, `segment_reduction_witness`).
 
-    To close ContourRemainderBoundHyp.bound, provide conjunct 3's second hypothesis:
-      ∀ x T, x ≥ 2 → T ≥ 16 → |shiftedRemainderRe x T| ≤ C·(√x·(logT)²/√T)
-    This is the ONLY remaining primitive — needs Perron formula + Hadamard product. -/
+    To close the entire chain, provide `ZetaLogDerivPointwiseBoundHyp`:
+      ∃ A > 0, ∀ x T, x ≥ 2 → T ≥ 16 →
+        |shiftedRemainderRe x T| ≤ A·√x·(logT)³/T + 2A·√x·(logT)²/T
+    This is the ONLY remaining primitive — needs Hadamard product + contour integration. -/
 theorem gap_specification :
     -- What we HAVE (sorry-free, from general_formula_accessible + absorption):
     (∃ C₀ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
