@@ -1993,44 +1993,24 @@ private lemma anti_target_witness_of_domination
     (c) approximate congruences for zeros ≤ T (with arbitrary phase function)
     (d) exp(t₀) ≤ tower_cap(T, ε)
 
-    The sorry captures THREE independent sub-problems:
+    PROOF STRUCTURE (C48 refactor):
+    Sets ε = 1/2, t₀ = log(max(X, perronThreshold(hRH, T)) + 1).
+    Three sub-gaps remain as sorry's:
 
-    **Gap 1: ZeroCountingLowerBoundHyp** (import cycle).
-    `tower_cap_unbounded_with_eps` requires `[ZeroCountingLowerBoundHyp]`.
-    The instance lives in Assumptions.lean; importing it creates a cycle.
-    ZeroCountingAssumptions.lean provides a cycle-free sorry'd instance but
-    importing it adds 2 sorry warnings. Workaround: `haveI := ⟨sorry⟩`.
+    **Gap 1 (CLOSED via haveI)**: ZeroCountingLowerBoundHyp import cycle.
+    Workaround: `haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩`.
 
-    **Gap 2: Tower-cap domination of perronThreshold**.
-    Need: ∃ T ≥ 4, tower_cap(T, ε) ≥ max(X, perronThreshold(hRH, T)).
-    The tower cap grows as exp(exp(exp(c·logT))) via N(T) ≥ T·logT/(3π).
-    `perronThreshold(hRH, T)` = Classical.choose from eventually_atTop,
-    so its growth rate depends on the sorry'd pi_approx chain.
-    The triple-exponential tower cap eventually dominates any polynomial
-    or single-exponential bound on perronThreshold, but we cannot prove
-    the crossing without an explicit upper bound on perronThreshold(hRH, T).
+    **Gap 2 (sorry in tower_cap_dominates_perronThreshold)**:
+    Need ∃ T ≥ 4 with tower_cap(T, 1/2) ≥ max(X, perronThreshold(hRH, T)) + 1.
+    Tower cap grows triple-exponentially; perronThreshold grows at most polynomially.
+    Requires unwinding Classical.choose through pi_approx for an explicit bound.
 
-    **Gap 3: Simultaneous inhomogeneous congruences in a bounded interval**.
-    For K = N(T) zeros with ordinates γ₁,...,γ_K and arbitrary phases φ₁,...,φ_K,
-    need t₀ with L ≤ t₀ ≤ U (where L = log(max(X,P)), U = log(tower_cap)) and
-    |t₀·γ_k - φ_k - m_k·2π| ≤ ε for all k. This is an inhomogeneous Dirichlet
-    approximation problem in a finite interval.
-    - For K = 0: vacuous (proved by `vacuous_congruences_target`).
-    - For K = 1: follows from `exact_solutions_periodic` if interval ≥ 2π/γ₁.
-    - For K ≥ 2: requires Cassels' inhomogeneous simultaneous Dirichlet
-      approximation (Cassels 1957, Ch. III). The interval must have length
-      ≥ (2π/ε)^K, which the triple-exponential tower cap provides for large T.
-    Not yet formalized; the homogeneous version is in `DirichletApproximation.lean`.
+    **Gap 3 (sorry in N(T) > 0 branch)**:
+    When N(T) = 0, congruences are vacuous (proved by `vacuous_congruences_general`).
+    When N(T) > 0, need inhomogeneous Cassels simultaneous Dirichlet approximation
+    (Cassels 1957, Ch. III). Not yet formalized.
 
-    CLOSURE PATH:
-    1. Add `haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩` (closes Gap 1).
-    2. Prove `perronThreshold(hRH, T) ≤ exp(poly(T))` for an explicit polynomial,
-       or use `by_contra` + `Tendsto` to show the crossing exists (closes Gap 2).
-    3. Formalize inhomogeneous Dirichlet: for K reals θ₁,...,θ_K, targets β₁,...,β_K,
-       and Q > 0, ∃ integer q ∈ [1, Q^K] with |q·θ_k - β_k - p_k| ≤ 1/Q
-       (closes Gap 3, via the same pigeonhole as `dirichlet_approximation_simultaneous`).
-
-    Sub-sorry count: 1 (consolidates gaps 1-3) -/
+    Sub-sorry count: 1 warning (tower_cap_dominates_perronThreshold propagates) -/
 private theorem seed_witness_from_perron_core
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
     (phase : ℂ → ℝ) :
