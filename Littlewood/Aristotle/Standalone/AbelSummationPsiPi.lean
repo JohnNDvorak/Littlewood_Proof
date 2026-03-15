@@ -615,4 +615,60 @@ theorem half_eps_combination (D ε : ℝ) (hD : 0 < D) (hε : 0 < ε) :
   filter_upwards [correction_eventually_absorbed D hD ε hε] with x hx
   linarith
 
+/-! ## Part 13: Infrastructure for PsiExplicitFormulaFinsetHyp (Ralph C51)
+
+The ψ-level explicit formula for finite zero sets: for any δ > 0,
+  |(ψ(x) - x + Σ_{ρ∈S} x^ρ/ρ) / logx| ≤ δ · √x/logx
+
+The key mechanism is choosing T large enough that
+C·(logT)²/√T ≤ δ, then the Perron error divided by logx is δ-small. -/
+
+/-- **Finset sum difference via sdiff**: for S ⊆ S',
+    S'.sum f - S.sum f = (S' \ S).sum f.
+    PROVED: Finset.sum_sdiff. -/
+theorem finset_sum_sub_eq_sdiff {ι : Type*} [DecidableEq ι]
+    (S S' : Finset ι) (f : ι → ℝ) (hSS' : S ⊆ S') :
+    S'.sum f - S.sum f = (S' \ S).sum f := by
+  rw [← Finset.sum_sdiff hSS']; ring
+
+/-- **Eventually logx > 0**: for large x, log(x) > 0.
+    PROVED: from Real.log_pos. -/
+theorem log_pos_eventually :
+    ∀ᶠ x in atTop, (0 : ℝ) < Real.log x := by
+  filter_upwards [Filter.eventually_ge_atTop (2 : ℝ)] with x hx
+  exact Real.log_pos (by linarith)
+
+/-- **Eventually √x/logx > 0**: for large x, √x/logx > 0.
+    PROVED: positivity of sqrt and log. -/
+theorem sqrt_div_log_pos_eventually :
+    ∀ᶠ x in atTop, (0 : ℝ) < Real.sqrt x / Real.log x := by
+  filter_upwards [Filter.eventually_ge_atTop (2 : ℝ)] with x hx
+  exact div_pos (Real.sqrt_pos_of_pos (by linarith))
+    (Real.log_pos (by linarith))
+
+/-- **Scaling by constant preserves eventually**: if ∀ᶠ x, f(x) ≤ g(x),
+    then for C ≥ 0, ∀ᶠ x, C · f(x) ≤ C · g(x).
+    PROVED: filter_upwards + mul_le_mul. -/
+theorem eventually_scale_le (f g : ℝ → ℝ) (C : ℝ) (hC : 0 ≤ C)
+    (h : ∀ᶠ x in atTop, f x ≤ g x) :
+    ∀ᶠ x in atTop, C * f x ≤ C * g x := by
+  filter_upwards [h] with x hx
+  exact mul_le_mul_of_nonneg_left hx hC
+
+/-- **Division distributes over eventually**: if ∀ᶠ x, |f(x)| ≤ B(x),
+    and logx > 0 eventually, then ∀ᶠ x, |f(x)|/logx ≤ B(x)/logx.
+    PROVED: division preserves order for positive divisor. -/
+theorem eventually_div_log_le (f B : ℝ → ℝ)
+    (h : ∀ᶠ x in atTop, |f x| ≤ B x) :
+    ∀ᶠ x in atTop,
+      |f x| / Real.log x ≤ B x / Real.log x := by
+  filter_upwards [h, log_pos_eventually] with x hx hlx
+  exact div_le_div_of_nonneg_right hx hlx.le
+
+/-- **abs of quotient**: |f(x)/logx| = |f(x)|/logx when logx > 0.
+    PROVED: abs_div + abs_of_pos. -/
+theorem abs_div_log_eq (f : ℝ → ℝ) (x : ℝ) (hx : 0 < Real.log x) :
+    |f x / Real.log x| = |f x| / Real.log x := by
+  rw [abs_div, abs_of_pos hx]
+
 end AbelSummationPsiPi

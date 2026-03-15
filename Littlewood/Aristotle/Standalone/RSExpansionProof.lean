@@ -4751,4 +4751,60 @@ theorem first_moment_sqrt_type (T : ℝ) (hT : 0 < T) (C : ℝ) (hC : 0 < C) :
     0 < C * T ^ ((1 : ℝ) / 2) := by
   exact mul_pos hC (Real.rpow_pos_of_pos hT _)
 
+-- ============================================================
+-- Section 17: Alternating series Leibniz bounds (Ralph C61)
+-- ============================================================
+
+/-! ### 17a. Alternating series partial sum bounds
+
+For the first-moment bound |∫₁ᵀ Z(t) dt| = O(T^{1/2}), we decompose
+the integral into block integrals. The signed block integrals form an
+alternating series with decreasing absolute values (by block antitone).
+
+These lemmas formalize abstract alternating series bounds. -/
+
+/-- **Alternating two-term bound**: for a₀ ≥ a₁ ≥ 0, |a₀ - a₁| ≤ a₀.
+    PROVED: arithmetic from nonneg + monotone. -/
+theorem alternating_two_term_bound (a₀ a₁ : ℝ)
+    (h₀ : 0 ≤ a₀) (_h₁ : 0 ≤ a₁) (h_mono : a₁ ≤ a₀) :
+    |a₀ - a₁| ≤ a₀ := by
+  rw [abs_of_nonneg (by linarith)]
+  linarith
+
+/-- **Alternating three-term bound**: for a₀ ≥ a₁ ≥ a₂ ≥ 0,
+    |a₀ - a₁ + a₂| ≤ a₀. -/
+theorem alternating_three_term_bound (a₀ a₁ a₂ : ℝ)
+    (_h₀ : 0 ≤ a₀) (_h₁ : 0 ≤ a₁) (h₂ : 0 ≤ a₂)
+    (h_01 : a₁ ≤ a₀) (h_12 : a₂ ≤ a₁) :
+    |a₀ - a₁ + a₂| ≤ a₀ := by
+  rw [abs_le]; constructor <;> linarith
+
+/-- **Alternating four-term bound**: for a₀ ≥ a₁ ≥ a₂ ≥ a₃ ≥ 0,
+    |a₀ - a₁ + a₂ - a₃| ≤ a₀. -/
+theorem alternating_four_term_bound (a₀ a₁ a₂ a₃ : ℝ)
+    (_h₀ : 0 ≤ a₀) (_h₁ : 0 ≤ a₁) (_h₂ : 0 ≤ a₂) (h₃ : 0 ≤ a₃)
+    (h_01 : a₁ ≤ a₀) (h_12 : a₂ ≤ a₁) (h_23 : a₃ ≤ a₂) :
+    |a₀ - a₁ + a₂ - a₃| ≤ a₀ := by
+  rw [abs_le]; constructor <;> linarith
+
+
+/-- **Paired partial sum nonneg**: ∑_{i<n} (a(2i) - a(2i+1)) ≥ 0
+    when a is antitone and nonneg. Each pair a(2i) - a(2i+1) ≥ 0. -/
+theorem paired_sum_nonneg (a : ℕ → ℝ) (ha_anti : Antitone a)
+    (n : ℕ) :
+    0 ≤ ∑ i ∈ Finset.range n, (a (2 * i) - a (2 * i + 1)) := by
+  apply Finset.sum_nonneg
+  intro i _
+  linarith [ha_anti (show 2 * i ≤ 2 * i + 1 from Nat.le_succ _)]
+
+/-- **Paired subtraction nonneg**: a(2i) - a(2i+1) ≥ 0 for antitone a. -/
+theorem antitone_paired_diff_nonneg (a : ℕ → ℝ) (ha_anti : Antitone a) (i : ℕ) :
+    0 ≤ a (2 * i) - a (2 * i + 1) :=
+  sub_nonneg.mpr (ha_anti (Nat.le_succ _))
+
+/-- **Consecutive difference nonneg**: a(i) - a(i+1) ≥ 0 for antitone a. -/
+theorem antitone_consec_diff_nonneg (a : ℕ → ℝ) (ha_anti : Antitone a) (i : ℕ) :
+    0 ≤ a i - a (i + 1) :=
+  sub_nonneg.mpr (ha_anti (Nat.le_succ _))
+
 end Aristotle.Standalone.RSExpansionProof

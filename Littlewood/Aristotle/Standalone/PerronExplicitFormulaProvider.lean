@@ -34,9 +34,9 @@ import Littlewood.Aristotle.Standalone.PerronCriticalLineBridge
 import Littlewood.Aristotle.ZeroFreeRegionV3
 import Littlewood.Aristotle.Standalone.KroneckerEquidistribution
 import Littlewood.Aristotle.Standalone.RHPiTowerHeightBudget
--- Note: ZeroCountingLocalDensityHyp is transitively available via
--- RHPiTowerHeightBudget → ZeroCountingFunction. No direct Assumptions import
--- needed (and importing Assumptions would create a cycle).
+import Littlewood.ZetaZeros.ZeroCountingAssumptions
+-- ZeroCountingAssumptions provides ZeroCountingLowerBoundHyp and
+-- FirstZeroOrdinateHyp without going through Assumptions.lean (cycle-free).
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -2033,15 +2033,19 @@ private lemma anti_target_witness_of_domination
 theorem target_exact_seed_from_perron :
     @TargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
   intro hRH X
-  -- Provide ZeroCountingLowerBoundHyp locally (import cycle prevents global access).
-  -- The sorry here does NOT produce a separate warning because this theorem is
-  -- consumed via cross-module opaque reference in RHPiExactSeedConstructive.
+  -- Provide ZeroCountingLowerBoundHyp locally to unlock tower_cap_unbounded.
   haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩
-  -- Get T with tower cap ≥ max(X, perronThreshold(hRH, T)) + 1.
-  -- The tower cap at T must dominate BOTH X and the Perron threshold at the SAME T.
-  -- Strategy: pick T₁ for X, compute P = perronThreshold(hRH, T₁), then pick T₂ for max(X,P).
-  -- The circularity is that perronThreshold(hRH, T₂) may differ from P.
-  -- Resolution: use target_witness_of_domination with a T satisfying the domination hypothesis.
+  -- Step 1: Choose T₁ so tower_cap(T₁) ≥ X + 1.
+  obtain ⟨T₁, hT₁_ge4, hT₁_cap⟩ := exists_T_tower_cap_exceeds (X + 1)
+  -- Step 2: P₁ = perronThreshold(hRH, T₁) is determined.
+  set P₁ := @perronThreshold pi_explicit_formula_from_perron hRH T₁
+  -- Step 3: Choose T₂ so tower_cap(T₂) ≥ max(X, P₁) + 1.
+  obtain ⟨T₂, hT₂_ge4, hT₂_cap⟩ := exists_T_tower_cap_exceeds (max X P₁ + 1)
+  -- Step 4: P₂ = perronThreshold(hRH, T₂) is determined.
+  -- We need tower_cap(T₂) ≥ max(X, P₂) + 1.
+  -- We know tower_cap(T₂) ≥ max(X, P₁) + 1, but P₂ ≠ P₁ in general.
+  -- The remaining sorry captures: ∃ T where tower_cap(T) dominates
+  -- perronThreshold(hRH, T) at the same T, plus congruences.
   sorry
 
 /-- Anti-target exact-seed phase alignment above the Perron threshold.
@@ -2056,6 +2060,9 @@ theorem anti_target_exact_seed_from_perron :
     @AntiTargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
   intro hRH X
   haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩
+  obtain ⟨T₁, hT₁_ge4, hT₁_cap⟩ := exists_T_tower_cap_exceeds (X + 1)
+  set P₁ := @perronThreshold pi_explicit_formula_from_perron hRH T₁
+  obtain ⟨T₂, hT₂_ge4, hT₂_cap⟩ := exists_T_tower_cap_exceeds (max X P₁ + 1)
   sorry
 
 end Aristotle.Standalone.PerronExplicitFormulaProvider

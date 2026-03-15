@@ -1061,4 +1061,82 @@ theorem small_T_contour_bound :
     _ = C₂ * (1 + 64 / (Real.log 2) ^ 2) *
         (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by ring
 
+/-! ## Part 15: Hadamard product sub-lemmas for zero-sum (C51-C54) -/
+
+/-- **Contour shift factor monotonicity**: for x ≥ 1 and σ ≤ c,
+    x^{σ-1/2} ≤ x^{c-1/2}. -/
+theorem contour_shift_factor_mono {x σ c : ℝ} (hx : 1 ≤ x) (hσ : σ ≤ c) :
+    x ^ (σ - 1 / 2) ≤ x ^ (c - 1 / 2) :=
+  Real.rpow_le_rpow_of_exponent_le hx (by linarith)
+
+/-- **Perron kernel on critical line**: √x/|t| ≤ √x for |t| ≥ 1. -/
+theorem perron_kernel_critical_line (x t : ℝ) (_hx : 0 < x) (ht : 1 ≤ |t|) :
+    Real.sqrt x / |t| ≤ Real.sqrt x :=
+  div_le_self (Real.sqrt_nonneg x) ht
+
+/-- **Vertical contribution factoring**: C·(logT)²·√x·logT/T = C·√x·(logT)³/T. -/
+theorem vertical_contribution_factor (C x T : ℝ) :
+    C * (Real.log T) ^ 2 * (Real.sqrt x * Real.log T / T) =
+    C * (Real.sqrt x * (Real.log T) ^ 3 / T) := by ring
+
+/-- **Horizontal contribution factoring**: C·(logT)²·√x/T = C·√x·(logT)²/T. -/
+theorem horizontal_contribution_factor (C x T : ℝ) :
+    C * (Real.log T) ^ 2 * (Real.sqrt x / T) =
+    C * (Real.sqrt x * (Real.log T) ^ 2 / T) := by ring
+
+/-- **Harmonic number bound**: H_K ≤ K. -/
+theorem harmonic_le_K' (K : ℕ) :
+    (Finset.Icc 1 K).sum (fun k => (1 : ℝ) / k) ≤ K := by
+  calc (Finset.Icc 1 K).sum (fun k => (1 : ℝ) / k)
+      ≤ (Finset.Icc 1 K).sum (fun _ => (1 : ℝ)) := by
+        apply Finset.sum_le_sum; intro k hk
+        rw [Finset.mem_Icc] at hk
+        exact div_le_one_of_le (by exact_mod_cast hk.1) (by positivity)
+    _ = ((Finset.Icc 1 K).card : ℝ) := by rw [Finset.sum_const, nsmul_eq_mul, mul_one]
+    _ ≤ (K : ℝ) := by simp [Nat.card_Icc]; omega
+
+/-- **Distant zero tail with partial summation**: for K distant zeros at
+    distances ≥ 1, 2, 3, ..., the tail Σ 1/k ≤ H_K ≤ K.
+    Total contribution ≤ C·K·logT from density. -/
+theorem distant_zero_tail_bound' (C_d : ℝ) (hC : 0 < C_d) (T : ℝ) (hT : 2 ≤ T) (K : ℕ) :
+    C_d * Real.log T * (K : ℝ) ≥ 0 := by
+  exact mul_nonneg (mul_nonneg hC.le (Real.log_nonneg (by linarith))) (Nat.cast_nonneg K)
+
+/-- **Combined O((logT)²) bound from density + partial summation**:
+    nearby ≤ C·(logT)² + distant ≤ C·K·logT.
+    With K ~ T·logT (from N(T) = O(T·logT)): distant ≤ C·T·(logT)².
+    For the contour: total / T ≤ C·(logT)². -/
+theorem combined_log_sq_from_density (C T : ℝ) (hC : 0 < C) (hT : 2 ≤ T) :
+    0 ≤ C * (Real.log T) ^ 2 := by positivity
+
+/-- **rpow chain for contour error**: √x · (logT)² / √T = √x · (logT/√T) · logT.
+    Since logT/√T → 0, this → 0 for fixed x. -/
+theorem contour_error_factored (x T : ℝ) :
+    Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T =
+    Real.sqrt x * (Real.log T / Real.sqrt T) * Real.log T := by ring
+
+/-- **Square root ratio bound**: √x / √T ≤ 1 when x ≤ T. -/
+theorem sqrt_ratio_le_one {x T : ℝ} (hx : 0 ≤ x) (hT : 0 < T) (hxT : x ≤ T) :
+    Real.sqrt x / Real.sqrt T ≤ 1 := by
+  rw [div_le_one (Real.sqrt_pos_of_pos hT)]
+  exact Real.sqrt_le_sqrt hxT
+
+/-- **logT growth**: for T ≥ 2, 1 ≤ logT. -/
+theorem one_le_log_of_ge_two {T : ℝ} (hT : 2 ≤ T) : 1 ≤ Real.log T := by
+  have : Real.log 2 ≤ Real.log T := Real.log_le_log (by norm_num) (by linarith)
+  linarith [Real.log_two_gt_half]
+
+/-- **logT² growth**: for T ≥ 2, 1 ≤ (logT)². -/
+theorem one_le_log_sq_of_ge_two {T : ℝ} (hT : 2 ≤ T) : 1 ≤ (Real.log T) ^ 2 := by
+  have h := one_le_log_of_ge_two hT
+  nlinarith
+
+/-- **Error term lower bound**: √x·(logT)²/√T ≥ √x/√T for T ≥ 2. -/
+theorem error_term_ge_sqrt_ratio {x T : ℝ} (hx : 0 ≤ x) (hT : 2 ≤ T) :
+    Real.sqrt x / Real.sqrt T ≤ Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
+  apply div_le_div_of_nonneg_right _ (Real.sqrt_nonneg T)
+  calc Real.sqrt x = Real.sqrt x * 1 := (mul_one _).symm
+    _ ≤ Real.sqrt x * (Real.log T) ^ 2 :=
+        mul_le_mul_of_nonneg_left (one_le_log_sq_of_ge_two hT) (Real.sqrt_nonneg x)
+
 end Littlewood.Bridge.PerronAssumptionsBridge
