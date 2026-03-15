@@ -44,6 +44,7 @@ import Littlewood.Bridge.HardyZTransfer
 import Littlewood.Aristotle.RSBlockParam
 import Littlewood.Aristotle.ErrorTermExpansion
 import Littlewood.Aristotle.Standalone.RSExpansionProof
+import Littlewood.Aristotle.IntervalPartition
 
 set_option linter.mathlibStandardSet false
 
@@ -1681,6 +1682,226 @@ private theorem block_errorTerm_integral_le
     _ = C_et * (2 * Real.pi * (2 * (k : ℝ) + 3)) := by rw [block_length]
 
 end ErrorTermIntegralBound
+
+/-! ## Part 8b: Block decomposition infrastructure for error_term_first_moment -/
+
+section ErrorBlockDecomposition
+
+open HardyEstimatesPartial
+open Aristotle.Standalone.OscPieceBigOAssembly
+  (exists_block_of_ge_hardyStart0 hardyStart_mono block_index_sq_le)
+open Aristotle.HardyNProperties (hardyStart_formula block_length)
+open Aristotle.IntervalPartition (integral_split_at integral_split_finitely)
+open Aristotle.ErrorTermExpansion (rsPsi)
+open Aristotle.RSBlockParam (blockParam)
+
+private theorem hardyStart0_gt_one : (1 : ℝ) < hardyStart 0 := by
+  rw [hardyStart_formula]; push_cast; nlinarith [Real.pi_gt_three]
+
+/-- Three-part split: ∫₁ᵀ = ∫₁^{hs0} + ∫_{hs0}^{hsK} + ∫_{hsK}^T. -/
+theorem error_integral_three_part (K : ℕ) (T : ℝ) (_hT : T ≥ 2)
+    (hK_le : hardyStart K ≤ T) (hK_ge : hardyStart 0 ≤ hardyStart K) :
+    ∫ t in Set.Ioc 1 T, ErrorTerm t =
+      (∫ t in Set.Ioc 1 (hardyStart 0), ErrorTerm t) +
+      (∫ t in Set.Ioc (hardyStart 0) (hardyStart K), ErrorTerm t) +
+      (∫ t in Set.Ioc (hardyStart K) T, ErrorTerm t) := by
+  have h1 := le_of_lt hardyStart0_gt_one
+  have hE := errorTerm_integrable T
+  have hA : IntegrableOn ErrorTerm (Set.Ioc 1 (hardyStart 0)) :=
+    hE.mono_set (fun t ht => ⟨ht.1, le_trans ht.2 (le_trans hK_ge hK_le)⟩)
+  have hB : IntegrableOn ErrorTerm (Set.Ioc (hardyStart 0) T) :=
+    hE.mono_set (fun t ht => ⟨lt_of_lt_of_le hardyStart0_gt_one (le_of_lt ht.1), ht.2⟩)
+  have hC : IntegrableOn ErrorTerm (Set.Ioc (hardyStart 0) (hardyStart K)) :=
+    hE.mono_set (fun t ht => ⟨lt_of_lt_of_le hardyStart0_gt_one (le_of_lt ht.1), le_trans ht.2 hK_le⟩)
+  have hD : IntegrableOn ErrorTerm (Set.Ioc (hardyStart K) T) :=
+    hE.mono_set (fun t ht => ⟨lt_of_lt_of_le hardyStart0_gt_one (le_trans hK_ge (le_of_lt ht.1)), ht.2⟩)
+  rw [integral_split_at ErrorTerm 1 (hardyStart 0) T h1 (le_trans hK_ge hK_le) hA hB,
+      integral_split_at ErrorTerm (hardyStart 0) (hardyStart K) T hK_ge hK_le hC hD, add_assoc]
+
+/-- Middle segment = ∑ block integrals. -/
+theorem error_middle_as_block_sum (K : ℕ) :
+    ∫ t in Set.Ioc (hardyStart 0) (hardyStart K), ErrorTerm t =
+      ∑ k ∈ Finset.range K,
+        ∫ t in Set.Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t :=
+  integral_split_finitely ErrorTerm hardyStart K
+    (fun k _ => hardyStart_mono (Nat.le_succ k))
+    (fun k _ => (errorTerm_integrable (hardyStart (k + 1))).mono_set
+      (fun t ht => ⟨lt_of_lt_of_le hardyStart0_gt_one
+        (le_trans (hardyStart_mono (Nat.zero_le k)) (le_of_lt ht.1)), ht.2⟩))
+
+/-- Head bound: |∫₁^{hs0} ErrorTerm| ≤ C_head. -/
+theorem error_head_bound
+    (h_exp : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4)) :
+    ∃ C_head > 0, |∫ t in Set.Ioc 1 (hardyStart 0), ErrorTerm t| ≤ C_head := by
+  obtain ⟨C_et, hCet_pos, h_ptwise⟩ := errorTerm_pointwise_from_rs h_exp
+  have h_bound : ∀ t ∈ Set.uIoc 1 (hardyStart 0), ‖ErrorTerm t‖ ≤ C_et := by
+    intro t ht; rw [Set.uIoc_of_le (le_of_lt hardyStart0_gt_one)] at ht
+    rw [Real.norm_eq_abs]
+    have ht1 : t ≥ 1 := le_of_lt ht.1
+    have h_rpow : t ^ (-(1 : ℝ) / 4) ≤ 1 := rpow_le_one_of_one_le_of_nonpos ht1 (by norm_num)
+    calc |ErrorTerm t| ≤ C_et * t ^ (-(1 : ℝ) / 4) := h_ptwise t ht1
+      _ ≤ C_et * 1 := mul_le_mul_of_nonneg_left h_rpow hCet_pos.le
+      _ = C_et := mul_one _
+  refine ⟨C_et * hardyStart 0 + 1, by nlinarith [hCet_pos, hardyStart0_gt_one], ?_⟩
+  rw [show ∫ t in Set.Ioc 1 (hardyStart 0), ErrorTerm t =
+    ∫ t in (1 : ℝ)..(hardyStart 0), ErrorTerm t from
+    (intervalIntegral.integral_of_le (le_of_lt hardyStart0_gt_one)).symm]
+  calc |∫ t in (1 : ℝ)..(hardyStart 0), ErrorTerm t|
+      ≤ C_et * |hardyStart 0 - 1| :=
+        intervalIntegral.norm_integral_le_of_norm_le_const h_bound
+    _ ≤ C_et * hardyStart 0 := by
+        rw [abs_of_nonneg (by linarith [hardyStart0_gt_one])]
+        nlinarith [hCet_pos]
+    _ ≤ C_et * hardyStart 0 + 1 := by linarith
+
+/-- Tail bound: |∫_{hs(K)}^T ErrorTerm| ≤ C_tail · √T. -/
+theorem error_tail_bound
+    (h_exp : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4)) :
+    ∃ C_tail > 0, ∀ K : ℕ, ∀ T : ℝ, T ≥ 2 → hardyStart K ≤ T → T ≤ hardyStart (K + 1) →
+      |∫ t in Set.Ioc (hardyStart K) T, ErrorTerm t| ≤ C_tail * Real.sqrt T := by
+  obtain ⟨C_et, hCet_pos, h_ptwise⟩ := errorTerm_pointwise_from_rs h_exp
+  refine ⟨C_et * (6 * Real.pi), by positivity, fun K T hT hK_lo hK_hi => ?_⟩
+  have h_const : ∀ t ∈ Set.uIoc (hardyStart K) T, ‖ErrorTerm t‖ ≤ C_et := by
+    intro t ht; rw [Set.uIoc_of_le hK_lo] at ht; rw [Real.norm_eq_abs]
+    have h0t : hardyStart 0 ≤ t := le_trans (hardyStart_mono (Nat.zero_le K)) (le_of_lt ht.1)
+    have ht1 : t ≥ 1 := le_of_lt (lt_of_lt_of_le hardyStart0_gt_one h0t)
+    have h_rpow : t ^ (-(1 : ℝ) / 4) ≤ 1 := rpow_le_one_of_one_le_of_nonpos ht1 (by norm_num)
+    calc |ErrorTerm t| ≤ C_et * t ^ (-(1 : ℝ) / 4) := h_ptwise t ht1
+      _ ≤ C_et * 1 := mul_le_mul_of_nonneg_left h_rpow hCet_pos.le
+      _ = C_et := mul_one _
+  have hK1_le : (K : ℝ) + 1 ≤ Real.sqrt T := by
+    rw [← Real.sqrt_sq (by positivity : (0 : ℝ) ≤ (K : ℝ) + 1)]
+    exact Real.sqrt_le_sqrt (le_trans (block_index_sq_le K T hK_lo)
+      (div_le_self (by linarith) (by nlinarith [Real.pi_gt_three])))
+  rw [show ∫ t in Set.Ioc (hardyStart K) T, ErrorTerm t =
+    ∫ t in (hardyStart K)..T, ErrorTerm t from
+    (intervalIntegral.integral_of_le hK_lo).symm]
+  calc |∫ t in (hardyStart K)..T, ErrorTerm t|
+      ≤ C_et * |T - hardyStart K| :=
+        intervalIntegral.norm_integral_le_of_norm_le_const h_const
+    _ = C_et * (T - hardyStart K) := by rw [abs_of_nonneg (sub_nonneg.mpr hK_lo)]
+    _ ≤ C_et * (hardyStart (K + 1) - hardyStart K) := by gcongr
+    _ = C_et * (2 * Real.pi * (2 * (K : ℝ) + 3)) := by rw [block_length]
+    _ ≤ C_et * (2 * Real.pi * (2 * Real.sqrt T + 1)) := by
+        apply mul_le_mul_of_nonneg_left _ hCet_pos.le
+        apply mul_le_mul_of_nonneg_left _ (by positivity : (0 : ℝ) ≤ 2 * Real.pi)
+        linarith
+    _ ≤ C_et * (6 * Real.pi * Real.sqrt T) := by
+        apply mul_le_mul_of_nonneg_left _ hCet_pos.le
+        have h_sqrtT_ge1 : (1 : ℝ) ≤ Real.sqrt T := by
+          rw [← Real.sqrt_one]; exact Real.sqrt_le_sqrt (by linarith)
+        -- 2π(2√T + 1) = 4π√T + 2π ≤ 4π√T + 2π√T = 6π√T (since √T ≥ 1)
+        nlinarith [Real.pi_pos]
+    _ = C_et * (6 * Real.pi) * Real.sqrt T := by ring
+
+/-- Block integral bound: |∫_{block k} ErrorTerm| ≤ C · √(k+2). -/
+theorem error_block_abs_le_sqrt
+    (h_exp : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4)) :
+    ∃ C_blk > 0, ∀ k : ℕ,
+      |∫ t in Set.Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t| ≤
+        C_blk * Real.sqrt ((k : ℝ) + 2) := by
+  obtain ⟨C_et, hCet_pos, h_ptwise⟩ := errorTerm_pointwise_from_rs h_exp
+  refine ⟨6 * Real.pi * C_et + C_et, by positivity, fun k => ?_⟩
+  have hk_pos := Aristotle.Standalone.RSExpansionProof.hardyStart_pos' k
+  have h_hs_le : hardyStart k ≤ hardyStart (k + 1) := hardyStart_mono (Nat.le_succ k)
+  have hk1_pos : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  have h_sqrt_k1_pos : (0 : ℝ) < Real.sqrt ((k : ℝ) + 1) := Real.sqrt_pos_of_pos hk1_pos
+  -- Pointwise: ‖ErrorTerm t‖ ≤ C_et / √(k+1) on block k
+  have h_sharp : ∀ t ∈ Set.uIoc (hardyStart k) (hardyStart (k + 1)),
+      ‖ErrorTerm t‖ ≤ C_et / Real.sqrt ((k : ℝ) + 1) := by
+    intro t ht; rw [Set.uIoc_of_le h_hs_le] at ht; rw [Real.norm_eq_abs]
+    have ht_ge_hs := le_of_lt ht.1
+    have ht_pos : (0 : ℝ) < t := lt_of_lt_of_le hk_pos ht_ge_hs
+    have ht1 : t ≥ 1 := le_of_lt (lt_of_lt_of_le hardyStart0_gt_one
+      (le_trans (hardyStart_mono (Nat.zero_le k)) ht_ge_hs))
+    -- t^{1/4} ≥ hs(k)^{1/4} ≥ √(k+1)
+    have h_hs14_pos : (0 : ℝ) < (hardyStart k) ^ ((1 : ℝ) / 4) := Real.rpow_pos_of_pos hk_pos _
+    have h_t14_ge : (hardyStart k) ^ ((1 : ℝ) / 4) ≤ t ^ ((1 : ℝ) / 4) :=
+      Real.rpow_le_rpow hk_pos.le ht_ge_hs (by norm_num)
+    have h_hs14_ge : Real.sqrt ((k : ℝ) + 1) ≤ (hardyStart k) ^ ((1 : ℝ) / 4) := by
+      -- hs(k) = 2π(k+1)² ≥ (k+1)², so hs(k)^{1/4} ≥ ((k+1)²)^{1/4} = (k+1)^{1/2} = √(k+1)
+      have h_hs_ge_sq : ((k : ℝ) + 1) ^ 2 ≤ hardyStart k := by
+        rw [hardyStart_formula]; push_cast; nlinarith [Real.pi_gt_three]
+      rw [Real.sqrt_eq_rpow]
+      calc ((k : ℝ) + 1) ^ ((1 : ℝ) / 2)
+          = (((k : ℝ) + 1) ^ 2) ^ ((1 : ℝ) / 4) := by
+            rw [← Real.rpow_natCast ((k : ℝ) + 1) 2, ← Real.rpow_mul hk1_pos.le]; norm_num
+        _ ≤ (hardyStart k) ^ ((1 : ℝ) / 4) :=
+            Real.rpow_le_rpow (by positivity) h_hs_ge_sq (by norm_num)
+    -- Chain: |ET| ≤ C_et · t^{-1/4} ≤ C_et · hs(k)^{-1/4} ≤ C_et / √(k+1)
+    have h_inv_le : t ^ (-(1 : ℝ) / 4) ≤ (hardyStart k) ^ (-(1 : ℝ) / 4) := by
+      rw [show -(1 : ℝ) / 4 = -(4⁻¹ : ℝ) from by norm_num, rpow_neg ht_pos.le, rpow_neg hk_pos.le]
+      have h14eq : ((1 : ℝ) / 4) = (4⁻¹ : ℝ) := by norm_num
+      rw [← h14eq] at *
+      exact inv_anti₀ h_hs14_pos h_t14_ge
+    have h_hs_inv_le : (hardyStart k) ^ (-(1 : ℝ) / 4) ≤ 1 / Real.sqrt ((k : ℝ) + 1) := by
+      have h14eq : ((1 : ℝ) / 4) = (4⁻¹ : ℝ) := by norm_num
+      have h_ge' : Real.sqrt ((k : ℝ) + 1) ≤ (hardyStart k) ^ (4⁻¹ : ℝ) := by
+        rw [← h14eq]; exact h_hs14_ge
+      rw [show -(1 : ℝ) / 4 = -(4⁻¹ : ℝ) from by norm_num, rpow_neg hk_pos.le, one_div]
+      exact inv_anti₀ h_sqrt_k1_pos h_ge'
+    calc |ErrorTerm t|
+        ≤ C_et * t ^ (-(1 : ℝ) / 4) := h_ptwise t ht1
+      _ ≤ C_et * (1 / Real.sqrt ((k : ℝ) + 1)) := by
+          apply mul_le_mul_of_nonneg_left _ hCet_pos.le; linarith
+      _ = C_et / Real.sqrt ((k : ℝ) + 1) := by ring
+  -- |∫| ≤ (C_et/√(k+1)) · BL(k) ≤ 6πC_et · √(k+1) ≤ 6πC_et · √(k+2)
+  rw [show ∫ t in Set.Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t =
+    ∫ t in (hardyStart k)..(hardyStart (k + 1)), ErrorTerm t from
+    (intervalIntegral.integral_of_le h_hs_le).symm]
+  calc |∫ t in (hardyStart k)..(hardyStart (k + 1)), ErrorTerm t|
+      = ‖∫ t in (hardyStart k)..(hardyStart (k + 1)), ErrorTerm t‖ := (Real.norm_eq_abs _).symm
+    _ ≤ C_et / Real.sqrt ((k : ℝ) + 1) * |hardyStart (k + 1) - hardyStart k| :=
+        intervalIntegral.norm_integral_le_of_norm_le_const h_sharp
+    _ = C_et / Real.sqrt ((k : ℝ) + 1) * (hardyStart (k + 1) - hardyStart k) := by
+        rw [abs_of_nonneg (sub_nonneg.mpr h_hs_le)]
+    _ ≤ C_et / Real.sqrt ((k : ℝ) + 1) * (6 * Real.pi * ((k : ℝ) + 1)) := by
+        gcongr; rw [block_length]
+        have hk_nn : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+        nlinarith [Real.pi_pos]
+    _ = 6 * Real.pi * C_et * (((k : ℝ) + 1) / Real.sqrt ((k : ℝ) + 1)) := by ring
+    _ = 6 * Real.pi * C_et * Real.sqrt ((k : ℝ) + 1) := by
+        congr 1; rw [div_eq_iff (ne_of_gt h_sqrt_k1_pos)]
+        exact (Real.mul_self_sqrt hk1_pos.le).symm
+    _ ≤ 6 * Real.pi * C_et * Real.sqrt ((k : ℝ) + 2) := by
+        apply mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt (by linarith))
+          (by nlinarith [Real.pi_pos, hCet_pos])
+    _ ≤ (6 * Real.pi * C_et + C_et) * Real.sqrt ((k : ℝ) + 2) := by
+        nlinarith [Real.sqrt_nonneg ((k : ℝ) + 2)]
+
+/-- Approx-monotone alternating sum: |∑ (-1)^k a_k| ≤ M_n + (n+1)δ. -/
+theorem alternating_sum_approx_monotone (a M_fn : ℕ → ℝ) (δ : ℝ) (_hδ : 0 ≤ δ)
+    (hM_nn : ∀ k, 0 ≤ M_fn k) (hM_mono : Monotone M_fn)
+    (h_approx : ∀ k, |a k - M_fn k| ≤ δ) (n : ℕ) :
+    |∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * a k| ≤ M_fn n + (↑n + 1) * δ := by
+  simp_rw [show ∀ k, (-1 : ℝ) ^ k * a k =
+    (-1 : ℝ) ^ k * M_fn k + (-1 : ℝ) ^ k * (a k - M_fn k) from fun k => by ring,
+    Finset.sum_add_distrib]
+  calc |∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * M_fn k +
+        ∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * (a k - M_fn k)|
+      ≤ |∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * M_fn k| +
+        |∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * (a k - M_fn k)| := abs_add_le _ _
+    _ ≤ M_fn n + ∑ k ∈ Finset.range (n + 1), |(-1 : ℝ) ^ k * (a k - M_fn k)| := by
+        gcongr
+        · exact AbelSummation.alternating_sum_le_last M_fn hM_nn hM_mono n
+        · exact Finset.abs_sum_le_sum_abs _ _
+    _ ≤ M_fn n + ∑ k ∈ Finset.range (n + 1), δ := by
+        gcongr with k _
+        rw [abs_mul, show |(-1 : ℝ) ^ k| = 1 from by simp [abs_pow, abs_neg, abs_one], one_mul]
+        exact h_approx k
+    _ = M_fn n + (↑n + 1) * δ := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
+
+end ErrorBlockDecomposition
 
 /-! ## Part 9: ibp_oscillatory_bound and first moment assembly
 
