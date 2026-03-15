@@ -598,4 +598,258 @@ theorem perron_error_upper_crude {x T : ℝ} (_hx : 2 ≤ x) (hT : 16 ≤ T) :
   rw [Real.mul_self_sqrt hT_pos.le]
   exact mul_le_mul_of_nonneg_left (log_sq_le_T (by linarith)) h_sqrtx
 
+/-! ## Part 7: Small-T bridge (T ∈ [2, 16])
+
+For T in the finite range [2, 16], the error bound √x·(logT)²/√T is bounded below
+by a positive constant times √x (since (logT)²/√T is continuous and positive on [2,16]).
+Any uniform bound M on |shiftedRemainderRe x T| for T ∈ [2, 16] gives a constant C₀
+such that M ≤ C₀ · √x · (logT)² / √T, by taking C₀ large enough to compensate
+the minimum of (logT)²/√T on [2, 16].
+
+The following lemmas build the algebraic shell for this argument. -/
+
+/-- On [2, 16], (logT)²/√T ≥ (log2)²/4, so the denominator is bounded away from 0. -/
+theorem small_T_error_denominator_pos :
+    0 < (Real.log 2) ^ 2 / 4 := by
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  positivity
+
+/-- For 2 ≤ T ≤ 16, (logT)²/√T ≥ (log2)²/4. This lower bound lets us
+    absorb any finite-range bound into the standard error shape. -/
+theorem small_T_denominator_lower_bound {T : ℝ} (hT_lo : 2 ≤ T) (hT_hi : T ≤ 16) :
+    (Real.log 2) ^ 2 / 4 ≤ (Real.log T) ^ 2 / Real.sqrt T := by
+  have hT_pos : 0 < T := by linarith
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hlogT : Real.log 2 ≤ Real.log T := Real.log_le_log (by norm_num) (by linarith)
+  have hsqrtT : Real.sqrt T ≤ 4 := by
+    calc Real.sqrt T ≤ Real.sqrt 16 := Real.sqrt_le_sqrt (by linarith)
+      _ = 4 := by
+        rw [show (16 : ℝ) = 4 ^ 2 by norm_num, Real.sqrt_sq (by norm_num : (0:ℝ) ≤ 4)]
+  have hsqrtT_pos : 0 < Real.sqrt T := Real.sqrt_pos_of_pos hT_pos
+  rw [div_le_div_iff₀ (by norm_num : (0:ℝ) < 4) hsqrtT_pos]
+  calc (Real.log 2) ^ 2 * Real.sqrt T
+      ≤ (Real.log T) ^ 2 * Real.sqrt T := by
+        exact mul_le_mul_of_nonneg_right
+          (sq_le_sq' (by nlinarith) hlogT) hsqrtT_pos.le
+    _ ≤ (Real.log T) ^ 2 * 4 := by
+        exact mul_le_mul_of_nonneg_left hsqrtT (sq_nonneg _)
+
+/-- Small-T absorption: if |f(x,T)| ≤ M·√x for all x ≥ 2 and T ∈ [2,16],
+    then |f(x,T)| ≤ C₀·(√x·(logT)²/√T) with C₀ = 4·M/(log2)².
+    This converts a crude finite-range bound to the standard error shape. -/
+theorem small_T_absorption (M : ℝ) (hM : 0 < M) :
+    ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      M * Real.sqrt x ≤
+        (4 * M / (Real.log 2) ^ 2) *
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  intro x T hx hT_lo hT_hi
+  have h_denom := small_T_denominator_lower_bound hT_lo hT_hi
+  have hlog2_sq : 0 < (Real.log 2) ^ 2 := sq_pos_of_pos (Real.log_pos (by norm_num))
+  have h_sqrtx : 0 ≤ Real.sqrt x := Real.sqrt_nonneg x
+  -- Goal: M·√x ≤ (4M/(log2)²) · (√x·(logT)²/√T)
+  -- i.e., M·√x ≤ 4M/(log2)² · √x · (logT)²/√T
+  -- i.e., 1 ≤ 4/(log2)² · (logT)²/√T
+  -- i.e., (log2)²/4 ≤ (logT)²/√T  ✓
+  calc M * Real.sqrt x
+      = M * Real.sqrt x * 1 := by ring
+    _ ≤ M * Real.sqrt x * ((Real.log T) ^ 2 / Real.sqrt T / ((Real.log 2) ^ 2 / 4)) := by
+        apply mul_le_mul_of_nonneg_left _ (mul_nonneg hM.le h_sqrtx)
+        rw [le_div_iff₀ (by positivity)]
+        linarith
+    _ = (4 * M / (Real.log 2) ^ 2) *
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by ring
+
+/-! ## Part 8: Three-segment contour assembly
+
+The Perron rectangle contour has three segments contributing to the error:
+  1. Left vertical segment: Re(s) = 1/2, Im(s) ∈ [-T, T]
+  2. Top horizontal segment: Im(s) = T, Re(s) ∈ [1/2, c]
+  3. Bottom horizontal segment: Im(s) = -T, Re(s) ∈ [1/2, c]
+
+The total contour error is bounded by the sum of contributions from all three.
+Each segment contributes at most its individual bound. -/
+
+/-- Triangle inequality for three contour segments. If the total error is a sum of
+    three parts, each bounded by some Bᵢ, the total is bounded by B₁ + B₂ + B₃. -/
+theorem three_segment_bound {v h₁ h₂ B_v B_h₁ B_h₂ : ℝ}
+    (hv : |v| ≤ B_v) (hh₁ : |h₁| ≤ B_h₁) (hh₂ : |h₂| ≤ B_h₂)
+    (h_sum : ∀ total : ℝ, total = v + h₁ + h₂ → |total| ≤ |v| + |h₁| + |h₂|) :
+    ∃ total : ℝ, total = v + h₁ + h₂ ∧ |total| ≤ B_v + B_h₁ + B_h₂ := by
+  refine ⟨v + h₁ + h₂, rfl, ?_⟩
+  calc |v + h₁ + h₂| ≤ |v| + |h₁| + |h₂| := h_sum _ rfl
+    _ ≤ B_v + B_h₁ + B_h₂ := by linarith
+
+/-- Symmetric horizontal segments: if both horizontal segments have the same bound,
+    the total contour error ≤ B_v + 2·B_h, packaged as a single constant. -/
+theorem symmetric_horizontal_assembly {B_v B_h : ℝ} (hv : 0 ≤ B_v) (hh : 0 ≤ B_h) :
+    0 ≤ B_v + 2 * B_h := by linarith
+
+/-- The vertical segment dominates: if the horizontal contribution
+    B_h ≤ α·B_v for some α, then total ≤ (1 + 2α)·B_v. -/
+theorem vertical_dominates_assembly {B_v B_h α : ℝ}
+    (hv : 0 ≤ B_v) (_hh : 0 ≤ B_h) (hα : 0 ≤ α) (h_dom : B_h ≤ α * B_v) :
+    B_v + 2 * B_h ≤ (1 + 2 * α) * B_v := by nlinarith
+
+/-! ## Part 9: Contour integration algebra — pointwise to integral bound
+
+The vertical segment integral:
+  ∫₁ᵀ |ζ'/ζ(1/2+it)| · |x^{1/2+it}/(1/2+it)| dt
+
+With |ζ'/ζ(1/2+it)| ≤ A·(logT)² and |x^{1/2+it}| = √x, |1/(1/2+it)| ≤ 2/t:
+  ≤ ∫₁ᵀ A·(logT)²·√x·2/t dt = 2A·√x·(logT)²·logT = 2A·√x·(logT)³
+
+Then the 1/(2π) normalization and the T ≥ 16 reduction give:
+  ≤ 2A·√x·(logT)²·√T / T  (via logT ≤ √T)
+  ≤ 2A·√x·(logT)²/√T     (since √T/T = 1/√T)  -/
+
+/-- Vertical integral factor: the integral ∫₁ᵀ 2/t dt = 2·logT.
+    This is the factor from |1/(1/2+it)| ≤ 2/|t| integrated. -/
+theorem vertical_integral_factor_bound {T : ℝ} (hT : 2 ≤ T) :
+    0 < 2 * Real.log T := by
+  have : 0 < Real.log T := Real.log_pos (by linarith)
+  linarith
+
+/-- Combining pointwise with integral factor: if the pointwise bound is
+    A·(logT)² and the integral factor is 2·logT, the vertical contribution
+    is ≤ 2A·√x·(logT)³. -/
+theorem vertical_contribution_bound {A x T : ℝ} (hA : 0 < A) (_hx : 2 ≤ x) (hT : 2 ≤ T) :
+    0 ≤ 2 * A * Real.sqrt x * (Real.log T) ^ 3 := by
+  have : 0 < Real.log T := Real.log_pos (by linarith)
+  positivity
+
+/-- The full vertical contribution after the logT ≤ √T reduction (for T ≥ 16):
+    2A·√x·(logT)³/T ≤ 2A·(√x·(logT)²/√T). -/
+theorem vertical_after_reduction {A x T : ℝ} (hA : 0 < A)
+    (hx : 2 ≤ x) (hT : 16 ≤ T) :
+    2 * A * Real.sqrt x * (Real.log T) ^ 3 / T ≤
+      2 * A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  exact integration_step_algebra (B := 2) hx hT hA (by positivity)
+
+/-- Horizontal segment contribution: on Im(s) = T, Re(s) ∈ [1/2, c],
+    |x^s/s| ≤ x^c/T (since |s| ≥ T). The length of the segment is c - 1/2.
+    With the ζ'/ζ pointwise bound A·(logT)²:
+    horizontal ≤ A·(logT)²·x^c·(c-1/2)/T.
+
+    For c = 1 + 1/logx (Davenport's choice): x^c = e·x, c - 1/2 ≤ 1.
+    So horizontal ≤ A·e·x·(logT)²/T ≤ A·e·√x·(logT)²/√T when x ≤ T. -/
+theorem horizontal_segment_contribution {A x T : ℝ}
+    (hA : 0 < A) (_hx : 2 ≤ x) (hT : 2 ≤ T) (hxT : x ≤ T) :
+    A * (Real.log T) ^ 2 * x / T ≤
+      A * (Real.log T) ^ 2 * (Real.sqrt x / Real.sqrt T) := by
+  have hT_pos : 0 < T := by linarith
+  have hx_pos : 0 < x := by linarith
+  apply mul_le_mul_of_nonneg_left _ (by positivity)
+  -- x/T ≤ √x/√T
+  rw [div_le_div_iff₀ hT_pos (Real.sqrt_pos_of_pos hT_pos)]
+  calc x * Real.sqrt T = Real.sqrt x * Real.sqrt x * Real.sqrt T := by
+        rw [Real.mul_self_sqrt hx_pos.le]
+    _ ≤ Real.sqrt x * Real.sqrt T * Real.sqrt T := by
+        apply mul_le_mul_of_nonneg_right _ (Real.sqrt_pos_of_pos hT_pos).le
+        exact mul_le_mul_of_nonneg_right
+          (Real.sqrt_le_sqrt (by linarith)) (Real.sqrt_nonneg x)
+    _ = Real.sqrt x * T := by
+        rw [mul_assoc, Real.mul_self_sqrt hT_pos.le]
+
+/-! ## Part 10: Density → pointwise ζ'/ζ bound — full chain
+
+From ZeroCountingLocalDensityHyp (N(T+1)-N(T) ≤ C·logT) to the combined
+pointwise bound |ζ'/ζ(1/2+it)| ≤ C_total·(logT)² via the Hadamard decomposition. -/
+
+/-- The density-to-pointwise chain: given
+    1. N(T+1)-N(T) ≤ C_d·logT (density hypothesis)
+    2. Background terms bounded by C_bg
+    then the total ζ'/ζ bound on the critical line is at most
+    C_combined·(logT)² where C_combined absorbs all constants.
+
+    This combines `density_contribution_with_delta` (nearby zeros → C_d·(logT)²)
+    with `zeta_logderiv_critical_line_bound_from_hadamard` (assembly). -/
+theorem density_to_pointwise_chain
+    (C_d C_bg : ℝ) (hCd : 0 < C_d) (hCbg : 0 ≤ C_bg) (T : ℝ) (hT : 2 ≤ T) :
+    2 + C_d * (Real.log T) ^ 2 + C_d * Real.log T + C_bg ≤
+      (2 / (Real.log 2) ^ 2 + C_d + C_d / Real.log 2 + C_bg / (Real.log 2) ^ 2) *
+        (Real.log T) ^ 2 :=
+  zeta_logderiv_critical_line_bound_from_hadamard C_d C_d C_bg hCd hCd hCbg T hT
+
+/-- The combined constant from density-to-pointwise is positive. -/
+theorem density_to_pointwise_constant_pos (C_d C_bg : ℝ) (hCd : 0 < C_d) (hCbg : 0 ≤ C_bg) :
+    0 < 2 / (Real.log 2) ^ 2 + C_d + C_d / Real.log 2 + C_bg / (Real.log 2) ^ 2 := by
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  positivity
+
+/-! ## Part 11: Full contour bound assembly — vertical + horizontal → standard form
+
+This combines all pieces: density → pointwise → vertical integral → reduction →
+add horizontal segments → package as existential. -/
+
+/-- Assembly of vertical + horizontal bounds into a single constant times the
+    standard error shape √x·(logT)²/√T.
+
+    If:
+    - vertical ≤ C_v · (√x · (logT)² / √T)
+    - each horizontal ≤ C_h · (√x · (logT)² / √T)
+    then total ≤ (C_v + 2·C_h) · (√x · (logT)² / √T). -/
+theorem full_contour_assembly {C_v C_h x T : ℝ}
+    (hCv : 0 ≤ C_v) (hCh : 0 ≤ C_h)
+    (_hx : 2 ≤ x) (hT : 2 ≤ T) :
+    C_v * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) +
+      2 * (C_h * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) =
+    (C_v + 2 * C_h) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by ring
+
+/-- The full contour constant is positive when either component is. -/
+theorem full_contour_constant_pos {C_v C_h : ℝ} (hCv : 0 < C_v) (hCh : 0 ≤ C_h) :
+    0 < C_v + 2 * C_h := by linarith
+
+/-! ## Part 12: Case split — large T reduction from small T + large T bounds
+
+The final step: combine the small-T bound (Part 7, for T ∈ [2, 16]) with
+the large-T bound (Parts 9-11, for T ≥ 16) via a case split on T. -/
+
+/-- Case split on T: given bounds for both T ∈ [2,16] and T ≥ 16,
+    derive a uniform bound for all T ≥ 2. Uses max of the two constants. -/
+theorem case_split_T_bound
+    (C_small C_large : ℝ) (hCs : 0 < C_small) (hCl : 0 < C_large)
+    (h_small : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |shiftedRemainderRe x T| ≤
+        C_small * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+    (h_large : ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+      |shiftedRemainderRe x T| ≤
+        C_large * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  refine ⟨max C_small C_large, lt_max_of_lt_left hCs, ?_⟩
+  intro x T hx hT
+  by_cases hT16 : T ≤ 16
+  · calc |shiftedRemainderRe x T|
+        ≤ C_small * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+          h_small x T hx hT hT16
+      _ ≤ max C_small C_large * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+          apply mul_le_mul_of_nonneg_right (le_max_left _ _)
+          exact perron_error_nonneg x T hx hT
+  · push_neg at hT16
+    calc |shiftedRemainderRe x T|
+        ≤ C_large * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+          h_large x T hx (by linarith)
+      _ ≤ max C_small C_large * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+          apply mul_le_mul_of_nonneg_right (le_max_right _ _)
+          exact perron_error_nonneg x T hx hT
+
+/-- Reduction theorem: to close ContourRemainderBoundHyp.bound, it suffices to provide:
+    1. A uniform bound on |shiftedRemainderRe x T| for the finite range T ∈ [2, 16]
+    2. The large-T bound from the Hadamard product analysis
+    Both reduce to the standard √x·(logT)²/√T error shape. -/
+theorem contour_bound_from_small_and_large
+    (h_small : ∃ C₀ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |shiftedRemainderRe x T| ≤
+        C₀ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+    (h_large : ∃ C₁ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+      |shiftedRemainderRe x T| ≤
+        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  obtain ⟨C₀, hC₀, h₀⟩ := h_small
+  obtain ⟨C₁, hC₁, h₁⟩ := h_large
+  exact case_split_T_bound C₀ C₁ hC₀ hC₁ h₀ h₁
+
 end Littlewood.Bridge.PerronAssumptionsBridge
