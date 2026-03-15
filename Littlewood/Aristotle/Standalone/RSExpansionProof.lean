@@ -2490,6 +2490,206 @@ theorem remainder_structure_decomp (k : ℕ) :
   exact div_le_self h8pi h_sqrt_ge
 
 -- ============================================================
+-- Section 7d-refined: Refined perturbation & amplitude infrastructure
+-- ============================================================
+
+/-! ### Tight cosine perturbation via sin bound
+
+The trivial bound |cos(α+δ) - cos(α)| ≤ 2 from `cos_perturb_trivial_bound` is
+insufficient for the O(t^{-3/4}) remainder. The refined bound
+|cos(α+δ) - cos(α)| ≤ |δ| via the prosthaphaeresis formula and |sin(x)| ≤ |x|
+gives the correct dependence on the phase perturbation δ.
+
+Combined with `phase_taylor_remainder_bounded`, this yields
+|cos(phase+error) - cos(phase)| ≤ 4π on each block, and multiplying
+by the amplitude (2π/t)^{1/4} ≤ 1/√(k+1) gives O(k^{-1/2}) = O(t^{-1/4}).
+The full O(t^{-3/4}) then uses the cubic Fresnel correction. -/
+
+/-- **Tight cosine perturbation bound**: |cos(α+δ) - cos(α)| ≤ |δ|.
+    Via prosthaphaeresis: cos(α+δ) - cos(α) = -2sin(δ/2)sin(α+δ/2),
+    so |...| ≤ 2|sin(δ/2)| · 1 ≤ 2·|δ/2| = |δ|.
+    This tightens `cos_perturb_trivial_bound` from ≤ 2 to ≤ |δ|. -/
+theorem cos_perturb_sin_bound (α δ : ℝ) :
+    |Real.cos (α + δ) - Real.cos α| ≤ |δ| := by
+  have h1 : Real.cos (α + δ) - Real.cos α =
+      -2 * Real.sin (δ / 2) * Real.sin (α + δ / 2) := by
+    rw [show α + δ = (α + δ / 2) + δ / 2 from by ring,
+        show α = (α + δ / 2) - δ / 2 from by ring,
+        Real.cos_add, Real.cos_sub]; ring
+  rw [h1]
+  have h2 : |(-2) * Real.sin (δ / 2) * Real.sin (α + δ / 2)| =
+      2 * |Real.sin (δ / 2)| * |Real.sin (α + δ / 2)| := by
+    rw [abs_mul, abs_mul, abs_neg, abs_of_pos (by norm_num : (0:ℝ) < 2)]
+  rw [h2]
+  have h3 : |Real.sin (δ / 2)| ≤ |δ / 2| := Real.abs_sin_le_abs
+  have h4 : |Real.sin (α + δ / 2)| ≤ 1 := Real.abs_sin_le_one _
+  calc 2 * |Real.sin (δ / 2)| * |Real.sin (α + δ / 2)|
+      ≤ 2 * |δ / 2| * |Real.sin (α + δ / 2)| := by
+        exact mul_le_mul_of_nonneg_right
+          (mul_le_mul_of_nonneg_left h3 (by norm_num)) (abs_nonneg _)
+    _ ≤ 2 * |δ / 2| * 1 := by
+        exact mul_le_mul_of_nonneg_left h4
+          (mul_nonneg (by norm_num) (abs_nonneg _))
+    _ = |δ| := by
+        rw [abs_div, abs_of_pos (by norm_num : (0:ℝ) < 2)]; ring
+
+/-- **Phase error absolute bound**: the absolute value of the Taylor phase error
+    2π(k+1+p)²·p²/(2(k+1)²) is at most 4π for p ∈ [0,1].
+    This is the absolute-value version of `phase_taylor_remainder_bounded`. -/
+theorem phase_error_abs_le (k : ℕ) (p : ℝ) (hp : 0 ≤ p) (hp1 : p ≤ 1) :
+    |2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 *
+      (p ^ 2 / (2 * ((k : ℝ) + 1) ^ 2))| ≤ 4 * Real.pi := by
+  have hk : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  have hpi : (0 : ℝ) < Real.pi := Real.pi_pos
+  have h_nn : 0 ≤ 2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 *
+      (p ^ 2 / (2 * ((k : ℝ) + 1) ^ 2)) := by positivity
+  rw [abs_of_nonneg h_nn]
+  have h_prod_bound : ((k : ℝ) + 1 + p) * p ≤ 2 * ((k : ℝ) + 1) := by nlinarith
+  have h_ksq_pos : (0 : ℝ) < ((k : ℝ) + 1) ^ 2 := by positivity
+  have h_rewrite : 2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 *
+    (p ^ 2 / (2 * ((k : ℝ) + 1) ^ 2)) =
+    Real.pi * (((k : ℝ) + 1 + p) * p) ^ 2 / ((k : ℝ) + 1) ^ 2 := by
+    field_simp
+  rw [h_rewrite, div_le_iff₀ h_ksq_pos]
+  have h_rhs : 4 * Real.pi * ((k : ℝ) + 1) ^ 2 =
+      Real.pi * (2 * ((k : ℝ) + 1)) ^ 2 := by ring
+  rw [h_rhs]
+  exact mul_le_mul_of_nonneg_left
+    (sq_le_sq' (by nlinarith) h_prod_bound) hpi.le
+
+/-- **Saddle cosine remainder on block**: combining cos_perturb_sin_bound with
+    phase_error_abs_le gives |cos(phase + Taylor_error) - cos(phase)| ≤ 4π
+    for p ∈ [0,1] on block k. This is the composed remainder bound. -/
+theorem saddle_cos_remainder_le (α : ℝ) (k : ℕ) (p : ℝ)
+    (hp : 0 ≤ p) (hp1 : p ≤ 1) :
+    |Real.cos (α + 2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 *
+      (p ^ 2 / (2 * ((k : ℝ) + 1) ^ 2))) - Real.cos α| ≤
+    4 * Real.pi := by
+  set δ := 2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 *
+    (p ^ 2 / (2 * ((k : ℝ) + 1) ^ 2))
+  -- |cos(α+δ) - cos α| ≤ |δ|
+  have h_cos_pert : |Real.cos (α + δ) - Real.cos α| ≤ |δ| :=
+    cos_perturb_sin_bound α δ
+  -- |δ| ≤ 4π
+  have h_delta_bound : |δ| ≤ 4 * Real.pi :=
+    phase_error_abs_le k p hp hp1
+  linarith
+
+/-- **Amplitude-weighted cosine perturbation**: for any amplitude a ≥ 0,
+    a · |cos(α+δ) - cos(α)| ≤ a · |δ|.
+    Follows immediately from cos_perturb_sin_bound. -/
+theorem amplitude_cos_perturb_product (α δ amp : ℝ) (hamp : 0 ≤ amp) :
+    amp * |Real.cos (α + δ) - Real.cos α| ≤ amp * |δ| :=
+  mul_le_mul_of_nonneg_left (cos_perturb_sin_bound α δ) hamp
+
+-- ============================================================
+-- Section 7d-amplitude: Quarter-power amplitude bounds on blocks
+-- ============================================================
+
+/-! ### Quarter-power amplitude ↔ block index
+
+For t in block k (i.e., hardyStart k ≤ t), the amplitude factor (2π/t)^{1/4}
+is bounded by 1/√(k+1). This connects the RS amplitude to the block index,
+enabling summation over blocks.
+
+The chain is:
+  t ≥ 2π(k+1)²  ⟹  2π/t ≤ 1/(k+1)²  ⟹  (2π/t)^{1/4} ≤ (1/(k+1)²)^{1/4} = 1/√(k+1).
+-/
+
+/-- **Inverse square rpow identity**: (1/(k+1)²)^{1/4} = 1/√(k+1).
+    Algebraic identity connecting the inverse-square ratio to the amplitude. -/
+theorem inv_sq_rpow_quarter (k : ℕ) :
+    (1 / ((k : ℝ) + 1) ^ 2) ^ ((1 : ℝ) / 4) = 1 / Real.sqrt ((k : ℝ) + 1) := by
+  have hk : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  rw [one_div, ← Real.rpow_natCast ((k : ℝ) + 1) 2, ← Real.rpow_neg hk.le,
+      ← Real.rpow_mul hk.le]
+  simp only [Nat.cast_ofNat]; norm_num
+  rw [Real.rpow_neg hk.le, one_div]
+  congr 1
+  rw [Real.sqrt_eq_rpow]; congr 1; norm_num
+
+/-- **Quarter-power amplitude bound on block**: for t in block k,
+    (2π/t)^{1/4} ≤ 1/√(k+1).
+    Since 2π/t ≤ 1/(k+1)² (from `two_pi_div_t_le_inv_sq`), taking the 1/4 power
+    preserves the inequality. This is the key amplitude estimate. -/
+theorem quarter_power_le_inv_sqrt (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_pos : 0 < t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) ≤ 1 / Real.sqrt ((k : ℝ) + 1) := by
+  have h_ratio := two_pi_div_t_le_inv_sq k t ht_lo ht_pos
+  have h_nn : 0 ≤ 2 * Real.pi / t := div_nonneg (by positivity) ht_pos.le
+  calc (2 * Real.pi / t) ^ ((1 : ℝ) / 4)
+      ≤ (1 / ((k : ℝ) + 1) ^ 2) ^ ((1 : ℝ) / 4) :=
+        Real.rpow_le_rpow h_nn h_ratio (by norm_num)
+    _ = 1 / Real.sqrt ((k : ℝ) + 1) := inv_sq_rpow_quarter k
+
+/-- **Reciprocal sqrt antitone**: 1/√(k+2) ≤ 1/√(k+1).
+    Since √ is monotone, its reciprocal is antitone. -/
+theorem inv_sqrt_antitone (k : ℕ) :
+    1 / Real.sqrt ((k : ℝ) + 2) ≤ 1 / Real.sqrt ((k : ℝ) + 1) := by
+  have h1 : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  have h2 : (0 : ℝ) < (k : ℝ) + 2 := by positivity
+  rw [div_le_div_iff₀ (Real.sqrt_pos_of_pos h2) (Real.sqrt_pos_of_pos h1)]
+  simp only [one_mul]
+  exact Real.sqrt_le_sqrt (by linarith)
+
+/-- **Fourth root monotonicity**: for 0 ≤ a ≤ b, a^{1/4} ≤ b^{1/4}. -/
+theorem rpow_quarter_mono {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b) :
+    a ^ ((1 : ℝ) / 4) ≤ b ^ ((1 : ℝ) / 4) :=
+  Real.rpow_le_rpow ha hab (by norm_num)
+
+/-- **Quarter-power from sqrt bound**: √x ≤ c and c > 0 imply x^{1/4} ≤ √c.
+    Since x^{1/4} = (x^{1/2})^{1/2} = √(√x) ≤ √c. -/
+theorem quarter_from_sqrt_bound {x c : ℝ} (hx : 0 ≤ x) (_hc : 0 < c)
+    (h : Real.sqrt x ≤ c) :
+    x ^ ((1:ℝ)/4) ≤ Real.sqrt c := by
+  rw [Real.sqrt_eq_rpow] at h
+  rw [show (1:ℝ)/4 = (1/2) * (1/2) from by norm_num,
+      Real.rpow_mul hx, Real.sqrt_eq_rpow]
+  exact Real.rpow_le_rpow (Real.rpow_nonneg hx _) h (by norm_num)
+
+-- ============================================================
+-- Section 7d-sign: Alternating sign infrastructure
+-- ============================================================
+
+/-! ### Sign alternation for block sums
+
+The RS expansion produces alternating signs (-1)^k on consecutive blocks.
+These lemmas support manipulating absolute values and signs in the
+block integral analysis. -/
+
+/-- **Sign alternation**: (-1)^{k+1} = -(-1)^k. -/
+theorem neg_one_pow_succ_eq' (k : ℕ) :
+    (-1 : ℝ) ^ (k + 1) = -((-1 : ℝ) ^ k) := by
+  rw [pow_succ]; ring
+
+/-- **Absolute value strips sign**: |(-1)^k · x| = |x|. -/
+theorem abs_neg_one_pow_mul (k : ℕ) (x : ℝ) :
+    |(-1 : ℝ) ^ k * x| = |x| := by
+  rw [abs_mul]
+  rcases Nat.even_or_odd k with he | ho
+  · rw [he.neg_one_pow, abs_one, one_mul]
+  · rw [ho.neg_one_pow, abs_neg, abs_one, one_mul]
+
+/-- **Amplitude remainder chain**: the composed saddle-point remainder on block k
+    satisfies: (2π/t)^{1/4} · 4π ≤ 4π/√(k+1).
+    This combines quarter_power_le_inv_sqrt with the phase error bound. -/
+theorem amplitude_remainder_chain (k : ℕ) (t : ℝ)
+    (ht_lo : hardyStart k ≤ t) (ht_pos : 0 < t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * (4 * Real.pi) ≤
+    4 * Real.pi / Real.sqrt ((k : ℝ) + 1) := by
+  have hk : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  have h_sqrt_pos : 0 < Real.sqrt ((k : ℝ) + 1) := Real.sqrt_pos_of_pos hk
+  have h_amp := quarter_power_le_inv_sqrt k t ht_lo ht_pos
+  -- (2π/t)^{1/4} ≤ 1/√(k+1), so (2π/t)^{1/4} · 4π ≤ (1/√(k+1)) · 4π = 4π/√(k+1)
+  have h1 : (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * (4 * Real.pi) ≤
+      1 / Real.sqrt ((k : ℝ) + 1) * (4 * Real.pi) :=
+    mul_le_mul_of_nonneg_right h_amp (by positivity)
+  have h2 : 1 / Real.sqrt ((k : ℝ) + 1) * (4 * Real.pi) =
+      4 * Real.pi / Real.sqrt ((k : ℝ) + 1) := by
+    rw [one_div, inv_mul_eq_div]
+  linarith
+
+-- ============================================================
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
 -- ============================================================
 

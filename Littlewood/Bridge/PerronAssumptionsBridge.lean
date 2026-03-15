@@ -516,4 +516,86 @@ theorem exists_T_perron_error_small (C_coeff : ℝ) (hC : 0 < C_coeff) (ε : ℝ
 
 end PiApproxAsymptotics
 
+/-! ## Part 6: Additional contour bound infrastructure (C44)
+
+Algebraic lemmas connecting the density hypothesis to the contour integral bound. -/
+
+/-- When x ≤ T, x/T ≤ √x/√T (since √x·√T ≤ T follows from √x ≤ √T). -/
+theorem x_over_T_le_sqrt_ratio {x T : ℝ} (_hx : 2 ≤ x) (hT : 2 ≤ T) (hxT : x ≤ T) :
+    x / T ≤ Real.sqrt x / Real.sqrt T := by
+  have hT_pos : 0 < T := by linarith
+  have hx_pos : 0 < x := by linarith
+  have h_sqrtT : 0 < Real.sqrt T := Real.sqrt_pos_of_pos hT_pos
+  have h_sqrtx : 0 < Real.sqrt x := Real.sqrt_pos_of_pos hx_pos
+  rw [div_le_div_iff₀ hT_pos h_sqrtT]
+  rw [show x * Real.sqrt T = Real.sqrt x * (Real.sqrt x * Real.sqrt T) by
+    rw [← mul_assoc, Real.mul_self_sqrt hx_pos.le]]
+  rw [show Real.sqrt x * T = Real.sqrt x * (Real.sqrt T * Real.sqrt T) by
+    rw [Real.mul_self_sqrt hT_pos.le]]
+  exact mul_le_mul_of_nonneg_left
+    (mul_le_mul_of_nonneg_right (Real.sqrt_le_sqrt (by linarith)) h_sqrtT.le) h_sqrtx.le
+
+/-- Nearby + distant zero contributions are nonneg. -/
+theorem zero_sum_split_bound (B_n B_d : ℝ) (h_n : 0 ≤ B_n) (h_d : 0 ≤ B_d) :
+    0 ≤ B_n + B_d := by linarith
+
+/-- Combined density → (logT)² bound: C_d·(logT)² + C_d·logT + C_bg ≤ C'·(logT)².
+    Absorbs all lower-order terms into the (logT)² dominant term. -/
+theorem reciprocal_distance_sum_from_density
+    (C_d C_bg : ℝ) (hC : 0 < C_d) (hbg : 0 ≤ C_bg) (T : ℝ) (hT : 2 ≤ T) :
+    C_d * (Real.log T) ^ 2 + C_d * Real.log T + C_bg ≤
+      (C_d + C_d / Real.log 2 + C_bg / (Real.log 2) ^ 2) * (Real.log T) ^ 2 := by
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hlogT : Real.log 2 ≤ Real.log T := Real.log_le_log (by norm_num) (by linarith)
+  have hlogT_pos : 0 < Real.log T := lt_of_lt_of_le hlog2 hlogT
+  have h1 : C_d * Real.log T ≤ C_d / Real.log 2 * (Real.log T) ^ 2 := by
+    rw [div_mul_eq_mul_div, le_div_iff₀ hlog2]
+    have : C_d * Real.log T * Real.log 2 ≤ C_d * Real.log T * Real.log T :=
+      mul_le_mul_of_nonneg_left hlogT (mul_nonneg hC.le hlogT_pos.le)
+    linarith [sq_abs (Real.log T)]
+  have h2 : C_bg ≤ C_bg / (Real.log 2) ^ 2 * (Real.log T) ^ 2 := by
+    rw [div_mul_eq_mul_div, le_div_iff₀ (sq_pos_of_pos hlog2)]
+    nlinarith [sq_le_sq' (by nlinarith : -(Real.log T) ≤ Real.log 2) hlogT]
+  nlinarith
+
+/-- The error bound √x·(logT)²/√T is increasing in x (for fixed T). -/
+theorem perron_error_mono_x {x₁ x₂ T : ℝ} (_hx₁ : 2 ≤ x₁) (hT : 2 ≤ T) (hle : x₁ ≤ x₂) :
+    Real.sqrt x₁ * (Real.log T) ^ 2 / Real.sqrt T ≤
+      Real.sqrt x₂ * (Real.log T) ^ 2 / Real.sqrt T := by
+  have h_sqrtT : 0 < Real.sqrt T := Real.sqrt_pos_of_pos (by linarith)
+  apply div_le_div_of_nonneg_right _ h_sqrtT.le
+  exact mul_le_mul_of_nonneg_right (Real.sqrt_le_sqrt (by linarith)) (sq_nonneg _)
+
+/-- 1/√T is decreasing: T₁ ≤ T₂ ⟹ 1/√T₂ ≤ 1/√T₁. -/
+theorem inv_sqrt_antitone {T₁ T₂ : ℝ} (hT₁ : 2 ≤ T₁) (hle : T₁ ≤ T₂) :
+    1 / Real.sqrt T₂ ≤ 1 / Real.sqrt T₁ := by
+  have h1 : 0 < Real.sqrt T₁ := Real.sqrt_pos_of_pos (by linarith)
+  have h2 : 0 < Real.sqrt T₂ := Real.sqrt_pos_of_pos (by linarith)
+  rw [div_le_div_iff₀ h2 h1, one_mul, one_mul]
+  exact Real.sqrt_le_sqrt (by linarith)
+
+/-- For T ≥ 2, (logT)² ≤ T. -/
+theorem log_sq_le_T {T : ℝ} (hT : 2 ≤ T) :
+    (Real.log T) ^ 2 ≤ T := by
+  have hT_pos : 0 < T := by linarith
+  have hlog_nn : 0 ≤ Real.log T := Real.log_nonneg (by linarith)
+  have h5 := Real.sum_le_exp_of_nonneg hlog_nn 5
+  rw [Real.exp_log hT_pos] at h5
+  simp only [Finset.sum_range_succ, Nat.factorial, Nat.cast_ofNat,
+    Finset.sum_range_zero, pow_zero, Nat.mul_one, Nat.cast_succ] at h5
+  nlinarith [pow_nonneg hlog_nn 3, pow_nonneg hlog_nn 4, pow_nonneg hlog_nn 5,
+             sq_nonneg (Real.log T)]
+
+/-- For T ≥ 16, √x·(logT)²/√T ≤ √x·√T. -/
+theorem perron_error_upper_crude {x T : ℝ} (_hx : 2 ≤ x) (hT : 16 ≤ T) :
+    Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T ≤ Real.sqrt x * Real.sqrt T := by
+  have hT_pos : 0 < T := by linarith
+  have h_sqrtT : 0 < Real.sqrt T := Real.sqrt_pos_of_pos hT_pos
+  have h_sqrtx : 0 ≤ Real.sqrt x := Real.sqrt_nonneg x
+  rw [div_le_iff₀ h_sqrtT]
+  rw [show Real.sqrt x * Real.sqrt T * Real.sqrt T =
+      Real.sqrt x * (Real.sqrt T * Real.sqrt T) from by ring]
+  rw [Real.mul_self_sqrt hT_pos.le]
+  exact mul_le_mul_of_nonneg_left (log_sq_le_T (by linarith)) h_sqrtx
+
 end Littlewood.Bridge.PerronAssumptionsBridge
