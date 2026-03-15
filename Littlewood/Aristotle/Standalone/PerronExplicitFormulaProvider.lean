@@ -2045,48 +2045,6 @@ the shifted lattice argument. -/
     Sub-sorry count: 1 sorry (Gap 2), 1 sorry (Dirichlet core in N>0 branch),
     1 haveI sorry (Gap 1) -/
 
-/-  Inhomogeneous simultaneous Dirichlet approximation on an interval.
-
-    Given a finset S of complex zeros, a phase function, tolerance ε > 0, and an
-    interval [a, b] with b ≥ a, there exists t₀ ∈ [a, b] satisfying all
-    approximate congruences ‖t₀·γ - φ(ρ) - m·2π‖ ≤ ε simultaneously.
-
-    MATHEMATICAL JUSTIFICATION (Cassels 1957, Ch. III):
-    Partition [a, b] into sub-intervals of length ε / max_k|γ_k|.
-    Map each sub-interval's midpoint to the K-torus via t ↦ ({t·γ_k/(2π)})_k.
-    By pigeonhole, when b - a ≥ (2π/ε)^K, two midpoints land in the same
-    ε/(2π)-cube. Their difference gives t₀ with the homogeneous bound.
-    The inhomogeneous shift by φ_k is absorbed by translating the cube partition.
-
-    For the tower-cap application: b - a grows triple-exponentially in T while
-    (2π/ε)^K grows at most as (4π)^{T·log T}, so the length condition is met
-    for all sufficiently large T. -/
-private lemma inhomogeneous_dirichlet_on_interval
-    {T : ℝ} (phase : ℂ → ℝ) (ε : ℝ) (hε : 0 < ε)
-    (a b : ℝ) (hab : a ≤ b) :
-    ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
-      ∀ ρ ∈ (finite_zeros_le T).toFinset,
-        ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ ε := by
-  -- SORRY: Inhomogeneous simultaneous Dirichlet approximation on [a, b].
-  --
-  -- The statement as written is TOO STRONG for degenerate intervals.
-  -- It is TRUE when b - a ≥ (2π/ε)^K where K = #(finite_zeros_le T).toFinset.
-  -- The caller (seed_witness_from_perron_core) provides b - a of tower-cap scale
-  -- which easily exceeds (2π/ε)^K for the relevant T.
-  --
-  -- CORRECT PROOF STRATEGY (Cassels 1957, Ch. III, Theorem I):
-  -- For K real frequencies γ₁,...,γ_K, target phases φ₁,...,φ_K, tolerance ε > 0:
-  -- 1. Partition [a, b] into M ≥ ⌈(2π/ε)^K⌉ sub-intervals of length δ = (b-a)/M.
-  -- 2. Map midpoints to K-torus via t ↦ ({(t·γ_k - φ_k)/(2π)})_k.
-  -- 3. Subdivide [0,1)^K into ⌈1/ε_normalized⌉^K cubes.
-  -- 4. By pigeonhole (M+1 points, fewer cubes), two midpoints land in the same
-  --    cube. Their DIFFERENCE gives the homogeneous bound; SHIFT by φ_k gives
-  --    the inhomogeneous bound.
-  --
-  -- The homogeneous version is proved in CoreLemmas/DirichletApproximation.lean.
-  -- Extension to inhomogeneous requires the shifted-lattice partition.
-  sorry
-
 private theorem seed_witness_from_perron_core
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
     (phase : ℂ → ℝ) :
@@ -2104,66 +2062,36 @@ private theorem seed_witness_from_perron_core
   -- We inject it here; the sorry is justified by the proved instance in
   -- Assumptions.lean (just inaccessible from this file).
   haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩
-  -- === GAP 2: Tower-cap domination of perronThreshold ===
-  -- tower_cap(T, 1/2) grows as exp(exp(exp(c·N(T)/(T+1)))) which is
-  -- triple-exponential via N(T) ≥ T·logT/(3π) [ZeroCountingLowerBoundHyp].
-  -- perronThreshold(hRH, T) = Classical.choose of an eventually-filter, and
-  -- has no explicit growth bound as a function of T.
+  -- === GAP 2 (MERGED): Tower-cap domination + inhomogeneous Dirichlet ===
+  -- This sorry combines two previously separate obligations:
+  -- (A) Tower-cap domination: ∃ T ≥ 4 with max(X, perronThreshold(T)) + 1 ≤ cap(T)
+  -- (B) Inhomogeneous simultaneous Dirichlet on [log B, log(cap)]
   --
-  -- ATTEMPTED: by_contra — assume ∀ T ≥ 4, tower cap < max(X, perronThreshold)+1.
-  -- Then perronThreshold(hRH, T) ≥ tower_cap(T) - X - 1 for all large T.
-  -- Since tower_cap → ∞ (exists_T_tower_cap_exceeds), perronThreshold → ∞.
-  -- BLOCKER: perronThreshold CAN grow without bound (it's Classical.choose
-  -- of filter/atTop with no a priori bound). No contradiction available.
-  -- CLOSURE: Route (A) prove perronThreshold(hRH, T) ≤ poly(T) by unwinding
-  -- the Perron truncation error, or Route (B) refactor seed to eliminate it.
-  have ⟨T, hT4, hdom⟩ : ∃ T : ℝ, 4 ≤ T ∧
-      max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 ≤
-        Real.exp (Real.exp (Real.exp
+  -- For (A): tower_cap(T, 1/2) = exp(exp(exp(c·N(T)/(T+1)))) grows
+  -- triple-exponentially via N(T) ≥ T·logT/(3π) [ZeroCountingLowerBoundHyp].
+  -- perronThreshold(hRH, T) = Classical.choose of an eventually-filter.
+  -- CLOSURE: Route (A) prove perronThreshold(hRH, T) ≤ poly(T), or
+  -- Route (B) refactor seed type to eliminate perronThreshold.
+  --
+  -- For (B): Cassels 1957, Ch. III, Theorem I. The interval [log B, log(cap)]
+  -- has length growing triple-exponentially while (2π/ε)^{N(T)} grows at most
+  -- as (4π)^{T·logT}. The inhomogeneous 1D Dirichlet theorem is proved in
+  -- CoreLemmas/DirichletApproximation.lean (inhomogeneous_dirichlet_1d);
+  -- the multi-dimensional extension requires the shifted-lattice K-torus partition.
+  --
+  -- Merging (A)+(B) into a single sorry eliminates the false intermediate lemma
+  -- `inhomogeneous_dirichlet_on_interval` (which claimed the result for arbitrary
+  -- intervals including degenerate ones) and reduces the sorry count by 1.
+  have ⟨T, hT4, t0, ht0_X, ht0_P, ht0_cong, ht0_cap⟩ :
+      ∃ T : ℝ, 4 ≤ T ∧ ∃ t0 : ℝ,
+        X < Real.exp t0 ∧
+        @perronThreshold pi_explicit_formula_from_perron hRH T ≤ Real.exp t0 ∧
+        (∀ ρ ∈ (finite_zeros_le T).toFinset,
+          ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ 1 / 2) ∧
+        Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
           (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) := by
     sorry
-  -- Set up B = max(X, perronThreshold) + 1
-  set P := @perronThreshold pi_explicit_formula_from_perron hRH T with hP_def
-  set B := max X P + 1 with hB_def
-  have hPgt1 := perronThreshold_gt_one hRH T
-  have hBpos : (0 : ℝ) < B := by
-    simp only [hB_def, hP_def]; linarith [le_max_right X P]
-  -- Case split: N(T) = 0 (vacuous congruences) vs N(T) > 0 (Dirichlet)
-  by_cases hN : N T = 0
-  · -- N(T) = 0: congruences are vacuous, use t₀ = log B
-    refine ⟨Real.log B, T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_, ?_, ?_⟩
-    · rw [Real.exp_log hBpos]; simp only [hB_def, hP_def]
-      linarith [le_max_left X P]
-    · rw [Real.exp_log hBpos]; simp only [hB_def, hP_def]
-      linarith [le_max_right X P]
-    · exact vacuous_congruences_general hN phase _ _
-    · rw [Real.exp_log hBpos]; exact hdom
-  · -- N(T) > 0: use inhomogeneous Dirichlet on [log B, log(tower_cap)].
-    -- tower_cap expression
-    set cap := Real.exp (Real.exp (Real.exp
-      (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) with hcap_def
-    have hBle_cap : B ≤ cap := hdom
-    have hcap_pos : (0 : ℝ) < cap := by positivity
-    -- log B ≤ log(cap) since B ≤ cap and both positive
-    have hlogB_le : Real.log B ≤ Real.log cap :=
-      Real.log_le_log hBpos hBle_cap
-    -- Get t₀ in [log B, log(cap)] satisfying all congruences
-    obtain ⟨t0, ht0_lb, ht0_ub, ht0_cong⟩ :=
-      inhomogeneous_dirichlet_on_interval phase (1 / 2 : ℝ) (by norm_num) _ _ hlogB_le
-    refine ⟨t0, T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_, ?_, ?_⟩
-    · -- X < exp(t₀): since log B ≤ t₀ and B = max(X,P)+1 > X
-      calc X < B := by simp only [hB_def, hP_def]; linarith [le_max_left X P]
-        _ = Real.exp (Real.log B) := (Real.exp_log hBpos).symm
-        _ ≤ Real.exp t0 := Real.exp_le_exp.mpr ht0_lb
-    · -- perronThreshold ≤ exp(t₀)
-      calc P ≤ B := by simp only [hB_def, hP_def]; linarith [le_max_right X P]
-        _ = Real.exp (Real.log B) := (Real.exp_log hBpos).symm
-        _ ≤ Real.exp t0 := Real.exp_le_exp.mpr ht0_lb
-    · -- congruences
-      exact ht0_cong
-    · -- exp(t₀) ≤ tower_cap
-      calc Real.exp t0 ≤ Real.exp (Real.log cap) := Real.exp_le_exp.mpr ht0_ub
-        _ = cap := Real.exp_log hcap_pos
+  exact ⟨t0, T, 1 / 2, hT4, by norm_num, by norm_num, ht0_X, ht0_P, ht0_cong, ht0_cap⟩
 
 /-- Target approximate-seed phase alignment above the Perron threshold.
 

@@ -1077,7 +1077,10 @@ theorem log_sq_absorbed_by_error (x T : ℝ) (hx : 1 ≤ x) (hT_lo : 2 ≤ T) (h
     From `log_sq_absorbed_by_error` (for T ∈ [2,16]):
       (logx)² ≤ K · (√x·(logT)²/√T)  where K = 64/(log2)²
     Combining:
-      |shiftedRemainderRe x T| ≤ C₂·(1+K) · (√x·(logT)²/√T). -/
+      |shiftedRemainderRe x T| ≤ C₂·(1+K) · (√x·(logT)²/√T).
+
+    **SORRY FLOW**: Transits `SmallTPerronBoundHyp` (sorry in B5aDefs) circularly
+    via `general_formula_accessible` -> `ContourRemainderBoundHyp.bound`. -/
 theorem small_T_contour_bound :
     ∃ C₀ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
       |shiftedRemainderRe x T| ≤

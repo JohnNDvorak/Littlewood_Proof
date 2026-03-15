@@ -2321,24 +2321,146 @@ theorem hardyCosIntegral_bound_trivial_of_lt (n : ℕ) (T : ℝ) (B : ℝ) (hB :
 
 end VdCSublemmas
 
-/-! ## Part 9c: Phase regularity notes
+/-! ## Part 9c: VdC analysis — why per_mode_sqrt_cos_bound needs a GLOBAL argument
 
-The VdC sub-lemmas require regularity hypotheses on the phase function
-φ(t) = θ(t) - t·log(n+1). These are satisfied because:
+### The per-mode VdC approach gives O(n+1), not O(√(n+1))
 
-1. hardyTheta is smooth away from branch cuts (t > 0 suffices)
-2. thetaDeriv = (1/2)log(t/(2π)) + O(1/t) is C^∞ for t > 0
-3. The phase φ' = thetaDeriv - log(n+1) = modeOmega n is
-   monotone increasing (θ'' > 0 for t > 0)
+The `hardyCosIntegral n T` integrates cos(θ(t) - t·log(n+1)) over
+[hardyStart n, T] = [2π(n+1)², T]. The phase is φ(t) = θ(t) - t·log(n+1), with:
+  - φ'(t) = θ'(t) - log(n+1) ≈ (1/2)·log(t/(2π)) - log(n+1)
+  - φ''(t) = θ''(t) = 1/(2t) > 0
 
-The regularity certificates (Differentiable φ, Differentiable φ', Continuous φ'')
-are available via the hardyThetaSmooth pathway in HardyThetaSmooth.lean:
-  differentiable_hardyThetaSmooth, hasDerivAt_hardyThetaSmooth,
-  continuous_thetaDeriv.
+The stationary point t* = 2π(n+1)² = hardyStart(n) is the LEFT endpoint of
+integration, so the integral starts at the point of zero oscillation.
 
-To use `hardyCosIntegral_split_bound` for `per_mode_sqrt_cos_bound`, one needs
-to instantiate these regularity hypotheses and choose the threshold t₁ optimally.
-The key quantitative input is the modeOmega growth rate near the stationary point
-t* = hardyStart n. -/
+**Splitting at t₁ = hardyStart(n+1) = 2π(n+2)²:**
+
+1. Near block [2π(n+1)², 2π(n+2)²]: length = 2π(2n+3) ≈ 4π(n+1).
+   - VdC2 (second derivative): inf|φ''| = 1/(2·2π(n+2)²) ≈ 1/(4π(n+1)²).
+     Bound: 8/√μ = 8·2√π·(n+2) ≈ 16√π·(n+1). This is O(n+1).
+   - Trivial bound: 2π(2n+3) ≈ 4π(n+1). This is also O(n+1), and SMALLER.
+
+2. Far block [2π(n+2)², T]: φ' is monotone increasing, so
+   φ'(2π(n+2)²) = (1/2)·log((n+2)²/(n+1)²) = log((n+2)/(n+1)) ≈ 1/(n+1).
+   VdC1: 3/φ'(t₁) ≈ 3(n+1). This is O(n+1).
+
+**Total per-mode: O(n+1). Weighted sum:** Σ_{n<N} (n+1)^{-1/2}·C·(n+1) =
+C·Σ √(n+1) ≈ (2/3)·C·N^{3/2} ≈ C'·T^{3/4}. This gives O(T^{3/4}), NOT O(T^{1/2}).
+
+**The √(n+1) bound is not achievable by per-mode VdC.** The O(√T) result
+requires either:
+  (a) The GLOBAL IBP approach from the file header (Titchmarsh §14.5):
+      ∫₁ᵀ Z(t)dt = O(√T) by integrating by parts on the whole sum using
+      e^{iθ(t)} as the oscillatory factor, with boundary terms O(T^{1/6}/log T)
+      and the correction integral controlled by the convexity bound.
+  (b) Partial summation over modes, exploiting cancellation BETWEEN modes.
+
+The per-mode infrastructure below documents what VdC CAN deliver (O(n+1)) and
+the existing `hardyCosIntegral_split_bound` remains correct and useful as a
+building block for approach (a) or (b).
+
+### Phase regularity
+
+The VdC sub-lemmas require regularity hypotheses on φ(t) = θ(t) - t·log(n+1).
+These hold because:
+  1. hardyTheta is smooth for t > 0
+  2. thetaDeriv = (1/2)log(t/(2π)) + O(1/t) is C^∞ for t > 0
+  3. φ' = thetaDeriv - log(n+1) = modeOmega n is monotone increasing (θ'' > 0)
+
+Regularity certificates: `differentiable_hardyThetaSmooth`,
+`hasDerivAt_hardyThetaSmooth`, `continuous_thetaDeriv` from HardyThetaSmooth.lean. -/
+
+section PerModeLinearBoundInfra
+
+open HardyEstimatesPartial
+open Aristotle.HardyNProperties (hardyStart_formula block_length)
+
+/-- First-block length bound: hardyStart(n+1) - hardyStart(n) ≤ 6π(n+1).
+    The first block starting at the stationary point has length
+    2π(2n+3) = 2π((n+2)² - (n+1)²) ≤ 6π(n+1). -/
+theorem first_block_length_le (n : ℕ) :
+    hardyStart (n + 1) - hardyStart n ≤ 6 * Real.pi * ((n : ℝ) + 1) :=
+  block_length_le n
+
+/-- hardyStart is strictly positive. -/
+theorem hardyStart_pos (n : ℕ) : 0 < hardyStart n := by
+  rw [hardyStart_formula]; positivity
+
+/-- hardyStart is monotone. -/
+theorem hardyStart_mono_le {m n : ℕ} (h : m ≤ n) : hardyStart m ≤ hardyStart n := by
+  rw [hardyStart_formula, hardyStart_formula]
+  apply mul_le_mul_of_nonneg_left
+  · exact sq_le_sq' (by linarith [Nat.cast_nonneg (α := ℝ) m]) (by exact_mod_cast Nat.add_le_add_right h 1)
+  · positivity
+
+/-- If hardyStart n ≤ T, then (n+1) ≤ √(T/(2π)).
+    This is the fundamental constraint relating mode index to T. -/
+theorem mode_index_le_sqrt_of_le (n : ℕ) (T : ℝ)
+    (h : hardyStart n ≤ T) :
+    ((n : ℝ) + 1) ≤ Real.sqrt (T / (2 * Real.pi)) := by
+  rw [hardyStart_formula] at h
+  -- h : 2π(n+1)² ≤ T, so (n+1)² ≤ T/(2π)
+  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
+  have h_sq : ((n : ℝ) + 1) ^ 2 ≤ T / (2 * Real.pi) := by
+    rw [div_le_iff₀ hpi] at *; linarith
+  have hn1 : (0 : ℝ) ≤ (n : ℝ) + 1 := by positivity
+  rwa [← Real.sqrt_sq hn1, Real.sqrt_le_sqrt]
+
+/-- (n+1)² ≤ T/(2π) when hardyStart n ≤ T. -/
+theorem mode_index_sq_le_of_le (n : ℕ) (T : ℝ)
+    (h : hardyStart n ≤ T) :
+    2 * Real.pi * ((n : ℝ) + 1) ^ 2 ≤ T := by
+  rw [hardyStart_formula] at h; linarith
+
+/-- The integration interval length T - hardyStart(n) ≤ T for any n. -/
+theorem integral_interval_le_T (n : ℕ) (T : ℝ) (h : hardyStart n ≤ T) :
+    T - hardyStart n ≤ T := by linarith [hardyStart_pos n]
+
+/-- Phase derivative lower bound on far block: for t ≥ hardyStart(n+1),
+    the modeOmega satisfies the quantitative lower bound needed for VdC1.
+    Specifically, modeOmega n (hardyStart(n+1)) = (1/2)·log((n+2)²/(n+1)²)
+    = log((n+2)/(n+1)) which is ≥ 1/(2(n+2)) ≥ 1/(2(n+1)+2).
+
+    This bound shows that VdC1 on [hardyStart(n+1), T] gives
+    3/modeOmega ≤ 6(n+2) ≤ 6(n+1) + 6, confirming the O(n) far-block bound.
+
+    Note: this is a mathematical fact statement. The formal modeOmega
+    lower bound requires concrete hardyTheta derivative evaluation,
+    which depends on phase regularity certificates from HardyThetaSmooth. -/
+theorem log_ratio_lower_bound (n : ℕ) :
+    1 / (2 * ((n : ℝ) + 2)) ≤ Real.log (((n : ℝ) + 2) / ((n : ℝ) + 1)) := by
+  have hn1 : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  have hn2 : (0 : ℝ) < (n : ℝ) + 2 := by positivity
+  have h_ratio : 1 < ((n : ℝ) + 2) / ((n : ℝ) + 1) := by
+    rw [one_lt_div hn1]; linarith
+  -- Use log(1+x) ≥ x/(1+x) for x > 0
+  -- Here x = 1/(n+1), so 1+x = (n+2)/(n+1), and x/(1+x) = 1/(n+2)
+  have h_write : ((n : ℝ) + 2) / ((n : ℝ) + 1) = 1 + 1 / ((n : ℝ) + 1) := by
+    field_simp
+  rw [h_write]
+  have hx : (0 : ℝ) < 1 / ((n : ℝ) + 1) := by positivity
+  -- log(1+x) ≥ x - x²/2 ≥ x/2 for 0 < x ≤ 1
+  have hx_le : 1 / ((n : ℝ) + 1) ≤ 1 := by
+    rw [div_le_one hn1]; linarith
+  calc 1 / (2 * ((n : ℝ) + 2))
+      = (1 / ((n : ℝ) + 1)) / (2 * (((n : ℝ) + 2) / ((n : ℝ) + 1))) := by field_simp
+    _ = (1 / ((n : ℝ) + 1)) / (2 * (1 + 1 / ((n : ℝ) + 1))) := by rw [h_write]
+    _ ≤ (1 / ((n : ℝ) + 1)) / 2 := by
+        apply div_le_div_of_nonneg_left (by positivity) (by positivity)
+        linarith [hx]
+    _ ≤ Real.log (1 + 1 / ((n : ℝ) + 1)) := by
+        -- Use Real.add_one_le_exp: 1 + x ≤ exp(x) doesn't directly give log(1+x) ≥ x/2
+        -- Instead use: for 0 < x ≤ 1, log(1+x) ≥ x/2
+        -- Proof: log(1+x) ≥ x - x²/2 (Taylor remainder) ≥ x - x/2 = x/2
+        rw [ge_iff_le, ← Real.exp_le_iff_le_log (by positivity)]
+        calc Real.exp ((1 / ((n : ℝ) + 1)) / 2)
+            ≤ 1 + (1 / ((n : ℝ) + 1)) / 2 + ((1 / ((n : ℝ) + 1)) / 2) ^ 2 := by
+              -- exp(y) ≤ 1 + y + y² for 0 ≤ y ≤ 1 — actually need exp(y) ≤ 1+2y for y ≤ 1
+              -- Use: exp(y) ≤ 1/(1-y) for y < 1, then 1/(1-y) ≤ 1+2y for y ≤ 1/2
+              sorry
+          _ ≤ 1 + 1 / ((n : ℝ) + 1) := by
+              nlinarith [hx, hx_le]
+
+end PerModeLinearBoundInfra
 
 end HardyZFirstMomentIBP
