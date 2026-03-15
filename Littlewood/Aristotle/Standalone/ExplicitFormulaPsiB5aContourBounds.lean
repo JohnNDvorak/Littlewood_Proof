@@ -73,4 +73,59 @@ theorem shifted_contours_bound_of_components
   have hPerron := perron_truncation_error perronIntegralRe contourRemainderRe hPerronRaw hResidue
   exact contour_remainder_bound contourRemainderRe hPerron hContour
 
+/-- **Contour bound from Hadamard product decomposition** (C50).
+
+    If we have:
+    1. A pointwise bound on ζ'/ζ: |ζ'/ζ(1/2+it)| ≤ A·(logT)² for 1 ≤ |t| ≤ T
+    2. A contour geometry bound: the Perron rectangle ∫ gives
+       √x · ∫₁ᵀ A·(logT)²/t dt ≤ A·√x·(logT)²·logT = A·√x·(logT)³
+    3. Horizontal segment bounds: ≤ B·√x·(logT)²/T each
+
+    Then for T ≥ 16, the total contour bound is
+    (A + 2B) · √x · (logT)² / √T.
+
+    This lemma captures the pure algebra: (logT)³/T ≤ (logT)²/√T for T ≥ 16. -/
+theorem contour_bound_assembly
+    (A B : ℝ) (hA : 0 < A) (hB : 0 < B)
+    (x T : ℝ) (_hx : 2 ≤ x) (hT : 16 ≤ T) :
+    A * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+    2 * B * (Real.sqrt x * (Real.log T) ^ 2 / T) ≤
+    (A + 2 * B) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  have hT_pos : 0 < T := by linarith
+  have h_sqrtT_pos : 0 < Real.sqrt T := Real.sqrt_pos_of_pos hT_pos
+  have h_sqrtT_le_T : Real.sqrt T ≤ T := by
+    calc Real.sqrt T ≤ Real.sqrt T * Real.sqrt T :=
+          le_mul_of_one_le_right (Real.sqrt_nonneg T) (by rw [Real.one_le_sqrt]; linarith)
+      _ = T := Real.mul_self_sqrt hT_pos.le
+  -- First piece: logT ≤ √T for T ≥ 16, so (logT)³/T ≤ (logT)²·√T/T = (logT)²/√T
+  have h_vert : A * (Real.sqrt x * (Real.log T) ^ 3 / T) ≤
+      A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+    apply mul_le_mul_of_nonneg_left _ hA.le
+    rw [div_le_div_iff₀ hT_pos h_sqrtT_pos]
+    rw [show Real.sqrt x * (Real.log T) ^ 2 * T =
+        Real.sqrt x * (Real.log T) ^ 2 * (Real.sqrt T * Real.sqrt T) from by
+      rw [Real.mul_self_sqrt hT_pos.le]]
+    have h_log_sqrt : Real.log T ≤ Real.sqrt T := by
+      calc Real.log T = Real.log (Real.sqrt T * Real.sqrt T) := by
+            rw [Real.mul_self_sqrt hT_pos.le]
+        _ ≤ Real.sqrt T := by
+            rw [Real.log_le_iff_le_exp (mul_pos h_sqrtT_pos h_sqrtT_pos)]
+            calc Real.sqrt T * Real.sqrt T = T := Real.mul_self_sqrt hT_pos.le
+              _ ≤ Real.exp (Real.sqrt T) := by
+                  rw [← Real.sq_sqrt hT_pos.le]
+                  exact Littlewood.Bridge.PerronAssumptionsBridge.exp_ge_sq_of_ge_four
+                    (Real.sqrt T) (by rw [show (4 : ℝ) = Real.sqrt 16 from by
+                      rw [show (16 : ℝ) = 4 ^ 2 from by norm_num,
+                          Real.sqrt_sq (by norm_num : (0:ℝ) ≤ 4)]
+                    ; exact Real.sqrt_le_sqrt (by linarith))
+    nlinarith [sq_nonneg (Real.log T), Real.sqrt_nonneg x]
+  -- Second piece: √T ≤ T so (logT)²/T ≤ (logT)²/√T
+  have h_horiz : 2 * B * (Real.sqrt x * (Real.log T) ^ 2 / T) ≤
+      2 * B * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+    apply mul_le_mul_of_nonneg_left _ (by positivity)
+    exact div_le_div_of_nonneg_left
+      (mul_nonneg (Real.sqrt_nonneg x) (sq_nonneg _)) hT_pos h_sqrtT_pos h_sqrtT_le_T
+  linarith [mul_nonneg hA.le (div_nonneg (mul_nonneg (Real.sqrt_nonneg x) (sq_nonneg _))
+    h_sqrtT_pos.le)]
+
 end Aristotle.Standalone.ExplicitFormulaPsiB5aContourBounds

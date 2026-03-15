@@ -976,4 +976,89 @@ theorem large_T_assembly {A B x T : ℝ}
       (A + 2 * B) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by ring
   linarith
 
+/-! ## Part 14: Small-T closure via Perron bound + log²/√x absorption
+
+For T ∈ [2, 16], the explicit formula gives
+  |shiftedRemainderRe x T| ≤ C₂ · (√x · (logT)²/√T + (logx)²)
+
+The key observation is (logx)² ≤ 16·√x for x ≥ 1, which follows from
+the Mathlib bound `Real.log_le_rpow_div` with p = 1/4:
+  log x ≤ x^{1/4}/(1/4) = 4·x^{1/4}
+so (logx)² ≤ 16·x^{1/2} = 16·√x.
+
+Then for T ∈ [2,16], √x can be absorbed into the error shape via the
+denominator lower bound (log2)²/4 ≤ (logT)²/√T (from Part 7). This gives
+  (logx)² ≤ (64/(log2)²) · (√x · (logT)²/√T)
+
+Combining: the small-T bound holds with constant C₂ · (1 + 64/(log2)²).
+
+Reference: elementary calculus; no contour integration needed. -/
+
+/-- For x ≥ 1, (logx)² ≤ 16·√x.
+    Proof: log x ≤ x^{1/4}/(1/4) = 4·x^{1/4} (Real.log_le_rpow_div),
+    so (logx)² ≤ (4·x^{1/4})² = 16·x^{1/2} = 16·√x. -/
+theorem log_sq_le_mul_sqrt (x : ℝ) (hx : 1 ≤ x) :
+    (Real.log x) ^ 2 ≤ 16 * Real.sqrt x := by
+  rw [Real.sqrt_eq_rpow]
+  have hx0 : 0 ≤ x := by linarith
+  have h1 : Real.log x ≤ 4 * x ^ ((1:ℝ)/4) := by
+    have := Real.log_le_rpow_div hx0 (show (0:ℝ) < 1/4 by positivity); linarith
+  calc (Real.log x) ^ 2
+      ≤ (4 * x ^ ((1:ℝ)/4)) ^ 2 := by nlinarith [Real.log_nonneg hx]
+    _ = 16 * (x ^ ((1:ℝ)/4)) ^ (2:ℕ) := by ring
+    _ = 16 * x ^ ((1:ℝ)/2) := by
+        rw [← Real.rpow_natCast (x ^ ((1:ℝ)/4)) 2, ← Real.rpow_mul hx0]; norm_num
+
+/-- For x ≥ 1 and T ∈ [2,16], (logx)² is absorbed by the standard error shape:
+    (logx)² ≤ (64/(log2)²) · (√x · (logT)²/√T).
+    Uses log_sq_le_mul_sqrt + small_T_denominator_lower_bound. -/
+theorem log_sq_absorbed_by_error (x T : ℝ) (hx : 1 ≤ x) (hT_lo : 2 ≤ T) (hT_hi : T ≤ 16) :
+    (Real.log x) ^ 2 ≤ (64 / (Real.log 2) ^ 2) *
+      (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  have hT_pos : 0 < T := by linarith
+  have hsqrtT_pos : 0 < Real.sqrt T := Real.sqrt_pos_of_pos hT_pos
+  have hlog2_sq : 0 < (Real.log 2) ^ 2 := sq_pos_of_pos (Real.log_pos (by norm_num))
+  have hlogT : Real.log 2 ≤ Real.log T := Real.log_le_log (by norm_num) (by linarith)
+  have hsqrtT_le : Real.sqrt T ≤ 4 := by
+    calc Real.sqrt T ≤ Real.sqrt 16 := Real.sqrt_le_sqrt (by linarith)
+      _ = 4 := by rw [show (16 : ℝ) = 4 ^ 2 by norm_num, Real.sqrt_sq (by norm_num : (0:ℝ) ≤ 4)]
+  have h_key : (Real.log 2) ^ 2 * Real.sqrt T ≤ 4 * (Real.log T) ^ 2 := by
+    nlinarith [sq_nonneg (Real.log T - Real.log 2)]
+  have h_16 : 16 ≤ 64 / (Real.log 2) ^ 2 * ((Real.log T) ^ 2 / Real.sqrt T) := by
+    rw [div_mul_div_comm, le_div_iff₀ (mul_pos hlog2_sq hsqrtT_pos)]
+    nlinarith
+  calc (Real.log x) ^ 2
+      ≤ 16 * Real.sqrt x := log_sq_le_mul_sqrt x hx
+    _ ≤ (64 / (Real.log 2) ^ 2 * ((Real.log T) ^ 2 / Real.sqrt T)) * Real.sqrt x :=
+        mul_le_mul_of_nonneg_right h_16 (Real.sqrt_nonneg x)
+    _ = (64 / (Real.log 2) ^ 2) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by ring
+
+/-- **Small-T closure**: the Perron explicit formula bound combined with log²/√x
+    absorption gives the small-T sub-goal of `contour_bound_from_small_and_large`.
+
+    From `general_formula_accessible`:
+      |shiftedRemainderRe x T| ≤ C₂ · (√x·(logT)²/√T + (logx)²)
+    From `log_sq_absorbed_by_error` (for T ∈ [2,16]):
+      (logx)² ≤ K · (√x·(logT)²/√T)  where K = 64/(log2)²
+    Combining:
+      |shiftedRemainderRe x T| ≤ C₂·(1+K) · (√x·(logT)²/√T). -/
+theorem small_T_contour_bound :
+    ∃ C₀ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |shiftedRemainderRe x T| ≤
+        C₀ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  obtain ⟨C₂, hC₂, h_perron⟩ := general_formula_accessible
+  refine ⟨C₂ * (1 + 64 / (Real.log 2) ^ 2), by positivity, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hx1 : (1 : ℝ) ≤ x := by linarith
+  have h_abs := h_perron x T hx (by linarith : T ≥ 2)
+  have h_la := log_sq_absorbed_by_error x T hx1 hT_lo hT_hi
+  calc |shiftedRemainderRe x T|
+      ≤ C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := h_abs
+    _ ≤ C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+        (64 / (Real.log 2) ^ 2) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) := by
+        apply mul_le_mul_of_nonneg_left _ hC₂.le
+        linarith
+    _ = C₂ * (1 + 64 / (Real.log 2) ^ 2) *
+        (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by ring
+
 end Littlewood.Bridge.PerronAssumptionsBridge
