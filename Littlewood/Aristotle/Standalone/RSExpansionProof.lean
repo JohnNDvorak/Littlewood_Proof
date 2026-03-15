@@ -2891,7 +2891,7 @@ theorem block_boundaries_telescope (k₀ K : ℕ) :
 -- Section 7d: Sub-lemma 4 — Saddle-point remainder bound
 -- ============================================================
 
-/-- **Combined Siegel expansion core** (single sorry for the entire Siegel expansion).
+/- **Combined Siegel expansion core** (decomposed into sub-sorrys, C61).
 
     This is the single atomic sorry for the steepest-descent analysis of the
     Riemann-Siegel integral representation. It produces two results:
@@ -2937,6 +2937,49 @@ theorem block_boundaries_telescope (k₀ K : ℕ) :
     feed into separate chains: saddle-point → Hardy chain; Perron → ψ chain.
 
     Reference: Siegel 1932 §3; Gabcke 1979 Satz 1 (C_R ≈ 0.127) + Satz 4. -/
+
+/-- Conjuncts 1+2: saddle-point bound + block antitone (coupled via Gabcke phase analysis).
+
+    These two results are coupled because the block antitone property (Gabcke Satz 4)
+    depends on the signed remainder R(k) inheriting phase coherence from the
+    saddle-point structure. The pointwise bound (Satz 1) alone gives |R(k)| ~ O(k^{-1/2}),
+    but Gabcke's phase analysis shows R(k) is itself approximately antitone.
+
+    Reference: Siegel 1932 §3; Gabcke 1979 Satz 1 + Satz 4. -/
+private theorem siegel_saddle_and_antitone :
+    (∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
+      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+        |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+          rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4))
+    ∧
+    (let A_val := 4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)
+     let c_fn := fun k : ℕ =>
+       (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
+         - A_val * Real.sqrt ((k : ℝ) + 1)
+     AntitoneOn c_fn (Ici (1 : ℕ))) := by
+  sorry
+
+/-- Conjunct 3: first moment bound (independent of saddle-point analysis).
+
+    |∫₁ᵀ Z(t) dt| ≤ C·√T (Titchmarsh §4.15; Heath-Brown 1978).
+
+    The proof decomposes into:
+    1. Main term: each mode n in the Dirichlet polynomial contributes
+       ∫ cos(θ(t) - t·log(n+1)) dt, bounded by VdC first-derivative test
+       (phase derivative ~ log(n+1) - log(√(t/2π)) is bounded away from 0
+       for off-diagonal modes). Total main term contribution: O(√T).
+    2. Error term: alternating block cancellation. The signed block integrals
+       (-1)^k ∫_{block k} ErrorTerm form an alternating series with antitone
+       absolute values (from the saddle-point amplitude decay ~ 1/√(k+1)).
+       Leibniz bound gives O(1/√K) ~ O(T^{-1/4}) per partial sum.
+    3. Combined: O(√T) from main term + O(1) from error term = O(√T).
+
+    Reference: Titchmarsh §4.15; Heath-Brown, Quart. J. Math. 29 (1978). -/
+private theorem siegel_first_moment :
+    ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) := by
+  sorry
+
 private theorem siegel_expansion_core :
     -- (1) Pointwise saddle-point bound
     (∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
@@ -2952,12 +2995,9 @@ private theorem siegel_expansion_core :
      AntitoneOn c_fn (Ici (1 : ℕ)))
     ∧
     -- (3) First moment bound for hardyZ (Titchmarsh §4.15; Heath-Brown 1978)
-    -- Per-mode VdC analysis: each mode ∫ cos(θ-t·log(n+1)) on [T₀,T] bounded
-    -- by O(1/log T₀) for off-diagonal, O(n^{1/2}) for resonant.
-    -- Combined with ErrorTerm alternating blocks: |∫₁ᵀ Z(t) dt| = O(T^{1/2}).
     (∃ C > 0, ∀ T : ℝ, T ≥ 2 →
-      |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2)) := by
-  sorry
+      |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2)) :=
+  ⟨siegel_saddle_and_antitone.1, siegel_saddle_and_antitone.2, siegel_first_moment⟩
 
 /-- **Saddle-point remainder bound** — extracted from `siegel_expansion_core` (1).
 
