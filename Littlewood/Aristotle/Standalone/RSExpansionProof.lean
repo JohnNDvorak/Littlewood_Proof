@@ -4590,21 +4590,19 @@ theorem quarter_times_inv_sqrt_eq (t : ℝ) (ht : 0 < t) :
 theorem remainder_constant_explicit (C_phase t : ℝ) (_hC : 0 ≤ C_phase) (ht : 0 < t) :
     (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * (C_phase * t ^ (-(1 : ℝ) / 2)) =
     C_phase * ((2 * Real.pi) ^ ((1 : ℝ) / 4) * t ^ (-(3 : ℝ) / 4)) := by
-  have := quarter_times_inv_sqrt_eq t ht
-  linarith [mul_comm ((2 * Real.pi / t) ^ ((1:ℝ)/4)) (C_phase * t ^ (-(1:ℝ)/2)),
-            mul_comm C_phase ((2 * Real.pi / t) ^ ((1:ℝ)/4)),
-            this]
+  -- (2π/t)^{1/4} * (C * t^{-1/2}) = C * ((2π)^{1/4} * t^{-3/4})
+  -- Factor: (2π/t)^{1/4} * C * t^{-1/2} = C * (2π/t)^{1/4} * t^{-1/2}
+  --       = C * ((2π)^{1/4} * t^{-3/4})   [by quarter_times_inv_sqrt_eq]
+  have key := quarter_times_inv_sqrt_eq t ht
+  calc (2 * Real.pi / t) ^ ((1:ℝ)/4) * (C_phase * t ^ (-(1:ℝ)/2))
+      = C_phase * ((2 * Real.pi / t) ^ ((1:ℝ)/4) * t ^ (-(1:ℝ)/2)) := by ring
+    _ = C_phase * ((2 * Real.pi) ^ ((1:ℝ)/4) * t ^ (-(3:ℝ)/4)) := by rw [key]
 
 /-- **Saddle ratio bound**: √(2π/t) ≤ 1/(k+1) on block k. -/
 theorem sqrt_two_pi_div_t_le_inv_v2 (k : ℕ) (t : ℝ)
     (ht : hardyStart k ≤ t) (ht_pos : 0 < t) :
     Real.sqrt (2 * Real.pi / t) ≤ 1 / ((k : ℝ) + 1) := by
-  have hk : (0 : ℝ) < (k : ℝ) + 1 := by positivity
-  have h := two_pi_div_t_le_inv_sq k t ht ht_pos
-  calc Real.sqrt (2 * Real.pi / t)
-      ≤ Real.sqrt (1 / ((k : ℝ) + 1) ^ 2) := Real.sqrt_le_sqrt h
-    _ = 1 / ((k : ℝ) + 1) := by
-        rw [one_div, Real.sqrt_inv, Real.sqrt_sq_eq_abs, abs_of_pos hk]
+  exact sqrt_two_pi_div_t_le_inv k t ht ht_pos
 
 /-- **Cubic coefficient crude bound**: 1/(k+1)³ ≤ 1/(k+1). -/
 theorem cubic_coefficient_crude_bound (k : ℕ) :
@@ -4673,7 +4671,7 @@ which is O(1/log(n)) by the first-derivative test (VdC lemma 1). -/
 theorem linear_phase_sin_diff_le_two (α β a b : ℝ) :
     |Real.sin (α * b + β) - Real.sin (α * a + β)| ≤ 2 := by
   calc |Real.sin (α * b + β) - Real.sin (α * a + β)|
-      ≤ |Real.sin (α * b + β)| + |Real.sin (α * a + β)| := abs_sub_abs_le_abs_sub _ _
+      ≤ |Real.sin (α * b + β)| + |Real.sin (α * a + β)| := abs_sub _ _
     _ ≤ 1 + 1 := add_le_add (Real.abs_sin_le_one _) (Real.abs_sin_le_one _)
     _ = 2 := by norm_num
 
