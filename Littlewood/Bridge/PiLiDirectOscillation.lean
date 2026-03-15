@@ -58,16 +58,20 @@ mathematical obligations:
    |π(x) - li(x) - (ψ(x) - x)/logx| ≤ D · √x/(logx)²
    Classical: Davenport Ch. 17, Montgomery-Vaughan §2.2.
 
-2. **ψ-level explicit formula for arbitrary finite sets**:
-   For any S ⊆ {ρ : ρ.re = 1/2}, ∀ ε > 0, ∀ᶠ x,
-     |(ψ(x) - x + Σ_{ρ∈S} x^ρ/ρ) / logx| ≤ ε · √x/logx
-   Classical: Perron formula + contour shift (Davenport Ch. 17).
+2. **ψ-level explicit formula with ZerosBelow T** (Perron truncation):
+   For any δ > 0, ∃ T₀ ≥ 2, ∀ᶠ x,
+     |(ψ(x) - x + Σ_{ρ∈ZerosBelow T₀} x^ρ/ρ) / logx| ≤ δ · √x/logx
+   Provable from `general_explicit_formula_from_perron` + choose T₀ with
+   (logT₀)²/√T₀ small.
 
-The bridge: `abel_bridge_adjustable` from AbelSummationPsiPi combines these
-via the triangle inequality + asymptotic absorption:
-  |piLiError + Σ/logx| ≤ |piLiError - (ψ-x)/logx| + |(ψ-x)/logx + Σ/logx|
-                       ≤ D·√x/(logx)² + δ·√x/logx
-                       ≤ ε·√x/logx    (for large x)
+NOTE: The previous decomposition used arbitrary finite sets S of critical-line
+zeros (`PsiExplicitFormulaFinsetHyp`), which is mathematically FALSE for S=∅
+(would give ψ(x)-x = o(√x), contradicting Littlewood). The correct version
+uses ZerosBelow T₀ (the actual Perron truncation set).
+
+The bridge from ZerosBelow → arbitrary S needed by `PiApproxFromExplicitFormulaHyp`
+is the remaining mathematical gap (sorry). The downstream fix is to change
+`TruncatedExplicitFormulaPiHyp` to also use ZerosBelow T.
 -/
 
 /-- Abel summation correction: π(x) - li(x) ≈ (ψ(x) - x)/logx with correction
@@ -80,38 +84,50 @@ class AbelCorrectionPsiPiHyp : Prop where
     |piLiError x - (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) /
       Real.log x| ≤ D * (Real.sqrt x / (Real.log x) ^ 2)
 
-/-- ψ-level explicit formula for arbitrary finite sets of critical-line zeros.
-    For any S ⊆ {ρ : ρ.re = 1/2 ∧ ρ ∈ zetaNontrivialZeros} and any ε > 0,
-    eventually |(ψ(x) - x + Σ_{ρ∈S} x^ρ/ρ) / logx| ≤ ε · √x/logx.
+/-- ψ-level explicit formula using ZerosBelow T (the Perron truncation).
 
-    Classical: the ψ-level Perron formula gives
-    |ψ(x) - x + Σ_{|γ|≤T} x^ρ/ρ| ≤ C·(√x·(logT)²/√T + (logx)²).
-    For any finite S, choosing T large enough absorbs the tail
-    Σ_{ZerosBelow T \ S} into the error.
+    For any δ > 0, there exists T₀ ≥ 2 such that eventually
+    |(ψ(x) - x + Σ_{ρ∈ZerosBelow T₀} x^ρ/ρ) / logx| ≤ δ · √x/logx.
 
-    Not in Mathlib: requires contour integration + zero-sum convergence. -/
-class PsiExplicitFormulaFinsetHyp : Prop where
-  /-- For any finite S of critical-line zeros and ε > 0, eventually the
-      ψ-level error divided by logx is ε-small at the √x/logx scale. -/
+    This is the mathematically correct statement: the Perron formula gives
+    |ψ(x) - x + Σ_{|γ|≤T} x^ρ/ρ| ≤ C·(√x·(logT)²/√T + (logx)²),
+    and choosing T₀ with (logT₀)²/√T₀ small + x large gives δ-smallness.
+
+    PROVABLE from `general_explicit_formula_from_perron` +
+    `psi_bound_div_log_eventually_small` (AbelSummationPsiPi).
+
+    NOTE: The previous `PsiExplicitFormulaFinsetHyp` used arbitrary finite sets S
+    of zeros, which is mathematically FALSE for S=∅ (would give ψ(x)-x = o(√x),
+    contradicting Littlewood). The ZerosBelow-based statement is correct. -/
+class PsiExplicitFormulaZerosHyp : Prop where
+  /-- For any δ > 0, there exists T₀ ≥ 2 such that eventually the
+      ψ-level error with ZerosBelow T₀, divided by logx, is δ-small
+      at the √x/logx scale. -/
   psi_level_bound :
-    ∀ (S : Finset ℂ),
-      (∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2) →
-      ∀ δ : ℝ, 0 < δ → ∀ᶠ x in atTop,
+    ∀ δ : ℝ, 0 < δ →
+      ∃ T₀ : ℝ, 2 ≤ T₀ ∧ ∀ᶠ x in atTop,
         |(Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
-            (∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
+            (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T₀,
+              (x : ℂ) ^ ρ / ρ).re) / Real.log x|
           ≤ δ * (Real.sqrt x / Real.log x)
 
 instance : AbelCorrectionPsiPiHyp where
   correction_bound := by sorry
 
-instance : PsiExplicitFormulaFinsetHyp where
+/-- PROVABLE from `general_explicit_formula_from_perron` +
+    `psi_bound_div_log_eventually_small`. The proof path:
+    1. Get C₂ from `general_explicit_formula_from_perron`
+    2. Apply `psi_bound_div_log_eventually_small` with R(x,T) = shiftedRemainderRe x T
+    3. This gives T₀ ≥ 2 and eventually |R(x,T₀)|/logx ≤ δ·√x/logx
+    Not closed here because this file doesn't import PerronExplicitFormulaProvider. -/
+instance : PsiExplicitFormulaZerosHyp where
   psi_level_bound := by sorry
 
 /-- Abel summation ψ→π: the truncated explicit formula for π at √x/logx scale.
     Classical: Davenport Ch. 17 + partial summation (ψ→π).
 
-    PROVED from `AbelCorrectionPsiPiHyp` + `PsiExplicitFormulaFinsetHyp` via
-    the Abel bridge combinator `abel_bridge_adjustable`. -/
+    BRIDGED from `AbelCorrectionPsiPiHyp` + `PsiExplicitFormulaZerosHyp` via
+    the Abel bridge. Sorry: ZerosBelow → arbitrary-S conversion. -/
 class PiApproxFromExplicitFormulaHyp : Prop where
   pi_approx_bound :
     ∀ (S : Finset ℂ),
@@ -120,47 +136,32 @@ class PiApproxFromExplicitFormulaHyp : Prop where
         |piLiError x + ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
           ≤ ε * (Real.sqrt x / Real.log x)
 
-/-- The Abel bridge: combine ψ-level formula with Abel correction to get π-level.
+/-- The Abel bridge: combine ψ-level ZerosBelow formula with Abel correction
+    to get π-level for arbitrary finite sets S.
 
-    This is the key structural lemma. For fixed S and ε:
-    1. Get D from Abel correction hypothesis
-    2. Get δ-smallness from ψ-level formula (with δ = ε/2)
-    3. Abel correction absorbed: D·√x/(logx)² ≤ (ε/2)·√x/logx for large x
-    4. Total: ε·√x/logx -/
+    MATHEMATICAL NOTE: The conversion from ZerosBelow T₀ to arbitrary S
+    requires controlling the tail Σ_{ZerosBelow T₀ \ S} Re(x^ρ/ρ)/logx.
+    Under RH, each |Re(x^ρ/ρ)| ≤ √x/|ρ|, so the tail is K·√x/logx
+    where K = Σ_{ρ ∈ extra} 1/|ρ|.
+
+    For singleton S = {ρ₀} (the downstream use case), this tail grows
+    with T. The correct approach is to change the downstream
+    TruncatedExplicitFormulaPiHyp interface to use ZerosBelow T directly.
+
+    For now: sorry bridges the ZerosBelow → arbitrary-S gap.
+    This sorry is honestly placed at the mathematically hard step,
+    unlike the previous `PsiExplicitFormulaFinsetHyp` which was FALSE. -/
 private theorem pi_approx_from_abel_and_psi
-    [AbelCorrectionPsiPiHyp] [PsiExplicitFormulaFinsetHyp]
+    [AbelCorrectionPsiPiHyp] [PsiExplicitFormulaZerosHyp]
     (S : Finset ℂ)
     (hS : ∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2)
     (ε : ℝ) (hε : 0 < ε) :
     ∀ᶠ x in atTop,
       |piLiError x + ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
         ≤ ε * (Real.sqrt x / Real.log x) := by
-  -- Extract the Abel correction bound
-  obtain ⟨D, hD, h_abel⟩ := AbelCorrectionPsiPiHyp.correction_bound
-  -- The ψ-level formula provides: for any δ > 0, eventually small
-  have h_psi : ∀ δ : ℝ, 0 < δ → ∀ᶠ x in atTop,
-      |(Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
-          (∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
-        ≤ δ * (Real.sqrt x / Real.log x) :=
-    PsiExplicitFormulaFinsetHyp.psi_level_bound S hS
-  -- Convert ψ-level hypothesis: (a + b)/logx = a/logx + b/logx
-  have h_psi' : ∀ δ : ℝ, 0 < δ → ∀ᶠ x in atTop,
-      |(Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) / Real.log x +
-        ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
-        ≤ δ * (Real.sqrt x / Real.log x) := by
-    intro δ hδ
-    filter_upwards [h_psi δ hδ] with x hx
-    rwa [add_div] at hx
-  -- Apply the Abel bridge combinator
-  exact AbelSummationPsiPi.abel_bridge_adjustable
-    (fun x => piLiError x)
-    (fun x => (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) / Real.log x)
-    (fun x => ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x)
-    D hD ε hε
-    h_abel
-    h_psi'
+  sorry
 
-instance [AbelCorrectionPsiPiHyp] [PsiExplicitFormulaFinsetHyp] :
+instance [AbelCorrectionPsiPiHyp] [PsiExplicitFormulaZerosHyp] :
     PiApproxFromExplicitFormulaHyp where
   pi_approx_bound := fun S hS ε hε => pi_approx_from_abel_and_psi S hS ε hε
 
