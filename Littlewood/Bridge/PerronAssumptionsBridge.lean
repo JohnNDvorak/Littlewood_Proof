@@ -1223,4 +1223,65 @@ theorem contour_bound_fully_assembled :
         Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
   contour_bound_from_small_and_large small_T_contour_bound large_T_contour_bound
 
+/-! ## Part 17: Gap specification — exactly what remains to close the sorry
+
+The ContourRemainderBoundHyp sorry in ExplicitFormulaPsiB5aDefs.lean encapsulates:
+1. Hadamard product for ζ (Davenport Ch. 12)
+2. Zero density → pointwise |ζ'/ζ(1/2+it)| ≤ A·(logT)² (Titchmarsh §9.6)
+3. Contour integration of ζ'/ζ · x^s/s over the Perron rectangle
+4. Segment estimates + assembly → O(√x·(logT)²/√T)
+
+Steps 3-4 are algebraic and proved sorry-free in Parts 5-16 above.
+The genuine sorry content reduces to a SINGLE primitive:
+
+  **PRIMITIVE**: For T ≥ 16, x ≥ 2:
+    |shiftedRemainderRe x T| ≤ C · (√x · (logT)² / √T)
+
+  This requires connecting shiftedRemainderRe (= ψ(x) - x + Σ Re(x^ρ/ρ))
+  to the Perron contour integral ∫ ζ'/ζ(s)·x^s/s ds:
+  - Perron's formula: ψ(x) = (1/2πi) ∫_{c-iT}^{c+iT} ζ'/ζ(s)·x^s/s ds + error
+  - Hadamard product → |ζ'/ζ(1/2+it)| ≤ A·(logT)²
+  - Complex contour integration (not in Mathlib)
+
+  All ALGEBRAIC reductions from this primitive to the full bound are complete:
+  - Small-T (T ∈ [2,16]): `small_T_contour_bound` — PROVED sorry-free
+  - Large-T assembly: `large_T_assembly` — PROVED sorry-free
+  - Case split: `case_split_T_bound` — PROVED sorry-free
+
+Reference: Titchmarsh §9.6.1, Davenport Ch. 12 + Ch. 17. -/
+
+/-- **Gap specification theorem**: documents exactly what is proved and what remains.
+
+    Conjunct 1: Small-T case is CLOSED (sorry-free from general_formula + absorption).
+    Conjunct 2: Algebraic contour assembly is CLOSED (sorry-free).
+    Conjunct 3: Case-split assembly is CLOSED (sorry-free).
+
+    To close ContourRemainderBoundHyp.bound, provide conjunct 3's second hypothesis:
+      ∀ x T, x ≥ 2 → T ≥ 16 → |shiftedRemainderRe x T| ≤ C·(√x·(logT)²/√T)
+    This is the ONLY remaining primitive — needs Perron formula + Hadamard product. -/
+theorem gap_specification :
+    -- What we HAVE (sorry-free, from general_formula_accessible + absorption):
+    (∃ C₀ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |shiftedRemainderRe x T| ≤
+        C₀ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+    -- What we HAVE (sorry-free algebraic infrastructure):
+    ∧ (∀ A B : ℝ, 0 < A → 0 < B → ∀ x T : ℝ, 2 ≤ x → 16 ≤ T →
+        A * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+        2 * B * (Real.sqrt x * (Real.log T) ^ 2 / T) ≤
+        (A + 2 * B) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+    -- What we HAVE (sorry-free case split):
+    ∧ (∀ C_s C_l : ℝ, 0 < C_s → 0 < C_l →
+        (∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+          |shiftedRemainderRe x T| ≤
+            C_s * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) →
+        (∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+          |shiftedRemainderRe x T| ≤
+            C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) →
+        ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+          |shiftedRemainderRe x T| ≤
+            Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :=
+  ⟨small_T_contour_bound,
+   fun A B hA hB x T hx hT => large_T_assembly hA hB hx hT,
+   fun C_s C_l hCs hCl hs hl => case_split_T_bound C_s C_l hCs hCl hs hl⟩
+
 end Littlewood.Bridge.PerronAssumptionsBridge
