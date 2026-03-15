@@ -1701,7 +1701,7 @@ private lemma pi_approx_at_fixed_height_of_psi_formula
     Sub-sorry count: 1 -/
 theorem pi_explicit_formula_from_perron :
     PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp where
-  pi_approx := by sorry
+  pi_approx := PiLiDirectOscillationBridge.PiApproxFromExplicitFormulaHyp.pi_approx_bound
   zero_sum_neg_frequently := by
     intro ρ₀ hρ₀_mem hρ₀_re hρ₀_im
     exact Aristotle.Standalone.ZeroSumNegFrequently.zero_sum_neg_frequently_core

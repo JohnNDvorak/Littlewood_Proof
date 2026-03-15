@@ -48,6 +48,20 @@ class TruncatedExplicitFormulaPiHyp : Prop where
           ((∑ ρ ∈ ({ρ₀} : Finset ℂ), ((x : ℂ) ^ ρ / ρ)).re) / Real.log x
             ≤ -(c * (Real.sqrt x / Real.log x))
 
+/-- Abel summation ψ→π: the truncated explicit formula for π at √x/logx scale.
+    Classical: Davenport Ch. 17 + partial summation (ψ→π).
+    Assumption: not yet in Mathlib (requires contour integration + Abel summation). -/
+class PiApproxFromExplicitFormulaHyp : Prop where
+  pi_approx_bound :
+    ∀ (S : Finset ℂ),
+      (∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2) →
+      ∀ ε : ℝ, 0 < ε → ∀ᶠ x in atTop,
+        |piLiError x + ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
+          ≤ ε * (Real.sqrt x / Real.log x)
+
+instance : PiApproxFromExplicitFormulaHyp where
+  pi_approx_bound := by sorry
+
 /-- Ω₋ direction for `π(x) - li(x)` from aligned phases. -/
 private theorem omega_minus_from_zeros
     [TruncatedExplicitFormulaPiHyp]
