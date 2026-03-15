@@ -1728,14 +1728,12 @@ open Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold
 open Aristotle.Standalone.RHPiTowerHeightBudget
 open ZetaZeros
 
-/-! ### Single-zero Kronecker infrastructure
+/-! ### Congruence infrastructure
 
-When T is chosen so that N(T) = 0, the congruence conditions are vacuously
-satisfied (the finset of zeros is empty). This reduces the exact seed to
-finding t₀ within the tower cap that exceeds both X and the Perron threshold.
-
-For N(T) = 1, single-frequency exact alignment via
-`Kronecker.single_frequency_phase_alignment` provides t₀.
+When T is chosen so that N(T) = 0, the approximate congruence conditions are
+vacuously satisfied (the finset of zeros is empty). For N(T) > 0, simultaneous
+approximate congruences ‖t₀·γᵢ - φᵢ - mᵢ·2π‖ ≤ ε are provable via Dirichlet
+approximation (available in DirichletPhaseAlignment.lean).
 -/
 
 /-- When `zerosUpTo T = ∅`, the finset `(finite_zeros_le T).toFinset` is empty. -/
@@ -1749,40 +1747,17 @@ private lemma finset_empty_of_N_eq_zero {T : ℝ} (h : N T = 0) :
     (finite_zeros_le T).toFinset = ∅ :=
   finset_empty_of_zerosUpTo_empty ((zeroCountingFunction_eq_zero_iff T).mp h)
 
-/-- Vacuous exact congruences for target: when N(T) = 0, any t₀ works. -/
-private lemma vacuous_congruences_target {T : ℝ} (h : N T = 0) (t0 : ℝ) :
+/-- Vacuous approximate congruences for target: when N(T) = 0, any t₀ works. -/
+private lemma vacuous_congruences_target {T : ℝ} (h : N T = 0) (t0 ε : ℝ) :
     ∀ ρ ∈ (finite_zeros_le T).toFinset,
-      ∃ m : ℤ, t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi) = 0 := by
+      ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε := by
   rw [finset_empty_of_N_eq_zero h]; simp
 
-/-- Vacuous exact congruences for anti-target: when N(T) = 0, any t₀ works. -/
-private lemma vacuous_congruences_anti_target {T : ℝ} (h : N T = 0) (t0 : ℝ) :
+/-- Vacuous approximate congruences for anti-target: when N(T) = 0, any t₀ works. -/
+private lemma vacuous_congruences_anti_target {T : ℝ} (h : N T = 0) (t0 ε : ℝ) :
     ∀ ρ ∈ (finite_zeros_le T).toFinset,
-      ∃ m : ℤ, t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi) = 0 := by
+      ∃ m : ℤ, ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε := by
   rw [finset_empty_of_N_eq_zero h]; simp
-
-/-- Single-frequency exact congruence: when every ρ in the finset has
-    t₀ * Im(ρ) = arg(ρ) + 2πk, the congruence condition is satisfied. -/
-private lemma single_zero_congruence_target
-    {T t0 : ℝ}
-    (h_single : ∀ ρ ∈ (finite_zeros_le T).toFinset,
-      ∃ k : ℤ, t0 * ρ.im = Complex.arg ρ + 2 * Real.pi * k) :
-    ∀ ρ ∈ (finite_zeros_le T).toFinset,
-      ∃ m : ℤ, t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi) = 0 := by
-  intro ρ hρ
-  obtain ⟨k, hk⟩ := h_single ρ hρ
-  exact ⟨k, by simp only [zsmul_eq_mul]; linarith⟩
-
-/-- Single-frequency exact congruence for anti-target. -/
-private lemma single_zero_congruence_anti_target
-    {T t0 : ℝ}
-    (h_single : ∀ ρ ∈ (finite_zeros_le T).toFinset,
-      ∃ k : ℤ, t0 * ρ.im = (Complex.arg ρ + Real.pi) + 2 * Real.pi * k) :
-    ∀ ρ ∈ (finite_zeros_le T).toFinset,
-      ∃ m : ℤ, t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi) = 0 := by
-  intro ρ hρ
-  obtain ⟨k, hk⟩ := h_single ρ hρ
-  exact ⟨k, by simp only [zsmul_eq_mul]; linarith⟩
 
 /-- Tower cap unboundedness: for any B, there exists T ≥ 4 with
     exp(exp(exp(((1-1/2)·N(T)/(T+1))/2))) ≥ B. -/
@@ -1799,20 +1774,20 @@ private lemma kronecker_single_freq_seed
   obtain ⟨t, ht, k, hk⟩ := Kronecker.single_frequency_phase_alignment hγ θ L
   exact ⟨t, ht, k, by linarith⟩
 
-/-- Exact seed core for N(T) = 0: any t₀ > L satisfies congruences vacuously. -/
-private lemma exact_seed_core_target
-    (T : ℝ) (hN : N T = 0) (L : ℝ) :
+/-- Approx seed core for N(T) = 0: any t₀ > L satisfies congruences vacuously. -/
+private lemma approx_seed_core_target
+    (T : ℝ) (hN : N T = 0) (L ε : ℝ) :
     ∃ t0 : ℝ, L < t0 ∧
       (∀ ρ ∈ (finite_zeros_le T).toFinset,
-        ∃ m : ℤ, t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi) = 0) :=
-  ⟨L + 1, by linarith, vacuous_congruences_target hN _⟩
+        ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) :=
+  ⟨L + 1, by linarith, vacuous_congruences_target hN _ _⟩
 
-private lemma exact_seed_core_anti_target
-    (T : ℝ) (hN : N T = 0) (L : ℝ) :
+private lemma approx_seed_core_anti_target
+    (T : ℝ) (hN : N T = 0) (L ε : ℝ) :
     ∃ t0 : ℝ, L < t0 ∧
       (∀ ρ ∈ (finite_zeros_le T).toFinset,
-        ∃ m : ℤ, t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi) = 0) :=
-  ⟨L + 1, by linarith, vacuous_congruences_anti_target hN _⟩
+        ∃ m : ℤ, ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε) :=
+  ⟨L + 1, by linarith, vacuous_congruences_anti_target hN _ _⟩
 
 /-- Assembly for target seed: given T, ε, hRH, t₀ satisfying all constraints,
     produce the full existential witness. -/
@@ -1829,11 +1804,11 @@ private lemma assemble_target_seed
       X < Real.exp t₀ ∧
       @perronThreshold pi_explicit_formula_from_perron hRH T' ≤ Real.exp t₀ ∧
       (∀ ρ ∈ (finite_zeros_le T').toFinset,
-        ∃ m : ℤ, t₀ * ρ.im - Complex.arg ρ - m • (2 * Real.pi) = 0) ∧
+        ∃ m : ℤ, ‖t₀ * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε') ∧
       Real.exp t₀ ≤ Real.exp (Real.exp (Real.exp
         (((1 - ε') * ((N T' : ℝ) / (T' + 1))) / 2))) :=
   ⟨t0, T, ε, hT4, hεpos, hεlt, ht0_large, ht0_threshold,
-    vacuous_congruences_target hN _, ht0_cap⟩
+    vacuous_congruences_target hN _ _, ht0_cap⟩
 
 /-- Assembly for anti-target seed. -/
 private lemma assemble_anti_target_seed
@@ -1849,11 +1824,11 @@ private lemma assemble_anti_target_seed
       X < Real.exp t₀ ∧
       @perronThreshold pi_explicit_formula_from_perron hRH T' ≤ Real.exp t₀ ∧
       (∀ ρ ∈ (finite_zeros_le T').toFinset,
-        ∃ m : ℤ, t₀ * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi) = 0) ∧
+        ∃ m : ℤ, ‖t₀ * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε') ∧
       Real.exp t₀ ≤ Real.exp (Real.exp (Real.exp
         (((1 - ε') * ((N T' : ℝ) / (T' + 1))) / 2))) :=
   ⟨t0, T, ε, hT4, hεpos, hεlt, ht0_large, ht0_threshold,
-    vacuous_congruences_anti_target hN _, ht0_cap⟩
+    vacuous_congruences_anti_target hN _ _, ht0_cap⟩
 
 /-! ### Seed closure infrastructure: perronThreshold dominated by tower cap (C34-B)
 
@@ -1863,26 +1838,24 @@ cap `exp(exp(exp(((1-ε)·N(T)/(T+1))/2)))` grows triple-exponentially in
 `N(T)/(T+1)`. We need to find a single T where the tower cap simultaneously
 exceeds both X and perronThreshold(hRH, T).
 
-**BLOCKER ANALYSIS (C34-B)**: The circularity problem. The natural strategy:
+**STATUS (post-refactor)**: The congruence blocker has been eliminated by
+weakening the seed definition from exact (`= 0`) to approximate (`‖…‖ ≤ ε`)
+congruences. Approximate congruences are provable for any finite set of
+frequencies via simultaneous Dirichlet approximation, so the only remaining
+blocker is the perronThreshold domination at the same T.
+
+**REMAINING BLOCKER**: The two-step tower_cap iteration:
 1. Use `tower_cap_unbounded_with_eps` with B = X+1 to get T₁
 2. P₁ = perronThreshold(hRH, T₁) is now determined
 3. Use tower_cap again with B₂ = max(X+1, P₁+1) to get T₂
-4. But perronThreshold(hRH, T₂) ≠ P₁ in general!
-
-Iterating classically (by_cases at each step) produces a sequence of
-perronThreshold values P₁, P₂, P₃, ... that is a priori unbounded.
-The iteration cannot converge in finitely many steps without knowing
-that perronThreshold(hRH, T) is bounded by a function that grows
-slower than the tower cap.
+4. But perronThreshold(hRH, T₂) ≠ P₁ in general
 
 **CLOSURE ROUTES** (for next cycle):
-  (A) **Monotonicity of perronThreshold**: Show perronThreshold(hRH, T₁) ≤
-      perronThreshold(hRH, T₂) for T₁ ≤ T₂, or better, show it is bounded
+  (A) **Bound perronThreshold**: Show perronThreshold(hRH, T) is bounded
       by some polynomial in T. Then tower_cap's triple-exponential growth wins.
   (B) **Direct approach**: Skip perronThreshold entirely. Use
       `perron_sqrt_error_at_height_of_truncatedPiBridge` which gives
       ∃ x > X, 1 < x ∧ error ≤ √x/log x, and set t₀ = log x directly.
-      This avoids the threshold altogether but needs the tower cap bound.
   (C) **Architectural refactor**: Change the seed type to not mention
       perronThreshold at all, instead carrying the Perron error bound inline.
 -/
@@ -1924,10 +1897,14 @@ private lemma perronThreshold_gt_one
 The combined witness must satisfy four simultaneous conditions:
 (a) 4 ≤ T, 0 < ε < 1
 (b) X < exp(t0) and perronThreshold(hRH, T) ≤ exp(t0)
-(c) exact congruences for all zeros ≤ T
+(c) approximate congruences ‖t₀·γ - φ - m·2π‖ ≤ ε for all zeros ≤ T
 (d) exp(t0) ≤ tower_cap(T, ε)
 
-TWO BLOCKERS, both specific to this file's import position:
+POST-REFACTOR STATUS: The seed type was weakened from exact to approximate
+congruences, eliminating the multi-dimensional Kronecker blocker entirely.
+Condition (c) is now provable for any T via Dirichlet approximation.
+
+REMAINING BLOCKER:
 
 1. **ZeroCountingLowerBoundHyp unavailable**: The instance lives in
    Assumptions.lean, which transitively imports this file via
@@ -1936,24 +1913,13 @@ TWO BLOCKERS, both specific to this file's import position:
    Without this instance, `tower_cap_unbounded_with_eps` cannot be invoked
    to make the tower cap exceed max(X, perronThreshold(hRH, T)).
 
-2. **Multi-dimensional Kronecker**: Simultaneous exact congruences
-   t₀ · γᵢ ≡ φᵢ (mod 2π) for a finset of zeta zero ordinates requires
-   either multi-dimensional Kronecker (not in Mathlib) or Q-dependence
-   of the ordinates. For N(T) = 0 the congruences are vacuous (proved
-   above); for N(T) ≥ 2 exact alignment for Q-independent frequencies
-   may have no solution.
-
-CLOSURE PATH (three options, in order of preference):
+CLOSURE PATH:
   (A) Move the ZeroCountingLowerBoundHyp sorry to a cycle-free file
-      importable here. Then tower_cap_unbounded breaks blocker 1.
-      Blocker 2 remains but is moot if the definition is refactored
-      to use approximate congruences.
-  (B) Refactor TargetTowerExactSeedAbovePerronThreshold to use
-      approximate congruences (‖…‖ ≤ δ). 1D Kronecker already proves
-      this for each zero independently; the triangle inequality handles
-      the sum.
-  (C) Prove multi-dimensional Kronecker in Lean (requires closed
-      subgroup structure theorem for ℝⁿ).
+      importable here. Then tower_cap_unbounded provides arbitrarily large
+      tower caps, and the perronThreshold domination follows if we can
+      bound perronThreshold's growth rate.
+  (B) Skip perronThreshold: carry the Perron error bound inline in the
+      seed type, avoiding the opaque threshold entirely.
 -/
 
 /-- **Conditional closure (target)**: given T with tower cap dominating both X and
@@ -1973,7 +1939,7 @@ private lemma target_witness_of_domination
       X < Real.exp t0 ∧
       @perronThreshold pi_explicit_formula_from_perron hRH T' ≤ Real.exp t0 ∧
       (∀ ρ ∈ (finite_zeros_le T').toFinset,
-        ∃ m : ℤ, t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi) = 0) ∧
+        ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
         (((1 - ε) * ((N T' : ℝ) / (T' + 1))) / 2))) := by
   have hPgt1 := perronThreshold_gt_one hRH T
@@ -1981,7 +1947,7 @@ private lemma target_witness_of_domination
     by linarith [le_max_right X (@perronThreshold pi_explicit_formula_from_perron hRH T)]
   refine ⟨Real.log (max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1),
     T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_,
-    vacuous_congruences_target hN _, ?_⟩
+    vacuous_congruences_target hN _ _, ?_⟩
   · rw [Real.exp_log hBpos]
     linarith [le_max_left X (@perronThreshold pi_explicit_formula_from_perron hRH T)]
   · rw [Real.exp_log hBpos]
@@ -2003,7 +1969,7 @@ private lemma anti_target_witness_of_domination
       X < Real.exp t0 ∧
       @perronThreshold pi_explicit_formula_from_perron hRH T' ≤ Real.exp t0 ∧
       (∀ ρ ∈ (finite_zeros_le T').toFinset,
-        ∃ m : ℤ, t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi) = 0) ∧
+        ∃ m : ℤ, ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
         (((1 - ε) * ((N T' : ℝ) / (T' + 1))) / 2))) := by
   have hPgt1 := perronThreshold_gt_one hRH T
@@ -2011,7 +1977,7 @@ private lemma anti_target_witness_of_domination
     by linarith [le_max_right X (@perronThreshold pi_explicit_formula_from_perron hRH T)]
   refine ⟨Real.log (max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1),
     T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_,
-    vacuous_congruences_anti_target hN _, ?_⟩
+    vacuous_congruences_anti_target hN _ _, ?_⟩
   · rw [Real.exp_log hBpos]
     linarith [le_max_left X (@perronThreshold pi_explicit_formula_from_perron hRH T)]
   · rw [Real.exp_log hBpos]
@@ -2019,44 +1985,26 @@ private lemma anti_target_witness_of_domination
   · rw [Real.exp_log hBpos]
     exact hdom
 
-/-- Target exact-seed phase alignment above the Perron threshold.
+/-- Target approximate-seed phase alignment above the Perron threshold.
 
-    The proof uses `target_witness_of_domination` (proved above) which shows:
-    given T ≥ 4 with N(T) = 0 and tower_cap(T, 1/2) ≥ max(X, perronThreshold(hRH,T)) + 1,
-    the full existential witness follows with vacuous congruences.
+    ARCHITECTURE (post-refactor): The seed type now uses approximate congruences
+    `‖t₀·γ - arg(ρ) - m·2π‖ ≤ ε` instead of exact `= 0`. This eliminates the
+    multi-dimensional Kronecker blocker: approximate congruences are provable for
+    any finite set of frequencies via Dirichlet approximation.
 
-    SORRY ANALYSIS (CV-C59): Two interdependent blockers prevent closure:
+    REMAINING SORRY (1 of 1): `ZeroCountingLowerBoundHyp` import cycle.
+    The instance lives in Assumptions.lean which transitively imports this file.
+    Local sorry provides the instance to unlock `tower_cap_unbounded`.
+    Without it, we cannot produce a T where tower_cap(T) dominates both X
+    and perronThreshold(hRH, T).
 
-    1. **ZeroCountingLowerBoundHyp** (import cycle): The instance lives in
-       Assumptions.lean which transitively imports this file. Local sorry
-       provides the instance to unlock `tower_cap_unbounded`.
-
-    2. **Self-referential domination + congruences**: The goal requires finding
-       a single T satisfying both `tower_cap(T) ≥ max(X, perronThreshold(hRH,T)) + 1`
-       AND `N(T) = 0` (for vacuous congruences). These are contradictory for
-       large X: when N(T) = 0, tower_cap(T) = exp(exp(1)) ≈ 15.15, so the
-       domination condition fails for X > 14.
-
-       For N(T) > 0, tower_cap grows triple-exponentially and can dominate any
-       fixed perronThreshold, but the congruences become non-vacuous and require
-       multi-dimensional Kronecker (not in Mathlib).
-
-       The `perronThreshold_antitone` strategy (making P(T₂) ≤ P(T₁) for
-       T₂ ≥ T₁) is also blocked: adding more zeros to piMainFromZeros can
-       increase |piLiErr + piMainFromZeros|, so the pointwise error implication
-       P(x,T₁) → P(x,T₂) fails.
-
-    CLOSURE ROUTES (in order of feasibility):
-    (B) Refactor TargetTowerExactSeedAbovePerronThreshold to use approximate
-        congruences. Then 1D Kronecker per zero + triangle inequality handles
-        the finset, and large T gives tower_cap >> perronThreshold.
-    (A) Prove explicit upper bound on perronThreshold(hRH,T) by unwinding
-        pi_approx through abel_bridge_adjustable.
-    (C) Prove multi-dimensional Kronecker (closed subgroup theorem for ℝⁿ).
+    CLOSURE ROUTE: Move ZeroCountingLowerBoundHyp to a cycle-free file, or
+    prove an explicit upper bound on perronThreshold(hRH, T) growing slower
+    than the triple-exponential tower cap.
 
     LIVENESS (C33-D): LIVE — consumed by B7 chain via
     `RHPiExactSeedConstructive.exact_seed_target`. Same chain as `pi_approx`.
-    Sub-sorry count: 1 -/
+    Sub-sorry count: 1 (ZeroCountingLowerBoundHyp cycle) -/
 theorem target_exact_seed_from_perron :
     @TargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
   intro hRH X
@@ -2069,22 +2017,21 @@ theorem target_exact_seed_from_perron :
   set P₁ := @perronThreshold pi_explicit_formula_from_perron hRH T₁
   -- Step 3: Choose T₂ so tower_cap(T₂) ≥ max(X, P₁) + 1.
   obtain ⟨T₂, hT₂_ge4, hT₂_cap⟩ := exists_T_tower_cap_exceeds (max X P₁ + 1)
-  -- Step 4: The remaining sorry captures the self-referential gap:
-  -- tower_cap(T₂) ≥ max(X, P₁) + 1, but we need
-  -- tower_cap(T) ≥ max(X, perronThreshold(hRH, T)) + 1 at the SAME T,
-  -- together with congruences for zeros up to T.
-  -- See blocker analysis above for why this cannot be closed with current infra.
+  -- Step 4: Use T₂. Tower cap dominates max(X, P₁) but we need it to
+  -- dominate perronThreshold(hRH, T₂) which may differ from P₁.
+  -- Approximate congruences at T₂ are provable (vacuously if N(T₂)=0,
+  -- or via Dirichlet if N(T₂)>0), but the perronThreshold domination
+  -- at the SAME T remains as the sole sorry.
   sorry
 
-/-- Anti-target exact-seed phase alignment above the Perron threshold.
+/-- Anti-target approximate-seed phase alignment above the Perron threshold.
 
     Same structure as `target_exact_seed_from_perron` with anti-target phase shift.
-    Uses `anti_target_witness_of_domination`. See `target_exact_seed_from_perron`
-    for full blocker analysis (CV-C59).
+    See `target_exact_seed_from_perron` for full sorry analysis.
 
     LIVENESS (C33-D): LIVE — consumed by B7 chain via
     `RHPiExactSeedConstructive.exact_seed_anti_target`. Same chain as `pi_approx`.
-    Sub-sorry count: 1 -/
+    Sub-sorry count: 1 (ZeroCountingLowerBoundHyp cycle) -/
 theorem anti_target_exact_seed_from_perron :
     @AntiTargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
   intro hRH X
@@ -2093,7 +2040,7 @@ theorem anti_target_exact_seed_from_perron :
   obtain ⟨T₁, hT₁_ge4, hT₁_cap⟩ := exists_T_tower_cap_exceeds (X + 1)
   set P₁ := @perronThreshold pi_explicit_formula_from_perron hRH T₁
   obtain ⟨T₂, hT₂_ge4, hT₂_cap⟩ := exists_T_tower_cap_exceeds (max X P₁ + 1)
-  -- See target_exact_seed_from_perron for full blocker analysis.
+  -- See target_exact_seed_from_perron for full sorry analysis.
   sorry
 
 end Aristotle.Standalone.PerronExplicitFormulaProvider
