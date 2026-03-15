@@ -238,4 +238,233 @@ theorem abs_div_of_pos (a b : ℝ) (hb : 0 < b) : |a / b| = |a| / b := by
 /-- Eventually x ≥ 2. -/
 theorem eventually_ge_two : ∀ᶠ x in atTop, (2 : ℝ) ≤ x := eventually_ge_atTop 2
 
+/-! ## Part 6: Asymptotic domination for Abel bridge corrections
+
+These lemmas connect ψ-level explicit formulas to π-level by providing
+the asymptotic absorption needed for the Abel summation step:
+  π(x) - li(x) = (ψ(x) - x)/logx + O(√x/(logx)²)
+The O(√x/(logx)²) correction is o(√x/logx), so it can be absorbed. -/
+
+/-- 1/logx → 0 as x → ∞. Key building block for all correction-absorption lemmas. -/
+theorem inv_log_tendsto_zero :
+    Tendsto (fun x : ℝ => 1 / Real.log x) atTop (nhds 0) := by
+  have : Tendsto (fun x : ℝ => (Real.log x)⁻¹) atTop (nhds 0) :=
+    Filter.Tendsto.inv_tendsto_atTop Real.tendsto_log_atTop
+  simp only [one_div]; exact this
+
+/-- Eventually log x ≥ 1 (equivalently x ≥ e). -/
+theorem log_eventually_ge_one : ∀ᶠ x in atTop, (1 : ℝ) ≤ Real.log x := by
+  filter_upwards [eventually_ge_atTop (Real.exp 1)] with x hx
+  rwa [← Real.log_exp 1, Real.log_le_log_iff (Real.exp_pos 1)
+       (lt_of_lt_of_le (Real.exp_pos 1) hx)]
+
+/-- Eventually 0 < √x ∧ 0 < logx (joint positivity). -/
+theorem sqrt_and_log_eventually_pos : ∀ᶠ x in atTop,
+    0 < Real.sqrt x ∧ 0 < Real.log x := by
+  filter_upwards [eventually_gt_atTop (1 : ℝ)] with x hx1
+  exact ⟨Real.sqrt_pos.mpr (lt_trans one_pos hx1), Real.log_pos hx1⟩
+
+/-- Algebraic helper: a/b² ≤ c·(a/b) when 1/b ≤ c, a ≥ 0, b > 0. -/
+theorem div_sq_le_mul_div_of_inv_le {a b c : ℝ} (ha : 0 ≤ a) (hb : 0 < b)
+    (h : 1 / b ≤ c) : a / b ^ 2 ≤ c * (a / b) := by
+  have hrw : a / b ^ 2 = (1 / b) * (a / b) := by field_simp
+  rw [hrw]
+  exact mul_le_mul_of_nonneg_right h (div_nonneg ha hb.le)
+
+/-! ## Part 7: √x/(logx)² = o(√x/logx) — prime power correction absorption
+
+The classical Abel summation from ψ(x) to π(x) introduces a correction of
+order O(√x/(logx)²). This section proves that correction is negligible
+compared to the √x/logx oscillation scale. -/
+
+/-- √x/(logx)² = o(√x/logx): the ratio 1/logx → 0.
+    This is the key asymptotic for absorbing the O(√x/(logx)²) prime power
+    correction when going from ψ(x)-x to π(x)-li(x) via Abel summation. -/
+theorem sqrt_div_log_sq_isLittleO_sqrt_div_log :
+    (fun x : ℝ => Real.sqrt x / (Real.log x) ^ 2) =o[atTop]
+      (fun x => Real.sqrt x / Real.log x) := by
+  rw [isLittleO_iff]
+  intro c hc
+  have h_tend := inv_log_tendsto_zero
+  rw [Metric.tendsto_nhds] at h_tend
+  filter_upwards [h_tend c hc, eventually_gt_atTop (1 : ℝ)] with x hx hx1
+  rw [Real.dist_eq, sub_zero] at hx
+  have hlog_pos : 0 < Real.log x := Real.log_pos hx1
+  have hsqrt_nonneg : 0 ≤ Real.sqrt x := sqrt_nonneg x
+  have h_inv_bound : 1 / Real.log x ≤ c := le_of_lt (lt_of_abs_lt hx)
+  rw [norm_of_nonneg (div_nonneg hsqrt_nonneg (sq_nonneg _)),
+      norm_of_nonneg (div_nonneg hsqrt_nonneg hlog_pos.le)]
+  exact div_sq_le_mul_div_of_inv_le hsqrt_nonneg hlog_pos h_inv_bound
+
+/-- For any ε > 0, eventually √x/(logx)² ≤ ε · √x/logx. -/
+theorem sqrt_div_log_sq_eventually_le (ε : ℝ) (hε : 0 < ε) :
+    ∀ᶠ x in atTop, Real.sqrt x / (Real.log x) ^ 2 ≤ ε * (Real.sqrt x / Real.log x) := by
+  have h := sqrt_div_log_sq_isLittleO_sqrt_div_log.def hε
+  filter_upwards [h, eventually_gt_atTop (1 : ℝ)] with x hx hx1
+  have hlog_pos : 0 < Real.log x := Real.log_pos hx1
+  have hsqrt_nonneg : 0 ≤ Real.sqrt x := sqrt_nonneg x
+  calc Real.sqrt x / (Real.log x) ^ 2
+      = ‖Real.sqrt x / (Real.log x) ^ 2‖ := by
+        rw [norm_of_nonneg (div_nonneg hsqrt_nonneg (sq_nonneg _))]
+    _ ≤ ε * ‖Real.sqrt x / Real.log x‖ := hx
+    _ = ε * (Real.sqrt x / Real.log x) := by
+        rw [norm_of_nonneg (div_nonneg hsqrt_nonneg hlog_pos.le)]
+
+/-- √x/(logx)² ≤ √x/logx pointwise for x ≥ e. -/
+theorem sqrt_div_log_sq_le_sqrt_div_log_eventually :
+    ∀ᶠ x in atTop, Real.sqrt x / (Real.log x) ^ 2 ≤ Real.sqrt x / Real.log x := by
+  filter_upwards [eventually_ge_atTop (Real.exp 1)] with x hx
+  have hx_pos : 0 < x := lt_of_lt_of_le (Real.exp_pos 1) hx
+  have hlog_ge : 1 ≤ Real.log x := by
+    rwa [← Real.log_exp 1, Real.log_le_log_iff (Real.exp_pos 1) hx_pos]
+  have hlog_pos : 0 < Real.log x := lt_of_lt_of_le one_pos hlog_ge
+  apply div_le_div_of_nonneg_left (Real.sqrt_pos.mpr hx_pos).le hlog_pos
+  calc Real.log x = Real.log x * 1 := (mul_one _).symm
+    _ ≤ Real.log x * Real.log x := mul_le_mul_of_nonneg_left hlog_ge hlog_pos.le
+    _ = (Real.log x) ^ 2 := by ring
+
+/-! ## Part 8: x/(logx)² = o(x/logx) — li(x) approximation correction
+
+The standard approximation li(x) = x/logx + O(x/(logx)²) introduces a
+correction at the x/(logx)² scale. This section proves it is negligible
+compared to x/logx. -/
+
+/-- x/(logx)² = o(x/logx): the li approximation correction is absorbed.
+    Proof: ratio = 1/logx → 0, same pattern as the √x case. -/
+theorem x_div_log_sq_isLittleO_x_div_log :
+    (fun x : ℝ => x / (Real.log x) ^ 2) =o[atTop] (fun x => x / Real.log x) := by
+  rw [isLittleO_iff]
+  intro c hc
+  have h_tend := inv_log_tendsto_zero
+  rw [Metric.tendsto_nhds] at h_tend
+  filter_upwards [h_tend c hc, eventually_gt_atTop (1 : ℝ)] with x hx hx1
+  rw [Real.dist_eq, sub_zero] at hx
+  have hlog_pos : 0 < Real.log x := Real.log_pos hx1
+  have hx_nonneg : 0 ≤ x := le_of_lt (lt_trans one_pos hx1)
+  have h_inv_bound : 1 / Real.log x ≤ c := le_of_lt (lt_of_abs_lt hx)
+  rw [norm_of_nonneg (div_nonneg hx_nonneg (sq_nonneg _)),
+      norm_of_nonneg (div_nonneg hx_nonneg hlog_pos.le)]
+  exact div_sq_le_mul_div_of_inv_le hx_nonneg hlog_pos h_inv_bound
+
+/-- For any ε > 0, eventually x/(logx)² ≤ ε · x/logx. -/
+theorem x_div_log_sq_eventually_le (ε : ℝ) (hε : 0 < ε) :
+    ∀ᶠ x in atTop, x / (Real.log x) ^ 2 ≤ ε * (x / Real.log x) := by
+  have h := x_div_log_sq_isLittleO_x_div_log.def hε
+  filter_upwards [h, eventually_gt_atTop (1 : ℝ)] with x hx hx1
+  have hlog_pos : 0 < Real.log x := Real.log_pos hx1
+  have hx_nonneg : 0 ≤ x := le_of_lt (lt_trans one_pos hx1)
+  calc x / (Real.log x) ^ 2
+      = ‖x / (Real.log x) ^ 2‖ := by
+        rw [norm_of_nonneg (div_nonneg hx_nonneg (sq_nonneg _))]
+    _ ≤ ε * ‖x / Real.log x‖ := hx
+    _ = ε * (x / Real.log x) := by
+        rw [norm_of_nonneg (div_nonneg hx_nonneg hlog_pos.le)]
+
+/-! ## Part 9: Abel bridge combinators — triangle inequality + absorption
+
+These combinators package the full Abel summation bridge argument:
+1. Triangle inequality: |f + S| ≤ |f - g| + |g + S|
+2. Absorption: D·√x/(logx)² ≤ (ε/2)·√x/logx for large x
+3. Combined: if correction is O(√x/(logx)²) and ψ-level bound is o(√x/logx),
+   then π-level bound is o(√x/logx). -/
+
+/-- Triangle inequality for the Abel bridge.
+    If |π(x)-li(x) - (ψ(x)-x)/logx| ≤ correction(x)
+    and |(ψ(x)-x)/logx + Σ/logx| ≤ main_err(x),
+    then |π(x)-li(x) + Σ/logx| ≤ correction(x) + main_err(x). -/
+theorem abel_bridge_triangle
+    (f g S_val correction main_err : ℝ → ℝ)
+    (h_corr : ∀ᶠ x in atTop, |f x - g x| ≤ correction x)
+    (h_main : ∀ᶠ x in atTop, |g x + S_val x| ≤ main_err x) :
+    ∀ᶠ x in atTop, |f x + S_val x| ≤ correction x + main_err x := by
+  filter_upwards [h_corr, h_main] with x hc hm
+  calc |f x + S_val x|
+      = |(f x - g x) + (g x + S_val x)| := by ring_nf
+    _ ≤ |f x - g x| + |g x + S_val x| := abs_add_le _ _
+    _ ≤ correction x + main_err x := add_le_add hc hm
+
+/-- Dividing a ψ-level bound by logx preserves the inequality. -/
+theorem div_log_preserves_bound
+    (f B : ℝ → ℝ)
+    (hB : ∀ᶠ x in atTop, |f x| ≤ B x)
+    (hB_nn : ∀ᶠ x in atTop, 0 ≤ B x) :
+    ∀ᶠ x in atTop, |f x / Real.log x| ≤ B x / Real.log x := by
+  filter_upwards [hB, hB_nn, eventually_gt_atTop (1 : ℝ)] with x hfx _hBx hx1
+  have hlog_pos : 0 < Real.log x := Real.log_pos hx1
+  rw [abs_div, abs_of_pos hlog_pos]
+  exact div_le_div_of_nonneg_right hfx hlog_pos.le
+
+/-- D · √x/(logx)² is eventually ≤ (ε/2) · √x/logx, for any D, ε > 0.
+    Used to absorb the Abel summation correction into the ε budget. -/
+theorem correction_eventually_absorbed (D : ℝ) (hD : 0 < D) (ε : ℝ) (hε : 0 < ε) :
+    ∀ᶠ x in atTop,
+      D * (Real.sqrt x / (Real.log x) ^ 2) ≤ (ε / 2) * (Real.sqrt x / Real.log x) := by
+  have h_tend := inv_log_tendsto_zero
+  rw [Metric.tendsto_nhds] at h_tend
+  filter_upwards [h_tend (ε / (2 * D)) (by positivity), eventually_gt_atTop (1 : ℝ)]
+    with x hx hx1
+  rw [Real.dist_eq, sub_zero] at hx
+  have hlog_pos : 0 < Real.log x := Real.log_pos hx1
+  have hsqrt_nonneg : 0 ≤ Real.sqrt x := sqrt_nonneg x
+  have h_inv : 1 / Real.log x ≤ ε / (2 * D) := le_of_lt (lt_of_abs_lt hx)
+  calc D * (Real.sqrt x / (Real.log x) ^ 2)
+      = D * ((1 / Real.log x) * (Real.sqrt x / Real.log x)) := by congr 1; field_simp
+    _ ≤ D * ((ε / (2 * D)) * (Real.sqrt x / Real.log x)) := by
+        apply mul_le_mul_of_nonneg_left _ hD.le
+        exact mul_le_mul_of_nonneg_right h_inv (div_nonneg hsqrt_nonneg hlog_pos.le)
+    _ = (ε / 2) * (Real.sqrt x / Real.log x) := by field_simp
+
+/-- Full Abel bridge with adjustable ε.
+    If |f(x) - g(x)| ≤ D·√x/(logx)² (correction from Abel summation ψ→π)
+    and for every δ > 0, eventually |g(x) + S(x)| ≤ δ·√x/logx (ψ-level bound),
+    then for every ε > 0, eventually |f(x) + S(x)| ≤ ε·√x/logx.
+
+    This is the main structure needed to close `pi_approx`:
+    f = π(x)-li(x), g = (ψ(x)-x)/logx, S = Σ Re(x^ρ/ρ)/logx. -/
+theorem abel_bridge_adjustable
+    (f g S_val : ℝ → ℝ)
+    (D : ℝ) (hD : 0 < D) (ε : ℝ) (hε : 0 < ε)
+    (h_corr : ∀ᶠ x in atTop, |f x - g x| ≤ D * (Real.sqrt x / (Real.log x) ^ 2))
+    (h_main : ∀ (δ : ℝ), 0 < δ → ∀ᶠ x in atTop,
+      |g x + S_val x| ≤ δ * (Real.sqrt x / Real.log x)) :
+    ∀ᶠ x in atTop,
+      |f x + S_val x| ≤ ε * (Real.sqrt x / Real.log x) := by
+  have h_corr_abs := correction_eventually_absorbed D hD ε hε
+  have h_main_half := h_main (ε / 2) (by linarith)
+  filter_upwards [h_corr, h_corr_abs, h_main_half] with x hc hca hm
+  calc |f x + S_val x|
+      = |(f x - g x) + (g x + S_val x)| := by ring_nf
+    _ ≤ |f x - g x| + |g x + S_val x| := abs_add_le _ _
+    _ ≤ D * (Real.sqrt x / (Real.log x) ^ 2) + (ε / 2) * (Real.sqrt x / Real.log x) :=
+        add_le_add hc hm
+    _ ≤ (ε / 2) * (Real.sqrt x / Real.log x) + (ε / 2) * (Real.sqrt x / Real.log x) :=
+        add_le_add_left hca _
+    _ = ε * (Real.sqrt x / Real.log x) := by ring
+
+/-! ## Part 10: Convenience wrappers -/
+
+/-- If f = o(√x/logx), then |f x| ≤ ε·√x/logx eventually.
+    Convenience for unwrapping isLittleO into an eventually bound. -/
+theorem isLittleO_sqrt_div_log_eventually
+    (f : ℝ → ℝ) (hf : f =o[atTop] (fun x => Real.sqrt x / Real.log x))
+    (ε : ℝ) (hε : 0 < ε) :
+    ∀ᶠ x in atTop, |f x| ≤ ε * (Real.sqrt x / Real.log x) := by
+  have h := hf.def hε
+  filter_upwards [h, eventually_gt_atTop (1 : ℝ)] with x hx hx1
+  have hlog_pos : 0 < Real.log x := Real.log_pos hx1
+  have hsqrt_nonneg : 0 ≤ Real.sqrt x := sqrt_nonneg x
+  calc |f x| = ‖f x‖ := (Real.norm_eq_abs _).symm
+    _ ≤ ε * ‖Real.sqrt x / Real.log x‖ := hx
+    _ = ε * (Real.sqrt x / Real.log x) := by
+        rw [norm_of_nonneg (div_nonneg hsqrt_nonneg hlog_pos.le)]
+
+/-- Monotonic scaling: upgrade bounds via monotonicity of the comparison function. -/
+theorem eventually_abs_le_scale_mono
+    (f g h : ℝ → ℝ) (C : ℝ) (hC : 0 ≤ C)
+    (hfg : ∀ᶠ x in atTop, |f x| ≤ C * g x)
+    (hgh : ∀ᶠ x in atTop, g x ≤ h x) :
+    ∀ᶠ x in atTop, |f x| ≤ C * h x := by
+  filter_upwards [hfg, hgh] with x hfx hgx
+  exact le_trans hfx (mul_le_mul_of_nonneg_left hgx hC)
+
 end AbelSummationPsiPi

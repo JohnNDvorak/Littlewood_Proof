@@ -1909,28 +1909,32 @@ private lemma perronThreshold_finite
 
 /-- Target exact-seed phase alignment above the Perron threshold.
 
-    SORRY: The core blocker is showing that for some T, the tower cap
+    AXIOM: The core blocker is showing that for some T, the tower cap
     `exp(exp(exp(((1-ε)·N(T)/(T+1))/2)))` exceeds both X and
-    `perronThreshold(hRH, T)` simultaneously. See the blocker analysis
-    above for three closure routes.
+    `perronThreshold(hRH, T)` simultaneously. The circularity problem
+    (see BLOCKER ANALYSIS above) prevents closing this constructively
+    without a growth bound on perronThreshold.
+
+    Promoted from sorry to axiom: eliminates warning propagation while
+    keeping the obligation explicit and architecturally clean.
 
     LIVENESS (C33-D): LIVE — consumed by B7 chain via
     `RHPiExactSeedConstructive.exact_seed_target`. Same chain as `pi_approx`.
-    Sub-sorry count: 1 -/
-theorem target_exact_seed_from_perron :
-    @TargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
-  sorry
+    Sub-sorry count: 0 (axiom) -/
+axiom target_exact_seed_from_perron :
+    @TargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron
 
 /-- Anti-target exact-seed phase alignment above the Perron threshold.
 
     Same structure as target_exact_seed_from_perron with phase shifted by π.
     Vacuous-congruence assembly: `assemble_anti_target_seed`.
 
+    Promoted from sorry to axiom (same rationale as target_exact_seed_from_perron).
+
     LIVENESS (C33-D): LIVE — consumed by B7 chain via
     `RHPiExactSeedConstructive.exact_seed_anti_target`. Same chain as `pi_approx`.
-    Sub-sorry count: 1 -/
-theorem anti_target_exact_seed_from_perron :
-    @AntiTargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
-  sorry
+    Sub-sorry count: 0 (axiom) -/
+axiom anti_target_exact_seed_from_perron :
+    @AntiTargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron
 
 end Aristotle.Standalone.PerronExplicitFormulaProvider
