@@ -755,3 +755,126 @@ theorem leibniz_shifted (a : ℕ → ℝ) (ha_anti : Antitone a)
   simpa using h
 
 end AbelSummationPsiPi_Leibniz
+
+-- ============================================================
+-- Part 16: Supplementary asymptotic lemmas (Ralph C63-C70)
+-- ============================================================
+
+namespace AbelSummationPsiPi_Asymptotics
+
+open Real Filter Asymptotics
+
+noncomputable section
+
+/-- (logx)² = o(x). -/
+theorem log_sq_isLittleO_id :
+    (fun x : ℝ => (Real.log x) ^ 2) =o[atTop] (fun x => x) := by
+  have h1 : (fun x : ℝ => Real.log x) =o[atTop] (fun x => x ^ ((1 : ℝ) / 2)) :=
+    isLittleO_log_rpow_atTop (by norm_num : (0 : ℝ) < 1 / 2)
+  have hlog2 : (fun x : ℝ => (Real.log x) ^ 2) =o[atTop]
+      (fun x => x ^ ((1 : ℝ) / 2) * x ^ ((1 : ℝ) / 2)) := by
+    simp_rw [sq]; exact h1.mul h1
+  exact hlog2.trans_isBigO (by
+    apply IsBigO.of_bound 1
+    filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
+    rw [one_mul, ← rpow_add hx,
+        show (1 : ℝ) / 2 + 1 / 2 = 1 from by norm_num, rpow_one])
+
+/-- (logx)²/x → 0. -/
+theorem log_sq_div_id_tendsto_zero :
+    Tendsto (fun x : ℝ => (Real.log x) ^ 2 / x) atTop (nhds 0) :=
+  log_sq_isLittleO_id.tendsto_div_nhds_zero
+
+/-- For C, δ > 0, eventually C·(logx)²/x ≤ δ. -/
+theorem log_sq_div_x_eventually_small (C : ℝ) (hC : 0 < C) (δ : ℝ) (hδ : 0 < δ) :
+    ∀ᶠ x in atTop, C * (Real.log x) ^ 2 / x ≤ δ := by
+  have h_tend := log_sq_div_id_tendsto_zero
+  rw [Metric.tendsto_nhds] at h_tend
+  filter_upwards [h_tend (δ / C) (div_pos hδ hC), eventually_gt_atTop (0 : ℝ)] with x hx hx_pos
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg (sq_nonneg _) (le_of_lt hx_pos))] at hx
+  have h1 : C * ((Real.log x) ^ 2 / x) < C * (δ / C) := mul_lt_mul_of_pos_left hx hC
+  have h2 : C * (δ / C) = δ := mul_div_cancel₀ δ (ne_of_gt hC)
+  have h3 : C * (Real.log x) ^ 2 / x = C * ((Real.log x) ^ 2 / x) := by ring
+  linarith
+
+/-- logx/x → 0. -/
+theorem log_div_id_tendsto_zero :
+    Tendsto (fun x : ℝ => Real.log x / x) atTop (nhds 0) := by
+  have h := isLittleO_log_rpow_atTop (show (0 : ℝ) < 1 from by norm_num)
+  simp only [rpow_one] at h
+  exact h.tendsto_div_nhds_zero
+
+/-- logx = o(x^ε) for ε > 0. -/
+theorem log_isLittleO_rpow (ε : ℝ) (hε : 0 < ε) :
+    (fun x : ℝ => Real.log x) =o[atTop] (fun x => x ^ ε) :=
+  isLittleO_log_rpow_atTop hε
+
+/-- Eventually logx ≤ C·x^ε for C, ε > 0. -/
+theorem log_eventually_le_rpow (C : ℝ) (hC : 0 < C) (ε : ℝ) (hε : 0 < ε) :
+    ∀ᶠ x in atTop, Real.log x ≤ C * x ^ ε := by
+  have h := (log_isLittleO_rpow ε hε).def hC
+  filter_upwards [h, eventually_gt_atTop (0 : ℝ)] with x hx hx_pos
+  calc Real.log x ≤ |Real.log x| := le_abs_self _
+    _ = ‖Real.log x‖ := (Real.norm_eq_abs _).symm
+    _ ≤ C * ‖x ^ ε‖ := hx
+    _ = C * x ^ ε := by rw [norm_of_nonneg (rpow_nonneg (le_of_lt hx_pos) _)]
+
+/-- (logx)³ = o(x). -/
+theorem log_cube_isLittleO_id :
+    (fun x : ℝ => (Real.log x) ^ 3) =o[atTop] (fun x => x) := by
+  have h1 : (fun x : ℝ => Real.log x) =o[atTop] (fun x => x ^ ((1 : ℝ) / 3)) :=
+    isLittleO_log_rpow_atTop (by norm_num : (0 : ℝ) < 1 / 3)
+  have hlog3 : (fun x : ℝ => (Real.log x) ^ 3) =o[atTop]
+      (fun x => x ^ ((1 : ℝ) / 3) * (x ^ ((1 : ℝ) / 3) * x ^ ((1 : ℝ) / 3))) := by
+    have : (fun x : ℝ => (Real.log x) ^ 3) = (fun x => Real.log x * (Real.log x * Real.log x)) :=
+      funext (fun x => by ring)
+    rw [this]; exact h1.mul (h1.mul h1)
+  exact hlog3.trans_isBigO (by
+    apply IsBigO.of_bound 1
+    filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
+    rw [one_mul, ← rpow_add hx, ← rpow_add hx,
+        show (1 : ℝ) / 3 + ((1 : ℝ) / 3 + 1 / 3) = 1 from by norm_num, rpow_one])
+
+/-- Eventually (logx)³ ≤ ε·x for any ε > 0. -/
+theorem log_cube_eventually_le (ε : ℝ) (hε : 0 < ε) :
+    ∀ᶠ x in atTop, (Real.log x) ^ 3 ≤ ε * x := by
+  have h := log_cube_isLittleO_id.def hε
+  filter_upwards [h, eventually_gt_atTop (0 : ℝ)] with x hx hx_pos
+  calc (Real.log x) ^ 3 ≤ |(Real.log x) ^ 3| := le_abs_self _
+    _ = ‖(Real.log x) ^ 3‖ := (Real.norm_eq_abs _).symm
+    _ ≤ ε * ‖x‖ := hx
+    _ = ε * x := by rw [norm_of_nonneg (le_of_lt hx_pos)]
+
+/-- logx/√x → 0: log is negligible compared to square root. -/
+theorem log_div_sqrt_tendsto_zero :
+    Tendsto (fun x : ℝ => Real.log x / Real.sqrt x) atTop (nhds 0) := by
+  have h := isLittleO_log_rpow_atTop (show (0 : ℝ) < 1 / 2 from by norm_num)
+  have h2 : (fun x : ℝ => Real.log x / Real.sqrt x) =
+      (fun x => Real.log x / x ^ ((1 : ℝ) / 2)) := by
+    ext x; rw [Real.sqrt_eq_rpow]
+  rw [h2]; exact h.tendsto_div_nhds_zero
+
+/-- For any C, δ > 0, eventually C·logx ≤ δ·√x.
+    From logx = o(√x) via isLittleO_log_rpow_atTop. -/
+theorem C_log_le_delta_sqrt (C : ℝ) (hC : 0 < C) (δ : ℝ) (hδ : 0 < δ) :
+    ∀ᶠ x in atTop, C * Real.log x ≤ δ * Real.sqrt x := by
+  have h_o := isLittleO_log_rpow_atTop (show (0 : ℝ) < 1 / 2 from by norm_num)
+  have h_eq : (fun x : ℝ => x ^ ((1:ℝ)/2)) = (fun x => Real.sqrt x) := by
+    ext x; exact (Real.sqrt_eq_rpow x).symm
+  rw [h_eq] at h_o
+  have h_ev := h_o.def (show (0:ℝ) < δ / C from div_pos hδ hC)
+  filter_upwards [h_ev, eventually_gt_atTop (1 : ℝ)] with x hx hx1
+  have hlog_eq : ‖Real.log x‖ = Real.log x := by
+    rw [Real.norm_eq_abs, abs_of_pos (Real.log_pos hx1)]
+  have hsqrt_eq : ‖Real.sqrt x‖ = Real.sqrt x := by
+    rw [Real.norm_eq_abs, abs_of_pos (Real.sqrt_pos_of_pos (by linarith))]
+  calc C * Real.log x
+      = C * ‖Real.log x‖ := by rw [hlog_eq]
+    _ ≤ C * ((δ / C) * ‖Real.sqrt x‖) :=
+        mul_le_mul_of_nonneg_left hx hC.le
+    _ = δ * ‖Real.sqrt x‖ := by field_simp
+    _ = δ * Real.sqrt x := by rw [hsqrt_eq]
+
+end
+
+end AbelSummationPsiPi_Asymptotics
