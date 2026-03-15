@@ -75,16 +75,8 @@ theorem shifted_contours_bound_of_components
 
 /-- **Contour bound from Hadamard product decomposition** (C50).
 
-    If we have:
-    1. A pointwise bound on ζ'/ζ: |ζ'/ζ(1/2+it)| ≤ A·(logT)² for 1 ≤ |t| ≤ T
-    2. A contour geometry bound: the Perron rectangle ∫ gives
-       √x · ∫₁ᵀ A·(logT)²/t dt ≤ A·√x·(logT)²·logT = A·√x·(logT)³
-    3. Horizontal segment bounds: ≤ B·√x·(logT)²/T each
-
-    Then for T ≥ 16, the total contour bound is
-    (A + 2B) · √x · (logT)² / √T.
-
-    This lemma captures the pure algebra: (logT)³/T ≤ (logT)²/√T for T ≥ 16. -/
+    Total contour: (A·(logT)³ + 2B·(logT)²)/T ≤ (A+2B)·(logT)²/√T for T ≥ 16.
+    Uses logT ≤ √T and √T ≤ T. -/
 theorem contour_bound_assembly
     (A B : ℝ) (hA : 0 < A) (hB : 0 < B)
     (x T : ℝ) (_hx : 2 ≤ x) (hT : 16 ≤ T) :
@@ -97,35 +89,56 @@ theorem contour_bound_assembly
     calc Real.sqrt T ≤ Real.sqrt T * Real.sqrt T :=
           le_mul_of_one_le_right (Real.sqrt_nonneg T) (by rw [Real.one_le_sqrt]; linarith)
       _ = T := Real.mul_self_sqrt hT_pos.le
-  -- First piece: logT ≤ √T for T ≥ 16, so (logT)³/T ≤ (logT)²·√T/T = (logT)²/√T
-  have h_vert : A * (Real.sqrt x * (Real.log T) ^ 3 / T) ≤
-      A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
-    apply mul_le_mul_of_nonneg_left _ hA.le
+  -- (logT)²/T ≤ (logT)²/√T since √T ≤ T
+  have h_num_nn : 0 ≤ Real.sqrt x * (Real.log T) ^ 2 :=
+    mul_nonneg (Real.sqrt_nonneg x) (sq_nonneg _)
+  have h_T_sqrtT : Real.sqrt x * (Real.log T) ^ 2 / T ≤
+      Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
+    rw [div_le_div_iff₀ hT_pos h_sqrtT_pos]
+    exact mul_le_mul_of_nonneg_left h_sqrtT_le_T h_num_nn
+  -- (logT)³/T = logT · (logT)²/T ≤ √T · (logT)²/T = (logT)²·√T/T = (logT)²/√T
+  -- actually: (logT)³/T ≤ (logT)²/√T ⟺ (logT)³·√T ≤ (logT)²·T
+  -- ⟺ logT ≤ T/√T = √T (true for T ≥ 16 by logT_le_sqrtT)
+  have h_vert : Real.sqrt x * (Real.log T) ^ 3 / T ≤
+      Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
     rw [div_le_div_iff₀ hT_pos h_sqrtT_pos]
     rw [show Real.sqrt x * (Real.log T) ^ 2 * T =
         Real.sqrt x * (Real.log T) ^ 2 * (Real.sqrt T * Real.sqrt T) from by
       rw [Real.mul_self_sqrt hT_pos.le]]
-    have h_log_sqrt : Real.log T ≤ Real.sqrt T := by
-      calc Real.log T = Real.log (Real.sqrt T * Real.sqrt T) := by
-            rw [Real.mul_self_sqrt hT_pos.le]
-        _ ≤ Real.sqrt T := by
-            rw [Real.log_le_iff_le_exp (mul_pos h_sqrtT_pos h_sqrtT_pos)]
-            calc Real.sqrt T * Real.sqrt T = T := Real.mul_self_sqrt hT_pos.le
-              _ ≤ Real.exp (Real.sqrt T) := by
-                  rw [← Real.sq_sqrt hT_pos.le]
-                  exact Littlewood.Bridge.PerronAssumptionsBridge.exp_ge_sq_of_ge_four
-                    (Real.sqrt T) (by rw [show (4 : ℝ) = Real.sqrt 16 from by
-                      rw [show (16 : ℝ) = 4 ^ 2 from by norm_num,
-                          Real.sqrt_sq (by norm_num : (0:ℝ) ≤ 4)]
-                    ; exact Real.sqrt_le_sqrt (by linarith))
-    nlinarith [sq_nonneg (Real.log T), Real.sqrt_nonneg x]
-  -- Second piece: √T ≤ T so (logT)²/T ≤ (logT)²/√T
-  have h_horiz : 2 * B * (Real.sqrt x * (Real.log T) ^ 2 / T) ≤
-      2 * B * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
-    apply mul_le_mul_of_nonneg_left _ (by positivity)
-    exact div_le_div_of_nonneg_left
-      (mul_nonneg (Real.sqrt_nonneg x) (sq_nonneg _)) hT_pos h_sqrtT_pos h_sqrtT_le_T
-  linarith [mul_nonneg hA.le (div_nonneg (mul_nonneg (Real.sqrt_nonneg x) (sq_nonneg _))
-    h_sqrtT_pos.le)]
+    -- logT ≤ √T for T ≥ 16: T = (√T)² ≤ exp(√T) since exp(u) ≥ u² for u ≥ 4
+    have h_log_le : Real.log T ≤ Real.sqrt T := by
+      rw [← Real.exp_le_exp]
+      calc Real.exp (Real.log T) = T := Real.exp_log hT_pos
+        _ = (Real.sqrt T) ^ 2 := (Real.sq_sqrt hT_pos.le).symm
+        _ ≤ Real.exp (Real.sqrt T) := by
+            have h4 : (4 : ℝ) ≤ Real.sqrt T := by
+              calc (4 : ℝ) = Real.sqrt 16 := by
+                    rw [show (16 : ℝ) = 4 ^ 2 from by norm_num,
+                        Real.sqrt_sq (by norm_num : (0:ℝ) ≤ 4)]
+                _ ≤ Real.sqrt T := Real.sqrt_le_sqrt (by linarith)
+            have hst := Real.sum_le_exp_of_nonneg (by linarith : (0 : ℝ) ≤ Real.sqrt T) 4
+            simp [Finset.sum_range_succ, Nat.factorial] at hst
+            nlinarith [sq_nonneg (Real.sqrt T - 4)]
+    -- Goal: √x·(logT)³·√T ≤ √x·(logT)²·(√T·√T)
+    -- Factor: √x·(logT)²·(logT·√T) ≤ √x·(logT)²·(√T·√T) from logT ≤ √T
+    have hlog_nn : (0 : ℝ) ≤ Real.log T := by linarith [Real.log_nonneg (by linarith : (1:ℝ) ≤ T)]
+    have hfactor : Real.sqrt x * (Real.log T) ^ 2 * (Real.log T * Real.sqrt T)
+        ≤ Real.sqrt x * (Real.log T) ^ 2 * (Real.sqrt T * Real.sqrt T) := by
+      apply mul_le_mul_of_nonneg_left
+      · exact mul_le_mul_of_nonneg_right h_log_le h_sqrtT_pos.le
+      · exact mul_nonneg (Real.sqrt_nonneg x) (sq_nonneg _)
+    nlinarith [hfactor]
+  -- Piece 1: A · vert ≤ A · target
+  have h1 : A * (Real.sqrt x * (Real.log T) ^ 3 / T) ≤
+      A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+    mul_le_mul_of_nonneg_left h_vert hA.le
+  -- Piece 2: 2B · horiz ≤ 2B · target
+  have h2 : 2 * B * (Real.sqrt x * (Real.log T) ^ 2 / T) ≤
+      2 * B * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+    mul_le_mul_of_nonneg_left h_T_sqrtT (by positivity)
+  -- Sum ≤ (A + 2B) · target
+  have h_target_nn : 0 ≤ Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T :=
+    div_nonneg (mul_nonneg (Real.sqrt_nonneg x) (sq_nonneg _)) h_sqrtT_pos.le
+  linarith
 
 end Aristotle.Standalone.ExplicitFormulaPsiB5aContourBounds
