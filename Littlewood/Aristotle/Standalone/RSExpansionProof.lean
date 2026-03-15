@@ -2969,26 +2969,6 @@ private theorem phase_error_from_saddle (k : ℕ) (p : ℝ) (hp : 0 ≤ p) (hp1 
   · exact log_ratio_taylor_bound k p hp hp1
   · positivity
 
-/-- **Phase error is O(1)**: combining the log Taylor remainder with the
-    block coordinate bound gives a phase error ≤ 4π on each block.
-    This is the entry point for the cos perturbation chain.
-    Proof: p(k+1+p)²/(k+1) ≤ 1·(k+2)²/(k+1) ≤ (k+2)²/(k+1).
-    Since (k+2)² = (k+1)² + 2(k+1) + 1, we get (k+2)²/(k+1) = (k+1) + 2 + 1/(k+1) ≤ k+4.
-    So 2π·p(k+1+p)²/(k+1) ≤ 2π(k+4) ≤ 4π(k+1) for k ≥ 3.
-    For k ∈ {0,1,2}: direct check. Actually the simpler bound works:
-    Since p ≤ 1 and (k+1+p) ≤ k+2: the product p·(k+1+p)² ≤ (k+2)².
-    Then 2π(k+2)²/(k+1) = 2π((k+1)+1)²/(k+1) ≤ 2π·2(k+1) = 4π(k+1) when k ≥ 1.
-    For k=0: LHS ≤ 2π·4·1/1 = 8π while 4π·1 = 4π, so the bound fails at k=0.
-    Fix: make the RHS 8π instead, or use the already-proved phase_taylor_remainder_bounded. -/
-private theorem phase_error_O_one (k : ℕ) (p : ℝ) (hp : 0 ≤ p) (hp1 : p ≤ 1) :
-    2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 * (p / ((k : ℝ) + 1)) ≤
-    8 * Real.pi := by
-  -- Note: this statement is WRONG for k ≥ 1 (LHS grows as O(k)).
-  -- The correct O(1) bound uses p²/(2(k+1)²) not p/(k+1).
-  -- See phase_taylor_remainder_bounded for the correct version.
-  -- Keeping as sorry; not used in the main chain.
-  sorry
-
 /-- **Saddle remainder amplitude chain**: on block k with t ≥ hardyStart k,
     the composed remainder satisfies
     (2π/t)^{1/4} · |cos perturbation| ≤ (2π/t)^{1/4} · 4π ≤ 4π / √(k+1).
@@ -3007,50 +2987,6 @@ private theorem saddle_remainder_amplitude_bound (k : ℕ) (t : ℝ)
         mul_le_mul_of_nonneg_left hδ h_amp_nn
     _ ≤ 4 * Real.pi / Real.sqrt ((k : ℝ) + 1) :=
         amplitude_remainder_chain k t ht_lo ht_pos
-
-/-- **Remainder amplitude-phase product bound on block with both endpoints**:
-    For t in block k (hardyStart k ≤ t ≤ hardyStart(k+1)),
-    the saddle-point remainder satisfies:
-    (2π/t)^{1/4} · 4π ≤ (1/2) · t^{-3/4}
-    This requires t ≤ hardyStart(k+1) to get the reverse bound on k+1 vs t.
-
-    The full derivation:
-    remainder ≤ (2π/t)^{1/4} · |δ| where |δ| ≤ p²·2π(k+1+p)²/(k+1)² ≤ 4π
-    So remainder ≤ (2π/t)^{1/4} · 4π = 4π(2π)^{1/4} · t^{-1/4}
-    For C_R ≤ 1/2: we need 4π(2π)^{1/4} · t^{-1/4} ≤ (1/2) · t^{-3/4}
-    i.e., 8π(2π)^{1/4} ≤ t^{-1/2}, which requires t ≤ (8π(2π)^{1/4})^{-2} ≈ 0.
-    That's impossible! So the SIMPLE amplitude × phase_error chain
-    gives O(t^{-1/4}), NOT O(t^{-3/4}).
-
-    The O(t^{-3/4}) comes from the cubic Fresnel correction absorbing the
-    quadratic phase into Ψ(p), leaving only the CUBIC and higher terms
-    which contribute O(p³/(k+1)²) = O(1/(k+1)²) to the phase.
-    Combined with |cos(α+δ)-cos(α)| ≤ |δ| and amplitude (2π/t)^{1/4}:
-    remainder ≤ (2π/t)^{1/4} · C/(k+1)² ≤ C'·t^{-1/4}·t^{-1} ... too much.
-
-    Actually: the cubic phase error is O(p³/(k+1)) (not /(k+1)²),
-    and the QUARTIC is O(p⁴/(k+1)²). The Fresnel correction handles the
-    cubic, leaving the quartic as the dominant error:
-    |δ_quartic| ≤ C·p⁴/(k+1)² ≤ C/(k+1)²
-    With amplitude (2π/t)^{1/4} ~ (k+1)^{-1/2}:
-    remainder ≤ C · (k+1)^{-1/2} · (k+1)^{-2} = C · (k+1)^{-5/2}
-    Converting: (k+1)^{-5/2} ≤ (2π)^{5/4} · t^{-5/4}
-    This is even BETTER than t^{-3/4}!
-
-    The correct Siegel analysis gives:
-    remainder = (2π/t)^{1/4} · O((k+1)^{-1}) (from next saddle expansion term)
-    = O(t^{-1/4} · t^{-1/2}) = O(t^{-3/4}).
-
-    This O((k+1)^{-1}) = O(t^{-1/2}) is the key: it comes from the NEXT term
-    in the saddle-point expansion, not from the cos perturbation bound.
-
-    This is irreducible steepest-descent content — sorry. -/
-private theorem saddle_remainder_chain_t_neg_three_quarter :
-    ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
-        (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
-          (4 * Real.pi / ((k : ℝ) + 1)) ≤ C_R * t ^ (-(3 : ℝ) / 4) := by
-  sorry
 
 /-- **Remainder on block k bounded by half-power series**:
     The composed saddle-point remainder, after the cos perturbation bound
