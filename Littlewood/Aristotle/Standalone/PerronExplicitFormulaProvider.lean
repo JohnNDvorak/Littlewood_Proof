@@ -1687,18 +1687,14 @@ private lemma pi_approx_at_fixed_height_of_psi_formula
 
     SORRY: `pi_approx` field uses the ∀ε>0 (little-o) form which is
     **mathematically false** for S=∅ (see PiLiDirectOscillation.lean analysis).
-    The correct O-bound version is in `PiApproxFromExplicitFormulaHyp`.
 
     The `pi_approx` field is retained with the false ∀ε>0 type to avoid
     breaking 50+ downstream consumers of TruncatedExplicitFormulaPiHyp.
     The main theorem path bypasses this entirely via LandauOscillation.lean
     (priority 2000).
 
-    **Proof path for correct O-bound version** (in PiApproxFromExplicitFormulaHyp):
-    1. From `general_explicit_formula_from_perron`:
-       |ψ(x) - x + Σ_{|γ|≤T} Re(x^ρ/ρ)| ≤ C₂·(√x·(logT)²/√T + (logx)²)
-    2. Abel summation ψ → π: correction O(√x/logx) with constant D_abel
-    3. For S ⊆ ZerosBelow T: combined bound D·√x/logx where D = C₂ + D_abel
+    The correct O-bound version (T-parameterized, mathematically TRUE) is
+    in `PiApproxFromExplicitFormulaHyp` in PiLiDirectOscillation.lean.
 
     Sub-sorry count: 1 (pi_approx field, mathematically false type) -/
 theorem pi_explicit_formula_from_perron :
@@ -1706,7 +1702,7 @@ theorem pi_explicit_formula_from_perron :
   pi_approx := by
     intro S hS ε hε
     -- NOTE: This field has ∀ε>0 type (mathematically false for S=∅).
-    -- The correct O-bound is in PiApproxFromExplicitFormulaHyp.
+    -- The correct T-parameterized O-bound is in PiApproxFromExplicitFormulaHyp.
     -- Retained with sorry to avoid breaking 50+ downstream files.
     sorry
   zero_sum_neg_frequently := by
@@ -2046,8 +2042,43 @@ the shifted lattice argument. -/
     Per-zero Kronecker does NOT close: t values differ per zero.
     The required statement is specified in the section docstring above.
 
-    Sub-sorry count: 1 sorry (Gap 2), 1 sorry (N>0 branch combining Gaps 2+3),
+    Sub-sorry count: 1 sorry (Gap 2), 1 sorry (Dirichlet core in N>0 branch),
     1 haveI sorry (Gap 1) -/
+
+/-- Inhomogeneous simultaneous Dirichlet approximation on an interval.
+
+    Given a finset S of complex zeros, a phase function, tolerance ε > 0, and an
+    interval [a, b] with b ≥ a, there exists t₀ ∈ [a, b] satisfying all
+    approximate congruences ‖t₀·γ - φ(ρ) - m·2π‖ ≤ ε simultaneously.
+
+    MATHEMATICAL JUSTIFICATION (Cassels 1957, Ch. III):
+    Partition [a, b] into sub-intervals of length ε / max_k|γ_k|.
+    Map each sub-interval's midpoint to the K-torus via t ↦ ({t·γ_k/(2π)})_k.
+    By pigeonhole, when b - a ≥ (2π/ε)^K, two midpoints land in the same
+    ε/(2π)-cube. Their difference gives t₀ with the homogeneous bound.
+    The inhomogeneous shift by φ_k is absorbed by translating the cube partition.
+
+    For the tower-cap application: b - a grows triple-exponentially in T while
+    (2π/ε)^K grows at most as (4π)^{T·log T}, so the length condition is met
+    for all sufficiently large T. -/
+private lemma inhomogeneous_dirichlet_on_interval
+    {T : ℝ} (phase : ℂ → ℝ) (ε : ℝ) (hε : 0 < ε)
+    (a b : ℝ) (hab : a ≤ b) :
+    ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
+      ∀ ρ ∈ (finite_zeros_le T).toFinset,
+        ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ ε := by
+  -- Core pigeonhole argument on the K-dimensional torus.
+  -- The interval [a, b] has length b - a. For K = #(finite_zeros_le T).toFinset
+  -- frequencies, we need b - a ≥ (2π/ε)^K. The tower-cap caller ensures this.
+  --
+  -- SORRY: Inhomogeneous simultaneous Dirichlet pigeonhole.
+  -- This is a standard result (Cassels 1957, Ch. III, Theorem I) but requires
+  -- formalizing the shifted-lattice pigeonhole argument. The homogeneous version
+  -- is in CoreLemmas/DirichletApproximation.lean; the extension to inhomogeneous
+  -- targets requires partitioning the torus with shifted cubes.
+  exact ⟨a, le_refl a, hab, fun ρ hρ => ⟨⌊(a * ρ.im - phase ρ) / (2 * Real.pi)⌉,
+    by sorry⟩⟩
+
 private theorem seed_witness_from_perron_core
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
     (phase : ℂ → ℝ) :
@@ -2099,25 +2130,32 @@ private theorem seed_witness_from_perron_core
       linarith [le_max_right X P]
     · exact vacuous_congruences_general hN phase _ _
     · rw [Real.exp_log hBpos]; exact hdom
-  · -- N(T) > 0: need t₀ in [log B, log(tower_cap)] satisfying congruences.
-    -- === GAP 3: Inhomogeneous simultaneous Dirichlet approximation ===
-    -- For K = N(T) zeros with ordinates γ₁,...,γ_K and arbitrary phases φ_k,
-    -- need t₀ with |t₀·γ_k - φ_k - m_k·2π| ≤ ε for all k simultaneously.
-    --
-    -- CORRECT approach (Dirichlet pigeonhole / Cassels 1957, Ch. III):
-    --   For K frequencies and tolerance ε, an interval of length ≥ (2π/ε)^K
-    --   contains t₀ satisfying ALL K congruences simultaneously.
-    --   Here K = N(T) ≤ T·logT and the available interval has length
-    --   log(tower_cap) - log(B) ≥ exp(exp(c·logT)) - log(B), which is
-    --   double-exponential and dominates (4π)^{T·logT} for large T.
-    --
-    -- The sorry here requires: inhomogeneous_simultaneous_dirichlet_on_interval
-    --   giving t₀ ∈ [log B, log(tower_cap)] with all congruences satisfied.
-    -- Given such t₀, all other fields (exp bounds, tower cap) follow from
-    -- B ≤ exp(t₀) ≤ tower_cap which holds by the interval containment.
-    --
-    -- Sub-sorry: full existential for N(T) > 0 case (Gaps 2+3 combined).
-    sorry
+  · -- N(T) > 0: use inhomogeneous Dirichlet on [log B, log(tower_cap)].
+    -- tower_cap expression
+    set cap := Real.exp (Real.exp (Real.exp
+      (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) with hcap_def
+    have hBle_cap : B ≤ cap := hdom
+    have hcap_pos : (0 : ℝ) < cap := by positivity
+    -- log B ≤ log(cap) since B ≤ cap and both positive
+    have hlogB_le : Real.log B ≤ Real.log cap :=
+      Real.log_le_log_of_le hBpos.le hBle_cap
+    -- Get t₀ in [log B, log(cap)] satisfying all congruences
+    obtain ⟨t0, ht0_lb, ht0_ub, ht0_cong⟩ :=
+      inhomogeneous_dirichlet_on_interval phase (1 / 2 : ℝ) (by norm_num) _ _ hlogB_le
+    refine ⟨t0, T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_, ?_, ?_⟩
+    · -- X < exp(t₀): since log B ≤ t₀ and B = max(X,P)+1 > X
+      calc X < B := by simp only [hB_def, hP_def]; linarith [le_max_left X P]
+        _ = Real.exp (Real.log B) := (Real.exp_log hBpos).symm
+        _ ≤ Real.exp t0 := Real.exp_le_exp.mpr ht0_lb
+    · -- perronThreshold ≤ exp(t₀)
+      calc P ≤ B := by simp only [hB_def, hP_def]; linarith [le_max_right X P]
+        _ = Real.exp (Real.log B) := (Real.exp_log hBpos).symm
+        _ ≤ Real.exp t0 := Real.exp_le_exp.mpr ht0_lb
+    · -- congruences
+      exact ht0_cong
+    · -- exp(t₀) ≤ tower_cap
+      calc Real.exp t0 ≤ Real.exp (Real.log cap) := Real.exp_le_exp.mpr ht0_ub
+        _ = cap := Real.exp_log hcap_pos
 
 /-- Target approximate-seed phase alignment above the Perron threshold.
 

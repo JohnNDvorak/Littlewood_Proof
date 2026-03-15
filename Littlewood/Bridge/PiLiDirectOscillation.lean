@@ -52,37 +52,20 @@ class TruncatedExplicitFormulaPiHyp : Prop where
 
 /-! ### MATHEMATICAL ANALYSIS: pi_approx soundness (2026-03-15)
 
-**STATUS (updated 2026-03-15)**: Both layers are **MATHEMATICALLY FALSE**.
+**STATUS (updated 2026-03-15)**:
 
-1. `PiApproxFromExplicitFormulaHyp` (O-bound, `∃ D > 0`): **MATHEMATICALLY FALSE**.
-   States ∃ D > 0 such that for any S of critical-line zeros, eventually
-   |π(x) - li(x) + (Σ_{ρ∈S} x^ρ/ρ)/logx| ≤ D·√x/logx.
-   Setting S=∅ requires |π(x)-li(x)| ≤ D·√x/logx. But even under RH, the best
-   bound is π(x)-li(x) = O(√x·logx) (von Koch 1901). Since √x·logx/(√x/logx) = (logx)²,
-   no fixed D can absorb the (logx)² factor. The O-bound version has the same structural
-   defect as the little-o version below.
+1. `PiApproxFromExplicitFormulaHyp` (T-parameterized O-bound): **MATHEMATICALLY TRUE**.
+   States ∀ T ≥ 2, ∃ D_T > 0, ∀ᶠ x, |π(x)-li(x)+Σ_{ZerosBelow T}/logx| ≤ D_T·√x/logx.
+   Proof: From the ψ-level Perron formula,
+     |ψ(x) - x + Σ_{ZerosBelow T} x^ρ/ρ| ≤ C₂·(√x·(logT)²/√T + (logx)²).
+   Abel summation ψ→π: |π(x)-li(x)-(ψ(x)-x)/logx| ≤ D_abel·√x/logx.
+   Dividing the ψ bound by logx and noting (logx)²/logx = logx = o(√x/logx):
+     D_T = C₂·(logT)²/√T + D_abel + C₂ works for x sufficiently large.
 
 2. `TruncatedExplicitFormulaPiHyp.pi_approx` (little-o, `∀ ε > 0`): **MATHEMATICALLY FALSE**.
    Setting S=∅ gives π(x)-li(x) = o(√x/logx), contradicting Ω± oscillation.
    Retained with false type to avoid breaking 50+ downstream files.
    The main theorem path bypasses this via LandauOscillation.lean (priority 2000).
-
-**ROOT CAUSE** (applies to BOTH layers):
-1. The `∀ S` quantification (including S=∅) requires π(x)-li(x) = O(√x/logx).
-2. Under RH: π(x)-li(x) = O(√x·logx), which is (logx)² times the target scale.
-3. Without RH: unconditional bounds are even worse (O(x·exp(-c√logx))).
-4. No fixed D (or ε) can absorb the (logx)² gap between √x·logx and √x/logx.
-
-**CORRECT FORMULATION** (future multi-file refactor):
-The right statement uses ZerosBelow T with D depending on T:
-  ∀ T ≥ 2, ∃ D_T > 0, ∀ᶠ x, |π(x)-li(x)+Σ_{ZerosBelow T}/logx| ≤ D_T·√x/logx
-Then the oscillation extraction uses A(T) → ∞ growth to exceed D_T for large T.
-This affects 50+ downstream files and is left as future work.
-
-**SORRY HISTORY**: 2 sorrys → 1 sorry (consolidated). The remaining sorry on
-PiApproxFromExplicitFormulaHyp is on a FALSE statement (not a legitimate proof obligation).
-The false `pi_approx` field in PerronExplicitFormulaProvider has its own sorry.
-The main theorem path is unaffected: LandauOscillation (priority 2000) bypasses both.
 -/
 
 /-- Abel summation correction: π(x) - li(x) ≈ (ψ(x) - x)/logx with correction
@@ -166,43 +149,44 @@ instance : PsiExplicitFormulaZerosHyp where
                   Aristotle.Standalone.ExplicitFormulaPsiSkeleton.zeroSumRe]
     rw [heq]; exact hx
 
-/-- π-level truncated explicit formula at √x/logx scale (O-bound version).
+/-- π-level truncated explicit formula at √x/logx scale (T-parameterized O-bound).
 
-    **MATHEMATICALLY FALSE** (2026-03-15 analysis): Setting S=∅ requires
-    |π(x)-li(x)| ≤ D·√x/logx, but even under RH the best bound is
-    O(√x·logx) — a factor (logx)² too large. No fixed D works.
+    **MATHEMATICALLY TRUE** (2026-03-15 refactor): For each T ≥ 2, the Perron
+    formula at height T gives a ψ-level bound with remainder depending on T.
+    Abel summation converts this to a π-level bound with D_T depending on T.
+    The key: D_T is allowed to depend on T (via (logT)²/√T + Abel constant),
+    and the ∀ᶠ x threshold also depends on T.
 
-    The correct formulation would use ZerosBelow T with T-dependent D:
-      ∀ T ≥ 2, ∃ D_T > 0, ∀ᶠ x, |π(x)-li(x)+Σ_{ZerosBelow T}/logx| ≤ D_T·√x/logx
-    This requires a multi-file refactor (50+ downstream files).
+    This is the correct replacement for the old ∀S formulation (which was false
+    for S=∅). Here ZerosBelow T is the canonical finite set from DirichletPhaseAlignment.
 
-    NOTE: TruncatedExplicitFormulaPiHyp.pi_approx retains the ∀ε>0 form
-    for downstream compatibility. Both are false; both bypassed by
-    LandauOscillation.lean (priority 2000) for the main theorem path. -/
+    Proof path:
+    1. From `general_explicit_formula_from_perron`:
+       |ψ(x) - x + Σ_{ZerosBelow T} Re(x^ρ/ρ)| ≤ C₂·(√x·(logT)²/√T + (logx)²)
+    2. Abel summation ψ→π: |π(x)-li(x)-(ψ(x)-x)/logx| ≤ D_abel·√x/logx
+    3. Dividing by logx and using (logx)³/√x → 0:
+       D_T = C₂·(logT)²/√T + D_abel + C₂ works for x sufficiently large. -/
 class PiApproxFromExplicitFormulaHyp : Prop where
-  /-- There exists D > 0 such that for any finite set S of critical-line zeros,
-      eventually |π(x) - li(x) + (Σ_{ρ∈S} x^ρ/ρ)/logx| ≤ D · √x/logx.
-      The constant D comes from the Abel summation ψ→π correction. -/
+  /-- For each T ≥ 2, there exists D_T > 0 such that eventually
+      |π(x) - li(x) + (Σ_{ρ∈ZerosBelow T} x^ρ/ρ)/logx| ≤ D_T · √x/logx.
+      The constant D_T absorbs the Perron error at height T plus the Abel correction. -/
   pi_approx_bound :
-    ∃ D : ℝ, 0 < D ∧
-      ∀ (S : Finset ℂ),
-        (∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2) →
-        ∀ᶠ x in atTop,
-          |piLiError x + ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
-            ≤ D * (Real.sqrt x / Real.log x)
+    ∀ T : ℝ, 2 ≤ T → ∃ D > (0 : ℝ), ∀ᶠ x in atTop,
+      |piLiError x + (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T,
+        (x : ℂ) ^ ρ / ρ).re / Real.log x| ≤ D * (Real.sqrt x / Real.log x)
 
-/-- Sorry for PiApproxFromExplicitFormulaHyp (O-bound version).
+/-- Instance for PiApproxFromExplicitFormulaHyp (T-parameterized O-bound).
 
-    SORRY (1): **MATHEMATICALLY FALSE** — same structural defect as the ∀ε>0 version.
-    Setting S=∅ requires |π(x)-li(x)| = O(√x/logx), but the best unconditional
-    bound is O(x·exp(-c√logx)) and even under RH only O(√x·logx). The (logx)²
-    gap between √x·logx and √x/logx cannot be absorbed by any fixed D.
-
-    This sorry is on a false statement. The main theorem path bypasses it via
-    LandauOscillation.lean (priority 2000). The correct formulation requires
-    ZerosBelow T with T-dependent constant — see MATHEMATICAL ANALYSIS above. -/
+    SORRY (1): The statement is **mathematically true** — a legitimate proof
+    obligation. Proof requires formalizing the Abel summation ψ→π correction
+    combined with `general_explicit_formula_from_perron`. The key estimate:
+    for fixed T, the ψ-level error C₂·(√x·(logT)²/√T + (logx)²) divided by
+    logx gives C₂·(√x·(logT)²/(√T·logx) + (logx)²/logx), and eventually
+    (logx)²/logx = logx ≤ √x/logx (since (logx)² ≤ √x for x large).
+    So D_T = C₂·(logT)²/√T + D_abel + C₂ suffices. -/
 instance : PiApproxFromExplicitFormulaHyp where
   pi_approx_bound := by
+    intro T hT
     sorry
 
 /-- Ω₋ direction for `π(x) - li(x)` from aligned phases. -/
