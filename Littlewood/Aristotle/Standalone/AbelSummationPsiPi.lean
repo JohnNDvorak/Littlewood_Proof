@@ -672,3 +672,86 @@ theorem abs_div_log_eq (f : ℝ → ℝ) (x : ℝ) (hx : 0 < Real.log x) :
   rw [abs_div, abs_of_pos hx]
 
 end AbelSummationPsiPi
+
+-- Appended atomically by Ralph C62-C70
+
+namespace AbelSummationPsiPi_Leibniz
+
+open Real Filter Asymptotics
+
+/-! ## Leibniz alternating series bound (Ralph C62-C70)
+
+Full Leibniz test: |∑_{k<n} (-1)^k a(k)| ≤ a(0) for antitone nonneg a. -/
+
+/-- Step-2 recurrence for alternating sums. -/
+theorem alternating_sum_step2 (a : ℕ → ℝ) (n : ℕ) :
+    ∑ i ∈ Finset.range (n + 2), (-1 : ℝ) ^ i * a i =
+    (∑ i ∈ Finset.range n, (-1 : ℝ) ^ i * a i) +
+      (-1 : ℝ) ^ n * (a n - a (n + 1)) := by
+  rw [Finset.sum_range_succ, Finset.sum_range_succ]
+  have : (-1 : ℝ) ^ (n + 1) = -((-1 : ℝ) ^ n) := by ring
+  rw [this]; ring
+
+/-- Even alternating sum = paired differences. -/
+theorem even_alternating_eq_paired (a : ℕ → ℝ) (k : ℕ) :
+    ∑ i ∈ Finset.range (2 * k), (-1 : ℝ) ^ i * a i =
+    ∑ j ∈ Finset.range k, (a (2 * j) - a (2 * j + 1)) := by
+  induction k with
+  | zero => simp
+  | succ m ih =>
+    rw [show 2 * (m + 1) = 2 * m + 2 from by omega, alternating_sum_step2]
+    rw [ih, Finset.sum_range_succ]; congr 1
+    rw [Even.neg_one_pow (⟨m, by omega⟩ : Even (2 * m)), one_mul]
+
+/-- Even partial sum nonneg for antitone sequences. -/
+theorem alternating_even_sum_nonneg (a : ℕ → ℝ) (ha_anti : Antitone a) (n : ℕ) :
+    0 ≤ ∑ k ∈ Finset.range (2 * n), (-1 : ℝ) ^ k * a k := by
+  rw [even_alternating_eq_paired]
+  exact Finset.sum_nonneg (fun j _ =>
+    sub_nonneg.mpr (ha_anti (show 2 * j ≤ 2 * j + 1 from Nat.le_succ _)))
+
+/-- Odd alternating sum = a₀ minus paired differences. -/
+theorem odd_alternating_eq_sub_paired (a : ℕ → ℝ) (k : ℕ) :
+    ∑ i ∈ Finset.range (2 * k + 1), (-1 : ℝ) ^ i * a i =
+    a 0 - ∑ j ∈ Finset.range k, (a (2 * j + 1) - a (2 * j + 2)) := by
+  induction k with
+  | zero => simp
+  | succ m ih =>
+    rw [show 2 * (m + 1) + 1 = (2 * m + 1) + 2 from by omega, alternating_sum_step2]
+    rw [ih, Finset.sum_range_succ]
+    rw [Odd.neg_one_pow (⟨m, by omega⟩ : Odd (2 * m + 1))]; ring
+
+/-- Odd partial sum ≤ a₀ for antitone sequences. -/
+theorem alternating_odd_sum_le_first (a : ℕ → ℝ) (ha_anti : Antitone a) (n : ℕ) :
+    ∑ k ∈ Finset.range (2 * n + 1), (-1 : ℝ) ^ k * a k ≤ a 0 := by
+  rw [odd_alternating_eq_sub_paired]
+  linarith [Finset.sum_nonneg (fun j (_ : j ∈ Finset.range n) =>
+    sub_nonneg.mpr (ha_anti (show 2 * j + 1 ≤ 2 * j + 2 from by omega)))]
+
+/-- **Full Leibniz bound**: |∑_{k<n} (-1)^k a(k)| ≤ a(0) for antitone nonneg a. -/
+theorem leibniz_alternating_bound (a : ℕ → ℝ) (ha_anti : Antitone a)
+    (ha_nn : ∀ k, 0 ≤ a k) (n : ℕ) :
+    |∑ k ∈ Finset.range n, (-1 : ℝ) ^ k * a k| ≤ a 0 := by
+  rcases Nat.even_or_odd n with ⟨m, hm⟩ | ⟨m, hm⟩
+  · rw [show n = 2 * m from by omega, abs_le]; constructor
+    · linarith [alternating_even_sum_nonneg a ha_anti m, ha_nn 0]
+    · rcases m with _ | m2
+      · simp [ha_nn 0]
+      · rw [show 2 * (m2 + 1) = (2 * m2 + 1) + 1 from by omega, Finset.sum_range_succ]
+        rw [Odd.neg_one_pow (⟨m2, by omega⟩ : Odd (2 * m2 + 1)), neg_one_mul]
+        linarith [alternating_odd_sum_le_first a ha_anti m2, ha_nn (2 * m2 + 1)]
+  · rw [hm, abs_le]; constructor
+    · rw [Finset.sum_range_succ, Even.neg_one_pow (⟨m, by omega⟩ : Even (2 * m)), one_mul]
+      linarith [alternating_even_sum_nonneg a ha_anti m, ha_nn (2 * m), ha_nn 0]
+    · exact alternating_odd_sum_le_first a ha_anti m
+
+/-- Leibniz for shifted sequence. -/
+theorem leibniz_shifted (a : ℕ → ℝ) (ha_anti : Antitone a)
+    (ha_nn : ∀ k, 0 ≤ a k) (j n : ℕ) :
+    |∑ k ∈ Finset.range n, (-1 : ℝ) ^ k * a (k + j)| ≤ a j := by
+  have h := leibniz_alternating_bound (fun k => a (k + j))
+    (fun _ _ hab => ha_anti (Nat.add_le_add_right hab j))
+    (fun k => ha_nn (k + j)) n
+  simpa using h
+
+end AbelSummationPsiPi_Leibniz
