@@ -327,5 +327,116 @@ theorem log_combined_le_standard {T : ℝ} (hT : 16 ≤ T) :
         · exact mul_le_mul_of_nonneg_left h_sqrtT (by positivity)
     _ = 3 * (Real.log T) ^ 2 * Real.sqrt T := by ring
 
+/-! ### Case-split infrastructure for ContourRemainderBoundHyp
+
+The sorry at `ContourRemainderBoundHyp` (line 210) requires a bound for ALL T ≥ 2.
+This decomposes into:
+  (a) T ∈ [2, 16] — the "small T" case
+  (b) T ≥ 16 — the "large T" case (from `LargeTContourBoundHyp`)
+
+The bridge file proves both cases but can't be imported here. We provide the
+case-split combiner inline so the sorry reduces to providing the two sub-bounds. -/
+
+/-- Case split on T: if the contour bound holds for [2,16] and for [16,∞),
+    it holds for all T ≥ 2. This is the INLINE version of the bridge's
+    `case_split_T_bound`, avoiding the import cycle. -/
+theorem contour_case_split
+    (C_s C_l : ℝ) (hCs : 0 < C_s) (hCl : 0 < C_l)
+    (h_small : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |shiftedRemainderRe x T| ≤
+        C_s * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+    (h_large : ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+      |shiftedRemainderRe x T| ≤
+        C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  refine ⟨max C_s C_l, lt_max_of_lt_left hCs, ?_⟩
+  intro x T hx hT
+  have h_err_nn : 0 ≤ Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
+    apply div_nonneg (mul_nonneg (Real.sqrt_nonneg _) (sq_nonneg _)) (Real.sqrt_nonneg _)
+  by_cases hT16 : T ≤ 16
+  · calc |shiftedRemainderRe x T|
+        ≤ C_s * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+          h_small x T hx hT hT16
+      _ ≤ max C_s C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+          mul_le_mul_of_nonneg_right (le_max_left _ _) h_err_nn
+  · push_neg at hT16
+    calc |shiftedRemainderRe x T|
+        ≤ C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+          h_large x T hx (by linarith)
+      _ ≤ max C_s C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+          mul_le_mul_of_nonneg_right (le_max_right _ _) h_err_nn
+
+/-- The large-T case is already available from `LargeTContourBoundHyp`. -/
+theorem contour_large_T_available :
+    ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+      |shiftedRemainderRe x T| ≤
+        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+  LargeTContourBoundHyp.bound
+
+/-- **Reduction theorem for ContourRemainderBoundHyp**: to close the sorry at
+    line 210, it suffices to provide a small-T bound for T ∈ [2, 16].
+    The large-T bound is already available from `LargeTContourBoundHyp`.
+
+    SORRY STATUS: The small-T bound is proved sorry-free in the bridge
+    (`small_T_contour_bound`) using `general_formula_accessible` + log²/√x
+    absorption. It cannot be imported here due to the import cycle, so the
+    sorry persists as an import-direction artifact.
+
+    When the import cycle is resolved OR `ZetaLogDerivPointwiseBoundHyp` is closed,
+    this sorry disappears. -/
+theorem contour_from_small_T
+    (h_small : ∃ C₀ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |shiftedRemainderRe x T| ≤
+        C₀ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  obtain ⟨C₀, hC₀, h₀⟩ := h_small
+  obtain ⟨C₁, hC₁, h₁⟩ := contour_large_T_available
+  exact contour_case_split C₀ C₁ hC₀ hC₁ h₀ h₁
+
+/-! ### Perron error shape toolbox
+
+Standard bounds on the error shape √x·(logT)²/√T, useful for downstream
+consumers of both sorry obligations. -/
+
+/-- Error shape is nonneg. -/
+theorem perron_error_shape_nonneg (x T : ℝ) :
+    0 ≤ Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T :=
+  div_nonneg (mul_nonneg (Real.sqrt_nonneg _) (sq_nonneg _)) (Real.sqrt_nonneg _)
+
+/-- Scaling preserves nonnegativity. -/
+theorem perron_error_scaled_nonneg (C x T : ℝ) (hC : 0 ≤ C) :
+    0 ≤ C * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+  mul_nonneg hC (perron_error_shape_nonneg x T)
+
+/-- Error shape is monotone in x. -/
+theorem perron_error_mono_in_x {x₁ x₂ T : ℝ} (hle : x₁ ≤ x₂) (hT : 0 < T) :
+    Real.sqrt x₁ * (Real.log T) ^ 2 / Real.sqrt T ≤
+    Real.sqrt x₂ * (Real.log T) ^ 2 / Real.sqrt T := by
+  apply div_le_div_of_nonneg_right _ (Real.sqrt_nonneg _)
+  exact mul_le_mul_of_nonneg_right (Real.sqrt_le_sqrt (by linarith)) (sq_nonneg _)
+
+/-- For T ≥ 2, the error shape is at least (log2)²/4 · √x/√T. -/
+theorem perron_error_lower_bound {x T : ℝ} (hx : 0 ≤ x) (hT : 2 ≤ T) :
+    (Real.log 2) ^ 2 / 4 * (Real.sqrt x / Real.sqrt T) ≤
+    Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hlogT : Real.log 2 ≤ Real.log T := Real.log_le_log (by norm_num) (by linarith)
+  have hlog_sq : (Real.log 2) ^ 2 ≤ (Real.log T) ^ 2 :=
+    pow_le_pow_left₀ hlog2.le hlogT 2
+  rw [show (Real.log 2) ^ 2 / 4 * (Real.sqrt x / Real.sqrt T) =
+      Real.sqrt x * ((Real.log 2) ^ 2 / 4) / Real.sqrt T from by ring]
+  apply div_le_div_of_nonneg_right _ (Real.sqrt_nonneg _)
+  calc Real.sqrt x * ((Real.log 2) ^ 2 / 4)
+      ≤ Real.sqrt x * ((Real.log T) ^ 2 / 1) := by
+        apply mul_le_mul_of_nonneg_left _ (Real.sqrt_nonneg _)
+        rw [div_one]
+        calc (Real.log 2) ^ 2 / 4 ≤ (Real.log 2) ^ 2 := by linarith [sq_pos_of_pos hlog2]
+          _ ≤ (Real.log T) ^ 2 := hlog_sq
+    _ = Real.sqrt x * (Real.log T) ^ 2 := by ring
+
 end Aristotle.Standalone.ExplicitFormulaPsiSkeleton
 
