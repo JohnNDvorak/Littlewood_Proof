@@ -50,49 +50,49 @@ class TruncatedExplicitFormulaPiHyp : Prop where
           ((∑ ρ ∈ ({ρ₀} : Finset ℂ), ((x : ℂ) ^ ρ / ρ)).re) / Real.log x
             ≤ -(c * (Real.sqrt x / Real.log x))
 
-/-! ### Decomposition of PiApproxFromExplicitFormulaHyp into Abel + ψ-level pieces
+/-! ### MATHEMATICAL ANALYSIS: pi_approx soundness (2026-03-15)
 
-The `PiApproxFromExplicitFormulaHyp` sorry decomposes into two independent
-mathematical obligations:
+**FINDING**: `TruncatedExplicitFormulaPiHyp.pi_approx` as stated is **MATHEMATICALLY FALSE**.
 
-1. **Abel correction** (partial summation ψ → π):
-   |π(x) - li(x) - (ψ(x) - x)/logx| ≤ D · √x/logx
-   Classical: Davenport Ch. 17, Montgomery-Vaughan §2.2.
-   NOTE: The original code claimed O(√x/(logx)²), but this is FALSE.
-   The dominant correction is (ψ-θ)/logx = O(√x/logx), not O(√x/(logx)²).
+The statement claims: for any finite set S of critical-line zeros and any ε > 0,
+eventually |π(x) - li(x) + (Σ_{ρ∈S} x^ρ/ρ)/logx| ≤ ε·√x/logx.
 
-2. **ψ-level explicit formula with ZerosBelow T** (Perron truncation):
-   For any δ > 0, ∃ T₀ ≥ 2, ∀ᶠ x,
-     |(ψ(x) - x + Σ_{ρ∈ZerosBelow T₀} x^ρ/ρ) / logx| ≤ δ · √x/logx
-   Provable from `general_explicit_formula_from_perron` + choose T₀ with
-   (logT₀)²/√T₀ small.
+Setting S = ∅ gives: π(x) - li(x) = o(√x/logx). But Littlewood's theorem
+(the very result we are proving) shows π(x) - li(x) = Ω±(√x/logx), so
+|π(x) - li(x)| ≥ c·√x/logx frequently, contradicting eventual o(√x/logx).
 
-NOTE: The previous decomposition used arbitrary finite sets S of critical-line
-zeros (`PsiExplicitFormulaFinsetHyp`), which is mathematically FALSE for S=∅
-(would give ψ(x)-x = o(√x), contradicting Littlewood). The correct version
-uses ZerosBelow T₀ (the actual Perron truncation set).
+**ROOT CAUSE**: Two independent issues:
+1. The `∀ S` quantification (including S=∅) is incompatible with Ω± oscillation.
+2. The ψ→π Abel correction (ψ-θ)/logx ≈ √x/logx contributes at the SAME scale
+   as the target ε·√x/logx. The previous O(√x/(logx)²) claim was FALSE; the
+   dominant correction is (ψ(x)-θ(x))/logx where ψ-θ = θ(√x)+θ(x^{1/3})+... ≈ √x.
 
-ARCHITECTURE NOTE (2026-03-15): The O(√x/logx) Abel correction is at the
-SAME scale as the target ε·√x/logx, so the `abel_bridge_adjustable` ε/2+ε/2
-absorption strategy no longer works. The `pi_approx_from_abel_and_psi` bridge
-is restructured with a single sorry that subsumes both the ZerosBelow→S
-transfer and the absorption of the Abel correction.
+**CORRECT STATEMENT** (requires multi-file refactor of 50+ consumers):
+Replace `∀ S, ∀ ε > 0` with ZerosBelow T and O-bound:
+  ∃ D > 0, ∀ T ≥ 2, ∀ᶠ x, |piLiError + Σ_{ZerosBelow T}/logx|
+    ≤ D·(√x·(logT)²/(√T·logx) + logx)
+Then change oscillation extraction to use ZerosBelow T with many zeros:
+  phase-aligned Σ_{ZerosBelow T} Re(x^ρ/(ρ·logx)) ≥ A(T)·√x/logx
+  where A(T) → ∞ as T → ∞ (Littlewood's logloglog growth).
+  For T large enough, A(T) > D, and the extraction works.
+
+**SORRY CONSOLIDATION**: Previous code had 2 sorrys:
+  1. AbelCorrectionPsiPiHyp instance (Abel correction O(√x/logx))
+  2. pi_approx_from_abel_and_psi (bridge combining Abel + ψ-level)
+Both fed into PiApproxFromExplicitFormulaHyp via a false decomposition.
+Now consolidated into a single sorry on PiApproxFromExplicitFormulaHyp.
+Sorry count: 2 → 1 in this file.
 -/
 
 /-- Abel summation correction: π(x) - li(x) ≈ (ψ(x) - x)/logx with correction
     of order O(√x/logx). Classical: partial summation applied to the
     prime-counting function (Davenport Ch. 17; Montgomery-Vaughan §2.2).
-    Not in Mathlib: requires von Mangoldt sum manipulation + integration.
 
-    NOTE (2026-03-15): The original bound used O(√x/(logx)²), but this is
-    MATHEMATICALLY FALSE. The dominant correction term is (ψ(x)-θ(x))/logx
-    where ψ-θ = θ(√x) + θ(x^{1/3}) + ... ≈ √x. Dividing by logx gives
-    √x/logx, which is NOT O(√x/(logx)²). The correct bound is O(√x/logx).
-
-    The downstream `abel_bridge_adjustable` requires O(√x/(logx)²) to absorb
-    the correction into ε·√x/logx. With the corrected O(√x/logx) bound, the
-    absorption fails for fixed D. The bridge `pi_approx_from_abel_and_psi` is
-    restructured accordingly, with the ZerosBelow→S sorry absorbing this gap. -/
+    NOTE (2026-03-15): The correction is O(√x/logx), not O(√x/(logx)²) as
+    previously claimed. The dominant term is (ψ(x)-θ(x))/logx where
+    ψ-θ = θ(√x) + θ(x^{1/3}) + ... ≈ √x. This class is retained for
+    reference but NO LONGER INSTANTIATED — the ψ→π decomposition is the
+    wrong approach for pi_approx. See MATHEMATICAL ANALYSIS above. -/
 class AbelCorrectionPsiPiHyp : Prop where
   /-- There exists D > 0 such that eventually the Abel correction is bounded. -/
   correction_bound : ∃ D > (0 : ℝ), ∀ᶠ x in atTop,
@@ -104,16 +104,17 @@ class AbelCorrectionPsiPiHyp : Prop where
     For any δ > 0, there exists T₀ ≥ 2 such that eventually
     |(ψ(x) - x + Σ_{ρ∈ZerosBelow T₀} x^ρ/ρ) / logx| ≤ δ · √x/logx.
 
-    This is the mathematically correct statement: the Perron formula gives
+    This is MATHEMATICALLY CORRECT. The Perron formula gives
     |ψ(x) - x + Σ_{|γ|≤T} x^ρ/ρ| ≤ C·(√x·(logT)²/√T + (logx)²),
     and choosing T₀ with (logT₀)²/√T₀ small + x large gives δ-smallness.
 
     PROVABLE from `general_explicit_formula_from_perron` +
     `psi_bound_div_log_eventually_small` (AbelSummationPsiPi).
 
-    NOTE: The previous `PsiExplicitFormulaFinsetHyp` used arbitrary finite sets S
-    of zeros, which is mathematically FALSE for S=∅ (would give ψ(x)-x = o(√x),
-    contradicting Littlewood). The ZerosBelow-based statement is correct. -/
+    NOTE: This is useful for the ψ-chain (littlewood_psi) but CANNOT be
+    combined with AbelCorrectionPsiPiHyp to prove pi_approx because the
+    Abel correction O(√x/logx) is at the same scale as the target.
+    See MATHEMATICAL ANALYSIS above. -/
 class PsiExplicitFormulaZerosHyp : Prop where
   /-- For any δ > 0, there exists T₀ ≥ 2 such that eventually the
       ψ-level error with ZerosBelow T₀, divided by logx, is δ-small
@@ -125,27 +126,6 @@ class PsiExplicitFormulaZerosHyp : Prop where
             (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T₀,
               (x : ℂ) ^ ρ / ρ).re) / Real.log x|
           ≤ δ * (Real.sqrt x / Real.log x)
-
-instance : AbelCorrectionPsiPiHyp where
-  correction_bound := by
-    -- The Abel correction bound: |π(x) - li(x) - (ψ(x)-x)/logx| ≤ D·√x/logx.
-    --
-    -- The identity is: π(x) - li(x) - (ψ(x)-x)/logx
-    --   = -(ψ(x)-θ(x))/logx + ∫₂ˣ (θ(t)-t)/(t·(logt)²) dt + 2/log2
-    --
-    -- (A) |ψ(x) - θ(x)| ≤ C₁·√x (PROVED: PsiThetaCanonicalBound)
-    --     ⟹ (ψ-θ)/logx = O(√x/logx) — this is the DOMINANT correction term
-    --
-    -- (B) ∫₂ˣ (θ(t)-t)/(t·(logt)²) dt converges by PNT (θ(t)=t+o(t)),
-    --     so the integral is O(1) = o(√x/logx)
-    --
-    -- Combined: O(√x/logx). This is the sharp order.
-    --
-    -- BLOCKER: Proving the identity requires Abel summation (partial summation
-    -- for π vs θ) and the li integration-by-parts formula. Both are sketched
-    -- in PartialSummationPiLiModule but use local definitions not connected
-    -- to the canonical definitions here.
-    sorry
 
 /-- PROVED from `ContourRemainderBoundHyp` (ExplicitFormulaPsiB5aDefs) +
     `psi_bound_div_log_eventually_small` (AbelSummationPsiPi).
@@ -185,12 +165,12 @@ instance : PsiExplicitFormulaZerosHyp where
                   Aristotle.Standalone.ExplicitFormulaPsiSkeleton.zeroSumRe]
     rw [heq]; exact hx
 
-/-- Abel summation ψ→π: the truncated explicit formula for π at √x/logx scale.
-    Classical: Davenport Ch. 17 + partial summation (ψ→π).
+/-- π-level truncated explicit formula at √x/logx scale.
 
-    BRIDGED from `AbelCorrectionPsiPiHyp` + `PsiExplicitFormulaZerosHyp`.
-    Sorry: ZerosBelow → arbitrary-S conversion + Abel correction absorption
-    (the O(√x/logx) correction cannot be absorbed via ε-splitting). -/
+    **MATHEMATICALLY FALSE** as stated — see MATHEMATICAL ANALYSIS above.
+    Retained with unchanged type signature to avoid breaking 50+ downstream files.
+    The correct fix is a multi-file refactor replacing `∀ S, ∀ ε > 0` with
+    `∃ D > 0, ∀ T ≥ 2` using ZerosBelow T. -/
 class PiApproxFromExplicitFormulaHyp : Prop where
   pi_approx_bound :
     ∀ (S : Finset ℂ),
@@ -199,49 +179,26 @@ class PiApproxFromExplicitFormulaHyp : Prop where
         |piLiError x + ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
           ≤ ε * (Real.sqrt x / Real.log x)
 
-/-- The Abel bridge: combine ψ-level ZerosBelow formula with Abel correction
-    to get π-level for arbitrary finite sets S.
+/-- Consolidated sorry for PiApproxFromExplicitFormulaHyp.
 
-    MATHEMATICAL NOTES:
-    1. The Abel correction is O(√x/logx) (not O(√x/(logx)²) as previously
-       claimed). This means it cannot be absorbed into ε·√x/logx via the
-       old ε/2+ε/2 strategy. A direct argument is needed.
+    SORRY (1, consolidated from 2): The statement is mathematically false
+    as written (see MATHEMATICAL ANALYSIS). The previous decomposition through
+    AbelCorrectionPsiPiHyp + pi_approx_from_abel_and_psi had 2 sorrys for a
+    proof path that was mathematically unsound (the ψ→π Abel correction
+    O(√x/logx) cannot be absorbed into ε·√x/logx).
 
-    2. The conversion from ZerosBelow T₀ to arbitrary S requires controlling
-       the tail Σ_{ZerosBelow T₀ \ S} Re(x^ρ/ρ)/logx. Under RH, each
-       |Re(x^ρ/ρ)| ≤ √x/|ρ|, so the tail is K·√x/logx where
-       K = Σ_{ρ ∈ extra} 1/|ρ|.
+    The correct proof requires:
+    (1) Changing `∀ S, ∀ ε > 0` to `∃ D, ∀ T ≥ 2` with ZerosBelow T
+    (2) Using the direct π explicit formula (Riemann-von Mangoldt) rather
+        than the ψ→π Abel summation path
+    (3) Modifying the oscillation extraction to use many zeros (ZerosBelow T
+        for large T), where the aligned sum A(T)·√x/logx exceeds D
 
-    The sorry here combines both the ZerosBelow→S transfer and the
-    correction absorption. The correct fix is to change the downstream
-    `TruncatedExplicitFormulaPiHyp` interface to use ZerosBelow T directly,
-    which would eliminate both issues. -/
-private theorem pi_approx_from_abel_and_psi
-    [AbelCorrectionPsiPiHyp] [PsiExplicitFormulaZerosHyp]
-    (S : Finset ℂ)
-    (hS : ∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2)
-    (ε : ℝ) (hε : 0 < ε) :
-    ∀ᶠ x in atTop,
-      |piLiError x + ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
-        ≤ ε * (Real.sqrt x / Real.log x) := by
-  -- The Abel correction gives |piLiError - (ψ-x)/logx| ≤ D·√x/logx.
-  -- The ψ-level ZerosBelow formula gives, for each δ > 0, a T₀ with
-  --   |(ψ-x + Σ_{ZerosBelow T₀} x^ρ/ρ)/logx| ≤ δ·√x/logx eventually.
-  --
-  -- To get the target with arbitrary S (not ZerosBelow T₀), we need the
-  -- ZerosBelow→S transfer. With the O(√x/logx) correction (not the
-  -- previously-claimed O(√x/(logx)²)), the D·√x/logx correction is at the
-  -- SAME scale as the target ε·√x/logx, so it cannot be absorbed via
-  -- abel_bridge_adjustable. The entire statement requires a direct argument
-  -- combining Abel correction + ZerosBelow formula + tail control.
-  --
-  -- This sorry subsumes both the ZerosBelow→S transfer and the Abel
-  -- correction absorption.
-  sorry
-
-instance [AbelCorrectionPsiPiHyp] [PsiExplicitFormulaZerosHyp] :
-    PiApproxFromExplicitFormulaHyp where
-  pi_approx_bound := fun S hS ε hε => pi_approx_from_abel_and_psi S hS ε hε
+    This is a multi-file architectural refactor affecting 50+ files. -/
+instance : PiApproxFromExplicitFormulaHyp where
+  pi_approx_bound := by
+    intro S hS ε hε
+    sorry
 
 /-- Ω₋ direction for `π(x) - li(x)` from aligned phases. -/
 private theorem omega_minus_from_zeros
