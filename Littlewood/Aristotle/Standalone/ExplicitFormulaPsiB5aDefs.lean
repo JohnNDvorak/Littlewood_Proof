@@ -187,17 +187,18 @@ theorem large_T_from_zeta_logderiv :
     Classical: |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C·(√x·(logT)²/√T).
 
     **SORRY STATUS** (2026-03-15):
-    WIRED through `contour_from_small_T`: the large-T case (T ≥ 16) is closed
-    via `LargeTContourBoundHyp` (which transits `ZetaLogDerivPointwiseBoundHyp`).
-    The remaining sorry covers ONLY the small-T case (T ∈ [2, 16]).
-
-    The small-T bound is PROVED sorry-free in the bridge as
-    `small_T_contour_bound` (from general_formula + log²/√x absorption).
-    It cannot be imported here due to import direction (bridge has
-    `general_formula_accessible`, this file does not).
+    WIRED through `contour_from_small_T` + `small_T_from_general_formula`:
+    - Large-T case (T ≥ 16): closed via `LargeTContourBoundHyp`
+    - Small-T case (T ∈ [2,16]): reduced to the general explicit formula via
+      `log_sq_absorbed_by_error` (proved inline, pure algebra)
+    - Remaining sorry: the general Perron explicit formula for T ∈ [2,16],
+      i.e., ∃ C₂ > 0, ∀ x T, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+        |shiftedRemainderRe x T| ≤ C₂·(√x·(logT)²/√T + (logx)²)
+      This is proved in PerronExplicit (`general_explicit_formula_from_perron`)
+      but not importable here due to import direction.
 
     See `PerronAssumptionsBridge.contour_bound_from_small_and_large` for the
-    sorry-free assembly that combines both cases. -/
+    bridge's sorry-free assembly that combines both cases. -/
 class ContourRemainderBoundHyp : Prop where
   bound : ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
     |shiftedRemainderRe x T| ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)
