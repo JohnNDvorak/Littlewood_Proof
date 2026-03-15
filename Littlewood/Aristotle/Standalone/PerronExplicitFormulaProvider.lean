@@ -1997,6 +1997,24 @@ private lemma vacuous_congruences_general {T : ℝ} (h : N T = 0)
       ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ ε := by
   rw [finset_empty_of_N_eq_zero h]; simp
 
+/-! ### Inhomogeneous simultaneous Dirichlet approximation — specification
+
+The N(T) > 0 branch of `seed_witness_from_perron_core` requires:
+
+Given K real frequencies γ₁,...,γ_K, arbitrary target phases φ₁,...,φ_K,
+tolerance ε > 0, and an interval [a, b] of length ≥ (2π/ε)^K,
+there exists t₀ ∈ [a, b] with ‖t₀·γ_k - φ_k - m_k·2π‖ ≤ ε for all k.
+
+The proof follows from the pigeonhole principle on the K-dimensional torus:
+partition the interval into ⌈(b-a)/Q⌉ subintervals where Q = ε/max_k(γ_k),
+and the fractional parts {t·γ_k/(2π)} land in N^K cubes of side ε/(2π).
+By pigeonhole, two points in the same cube differ by ≤ ε in each coordinate.
+For the inhomogeneous version, shift by φ_k (Cassels 1957, Ch. III).
+
+The homogeneous version is proved in CoreLemmas/DirichletApproximation.lean as
+`dirichlet_approximation_simultaneous`. The inhomogeneous extension requires
+the shifted lattice argument. -/
+
 /-- **Seed witness existence via tower-cap domination and Dirichlet approximation** (C48).
 
     Produces a seed witness (t₀, T, ε) satisfying ALL simultaneous conditions:
@@ -2026,8 +2044,10 @@ private lemma vacuous_congruences_general {T : ℝ} (h : N T = 0)
     [log B, log(tower_cap)]. Length grows double-exponentially, suffices for
     (2π/ε)^{N(T)} simultaneous approximation (Cassels 1957, Ch. III).
     Per-zero Kronecker does NOT close: t values differ per zero.
+    The required statement is specified in the section docstring above.
 
-    Sub-sorry count: 2 inline sorry (Gaps 2+3), 1 haveI sorry (Gap 1) -/
+    Sub-sorry count: 1 sorry (Gap 2), 1 sorry (N>0 branch combining Gaps 2+3),
+    1 haveI sorry (Gap 1) -/
 private theorem seed_witness_from_perron_core
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
     (phase : ℂ → ℝ) :
@@ -2084,26 +2104,20 @@ private theorem seed_witness_from_perron_core
     -- For K = N(T) zeros with ordinates γ₁,...,γ_K and arbitrary phases φ_k,
     -- need t₀ with |t₀·γ_k - φ_k - m_k·2π| ≤ ε for all k simultaneously.
     --
-    -- PER-ZERO INDEPENDENT approach (Kronecker per zero):
-    --   kronecker_single_freq_seed gives t_k with exact alignment for ρ_k.
-    --   But the t_k values differ per zero, and intersecting neighborhoods
-    --   fails because frequencies γ_k may be rationally dependent.
-    --
     -- CORRECT approach (Dirichlet pigeonhole / Cassels 1957, Ch. III):
     --   For K frequencies and tolerance ε, an interval of length ≥ (2π/ε)^K
     --   contains t₀ satisfying ALL K congruences simultaneously.
     --   Here K = N(T) ≤ T·logT and the available interval has length
     --   log(tower_cap) - log(B) ≥ exp(exp(c·logT)) - log(B), which is
     --   double-exponential and dominates (4π)^{T·logT} for large T.
-    --   The sorry covers: formalize Dirichlet simultaneous approximation
-    --   on a bounded interval + verify the interval length bound.
-    exact ⟨Real.log B, T, 1 / 2, hT4, by norm_num, by norm_num,
-      by rw [Real.exp_log hBpos]; simp only [hB_def, hP_def];
-         linarith [le_max_left X P],
-      by rw [Real.exp_log hBpos]; simp only [hB_def, hP_def];
-         linarith [le_max_right X P],
-      by intro ρ hρ; exact ⟨0, by sorry⟩,
-      by rw [Real.exp_log hBpos]; exact hdom⟩
+    --
+    -- The sorry here requires: inhomogeneous_simultaneous_dirichlet_on_interval
+    --   giving t₀ ∈ [log B, log(tower_cap)] with all congruences satisfied.
+    -- Given such t₀, all other fields (exp bounds, tower cap) follow from
+    -- B ≤ exp(t₀) ≤ tower_cap which holds by the interval containment.
+    --
+    -- Sub-sorry: full existential for N(T) > 0 case (Gaps 2+3 combined).
+    sorry
 
 /-- Target approximate-seed phase alignment above the Perron threshold.
 

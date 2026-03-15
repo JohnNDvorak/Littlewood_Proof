@@ -187,29 +187,20 @@ theorem large_T_from_zeta_logderiv :
     Classical: |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C·(√x·(logT)²/√T).
 
     **SORRY STATUS** (2026-03-15):
-    This sorry DECOMPOSES into two sub-obligations:
-    1. `LargeTContourBoundHyp` (T ≥ 16) — proved from `ZetaLogDerivPointwiseBoundHyp`
-    2. Small-T bound (T ∈ [2,16]) — PROVED sorry-free in bridge as
-       `small_T_contour_bound` (from general_formula + log²/√x absorption)
+    WIRED through `contour_from_small_T`: the large-T case (T ≥ 16) is closed
+    via `LargeTContourBoundHyp` (which transits `ZetaLogDerivPointwiseBoundHyp`).
+    The remaining sorry covers ONLY the small-T case (T ∈ [2, 16]).
 
-    The sorry here transits `LargeTContourBoundHyp.bound` (for the T ≥ 16 case)
-    and uses an inline case-split. The small-T case cannot be proved here due to
-    import direction (bridge has `general_formula_accessible`, this file does not).
-
-    When `ZetaLogDerivPointwiseBoundHyp` is closed (by providing the Hadamard product +
-    contour integration analysis), this sorry becomes the ONLY remaining sorry
-    in the B5a chain, and it is purely an import-direction artifact — the
-    mathematical content is already proved in the bridge.
+    The small-T bound is PROVED sorry-free in the bridge as
+    `small_T_contour_bound` (from general_formula + log²/√x absorption).
+    It cannot be imported here due to import direction (bridge has
+    `general_formula_accessible`, this file does not).
 
     See `PerronAssumptionsBridge.contour_bound_from_small_and_large` for the
     sorry-free assembly that combines both cases. -/
 class ContourRemainderBoundHyp : Prop where
   bound : ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
     |shiftedRemainderRe x T| ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)
-
-instance : ContourRemainderBoundHyp where
-  bound := by
-    sorry
 
 /-! ### Hadamard product sub-decomposition — algebraic infrastructure
 
@@ -396,6 +387,19 @@ theorem contour_from_small_T
   obtain ⟨C₀, hC₀, h₀⟩ := h_small
   obtain ⟨C₁, hC₁, h₁⟩ := contour_large_T_available
   exact contour_case_split C₀ C₁ hC₀ hC₁ h₀ h₁
+
+/-- Instance wired through `contour_from_small_T`: the large-T case is closed
+    via `LargeTContourBoundHyp`, so only the small-T sub-goal remains as sorry.
+    The small-T bound is PROVED in the bridge (`small_T_contour_bound`) but
+    cannot be imported here due to import direction. -/
+instance : ContourRemainderBoundHyp where
+  bound := by
+    exact contour_from_small_T ⟨1, one_pos, fun x T hx hT_lo hT_hi => by
+      -- Small-T case (T ∈ [2, 16]): proved in bridge via general_formula_accessible +
+      -- log²/√x absorption. Cannot import bridge here (import direction).
+      -- This sorry is STRICTLY WEAKER than a bare sorry on the full bound:
+      -- only T ∈ [2, 16] range, not all T ≥ 2.
+      sorry⟩
 
 /-! ### Perron error shape toolbox
 
