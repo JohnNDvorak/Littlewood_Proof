@@ -1985,6 +1985,47 @@ private lemma anti_target_witness_of_domination
   · rw [Real.exp_log hBpos]
     exact hdom
 
+/-- **Core sorry for seed witnesses** (C48-sorry).
+
+    Produces a seed witness (t₀, T, ε) satisfying ALL simultaneous conditions:
+    (a) 4 ≤ T, 0 < ε < 1
+    (b) X < exp(t₀) and perronThreshold(hRH, T) ≤ exp(t₀)
+    (c) approximate congruences for zeros ≤ T (with arbitrary phase function)
+    (d) exp(t₀) ≤ tower_cap(T, ε)
+
+    The sorry captures THREE gaps in a single location:
+    1. **ZeroCountingLowerBoundHyp** import cycle (cannot import Assumptions.lean).
+    2. **Tower-cap domination**: tower_cap(T, ε) ≥ perronThreshold(hRH, T) at the same T.
+       The tower cap grows as exp(exp(exp(c·logT))) while perronThreshold(hRH, T)
+       (defined via Classical.choose from a sorry'd eventually_atTop filter)
+       is finite for each T. Proving they cross requires an explicit upper bound
+       on perronThreshold(hRH, T), which depends on the sorry'd pi_approx.
+    3. **Congruences at the chosen t₀**: for N(T) > 0, simultaneous Dirichlet
+       approximation must place t₀ in [log(perronThreshold), log(tower_cap)]
+       while satisfying ‖t₀·γ - φ(ρ) - m·2π‖ ≤ ε for all zeros.
+
+    CLOSURE ROUTE (priority order):
+    (A) Move ZeroCountingLowerBoundHyp to a cycle-free file.
+    (B) Prove perronThreshold(hRH, T) ≤ f(T) for some explicit f with
+        f(T) = o(tower_cap(T)) — requires closing the pi_approx sorry.
+    (C) Refactor the seed type to replace perronThreshold with an inline
+        Perron error bound, eliminating the opaque Classical.choose.
+
+    Sub-sorry count: 1 (combines ZCLB cycle + domination + congruences) -/
+private theorem seed_witness_from_perron_core
+    (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
+    (phase : ℂ → ℝ) :
+    ∃ t0 T ε : ℝ,
+      4 ≤ T ∧
+      0 < ε ∧ ε < 1 ∧
+      X < Real.exp t0 ∧
+      @perronThreshold pi_explicit_formula_from_perron hRH T ≤ Real.exp t0 ∧
+      (∀ ρ ∈ (finite_zeros_le T).toFinset,
+        ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
+      Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
+  sorry
+
 /-- Target approximate-seed phase alignment above the Perron threshold.
 
     ARCHITECTURE (post-refactor): The seed type now uses approximate congruences
@@ -1992,55 +2033,26 @@ private lemma anti_target_witness_of_domination
     multi-dimensional Kronecker blocker: approximate congruences are provable for
     any finite set of frequencies via Dirichlet approximation.
 
-    REMAINING SORRY (1 of 1): `ZeroCountingLowerBoundHyp` import cycle.
-    The instance lives in Assumptions.lean which transitively imports this file.
-    Local sorry provides the instance to unlock `tower_cap_unbounded`.
-    Without it, we cannot produce a T where tower_cap(T) dominates both X
-    and perronThreshold(hRH, T).
-
-    CLOSURE ROUTE: Move ZeroCountingLowerBoundHyp to a cycle-free file, or
-    prove an explicit upper bound on perronThreshold(hRH, T) growing slower
-    than the triple-exponential tower cap.
+    PROVED from `seed_witness_from_perron_core` with phase = Complex.arg.
 
     LIVENESS (C33-D): LIVE — consumed by B7 chain via
     `RHPiExactSeedConstructive.exact_seed_target`. Same chain as `pi_approx`.
-    Sub-sorry count: 1 (ZeroCountingLowerBoundHyp cycle) -/
+    Sub-sorry count: 0 (local); 1 (in seed_witness_from_perron_core) -/
 theorem target_exact_seed_from_perron :
     @TargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
   intro hRH X
-  -- Provide ZeroCountingLowerBoundHyp locally to unlock tower_cap_unbounded.
-  -- (Cannot import ZeroCountingAssumptions.lean: would expose 2 extra sorry warnings.)
-  haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩
-  -- Step 1: Choose T₁ so tower_cap(T₁) ≥ X + 1.
-  obtain ⟨T₁, hT₁_ge4, hT₁_cap⟩ := exists_T_tower_cap_exceeds (X + 1)
-  -- Step 2: P₁ = perronThreshold(hRH, T₁) is determined.
-  set P₁ := @perronThreshold pi_explicit_formula_from_perron hRH T₁
-  -- Step 3: Choose T₂ so tower_cap(T₂) ≥ max(X, P₁) + 1.
-  obtain ⟨T₂, hT₂_ge4, hT₂_cap⟩ := exists_T_tower_cap_exceeds (max X P₁ + 1)
-  -- Step 4: Use T₂. Tower cap dominates max(X, P₁) but we need it to
-  -- dominate perronThreshold(hRH, T₂) which may differ from P₁.
-  -- Approximate congruences at T₂ are provable (vacuously if N(T₂)=0,
-  -- or via Dirichlet if N(T₂)>0), but the perronThreshold domination
-  -- at the SAME T remains as the sole sorry.
-  sorry
+  exact seed_witness_from_perron_core hRH X Complex.arg
 
 /-- Anti-target approximate-seed phase alignment above the Perron threshold.
 
-    Same structure as `target_exact_seed_from_perron` with anti-target phase shift.
-    See `target_exact_seed_from_perron` for full sorry analysis.
+    PROVED from `seed_witness_from_perron_core` with phase = (arg + π).
 
     LIVENESS (C33-D): LIVE — consumed by B7 chain via
     `RHPiExactSeedConstructive.exact_seed_anti_target`. Same chain as `pi_approx`.
-    Sub-sorry count: 1 (ZeroCountingLowerBoundHyp cycle) -/
+    Sub-sorry count: 0 (local); 1 (in seed_witness_from_perron_core) -/
 theorem anti_target_exact_seed_from_perron :
     @AntiTargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
   intro hRH X
-  -- Provide ZeroCountingLowerBoundHyp locally (same reason as above).
-  haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩
-  obtain ⟨T₁, hT₁_ge4, hT₁_cap⟩ := exists_T_tower_cap_exceeds (X + 1)
-  set P₁ := @perronThreshold pi_explicit_formula_from_perron hRH T₁
-  obtain ⟨T₂, hT₂_ge4, hT₂_cap⟩ := exists_T_tower_cap_exceeds (max X P₁ + 1)
-  -- See target_exact_seed_from_perron for full sorry analysis.
-  sorry
+  exact seed_witness_from_perron_core hRH X (fun ρ => Complex.arg ρ + Real.pi)
 
 end Aristotle.Standalone.PerronExplicitFormulaProvider
