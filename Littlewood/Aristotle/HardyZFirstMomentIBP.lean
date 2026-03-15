@@ -1397,6 +1397,96 @@ theorem near_blocks_count (n K : ℕ) :
     _ = 2 * (n + 1) - (n + 1) := by simp
     _ = n + 1 := by omega
 
+/-- The modeOmega achieves its minimum on [T₀, T] at t = T₀ since it is increasing.
+    This gives the per-mode VdC denominator. -/
+theorem perMode_modeOmega_min_lower :
+    ∃ T₀ > 0, ∀ (n : ℕ) (T : ℝ), T ≥ T₀ →
+      (∀ t ∈ Set.Icc T₀ T, modeOmega n t ≥ modeOmega n T₀) := by
+  obtain ⟨T₀, hT₀, _⟩ := thetaDeriv_lower_bound
+  refine ⟨T₀, hT₀, fun n T _hT t ht => ?_⟩
+  exact modeOmega_monotoneOn_Ioi n
+    (show T₀ ∈ Set.Ioi 0 from hT₀)
+    (show t ∈ Set.Ioi 0 from lt_of_lt_of_le hT₀ ht.1) ht.1
+
+/-- For off-diagonal mode n with log(n+1) ≤ (1/8)·log(t), the modeOmega is bounded
+    below by (1/8)·log(t) on [T₀, ∞). This is a re-export of
+    modeOmega_lower_off_diagonal. -/
+theorem perMode_delta_lower :
+    ∃ T₀ > 0, ∀ (n : ℕ) (t : ℝ), t ≥ T₀ →
+      Real.log (↑n + 1) ≤ (1/8) * Real.log t →
+        modeOmega n t ≥ (1/8) * Real.log t := modeOmega_lower_off_diagonal
+
+/-- Reciprocal bound: for t ≥ T₀ ≥ 2 and off-diagonal mode n (log(n+1) ≤ (1/8)log(t)),
+    1/(modeOmega n t) ≤ 8/log(t). -/
+theorem perMode_inv_modeOmega_bound :
+    ∃ T₀ > 0, ∀ (n : ℕ) (t : ℝ), t ≥ T₀ →
+      Real.log (↑n + 1) ≤ (1/8) * Real.log t →
+        1 / modeOmega n t ≤ 8 / Real.log t := by
+  obtain ⟨T₀, hT₀, hbd⟩ := modeOmega_lower_off_diagonal
+  refine ⟨max T₀ 2, by positivity, fun n t ht hlog => ?_⟩
+  have ht_T₀ : t ≥ T₀ := le_trans (le_max_left T₀ 2) ht
+  have ht_2 : t ≥ 2 := le_trans (le_max_right T₀ 2) ht
+  have hlog_pos : 0 < Real.log t := Real.log_pos (by linarith)
+  have h_omega := hbd n t ht_T₀ hlog
+  have h_omega_pos : 0 < modeOmega n t := by linarith
+  rw [div_le_div_iff₀ h_omega_pos hlog_pos]
+  linarith
+
+/-- Off-diagonal criterion: n+1 ≤ T₀^{1/8} implies log(n+1) ≤ (1/8)·log(T₀). -/
+theorem off_diagonal_log_criterion (T₀ : ℝ) (_hT₀ : 2 ≤ T₀) (n : ℕ)
+    (hn : (↑n + 1 : ℝ) ≤ T₀ ^ ((1 : ℝ)/8)) :
+    Real.log (↑n + 1) ≤ (1/8) * Real.log T₀ := by
+  have hT₀_pos : (0 : ℝ) < T₀ := by linarith
+  have hn1_pos : (0 : ℝ) < (↑n + 1 : ℝ) := by positivity
+  calc Real.log (↑n + 1) ≤ Real.log (T₀ ^ ((1 : ℝ)/8)) :=
+        Real.log_le_log hn1_pos hn
+    _ = (1/8) * Real.log T₀ := by rw [Real.log_rpow hT₀_pos]
+
+/-- Trivial bound for any bounded integrand: |∫_a^b f| ≤ b - a when |f| ≤ 1. -/
+theorem cos_integral_trivial_bound (a b : ℝ) (hab : a ≤ b) (f : ℝ → ℝ)
+    (hf : ∀ t, |f t| ≤ 1) (_hint : IntervalIntegrable f MeasureTheory.volume a b) :
+    |∫ t in a..b, f t| ≤ b - a := by
+  have h1 : ∀ t ∈ Set.uIoc a b, ‖f t‖ ≤ 1 := by
+    intro t _ht; rw [Real.norm_eq_abs]; exact hf t
+  calc |∫ t in a..b, f t|
+      ≤ 1 * |b - a| := intervalIntegral.norm_integral_le_of_norm_le_const h1
+    _ = b - a := by rw [one_mul, abs_of_nonneg (sub_nonneg.mpr hab)]
+
+/-- Weighted off-diagonal mode total: Σ_n (n+1)^{-1/2} · C ≤ C · N. -/
+theorem weighted_off_diag_mode_total_le (C_vdc : ℝ) (hC : 0 < C_vdc) (N : ℕ) :
+    ∑ n ∈ Finset.range N, ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) * C_vdc ≤
+      C_vdc * (N : ℝ) := by
+  calc ∑ n ∈ Finset.range N, ((↑n + 1 : ℝ) ^ (-(1 : ℝ)/2)) * C_vdc
+      ≤ ∑ _n ∈ Finset.range N, (1 * C_vdc) := by
+        apply Finset.sum_le_sum
+        intro n _
+        exact mul_le_mul_of_nonneg_right (rpow_neg_half_le_one n) hC.le
+    _ = C_vdc * (N : ℝ) := by
+        simp [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_comm]
+
+/- **Main term first moment contribution**: the sum of per-mode oscillatory
+    integrals from the Dirichlet polynomial is O(√T).
+
+    Given the per-mode VdC bound C_vdc/log((k+1)/(n+1)) on each block
+    (from off_resonance_integral_bound_smooth), and the mode sum estimate
+    Σ (n+1)^{-1/2}/log(n+2) ≤ C·√T (from AbelSummationPsiPi), the total
+    main term contribution satisfies:
+
+    Σ_{n<N} (n+1)^{-1/2} · |∫ cos(φ_n)| ≤ C_vdc · (1/log 2) · √T
+
+    This is the content of `weighted_mode_sum_with_constant` applied with the
+    per-mode VdC bounds. The N ≤ √(T/(2π)) constraint from the AFE is handled
+    by `afe_N_le_sqrt`.
+
+    SORRY STATUS: This statement assembles the proved sub-components. The
+    reduction to mode sums is proved in AbelSummationPsiPi. The per-mode VdC
+    is proved in OffResonanceSmoothVdC. The gap is the WIRING between the
+    per-block VdC and the global per-mode integral bound, which requires
+    splitting [T₀,T] into blocks and summing the per-block bounds. This
+    wiring is done constructively in Part 7 (block_sum_assembly) for the
+    crude K² + K^{3/2} bound. The sharp O(√T) bound requires the
+    AbelSummation mode sum with the per-mode O(1/log(n+2)) bound. -/
+
 end PerModeGlobal
 
 /-! ## Part 8: ErrorTerm integral bound via RS expansion + alternating blocks
@@ -1612,6 +1702,13 @@ PROVED (in this file, used by downstream IBP + VdC analysis):
   - sqrt_log_le_rpow: T^{1/2}·log T ≤ C_ε·T^{1/2+ε}
   - block_sum_assembly: per-mode VdC total ≤ O(K² + K^{3/2})
   - off_resonance_integral_bound_smooth: per-mode VdC on blocks
+  - perMode_modeOmega_min_lower: min at left endpoint (Part 7c)
+  - perMode_delta_lower_off_diagonal: modeOmega ≥ (1/8)log(T₀) (Part 7c)
+  - perMode_inv_modeOmega_bound: 1/modeOmega ≤ 8/log(T₀) (Part 7c)
+  - off_diagonal_log_criterion: n+1 ≤ T₀^{1/8} → log bound (Part 7c)
+  - cos_integral_trivial_bound: |∫ f| ≤ b-a for bounded f (Part 7c)
+  - afe_N_le_sqrt: N ≤ √(T/(2π)) → N ≤ √T (AbelSummation)
+  - weighted_mode_sum_with_constant: abstract mode sum O(√T) (AbelSummation)
 
 The mathematical content of ibp_oscillatory_bound (per-mode VdC for the
 Dirichlet polynomial + alternating block cancellation for the error) is
