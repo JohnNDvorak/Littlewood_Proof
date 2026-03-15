@@ -2135,4 +2135,54 @@ theorem error_term_first_moment_assembly
 
 end ErrorTermFirstMomentAssembly_v2
 
+/-! ## Part 8d: Per-mode cosine integral bound via block decomposition
+
+For each mode n, the integral ∫_{hardyStart n}^T cos(θ(t) - t·log(n+1)) dt
+can be bounded by summing per-block VdC bounds. The off_resonance_integral_bound_smooth
+gives |∫_{block k} cos| ≤ C_vdc / log((k+1)/(n+1)) for k > n.
+
+Summing over blocks n < k ≤ K: ∑ C_vdc/log((k+1)/(n+1)) ≤ C_vdc·K/log(2).
+With K ~ √T, this gives O(√T) per mode, which is too crude for the O(√(n+1)) target.
+
+A better bound for the diagonal mode (k near n): use the trivial |∫ cos| ≤ block_length.
+For off-diagonal blocks (k >> n or k << n): use VdC: |∫ cos| ≤ C/log(k/n).
+
+The sharp per-mode bound requires combining these, which is done here as infrastructure. -/
+
+section PerModeCosIntegralBound
+
+open HardyEstimatesPartial
+open Aristotle.Standalone.OscPieceBigOAssembly
+  (exists_block_of_ge_hardyStart0 hardyStart_mono)
+open Aristotle.HardyNProperties (hardyStart_formula block_length)
+
+/-- Trivial per-mode cos integral bound: |∫_{hs(n)}^T cos(phase_n)| ≤ T.
+    This is the bound from |cos| ≤ 1 and positivity of the interval. -/
+theorem cos_integral_trivial_global_bound (n : ℕ) (T : ℝ) (hT : 2 ≤ T) :
+    |hardyCosIntegral n T| ≤ T := by
+  unfold hardyCosIntegral
+  by_cases h : hardyStart n ≤ T
+  · -- Normal case: hardyStart n ≤ T
+    rw [← intervalIntegral.integral_of_le h]
+    have h_bd : ∀ t ∈ Set.uIoc (hardyStart n) T,
+        ‖hardyCos n t‖ ≤ 1 := by
+      intro t _; rw [Real.norm_eq_abs]; exact abs_cos_le_one _
+    calc |∫ t in (hardyStart n)..T, hardyCos n t|
+        ≤ 1 * |T - hardyStart n| :=
+          intervalIntegral.norm_integral_le_of_norm_le_const h_bd
+      _ = T - hardyStart n := by
+          rw [one_mul, abs_of_nonneg (sub_nonneg.mpr h)]
+      _ ≤ T := by
+          have h_pos : 0 < hardyStart n := by rw [hardyStart_formula]; positivity
+          linarith
+  · -- Degenerate case: hardyStart n > T, integral on empty set = 0
+    push_neg at h
+    have h_eq : Set.Ioc (hardyStart n) T = ∅ :=
+      Set.Ioc_eq_empty (not_lt.mpr (le_of_lt h))
+    rw [show ∫ t in Set.Ioc (hardyStart n) T, hardyCos n t = 0 from by
+      rw [h_eq]; simp]
+    simp; linarith
+
+end PerModeCosIntegralBound
+
 end HardyZFirstMomentIBP
