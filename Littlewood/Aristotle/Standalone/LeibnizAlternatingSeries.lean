@@ -126,4 +126,96 @@ theorem eventually_div_log_bound (f B : ℝ → ℝ)
 theorem abs_div_of_pos (a b : ℝ) (hb : 0 < b) : |a / b| = |a| / b := by
   rw [abs_div, abs_of_pos hb]
 
+-- ============================================================
+-- Alternating series: (-1)^i sums via paired sums
+-- ============================================================
+
+/-- Convert alternating sum over 2n terms to paired differences. -/
+theorem alternating_sum_even (a : ℕ → ℝ) (n : ℕ) :
+    ∑ i ∈ Finset.range (2 * n), (-1 : ℝ) ^ i * a i
+      = ∑ j ∈ Finset.range n, (a (2 * j) - a (2 * j + 1)) := by
+  induction n with
+  | zero => simp
+  | succ m ih =>
+    rw [Finset.sum_range_succ (f := fun j => a (2 * j) - a (2 * j + 1))]
+    have h_idx : 2 * (m + 1) = 2 * m + 1 + 1 := by omega
+    rw [h_idx, Finset.sum_range_succ, Finset.sum_range_succ, ih]
+    have h1 : (-1 : ℝ) ^ (2 * m) = 1 := (even_two_mul m).neg_one_pow
+    have h2 : (-1 : ℝ) ^ (2 * m + 1) = -1 := Odd.neg_one_pow ⟨m, rfl⟩
+    rw [h1, h2, one_mul, neg_one_mul]; ring
+
+/-- Alternating sum over 2n+1 terms = paired sum + last even term. -/
+theorem alternating_sum_odd (a : ℕ → ℝ) (n : ℕ) :
+    ∑ i ∈ Finset.range (2 * n + 1), (-1 : ℝ) ^ i * a i
+      = ∑ j ∈ Finset.range n, (a (2 * j) - a (2 * j + 1)) + a (2 * n) := by
+  rw [Finset.sum_range_succ, (even_two_mul n).neg_one_pow, one_mul, alternating_sum_even]
+
+/-- Alternating partial sum bound (even length): |∑_{i<2n} (-1)^i·a(i)| ≤ a(0). -/
+theorem alternating_sum_even_bound (a : ℕ → ℝ) (ha : Antitone a)
+    (ha_nn : ∀ k, 0 ≤ a k) (n : ℕ) :
+    |∑ i ∈ Finset.range (2 * n), (-1 : ℝ) ^ i * a i| ≤ a 0 := by
+  rw [alternating_sum_even]; exact leibniz_paired_bound a ha ha_nn n
+
+/-- Alternating partial sum bound (odd length): |∑_{i<2n+1} (-1)^i·a(i)| ≤ a(0). -/
+theorem alternating_sum_odd_bound (a : ℕ → ℝ) (ha : Antitone a)
+    (ha_nn : ∀ k, 0 ≤ a k) (n : ℕ) :
+    |∑ i ∈ Finset.range (2 * n + 1), (-1 : ℝ) ^ i * a i| ≤ a 0 := by
+  rw [alternating_sum_odd, abs_le]; constructor
+  · linarith [paired_partial_sum_nonneg a ha n, ha_nn (2 * n), ha_nn 0]
+  · linarith [inductive_bound a ha n]
+
+/-- Alternating partial sum bound (any length): |∑_{i<N} (-1)^i·a(i)| ≤ a(0). -/
+theorem alternating_partial_sum_le_first (a : ℕ → ℝ) (ha : Antitone a)
+    (ha_nn : ∀ k, 0 ≤ a k) (N : ℕ) :
+    |∑ i ∈ Finset.range N, (-1 : ℝ) ^ i * a i| ≤ a 0 := by
+  rcases Nat.even_or_odd' N with ⟨n, rfl | rfl⟩
+  · exact alternating_sum_even_bound a ha ha_nn n
+  · exact alternating_sum_odd_bound a ha ha_nn n
+
+-- ============================================================
+-- Approximate Leibniz: perturbation of antitone by bounded error
+-- ============================================================
+
+/-- If |a(k) - M(k)| ≤ δ for all k, and M is antitone and nonneg, then
+    |∑_{i<n} (-1)^i a(i)| ≤ M(0) + n·δ. -/
+theorem leibniz_approx_antitone_nδ (a M : ℕ → ℝ) (δ : ℝ) (_hδ : 0 ≤ δ)
+    (hM_anti : Antitone M) (hM_nn : ∀ k, 0 ≤ M k)
+    (h_approx : ∀ k, |a k - M k| ≤ δ) (n : ℕ) :
+    |∑ i ∈ Finset.range n, (-1 : ℝ) ^ i * a i| ≤ M 0 + n * δ := by
+  have split : ∀ i, (-1 : ℝ) ^ i * a i = (-1 : ℝ) ^ i * M i + (-1 : ℝ) ^ i * (a i - M i) := by
+    intro i; ring
+  simp_rw [split, Finset.sum_add_distrib]
+  calc |∑ i ∈ Finset.range n, (-1 : ℝ) ^ i * M i +
+        ∑ i ∈ Finset.range n, (-1 : ℝ) ^ i * (a i - M i)|
+      ≤ |∑ i ∈ Finset.range n, (-1 : ℝ) ^ i * M i| +
+        |∑ i ∈ Finset.range n, (-1 : ℝ) ^ i * (a i - M i)| := abs_add_le _ _
+    _ ≤ M 0 + ∑ i ∈ Finset.range n, |(-1 : ℝ) ^ i * (a i - M i)| := by
+        gcongr
+        · exact alternating_partial_sum_le_first M hM_anti hM_nn n
+        · exact Finset.abs_sum_le_sum_abs _ _
+    _ ≤ M 0 + ∑ i ∈ Finset.range n, δ := by
+        gcongr with i _; rw [abs_neg_one_pow_mul]; exact h_approx i
+    _ = M 0 + n * δ := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+
+-- ============================================================
+-- Block sum / integral auxiliary lemmas
+-- ============================================================
+
+/-- Sum of nonneg terms is monotone in the range. -/
+theorem sum_range_mono_of_nonneg (a : ℕ → ℝ) (ha : ∀ k, 0 ≤ a k)
+    {m n : ℕ} (hmn : m ≤ n) :
+    ∑ i ∈ Finset.range m, a i ≤ ∑ i ∈ Finset.range n, a i := by
+  apply Finset.sum_le_sum_of_subset_of_nonneg
+  · exact Finset.range_mono hmn
+  · intros i _ _; exact ha i
+
+/-- Tail of a sum: ∑_{i<n} - ∑_{i<m} = ∑ over the complement. -/
+theorem sum_range_sub (a : ℕ → ℝ) (m n : ℕ) (hmn : m ≤ n) :
+    ∑ i ∈ Finset.range n, a i - ∑ i ∈ Finset.range m, a i =
+    ∑ i ∈ (Finset.range n).filter (· ≥ m), a i := by
+  rw [← Finset.sum_sdiff_eq_sub (Finset.range_mono hmn)]
+  congr 1; ext i
+  simp only [Finset.mem_sdiff, Finset.mem_range, Finset.mem_filter, ge_iff_le]
+  omega
+
 end LeibnizAlternatingSeries

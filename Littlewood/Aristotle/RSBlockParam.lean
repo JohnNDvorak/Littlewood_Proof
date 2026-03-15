@@ -226,4 +226,115 @@ theorem block_integral_cov (k : ℕ) (g : ℝ → ℝ)
     ((blockJacobian_continuous k).continuousOn)
     (hg.mono (blockCoord_image_uIcc_subset k))).symm
 
+-- ============================================================
+-- Section 7: Block coordinate monotonicity across blocks
+-- ============================================================
+
+/-- blockCoord(k,p) < blockCoord(k+1,p) for p ∈ [0,1]. -/
+theorem blockCoord_lt_succ (k : ℕ) {p : ℝ} (hp : 0 ≤ p) (_hp1 : p ≤ 1) :
+    blockCoord k p < blockCoord (k + 1) p := by
+  unfold blockCoord
+  apply mul_lt_mul_of_pos_left _ (by positivity : (0 : ℝ) < 2 * Real.pi)
+  exact pow_lt_pow_left₀ (by push_cast; linarith) (by positivity) two_ne_zero
+
+/-- blockCoord is monotone in the block index at each fixed parameter. -/
+theorem blockCoord_mono_block {k₁ k₂ : ℕ} (hk : k₁ ≤ k₂) (p : ℝ) (hp : 0 ≤ p) :
+    blockCoord k₁ p ≤ blockCoord k₂ p := by
+  unfold blockCoord
+  apply mul_le_mul_of_nonneg_left _ (by positivity : (0 : ℝ) ≤ 2 * Real.pi)
+  apply pow_le_pow_left₀ (by positivity : (0 : ℝ) ≤ _) _ 2
+  have : (k₁ : ℝ) ≤ (k₂ : ℝ) := Nat.cast_le.mpr hk
+  linarith
+
+-- ============================================================
+-- Section 8: Block integral signed structure (CoV with explicit Jacobian)
+-- ============================================================
+
+/-- Block integral via CoV with explicit Jacobian 4π(k+1+p). -/
+theorem block_integral_cov_jacobian (k : ℕ) (f : ℝ → ℝ)
+    (hf : ContinuousOn f (Icc (hardyStart k) (hardyStart (k + 1)))) :
+    ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), f t
+      = ∫ p in Ioc 0 1, f (blockCoord k p) * (4 * Real.pi * ((k : ℝ) + 1 + p)) := by
+  have h_jac : ∀ p, blockJacobian k p = 4 * Real.pi * ((k : ℝ) + 1 + p) := by
+    intro p; unfold blockJacobian; ring
+  simp_rw [← h_jac]
+  exact block_integral_cov k f hf
+
+-- ============================================================
+-- Section 9: √(k+1) concavity — decrement bounds
+-- ============================================================
+
+/-- √(k+2) - √(k+1) ≤ √(k+1) - √(k): square root has decreasing increments. -/
+theorem sqrt_decrement_antitone (k : ℕ) (_hk : 1 ≤ k) :
+    Real.sqrt ((k : ℝ) + 2) - Real.sqrt ((k : ℝ) + 1)
+      ≤ Real.sqrt ((k : ℝ) + 1) - Real.sqrt (k : ℝ) := by
+  have hk_nn : (0 : ℝ) ≤ k := Nat.cast_nonneg k
+  have sq_k := Real.sq_sqrt hk_nn
+  have sq_k1 := Real.sq_sqrt (show (0 : ℝ) ≤ (k : ℝ) + 1 by linarith)
+  have sq_k2 := Real.sq_sqrt (show (0 : ℝ) ≤ (k : ℝ) + 2 by linarith)
+  have prod_le : Real.sqrt (k : ℝ) * Real.sqrt ((k : ℝ) + 2) ≤ (k : ℝ) + 1 := by
+    rw [← Real.sqrt_mul hk_nn]
+    calc Real.sqrt ((k : ℝ) * ((k : ℝ) + 2))
+        ≤ Real.sqrt (((k : ℝ) + 1) ^ 2) := Real.sqrt_le_sqrt (by nlinarith)
+      _ = (k : ℝ) + 1 := Real.sqrt_sq (by linarith)
+  suffices h : 0 ≤ 2 * Real.sqrt ((k : ℝ) + 1) - Real.sqrt ((k : ℝ) + 2)
+      - Real.sqrt (k : ℝ) by linarith
+  have hS_pos : (0 : ℝ) < 2 * Real.sqrt ((k : ℝ) + 1) + Real.sqrt ((k : ℝ) + 2)
+      + Real.sqrt (k : ℝ) := by positivity
+  have h_ds_nn : 0 ≤ (2 * Real.sqrt ((k : ℝ) + 1) - Real.sqrt ((k : ℝ) + 2)
+      - Real.sqrt (k : ℝ))
+      * (2 * Real.sqrt ((k : ℝ) + 1) + Real.sqrt ((k : ℝ) + 2) + Real.sqrt (k : ℝ)) := by
+    nlinarith [sq_k, sq_k1, sq_k2, prod_le,
+               Real.sqrt_nonneg (k : ℝ), Real.sqrt_nonneg ((k : ℝ) + 2)]
+  exact nonneg_of_mul_nonneg_left h_ds_nn hS_pos
+
+/-- The square root increment √(k+1) - √k is positive for k ≥ 0. -/
+theorem sqrt_increment_pos (k : ℕ) :
+    0 < Real.sqrt ((k : ℝ) + 1) - Real.sqrt (k : ℝ) := by
+  have : Real.sqrt (k : ℝ) < Real.sqrt ((k : ℝ) + 1) :=
+    Real.sqrt_lt_sqrt (Nat.cast_nonneg k) (by linarith)
+  linarith
+
+/-- Upper bound on √(k+1)-√k: at most 1/(2√k) for k ≥ 1. -/
+theorem sqrt_increment_le_inv (k : ℕ) (hk : 1 ≤ k) :
+    Real.sqrt ((k : ℝ) + 1) - Real.sqrt (k : ℝ) ≤ 1 / (2 * Real.sqrt (k : ℝ)) := by
+  have hk_nn : (0 : ℝ) ≤ k := Nat.cast_nonneg k
+  have _hk_pos : (0 : ℝ) < k := Nat.cast_pos.mpr (by omega)
+  have h2sk_pos : (0 : ℝ) < 2 * Real.sqrt (k : ℝ) := by positivity
+  rw [le_div_iff₀ h2sk_pos]
+  have sq_k := Real.sq_sqrt hk_nn
+  have sq_k1 := Real.sq_sqrt (show (0 : ℝ) ≤ (k : ℝ) + 1 by linarith)
+  nlinarith [sq_nonneg (Real.sqrt (k : ℝ) - Real.sqrt ((k : ℝ) + 1))]
+
+-- ============================================================
+-- Section 10: Consecutive block difference infrastructure
+-- ============================================================
+
+/-- Difference of consecutive block integrals expressed via CoV. -/
+theorem consecutive_block_diff_cov (k : ℕ) (f : ℝ → ℝ)
+    (hf_k : ContinuousOn f (Icc (hardyStart k) (hardyStart (k + 1))))
+    (hf_k1 : ContinuousOn f (Icc (hardyStart (k + 1)) (hardyStart (k + 2)))) :
+    (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), f t)
+      - (∫ t in Ioc (hardyStart (k + 1)) (hardyStart (k + 2)), f t)
+    = (∫ p in Ioc 0 1, f (blockCoord k p) * blockJacobian k p)
+      - (∫ p in Ioc 0 1, f (blockCoord (k + 1) p) * blockJacobian (k + 1) p) := by
+  rw [block_integral_cov k f hf_k, block_integral_cov (k + 1) f hf_k1]
+
+-- ============================================================
+-- Section 11: Jacobian monotonicity
+-- ============================================================
+
+/-- Jacobian is monotone in block index: 4π(k+1+p) ≤ 4π(k+2+p). -/
+theorem blockJacobian_mono_block (k : ℕ) (p : ℝ) :
+    blockJacobian k p ≤ blockJacobian (k + 1) p := by
+  unfold blockJacobian; push_cast; nlinarith [Real.pi_pos]
+
+/-- Jacobian at p=0 in block k is 4π(k+1). -/
+theorem blockJacobian_at_zero (k : ℕ) : blockJacobian k 0 = 4 * Real.pi * ((k : ℝ) + 1) := by
+  unfold blockJacobian; ring
+
+/-- Jacobian at p=1 in block k is 4π(k+2). -/
+theorem blockJacobian_at_one (k : ℕ) : blockJacobian k 1 = 4 * Real.pi * ((k : ℝ) + 2) := by
+  unfold blockJacobian; ring
+
 end Aristotle.RSBlockParam
