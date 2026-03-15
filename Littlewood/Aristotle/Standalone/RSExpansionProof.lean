@@ -3216,6 +3216,34 @@ private theorem first_moment_from_main_and_error
   linarith [abs_add_le (∫ t in Ioc 1 T, MainTerm t) (∫ t in Ioc 1 T, ErrorTerm t),
             h_M T hT, h_E T hT]
 
+/-- **Per-mode oscillatory integral bound**: for each mode n,
+    |∫_a^b (n+1)^{-1/2} cos(θ(t) - t·log(n+1)) dt| ≤ C_n(a, b)
+    where C_n depends on the phase derivative at the endpoints.
+
+    The VdC first-derivative test gives: if |φ'(t)| ≥ λ > 0 on [a,b],
+    then |∫_a^b e^{iφ(t)} dt| ≤ 2/λ. For φ(t) = θ(t) - t·log(n+1),
+    φ'(t) = θ'(t) - log(n+1) ≈ (1/2)log(t/(2π)) - log(n+1).
+
+    Off-diagonal modes (n far from √(T/2π)) have |φ'| bounded below,
+    giving O(1) contribution per mode. The diagonal mode (n ≈ √(T/2π))
+    requires a second-derivative (VdC) bound: |∫| ≤ C/√|φ''| = O(T^{1/4}).
+
+    The total is: ∑_{n ≤ N} (n+1)^{-1/2} · O(1) + O(T^{1/4}) = O(√N + T^{1/4})
+    = O(T^{1/4}) since N ≈ √(T/2π).
+
+    Actually for the first moment, N varies with t, making the argument
+    more subtle. The correct approach is to bound ∫₁ᵀ MainTerm dt
+    = 2 ∑_n (n+1)^{-1/2} ∫₁ᵀ cos(θ(t) - t·log(n+1)) dt (with n-dependent
+    integration endpoints) and use VdC per mode.
+
+    Reference: Titchmarsh §4.15; Ivic Ch. 4. -/
+private theorem main_term_per_mode_bound :
+    ∀ n : ℕ, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T,
+        ((n + 1 : ℝ) ^ (-(1/2 : ℝ))) * Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))| ≤
+      ((n + 1 : ℝ) ^ (-(1/2 : ℝ))) * (2 * T + 4) := by
+  sorry
+
 /-- **Main term first moment bound**: |∫₁ᵀ MainTerm(t) dt| ≤ C_M · √T.
 
     Each mode n contributes ∫ (n+1)^{-1/2} cos(θ(t) - t·log(n+1)) dt.
@@ -3230,21 +3258,29 @@ private theorem main_term_first_moment :
       |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) := by
   sorry
 
-/-- **Error term first moment bound**: |∫₁ᵀ ErrorTerm(t) dt| ≤ C_E · √T.
+/-- **Per-block error integral bound**: the signed block integral
+    |∫_{block k} ErrorTerm| is bounded by C · √(k+1).
+    This follows from |ErrorTerm| ≤ |leading| + C_R·t^{-3/4}
+    and ∫_block |leading| = 4π·∫₀¹ √(k+1+p)·Ψ(p)dp ≤ C·√(k+2). -/
+private theorem error_block_integral_bound :
+    ∃ C_block > 0, ∀ k : ℕ,
+      |∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t| ≤
+        C_block * Real.sqrt ((k : ℝ) + 2) := by
+  sorry
 
-    The error term on block k has alternating sign (-1)^k and amplitude
-    that decays like 1/√(k+1). The block integrals form an alternating
-    series, so by Leibniz the partial sum is bounded by the first omitted
-    term ~ 1/√K. Since K ~ √(T/2π), the bound is O(T^{-1/4}), which is
-    much better than √T.
+/-- **Error term first moment via block alternation**: the error term
+    integral benefits from alternating signs on consecutive blocks.
 
-    The crude bound C_E · √T follows from the VdC-type bound on the
-    MainTerm contribution, since ErrorTerm = hardyZ - MainTerm and
-    |∫ hardyZ| ≤ C · T (crude bound from HardyZFirstMoment), so
-    |∫ Error| ≤ |∫ Z| + |∫ Main| ≤ C·T + C_M·√T ≤ C_E · T.
-    The sharper O(T^{-1/4}) bound is not needed here.
+    Strategy: decompose ∫₁ᵀ ErrorTerm = ∫₁^{hs(0)} ErrorTerm + ∑_{k<K} ∫_{block k} ErrorTerm
+    + ∫_{hs(K)}^T ErrorTerm, where K is the last complete block before T.
 
-    Reference: Gabcke 1979; Heath-Brown 1978. -/
+    The block sum has alternating signs: on block k, ErrorTerm has sign (-1)^k.
+    The per-block integrals |∫_{block k} ErrorTerm| ~ C·√(k+1) form a sequence
+    whose successive differences are O(k^{-1/2}). By Leibniz alternation,
+    the partial sum is bounded by the first term ~ C·√2 = O(1).
+
+    The boundary terms (initial and final partial blocks) contribute O(√T)
+    and O(1) respectively, giving a total of O(√T). -/
 private theorem error_term_first_moment :
     ∃ C_E > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Ioc 1 T, ErrorTerm t| ≤ C_E * T ^ ((1 : ℝ) / 2) := by
