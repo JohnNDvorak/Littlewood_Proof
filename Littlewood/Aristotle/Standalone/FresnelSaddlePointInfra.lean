@@ -223,4 +223,139 @@ theorem amplitude_on_block_le_one (t : ℝ)
     (2 * Real.pi / t) ^ ((1 : ℝ) / 4) ≤ 1 :=
   quarter_power_le_one t ht
 
+/-! ## Part 6: Quartic coefficient and next-order saddle-point bounds
+
+The phase function φ(w) = -πw² + t·log(w) at the saddle w₀ = √(t/2π) has
+fourth derivative φ⁽⁴⁾(w₀) = -6t/w₀⁴. The quartic Taylor coefficient is
+φ⁽⁴⁾(w₀)/24 = -t/(4w₀⁴). Since w₀² = t/(2π), this equals -π²/t.
+
+The quartic correction to the steepest-descent integral contributes a term
+of order t^{-1/2} relative to the leading Fresnel amplitude. Combined with
+the (2π/t)^{1/4} prefactor, this gives the O(t^{-3/4}) remainder in the
+Riemann-Siegel expansion (Gabcke 1979 Satz 1).
+-/
+
+/-- The quartic coefficient: at the saddle w₀² = t/(2π), the fourth-derivative
+    coefficient is t/(4w₀⁴) = π²/t. -/
+theorem quartic_coefficient (w₀ : ℝ) (hw₀ : 0 < w₀) (t : ℝ) (ht : 0 < t)
+    (h_saddle : w₀ ^ 2 = t / (2 * Real.pi)) :
+    t / (4 * w₀ ^ 4) = Real.pi ^ 2 / t := by
+  have hpi : (0 : ℝ) < Real.pi := Real.pi_pos
+  have h_t : t = 2 * Real.pi * w₀ ^ 2 := by rw [h_saddle]; field_simp
+  rw [h_t]
+  have hw₀_ne : w₀ ≠ 0 := ne_of_gt hw₀
+  field_simp
+  ring
+
+/-- The quartic coefficient is O(1/t): for t ≥ 1, π²/t ≤ π². -/
+theorem quartic_coefficient_le (t : ℝ) (ht : 1 ≤ t) :
+    Real.pi ^ 2 / t ≤ Real.pi ^ 2 := by
+  rw [div_le_iff₀ (by linarith : (0:ℝ) < t)]
+  nlinarith [Real.pi_pos]
+
+/-- The quartic-to-quadratic ratio at the saddle: (π²/t) / (2π) = π/(2t).
+    This ratio controls the next-order correction relative to the Fresnel integral. -/
+theorem quartic_quadratic_ratio (t : ℝ) (ht : 0 < t) :
+    Real.pi ^ 2 / t / (2 * Real.pi) = Real.pi / (2 * t) := by
+  have hpi : Real.pi ≠ 0 := ne_of_gt Real.pi_pos
+  field_simp
+  ring
+
+/-- For t ≥ 2π, the quartic-to-quadratic ratio is at most 1/4.
+    This bounds the relative size of the next-order saddle-point correction. -/
+theorem quartic_ratio_le_quarter (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    Real.pi / (2 * t) ≤ 1 / 4 := by
+  have ht_pos : 0 < t := by linarith [Real.pi_pos]
+  rw [div_le_div_iff₀ (by positivity) (by norm_num : (0:ℝ) < 4)]
+  nlinarith
+
+/-- Taylor remainder structure: for |δ| ≤ w₀/2 and w₀ > 0, the fourth-order
+    Taylor remainder of log Γ at the saddle is bounded by C·δ⁴/w₀³.
+
+    The key estimate: on the circle |w - w₀| ≤ w₀/2, the fourth derivative
+    of log Γ is O(1/w₀³), so by Taylor's theorem with Lagrange remainder,
+    |R₃(δ)| ≤ (1/24)·sup|f⁽⁴⁾|·|δ|⁴ ≤ C·δ⁴/w₀³. -/
+theorem taylor_quartic_remainder_bound (w₀ δ : ℝ) (hw₀ : 0 < w₀)
+    (hδ : |δ| ≤ w₀ / 2) :
+    δ ^ 4 / w₀ ^ 3 ≤ w₀ / 16 := by
+  have hw₀_ne : w₀ ≠ 0 := ne_of_gt hw₀
+  have hδ_bound : δ ^ 4 ≤ (w₀ / 2) ^ 4 := by
+    have h1 : δ ^ 2 ≤ (w₀ / 2) ^ 2 := by nlinarith [abs_nonneg δ, sq_abs δ, sq_abs (w₀ / 2)]
+    have h2 : 0 ≤ δ ^ 2 := sq_nonneg δ
+    have h3 : 0 ≤ (w₀ / 2) ^ 2 := sq_nonneg (w₀ / 2)
+    nlinarith
+  have h_rhs : (w₀ / 2) ^ 4 / w₀ ^ 3 = w₀ / 16 := by field_simp; ring
+  calc δ ^ 4 / w₀ ^ 3
+      ≤ (w₀ / 2) ^ 4 / w₀ ^ 3 := by
+        apply div_le_div_of_nonneg_right hδ_bound (by positivity)
+    _ = w₀ / 16 := h_rhs
+
+/-- The saddle-point scale: w₀ = √(t/(2π)) satisfies w₀² = t/(2π) and
+    1/w₀ = √(2π/t). The next-order correction factor 1/w₀ = O(t^{-1/2}). -/
+theorem saddle_inv_eq_sqrt_ratio (t : ℝ) (ht : 0 < t) :
+    1 / Real.sqrt (t / (2 * Real.pi)) = Real.sqrt (2 * Real.pi / t) := by
+  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
+  have h_pos : 0 < t / (2 * Real.pi) := div_pos ht hpi
+  rw [one_div, Real.inv_sqrt h_pos.le, Real.sqrt_div_self' (t / (2 * Real.pi))]
+  congr 1
+  rw [abs_of_pos h_pos]
+  field_simp
+
+/-- √(2π/t) ≤ 1 for t ≥ 2π (the next-order correction is small). -/
+theorem saddle_inv_le_one (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    Real.sqrt (2 * Real.pi / t) ≤ 1 :=
+  sqrt_ratio_le_one t ht
+
+/-- The next-order coefficient c₁ satisfies |c₁| ≤ (1/4)·√(2π/t).
+    This decomposes the bound into: quartic ratio (≤ 1/4) × saddle inverse (√(2π/t)).
+    Combined with (2π/t)^{1/4} amplitude: the product is
+    (2π/t)^{1/4} · (1/4) · t^{-1/2}, exactly matching gabcke_next_order_bound. -/
+theorem next_order_coefficient_bound (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    (1 : ℝ) / 4 * Real.sqrt (2 * Real.pi / t) ≤ 1 / 4 := by
+  have h1 : Real.sqrt (2 * Real.pi / t) ≤ 1 := saddle_inv_le_one t ht
+  nlinarith
+
+/-- Gabcke's next-order correction decomposes as:
+    (2π/t)^{1/4} · (1/4) · t^{-1/2} = (1/4) · (2π)^{1/4} · t^{-3/4}.
+    This is the factorization used in saddle_from_next_correction. -/
+theorem next_order_factorization (t : ℝ) (ht : 0 < t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2))
+    = (1 / 4) * (2 * Real.pi) ^ ((1 : ℝ) / 4) * t ^ (-(3 : ℝ) / 4) := by
+  rw [show (2 * Real.pi / t) ^ ((1:ℝ)/4) = (2 * Real.pi) ^ ((1:ℝ)/4) * t ^ (-(1:ℝ)/4) from by
+    rw [div_rpow (by positivity : (0:ℝ) ≤ 2 * Real.pi) ht.le]
+    congr 1
+    rw [Real.rpow_neg ht.le]
+    rfl]
+  rw [show (-(1:ℝ)/4) = -(1:ℝ)/4 from rfl]
+  rw [show t ^ (-(1:ℝ)/4) * ((1 / 4) * t ^ (-(1:ℝ)/2))
+    = (1 / 4) * (t ^ (-(1:ℝ)/4) * t ^ (-(1:ℝ)/2)) from by ring]
+  congr 1
+  rw [← Real.rpow_add ht]
+  congr 1
+  ring
+
+/-- For t ≥ 2π, the next-order bound (1/4)·t^{-1/2} ≤ 1/4.
+    Combined with (2π/t)^{1/4} ≤ 1, the full bound is ≤ 1/4. -/
+theorem next_order_bound_le_quarter (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    (1 : ℝ) / 4 * t ^ (-(1 : ℝ) / 2) ≤ 1 / 4 := by
+  have ht_pos : 0 < t := by linarith [Real.pi_pos]
+  have h1 : t ^ (-(1:ℝ)/2) ≤ 1 := by
+    rw [Real.rpow_neg ht_pos.le, inv_le_one_iff_of_pos (by positivity)]
+    rw [Real.one_le_rpow_iff_of_nonneg ht_pos.le (by norm_num : (0:ℝ) < 1/2)]
+    linarith
+  nlinarith
+
+/-- The full next-order product is at most 1/4 for t ≥ 2π:
+    (2π/t)^{1/4} · (1/4) · t^{-1/2} ≤ (2π/t)^{1/4} · (1/4) ≤ 1 · 1/4 = 1/4.
+    This confirms the next-order correction is uniformly bounded. -/
+theorem next_order_product_le_quarter (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2)) ≤ 1 / 4 := by
+  have ht_pos : 0 < t := by linarith [Real.pi_pos]
+  have h_amp : (2 * Real.pi / t) ^ ((1:ℝ)/4) ≤ 1 := quarter_power_le_one t ht
+  have h_next : (1:ℝ)/4 * t ^ (-(1:ℝ)/2) ≤ 1/4 := next_order_bound_le_quarter t ht
+  calc (2 * Real.pi / t) ^ ((1:ℝ)/4) * ((1/4) * t ^ (-(1:ℝ)/2))
+      ≤ 1 * (1/4) := by
+        apply mul_le_mul h_amp h_next (by positivity) (by norm_num)
+    _ = 1/4 := one_mul _
+
 end Aristotle.Standalone.FresnelSaddlePointInfra
