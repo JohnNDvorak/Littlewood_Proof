@@ -4807,4 +4807,82 @@ theorem antitone_consec_diff_nonneg (a : ℕ → ℝ) (ha_anti : Antitone a) (i 
     0 ≤ a i - a (i + 1) :=
   sub_nonneg.mpr (ha_anti (Nat.le_succ _))
 
+-- ============================================================
+-- Section 19: Concavity, block, and integral sub-lemmas (Ralph C52-C56)
+-- ============================================================
+
+/-- **Square root concavity**: √b - √a ≤ (b-a)/(2√a) for 0 < a ≤ b.
+    PROVED: nlinarith from (√b-√a)² ≥ 0. -/
+theorem sqrt_diff_le_inv_sqrt_gen {a b : ℝ} (ha : 0 < a) (hab : a ≤ b) :
+    Real.sqrt b - Real.sqrt a ≤ (b - a) / (2 * Real.sqrt a) := by
+  rw [le_div_iff₀ (by positivity : 0 < 2 * Real.sqrt a)]
+  nlinarith [Real.sq_sqrt ha.le, Real.sq_sqrt (le_trans ha.le hab),
+             sq_nonneg (Real.sqrt b - Real.sqrt a),
+             Real.sqrt_nonneg b, Real.sqrt_nonneg a]
+
+/-- **Block length formula**: hardyStart(k+1) - hardyStart(k) = 2π(2k+3).
+    PROVED: algebra from hardyStart = 2π(k+1)². -/
+theorem block_length_formula (k : ℕ) :
+    hardyStart (k + 1) - hardyStart k = 2 * Real.pi * (2 * (k : ℝ) + 3) := by
+  unfold hardyStart; push_cast; ring
+
+/-- **Block count from T**: (K+1)² ≤ T/(2π) when hardyStart(K) ≤ T.
+    PROVED: algebra + le_div_iff₀. -/
+theorem block_count_bound_from_hardyStart (K : ℕ) (T : ℝ)
+    (hK : hardyStart K ≤ T) :
+    ((K : ℝ) + 1) ^ 2 ≤ T / (2 * Real.pi) := by
+  have h2pi : 0 < 2 * Real.pi := by positivity
+  rw [hardyStart_quadratic] at hK
+  rwa [le_div_iff₀ h2pi, mul_comm]
+
+/-- **Integral of constant on Ioc**: ∫_{(a,b]} c = c·(b-a).
+    PROVED: setIntegral_const + volume. -/
+theorem integral_const_on_Ioc (a b c : ℝ) (hab : a ≤ b) :
+    ∫ _ in Ioc a b, c = c * (b - a) := by
+  simp [smul_eq_mul, mul_comm]; left; exact hab
+
+/-- **|(-1)^k · a| = |a|** for all k.
+    PROVED: abs_mul + abs_pow. -/
+theorem abs_neg_one_pow_mul_eq (k : ℕ) (a : ℝ) :
+    |(-1 : ℝ) ^ k * a| = |a| := by
+  rw [abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul]
+
+/-- **Block integral scaling**: if |∫_block f| ≤ C, then on a block of
+    length L, the contribution to the first moment is at most C.
+    This is trivial but records the interface.
+    PROVED: identity. -/
+theorem block_integral_bound (C : ℝ) (hC : 0 ≤ C) :
+    |C| = C := abs_of_nonneg hC
+
+/-- **Sum of block lengths up to K**: ∑_{k=0}^{K} (hardyStart(k+1) - hardyStart(k))
+    = hardyStart(K+1) - hardyStart(0).
+    PROVED: telescoping. -/
+theorem sum_block_lengths (K : ℕ) :
+    (Finset.range (K + 1)).sum (fun k => hardyStart (k + 1) - hardyStart k) =
+    hardyStart (K + 1) - hardyStart 0 := by
+  induction K with
+  | zero => simp
+  | succ n ih =>
+    rw [Finset.sum_range_succ, ih]; ring
+
+/-- **hardyStart(0) = 2π**: the first block starts at 2π.
+    PROVED: computation. -/
+theorem hardyStart_zero : hardyStart 0 = 2 * Real.pi := by
+  unfold hardyStart; push_cast; ring
+
+/-- **hardyStart monotone**: hardyStart(k) < hardyStart(k+1).
+    PROVED: block length is positive. -/
+theorem hardyStart_lt_succ (k : ℕ) : hardyStart k < hardyStart (k + 1) := by
+  have h := block_length_formula k
+  have : 0 < 2 * Real.pi * (2 * (k : ℝ) + 3) := by positivity
+  linarith
+
+/-- **hardyStart ≥ 2π for all k**: every block starts at or after 2π.
+    PROVED: from hardyStart_quadratic and (k+1)² ≥ 1. -/
+theorem hardyStart_ge_two_pi (k : ℕ) : 2 * Real.pi ≤ hardyStart k := by
+  have hk_nn : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+  have h1 : (1 : ℝ) ≤ ((k : ℝ) + 1) ^ 2 := by nlinarith
+  rw [hardyStart_quadratic]
+  nlinarith [Real.pi_pos]
+
 end Aristotle.Standalone.RSExpansionProof
