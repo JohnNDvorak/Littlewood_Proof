@@ -3063,7 +3063,7 @@ private theorem gabcke_constant_exists :
   refine ⟨by norm_num, ?_⟩
   -- Need: (1/4)·(2π)^{1/4} ≤ 1/2, i.e., (2π)^{1/4} ≤ 2
   -- (2π)^{1/4} ≤ 2 iff 2π ≤ 16 iff π ≤ 8. True since π < 4.
-  have hpi_lt : Real.pi < 4 := by linarith [Real.pi_lt_3141593]
+  have hpi_lt : Real.pi < 4 := Real.pi_lt_four
   have h2pi_lt : 2 * Real.pi < 8 := by linarith
   have h2pi_pos : (0 : ℝ) < 2 * Real.pi := by positivity
   -- Need: (1/4)·(2π)^{1/4} ≤ 1/2, i.e., (2π)^{1/4} ≤ 2
@@ -3102,7 +3102,7 @@ private theorem saddle_from_next_correction
   refine ⟨1 / 2, by norm_num, le_refl _, fun k t ht_lo ht_hi ht_pos => ?_⟩
   have h_step := h_next k t ht_lo ht_hi ht_pos
   -- From gabcke_constant_exists: (1/4)·(2π)^{1/4} ≤ 1/2
-  have hpi_lt : Real.pi < 4 := by linarith [Real.pi_lt_3141593]
+  have hpi_lt : Real.pi < 4 := Real.pi_lt_four
   have h2pi_lt16 : 2 * Real.pi < 16 := by linarith
   have h16_rpow : (16 : ℝ) ^ ((1 : ℝ) / 4) = 2 := by
     rw [show (16 : ℝ) = (2 : ℝ) ^ (4 : ℕ) from by norm_num,
@@ -3122,19 +3122,6 @@ private theorem saddle_from_next_correction
     _ ≤ (1 / 2) * t ^ (-(3 : ℝ) / 4) :=
         mul_le_mul_of_nonneg_right h_quarter_bound (Real.rpow_nonneg ht_pos.le _)
 
-/-- **Saddle remainder is controlled by t^{-3/4}**: the key quantitative bound.
-
-    Reduced via `saddle_from_next_correction` to: the next-order correction
-    in Siegel's steepest-descent expansion is bounded by (1/4)·t^{-1/2}.
-    This is the irreducible content of Siegel 1932 §3.
-
-    The steepest descent gives:
-    I(t) = (2π/t)^{1/4} · [Ψ(p) + c₁(p)·t^{-1/2} + c₂(p)·t^{-1} + ...]
-    where c₁(p) involves the third derivative of the phase at the saddle.
-    |c₁(p)| ≤ C₁ for p ∈ [0,1] by boundedness of the Fresnel coefficients.
-    Gabcke (1979) computed C₁ ≈ 0.083 < 1/4.
-
-    Reference: Siegel 1932 §3; Gabcke 1979 Satz 1. -/
 /-- **Gabcke next-order correction bound** (Siegel 1932 §3, Gabcke 1979 Satz 1):
     The irreducible content of the steepest-descent expansion.
     On each block, the remainder after extracting the leading RS correction
@@ -3226,7 +3213,8 @@ private theorem first_moment_from_main_and_error
     intro t _; show hardyZ t = MainTerm t + ErrorTerm t
     simp [ErrorTerm]
   rw [h_split, add_mul]
-  exact le_trans (abs_add _ _) (add_le_add (h_M T hT) (h_E T hT))
+  linarith [abs_add_le (∫ t in Ioc 1 T, MainTerm t) (∫ t in Ioc 1 T, ErrorTerm t),
+            h_M T hT, h_E T hT]
 
 /-- **Main term first moment bound**: |∫₁ᵀ MainTerm(t) dt| ≤ C_M · √T.
 
