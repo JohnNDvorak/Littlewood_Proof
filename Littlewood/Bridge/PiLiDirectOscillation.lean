@@ -113,7 +113,30 @@ class PsiExplicitFormulaZerosHyp : Prop where
           ≤ δ * (Real.sqrt x / Real.log x)
 
 instance : AbelCorrectionPsiPiHyp where
-  correction_bound := by sorry
+  correction_bound := by
+    -- PROOF PATH: The Abel correction bound combines three classical results:
+    --
+    -- (A) Prime power correction: |ψ(x) - θ(x)| ≤ C₁·√x
+    --     PROVED: Aristotle.PsiThetaCanonicalBound.abs_chebyshevPsi_sub_chebyshevTheta_le_const_sqrt
+    --
+    -- (B) Partial summation (Abel): π(x) = θ(x)/logx + ∫₂ˣ θ(t)/(t·(logt)²) dt
+    --     SKETCHED: PartialSummationPiLiModule (local defs, not connected to canonical)
+    --
+    -- (C) li approximation: li(x) = x/logx + ∫₂ˣ 1/(logt)² dt + C
+    --     SKETCHED: PartialSummationPiLiModule.li_integration_by_parts
+    --
+    -- Combined: π(x) - li(x) - (ψ(x)-x)/logx
+    --   = (θ(x)-ψ(x))/logx + ∫₂ˣ (θ(t)-t)/(t·(logt)²) dt + const
+    --   The first term is O(√x/logx) from (A).
+    --   The integral correction is O(√x/(logx)²) by PNT: θ(t) = t + O(t/logt).
+    --   Together: O(√x/(logx)²) (the 1/logx on √x gets absorbed by the extra logx).
+    --
+    -- BLOCKER: Connecting PartialSummationPiLiModule's local definitions
+    -- (chebyshevPsi, primeCountingReal, li) to the canonical definitions
+    -- used here (DirichletPhaseAlignment.chebyshevPsi, Nat.primeCounting,
+    -- LogarithmicIntegral.logarithmicIntegral). Both represent the same
+    -- mathematical objects but are defined differently in Lean.
+    sorry
 
 /-- PROVED from `ContourRemainderBoundHyp` (ExplicitFormulaPsiB5aDefs) +
     `psi_bound_div_log_eventually_small` (AbelSummationPsiPi).
@@ -189,7 +212,18 @@ private theorem pi_approx_from_abel_and_psi
     ∀ᶠ x in atTop,
       |piLiError x + ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
         ≤ ε * (Real.sqrt x / Real.log x) := by
-  sorry
+  -- Decompose via Abel bridge: piLiError ≈ (ψ-x)/logx with O(√x/(logx)²) correction
+  obtain ⟨D, hD, h_corr⟩ := AbelCorrectionPsiPiHyp.correction_bound
+  -- Apply the adjustable Abel bridge combinator
+  exact AbelSummationPsiPi.abel_bridge_adjustable
+    (fun x => piLiError x)
+    (fun x => (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x) / Real.log x)
+    (fun x => ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x)
+    D hD ε hε h_corr
+    (fun δ hδ => by
+      -- Need: |(ψ-x)/logx + Σ_S/logx| ≤ δ·√x/logx eventually
+      -- This is the ZerosBelow→S transfer (genuinely open without RH/density)
+      sorry)
 
 instance [AbelCorrectionPsiPiHyp] [PsiExplicitFormulaZerosHyp] :
     PiApproxFromExplicitFormulaHyp where
