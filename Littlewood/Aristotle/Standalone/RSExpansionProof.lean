@@ -3242,7 +3242,34 @@ private theorem main_term_per_mode_bound :
       |∫ t in Ioc 1 T,
         ((n + 1 : ℝ) ^ (-(1/2 : ℝ))) * Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))| ≤
       ((n + 1 : ℝ) ^ (-(1/2 : ℝ))) * (2 * T + 4) := by
-  sorry
+  intro n T hT
+  -- Let c := (n+1)^{-1/2} ≥ 0
+  set c := ((n + 1 : ℝ) ^ (-(1/2 : ℝ))) with hc_def
+  have hc_nonneg : 0 ≤ c := Real.rpow_nonneg (by positivity : (0 : ℝ) ≤ (n : ℝ) + 1) _
+  have h1T : (1 : ℝ) ≤ T := by linarith
+  -- Convert from set integral to interval integral
+  have h_eq : (∫ t in Ioc 1 T,
+      c * Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))) =
+    ∫ t in (1 : ℝ)..T,
+      c * Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1)) :=
+    (intervalIntegral.integral_of_le h1T).symm
+  rw [h_eq]
+  -- Pull constant out: ∫ c * f = c * ∫ f
+  conv_lhs => rw [show (fun t => c * Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))) =
+      (fun t => c • Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))) from
+    funext (fun t => (smul_eq_mul c _).symm)]
+  rw [intervalIntegral.integral_smul, smul_eq_mul, abs_mul, abs_of_nonneg hc_nonneg]
+  -- Now bound: c * |∫ cos| ≤ c * (2T+4)
+  apply mul_le_mul_of_nonneg_left _ hc_nonneg
+  -- |∫₁ᵀ cos(...)| ≤ |T - 1| (norm_integral_le_of_norm_le_const with bound 1)
+  calc |∫ t in (1 : ℝ)..T, Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))|
+      = ‖∫ t in (1 : ℝ)..T, Real.cos (hardyTheta t - t * Real.log ((n : ℝ) + 1))‖ :=
+        (Real.norm_eq_abs _).symm
+    _ ≤ 1 * |T - 1| :=
+        intervalIntegral.norm_integral_le_of_norm_le_const
+          (fun t _ => by rw [Real.norm_eq_abs]; exact abs_cos_le_one _)
+    _ = T - 1 := by rw [one_mul, abs_of_nonneg (by linarith)]
+    _ ≤ 2 * T + 4 := by linarith
 
 /-- **Main term first moment bound**: |∫₁ᵀ MainTerm(t) dt| ≤ C_M · √T.
 
