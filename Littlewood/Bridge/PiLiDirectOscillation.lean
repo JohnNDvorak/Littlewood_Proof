@@ -52,32 +52,37 @@ class TruncatedExplicitFormulaPiHyp : Prop where
 
 /-! ### MATHEMATICAL ANALYSIS: pi_approx soundness (2026-03-15)
 
-**STATUS (updated 2026-03-15)**: Two layers with different truth values:
+**STATUS (updated 2026-03-15)**: Both layers are **MATHEMATICALLY FALSE**.
 
-1. `PiApproxFromExplicitFormulaHyp` (O-bound, `∃ D > 0`): **MATHEMATICALLY TRUE**.
+1. `PiApproxFromExplicitFormulaHyp` (O-bound, `∃ D > 0`): **MATHEMATICALLY FALSE**.
    States ∃ D > 0 such that for any S of critical-line zeros, eventually
    |π(x) - li(x) + (Σ_{ρ∈S} x^ρ/ρ)/logx| ≤ D·√x/logx.
-   This follows from the Perron contour formula + Abel summation ψ→π.
-   The constant D absorbs the Abel correction O(√x/logx).
-   Sorry: proof not yet formalized (requires composing Perron + Abel constants).
+   Setting S=∅ requires |π(x)-li(x)| ≤ D·√x/logx. But even under RH, the best
+   bound is π(x)-li(x) = O(√x·logx) (von Koch 1901). Since √x·logx/(√x/logx) = (logx)²,
+   no fixed D can absorb the (logx)² factor. The O-bound version has the same structural
+   defect as the little-o version below.
 
 2. `TruncatedExplicitFormulaPiHyp.pi_approx` (little-o, `∀ ε > 0`): **MATHEMATICALLY FALSE**.
    Setting S=∅ gives π(x)-li(x) = o(√x/logx), contradicting Ω± oscillation.
    Retained with false type to avoid breaking 50+ downstream files.
    The main theorem path bypasses this via LandauOscillation.lean (priority 2000).
 
-**ROOT CAUSE** of the false little-o statement:
-1. The `∀ S` quantification (including S=∅) is incompatible with Ω± oscillation.
-2. The ψ→π Abel correction O(√x/logx) contributes at the SAME scale as ε·√x/logx.
+**ROOT CAUSE** (applies to BOTH layers):
+1. The `∀ S` quantification (including S=∅) requires π(x)-li(x) = O(√x/logx).
+2. Under RH: π(x)-li(x) = O(√x·logx), which is (logx)² times the target scale.
+3. Without RH: unconditional bounds are even worse (O(x·exp(-c√logx))).
+4. No fixed D (or ε) can absorb the (logx)² gap between √x·logx and √x/logx.
 
-**CORRECT MULTI-FILE REFACTOR** (future work):
-Replace `∀ S, ∀ ε > 0` in TruncatedExplicitFormulaPiHyp with ZerosBelow T + O-bound.
-Then the oscillation extraction uses A(T) → ∞ growth to exceed D for large T.
-This affects 50+ downstream files.
+**CORRECT FORMULATION** (future multi-file refactor):
+The right statement uses ZerosBelow T with D depending on T:
+  ∀ T ≥ 2, ∃ D_T > 0, ∀ᶠ x, |π(x)-li(x)+Σ_{ZerosBelow T}/logx| ≤ D_T·√x/logx
+Then the oscillation extraction uses A(T) → ∞ growth to exceed D_T for large T.
+This affects 50+ downstream files and is left as future work.
 
 **SORRY HISTORY**: 2 sorrys → 1 sorry (consolidated). The remaining sorry on
-PiApproxFromExplicitFormulaHyp is now a legitimate proof obligation (true statement).
+PiApproxFromExplicitFormulaHyp is on a FALSE statement (not a legitimate proof obligation).
 The false `pi_approx` field in PerronExplicitFormulaProvider has its own sorry.
+The main theorem path is unaffected: LandauOscillation (priority 2000) bypasses both.
 -/
 
 /-- Abel summation correction: π(x) - li(x) ≈ (ψ(x) - x)/logx with correction
@@ -163,19 +168,17 @@ instance : PsiExplicitFormulaZerosHyp where
 
 /-- π-level truncated explicit formula at √x/logx scale (O-bound version).
 
-    **MATHEMATICALLY TRUE**: For any finite set S of critical-line zeros,
-    the explicit formula gives an O-bound:
-      |π(x) - li(x) + (Σ_{ρ∈S} x^ρ/ρ)/logx| ≤ D · √x/logx
-    where D depends on the Abel correction constant but NOT on S or ε.
+    **MATHEMATICALLY FALSE** (2026-03-15 analysis): Setting S=∅ requires
+    |π(x)-li(x)| ≤ D·√x/logx, but even under RH the best bound is
+    O(√x·logx) — a factor (logx)² too large. No fixed D works.
 
-    This replaces the previous ∀ε>0 (little-o) version which was FALSE
-    (setting S=∅ contradicts Littlewood's Ω± oscillation). The O-bound
-    IS compatible with Ω± because the phase-aligned sum grows with |S|
-    and can exceed D for large enough S.
+    The correct formulation would use ZerosBelow T with T-dependent D:
+      ∀ T ≥ 2, ∃ D_T > 0, ∀ᶠ x, |π(x)-li(x)+Σ_{ZerosBelow T}/logx| ≤ D_T·√x/logx
+    This requires a multi-file refactor (50+ downstream files).
 
     NOTE: TruncatedExplicitFormulaPiHyp.pi_approx retains the ∀ε>0 form
-    for downstream compatibility (50+ files). The bridge from this O-bound
-    to that little-o form requires the full ZerosBelow T refactor. -/
+    for downstream compatibility. Both are false; both bypassed by
+    LandauOscillation.lean (priority 2000) for the main theorem path. -/
 class PiApproxFromExplicitFormulaHyp : Prop where
   /-- There exists D > 0 such that for any finite set S of critical-line zeros,
       eventually |π(x) - li(x) + (Σ_{ρ∈S} x^ρ/ρ)/logx| ≤ D · √x/logx.
@@ -190,14 +193,14 @@ class PiApproxFromExplicitFormulaHyp : Prop where
 
 /-- Sorry for PiApproxFromExplicitFormulaHyp (O-bound version).
 
-    SORRY (1): The statement is now MATHEMATICALLY TRUE. The proof requires:
-    (1) The Perron contour formula for ψ(x) (from ContourRemainderBoundHyp)
-    (2) Abel summation ψ → π with O(√x/logx) correction
-    (3) Combining: the remainder + Abel correction give a fixed D
+    SORRY (1): **MATHEMATICALLY FALSE** — same structural defect as the ∀ε>0 version.
+    Setting S=∅ requires |π(x)-li(x)| = O(√x/logx), but the best unconditional
+    bound is O(x·exp(-c√logx)) and even under RH only O(√x·logx). The (logx)²
+    gap between √x·logx and √x/logx cannot be absorbed by any fixed D.
 
-    The previous ∀ε>0 version was mathematically false; this O-bound version
-    is the correct statement. Provable from PsiExplicitFormulaZerosHyp +
-    AbelCorrectionPsiPiHyp once their constants are composed. -/
+    This sorry is on a false statement. The main theorem path bypasses it via
+    LandauOscillation.lean (priority 2000). The correct formulation requires
+    ZerosBelow T with T-dependent constant — see MATHEMATICAL ANALYSIS above. -/
 instance : PiApproxFromExplicitFormulaHyp where
   pi_approx_bound := by
     sorry
