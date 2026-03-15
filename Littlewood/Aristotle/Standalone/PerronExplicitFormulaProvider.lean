@@ -34,9 +34,11 @@ import Littlewood.Aristotle.Standalone.PerronCriticalLineBridge
 import Littlewood.Aristotle.ZeroFreeRegionV3
 import Littlewood.Aristotle.Standalone.KroneckerEquidistribution
 import Littlewood.Aristotle.Standalone.RHPiTowerHeightBudget
-import Littlewood.ZetaZeros.ZeroCountingAssumptions
--- ZeroCountingAssumptions provides ZeroCountingLowerBoundHyp and
--- FirstZeroOrdinateHyp without going through Assumptions.lean (cycle-free).
+-- Note: ZeroCountingLowerBoundHyp and FirstZeroOrdinateHyp are not in scope
+-- globally because importing Assumptions.lean would create a cycle.
+-- Local sorry'd instances are used inside proofs that need them.
+-- A cycle-free instance file ZetaZeros/ZeroCountingAssumptions.lean is available
+-- but importing it caused OOM during build (too many instance unifications).
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
