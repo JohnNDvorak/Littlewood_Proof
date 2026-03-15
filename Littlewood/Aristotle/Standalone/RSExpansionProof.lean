@@ -3533,19 +3533,75 @@ private theorem error_block_integral_bound :
     _ ≤ 9 * Real.pi * Real.sqrt ((k : ℝ) + 2) := by
         apply mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt (by linarith)) (by positivity)
 
-/-- **Error term first moment via block alternation**: the error term
-    integral benefits from alternating signs on consecutive blocks.
+/-- For monotone nonneg M, |∑_{k<n+1} (-1)^k M(k)| ≤ M(n).
+    Even partial sums lie in [0, M(n)]; odd partial sums in [-M(n), 0]. -/
+private theorem alt_sum_mono_le (M_fn : ℕ → ℝ) (hM_nn : ∀ k, 0 ≤ M_fn k)
+    (hM_mono : Monotone M_fn) : ∀ n : ℕ,
+    |∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * M_fn k| ≤ M_fn n := by
+  suffices h : ∀ m : ℕ,
+      let S := ∑ k ∈ Finset.range (m + 1), (-1 : ℝ) ^ k * M_fn k
+      (Even m → 0 ≤ S ∧ S ≤ M_fn m) ∧ (Odd m → S ≤ 0 ∧ -M_fn m ≤ S) by
+    intro n; rcases Nat.even_or_odd n with he | ho
+    · obtain ⟨hnn, hle⟩ := (h n).1 he; rw [abs_of_nonneg hnn]; exact hle
+    · obtain ⟨hle0, hge⟩ := (h n).2 ho; rw [abs_of_nonpos hle0]; linarith
+  intro m; induction m with
+  | zero => exact ⟨fun _ => by simp [hM_nn 0], fun ho => absurd ho Nat.not_odd_zero⟩
+  | succ k ih =>
+    constructor
+    · intro hek1
+      have hk_odd : Odd k := by
+        rcases Nat.even_or_odd k with he | ho
+        · exact absurd (he.add_one) (Nat.Even.not_odd hek1)
+        · exact ho
+      obtain ⟨hSk_le0, hSk_ge⟩ := ih.2 hk_odd
+      rw [Finset.sum_range_succ]
+      have hpow : (-1 : ℝ) ^ (k + 1) = 1 := by
+        obtain ⟨j, hj⟩ := hk_odd; rw [hj]
+        show (-1 : ℝ) ^ (2 * j + 1 + 1) = 1
+        rw [show 2 * j + 1 + 1 = 2 * (j + 1) from by ring]
+        exact Even.neg_one_pow ⟨j + 1, by ring⟩
+      rw [hpow, one_mul]; exact ⟨by linarith [hM_mono (Nat.le_succ k)], by linarith⟩
+    · intro hok1
+      have hk_even : Even k := by
+        rcases Nat.even_or_odd k with he | ho
+        · exact he
+        · exact absurd (ho.add_one) (Nat.Odd.not_even hok1)
+      obtain ⟨hSk_nn, hSk_le⟩ := ih.1 hk_even
+      rw [Finset.sum_range_succ]
+      have hpow : (-1 : ℝ) ^ (k + 1) = -1 := by
+        obtain ⟨j, hj⟩ := hk_even; rw [hj]
+        show (-1 : ℝ) ^ (2 * j + 1) = -1
+        rw [pow_succ, Even.neg_one_pow ⟨j, by ring⟩]; ring
+      rw [hpow, neg_one_mul]; exact ⟨by linarith [hM_mono (Nat.le_succ k)], by linarith⟩
 
-    Strategy: decompose ∫₁ᵀ ErrorTerm = ∫₁^{hs(0)} ErrorTerm + ∑_{k<K} ∫_{block k} ErrorTerm
-    + ∫_{hs(K)}^T ErrorTerm, where K is the last complete block before T.
+/-- Alternating sum of approximately monotone sequence:
+    |∑_{k<n+1} (-1)^k b(k)| ≤ M(n) + (n+1)·δ. -/
+private theorem alt_sum_approx_mono (b M_fn : ℕ → ℝ) (δ : ℝ) (_hδ : 0 ≤ δ)
+    (hM_nn : ∀ k, 0 ≤ M_fn k) (hM_mono : Monotone M_fn)
+    (h_approx : ∀ k, |b k - M_fn k| ≤ δ) (n : ℕ) :
+    |∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * b k| ≤ M_fn n + (↑n + 1) * δ := by
+  have h_split : ∀ k, (-1 : ℝ) ^ k * b k =
+      (-1 : ℝ) ^ k * M_fn k + (-1 : ℝ) ^ k * (b k - M_fn k) := by intro k; ring
+  simp_rw [h_split, Finset.sum_add_distrib]
+  calc |∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * M_fn k +
+        ∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * (b k - M_fn k)|
+      ≤ |∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * M_fn k| +
+        |∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * (b k - M_fn k)| := abs_add_le _ _
+    _ ≤ M_fn n + ∑ k ∈ Finset.range (n + 1), δ := by
+        gcongr
+        · exact alt_sum_mono_le M_fn hM_nn hM_mono n
+        · calc |∑ k ∈ Finset.range (n + 1), (-1 : ℝ) ^ k * (b k - M_fn k)|
+              ≤ ∑ k ∈ Finset.range (n + 1), |(-1 : ℝ) ^ k * (b k - M_fn k)| :=
+                Finset.abs_sum_le_sum_abs _ _
+            _ ≤ ∑ k ∈ Finset.range (n + 1), δ := by
+                gcongr with k _; rw [abs_mul, show |(-1 : ℝ) ^ k| = 1 from by
+                  simp [abs_pow, abs_neg, abs_one], one_mul]; exact h_approx k
+    _ = M_fn n + (↑n + 1) * δ := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
 
-    The block sum has alternating signs: on block k, ErrorTerm has sign (-1)^k.
-    The per-block integrals |∫_{block k} ErrorTerm| ~ C·√(k+1) form a sequence
-    whose successive differences are O(k^{-1/2}). By Leibniz alternation,
-    the partial sum is bounded by the first term ~ C·√2 = O(1).
-
-    The boundary terms (initial and final partial blocks) contribute O(√T)
-    and O(1) respectively, giving a total of O(√T). -/
+/-- **Error term first moment**: uses approximately-monotone alternating sum
+    bound with M(k) from signed_block_integral_expansion.
+    Depends on sorry #1 (gabcke_next_order_bound) through saddle_pointwise_bound_from_cubic. -/
 private theorem error_term_first_moment :
     ∃ C_E > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Ioc 1 T, ErrorTerm t| ≤ C_E * T ^ ((1 : ℝ) / 2) := by
