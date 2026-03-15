@@ -3264,13 +3264,15 @@ private theorem rsPsi_integral_pos :
     0 < ∫ p in Ioc (0 : ℝ) 1, rsPsi p := by
   have h_lower : ∀ p ∈ Ioc (0 : ℝ) 1, Real.cos (Real.pi / 4) ≤ rsPsi p :=
     fun p hp => rsPsi_ge_cos_pi_four p (Ioc_subset_Icc_self hp)
-  have h_cos_pos : (0 : ℝ) < Real.cos (Real.pi / 4) := by positivity
+  have h_cos_pos : (0 : ℝ) < Real.cos (Real.pi / 4) := by
+    rw [Real.cos_pi_div_four]; positivity
   calc (0 : ℝ) < Real.cos (Real.pi / 4) * (1 - 0) := by positivity
     _ = ∫ _ in Ioc (0 : ℝ) 1, Real.cos (Real.pi / 4) := by
-        rw [integral_const]; simp [smul_eq_mul, mul_comm]; left; linarith
+        rw [integral_const]
+        simp [smul_eq_mul, ENNReal.toReal_ofReal (show (0 : ℝ) ≤ 1 by linarith)]
     _ ≤ ∫ p in Ioc (0 : ℝ) 1, rsPsi p := by
         apply setIntegral_mono_on
-        · exact integrableOn_const.mono_set Ioc_subset_Icc_self
+        · exact (ContinuousOn.integrableOn_Icc continuousOn_const).mono_set Ioc_subset_Icc_self
         · exact rsPsi_continuousOn.integrableOn_Icc.mono_set Ioc_subset_Icc_self
         · exact measurableSet_Ioc
         · exact h_lower
@@ -3295,15 +3297,6 @@ private theorem weighted_sqrt_psi_le_sqrt_times_integral (k : ℕ) :
   · intro p hp
     apply mul_le_mul_of_nonneg_right _ (rsPsi_nonneg_on p (Ioc_subset_Icc_self hp))
     exact Real.sqrt_le_sqrt (by linarith [hp.2])
-
-/-- **(k+1)^{-1/2} <= 1** for all k : N. -/
-private theorem rpow_neg_half_le_one (k : ℕ) :
-    ((k : ℝ) + 1) ^ (-(1 : ℝ) / 2) ≤ 1 := by
-  have h1 : (1 : ℝ) ≤ (k : ℝ) + 1 := by linarith [Nat.cast_nonneg k]
-  calc ((k : ℝ) + 1) ^ (-(1 : ℝ) / 2)
-      ≤ (1 : ℝ) ^ (-(1 : ℝ) / 2) :=
-        Real.rpow_le_rpow_of_nonpos (by norm_num) h1 (by norm_num)
-    _ = 1 := one_rpow _
 
 /-- **Per-block error integral bound**: the signed block integral
     abs(integral_block ErrorTerm) is bounded by C sqrt(k+2).
