@@ -518,4 +518,43 @@ theorem sinc_product_bound (K : ℕ) (θ : Fin K → ℝ) (δ : ℝ) (_hδ : 0 <
 
 end SineProducts
 
+/-! ## Inhomogeneous Dirichlet Approximation -/
+
+section InhomogeneousDirichlet
+
+/-- Triangle-inequality bound for distToInt: ‖x + y‖ᵢₙₜ ≤ ‖x‖ᵢₙₜ + ‖y‖ᵢₙₜ. -/
+theorem distToInt_add_le (x y : ℝ) : ‖x + y‖ᵢₙₜ ≤ ‖x‖ᵢₙₜ + ‖y‖ᵢₙₜ := by
+  unfold distToInt
+  have h1 : |x + y - ↑(round (x + y))| ≤ |x + y - ↑(round x + round y)| :=
+    round_le _ (round x + round y)
+  have h2 : (↑(round x + round y) : ℝ) = ↑(round x) + ↑(round y) := Int.cast_add _ _
+  rw [h2] at h1
+  have h3 : x + y - (↑(round x) + ↑(round y)) = (x - ↑(round x)) + (y - ↑(round y)) := by ring
+  have h4 := abs_add_le (x - ↑(round x)) (y - ↑(round y))
+  rw [← h3] at h4
+  linarith
+
+/-- distToInt scales: ‖n * x‖ᵢₙₜ ≤ n * ‖x‖ᵢₙₜ for natural n. -/
+theorem distToInt_nsmul_le (x : ℝ) (n : ℕ) : ‖(n : ℝ) * x‖ᵢₙₜ ≤ n * ‖x‖ᵢₙₜ := by
+  induction n with
+  | zero => simp [distToInt_zero]
+  | succ k ih =>
+    have h1 : (↑(k + 1) : ℝ) * x = ↑k * x + x := by push_cast; ring
+    have h2 : ‖(↑(k + 1) : ℝ) * x‖ᵢₙₜ ≤ ‖(↑k : ℝ) * x‖ᵢₙₜ + ‖x‖ᵢₙₜ := by
+      rw [h1]; exact distToInt_add_le _ _
+    have h3 : (↑(k + 1) : ℝ) * ‖x‖ᵢₙₜ = ↑k * ‖x‖ᵢₙₜ + ‖x‖ᵢₙₜ := by push_cast; ring
+    linarith
+
+-- Note: The statement ∃ n ≤ N, ‖n*θ - α‖ᵢₙₜ ≤ 1/N is FALSE for general α.
+-- Counterexample: θ = 0, α = 1/2, N = 3 gives distToInt(-1/2) = 1/2 > 1/3.
+-- The correct inhomogeneous Dirichlet requires n ≤ N² (two-stage pigeonhole)
+-- or the weaker bound ‖n*θ - α‖ᵢₙₜ ≤ 1/2.
+-- The multi-dim version needed by PerronExplicitFormulaProvider is absorbed
+-- into the merged tower-cap sorry (Gap 2) in that file.
+
+-- Placeholder for future work: the correct 1D inhomogeneous bound
+-- uses two applications of homogeneous Dirichlet.
+
+end InhomogeneousDirichlet
+
 end DirichletApprox
