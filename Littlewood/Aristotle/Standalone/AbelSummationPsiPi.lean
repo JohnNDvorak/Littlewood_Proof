@@ -878,3 +878,128 @@ theorem C_log_le_delta_sqrt (C : ℝ) (hC : 0 < C) (δ : ℝ) (hδ : 0 < δ) :
 end
 
 end AbelSummationPsiPi_Asymptotics
+
+-- ============================================================
+-- Part 17: Harmonic-log sum estimates for VdC mode summation
+-- ============================================================
+
+namespace AbelSummationPsiPi_HarmonicLog
+
+open Real Filter Asymptotics Finset
+
+noncomputable section
+
+/-! ## Harmonic-log sum bounds: Σ_{n=2}^{N} 1/log(n) ≤ C·N/log(N)
+
+The VdC first-derivative test bounds each mode's oscillatory integral by
+O(1/log(n+1)). Summing over modes n ≤ N requires bounding Σ 1/log(n+1).
+
+By comparison with the integral ∫₂ᴺ dx/logx = li(N) - li(2), the partial
+sum satisfies Σ_{n=2}^{N} 1/log(n) ≤ C·N/log(N) for large N. We prove a
+cruder but sufficient bound: each term 1/log(n+1) ≤ 1/log(2) for n ≥ 1,
+giving Σ ≤ N/log(2). The weighted sum Σ n^{-1/2}/log(n+1) ≤ C·√N/log(2)
+then follows from the Cauchy-Schwarz / integral comparison.
+
+These feed into the main term integral bound in HardyZFirstMomentIBP.lean. -/
+
+/-- 1/log(n+1) ≤ 1/log(2) for all n ≥ 1 : ℕ. -/
+theorem inv_log_le_inv_log2 (n : ℕ) (hn : 1 ≤ n) :
+    1 / Real.log ((n : ℝ) + 1) ≤ 1 / Real.log 2 := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hn1 : (2 : ℝ) ≤ (n : ℝ) + 1 := by exact_mod_cast Nat.succ_le_succ hn
+  have hlog_n1 : Real.log 2 ≤ Real.log ((n : ℝ) + 1) :=
+    Real.log_le_log (by norm_num) hn1
+  exact div_le_div_of_nonneg_left (by norm_num) hlog2 hlog_n1
+
+/-- Crude partial sum: Σ_{n∈range N, n≥1} 1/log(n+1) ≤ N/log(2). -/
+theorem inv_log_partial_sum_le (N : ℕ) :
+    ∑ n ∈ Finset.range N, 1 / Real.log ((n : ℝ) + 1 + 1) ≤
+      (N : ℝ) / Real.log 2 := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  calc ∑ n ∈ Finset.range N, 1 / Real.log ((n : ℝ) + 1 + 1)
+      ≤ ∑ _n ∈ Finset.range N, (1 / Real.log 2) := by
+        apply Finset.sum_le_sum
+        intro n _hn
+        have : (2 : ℝ) ≤ (n : ℝ) + 1 + 1 := by linarith [Nat.cast_nonneg (α := ℝ) n]
+        have hlog_ge : Real.log 2 ≤ Real.log ((n : ℝ) + 1 + 1) :=
+          Real.log_le_log (by norm_num) this
+        exact div_le_div_of_nonneg_left (by norm_num) hlog2 hlog_ge
+    _ = (N : ℝ) * (1 / Real.log 2) := by
+        simp [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    _ = (N : ℝ) / Real.log 2 := by ring
+
+/-- Weighted sum: Σ_{n=0}^{N-1} (n+1)^{-1/2}/log(n+2) ≤ √N / log(2).
+
+    Each term (n+1)^{-1/2}/log(n+2) ≤ 1/log(2) (since (n+1)^{-1/2} ≤ 1).
+    Sum of N such terms ≤ N/log(2).
+    Sharper: Σ (n+1)^{-1/2} ≤ 2√N (integral comparison), and 1/log(n+2) ≤ 1/log(2),
+    so Σ ≤ 2√N/log(2). We prove the cruder N/log(2) here. -/
+theorem weighted_inv_log_sum_le (N : ℕ) :
+    ∑ n ∈ Finset.range N,
+      ((n : ℝ) + 1) ^ (-(1 : ℝ)/2) / Real.log ((n : ℝ) + 2) ≤
+      (N : ℝ) / Real.log 2 := by
+  have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  calc ∑ n ∈ Finset.range N,
+        ((n : ℝ) + 1) ^ (-(1 : ℝ)/2) / Real.log ((n : ℝ) + 2)
+      ≤ ∑ _n ∈ Finset.range N, (1 / Real.log 2) := by
+        apply Finset.sum_le_sum
+        intro n _hn
+        have hn1_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+        have hn1_ge : (1 : ℝ) ≤ (n : ℝ) + 1 := by linarith [Nat.cast_nonneg (α := ℝ) n]
+        have hn2 : (2 : ℝ) ≤ (n : ℝ) + 2 := by linarith [Nat.cast_nonneg (α := ℝ) n]
+        have hlog_ge : Real.log 2 ≤ Real.log ((n : ℝ) + 2) :=
+          Real.log_le_log (by norm_num) hn2
+        have h_coef : ((n : ℝ) + 1) ^ (-(1 : ℝ)/2) ≤ 1 := by
+          calc ((n : ℝ) + 1) ^ (-(1 : ℝ)/2)
+              ≤ ((n : ℝ) + 1) ^ (0 : ℝ) :=
+                rpow_le_rpow_of_exponent_le hn1_ge (by norm_num)
+            _ = 1 := rpow_zero _
+        calc ((n : ℝ) + 1) ^ (-(1 : ℝ)/2) / Real.log ((n : ℝ) + 2)
+            ≤ 1 / Real.log ((n : ℝ) + 2) := by
+              apply div_le_div_of_nonneg_right h_coef
+              exact le_of_lt (Real.log_pos (by linarith))
+          _ ≤ 1 / Real.log 2 :=
+              div_le_div_of_nonneg_left (by norm_num) hlog2 hlog_ge
+    _ = (N : ℝ) * (1 / Real.log 2) := by
+        simp [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    _ = (N : ℝ) / Real.log 2 := by ring
+
+/-- N/log(2) ≤ C·√T/log(T) when N ~ √(T/2π) and T is large enough.
+
+    More precisely: if N ≤ √T then N/log(2) ≤ √T/log(2).
+    And √T/log(2) ≤ C·√T/log(T) when log(T) ≤ C·log(2), which fails.
+    So the correct bound is: N/log(2) ≤ (1/log 2)·√T = O(√T).
+
+    For the first moment, O(√T) suffices (it's within the C·√T target). -/
+theorem mode_sum_le_sqrt (N : ℕ) (T : ℝ) (hT : 2 ≤ T)
+    (hN : (N : ℝ) ≤ Real.sqrt T) :
+    (N : ℝ) / Real.log 2 ≤ (1 / Real.log 2) * Real.sqrt T := by
+  rw [one_div, inv_mul_eq_div]
+  exact div_le_div_of_nonneg_right hN (le_of_lt (Real.log_pos (by norm_num)))
+
+/-- Assembly: the total weighted mode sum Σ_{n<N} (n+1)^{-1/2}/log(n+2)
+    is O(√T) when N ≤ √T.
+
+    This is the key estimate for the main term contribution to the
+    first moment |∫₁ᵀ Z(t) dt|. Each mode contributes O(1/log(n+2))
+    from VdC, the amplitude is (n+1)^{-1/2}, and there are N ~ √T modes. -/
+theorem vdc_mode_sum_bound (N : ℕ) (T : ℝ) (hT : 2 ≤ T)
+    (hN : (N : ℝ) ≤ Real.sqrt T) :
+    ∑ n ∈ Finset.range N,
+      ((n : ℝ) + 1) ^ (-(1 : ℝ)/2) / Real.log ((n : ℝ) + 2) ≤
+      (1 / Real.log 2) * Real.sqrt T :=
+  le_trans (weighted_inv_log_sum_le N) (mode_sum_le_sqrt N T hT hN)
+
+/-- The O(√T) mode sum bound is O(C·T^{1/2}) for an explicit constant. -/
+theorem vdc_mode_sum_le_C_sqrt (N : ℕ) (T : ℝ) (hT : 2 ≤ T)
+    (hN : (N : ℝ) ≤ Real.sqrt T) :
+    ∑ n ∈ Finset.range N,
+      ((n : ℝ) + 1) ^ (-(1 : ℝ)/2) / Real.log ((n : ℝ) + 2) ≤
+      (1 / Real.log 2) * T ^ ((1 : ℝ)/2) := by
+  have hT_pos : (0 : ℝ) < T := by linarith
+  rw [show T ^ ((1 : ℝ)/2) = Real.sqrt T from (Real.sqrt_eq_rpow T).symm]
+  exact vdc_mode_sum_bound N T hT hN
+
+end
+
+end AbelSummationPsiPi_HarmonicLog
