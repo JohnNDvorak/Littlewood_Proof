@@ -167,6 +167,48 @@ theorem pointwise_to_segment_reduction
   have := (segment_bounds_nonneg A x T hA (by linarith) (by linarith))
   linarith [this.1, this.2]
 
+/-! ### Perron kernel bounds — sorry-free integration infrastructure -/
+
+/-- **Perron kernel bound**: √x / √(1/4 + t²) ≤ √x / |t| for |t| ≥ 1. -/
+theorem perron_kernel_bound (x t : ℝ) (ht : 1 ≤ |t|) :
+    Real.sqrt x / Real.sqrt (1 / 4 + t ^ 2) ≤ Real.sqrt x / |t| := by
+  apply div_le_div_of_nonneg_left (Real.sqrt_nonneg x) (by positivity)
+  rw [Real.le_sqrt (by positivity)]
+  nlinarith [sq_abs t]
+
+/-- **Perron kernel integrated**: M · √x · logT ≥ 0 for M ≥ 0, x ≥ 0, T ≥ 2. -/
+theorem perron_kernel_integral_nonneg (M x T : ℝ) (hM : 0 ≤ M) (_hx : 0 ≤ x) (hT : 2 ≤ T) :
+    0 ≤ M * Real.sqrt x * Real.log T :=
+  mul_nonneg (mul_nonneg hM (Real.sqrt_nonneg x)) (Real.log_pos (by linarith)).le
+
+/-- **Vertical from pointwise + kernel algebra**. -/
+theorem vertical_from_pointwise_and_kernel (A x T : ℝ) :
+    A * (Real.log T) ^ 2 * (Real.sqrt x * Real.log T) / T =
+    A * (Real.sqrt x * (Real.log T) ^ 3 / T) := by ring
+
+/-- **Horizontal from pointwise + kernel algebra**. -/
+theorem horizontal_from_pointwise_and_kernel (A x T : ℝ) :
+    A * (Real.log T) ^ 2 * (Real.sqrt x / T) =
+    A * (Real.sqrt x * (Real.log T) ^ 2 / T) := by ring
+
+/-- **Structured reduction**: the sorry follows from a contour bound. -/
+theorem zeta_logderiv_from_contour_bound
+    (A : ℝ) (hA : 0 < A)
+    (h : ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+      |shiftedRemainderRe x T| ≤
+        A * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+        2 * A * (Real.sqrt x * (Real.log T) ^ 2 / T)) :
+    ZetaLogDerivPointwiseBoundHyp :=
+  ⟨⟨A, hA, h⟩⟩
+
+/-- **Segment form nonnegativity for all large T**. -/
+theorem segment_form_nonneg_large_T (A x T : ℝ)
+    (hA : 0 < A) (hx : 2 ≤ x) (hT : 16 ≤ T) :
+    0 ≤ A * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+        2 * A * (Real.sqrt x * (Real.log T) ^ 2 / T) := by
+  have := segment_bounds_nonneg A x T hA hx (by linarith : 2 ≤ T)
+  linarith [this.1, this.2]
+
 instance : ZetaLogDerivPointwiseBoundHyp where
   bound := by
     sorry
