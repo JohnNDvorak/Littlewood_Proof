@@ -168,6 +168,21 @@ instance : LargeTContourBoundHyp where
         _ ≤ 3 * A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
             segment_to_standard_form hA hx hT⟩
 
+/-- **Sorry decomposition witness**: the full contour bound (T ≥ 2) factors as:
+    1. `ZetaLogDerivPointwiseBoundHyp` → `LargeTContourBoundHyp` (sorry-free, above)
+    2. `LargeTContourBoundHyp` → large-T case of `ContourRemainderBoundHyp`
+    3. Small-T case → proved in bridge (`small_T_contour_bound`)
+    4. Case split → proved in bridge (`contour_bound_from_small_and_large`)
+
+    Steps 2-4 cannot be executed here due to import direction. The bridge's
+    `contour_bound_fully_assembled` proves the full statement transiting only
+    `ZetaLogDerivPointwiseBoundHyp`. This theorem witnesses that the large-T
+    part of step 2 is available. -/
+theorem large_T_from_zeta_logderiv :
+    ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+      |shiftedRemainderRe x T| ≤ C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+  LargeTContourBoundHyp.bound
+
 /-- Contour remainder bound — Davenport Ch. 17, Montgomery-Vaughan §12.5.
     Classical: |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C·(√x·(logT)²/√T).
 
