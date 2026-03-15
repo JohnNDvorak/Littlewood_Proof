@@ -569,12 +569,17 @@ theorem residue_captured_in_shifted_remainder :
       Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T := by
   intro x T; rfl
 
-/-- **Complete witness**: if someone provides a constant A and the bound
-    |shiftedRemainderRe x T| ≤ A·√x·(logT)³/T + 2A·√x·(logT)²/T
+/-- **Complete witness for large-T sorrys**: if someone provides a constant A
+    and the bound |shiftedRemainderRe x T| ≤ A·√x·(logT)³/T + 2A·√x·(logT)²/T
     for all x ≥ 2, T ≥ 16, then:
     - `ZetaLogDerivPointwiseBoundHyp` closes (by `⟨A, hA, h⟩`)
     - `LargeTContourBoundHyp` closes (automatically via segment_to_standard_form)
-    - `ContourRemainderBoundHyp` closes via `contour_from_small_T` + bridge's small-T
+
+    `ContourRemainderBoundHyp` additionally needs the general Perron formula
+    for T ∈ [2, 16] (a weaker bound, not requiring Hadamard). With BOTH:
+    - the Hadamard-based segment bound for T ≥ 16 (this theorem)
+    - the general Perron formula for T ∈ [2, 16] (import-direction artifact)
+    all three hypotheses in this file become sorry-free.
 
     This is the COMPLETE specification of what must be provided. -/
 theorem full_closure_witness
