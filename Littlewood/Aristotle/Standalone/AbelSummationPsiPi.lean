@@ -1055,3 +1055,36 @@ theorem weighted_mode_sum_with_constant (N : ℕ) (T : ℝ) (hT : 2 ≤ T)
 end
 
 end AbelSummationPsiPi_HarmonicLog
+
+-- ============================================================
+-- Part 17: Antitone triangle bound for block sums
+-- ============================================================
+
+namespace AbelSummationPsiPi_BlockTriangle
+
+/-- **Antitone triangle bound**: if |a(k)| is antitone, then
+    |∑_{k<K} a(k)| ≤ K · |a(0)|.
+
+    Used for error term block sums where the block integrals have
+    antitone absolute values. When combined with K ≤ √T and
+    |a(0)| = O(1), gives O(√T) total. -/
+theorem antitone_triangle_sum_bound (a : ℕ → ℝ)
+    (h_anti : Antitone (fun k => |a k|)) (K : ℕ) :
+    |∑ k ∈ Finset.range K, a k| ≤ (K : ℝ) * |a 0| := by
+  calc |∑ k ∈ Finset.range K, a k|
+      ≤ ∑ k ∈ Finset.range K, |a k| := Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ _k ∈ Finset.range K, |a 0| := by
+        apply Finset.sum_le_sum; intro k _
+        exact h_anti (Nat.zero_le k)
+    _ = (K : ℝ) * |a 0| := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+
+/-- Antitone triangle with explicit bound: if |a(0)| ≤ M, then
+    |∑ a(k)| ≤ K · M. -/
+theorem antitone_triangle_sum_le (a : ℕ → ℝ)
+    (h_anti : Antitone (fun k => |a k|)) (M : ℝ) (hM : |a 0| ≤ M) (K : ℕ) :
+    |∑ k ∈ Finset.range K, a k| ≤ (K : ℝ) * M :=
+  le_trans (antitone_triangle_sum_bound a h_anti K)
+    (mul_le_mul_of_nonneg_left hM (Nat.cast_nonneg K))
+
+end AbelSummationPsiPi_BlockTriangle
