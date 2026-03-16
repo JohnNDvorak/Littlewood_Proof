@@ -176,7 +176,23 @@ class PiApproxFromExplicitFormulaHyp : Prop where
         (x : ℂ) ^ ρ / ρ).re / Real.log x| ≤ D * (Real.sqrt x / Real.log x)
 
 /-- Abel summation correction: π(x) - li(x) ≈ (ψ(x) - x)/logx at √x/logx scale.
-    SORRY: Mathematically true (classical Abel/partial summation, Davenport Ch. 17). -/
+    SORRY: Mathematically true (classical Abel/partial summation, Davenport Ch. 17).
+
+    BLOCKER ANALYSIS (2026-03-15, Agent 3):
+    The PartialSummation.lean decomposition gives:
+      π(x) - li(x) - (ψ(x)-x)/logx = -sumPrimePowers(x) + ∫₂ˣ (ψ(t)-t)/(t·(logt)²)dt + 2/log2
+
+    Term-by-term:
+    1. sumPrimePowers(x) = Σ_{p^k≤x, k≥2} 1/k ≈ π(√x)/2 = O(√x/logx) — PROVABLE from
+       Mathlib's `Chebyshev.theta_le_log4_mul_x` + `Chebyshev.eventually_primeCounting_le`.
+    2. ∫₂ˣ (ψ(t)-t)/(t·(logt)²)dt — requires ψ(t) = t + o(t) (PNT) to show this
+       is o(x/(logx)²) = o(√x/logx). With only Chebyshev bounds (ψ(t) ≤ (log4)t + 2√t·logt),
+       the integral is O(x/(logx)²) ≫ √x/logx. PNT is NOT in Mathlib.
+    3. 2/log(2) is constant — absorbed by D·√x/logx for large x.
+
+    CONCLUSION: Closing this sorry requires the Prime Number Theorem (ψ(t) ~ t),
+    which is in PrimeNumberTheoremAnd but not upstreamed to Mathlib. IRREDUCIBLE
+    until PNT is available. -/
 instance : AbelCorrectionPsiPiHyp where
   correction_bound := by sorry
 
