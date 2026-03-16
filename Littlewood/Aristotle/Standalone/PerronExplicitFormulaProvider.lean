@@ -2064,7 +2064,37 @@ the shifted lattice argument. -/
     log(cap) - log(B) ≥ (4π)^{N(T)}, where B = max(X, P) + 1.
     This is the key growth comparison: triple-exponential tower_cap minus
     a polynomial-growth log(B) leaves room for single-exponential (4π)^N.
-    Both conjuncts are one sorry since they require the same T. -/
+    Both conjuncts are one sorry since they require the same T.
+
+    **BLOCKER ANALYSIS** (Agent4, 2026-03-15):
+    The "moving target" problem: T appears in BOTH perronThreshold(hRH, T) and
+    tower_cap(T). `tower_cap_unbounded_with_eps` gives ∃ T with tower_cap(T) ≥ B
+    for any B, but the B we need (max X perronThreshold(hRH, T) + 1) depends on T.
+
+    `perronThreshold` is `Classical.choose` of `Filter.eventually_atTop.1 (...)`,
+    completely opaque — no a priori bound on growth rate as a function of T.
+
+    `by_contra` fails: negating ∃T gives ∀T, tower_cap(T) < max(X,P(T))+1,
+    but P(T) being large is not contradictory (just opaque, not bounded).
+
+    When N(T) = 0 (e.g. T = 4), tower_cap = exp(exp(1)) ≈ 15.15, far too small
+    to dominate an arbitrary perronThreshold. Need N(T) > 0 regime.
+
+    **CLOSURE ROUTES** (ranked by feasibility):
+    (A) **Inline error bound** (best): Replace `perronThreshold` in the seed type
+        with an inline error statement. Then the seed only needs tower_cap ≥ X,
+        and the error bound is provided separately for the chosen x = exp(t₀).
+        This is an ARCHITECTURAL refactor of the seed types.
+    (B) **Explicit bound on perronThreshold**: Prove perronThreshold(hRH, T) ≤ f(T)
+        for some explicit f. Requires tracing through the Perron formula error
+        analysis to get an effective bound on the "eventually" quantifier.
+        Likely polynomial in T, which triple-exponential tower_cap dominates.
+    (C) **Monotonicity trick**: If perronThreshold(hRH, T) were NON-DECREASING in T,
+        we could fix T₁, compute P₁ = perronThreshold(hRH, T₁), then find T₂ with
+        tower_cap(T₂) ≥ P₁. But perronThreshold likely INCREASES with T (more
+        zeros means more terms, possibly larger threshold), so this goes wrong.
+
+    VERDICT: IRREDUCIBLE without architectural refactor or explicit error bound. -/
 private lemma tower_cap_dominates_perronThreshold
     [ZeroCountingLowerBoundHyp]
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ) :
