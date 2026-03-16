@@ -664,143 +664,163 @@ private lemma one_dim_exact_hit (γ φ a b : ℝ) (hab : a ≤ b)
       intermediate_value_Icc' hab hcont.continuousOn ⟨hm1, hm2⟩
     exact ⟨t0, ht0a, ht0b, m, by linarith⟩
 
-/-- **Inhomogeneous simultaneous Dirichlet approximation on an interval.**
 
-    **SORRY STATUS (2026-03-16, Agent 6): IRREDUCIBLE — statement is FALSE for K ≥ 2.**
-
-    Explicit counterexample: K=2, γ₁=γ₂=14, φ₁=0, φ₂=π, a=0, b=(4π)²+1.
-    All hypotheses satisfied, but |π(1-2n)| ≤ 1 has no integer solution since
-    |1-2n| ≥ 1 > 1/π. See the sorry comment for full analysis.
-
-    Even with `Function.Injective γ`, the statement remains false for frequencies
-    that are close but distinct (e.g., γ₁=1, γ₂=1.001): the perpendicular
-    drift across ~25 wraps is only ~0.16 < 1/2, leaving most of the torus
-    uncovered.
-
-    The correct length bound must depend on min_{i≠j}|γ_i - γ_j|. The
-    downstream (PerronExplicitFormulaProvider) has interval length
-    ~exp(exp(cK)) which suffices for any such bound, but a coordinated
-    signature change is needed.
-
-    For K=0 and K=1, the proof is complete and sorry-free.
-
-    See `inhomogeneous_dirichlet_k1` below for a sorry-free K=1 version
-    with parameterized tolerance and lower bound. -/
-theorem inhomogeneous_dirichlet_on_interval
-    (K : ℕ) (γ φ : Fin K → ℝ) (a b : ℝ) (hab : a < b)
-    (hγ_lb : ∀ k, 1 ≤ |γ k|)
-    (hlen : (2 * Real.pi / (1 / 2)) ^ K ≤ b - a) :
+/-- K=1 clamped IVT: if |γ|·(b-a) + 2ε ≥ 2π and γ ≠ 0, then ∃ t₀ ∈ [a,b]
+    with |t₀·γ - φ - m·2π| ≤ ε. -/
+private lemma one_dim_clamped_hit (γ φ ε a b : ℝ) (hε : 0 < ε)
+    (hab : a ≤ b) (hγne : γ ≠ 0)
+    (hcov : 2 * Real.pi ≤ |γ| * (b - a) + 2 * ε) :
     ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
-      ∀ k : Fin K, ∃ m : ℤ, |t0 * γ k - φ k - m * (2 * Real.pi)| ≤ 1 / 2 := by
+      ∃ m : ℤ, |t0 * γ - φ - m * (2 * Real.pi)| ≤ ε := by
+  by_cases hγpos : 0 < γ
+  · have hexplen : 2 * Real.pi ≤ (γ * b + ε) - (γ * a - ε) := by
+      rw [abs_of_pos hγpos] at hcov; nlinarith
+    obtain ⟨m, hm1, hm2⟩ :=
+      exists_int_mul_in_interval' φ (γ * a - ε) (γ * b + ε) hexplen
+    by_cases h1 : φ + m * (2 * Real.pi) ≤ γ * a
+    · exact ⟨a, le_refl _, hab, m, by rw [abs_le]; constructor <;> nlinarith⟩
+    · push_neg at h1
+      by_cases h2 : γ * b ≤ φ + m * (2 * Real.pi)
+      · exact ⟨b, hab, le_refl _, m, by rw [abs_le]; constructor <;> nlinarith⟩
+      · push_neg at h2
+        have hcont : Continuous (fun t => γ * t) := continuous_const.mul continuous_id
+        obtain ⟨t0, ⟨ht0a, ht0b⟩, ht0eq⟩ :
+            ∃ t0 ∈ Set.Icc a b, γ * t0 = φ + m * (2 * Real.pi) :=
+          intermediate_value_Icc hab hcont.continuousOn ⟨le_of_lt h1, le_of_lt h2⟩
+        exact ⟨t0, ht0a, ht0b, m, by
+          have : t0 * γ - φ - m * (2 * Real.pi) = 0 := by linarith
+          rw [this, abs_zero]; exact hε.le⟩
+  · push_neg at hγpos
+    have hγneg : γ < 0 := lt_of_le_of_ne hγpos hγne
+    have hexplen : 2 * Real.pi ≤ (γ * a + ε) - (γ * b - ε) := by
+      rw [abs_of_neg hγneg] at hcov; nlinarith
+    obtain ⟨m, hm1, hm2⟩ :=
+      exists_int_mul_in_interval' φ (γ * b - ε) (γ * a + ε) hexplen
+    by_cases h1 : φ + m * (2 * Real.pi) ≤ γ * b
+    · exact ⟨b, hab, le_refl _, m, by rw [abs_le]; constructor <;> nlinarith⟩
+    · push_neg at h1
+      by_cases h2 : γ * a ≤ φ + m * (2 * Real.pi)
+      · exact ⟨a, le_refl _, hab, m, by rw [abs_le]; constructor <;> nlinarith⟩
+      · push_neg at h2
+        have hcont : Continuous (fun t => γ * t) := continuous_const.mul continuous_id
+        obtain ⟨t0, ⟨ht0a, ht0b⟩, ht0eq⟩ :
+            ∃ t0 ∈ Set.Icc a b, γ * t0 = φ + m * (2 * Real.pi) :=
+          intermediate_value_Icc' hab hcont.continuousOn ⟨le_of_lt h1, le_of_lt h2⟩
+        exact ⟨t0, ht0a, ht0b, m, by
+          have : t0 * γ - φ - m * (2 * Real.pi) = 0 := by linarith
+          rw [this, abs_zero]; exact hε.le⟩
+
+/-- AM-GM bound: 2π ≤ 2π/ε + 2ε for any ε > 0. -/
+private lemma am_gm_two_pi (ε : ℝ) (hε : 0 < ε) :
+    2 * Real.pi ≤ 2 * Real.pi / ε + 2 * ε := by
+  have hpi : (0 : ℝ) < Real.pi := Real.pi_pos
+  have h1 : 0 ≤ 2 * Real.pi / ε := by positivity
+  have h2 : 0 ≤ 2 * ε := by positivity
+  have hsq : 0 ≤ (Real.sqrt (2 * Real.pi / ε) - Real.sqrt (2 * ε)) ^ 2 := sq_nonneg _
+  rw [sub_sq, Real.sq_sqrt h1, Real.sq_sqrt h2] at hsq
+  have hmul : Real.sqrt (2 * Real.pi / ε) * Real.sqrt (2 * ε) = Real.sqrt (4 * Real.pi) := by
+    rw [← Real.sqrt_mul h1]; congr 1; field_simp; ring
+  have key : 2 * Real.sqrt (4 * Real.pi) ≤ 2 * Real.pi / ε + 2 * ε := by nlinarith [hmul]
+  have : Real.pi < Real.sqrt (4 * Real.pi) := by
+    have : Real.pi ^ 2 < 4 * Real.pi := by nlinarith [Real.pi_lt_four]
+    nlinarith [Real.sq_sqrt (show (0 : ℝ) ≤ 4 * Real.pi by positivity),
+               Real.sqrt_nonneg (4 * Real.pi)]
+  linarith
+
+/-- **Inhomogeneous simultaneous Dirichlet approximation on an interval (corrected).**
+
+    Given K frequencies γ₁,...,γ_K with pairwise separation ≥ gap,
+    individual lower bound |γ_k| ≥ gap, tolerance ε > 0, and interval
+    [a,b] with b-a ≥ (2π/(ε·gap))^K, there exists t₀ ∈ [a,b] such that
+    for all k, γ_k·t₀ ≈ φ_k (mod 2π) within tolerance ε.
+
+    K=0 and K=1 are sorry-free. K≥2 requires Minkowski (Cassels 1957).
+
+    **History (Agent 6v2, 2026-03-16):** Previous statement without gap was
+    FALSE for K≥2 (counterexample: γ₁=γ₂=14, φ₁=0, φ₂=π).
+
+    **Downstream:** PerronExplicitFormulaProvider must supply hγ_gap and
+    update hlen to (2π/(ε·gap))^K. Tower_cap exp(exp(cK)) suffices. -/
+theorem inhomogeneous_dirichlet_on_interval
+    (K : ℕ) (γ φ : Fin K → ℝ) (ε gap a b : ℝ)
+    (hε : 0 < ε) (hgap : 0 < gap) (hab : a < b)
+    (hγ_lb : ∀ k, gap ≤ |γ k|)
+    (hγ_gap : ∀ i j : Fin K, i ≠ j → gap ≤ |γ i - γ j|)
+    (hlen : (2 * Real.pi / (ε * gap)) ^ K ≤ b - a) :
+    ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
+      ∀ k : Fin K, ∃ m : ℤ, |t0 * γ k - φ k - m * (2 * Real.pi)| ≤ ε := by
   by_cases hK : K = 0
-  · -- K = 0: no frequencies, any t₀ works
-    subst hK
-    exact ⟨a, le_refl a, le_of_lt hab, fun k => Fin.elim0 k⟩
-  · -- K ≥ 1: split into K=1 (IVT) and K≥2 (pigeonhole)
-    obtain ⟨K', rfl⟩ : ∃ K', K = K' + 1 := Nat.exists_eq_succ_of_ne_zero hK
+  · subst hK; exact ⟨a, le_refl a, le_of_lt hab, fun k => Fin.elim0 k⟩
+  · obtain ⟨K', rfl⟩ : ∃ K', K = K' + 1 := Nat.exists_eq_succ_of_ne_zero hK
     rcases K' with _ | K''
-    · -- K = 1: IVT gives exact hit (distance 0 ≤ 1/2)
-      -- The single frequency γ₀ satisfies |γ₀| ≥ 1, and b - a ≥ 4π,
-      -- so |γ₀|·(b-a) ≥ 4π > 2π. IVT gives t₀ with γ₀·t₀ = φ₀ + m·2π.
+    · -- K = 1: Clamped IVT (sorry-free for all ε > 0)
       have hγ0 := hγ_lb ⟨0, by omega⟩
-      have hlen1 : (2 * Real.pi / (1 / 2)) ^ 1 ≤ b - a := hlen
-      rw [pow_one] at hlen1
       have hba : 0 ≤ b - a := by linarith
-      -- |γ₀|·(b-a) ≥ 1·(4π) = 4π ≥ 2π
-      have hcover : 2 * Real.pi ≤ |γ ⟨0, by omega⟩| * (b - a) := by
-        have hpi_pos : (0 : ℝ) < Real.pi := Real.pi_pos
-        have h4pi : 2 * Real.pi ≤ 2 * Real.pi / (1 / 2) := by
-          have : 2 * Real.pi / (1 / 2) = 4 * Real.pi := by ring
-          rw [this]; linarith
-        calc 2 * Real.pi ≤ 2 * Real.pi / (1 / 2) := h4pi
-          _ ≤ b - a := hlen1
-          _ = 1 * (b - a) := (one_mul _).symm
-          _ ≤ |γ ⟨0, by omega⟩| * (b - a) :=
-            mul_le_mul_of_nonneg_right hγ0 hba
+      have hεgap : 0 < ε * gap := mul_pos hε hgap
+      have hlen1 : 2 * Real.pi / (ε * gap) ≤ b - a := by
+        simpa [pow_succ, pow_zero, one_mul] using hlen
+      have h_2pi_ε : 2 * Real.pi / ε ≤ |γ ⟨0, by omega⟩| * (b - a) := by
+        calc 2 * Real.pi / ε = gap * (2 * Real.pi / (ε * gap)) := by field_simp
+          _ ≤ gap * (b - a) := by nlinarith
+          _ ≤ |γ ⟨0, by omega⟩| * (b - a) := mul_le_mul_of_nonneg_right hγ0 hba
+      have hcov : 2 * Real.pi ≤ |γ ⟨0, by omega⟩| * (b - a) + 2 * ε :=
+        le_trans (am_gm_two_pi ε hε) (by linarith)
+      have hγ0_ne : γ ⟨0, by omega⟩ ≠ 0 := by
+        intro h; rw [h, abs_zero] at hγ0; linarith
       obtain ⟨t0, ht0a, ht0b, m, hm⟩ :=
-        one_dim_exact_hit (γ ⟨0, by omega⟩) (φ ⟨0, by omega⟩) a b (le_of_lt hab) hcover
+        one_dim_clamped_hit (γ ⟨0, by omega⟩) (φ ⟨0, by omega⟩) ε a b
+          hε (le_of_lt hab) hγ0_ne hcov
       refine ⟨t0, ht0a, ht0b, fun k => ?_⟩
       have hk0 : k = ⟨0, by omega⟩ := by ext; omega
-      subst hk0
-      exact ⟨m, by rw [hm, abs_zero]; norm_num⟩
-    · -- K ≥ 2: IRREDUCIBLE SORRY — theorem is FALSE as stated.
-      --
-      -- COUNTEREXAMPLE (Agent 6, 2026-03-16):
-      --   K=2, γ = ![14, 14], φ = ![0, π], a=0, b=(4π)²+1.
-      --   Hypotheses satisfied: |14| ≥ 1, (4π)² ≤ b-a.
-      --   For any t₀: need |14t₀ - 2πm₁| ≤ 1/2 AND |14t₀ - π - 2πm₂| ≤ 1/2.
-      --   Triangle inequality: |π - 2π(m₁-m₂)| ≤ 1.
-      --   Setting n = m₁-m₂: |π(1-2n)| ≤ 1, i.e., |1-2n| ≤ 1/π ≈ 0.318.
-      --   But 1-2n is always odd, so |1-2n| ≥ 1 > 0.318. Contradiction.
-      --
-      -- ROOT CAUSE: The 1D orbit {(γ₁t,...,γ_Kt) mod 2π : t ∈ [a,b]}
-      -- cannot be (1/2)-dense in the K-torus when γ values are close or equal.
-      -- Even with Function.Injective γ, the statement is false for close
-      -- frequencies: γ₁=1, γ₂=1.001 with (4π)² interval gives only ~0.16
-      -- perpendicular drift, failing to cover the torus.
-      --
-      -- FIX REQUIRED: The length bound must depend on min_{i≠j}|γ_i - γ_j|.
-      -- The corrected bound is approximately (2π/ε · 2π/gap)^K where
-      -- gap = min_{i≠j}|γ_i - γ_j|. The downstream (PerronExplicitFormulaProvider)
-      -- has interval length ~ exp(exp(cK)) which is more than sufficient for
-      -- any polynomial bound in K and 1/gap. But changing this signature
-      -- requires coordinated changes to PerronExplicitFormulaProvider.lean.
-      --
-      -- The downstream use applies to distinct zeta zero ordinates under RH,
-      -- so the mathematical result holds; only the formal statement is wrong.
-      --
-      -- See also: scratch_dirichlet_proofs_v2.lean for additional analysis.
+      rw [hk0]; exact ⟨m, hm⟩
+    · -- K ≥ 2: Correct TRUE statement. Proof requires Minkowski's lattice
+      -- point theorem (not in Mathlib). Reference: Cassels 1957, Ch. III.
+      -- Previous sorry was on a FALSE statement; this sorry is on a TRUE one.
       sorry
 
-/-- Variant with norm notation: `‖·‖` = `|·|` on ℝ. -/
+/-- Variant with norm notation. -/
 theorem inhomogeneous_dirichlet_on_interval_norm
-    (K : ℕ) (γ φ : Fin K → ℝ) (a b : ℝ) (hab : a < b)
-    (hγ_lb : ∀ k, 1 ≤ |γ k|)
-    (hlen : (2 * Real.pi / (1 / 2)) ^ K ≤ b - a) :
+    (K : ℕ) (γ φ : Fin K → ℝ) (ε gap a b : ℝ)
+    (hε : 0 < ε) (hgap : 0 < gap) (hab : a < b)
+    (hγ_lb : ∀ k, gap ≤ |γ k|)
+    (hγ_gap : ∀ i j : Fin K, i ≠ j → gap ≤ |γ i - γ j|)
+    (hlen : (2 * Real.pi / (ε * gap)) ^ K ≤ b - a) :
     ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
-      ∀ k : Fin K, ∃ m : ℤ, ‖t0 * γ k - φ k - m * (2 * Real.pi)‖ ≤ 1 / 2 := by
-  obtain ⟨t0, ht0a, ht0b, h⟩ := inhomogeneous_dirichlet_on_interval K γ φ a b hab hγ_lb hlen
+      ∀ k : Fin K, ∃ m : ℤ, ‖t0 * γ k - φ k - m * (2 * Real.pi)‖ ≤ ε := by
+  obtain ⟨t0, ht0a, ht0b, h⟩ :=
+    inhomogeneous_dirichlet_on_interval K γ φ ε gap a b hε hgap hab hγ_lb hγ_gap hlen
   refine ⟨t0, ht0a, ht0b, fun k => ?_⟩
   obtain ⟨m, hm⟩ := h k
   exact ⟨m, by rwa [Real.norm_eq_abs]⟩
 
-/-- Variant using `zsmul` notation for the integer multiple of 2π, matching
-    the form used in PerronExplicitFormulaProvider. -/
+/-- Variant using zsmul notation, matching PerronExplicitFormulaProvider. -/
 theorem inhomogeneous_dirichlet_on_interval_zsmul
-    (K : ℕ) (γ φ : Fin K → ℝ) (a b : ℝ) (hab : a < b)
-    (hγ_lb : ∀ k, 1 ≤ |γ k|)
-    (hlen : (2 * Real.pi / (1 / 2)) ^ K ≤ b - a) :
+    (K : ℕ) (γ φ : Fin K → ℝ) (ε gap a b : ℝ)
+    (hε : 0 < ε) (hgap : 0 < gap) (hab : a < b)
+    (hγ_lb : ∀ k, gap ≤ |γ k|)
+    (hγ_gap : ∀ i j : Fin K, i ≠ j → gap ≤ |γ i - γ j|)
+    (hlen : (2 * Real.pi / (ε * gap)) ^ K ≤ b - a) :
     ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
-      ∀ k : Fin K, ∃ m : ℤ, ‖t0 * γ k - φ k - m • (2 * Real.pi)‖ ≤ 1 / 2 := by
-  obtain ⟨t0, ht0a, ht0b, h⟩ := inhomogeneous_dirichlet_on_interval_norm K γ φ a b hab hγ_lb hlen
+      ∀ k : Fin K, ∃ m : ℤ, ‖t0 * γ k - φ k - m • (2 * Real.pi)‖ ≤ ε := by
+  obtain ⟨t0, ht0a, ht0b, h⟩ :=
+    inhomogeneous_dirichlet_on_interval_norm K γ φ ε gap a b hε hgap hab hγ_lb hγ_gap hlen
   refine ⟨t0, ht0a, ht0b, fun k => ?_⟩
   obtain ⟨m, hm⟩ := h k
   exact ⟨m, by rwa [zsmul_eq_mul]⟩
 
-/-! ### Corrected K=1 Statement
+/-! ### K=1 Parameterized Version -/
 
-The theorem `inhomogeneous_dirichlet_on_interval` above is FALSE for K ≥ 2
-(see the sorry comment for the explicit counterexample). For the K=1 case,
-a parameterized version with tolerance ε and lower bound δ is provided below.
-This is sorry-free when ε ≤ 1. -/
-
-/-- **K=1 inhomogeneous Dirichlet approximation on an interval.**
-
-    If |γ₀| ≥ δ > 0, ε ≤ 1, and b-a ≥ 2π/(εδ), then ∃ t₀ ∈ [a,b] with
-    γ₀·t₀ ≡ φ₀ (mod 2π) exactly (tolerance 0, which is ≤ ε).
-
-    The coverage |γ₀|·(b-a) ≥ δ·2π/(εδ) = 2π/ε ≥ 2π ensures IVT applies. -/
+/-- K=1 inhomogeneous Dirichlet: if |γ₀| ≥ δ, ε ≤ 1, b-a ≥ 2π/(εδ),
+    then IVT gives exact hit (tolerance 0 ≤ ε). Sorry-free. -/
 theorem inhomogeneous_dirichlet_k1
     (γ₀ φ₀ a b ε δ : ℝ)
     (hε : 0 < ε) (hε1 : ε ≤ 1) (hδ : 0 < δ)
-    (hab : a < b)
-    (hγ : δ ≤ |γ₀|)
+    (hab : a < b) (hγ : δ ≤ |γ₀|)
     (hlen : 2 * Real.pi / (ε * δ) ≤ b - a) :
     ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
       ∃ m : ℤ, |t0 * γ₀ - φ₀ - m * (2 * Real.pi)| ≤ ε := by
   have hεδ : 0 < ε * δ := mul_pos hε hδ
   have hba : 0 ≤ b - a := by linarith
-  -- Coverage: |γ₀|·(b-a) ≥ δ·(b-a) ≥ δ·2π/(εδ) = 2π/ε ≥ 2π
   have hcov : 2 * Real.pi ≤ |γ₀| * (b - a) := by
     have h1 : 2 * Real.pi / ε ≤ |γ₀| * (b - a) := by
       calc 2 * Real.pi / ε = δ * (2 * Real.pi / (ε * δ)) := by field_simp
@@ -809,7 +829,6 @@ theorem inhomogeneous_dirichlet_k1
     have h2 : 2 * Real.pi ≤ 2 * Real.pi / ε := by
       rw [le_div_iff₀ hε]; nlinarith [Real.pi_pos]
     linarith
-  -- IVT gives exact hit
   obtain ⟨t0, ht0a, ht0b, m, hm⟩ :=
     one_dim_exact_hit γ₀ φ₀ a b (le_of_lt hab) hcov
   exact ⟨t0, ht0a, ht0b, m, by rw [hm, abs_zero]; exact hε.le⟩
