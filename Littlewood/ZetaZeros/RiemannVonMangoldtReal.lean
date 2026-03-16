@@ -32,6 +32,7 @@ Co-authored-by: Claude (Anthropic)
 
 import Littlewood.ZetaZeros.RectArgumentPrinciple
 import Littlewood.ZetaZeros.ZeroCountingFunction
+import Littlewood.ZetaZeros.StirlingForRvM
 import Littlewood.Aristotle.RiemannXiEntire
 
 set_option maxHeartbeats 1600000
@@ -275,7 +276,12 @@ theorem riemann_von_mangoldt_explicit :
     ∃ C T₀ : ℝ, ∀ T ≥ T₀,
       |(N T : ℝ) - (T / (2 * Real.pi)) * Real.log (T / (2 * Real.pi)) + T / (2 * Real.pi)|
         ≤ C * Real.log T := by
-  sorry
+  -- Rewrite: |x - a + b| = |x - (a - b)|
+  obtain ⟨C, T₀, hCT⟩ := contour_integral_gives_rvm
+  exact ⟨C, T₀, fun T hT => by
+    have := hCT T hT
+    convert this using 2
+    ring⟩
 
 /-- Provide `ZeroCountingRvmExplicitHyp` from the Riemann-von Mangoldt formula.
     This automatically triggers the instance chain:
