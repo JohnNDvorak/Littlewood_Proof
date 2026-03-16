@@ -9,10 +9,10 @@ then the rectangle contour integral of f(z)/(z-w) equals 2*pi*i*f(w).
 1. `closedRect_eq_reProdIm`: Converts our rectangle to Mathlib's reProdIm format.
 2. `rectangle_contains_ball`: Interior point has ball inside the closed rectangle.
 3. `cauchy_goursat_rect`: Cauchy-Goursat for our rectangle (via Mathlib's version).
-4. `rectangle_circle_agreement`: Rectangle integral = circle integral (deformation).
-   THIS IS THE ONE KEY SORRY -- requires connecting the two contour integrals.
-5. `cauchy_integral_formula_rectangle`: The CIF, proved from (4) + Mathlib circle CIF.
-6. Norm estimates for rectangle integrals (all sorry-free).
+4. `rect_winding_number`: Rectangle integral of (z-w)^{-1} = 2*pi*i (via FTC + complex log).
+5. `cauchy_integral_formula_rectangle`: CIF via dslope + Cauchy-Goursat + winding number.
+6. `rectangle_circle_agreement`: Corollary relating rectangle and circle integrals.
+7. Norm estimates for rectangle integrals (all sorry-free).
 
 ## References
 - Mathlib: `Complex.circleIntegral_div_sub_of_differentiable_on_off_countable`
@@ -185,29 +185,286 @@ theorem rectIntegral_split (f : ℂ → ℂ) (a p b c q d : ℝ)
   rw [Hbc, Hbd, Hvb, Hva]
   ring
 
-/-! ## Section 4: Contour Deformation (Key Sorry)
+/-! ## Section 4: Winding Number for Rectangles via FTC
 
-The theorem that the rectangle integral of f(z)/(z-w) equals the circle
-integral of the same function. This is the critical gap: it requires
-showing that two contours enclosing the same point give the same integral
-for a holomorphic function.
+The rectangle integral of `(z-w)⁻¹` around an interior point `w` equals `2πi`.
 
-Mathematical proof sketch:
-- f(z)/(z-w) is holomorphic on closedRect \ {w}
-- Choose a small disk D(w,r) inside the rectangle
-- The region closedRect \ D(w,r) is an annular domain
-- Decompose it into sub-rectangles where f(z)/(z-w) is holomorphic
-- Apply Cauchy-Goursat to each; the internal edges cancel
-- What remains: rectangle boundary integral - circle integral = 0
+Proof via the fundamental theorem of calculus. On each edge, `Complex.log(z - w)` is an
+antiderivative (valid when `z - w ∈ slitPlane`). The left edge crosses the branch cut at
+`Im(w)`, producing a `2πi` jump that yields the winding number.
 
-The formal proof requires:
-1. Splitting the rectangle into sub-rectangles around the disk
-2. Showing each sub-rectangle integral vanishes (Cauchy-Goursat)
-3. Showing the internal boundary integrals cancel
-This is a combinatorial/topological argument, not deep analysis. -/
+Adapted from `RectArgumentPrinciple.rect_winding_number_eq_one`. -/
+
+section WindingNumber
+
+set_option maxHeartbeats 3200000
+
+private theorem im_sub_pt {x y : ℝ} {w : ℂ} : (↑x + ↑y * I - w).im = y - w.im := by
+  simp [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_im, Complex.I_re,
+    Complex.sub_im]
+
+private theorem re_sub_pt {x y : ℝ} {w : ℂ} : (↑x + ↑y * I - w).re = x - w.re := by
+  simp [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re, Complex.ofReal_im,
+    Complex.I_im, Complex.sub_re]
+
+private theorem hasDerivAt_log_horiz_sub {w : ℂ} {x c' : ℝ} (hc : c' ≠ w.im) :
+    HasDerivAt (fun t : ℝ => Complex.log (↑t + ↑c' * I - w)) ((↑x + ↑c' * I - w)⁻¹) x := by
+  have hsp := Complex.mem_slitPlane_iff.mpr (Or.inr (show (↑x + ↑c' * I - w).im ≠ 0 from
+    by rw [im_sub_pt]; exact sub_ne_zero.mpr hc))
+  have h1 : HasDerivAt (fun t : ℝ => (↑t + ↑c' * I - w : ℂ)) 1 x := by
+    have h2 : HasDerivAt (fun t : ℝ => (t : ℂ) + (↑c' * I - w)) 1 x := by
+      simpa using Complex.ofRealCLM.hasDerivAt.add_const (↑c' * I - w : ℂ)
+    have heq : (fun t : ℝ => (↑t : ℂ) + (↑c' * I - w)) = (fun t : ℝ => ↑t + ↑c' * I - w) :=
+      funext fun t => by ring
+    rwa [heq] at h2
+  exact ((Complex.hasDerivAt_log hsp).comp x h1).congr_deriv (mul_one _)
+
+private theorem hasDerivAt_log_vert_sub {w : ℂ} {x₀ y : ℝ}
+    (hsp : (↑x₀ + ↑y * I - w) ∈ Complex.slitPlane) :
+    HasDerivAt (fun t : ℝ => I⁻¹ * Complex.log (↑x₀ + ↑t * I - w))
+      ((↑x₀ + ↑y * I - w)⁻¹) y := by
+  have h1 : HasDerivAt (fun t : ℝ => (↑x₀ + ↑t * I - w : ℂ)) I y := by
+    have hd := Complex.ofRealCLM.hasDerivAt (x := y)
+    have : ⇑Complex.ofRealCLM = fun (t : ℝ) => (t : ℂ) := rfl; rw [this] at hd; simp at hd
+    have hd2 : HasDerivAt (fun t : ℝ => ((t : ℂ) * I)) I y :=
+      (hd.mul_const I).congr_deriv (one_mul I)
+    have h3 := hd2.const_add (↑x₀ - w : ℂ)
+    have heq : (fun t : ℝ => ↑x₀ - w + (↑t : ℂ) * I) = (fun t : ℝ => ↑x₀ + ↑t * I - w) :=
+      funext fun t => by ring
+    rwa [heq] at h3
+  exact ((Complex.hasDerivAt_log hsp).comp y h1 |>.const_mul I⁻¹).congr_deriv (by
+    rw [← mul_assoc, mul_comm I⁻¹, mul_assoc, inv_mul_cancel₀ I_ne_zero, mul_one])
+
+private theorem intble_horiz_sub {w : ℂ} {c' : ℝ} (hc : c' ≠ w.im) (p q : ℝ) :
+    IntervalIntegrable (fun x => (↑x + ↑c' * I - w)⁻¹) MeasureTheory.volume p q := by
+  apply ContinuousOn.intervalIntegrable; apply ContinuousOn.inv₀
+  · exact (continuous_ofReal.add (continuous_const.mul continuous_const)).continuousOn.sub
+      continuousOn_const
+  · intro x _; exact Complex.slitPlane_ne_zero (Complex.mem_slitPlane_iff.mpr (Or.inr
+      (by rw [im_sub_pt]; exact sub_ne_zero.mpr hc)))
+
+private theorem intble_vert_sub {w : ℂ} {x₀ : ℝ} (hx : x₀ ≠ w.re) (p q : ℝ) :
+    IntervalIntegrable (fun y => (↑x₀ + ↑y * I - w)⁻¹) MeasureTheory.volume p q := by
+  apply ContinuousOn.intervalIntegrable; apply ContinuousOn.inv₀
+  · exact (continuous_const.add (continuous_ofReal.mul continuous_const)).continuousOn.sub
+      continuousOn_const
+  · intro y _ h; have := congr_arg Complex.re h
+    simp [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re, Complex.ofReal_im,
+      Complex.I_im, Complex.sub_re, Complex.zero_re] at this; exact hx (by linarith)
+
+private theorem tendsto_antideriv_lower {w : ℂ} {a₀ : ℝ} (ha : a₀ < w.re) :
+    Filter.Tendsto (fun y : ℝ => I⁻¹ * Complex.log (↑a₀ + ↑y * I - w))
+      (nhdsWithin w.im (Set.Iio w.im))
+      (nhds (I⁻¹ * (↑(Real.log ‖(↑a₀ + ↑w.im * I - w : ℂ)‖) - ↑Real.pi * I))) := by
+  set φ : ℝ → ℂ := fun y => ↑a₀ + ↑y * I - w
+  set z₀ := φ w.im
+  have hz₀_re : z₀.re < 0 := by
+    simp [z₀, φ, Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
+      Complex.ofReal_im, Complex.I_im, Complex.sub_re]; linarith
+  have hz₀_im : z₀.im = 0 := by
+    simp [z₀, φ, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_im,
+      Complex.I_re, Complex.sub_im]
+  have hcont : Continuous φ :=
+    continuous_const.add (continuous_ofReal.mul continuous_const) |>.sub continuous_const
+  have htend : Filter.Tendsto φ (nhdsWithin w.im (Set.Iio w.im))
+      (nhdsWithin z₀ {z : ℂ | z.im < 0}) := by
+    rw [tendsto_nhdsWithin_iff]
+    exact ⟨hcont.continuousAt.tendsto.mono_left nhdsWithin_le_nhds,
+      Filter.eventually_of_mem self_mem_nhdsWithin (fun y (hy : y < w.im) => by
+        show (φ y).im < 0
+        simp [φ, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_im,
+          Complex.I_re, Complex.sub_im]; linarith)⟩
+  exact ((Complex.tendsto_log_nhdsWithin_im_neg_of_re_neg_of_im_zero hz₀_re hz₀_im).comp
+    htend).const_mul I⁻¹
+
+private theorem tendsto_antideriv_upper {w : ℂ} {a₀ : ℝ} (ha : a₀ < w.re) :
+    Filter.Tendsto (fun y : ℝ => I⁻¹ * Complex.log (↑a₀ + ↑y * I - w))
+      (nhdsWithin w.im (Set.Ioi w.im))
+      (nhds (I⁻¹ * (↑(Real.log ‖(↑a₀ + ↑w.im * I - w : ℂ)‖) + ↑Real.pi * I))) := by
+  set φ : ℝ → ℂ := fun y => ↑a₀ + ↑y * I - w
+  set z₀ := φ w.im
+  have hz₀_re : z₀.re < 0 := by
+    simp [z₀, φ, Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
+      Complex.ofReal_im, Complex.I_im, Complex.sub_re]; linarith
+  have hz₀_im : z₀.im = 0 := by
+    simp [z₀, φ, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_im,
+      Complex.I_re, Complex.sub_im]
+  have hcont : Continuous φ :=
+    continuous_const.add (continuous_ofReal.mul continuous_const) |>.sub continuous_const
+  have htend : Filter.Tendsto φ (nhdsWithin w.im (Set.Ioi w.im))
+      (nhdsWithin z₀ {z : ℂ | 0 ≤ z.im}) := by
+    rw [tendsto_nhdsWithin_iff]
+    exact ⟨hcont.continuousAt.tendsto.mono_left nhdsWithin_le_nhds,
+      Filter.eventually_of_mem self_mem_nhdsWithin (fun y (hy : w.im < y) => by
+        show 0 ≤ (φ y).im
+        simp [φ, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_im,
+          Complex.I_re, Complex.sub_im]; linarith)⟩
+  exact ((Complex.tendsto_log_nhdsWithin_im_nonneg_of_re_neg_of_im_zero hz₀_re hz₀_im).comp
+    htend).const_mul I⁻¹
+
+/-- **Winding number for rectangles**: the rectangle integral of `(z-w)⁻¹` around
+    a rectangle containing `w` in its open interior equals `2πi`.
+
+    Proved via FTC on each edge with `Complex.log` as antiderivative.
+    The left edge crosses the branch cut at `Im(w)`, producing a `2πi` jump. -/
+theorem rect_winding_number (w : ℂ) (a b c d : ℝ)
+    (hw : w ∈ openRect a b c d) :
+    rectangleIntegral (fun z => (z - w)⁻¹) a b c d = 2 * ↑Real.pi * I := by
+  obtain ⟨ha_w, hw_b, hc_w, hw_d⟩ := hw
+  unfold rectangleIntegral
+  have hbot := intervalIntegral.integral_eq_sub_of_hasDerivAt
+    (fun x _ => hasDerivAt_log_horiz_sub (ne_of_lt hc_w)) (intble_horiz_sub (ne_of_lt hc_w) a b)
+  have htop := intervalIntegral.integral_eq_sub_of_hasDerivAt
+    (fun x _ => hasDerivAt_log_horiz_sub (ne_of_gt hw_d)) (intble_horiz_sub (ne_of_gt hw_d) a b)
+  have hright := intervalIntegral.integral_eq_sub_of_hasDerivAt
+    (fun y _ => hasDerivAt_log_vert_sub (Complex.mem_slitPlane_iff.mpr
+      (Or.inl (by rw [re_sub_pt]; linarith)))) (intble_vert_sub (ne_of_gt hw_b) c d)
+  have hleft_split := (intervalIntegral.integral_add_adjacent_intervals
+    (intble_vert_sub (ne_of_lt ha_w) c w.im)
+    (intble_vert_sub (ne_of_lt ha_w) w.im d)).symm
+  have hcont_c : Filter.Tendsto (fun y : ℝ => I⁻¹ * Complex.log (↑a + ↑y * I - w))
+      (nhdsWithin c (Set.Ioi c)) (nhds (I⁻¹ * Complex.log (↑a + ↑c * I - w))) :=
+    (hasDerivAt_log_vert_sub (Complex.mem_slitPlane_iff.mpr (Or.inr (by
+      rw [im_sub_pt]; linarith)))).continuousAt.tendsto.mono_left nhdsWithin_le_nhds
+  have hleft_lo := intervalIntegral.integral_eq_sub_of_hasDerivAt_of_tendsto hc_w
+    (fun y hy => hasDerivAt_log_vert_sub (Complex.mem_slitPlane_iff.mpr
+      (Or.inr (by rw [im_sub_pt]; linarith [hy.2]))))
+    (intble_vert_sub (ne_of_lt ha_w) c w.im) hcont_c (tendsto_antideriv_lower ha_w)
+  have hcont_d : Filter.Tendsto (fun y : ℝ => I⁻¹ * Complex.log (↑a + ↑y * I - w))
+      (nhdsWithin d (Set.Iio d)) (nhds (I⁻¹ * Complex.log (↑a + ↑d * I - w))) :=
+    (hasDerivAt_log_vert_sub (Complex.mem_slitPlane_iff.mpr (Or.inr (by
+      rw [im_sub_pt]; linarith)))).continuousAt.tendsto.mono_left nhdsWithin_le_nhds
+  have hleft_up := intervalIntegral.integral_eq_sub_of_hasDerivAt_of_tendsto hw_d
+    (fun y hy => hasDerivAt_log_vert_sub (Complex.mem_slitPlane_iff.mpr
+      (Or.inr (by rw [im_sub_pt]; linarith [hy.1]))))
+    (intble_vert_sub (ne_of_lt ha_w) w.im d) (tendsto_antideriv_upper ha_w) hcont_d
+  rw [hbot, htop, hright, hleft_split, hleft_lo, hleft_up]
+  have hII : I * I⁻¹ = 1 := mul_inv_cancel₀ I_ne_zero
+  simp only [mul_add, mul_sub]
+  simp only [← mul_assoc, hII, one_mul]
+  ring
+
+end WindingNumber
+
+/-! ## Section 5: Cauchy Integral Formula for Rectangles
+
+Proved directly via the dslope trick + winding number, without
+going through the circle integral. -/
+
+/-- The closed rectangle is a neighborhood of any interior point. -/
+theorem closedRect_mem_nhds {a b c d : ℝ} {w : ℂ}
+    (hw : w ∈ openRect a b c d) :
+    closedRect a b c d ∈ nhds w :=
+  Filter.mem_of_superset ((isOpen_openRect a b c d).mem_nhds hw)
+    (openRect_subset_closedRect a b c d)
+
+/-- Cauchy-Goursat for `dslope f w` on a rectangle containing w in its interior. -/
+theorem cauchy_goursat_dslope (f : ℂ → ℂ) (a b c d : ℝ) (w : ℂ)
+    (hab : a ≤ b) (hcd : c ≤ d)
+    (hf : DifferentiableOn ℂ f (closedRect a b c d))
+    (hw : w ∈ openRect a b c d) :
+    rectangleIntegral (dslope f w) a b c d = 0 := by
+  apply cauchy_goursat_rect _ a b c d hab hcd
+  rwa [Complex.differentiableOn_dslope (closedRect_mem_nhds hw)]
+
+/-- On the rectangle boundary (where z ≠ w), `dslope f w z = (z-w)⁻¹ * (f z - f w)`. -/
+private theorem dslope_eq_on_boundary {f : ℂ → ℂ} {w z : ℂ} (hz : z ≠ w) :
+    dslope f w z = (z - w)⁻¹ * (f z - f w) := by
+  rw [dslope_of_ne _ hz, slope, vsub_eq_sub, smul_eq_mul]
+
+/-- **Cauchy Integral Formula for Rectangles**: if f is differentiable on the closed
+    rectangle [a,b] x [c,d] and w is in its open interior, then
+      integral_{boundary R} f(z)/(z-w) dz = 2*pi*i*f(w).
+
+    Proof: dslope + Cauchy-Goursat + winding number via FTC. -/
+theorem cauchy_integral_formula_rectangle (f : ℂ → ℂ) (a b c d : ℝ)
+    (hab : a < b) (hcd : c < d)
+    (hf : DifferentiableOn ℂ f (closedRect a b c d))
+    (w : ℂ) (hw : w ∈ openRect a b c d) :
+    rectangleIntegral (fun z => f z / (z - w)) a b c d =
+    2 * ↑Real.pi * I * f w := by
+  have hw' := hw
+  obtain ⟨ha_w, hw_b, hc_w, hw_d⟩ := hw
+  -- Edge z ≠ w facts:
+  have hbot_ne : ∀ x : ℝ, (↑x + ↑c * I : ℂ) ≠ w := fun x h =>
+    absurd (congr_arg Complex.im h) (by simp [Complex.add_im, Complex.ofReal_im,
+      Complex.mul_im, Complex.I_im, Complex.I_re]; linarith)
+  have htop_ne : ∀ x : ℝ, (↑x + ↑d * I : ℂ) ≠ w := fun x h =>
+    absurd (congr_arg Complex.im h) (by simp [Complex.add_im, Complex.ofReal_im,
+      Complex.mul_im, Complex.I_im, Complex.I_re]; linarith)
+  have hright_ne : ∀ y : ℝ, (↑b + ↑y * I : ℂ) ≠ w := fun y h =>
+    absurd (congr_arg Complex.re h) (by simp [Complex.add_re, Complex.ofReal_re,
+      Complex.mul_re, Complex.I_re, Complex.ofReal_im, Complex.I_im]; linarith)
+  have hleft_ne : ∀ y : ℝ, (↑a + ↑y * I : ℂ) ≠ w := fun y h =>
+    absurd (congr_arg Complex.re h) (by simp [Complex.add_re, Complex.ofReal_re,
+      Complex.mul_re, Complex.I_re, Complex.ofReal_im, Complex.I_im]; linarith)
+  -- Pointwise identity: f(z)/(z-w) = dslope f w z + f(w) * (z-w)⁻¹ for z ≠ w
+  have hid : ∀ (z : ℂ), z ≠ w →
+      f z / (z - w) = dslope f w z + f w * (z - w)⁻¹ := by
+    intro z hz
+    rw [dslope_eq_on_boundary hz, div_eq_mul_inv]
+    ring
+  -- Integrability: dslope is continuous hence integrable on all edges
+  have hdslope_cont := ((Complex.differentiableOn_dslope
+    (closedRect_mem_nhds hw')).mpr hf).continuousOn
+  -- Integrability of (z-w)⁻¹ on each edge
+  have hint_bot := intble_horiz_sub (ne_of_lt hc_w) a b
+  have hint_top := intble_horiz_sub (ne_of_gt hw_d) a b
+  have hint_right := intble_vert_sub (ne_of_gt hw_b) c d
+  have hint_left := intble_vert_sub (ne_of_lt ha_w) c d
+  -- Integrability of dslope on each edge
+  have hds_bot := intble_horiz (dslope f w) a b c d c hdslope_cont hab.le le_rfl hcd.le
+  have hds_top := intble_horiz (dslope f w) a b c d d hdslope_cont hab.le hcd.le le_rfl
+  have hds_right := intble_vert (dslope f w) a b c d b hdslope_cont hcd.le hab.le le_rfl
+  have hds_left := intble_vert (dslope f w) a b c d a hdslope_cont hcd.le le_rfl hab.le
+  -- Integrability of f(w) * (z-w)⁻¹ on each edge
+  have hfw_bot := hint_bot.const_mul (f w)
+  have hfw_top := hint_top.const_mul (f w)
+  have hfw_right := hint_right.const_mul (f w)
+  have hfw_left := hint_left.const_mul (f w)
+  -- Each edge integral of f/(z-w) = edge integral of dslope + edge integral of f(w)*(z-w)⁻¹
+  have edge_bot : ∫ x in a..b, f (↑x + ↑c * I) / (↑x + ↑c * I - w) =
+      (∫ x in a..b, dslope f w (↑x + ↑c * I)) +
+      ∫ x in a..b, f w * (↑x + ↑c * I - w)⁻¹ := by
+    rw [← intervalIntegral.integral_add hds_bot hfw_bot]
+    exact intervalIntegral.integral_congr (fun x _ => hid _ (hbot_ne x))
+  have edge_top : ∫ x in a..b, f (↑x + ↑d * I) / (↑x + ↑d * I - w) =
+      (∫ x in a..b, dslope f w (↑x + ↑d * I)) +
+      ∫ x in a..b, f w * (↑x + ↑d * I - w)⁻¹ := by
+    rw [← intervalIntegral.integral_add hds_top hfw_top]
+    exact intervalIntegral.integral_congr (fun x _ => hid _ (htop_ne x))
+  have edge_right : ∫ y in c..d, f (↑b + ↑y * I) / (↑b + ↑y * I - w) =
+      (∫ y in c..d, dslope f w (↑b + ↑y * I)) +
+      ∫ y in c..d, f w * (↑b + ↑y * I - w)⁻¹ := by
+    rw [← intervalIntegral.integral_add hds_right hfw_right]
+    exact intervalIntegral.integral_congr (fun y _ => hid _ (hright_ne y))
+  have edge_left : ∫ y in c..d, f (↑a + ↑y * I) / (↑a + ↑y * I - w) =
+      (∫ y in c..d, dslope f w (↑a + ↑y * I)) +
+      ∫ y in c..d, f w * (↑a + ↑y * I - w)⁻¹ := by
+    rw [← intervalIntegral.integral_add hds_left hfw_left]
+    exact intervalIntegral.integral_congr (fun y _ => hid _ (hleft_ne y))
+  -- Factor out f(w) from the (z-w)⁻¹ integrals
+  have cfactor_bot := intervalIntegral.integral_const_mul (f w)
+    (fun x => (↑x + ↑c * I - w)⁻¹ : ℝ → ℂ) (a := a) (b := b) (μ := volume)
+  have cfactor_top := intervalIntegral.integral_const_mul (f w)
+    (fun x => (↑x + ↑d * I - w)⁻¹ : ℝ → ℂ) (a := a) (b := b) (μ := volume)
+  have cfactor_right := intervalIntegral.integral_const_mul (f w)
+    (fun y => (↑b + ↑y * I - w)⁻¹ : ℝ → ℂ) (a := c) (b := d) (μ := volume)
+  have cfactor_left := intervalIntegral.integral_const_mul (f w)
+    (fun y => (↑a + ↑y * I - w)⁻¹ : ℝ → ℂ) (a := c) (b := d) (μ := volume)
+  -- Now expand rectangleIntegral and substitute
+  unfold rectangleIntegral
+  rw [edge_bot, edge_top, edge_right, edge_left,
+      cfactor_bot, cfactor_top, cfactor_right, cfactor_left]
+  -- The dslope parts sum to 0 (Cauchy-Goursat), the (z-w)⁻¹ parts sum to f(w) * 2πi
+  have hds_zero := cauchy_goursat_dslope f a b c d w hab.le hcd.le hf hw'
+  unfold rectangleIntegral at hds_zero
+  have hwinding := rect_winding_number w a b c d hw'
+  unfold rectangleIntegral at hwinding
+  linear_combination hds_zero + (f w) * hwinding
 
 /-- **Contour deformation**: the rectangle integral of f(z)/(z-w) equals
-    the circle integral. THIS IS THE KEY SORRY. -/
+    the circle integral. Derived as a corollary of the rectangle CIF + Mathlib circle CIF. -/
 theorem rectangle_circle_agreement (f : ℂ → ℂ) (a b c d : ℝ)
     (hab : a < b) (hcd : c < d)
     (hf : DifferentiableOn ℂ f (closedRect a b c d))
@@ -216,31 +473,11 @@ theorem rectangle_circle_agreement (f : ℂ → ℂ) (a b c d : ℝ)
     (hRw : Metric.closedBall w R ⊆ closedRect a b c d) :
     rectangleIntegral (fun z => f z / (z - w)) a b c d =
     ∮ z in C(w, R), f z / (z - w) := by
-  sorry
-
-/-! ## Section 5: Cauchy Integral Formula for Rectangles -/
-
-/-- **Cauchy Integral Formula for Rectangles**: if f is differentiable on the closed
-    rectangle [a,b] x [c,d] and w is in its open interior, then
-      integral_{boundary R} f(z)/(z-w) dz = 2*pi*i*f(w).
-
-    This is the rectangle analogue of Mathlib's
-    `Complex.circleIntegral_div_sub_of_differentiable_on_off_countable`. -/
-theorem cauchy_integral_formula_rectangle (f : ℂ → ℂ) (a b c d : ℝ)
-    (hab : a < b) (hcd : c < d)
-    (hf : DifferentiableOn ℂ f (closedRect a b c d))
-    (w : ℂ) (hw : w ∈ openRect a b c d) :
-    rectangleIntegral (fun z => f z / (z - w)) a b c d =
-    2 * ↑Real.pi * I * f w := by
-  -- Step 1: Find R > 0 with closedBall w R inside closedRect
-  obtain ⟨R, hR, hRw⟩ := rectangle_contains_ball hw
-  -- Step 2: Rectangle integral = circle integral (contour deformation)
-  rw [rectangle_circle_agreement f a b c d hab hcd hf w hw R hR hRw]
-  -- Step 3: Apply Mathlib's circle CIF
+  rw [cauchy_integral_formula_rectangle f a b c d hab hcd hf w hw]
   have hf_ball : DifferentiableOn ℂ f (Metric.closedBall w R) := hf.mono hRw
   have := hf_ball.circleIntegral_sub_inv_smul (Metric.mem_ball_self hR)
   simp only [smul_eq_mul, div_eq_inv_mul] at this ⊢
-  exact this
+  exact this.symm
 
 /-- (1/2*pi*i) * integral = f(w). -/
 theorem cauchy_integral_formula_rectangle_inv (f : ℂ → ℂ) (a b c d : ℝ)
