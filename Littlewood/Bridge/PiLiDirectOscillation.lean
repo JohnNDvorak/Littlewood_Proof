@@ -185,23 +185,29 @@ class PiApproxFromExplicitFormulaHyp : Prop where
     Term-by-term:
     1. sumPrimePowers(x) = Σ_{p^k≤x, k≥2} 1/k ≈ π(√x)/2 = O(√x/logx) — PROVABLE from
        Mathlib's `Chebyshev.theta_le_log4_mul_x` + `Chebyshev.eventually_primeCounting_le`.
-    2. ∫₂ˣ (ψ(t)-t)/(t·(logt)²)dt — requires ψ(t) = t + o(t) (PNT) to show this
-       is o(x/(logx)²) = o(√x/logx). With only Chebyshev bounds (ψ(t) ≤ (log4)t + 2√t·logt),
-       the integral is O(x/(logx)²) ≫ √x/logx. PNT is NOT in Mathlib.
+    2. ∫₂ˣ (ψ(t)-t)/(t·(logt)²)dt — with PNT (ψ(t) ~ t), this is o(x/(logx)²).
+       BUT x/(logx)² ≫ √x/logx (ratio = √x/logx → ∞), so o(x/(logx)²) does NOT
+       imply O(√x/logx). The weak PNT is INSUFFICIENT for the O(√x/logx) bound.
     3. 2/log(2) is constant — absorbed by D·√x/logx for large x.
 
-    CONCLUSION: Closing this sorry requires the Prime Number Theorem (ψ(t) ~ t),
-    which is in PrimeNumberTheoremAnd but not upstreamed to Mathlib. IRREDUCIBLE
-    until PNT is available.
+    CORRECTED ANALYSIS (2026-03-15, Agent 3 iteration 3):
+    The previous claim "o(x/(logx)²) = o(√x/logx)" was WRONG (inequality reversed).
+    Weak PNT gives ψ(t) - t = o(t), yielding ∫ = o(x/log²x), but we need O(√x/logx).
+    Strong PNT gives ψ(t) - t = O(t·exp(-c·√(log t))), yielding:
+      ∫₂ˣ O(exp(-c·√(log t))/log²t) dt = O(x·exp(-c'·√(log x)))
+    which IS O(√x/logx). But the Strong PNT is NOT formalized in PrimeNumberTheoremAnd
+    (StrongPNT.lean has only blueprint comments, no proof).
 
-    PNT IMPORT FEASIBILITY (2026-03-15, Agent 3v2):
-    - PrimeNumberTheoremAnd exists in .lake/packages/ with matching lean-toolchain
-      (v4.27.0-rc1), but is NOT declared in lakefile.toml or lake-manifest.json.
-    - Key result: `chebyshev_asymptotic : θ ~[atTop] id` (Consequences.lean),
-      giving θ(x) ~ x. Combined with ψ - θ = O(√x log x), yields ψ(t) ~ t.
-    - Adding to lakefile.toml would require `lake update` + full rebuild.
-      Risk: dependency resolution. Should be tested in a non-overnight session.
-    - No circular dependency: PrimeNumberTheoremAnd depends only on Mathlib. -/
+    PrimeNumberTheoremAnd HAS:
+    - `chebyshev_asymptotic : θ ~[atTop] id` (weak PNT)
+    - `WeakPNT'' : ψ ~[atTop] id` (weak PNT for ψ)
+    - Classical zero-free region formalized but Strong PNT error term NOT proved
+
+    CONCLUSION: This sorry is IRREDUCIBLE with current formalized tools.
+    Requires either:
+    (a) Strong PNT error term O(x·exp(-c·√(logx))) — not in any Lean 4 library, or
+    (b) A weaker approach that avoids the O(√x/logx) scale entirely.
+    The main theorem path BYPASSES this via LandauOscillation.lean (priority 2000). -/
 instance : AbelCorrectionPsiPiHyp where
   correction_bound := by sorry
 
