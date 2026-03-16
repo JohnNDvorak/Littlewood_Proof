@@ -21,7 +21,7 @@ This depends on:
 (a) The saddle-point expansion giving precise phase information (not just bounds)
 (b) The coupling of R(k) across consecutive blocks via phase coherence
 
-SORRY COUNT: 1
+SORRY COUNT: 0 (sorry delegated to GabckePhaseCouplingInfra.remainder_antitone_for_ge_one)
 
 Reference: Gabcke 1979 Satz 4.
 

@@ -12,9 +12,11 @@ Gabcke's Satz 4 asserts AntitoneOn c (Ici 1). The proof strategy:
 2. Show the leading term is 4π·A·√(k+1) with a remainder that is O(1/√k)
 3. Use concavity of √ to show the A·√(k+1) terms decrease faster than remainders
 
-This file provides sorry-free algebraic infrastructure and key lemmas.
+This file provides algebraic infrastructure and key reduction lemmas.
+Part 11 reduces the full antitonicity to `remainder_antitone_for_ge_one`,
+which is the irreducible signed content of Gabcke Satz 4.
 
-SORRY COUNT: 0
+SORRY COUNT: 1 (remainder_antitone_for_ge_one — signed remainder antitonicity)
 
 Co-authored-by: Claude (Anthropic)
 -/
