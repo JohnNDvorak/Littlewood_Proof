@@ -32,6 +32,7 @@ import Littlewood.Aristotle.ErrorTermExpansion
 import Littlewood.Aristotle.RSBlockParam
 import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp
+import Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -78,13 +79,52 @@ class GabckePhaseCouplingHyp : Prop where
   block_correction_antitone :
     AntitoneOn signedBlockCorrection (Ici (1 : ℕ))
 
+/-! ## Decomposition: reducing to block estimates -/
+
+open Aristotle.Standalone.GabckePhaseCouplingInfra in
+/-- **Decomposition**: the signed block correction has the form
+    c(k) = (-1)^k · I(k) - A · √(k+1), so antitone_from_block_estimate applies. -/
+theorem signedBlockCorrection_form :
+    ∀ k, signedBlockCorrection k =
+      (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
+      - blockCorrectionA * Real.sqrt ((k : ℝ) + 1) :=
+  fun _ => rfl
+
+/-- **Reduced sorry**: it suffices to show the block estimate condition.
+    Specifically, for each k ≥ 1:
+      blockCorrectionA · (√(k+1) - √(k+2))
+      ≤ (-1)^k · (I_k + I_{k+1})
+    where I_k = ∫_{block k} ErrorTerm(t) dt.
+
+    This reduces the antitonicity of the signed block correction to a
+    per-block signed integral estimate that requires the saddle-point
+    expansion with phase information (Gabcke Satz 4). -/
+theorem block_estimate_suffices
+    (h_est : ∀ k : ℕ, 1 ≤ k →
+      blockCorrectionA * (Real.sqrt ((k : ℝ) + 1) - Real.sqrt ((k : ℝ) + 2))
+      ≤ (-1 : ℝ) ^ k *
+        ((∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t) +
+         (∫ t in Ioc (hardyStart (k + 1)) (hardyStart (k + 2)), ErrorTerm t))) :
+    GabckePhaseCouplingHyp := by
+  constructor
+  exact GabckePhaseCouplingInfra.antitone_from_block_estimate
+    blockCorrectionA
+    (fun k => ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
+    signedBlockCorrection
+    signedBlockCorrection_form
+    h_est
+
 /-! ## Sorry'd instance -/
 
 /-- **Instance** (sorry'd): Gabcke's phase coupling analysis confirms antitonicity.
     Closing requires the full signed steepest-descent analysis, not just
-    pointwise bounds. See Gabcke 1979 Satz 4 for the mathematical argument. -/
+    pointwise bounds. See Gabcke 1979 Satz 4 for the mathematical argument.
+
+    Via `block_estimate_suffices`, the sorry is equivalent to:
+    ∀ k ≥ 1, A·(√(k+1)-√(k+2)) ≤ (-1)^k·(I_k + I_{k+1})
+    where I_k = ∫_{block k} ErrorTerm dt and A = blockCorrectionA. -/
 instance : GabckePhaseCouplingHyp := by
-  constructor
+  apply block_estimate_suffices
   sorry
 
 /-! ## Bridge theorem -/
