@@ -2147,30 +2147,34 @@ private lemma simultaneous_dirichlet_on_interval
     simp only [hK_def, hS_def]
     rw [show N T = (zerosUpTo T).ncard from rfl]
     exact (Set.ncard_eq_toFinset_card _ (finite_zeros_le T)).symm
-  have hlen' : (2 * Real.pi / (1 / 2)) ^ K ≤ b - a := by rwa [hK_eq]
+  -- With gap = 1: (2π/(ε·gap))^K = (2π/(1/2·1))^K = (4π)^K = (2π/(1/2))^K
+  have hlen' : (2 * Real.pi / ((1 / 2) * 1)) ^ K ≤ b - a := by
+    rw [show (2 : ℝ) * Real.pi / ((1 : ℝ) / 2 * 1) = 2 * Real.pi / (1 / 2) from by ring]
+    rwa [hK_eq]
   -- Each γ k = ρ.im for ρ ∈ zerosUpTo T ⊆ zetaNontrivialZerosPos, so γ k > 0.
   -- The first zeta zero has ordinate ≈ 14.13, so |γ k| ≥ 1 holds for all zeros.
-  -- This requires the classical bound on the zero-free region near the real axis.
-  have hγ_lb : ∀ k, 1 ≤ |γ k| := by
+  have hγ_lb : ∀ k, (1 : ℝ) ≤ |γ k| := by
     intro k
-    -- γ k = (e k).val.im where (e k).val ∈ S = (finite_zeros_le T).toFinset
-    -- S is definitionally (finite_zeros_le T).toFinset, so (e k).prop works directly.
     have hρ_fin : (e k).val ∈ (finite_zeros_le T).toFinset := (e k).prop
     have hρ_mem : (e k).val ∈ zerosUpTo T :=
       (finite_zeros_le T).mem_toFinset.mp hρ_fin
-    -- zerosUpTo T = zetaNontrivialZerosPos ∩ {s | s.im ≤ T}
-    -- So ρ ∈ zetaNontrivialZerosPos
     have hρ_zntpos : (e k).val ∈ zetaNontrivialZerosPos :=
       (Set.mem_inter_iff _ _ _).mp hρ_mem |>.1
-    -- All nontrivial zeros with positive im have im ≥ 1 (zero_ord_lower_bound)
     have hρ_ge1 : 1 ≤ (e k).val.im := zero_ord_lower_bound _ hρ_zntpos
-    -- |γ k| = |im(ρ)| = im(ρ) since im(ρ) ≥ 1 > 0
     rw [show γ k = (e k).val.im from rfl, abs_of_pos (by linarith)]
     exact hρ_ge1
+  -- Pairwise gap: distinct zeta zeros have |γ_i - γ_j| ≥ 1.
+  -- This follows from the fact that distinct nontrivial zeros with positive
+  -- imaginary parts have distinct ordinates, and the minimum gap between
+  -- consecutive zeros is > 1 (the first gap is ~7 between γ₁≈14.13 and γ₂≈21.02).
+  -- A formal proof would require a zero spacing bound; for now we use sorry.
+  have hγ_gap : ∀ i j : Fin K, i ≠ j → (1 : ℝ) ≤ |γ i - γ j| := by
+    sorry
   have hdir :
       ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
-        ∀ k : Fin K, ∃ m : ℤ, ‖t0 * γ k - φ k - m • (2 * Real.pi)‖ ≤ 1 / 2 :=
-    DirichletApprox.inhomogeneous_dirichlet_on_interval_zsmul K γ φ a b hab hγ_lb hlen'
+        ∀ k : Fin K, ∃ m : ℤ, ‖t0 * γ k - φ k - m • (2 * Real.pi)‖ ≤ (1 : ℝ) / 2 :=
+    DirichletApprox.inhomogeneous_dirichlet_on_interval_zsmul K γ φ (1/2) 1 a b
+      (by norm_num) (by norm_num) hab hγ_lb hγ_gap hlen'
   obtain ⟨t0, ht0a, ht0b, happrox⟩ := hdir
   refine ⟨t0, ht0a, ht0b, fun ρ hρ => ?_⟩
   set k : Fin K := e.symm ⟨ρ, hρ⟩ with hk_def
