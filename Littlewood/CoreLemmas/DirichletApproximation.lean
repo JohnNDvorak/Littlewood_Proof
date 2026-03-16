@@ -684,8 +684,8 @@ private lemma one_dim_exact_hit (γ φ a b : ℝ) (hab : a ≤ b)
 
     For K=0 and K=1, the proof is complete and sorry-free.
 
-    See `inhomogeneous_dirichlet_on_interval_gap` below for a corrected
-    statement with the gap hypothesis. -/
+    See `inhomogeneous_dirichlet_k1` below for a sorry-free K=1 version
+    with parameterized tolerance and lower bound. -/
 theorem inhomogeneous_dirichlet_on_interval
     (K : ℕ) (γ φ : Fin K → ℝ) (a b : ℝ) (hab : a < b)
     (hγ_lb : ∀ k, 1 ≤ |γ k|)
