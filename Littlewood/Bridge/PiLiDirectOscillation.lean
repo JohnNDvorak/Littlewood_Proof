@@ -192,7 +192,16 @@ class PiApproxFromExplicitFormulaHyp : Prop where
 
     CONCLUSION: Closing this sorry requires the Prime Number Theorem (ψ(t) ~ t),
     which is in PrimeNumberTheoremAnd but not upstreamed to Mathlib. IRREDUCIBLE
-    until PNT is available. -/
+    until PNT is available.
+
+    PNT IMPORT FEASIBILITY (2026-03-15, Agent 3v2):
+    - PrimeNumberTheoremAnd exists in .lake/packages/ with matching lean-toolchain
+      (v4.27.0-rc1), but is NOT declared in lakefile.toml or lake-manifest.json.
+    - Key result: `chebyshev_asymptotic : θ ~[atTop] id` (Consequences.lean),
+      giving θ(x) ~ x. Combined with ψ - θ = O(√x log x), yields ψ(t) ~ t.
+    - Adding to lakefile.toml would require `lake update` + full rebuild.
+      Risk: dependency resolution. Should be tested in a non-overnight session.
+    - No circular dependency: PrimeNumberTheoremAnd depends only on Mathlib. -/
 instance : AbelCorrectionPsiPiHyp where
   correction_bound := by sorry
 
