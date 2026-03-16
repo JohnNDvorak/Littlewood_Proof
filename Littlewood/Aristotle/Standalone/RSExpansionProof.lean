@@ -80,6 +80,8 @@ import Littlewood.Aristotle.FunctionalEquationV2
 import Littlewood.Bridge.HardyZTransfer
 import Littlewood.Aristotle.HardyThetaSmooth
 import Littlewood.Aristotle.IntervalPartition
+import Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp
+import Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -92,6 +94,8 @@ namespace Aristotle.Standalone.RSExpansionProof
 open MeasureTheory Set Real Filter Topology HardyEstimatesPartial
 open Aristotle.HardyNProperties Aristotle.RSBlockParam
 open Aristotle.ErrorTermExpansion
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckePhaseCouplingHyp
 
 -- ============================================================
 -- Section 1: blockParam ∈ [0,1] on closed blocks (constructive)
@@ -3250,8 +3254,8 @@ private theorem gabcke_next_order_bound :
       hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤
-        (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2)) := by
-  sorry
+        (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2)) :=
+  gabcke_from_hyp
 
 private theorem saddle_pointwise_bound_from_cubic :
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
@@ -3285,8 +3289,8 @@ private theorem block_correction_antitone_from_saddle :
     let c_fn := fun k : ℕ =>
       (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
         - A_val * Real.sqrt ((k : ℝ) + 1)
-    AntitoneOn c_fn (Ici (1 : ℕ)) := by
-  sorry
+    AntitoneOn c_fn (Ici (1 : ℕ)) :=
+  antitone_from_hyp
 
 /-- Conjuncts 1+2: saddle-point bound + block antitone (coupled via Gabcke phase analysis).
 
