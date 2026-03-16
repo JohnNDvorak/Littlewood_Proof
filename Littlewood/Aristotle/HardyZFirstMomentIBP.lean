@@ -799,6 +799,130 @@ private theorem ibp_correction_integrand_bound :
         16 * C_z * M * t ^ ((3:ℝ)/4) / Real.log t := add_le_add h_term1 h_term2
     _ = (4 * C_d + 16 * C_z * M) * t ^ ((3:ℝ)/4) / Real.log t := by ring
 
+/-! ## Part 5d: Global IBP sub-lemmas for |∫₁ᵀ Z(t) dt| ≤ C·√T (Titchmarsh §14.5)
+
+Sub-lemma 1: |θ''(t)|/(θ'(t))² ≤ C/(log t)²
+Sub-lemma 2: d/dt[(θ')⁻¹] has explicit HasDerivAt form
+Sub-lemma 3: Both boundary terms ≤ C·T^{1/2}
+Sub-lemma 4: Correction ratio continuous on [T₀, ∞)
+Sub-lemma 5: 1/θ' is monotone decreasing
+Sub-lemma 6: Total variation of 1/θ' bounded by constant
+All sorry-free. -/
+
+/-- |θ''(t)|/(θ'(t))² ≤ 16M/(log t)² for large t. -/
+theorem deriv_inv_thetaDeriv_bound :
+    ∃ C > 0, ∃ T₀ ≥ (2 : ℝ), ∀ t : ℝ, t ≥ T₀ →
+      |deriv thetaDeriv t| / (thetaDeriv t) ^ 2 ≤ C / (Real.log t) ^ 2 := by
+  obtain ⟨M, hM_pos, hM⟩ := thetaDeriv_deriv_bounded
+  obtain ⟨T₁, hT₁, h_theta⟩ := thetaDeriv_lower_bound
+  set T₀ := max T₁ (max (Real.exp 1) 2) with hT₀_def
+  have hT₀_ge_2 : (2 : ℝ) ≤ T₀ := le_trans (le_max_right _ _) (le_max_right _ _)
+  refine ⟨16 * M, by positivity, T₀, hT₀_ge_2, fun t ht => ?_⟩
+  have ht_T₁ : t ≥ T₁ := le_trans (le_max_left _ _) ht
+  have ht_pos : (0 : ℝ) < t := by linarith
+  have hlog : 0 < Real.log t := Real.log_pos (by linarith)
+  have htheta_lb := h_theta t ht_T₁
+  have htheta_pos : 0 < thetaDeriv t := by linarith
+  have h_theta_sq_pos : 0 < (thetaDeriv t) ^ 2 := by positivity
+  have h_log_sq_pos : 0 < (Real.log t) ^ 2 := by positivity
+  rw [div_le_div_iff₀ h_theta_sq_pos h_log_sq_pos]
+  have h_log_le : Real.log t ≤ 4 * thetaDeriv t := by linarith
+  calc |deriv thetaDeriv t| * (Real.log t) ^ 2
+      ≤ M * (Real.log t) ^ 2 :=
+        mul_le_mul_of_nonneg_right (hM t) (le_of_lt h_log_sq_pos)
+    _ ≤ M * (4 * thetaDeriv t) ^ 2 := by
+        apply mul_le_mul_of_nonneg_left _ (le_of_lt hM_pos)
+        apply sq_le_sq'
+        · linarith [mul_nonneg (show (0:ℝ) ≤ 4 by norm_num) (le_of_lt htheta_pos)]
+        · exact h_log_le
+    _ = 16 * M * (thetaDeriv t) ^ 2 := by ring
+
+/-- d/dt[(θ')⁻¹] = −θ''/(θ')² at points where θ' > 0. -/
+theorem hasDerivAt_inv_thetaDeriv (t : ℝ) (htheta_pos : 0 < thetaDeriv t) :
+    HasDerivAt (fun u => (thetaDeriv u)⁻¹)
+      (-(deriv thetaDeriv t) / (thetaDeriv t) ^ 2) t := by
+  have h_ne : thetaDeriv t ≠ 0 := ne_of_gt htheta_pos
+  have h_inv := (thetaDeriv_hasDerivAt t).inv h_ne
+  simp only [one_div] at h_inv ⊢
+  convert h_inv using 1
+  rw [(thetaDeriv_hasDerivAt t).deriv]
+  field_simp
+
+/-- Both IBP boundary terms ≤ C·T^{1/2}. -/
+theorem ibp_boundary_both_endpoints_le_sqrt :
+    ∃ C > 0, ∃ T₀ ≥ (2 : ℝ), ∀ T : ℝ, T ≥ T₀ →
+      ‖riemannZeta (1/2 + I * ↑T)‖ / thetaDeriv T +
+      ‖riemannZeta (1/2 + I * ↑T₀)‖ / thetaDeriv T₀ ≤ C * T ^ ((1:ℝ)/2) := by
+  obtain ⟨C_b, hC_b, T₁, hT₁, h_bd⟩ := ibp_boundary_bound
+  set val_T₁ := ‖riemannZeta (1/2 + I * ↑T₁)‖ / thetaDeriv T₁
+  refine ⟨C_b + |val_T₁| + 1, by positivity, T₁, hT₁, fun T hT => ?_⟩
+  have hT_pos : (0 : ℝ) < T := by linarith
+  have h_rpow_pos : 0 < T ^ ((1:ℝ)/2) := rpow_pos_of_pos hT_pos _
+  have h_rpow_ge_one : 1 ≤ T ^ ((1:ℝ)/2) := by
+    rw [← rpow_zero T]
+    exact rpow_le_rpow_of_exponent_le (by linarith) (by norm_num)
+  have h1 := h_bd T hT
+  have h_val_le : val_T₁ ≤ (|val_T₁| + 1) * T ^ ((1:ℝ)/2) :=
+    calc val_T₁ ≤ |val_T₁| := le_abs_self _
+      _ ≤ |val_T₁| * T ^ ((1:ℝ)/2) :=
+          le_mul_of_one_le_right (abs_nonneg _) h_rpow_ge_one
+      _ ≤ (|val_T₁| + 1) * T ^ ((1:ℝ)/2) :=
+          mul_le_mul_of_nonneg_right (by linarith) (le_of_lt h_rpow_pos)
+  calc ‖riemannZeta (1/2 + I * ↑T)‖ / thetaDeriv T + val_T₁
+      ≤ C_b * T ^ ((1:ℝ)/2) + (|val_T₁| + 1) * T ^ ((1:ℝ)/2) := by linarith
+    _ = (C_b + |val_T₁| + 1) * T ^ ((1:ℝ)/2) := by ring
+
+/-- Correction ratio |θ''|/(θ')² is continuous on [T₀, ∞). -/
+theorem continuousOn_correction_ratio (T₀ : ℝ) (hT₀ : ∀ t ≥ T₀, 0 < thetaDeriv t) :
+    ContinuousOn (fun t => |deriv thetaDeriv t| / (thetaDeriv t) ^ 2) (Set.Ici T₀) := by
+  apply ContinuousOn.div
+  · exact (continuous_deriv_thetaDeriv.comp continuous_id).continuousOn.abs
+  · exact (continuous_thetaDeriv.continuousOn.pow 2)
+  · intro t ht; exact ne_of_gt (pow_pos (hT₀ t ht) 2)
+
+/-- 1/θ' is monotone decreasing for large t. -/
+theorem inv_thetaDeriv_antitoneOn :
+    ∃ T₀ > 0, AntitoneOn (fun t => 1 / thetaDeriv t) (Set.Ici T₀) := by
+  obtain ⟨T₀, hT₀, h_pos⟩ := thetaDeriv_pos_of_large
+  refine ⟨T₀, hT₀, fun a ha b hb hab => ?_⟩
+  rw [div_le_div_iff₀ (h_pos b hb) (h_pos a ha)]
+  simp only [one_mul]
+  exact thetaDeriv_strictMonoOn.monotoneOn
+    (lt_of_lt_of_le hT₀ ha) (lt_of_lt_of_le hT₀ hb) hab
+
+/-- Total variation of 1/θ' on [T₀, T] bounded by a constant. -/
+theorem ibp_total_variation_inv_thetaDeriv :
+    ∃ C > 0, ∃ T₀ ≥ (2 : ℝ), ∀ T : ℝ, T ≥ T₀ →
+      1 / thetaDeriv T₀ - 1 / thetaDeriv T ≤ C := by
+  obtain ⟨T₁, hT₁, h_theta⟩ := thetaDeriv_lower_bound
+  set T₀ := max T₁ (max (Real.exp 1) 2) with hT₀_def
+  have hT₀_ge_2 : (2 : ℝ) ≤ T₀ := le_trans (le_max_right _ _) (le_max_right _ _)
+  have hT₀_ge_T₁ : T₁ ≤ T₀ := le_max_left _ _
+  have h_theta_T₀ := h_theta T₀ hT₀_ge_T₁
+  have hlog_T₀ : 0 < Real.log T₀ := Real.log_pos (by linarith)
+  have htheta_pos : 0 < thetaDeriv T₀ := by linarith
+  refine ⟨1 / thetaDeriv T₀ + 1, by positivity, T₀, hT₀_ge_2, fun T hT => ?_⟩
+  have h_theta_T := h_theta T (le_trans hT₀_ge_T₁ hT)
+  have hlog_T : 0 < Real.log T := Real.log_pos (by linarith)
+  have htheta_T_pos : 0 < thetaDeriv T := by linarith
+  have : 0 ≤ 1 / thetaDeriv T := by positivity
+  linarith
+
+/-- Summary: all global IBP sub-lemmas (sorry-free). -/
+theorem ibp_global_approach_summary :
+    (∃ C > 0, ∃ T₀ ≥ (2 : ℝ), ∀ T : ℝ, T ≥ T₀ →
+      ‖riemannZeta (1/2 + I * ↑T)‖ / thetaDeriv T +
+      ‖riemannZeta (1/2 + I * ↑T₀)‖ / thetaDeriv T₀ ≤ C * T ^ ((1:ℝ)/2)) ∧
+    (∃ C > 0, ∃ T₀ ≥ (2 : ℝ), ∀ t : ℝ, t ≥ T₀ →
+      ‖deriv riemannZeta (1/2 + I * ↑t)‖ / thetaDeriv t +
+      ‖riemannZeta (1/2 + I * ↑t)‖ * |deriv thetaDeriv t| / (thetaDeriv t) ^ 2
+        ≤ C * t ^ ((3:ℝ)/4) / Real.log t) ∧
+    (∃ C > 0, ∃ T₀ ≥ (2 : ℝ), ∀ t : ℝ, t ≥ T₀ →
+      |deriv thetaDeriv t| / (thetaDeriv t) ^ 2 ≤ C / (Real.log t) ^ 2) :=
+  ⟨ibp_boundary_both_endpoints_le_sqrt,
+   ibp_correction_integrand_bound,
+   deriv_inv_thetaDeriv_bound⟩
+
 /- **Main oscillatory integral bound** (sorry — requires AFE-based VdC argument).
 
     REMAINING ATOMIC OBLIGATION: |∫₁ᵀ Z(t) dt| ≤ C · T^{1/2}.
@@ -2399,9 +2523,10 @@ theorem mode_index_le_sqrt_of_le (n : ℕ) (T : ℝ)
     ((n : ℝ) + 1) ≤ Real.sqrt (T / (2 * Real.pi)) := by
   have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
   have h_sq : ((n : ℝ) + 1) ^ 2 ≤ T / (2 * Real.pi) := by
-    rw [div_le_iff₀ hpi] at *; linarith [mode_index_sq_le_of_le n T h]
+    rw [le_div_iff₀ hpi]; linarith [mode_index_sq_le_of_le n T h]
   have hn1 : (0 : ℝ) ≤ (n : ℝ) + 1 := by positivity
-  rwa [← Real.sqrt_sq hn1, Real.sqrt_le_sqrt]
+  calc (↑n + 1) = Real.sqrt ((↑n + 1) ^ 2) := (Real.sqrt_sq hn1).symm
+    _ ≤ Real.sqrt (T / (2 * Real.pi)) := Real.sqrt_le_sqrt h_sq
 
 /-- The integration interval length T - hardyStart(n) ≤ T for any n. -/
 theorem integral_interval_le_T (n : ℕ) (T : ℝ) (h : hardyStart n ≤ T) :
@@ -2413,15 +2538,14 @@ theorem integral_interval_le_T (n : ℕ) (T : ℝ) (h : hardyStart n ≤ T) :
 theorem hardyCosIntegral_one_block_bound (n : ℕ) :
     |∫ t in Set.Ioc (hardyStart n) (hardyStart (n + 1)), hardyCos n t| ≤
       6 * Real.pi * ((n : ℝ) + 1) := by
-  rw [← intervalIntegral.integral_of_le (le_of_lt (by
-    rw [hardyStart_formula, hardyStart_formula]; nlinarith [Real.pi_pos,
-      Nat.cast_nonneg (α := ℝ) n]))]
+  have h_le : hardyStart n ≤ hardyStart (n + 1) := by
+    rw [hardyStart_formula, hardyStart_formula]
+    apply mul_le_mul_of_nonneg_left _ (by positivity : (0 : ℝ) ≤ 2 * Real.pi)
+    push_cast; nlinarith [Nat.cast_nonneg (α := ℝ) n]
+  rw [← intervalIntegral.integral_of_le h_le]
   have h_bd : ∀ t ∈ Set.uIoc (hardyStart n) (hardyStart (n + 1)),
       ‖hardyCos n t‖ ≤ 1 :=
     fun t _ => by rw [Real.norm_eq_abs]; exact abs_cos_le_one _
-  have h_le : hardyStart n ≤ hardyStart (n + 1) := by
-    rw [hardyStart_formula, hardyStart_formula]
-    nlinarith [Real.pi_pos, Nat.cast_nonneg (α := ℝ) n]
   calc |∫ t in (hardyStart n)..(hardyStart (n + 1)), hardyCos n t|
       ≤ 1 * |hardyStart (n + 1) - hardyStart n| :=
         intervalIntegral.norm_integral_le_of_norm_le_const h_bd
@@ -2446,8 +2570,9 @@ theorem sqrt_sum_lower (N : ℕ) :
         rw [Finset.sum_const, Finset.card_range]; simp
     _ ≤ ∑ n ∈ Finset.range N, Real.sqrt ((n : ℝ) + 1) := by
         apply Finset.sum_le_sum; intro n _
-        rw [show (1 : ℝ) = Real.sqrt 1 from (Real.sqrt_one).symm]
-        exact Real.sqrt_le_sqrt (by positivity)
+        calc (1 : ℝ) = Real.sqrt 1 := Real.sqrt_one.symm
+          _ ≤ Real.sqrt ((n : ℝ) + 1) :=
+              Real.sqrt_le_sqrt (by linarith [Nat.cast_nonneg (α := ℝ) n])
 
 end PerModeLinearBoundInfra
 
