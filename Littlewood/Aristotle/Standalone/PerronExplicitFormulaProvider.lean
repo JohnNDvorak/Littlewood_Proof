@@ -2045,6 +2045,60 @@ the shifted lattice argument. -/
     Sub-sorry count: 1 sorry (Gap 2), 1 sorry (Dirichlet core in N>0 branch),
     1 haveI sorry (Gap 1) -/
 
+/-- **perronThreshold growth bound**: the Perron threshold at height T is dominated
+    by the tower cap at T, for sufficiently large T.
+
+    **Mathematical justification** (Davenport Ch. 17, Titchmarsh §14.25):
+    The Perron formula error at height T is O(x^{1/2+ε} log(x)/T + x^{1/2}/T · log²T).
+    For this to be ≤ √x/log x, we need x ≳ T² · (log T)^6 at worst.
+    So perronThreshold(hRH, T) ≤ C · T² · (log T)^6 for some absolute C.
+    Meanwhile tower_cap(T, 1/2) = exp(exp(exp(c · N(T)/(T+1)))) where
+    N(T) ≥ T·log(T)/(3π), giving triple-exponential growth.
+
+    For T ≥ T₀ (some absolute constant), the tower cap dominates any polynomial.
+
+    **SORRY STATUS**: This is a targeted sorry for the Perron threshold vs tower-cap
+    comparison. It replaces the previous merged sorry that combined this with
+    the Dirichlet approximation obligation. Closing this requires either:
+    (A) An explicit polynomial upper bound on perronThreshold (from the Perron
+        formula error analysis), or
+    (B) Refactoring the Classical.choose to carry the bound explicitly. -/
+private lemma tower_cap_dominates_perronThreshold
+    [ZeroCountingLowerBoundHyp]
+    (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ) :
+    ∃ T : ℝ, 4 ≤ T ∧
+      max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 ≤
+        Real.exp (Real.exp (Real.exp
+          (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) := by
+  sorry
+
+/-- **Simultaneous inhomogeneous Dirichlet approximation on an interval**.
+
+    Given K frequencies γ₁,...,γ_K (imaginary parts of zeros ≤ T),
+    target phases φ₁,...,φ_K, tolerance ε > 0, and an interval [a, b]
+    of length ≥ (2π/ε)^K, there exists t₀ ∈ [a, b] with
+    ‖t₀·γ_k - φ_k - m_k·2π‖ ≤ ε for all k simultaneously.
+
+    **Mathematical justification** (Cassels 1957, Ch. III, Theorem I):
+    The K-torus T^K = (ℝ/2πℤ)^K is covered by (2π/ε)^K boxes of side ε.
+    Mapping t ↦ (t·γ₁,...,t·γ_K) mod 2π, with ⌈(b-a)·max|γ_k|/(2π)⌉
+    sample points, pigeonhole gives two points in the same box.
+    Their difference provides homogeneous approximation; the shifted
+    version gives inhomogeneous approximation.
+
+    **SORRY STATUS**: Targeted sorry for the K-torus pigeonhole argument.
+    The 1D case (inhomogeneous_dirichlet_1d) is proved in
+    CoreLemmas/DirichletApproximation.lean. The K-dimensional extension
+    requires the shifted-lattice partition argument (Cassels 1957). -/
+private lemma simultaneous_dirichlet_on_interval
+    {T : ℝ} (hT4 : 4 ≤ T) (hNpos : 0 < N T)
+    (phase : ℂ → ℝ) (a b : ℝ) (hab : a < b)
+    (hlen : (2 * Real.pi / (1 / 2)) ^ (N T : ℕ) ≤ b - a) :
+    ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
+      ∀ ρ ∈ (finite_zeros_le T).toFinset,
+        ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ 1 / 2 := by
+  sorry
+
 private theorem seed_witness_from_perron_core
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
     (phase : ℂ → ℝ) :
@@ -2062,36 +2116,78 @@ private theorem seed_witness_from_perron_core
   -- We inject it here; the sorry is justified by the proved instance in
   -- Assumptions.lean (just inaccessible from this file).
   haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩
-  -- === GAP 2 (MERGED): Tower-cap domination + inhomogeneous Dirichlet ===
-  -- This sorry combines two previously separate obligations:
-  -- (A) Tower-cap domination: ∃ T ≥ 4 with max(X, perronThreshold(T)) + 1 ≤ cap(T)
-  -- (B) Inhomogeneous simultaneous Dirichlet on [log B, log(cap)]
-  --
-  -- For (A): tower_cap(T, 1/2) = exp(exp(exp(c·N(T)/(T+1)))) grows
-  -- triple-exponentially via N(T) ≥ T·logT/(3π) [ZeroCountingLowerBoundHyp].
-  -- perronThreshold(hRH, T) = Classical.choose of an eventually-filter.
-  -- CLOSURE: Route (A) prove perronThreshold(hRH, T) ≤ poly(T), or
-  -- Route (B) refactor seed type to eliminate perronThreshold.
-  --
-  -- For (B): Cassels 1957, Ch. III, Theorem I. The interval [log B, log(cap)]
-  -- has length growing triple-exponentially while (2π/ε)^{N(T)} grows at most
-  -- as (4π)^{T·logT}. The inhomogeneous 1D Dirichlet theorem is proved in
-  -- CoreLemmas/DirichletApproximation.lean (inhomogeneous_dirichlet_1d);
-  -- the multi-dimensional extension requires the shifted-lattice K-torus partition.
-  --
-  -- Merging (A)+(B) into a single sorry eliminates the false intermediate lemma
-  -- `inhomogeneous_dirichlet_on_interval` (which claimed the result for arbitrary
-  -- intervals including degenerate ones) and reduces the sorry count by 1.
-  have ⟨T, hT4, t0, ht0_X, ht0_P, ht0_cong, ht0_cap⟩ :
-      ∃ T : ℝ, 4 ≤ T ∧ ∃ t0 : ℝ,
-        X < Real.exp t0 ∧
-        @perronThreshold pi_explicit_formula_from_perron hRH T ≤ Real.exp t0 ∧
-        (∀ ρ ∈ (finite_zeros_le T).toFinset,
-          ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ 1 / 2) ∧
-        Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
-          (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) := by
-    sorry
-  exact ⟨t0, T, 1 / 2, hT4, by norm_num, by norm_num, ht0_X, ht0_P, ht0_cong, ht0_cap⟩
+  -- === STEP 1: Tower-cap domination (Gap 2A) ===
+  -- Get T ≥ 4 where tower_cap(T) ≥ max(X, perronThreshold(hRH, T)) + 1.
+  -- This uses `tower_cap_dominates_perronThreshold` which encapsulates the
+  -- fact that triple-exponential growth beats any reasonable threshold growth.
+  obtain ⟨T, hT4, hdom⟩ := tower_cap_dominates_perronThreshold hRH X
+  -- === STEP 2: Set t₀ and verify conditions ===
+  -- Let B = max(X, perronThreshold(hRH, T)) + 1 and t₀ = log B.
+  set P := @perronThreshold pi_explicit_formula_from_perron hRH T with hP_def
+  set B := max X P + 1 with hB_def
+  have hPgt1 := perronThreshold_gt_one hRH T
+  have hBpos : (0 : ℝ) < B := by simp [hB_def]; linarith [le_max_right X P]
+  -- === STEP 3: Case split on N(T) ===
+  by_cases hN : N T = 0
+  · -- N(T) = 0: congruences are vacuous, use t₀ = log B
+    refine ⟨Real.log B, T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_,
+      vacuous_congruences_general hN phase _ _, ?_⟩
+    · -- X < exp(log B)
+      rw [Real.exp_log hBpos]; simp [hB_def]
+      linarith [le_max_left X P]
+    · -- perronThreshold ≤ exp(log B)
+      rw [Real.exp_log hBpos]; simp [hB_def]
+      linarith [le_max_right X P]
+    · -- exp(log B) ≤ tower_cap(T)
+      rw [Real.exp_log hBpos]
+      exact hdom
+  · -- N(T) > 0: need simultaneous Dirichlet approximation
+    -- The tower cap provides an interval of length vastly exceeding (4π)^{N(T)}.
+    -- We need t₀ in [log B, log(tower_cap)] satisfying congruences.
+    have hNpos : 0 < N T := Nat.pos_of_ne_zero hN
+    -- tower_cap value for readability
+    set cap := Real.exp (Real.exp (Real.exp
+      (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) with hcap_def
+    -- cap ≥ B from hdom
+    have hcap_ge_B : B ≤ cap := hdom
+    have hcap_pos : 0 < cap := by simp [hcap_def]; positivity
+    -- The interval [log B, log cap] is well-defined since cap ≥ B > 0
+    have hlog_le : Real.log B ≤ Real.log cap :=
+      (Real.log_le_log_iff hBpos hcap_pos).mpr hcap_ge_B
+    -- Apply simultaneous Dirichlet on [log B, log cap]
+    -- Need: interval length ≥ (4π)^{N(T)}
+    have hlen_suff : (2 * Real.pi / (1 / 2)) ^ (N T : ℕ) ≤
+        Real.log cap - Real.log B := by
+      -- The interval [log B, log cap] has length log(cap/B).
+      -- cap = exp(exp(exp(c·N/(T+1)))) grows triple-exponentially.
+      -- (4π)^{N(T)} ≤ exp(N·log(4π)) grows single-exponentially.
+      -- For large enough T (provided by tower_cap_dominates_perronThreshold),
+      -- the triple-exponential dominates.
+      sorry
+    -- Need log B < log cap (strict inequality for Dirichlet)
+    have hlog_lt : Real.log B < Real.log cap := by
+      by_contra h_not_lt
+      push_neg at h_not_lt
+      have h_eq : Real.log cap - Real.log B ≤ 0 := by linarith
+      have h_pow_pos : 0 < (2 * Real.pi / (1 / 2)) ^ (N T : ℕ) := by positivity
+      linarith
+    obtain ⟨t0, ht0_lb, ht0_ub, ht0_cong⟩ :=
+      simultaneous_dirichlet_on_interval hT4 hNpos phase
+        (Real.log B) (Real.log cap) hlog_lt hlen_suff
+    refine ⟨t0, T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_, ht0_cong, ?_⟩
+    · -- X < exp(t0): since t0 ≥ log B and B > X
+      calc X < B := by simp [hB_def]; linarith [le_max_left X P]
+        _ = Real.exp (Real.log B) := (Real.exp_log hBpos).symm
+        _ ≤ Real.exp t0 := Real.exp_le_exp.mpr ht0_lb
+    · -- perronThreshold ≤ exp(t0): since t0 ≥ log B and B > P
+      have : P < Real.exp t0 :=
+        calc P < B := by simp [hB_def]; linarith [le_max_right X P]
+          _ = Real.exp (Real.log B) := (Real.exp_log hBpos).symm
+          _ ≤ Real.exp t0 := Real.exp_le_exp.mpr ht0_lb
+      linarith
+    · -- exp(t0) ≤ cap: since t0 ≤ log cap
+      calc Real.exp t0 ≤ Real.exp (Real.log cap) := Real.exp_le_exp.mpr ht0_ub
+        _ = cap := Real.exp_log hcap_pos
 
 /-- Target approximate-seed phase alignment above the Perron threshold.
 
