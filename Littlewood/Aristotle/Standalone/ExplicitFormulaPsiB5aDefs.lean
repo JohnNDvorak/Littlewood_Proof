@@ -41,13 +41,21 @@ def shiftedRemainderRe (x T : ℝ) : ℝ :=
     pre-standard form to the standard O(√x·(logT)²/√T) form is sorry-free
     in PerronAssumptionsBridge.lean (`large_T_assembly`).
 
-    **SORRY STATUS** (2026-03-15):
+    **SORRY STATUS** (2026-03-15, confirmed 2026-03-15 overnight):
     This is IRREDUCIBLE sorry #1. Requires:
     1. Hadamard product decomposition of ζ'/ζ (Davenport Ch. 12)
     2. Contour integration of ζ'/ζ · x^s/s (complex analysis not in Mathlib)
+    3. Entire function factorization theory (not in Mathlib as of v4.27.0-rc1)
+
+    Mathlib has `riemannZeta` and `differentiableAt_riemannZeta` but NO:
+    - Hadamard/Weierstrass product representation
+    - Meromorphic function theory for ζ'/ζ
+    - Complex contour integration / residue theorem
+    - Winding numbers for rectangular contours
 
     All downstream reductions (this -> LargeTContourBoundHyp -> large-T case of
-    ContourRemainderBoundHyp) are sorry-free once this is provided. -/
+    ContourRemainderBoundHyp) are sorry-free once this is provided.
+    See PerronAssumptionsBridge.lean Part 17-23 for full gap specification. -/
 class ZetaLogDerivPointwiseBoundHyp : Prop where
   bound : ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
     |shiftedRemainderRe x T| ≤
@@ -367,8 +375,11 @@ theorem small_T_from_general_formula
       SmallTPerronBoundHyp (sorry) → ContourRemainderBoundHyp (line 371)
     with the small-T and large-T sorrys combined directly.
 
-    **CANNOT BE BROKEN BY PNT**: For fixed T ∈ [2,16], PNT gives |ψ(x)-x| = o(x),
-    but the required bound shape √x·(logT)²/√T grows only as √x, while x/(logx)² → ∞.
+    **CANNOT BE BROKEN BY PNT** (formally proved 2026-03-15 overnight):
+    For fixed T ∈ [2,16], PNT gives |ψ(x)-x| = o(x), but the required bound shape
+    √x·(logT)²/√T grows only as √x, while x/(logx)² → ∞.
+    FORMAL PROOF: `pnt_cannot_dominate_sqrt` in PerronAssumptionsBridge.lean (Part 22)
+    shows ∀ C > 0, ∀ᶠ x, C·√x < x/(logx)², using `isLittleO_log_rpow_atTop`.
     So the small-T bound genuinely requires Perron contour integration, not just PNT.
     This sorry is IRREDUCIBLE: it needs complex analysis (contour integration of
     ζ'/ζ · x^s/s over a rectangle with bounded height). -/

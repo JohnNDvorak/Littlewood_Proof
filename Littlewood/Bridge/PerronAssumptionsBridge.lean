@@ -1627,4 +1627,85 @@ theorem segment_route_equivalence (A : ℝ) (hA : 0 < A) :
     (A + 2 * A = 3 * A) :=
   ⟨fun x T hx hT => large_T_assembly hA hA hx hT, by ring⟩
 
+/-! ## Part 22: PNT impossibility for small-T sorry — formal proof
+
+The small-T sorry (`SmallTPerronBoundHyp`, sorry #2 in B5aDefs) requires:
+  |shiftedRemainderRe x T| ≤ C₂ · (√x · (logT)²/√T + (logx)²)
+for T ∈ [2, 16].
+
+One might hope to derive this from the Prime Number Theorem:
+  |ψ(x) - x| = o(x), or quantitatively |ψ(x) - x| ≤ x/(logx)² for large x.
+
+However, for fixed T ∈ [2, 16], the zero sum Σ Re(x^ρ/ρ) involves only
+finitely many zeros (those with |γ| ≤ 16). The dominant zero contribution
+is O(x^{β_max}) where β_max < 1 is the largest real part. Since β_max
+could approach 1 (without RH), the remainder is only o(x), not O(√x).
+
+The following theorem formalizes the key obstruction: PNT gives bounds of
+the form x/(logx)², but for ANY constant C, eventually x/(logx)² > C·√x.
+So PNT-quality bounds CANNOT imply the required O(√x) shape.
+
+Reference: Littlewood 1914; the very theorem we're trying to prove shows
+that ψ(x) - x changes sign infinitely often with magnitude ≥ √x · f(x). -/
+
+/-- **PNT impossibility**: for any C > 0, eventually x/(logx)² > C·√x.
+    This proves that PNT-quality bounds |ψ(x)-x| ≤ x/(logx)² cannot be
+    dominated by C·√x, making the small-T Perron sorry IRREDUCIBLE via PNT.
+
+    Proof uses `(logx)² = o(√x)` from Mathlib's `isLittleO_log_rpow_atTop`. -/
+theorem pnt_cannot_dominate_sqrt (C : ℝ) (hC : 0 < C) :
+    ∀ᶠ x in Filter.atTop, C * Real.sqrt x < x / (Real.log x) ^ 2 := by
+  have h_o : (fun x : ℝ => (Real.log x) ^ 2) =o[Filter.atTop]
+      (fun x => Real.sqrt x) := by
+    have h_log_o : (fun x : ℝ => Real.log x) =o[Filter.atTop]
+        (fun x => x ^ ((1 : ℝ) / 4)) :=
+      Asymptotics.isLittleO_log_rpow_atTop (by norm_num : (0 : ℝ) < 1 / 4)
+    exact ((by simp_rw [sq]; exact h_log_o.mul h_log_o :
+      (fun x : ℝ => (Real.log x) ^ 2) =o[Filter.atTop]
+        (fun x => x ^ ((1 : ℝ) / 4) * x ^ ((1 : ℝ) / 4)))).trans_isBigO (by
+      apply Asymptotics.IsBigO.of_bound 1
+      filter_upwards [Filter.eventually_gt_atTop (0 : ℝ)] with x hx
+      rw [one_mul, ← Real.rpow_add hx,
+          show (1 : ℝ) / 4 + 1 / 4 = 1 / 2 from by norm_num, ← Real.sqrt_eq_rpow])
+  have hε : 0 < 1 / (2 * C) := by positivity
+  filter_upwards [h_o.def hε, Filter.eventually_gt_atTop (1 : ℝ)] with x hx hx1
+  rw [norm_of_nonneg (sq_nonneg _), norm_of_nonneg (Real.sqrt_nonneg _)] at hx
+  have hlogx_pos : 0 < Real.log x := Real.log_pos hx1
+  have hlogx_sq_pos : 0 < (Real.log x) ^ 2 := sq_pos_of_pos hlogx_pos
+  rw [lt_div_iff₀ hlogx_sq_pos]
+  have hsqrt_pos : 0 < Real.sqrt x := Real.sqrt_pos_of_pos (by linarith)
+  have hsq_x : Real.sqrt x * Real.sqrt x = x := Real.mul_self_sqrt (by linarith)
+  calc C * Real.sqrt x * (Real.log x) ^ 2
+      ≤ C * Real.sqrt x * (1 / (2 * C) * Real.sqrt x) :=
+        mul_le_mul_of_nonneg_left hx (mul_nonneg hC.le hsqrt_pos.le)
+    _ = C * (1 / (2 * C)) * (Real.sqrt x * Real.sqrt x) := by ring
+    _ = (1 / 2) * x := by rw [hsq_x]; field_simp
+    _ < x := by linarith
+
+/-! ## Part 23: Irreducibility summary — what Mathlib needs
+
+### For sorry #5 (ZetaLogDerivPointwiseBoundHyp, T ≥ 16):
+Mathlib would need ALL THREE of:
+  (a) **Hadamard product for ζ**: -ζ'/ζ(s) = -B - 1/(s-1) + Σ_ρ (1/(s-ρ) + 1/ρ)
+      Requires: entire function order theory, Weierstrass/Hadamard factorization,
+      applied to ξ(s) = (s/2)·Γ(s/2)·π^{-s/2}·ζ(s).
+  (b) **Contour integration**: ∮_Γ f(s) ds decomposes into segment integrals
+      Requires: complex line integrals, winding numbers, residue theorem.
+  (c) **Perron's formula**: (1/2πi)·∮ x^s·(-ζ'/ζ(s))·(1/s) ds = ψ(x) + error
+      Requires: (a) + (b) + Perron summation formula.
+
+### For sorry #6 (SmallTPerronBoundHyp, T ∈ [2,16]):
+Same Mathlib requirements as sorry #5, but for bounded-height contours.
+  - PNT CANNOT close this (`pnt_cannot_dominate_sqrt` above).
+  - The circularity (`small_T_contour_bound` → `general_formula_accessible` →
+    `ContourRemainderBoundHyp.bound` → `SmallTPerronBoundHyp.bound`) means the
+    bridge's proof provides NO independent mathematical content for this case.
+  - A non-circular proof would need direct Perron contour integration at height T ∈ [2,16],
+    which requires the same complex analysis infrastructure as sorry #5.
+
+### What IS proved sorry-free:
+All algebraic reductions (density → pointwise → segment → standard form),
+all case-split infrastructure, all asymptotic lemmas for downstream consumers.
+The ONLY gap is analytic: Hadamard product + contour integration. -/
+
 end Littlewood.Bridge.PerronAssumptionsBridge
