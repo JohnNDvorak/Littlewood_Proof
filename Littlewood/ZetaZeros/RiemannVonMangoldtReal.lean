@@ -34,6 +34,7 @@ import Littlewood.ZetaZeros.RectArgumentPrinciple
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.ZetaZeros.StirlingForRvM
 import Littlewood.Aristotle.RiemannXiEntire
+import Littlewood.Aristotle.Standalone.DirichletEtaZetaSign
 
 set_option maxHeartbeats 1600000
 set_option autoImplicit false
@@ -342,7 +343,11 @@ private theorem xi_ne_zero_on_boundary (T : ℝ) (hT : 0 < T)
       -- In (0,1), zeta(s) < 0 (classical), hence zeta(s) ≠ 0.
       -- This follows from the representation zeta(s) = s/(s-1) - s * integral for 0 < s < 1.
       -- For the formalization: zeta at real s in (0,1) is nonzero by explicit calculation.
-      sorry  -- zeta(s) ≠ 0 for real s ∈ (0,1): no real zeros of zeta in (0,1)
+      -- z is real (Im = 0), so z = ↑(z.re). Use DirichletEtaZetaSign for ζ(σ) ≠ 0 on (0,1).
+      have hz_eq : z = (↑z.re : ℂ) := Complex.ext rfl (by simp [him_eq])
+      rw [hz_eq] at hzeta_zero
+      exact Aristotle.Standalone.DirichletEtaZetaSign.riemannZeta_ofReal_ne_zero_of_mem_Ioo
+        hre_pos hre_lt hzeta_zero
     · -- Need Im(z) < T. If Im(z) = T, then z is a zero with Im = T, contradicting hT_not_ord
       by_contra h_ge
       push_neg at h_ge
