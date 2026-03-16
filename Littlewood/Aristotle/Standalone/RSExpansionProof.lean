@@ -4540,9 +4540,86 @@ private theorem one_lt_hs (k : ℕ) : (1 : ℝ) < hardyStart k := by
 private theorem errorTerm_first_moment_sqrt :
     ∃ C_E > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Ioc 1 T, ErrorTerm t| ≤ C_E * T ^ ((1 : ℝ) / 2) := by
-  sorry
+  -- Obtain infrastructure
+  obtain ⟨C_bl, hCbl, h_bl⟩ := error_block_integral_bound
+  obtain ⟨C₂, hC₂_nn, h_interp⟩ := rs_block_interpolation
+  -- hardyZ continuous → bounded on [1, hs0]
+  have hHZ_cont : Continuous hardyZ := by
+    rw [funext HardyZTransfer.hardyZ_eq_hardyZV2_re]
+    exact Complex.continuous_re.comp continuous_hardyZV2
+  obtain ⟨M₀, hM₀⟩ := isCompact_Icc.exists_bound_of_continuousOn
+    (hHZ_cont.continuousOn : ContinuousOn hardyZ (Icc 1 (hardyStart 0)))
+  have hM₀_nn : (0 : ℝ) ≤ M₀ :=
+    le_trans (norm_nonneg _) (hM₀ 1 ⟨le_refl _, le_of_lt (one_lt_hs 0)⟩)
+  -- Constants
+  set C_E := (M₀ + 2) * hardyStart 0 + C_bl + C₂ + 1
+  refine ⟨C_E, by show 0 < (M₀ + 2) * hardyStart 0 + C_bl + C₂ + 1; nlinarith [hardyStart_pos' 0],
+    fun T hT => ?_⟩
+  have hT_pos : (0 : ℝ) < T := by linarith
+  have hT1 : (1 : ℝ) ≤ T ^ ((1 : ℝ) / 2) := by
+    calc (1 : ℝ) = Real.sqrt 1 := by simp
+      _ ≤ Real.sqrt T := Real.sqrt_le_sqrt (by linarith)
+      _ = T ^ ((1:ℝ)/2) := Real.sqrt_eq_rpow T
+  have hCE_pos : (0 : ℝ) < C_E := by show 0 < (M₀ + 2) * hardyStart 0 + C_bl + C₂ + 1; nlinarith [hardyStart_pos' 0]
+  by_cases hhs : hardyStart 0 ≤ T
+  · -- Case T ≥ hs0: block decomposition
+    obtain ⟨K, hKl, hKh⟩ := exists_enclosing_block T hhs
+    -- Tail: |∫_{hsK}^T ET| ≤ C_bl·√(K+2) + C₂ via block interpolation
+    have h_tail : |∫ t in Ioc (hardyStart K) T, ErrorTerm t| ≤
+        C_bl * Real.sqrt ((K : ℝ) + 2) + C₂ := by
+      obtain ⟨β, hβ_nn, hβ_le1, h_diff⟩ := h_interp K T hKl hKh
+      calc |∫ t in Ioc (hardyStart K) T, ErrorTerm t|
+          ≤ |β * ∫ t in Ioc (hardyStart K) (hardyStart (K + 1)), ErrorTerm t| + C₂ := by
+            linarith [abs_sub_abs_le_abs_sub
+              (∫ t in Ioc (hardyStart K) T, ErrorTerm t)
+              (β * ∫ t in Ioc (hardyStart K) (hardyStart (K + 1)), ErrorTerm t)]
+        _ ≤ |∫ t in Ioc (hardyStart K) (hardyStart (K + 1)), ErrorTerm t| + C₂ := by
+            have : |β * ∫ t in Ioc (hardyStart K) (hardyStart (K + 1)), ErrorTerm t| ≤
+              |∫ t in Ioc (hardyStart K) (hardyStart (K + 1)), ErrorTerm t| := by
+              rw [abs_mul, abs_of_nonneg hβ_nn]
+              exact mul_le_of_le_one_left (abs_nonneg _) hβ_le1
+            linarith
+        _ ≤ C_bl * Real.sqrt ((K : ℝ) + 2) + C₂ := by linarith [h_bl K]
+    -- Main case sorry: needs integral splitting + alternating sum assembly
+    sorry
+  · -- Case T < hs0: pointwise bound on compact [1,T] ⊆ [1,hs0]
+    push_neg at hhs
+    have h1T : (1 : ℝ) ≤ T := by linarith
+    rw [← intervalIntegral.integral_of_le h1T]
+    have h_pw : ∀ t ∈ Set.uIoc 1 T, ‖ErrorTerm t‖ ≤ M₀ + 2 := by
+      intro t ht
+      rw [Set.uIoc_of_le h1T] at ht; rw [Real.norm_eq_abs]
+      have ht_Icc : t ∈ Icc 1 (hardyStart 0) :=
+        ⟨le_of_lt ht.1, le_of_lt (lt_of_le_of_lt ht.2 hhs)⟩
+      have hZ : |hardyZ t| ≤ M₀ := by
+        rw [← Real.norm_eq_abs]; exact hM₀ t ht_Icc
+      have ht_lt_2pi : t < 2 * Real.pi := by
+        have : t < hardyStart 0 := lt_of_le_of_lt ht.2 hhs
+        unfold hardyStart at this; push_cast at this; linarith
+      have hMT : |MainTerm t| ≤ 2 := by
+        unfold MainTerm
+        have hfl : Nat.floor (Real.sqrt (t / (2 * Real.pi))) = 0 := by
+          rw [Nat.floor_eq_zero]
+          calc Real.sqrt (t / (2 * Real.pi))
+              < Real.sqrt 1 := Real.sqrt_lt_sqrt (div_nonneg (by linarith [ht.1]) (by positivity))
+                ((div_lt_one (by positivity : (0:ℝ) < 2 * Real.pi)).mpr ht_lt_2pi)
+            _ = 1 := Real.sqrt_one
+        rw [hfl]; simp
+      calc |ErrorTerm t| = |hardyZ t - MainTerm t| := rfl
+        _ ≤ |hardyZ t| + |MainTerm t| := abs_sub _ _
+        _ ≤ M₀ + 2 := by linarith
+    calc |∫ t in (1:ℝ)..T, ErrorTerm t|
+        = ‖∫ t in (1:ℝ)..T, ErrorTerm t‖ := (Real.norm_eq_abs _).symm
+      _ ≤ (M₀ + 2) * |T - 1| :=
+          intervalIntegral.norm_integral_le_of_norm_le_const h_pw
+      _ ≤ (M₀ + 2) * hardyStart 0 := by
+          rw [abs_of_nonneg (by linarith : (0:ℝ) ≤ T - 1)]
+          exact mul_le_mul_of_nonneg_left (by linarith [le_of_lt hhs]) (by linarith)
+      _ ≤ C_E * 1 := by show (M₀ + 2) * hardyStart 0 ≤ ((M₀ + 2) * hardyStart 0 + C_bl + C₂ + 1) * 1; nlinarith
+      _ ≤ C_E * T ^ ((1:ℝ)/2) :=
+          mul_le_mul_of_nonneg_left hT1 (le_of_lt hCE_pos)
 /-  -- PROOF DRAFT (blocked by Mathlib API issues with push_cast/hardyStart_formula)
-  -- Structure verified: all dependencies now available after file reorg
+  -- (Structure verified: all dependencies now available after file reorg)
   obtain ⟨C_bl, hCbl, h_bl⟩ := error_block_integral_bound
   -- Head bound via compactness of hardyZ on [1, hs0]
   obtain ⟨M₀, hM₀⟩ := isCompact_Icc.exists_bound_of_continuousOn
