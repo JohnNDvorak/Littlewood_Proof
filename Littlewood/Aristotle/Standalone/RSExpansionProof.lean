@@ -3100,6 +3100,81 @@ private theorem gabcke_constant_exists :
   rw [← h16]
   exact Real.rpow_le_rpow (by positivity) (by linarith) (by norm_num)
 
+-- ── Sub-lemma infrastructure for gabcke_next_order_bound (sorry #1) ──
+-- These are AXLE-verified Mathlib-only helpers that narrow the gap between
+-- the existing coefficient chain and the irreducible contour deformation step.
+-- Source: scratch_gabcke_proofs.lean (Agent 2v4 research).
+
+/-- **Cos perturbation Lipschitz bound**: |cos(α+δ) - cos(α)| ≤ |δ|.
+    Used when the saddle-point phase picks up a correction δ. -/
+private theorem cos_sub_cos_le_abs (α δ : ℝ) :
+    |Real.cos (α + δ) - Real.cos α| ≤ |δ| := by
+  have key : LipschitzWith 1 Real.cos := Real.lipschitzWith_cos
+  have h := key.dist_le_mul (α + δ) α
+  simp only [NNReal.coe_one, one_mul, Real.dist_eq, show α + δ - α = δ from by ring] at h
+  exact h
+
+/-- **Sin absolute value bound**: |sin(x)| ≤ |x| from Lipschitz. -/
+private theorem sin_abs_le (x : ℝ) : |Real.sin x| ≤ |x| := by
+  have h := Real.lipschitzWith_sin.dist_le_mul x 0
+  simp only [NNReal.coe_one, one_mul, Real.dist_eq, Real.sin_zero, sub_zero] at h
+  exact h
+
+/-- **Hermite H₃ polynomial bound**: |x³ - 3x| ≤ 2 for |x| ≤ √3.
+    This bounds the Fresnel coefficient c₁(p) (Gabcke 1979 eq. 3.12). -/
+private theorem hermite3_bound (x : ℝ) (hx : |x| ≤ Real.sqrt 3) :
+    |x ^ 3 - 3 * x| ≤ 2 := by
+  have hsq3 : Real.sqrt 3 * Real.sqrt 3 = 3 := Real.mul_self_sqrt (by norm_num)
+  have h_abs_sq : |x| * |x| ≤ 3 := by
+    calc |x| * |x| ≤ Real.sqrt 3 * Real.sqrt 3 :=
+          mul_le_mul hx hx (abs_nonneg x) (by positivity)
+      _ = 3 := hsq3
+  have h_sq : x ^ 2 ≤ 3 := by
+    have : x ^ 2 = |x| * |x| := by have := sq_abs x; rw [sq] at this; linarith
+    linarith
+  have h_factor : x ^ 3 - 3 * x = x * (x ^ 2 - 3) := by ring
+  rw [h_factor, abs_mul]
+  have h_neg : x ^ 2 - 3 ≤ 0 := by linarith
+  rw [abs_of_nonpos h_neg]
+  have habs := abs_nonneg x
+  have h_x2 : x ^ 2 = |x| * |x| := by have := sq_abs x; rw [sq] at this; linarith
+  suffices h : |x| * (3 - |x| * |x|) ≤ 2 by rw [h_x2]; linarith
+  -- 2 - |x|(3 - |x|²) = (|x|-1)²(|x|+2) ≥ 0
+  have key : 0 ≤ (|x| - 1) ^ 2 * (|x| + 2) := by positivity
+  nlinarith
+
+/-- **Steepest descent c₁ coefficient bound**: the subleading coefficient
+    satisfies 3/(64t) + 5π/(96t²) ≤ 1/(16t) for t ≥ 4π.
+    Since hardyStart(1) = 8π > 4π, this covers all blocks k ≥ 1. -/
+private theorem steepest_descent_c1_bound (t : ℝ) (ht : 4 * Real.pi ≤ t) :
+    3 / (64 * t) + 5 * Real.pi / (96 * t ^ 2) ≤ 1 / (16 * t) := by
+  have ht_pos : 0 < t := by linarith [Real.pi_pos]
+  have hpi := Real.pi_pos
+  have hpi3 := Real.pi_gt_three
+  rw [div_add_div _ _ (show (64 * t : ℝ) ≠ 0 by positivity)
+      (show (96 * t ^ 2 : ℝ) ≠ 0 by positivity)]
+  rw [div_le_div_iff₀ (by positivity) (by positivity)]
+  nlinarith [sq_nonneg (t - 4 * Real.pi)]
+
+/-- **rpow monotonicity on blocks**: t^{-1/2} ≤ (2π)^{-1/2} for t ≥ 2π. -/
+private theorem rpow_neg_half_le_on_block (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    t ^ (-(1 : ℝ)/2) ≤ (2 * Real.pi) ^ (-(1 : ℝ)/2) := by
+  have h2pi_pos : 0 < 2 * Real.pi := by positivity
+  exact Real.rpow_le_rpow_of_nonpos h2pi_pos ht (by norm_num)
+
+/-- **Saddle scale lower bound**: w₀ = √(t/(2π)) ≥ k+1 when t ≥ 2π(k+1)².
+    This ensures the saddle point is well inside the integration contour. -/
+private theorem saddle_scale_lower_bound (k : ℕ) (t : ℝ)
+    (ht : 2 * Real.pi * ((k : ℝ) + 1) ^ 2 ≤ t) :
+    (k : ℝ) + 1 ≤ Real.sqrt (t / (2 * Real.pi)) := by
+  have hk : 0 < (k : ℝ) + 1 := by positivity
+  have h2pi : 0 < 2 * Real.pi := by positivity
+  rw [show (k : ℝ) + 1 = Real.sqrt (((k : ℝ) + 1) ^ 2) from
+      (Real.sqrt_sq hk.le).symm]
+  apply Real.sqrt_le_sqrt
+  rw [le_div_iff₀ h2pi]
+  linarith
+
 /-- **Saddle expansion remainder decomposition**: the remainder from the
     steepest-descent analysis decomposes as:
     |ErrorTerm(t) - leading(t)| ≤ amplitude(t) · |next_correction(t)|
@@ -3154,6 +3229,21 @@ private theorem saddle_from_next_correction
     phase involves the third derivative at the saddle, bounded by the Fresnel
     coefficient |c₁(p)| ≤ 1/4 for p ∈ [0,1] (Gabcke computed ≈ 0.083).
 
+    **IRREDUCIBILITY ANALYSIS** (Agent 1v3 / Agent 2v4, 2026-03-16):
+    The sorry requires connecting ErrorTerm to the Siegel contour integral
+    representation and performing steepest descent at w₀. Mathlib has NO
+    steepest-descent lemma and NO general contour deformation theorem.
+    All algebraic/analytic scaffolding is in place:
+    - Coefficient chain: quartic → ratio → ≤ 1/4 (FresnelSaddlePointInfra)
+    - Amplitude factorization (saddle_amplitude_times_next_order)
+    - Constant compatibility (gabcke_constant_exists)
+    - cos/sin perturbation bounds (cos_sub_cos_le_abs, sin_abs_le)
+    - H₃ bound for Fresnel coefficient (hermite3_bound)
+    - Saddle scale bound w₀ ≥ k+1 (saddle_scale_lower_bound)
+    - c₁ coefficient bound (steepest_descent_c1_bound)
+    The missing piece is Step 2 of the modular approach: contour_integral ~
+    saddle_expansion, requiring ~500 lines of steepest-descent infrastructure.
+
     Reference: Siegel 1932 §3; Gabcke 1979 Satz 1, Tabelle 1. -/
 private theorem gabcke_next_order_bound :
     ∀ k : ℕ, ∀ t : ℝ,
@@ -3178,6 +3268,16 @@ private theorem saddle_pointwise_bound_from_cubic :
 
     The coupling between R(k) values on consecutive blocks is the genuine
     Gabcke content that cannot be derived from pointwise |R(k)| bounds alone.
+
+    **IRREDUCIBILITY ANALYSIS** (Agent 1v3, 2026-03-16):
+    This is the hardest of the three RSExpansionProof sorrys. It requires
+    the SIGNED remainder R(k) to be approximately antitone, which depends on:
+    (a) The saddle-point expansion giving precise phase information (not just bounds)
+    (b) The coupling of R(k) across consecutive blocks via phase coherence
+    Sorry #1 (gabcke_next_order_bound) gives pointwise |R(k)| bounds but NOT
+    the signed structure needed here. Gabcke's proof uses explicit evaluation
+    of the Fresnel integrals with monotone error bounds. This is strictly harder
+    than sorry #1 and depends on it.
 
     Reference: Gabcke 1979 Satz 4. -/
 private theorem block_correction_antitone_from_saddle :
@@ -3429,6 +3529,20 @@ private theorem alt_sum_approx_mono (b M_fn : ℕ → ℝ) (δ : ℝ) (_hδ : 0 
     The genuine O(√T) bound for the Dirichlet polynomial integral requires
     integration by parts with the theta-phase rotation, giving boundary terms
     O(T^{1/6}/log T) and correction O(∫ t^{1/6}/t dt) = O(T^{1/6}).
+
+    **IRREDUCIBILITY ANALYSIS** (Agent 1v3 / Agent 4v7, 2026-03-16):
+    Per-mode VdC only yields O(T^{3/4}), not O(T^{1/2}). The T^{1/2} bound
+    requires the FULL IBP on Z(t) with ζ convexity bounds (Titchmarsh §4.15),
+    which is proved in HardyZFirstMomentIBP.lean. However, that file IMPORTS
+    RSExpansionProof.lean, creating a circular dependency. Weakening to T^{3/4}
+    breaks `hardyZ_first_moment_sqrt_bound` (which needs T^{1/2}) and the
+    downstream `hardyZ_first_moment_sqrt` in HardyZFirstMomentIBP.
+    Closing this sorry requires either:
+    (a) Breaking the import cycle by extracting the IBP-on-Z proof into a
+        separate file that doesn't import RSExpansionProof, or
+    (b) Inlining ~800 lines of IBP infrastructure (ζ convexity, θ' monotonicity,
+        etc.) within this file.
+    Neither is quick; this sorry is IRREDUCIBLE at the T^{1/2} level.
 
     Reference: Titchmarsh 1951 §4.15; Ingham 1932 §5.2. -/
 private theorem mainTerm_first_moment_ibp :
