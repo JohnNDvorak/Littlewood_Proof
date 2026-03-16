@@ -394,7 +394,11 @@ maximally decomposed with all CIF-based steps proved. -/
     (connecting ψ(x) = Σ Λ(n) to ∫ (-ζ'/ζ)·x^s/s ds) requires:
     - LSeries_vonMangoldt_eq_deriv_riemannZeta_div (Mathlib: AVAILABLE)
     - Per-term Perron integral evaluation (CIF on y^s/s: AVAILABLE via CIF)
-    - Dominated convergence for sum-integral interchange (NOT in Mathlib for this context) -/
+    - Dominated convergence for sum-integral interchange: **PROVED** in
+      PerronFormulaProof.perron_sum_integral_interchange (Agent4v6, 2026-03-16)
+
+    Remaining gap: CIF rectangle shift to extract residues (pole at s=1, zeros ρ)
+    from the Perron integral, plus Hadamard product bound for segment estimates. -/
 theorem perron_contour_representation (x T : ℝ) (hx : 2 ≤ x) (hT : 2 ≤ T) :
     ∃ (vertRe horizRe : ℝ),
       shiftedRemainderRe x T = vertRe + horizRe ∧
@@ -503,9 +507,15 @@ theorem hadamard_contour_bound :
   -- (3) Bound horizRe via horizontal_segment_bound_from_CIF
   -- (4) Assemble via shifted_remainder_from_segments
   --
-  -- Step (1) requires the Perron formula (sum-integral interchange).
-  -- Steps (2)-(4) are sorry-free via CIF infrastructure.
-  -- The sorry is localized to the Perron sum-integral connection.
+  -- STATUS (Agent4v6, 2026-03-16):
+  -- ✓ Sum-integral interchange PROVED (PerronFormulaProof.perron_sum_integral_interchange)
+  -- ✓ Per-term Perron bounds PROVED (PerronTruncationInfra)
+  -- ✓ CIF for rectangles PROVED (CauchyRectangleFormula)
+  -- ✗ CIF rectangle shift to extract residues at s=1 and zeros — needs:
+  --   (a) Holomorphicity of (-ζ'/ζ)(s)·x^s/s away from pole and zeros
+  --   (b) Residue computation at s=1 (giving x) and at zeros (giving -x^ρ/ρ)
+  --   (c) Hadamard product bound |ζ'/ζ(σ+it)| ≤ C·(logT)² for the segment bounds
+  -- ✗ Hadamard factorization of ξ(s) — not in Mathlib
   sorry
 
 /-- **Perron small-T bound** (T ∈ [2, 16]).
@@ -523,7 +533,11 @@ theorem perron_small_T_bound :
         C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
   -- Same CIF decomposition as hadamard_contour_bound, but with T ≤ 16.
   -- For bounded T, all contour bounds are uniform.
-  -- The sorry is again localized to the Perron sum-integral connection.
+  --
+  -- STATUS (Agent4v6, 2026-03-16):
+  -- Same blockers as hadamard_contour_bound. The sum-integral interchange
+  -- is PROVED but the CIF rectangle shift (residue extraction) remains.
+  -- For bounded T ∈ [2,16], the segment bounds are simpler (uniform in T).
   sorry
 
 /-! ## Section 7: Derived Bounds from Atomic Claims
