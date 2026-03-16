@@ -507,15 +507,17 @@ theorem hadamard_contour_bound :
   -- (3) Bound horizRe via horizontal_segment_bound_from_CIF
   -- (4) Assemble via shifted_remainder_from_segments
   --
-  -- STATUS (Agent4v6, 2026-03-16):
+  -- STATUS (Agent4v7, 2026-03-16):
   -- ✓ Sum-integral interchange PROVED (PerronFormulaProof.perron_sum_integral_interchange)
   -- ✓ Per-term Perron bounds PROVED (PerronTruncationInfra)
   -- ✓ CIF for rectangles PROVED (CauchyRectangleFormula)
-  -- ✗ CIF rectangle shift to extract residues at s=1 and zeros — needs:
-  --   (a) Holomorphicity of (-ζ'/ζ)(s)·x^s/s away from pole and zeros
-  --   (b) Residue computation at s=1 (giving x) and at zeros (giving -x^ρ/ρ)
-  --   (c) Hadamard product bound |ζ'/ζ(σ+it)| ≤ C·(logT)² for the segment bounds
-  -- ✗ Hadamard factorization of ξ(s) — not in Mathlib
+  -- ✓ CIF rectangle contour shift PROVED (PerronContourShift.right_vertical_from_cif)
+  --   Decomposes right vertical integral = 2πi·g(w) + three boundary edges
+  -- ✓ Boundary segment bounds PROVED (PerronContourShift.three_edges_bound)
+  --   Given pointwise bound M, edges bounded by M·2T + 2M·(c-σ₀)
+  -- ✗ Remaining: SINGLE atomic sorry (PerronContourShift.zeta_logderiv_pointwise_bound):
+  --   |ζ'/ζ(σ+it)| ≤ C·(log|t|)² for 1/2 ≤ σ ≤ 2, |t| ≥ 2
+  --   Requires: Hadamard factorization of ξ(s) — not in Mathlib
   sorry
 
 /-- **Perron small-T bound** (T ∈ [2, 16]).
@@ -534,10 +536,12 @@ theorem perron_small_T_bound :
   -- Same CIF decomposition as hadamard_contour_bound, but with T ≤ 16.
   -- For bounded T, all contour bounds are uniform.
   --
-  -- STATUS (Agent4v6, 2026-03-16):
-  -- Same blockers as hadamard_contour_bound. The sum-integral interchange
-  -- is PROVED but the CIF rectangle shift (residue extraction) remains.
-  -- For bounded T ∈ [2,16], the segment bounds are simpler (uniform in T).
+  -- STATUS (Agent4v7, 2026-03-16):
+  -- Same as hadamard_contour_bound. All infrastructure proved:
+  -- ✓ Sum-integral interchange, CIF, contour shift, segment bounds
+  -- ✗ Single blocker: zeta_logderiv_pointwise_bound (Hadamard, not in Mathlib)
+  -- For bounded T ∈ [2,16], the pointwise bound is easier (σ ≥ 1/2 + 1/logT
+  -- with T ≤ 16 keeps us away from zeros), but still needs Hadamard.
   sorry
 
 /-! ## Section 7: Derived Bounds from Atomic Claims
