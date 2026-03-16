@@ -386,16 +386,125 @@ SORRY STATUS: Requires partial-fraction decomposition of f'/f. Mathlib has
 assembling the global decomposition on R requires more work.
 For the RvM application, this is applied to ξ(s) which has only simple zeros
 (conjectured but consistent with the formalization's N(T) using ncard). -/
+private theorem logDeriv_decompose_aux (n : ℕ) :
+    ∀ (f : ℂ → ℂ) (K : Set ℂ) (S : Finset ℂ),
+    S.card = n → Differentiable ℂ f →
+    (∀ z ∈ S, f z = 0) → (∀ z ∈ S, deriv f z ≠ 0) →
+    (∀ z ∈ K, z ∉ S → f z ≠ 0) → (∀ z ∈ S, K ∈ nhds z) →
+    ∃ h : ℂ → ℂ, DifferentiableOn ℂ h K ∧
+      ∀ s ∈ K, s ∉ S → logDeriv f s = (∑ z ∈ S, (1 : ℂ) / (s - z)) + h s := by
+  induction n with
+  | zero =>
+    intro f K S hcard hf _ _ hK_nonzero _
+    have hS_empty : S = ∅ := Finset.card_eq_zero.mp hcard; subst hS_empty
+    refine ⟨logDeriv f, ?_, by simp⟩
+    intro z hz; unfold logDeriv
+    exact ((hf.analyticAt z).deriv.differentiableAt.div (hf z)
+      (hK_nonzero z hz (fun h => nomatch h))).differentiableWithinAt
+  | succ n ih =>
+    intro f K S hcard hf hS_zeros hS_simple hK_nonzero hK_nhds
+    obtain ⟨z₀, hz₀⟩ := Finset.card_pos.mp (by omega : 0 < S.card)
+    set S' := S.erase z₀
+    have hS'_card : S'.card = n := by rw [Finset.card_erase_of_mem hz₀]; omega
+    have hz₀_not_S' : z₀ ∉ S' := by intro h; exact (Finset.mem_erase.mp h).1 rfl
+    have hinsert : insert z₀ S' = S := Finset.insert_erase hz₀
+    have hfz₀ : f z₀ = 0 := hS_zeros z₀ hz₀
+    have hdf : deriv f z₀ ≠ 0 := hS_simple z₀ hz₀
+    set g := dslope f z₀
+    have hg_entire : Differentiable ℂ g := by
+      show Differentiable ℂ (dslope f z₀); rw [← differentiableOn_univ]
+      exact (Complex.differentiableOn_dslope (isOpen_univ.mem_nhds (Set.mem_univ z₀))).mpr
+        hf.differentiableOn
+    have hg_zeros : ∀ z ∈ S', g z = 0 := by
+      intro z hz; show dslope f z₀ z = 0
+      have hne : z ≠ z₀ := (Finset.mem_erase.mp hz).1
+      rw [dslope_of_ne _ hne, slope_def_field, hfz₀, sub_zero, div_eq_zero_iff]
+      left; exact hS_zeros z (Finset.mem_of_mem_erase hz)
+    have hg_simple : ∀ z ∈ S', deriv g z ≠ 0 := by
+      intro z hz; show deriv (dslope f z₀) z ≠ 0
+      have hne : z ≠ z₀ := (Finset.mem_erase.mp hz).1
+      have hfz : f z = 0 := hS_zeros z (Finset.mem_of_mem_erase hz)
+      have hfe : (dslope f z₀) =ᶠ[𝓝 z] fun w => f w / (w - z₀) := by
+        filter_upwards [isOpen_ne.mem_nhds hne] with w hw
+        rw [dslope_of_ne _ hw, slope_def_field, hfz₀, sub_zero]
+      -- deriv (dslope f z₀) z = deriv f z / (z - z₀) ≠ 0
+      rw [hfe.deriv_eq]
+      have hd := (hf z).hasDerivAt.div ((hasDerivAt_id z).sub_const z₀) (sub_ne_zero.mpr hne)
+      -- hd gives deriv at z for the quotient; extract the value
+      have hval : deriv (fun w => f w / (w - z₀)) z =
+          (deriv f z * (z - z₀) - f z * 1) / (z - z₀) ^ 2 := hd.deriv
+      rw [hval, hfz]
+      simp only [zero_mul, sub_zero, mul_one]
+      exact div_ne_zero (mul_ne_zero (hS_simple z (Finset.mem_of_mem_erase hz))
+        (sub_ne_zero.mpr hne)) (pow_ne_zero 2 (sub_ne_zero.mpr hne))
+    have hg_nonzero : ∀ z ∈ K, z ∉ S' → g z ≠ 0 := by
+      intro z hz hzS'; show dslope f z₀ z ≠ 0
+      by_cases hzz₀ : z = z₀
+      · subst hzz₀; rw [dslope_same]; exact hdf
+      · rw [dslope_of_ne _ hzz₀, slope_def_field, hfz₀, sub_zero]
+        refine div_ne_zero (hK_nonzero z hz (fun hmem => ?_)) (sub_ne_zero.mpr hzz₀)
+        rw [← hinsert, Finset.mem_insert] at hmem
+        exact hmem.elim (absurd · hzz₀) (absurd · hzS')
+    obtain ⟨h', hh'_diff, hh'_eq⟩ := ih g K S' hS'_card hg_entire hg_zeros hg_simple hg_nonzero
+      (fun z hz => hK_nhds z (Finset.mem_of_mem_erase hz))
+    exact ⟨h', hh'_diff, fun s hs hsS => by
+      have hs_ne : s ≠ z₀ := by
+        intro heq; exact hsS (hinsert ▸ heq ▸ Finset.mem_insert_self z₀ S')
+      have hs_not : s ∉ S' := by
+        intro hmem; exact hsS (hinsert ▸ Finset.mem_insert_of_mem hmem)
+      have hsub : s - z₀ ≠ 0 := sub_ne_zero.mpr hs_ne
+      have hfs : f s = (s - z₀) * dslope f z₀ s := by
+        rw [dslope_of_ne _ hs_ne, slope_def_field, hfz₀, sub_zero, mul_div_cancel₀ _ hsub]
+      have hfe : f =ᶠ[𝓝 s] fun z => (z - z₀) * dslope f z₀ z := by
+        filter_upwards [isOpen_ne.mem_nhds hs_ne] with w hw
+        rw [dslope_of_ne _ hw, slope_def_field, hfz₀, sub_zero,
+          mul_div_cancel₀ _ (sub_ne_zero.mpr hw)]
+      have hderiv : deriv f s = dslope f z₀ s + (s - z₀) * deriv (dslope f z₀) s := by
+        rw [hfe.deriv_eq]
+        have h1 : HasDerivAt (fun z => z - z₀) 1 s := (hasDerivAt_id s).sub_const z₀
+        have h2 : HasDerivAt (dslope f z₀) (deriv (dslope f z₀) s) s := (hg_entire s).hasDerivAt
+        have h3 : HasDerivAt (fun z => (z - z₀) * dslope f z₀ z)
+          (1 * dslope f z₀ s + (s - z₀) * deriv (dslope f z₀) s) s := h1.mul h2
+        rw [h3.deriv]; ring
+      have hgs_ne : dslope f z₀ s ≠ 0 := hg_nonzero s hs hs_not
+      have hsplit : deriv f s / f s =
+          1 / (s - z₀) + deriv (dslope f z₀) s / dslope f z₀ s := by
+        rw [hderiv, hfs]; field_simp
+      have hg_eq : deriv (dslope f z₀) s / dslope f z₀ s =
+          ∑ z ∈ S', 1 / (s - z) + h' s := by
+        have := hh'_eq s hs hs_not; rwa [logDeriv_apply] at this
+      show logDeriv f s = (∑ z ∈ S, (1 : ℂ) / (s - z)) + h' s
+      rw [logDeriv_apply, hsplit, hg_eq, ← hinsert, Finset.sum_insert hz₀_not_S']; ring⟩
+
 theorem logDeriv_decompose_rect (f : ℂ → ℂ)
     (a b c d : ℝ) (hab : a < b) (hcd : c < d)
     (hf : Differentiable ℂ f)
     (hbdy : ∀ z ∈ rectBoundary a b c d, f z ≠ 0)
-    (hfin : {z ∈ openRect a b c d | f z = 0}.Finite) :
+    (hfin : {z ∈ openRect a b c d | f z = 0}.Finite)
+    (hsimple : ∀ z ∈ openRect a b c d, f z = 0 → deriv f z ≠ 0) :
     ∃ h : ℂ → ℂ,
       DifferentiableOn ℂ h (closedRect a b c d) ∧
       ∀ s ∈ closedRect a b c d, (∀ z ∈ openRect a b c d, f z = 0 → s ≠ z) →
         logDeriv f s = (∑ z ∈ hfin.toFinset, (1 : ℂ) / (s - z)) + h s := by
-  sorry
+  have hS_zeros : ∀ z ∈ hfin.toFinset, f z = 0 :=
+    fun z hz => (Set.Finite.mem_toFinset hfin |>.mp hz).2
+  have hS_simple : ∀ z ∈ hfin.toFinset, deriv f z ≠ 0 :=
+    fun z hz => let ⟨ho, hfz⟩ := Set.Finite.mem_toFinset hfin |>.mp hz; hsimple z ho hfz
+  have hK_nonzero : ∀ z ∈ closedRect a b c d, z ∉ hfin.toFinset → f z ≠ 0 := by
+    intro z hz hzS
+    by_cases hopen : z ∈ openRect a b c d
+    · intro hfz; exact hzS (Set.Finite.mem_toFinset hfin |>.mpr ⟨hopen, hfz⟩)
+    · exact hbdy z ⟨hz, hopen⟩
+  have hK_nhds : ∀ z ∈ hfin.toFinset, closedRect a b c d ∈ nhds z := by
+    intro z hz
+    have hmem := (Set.Finite.mem_toFinset hfin |>.mp hz).1
+    exact Filter.mem_of_superset ((isOpen_openRect a b c d).mem_nhds hmem)
+      openRect_subset_closedRect
+  obtain ⟨h, hh_diff, hh_eq⟩ := logDeriv_decompose_aux hfin.toFinset.card f
+    (closedRect a b c d) hfin.toFinset rfl hf hS_zeros hS_simple hK_nonzero hK_nhds
+  exact ⟨h, hh_diff, fun s hs hne => hh_eq s hs (fun hmem =>
+    let ⟨hz_open, hfz⟩ := Set.Finite.mem_toFinset hfin |>.mp hmem
+    absurd rfl (hne _ hz_open hfz))⟩
 
 /-! ## Sub-lemma C: Cauchy-Goursat for Rectangles (MATHLIB)
 
@@ -604,13 +713,15 @@ theorem corner_mem_rectBoundary {a b c d : ℝ} (hab : a < b) (hcd : c < d) :
 theorem argument_principle_rect_entire (f : ℂ → ℂ)
     (a b c d : ℝ) (hab : a < b) (hcd : c < d)
     (hf : Differentiable ℂ f)
-    (hbdy : ∀ z ∈ rectBoundary a b c d, f z ≠ 0) :
+    (hbdy : ∀ z ∈ rectBoundary a b c d, f z ≠ 0)
+    (hsimple : ∀ z ∈ openRect a b c d, f z = 0 → deriv f z ≠ 0) :
     logIntegralRect f a b c d = ↑(zeroCountRect f a b c d) := by
   -- Obtain the zero set and its finiteness
   have hz : ∃ z, f z ≠ 0 := ⟨_, hbdy _ (corner_mem_rectBoundary hab hcd)⟩
   have hfin := finite_zeros_in_openRect f a b c d hab hcd hf hz
   -- Get the decomposition from sub-lemma B
-  obtain ⟨h, hh_diff, hh_eq⟩ := logDeriv_decompose_rect f a b c d hab hcd hf hbdy hfin
+  obtain ⟨h, hh_diff, hh_eq⟩ :=
+    logDeriv_decompose_rect f a b c d hab hcd hf hbdy hfin hsimple
   -- Apply Cauchy-Goursat to the holomorphic part h
   have hh_zero := cauchy_goursat_rect h a b c d (le_of_lt hab) (le_of_lt hcd) hh_diff
   -- Apply the winding number formula to each zero
