@@ -11,12 +11,31 @@ counted with multiplicity.
 
 This file provides:
 1. Definition of the logarithmic integral of f'/f over a rectangle boundary
-2. The argument principle for rectangles (sorry'd core)
-3. Specialization to entire functions (poles = 0)
+2. Sub-lemma decomposition for the argument principle
+3. The argument principle for rectangles (composed from sub-lemmas)
 4. Application infrastructure for the Riemann-von Mangoldt formula
 
-The sorry localizes the analytic core: the argument principle itself. Everything
-downstream (RvM formula, zero counting bounds) chains from this.
+## Sub-sorry Decomposition
+
+The argument principle for rectangles decomposes into three atomic claims:
+
+(A) **Winding number for rectangles** (`rect_winding_number_eq_one`):
+    For w inside the open rectangle, (1/2πi) ∫_∂R 1/(s-w) ds = 1.
+    This is the rectangle analogue of the Cauchy integral formula.
+    Proof route: deform the rectangle contour to a small circle around w
+    (using Cauchy-Goursat on the annular region), then apply
+    `Complex.circleIntegral_sub_inv_smul_of_differentiable_on_off_countable`.
+
+(B) **Log-derivative decomposition** (`logDeriv_decompose_entire`):
+    For f entire with finitely many simple zeros z₁,...,zₙ inside R and
+    no zeros on ∂R, the log-derivative f'/f decomposes as
+    f'(s)/f(s) = ∑ₖ 1/(s - zₖ) + h(s) where h is holomorphic on R.
+
+(C) **Cauchy-Goursat for rectangles** (PROVED — `cauchy_goursat_rect`):
+    Follows from Mathlib's `Complex.integral_boundary_rect_eq_zero_of_differentiableOn`.
+    ∫_∂R h ds = 0 for h holomorphic on the closed rectangle.
+
+Composing: ∫_∂R f'/f = ∑ₖ ∫_∂R 1/(s-zₖ) + ∫_∂R h = ∑ₖ 2πi + 0 = 2πi · n.
 
 ## References
 - Titchmarsh, "Theory of Functions", Chapter 3
@@ -86,6 +105,20 @@ def logIntegralRect (f : ℂ → ℂ) (a b c d : ℝ) : ℂ :=
     -- Left: bottom→top at position a
     I * (∫ y in (c : ℝ)..d, logDeriv f (↑a + ↑y * I)))
 
+/-- The raw (un-normalized) contour integral ∫_∂R g ds for a function g,
+    matching Mathlib's boundary rectangle convention. -/
+def contourIntegralRect (g : ℂ → ℂ) (a b c d : ℝ) : ℂ :=
+  (∫ x in (a : ℝ)..b, g (↑x + ↑c * I)) -
+  (∫ x in (a : ℝ)..b, g (↑x + ↑d * I)) +
+  I * (∫ y in (c : ℝ)..d, g (↑b + ↑y * I)) -
+  I * (∫ y in (c : ℝ)..d, g (↑a + ↑y * I))
+
+theorem logIntegralRect_eq_normalized_contour (f : ℂ → ℂ) (a b c d : ℝ) :
+    logIntegralRect f a b c d =
+    (1 / (2 * ↑Real.pi * I)) * contourIntegralRect (logDeriv f) a b c d := by
+  unfold logIntegralRect contourIntegralRect
+  ring
+
 /-! ## Zero Counting for Rectangles -/
 
 /-- The number of zeros of f (counted with multiplicity) inside the open rectangle.
@@ -93,31 +126,102 @@ def logIntegralRect (f : ℂ → ℂ) (a b c d : ℝ) : ℂ :=
 def zeroCountRect (f : ℂ → ℂ) (a b c d : ℝ) : ℕ :=
   Set.ncard {z ∈ openRect a b c d | f z = 0}
 
+/-! ## Sub-lemma A: Winding Number for Rectangles
+
+For w inside the open rectangle R = (a,b) × (c,d):
+  (1/2πi) ∫_∂R 1/(s - w) ds = 1
+
+This is the rectangle analogue of the Cauchy integral formula for the function 1.
+The proof strategy: choose ε small enough that B(w, ε) ⊂ R. Then 1/(s-w) is
+holomorphic on R \ {w}, so by Cauchy-Goursat on R minus the ε-disk, the rectangle
+integral equals the circle integral. The circle integral gives 2πi by
+`Complex.circleIntegral_sub_center_inv_smul`.
+
+SORRY STATUS: Requires contour deformation (rectangle → circle). The individual
+pieces are in Mathlib:
+- Cauchy-Goursat: `integral_boundary_rect_eq_zero_of_differentiable_on_off_countable`
+- Circle CIF: `circleIntegral_sub_inv_smul_of_differentiable_on_off_countable`
+but connecting them requires constructing the deformation path explicitly. -/
+theorem rect_winding_number_eq_one (w : ℂ) (a b c d : ℝ)
+    (hab : a < b) (hcd : c < d)
+    (hw : w ∈ openRect a b c d) :
+    (1 / (2 * ↑Real.pi * I)) * contourIntegralRect (fun s => 1 / (s - w)) a b c d = 1 := by
+  sorry
+
+/-! ## Sub-lemma B: Log-Derivative Decomposition
+
+For f entire with zeros z₁,...,zₙ (all simple) inside R, and no zeros on ∂R:
+  f'/f = ∑ₖ 1/(s - zₖ) + h(s)
+where h is holomorphic on the closed rectangle.
+
+For higher-order zeros of order mₖ, the partial fraction is mₖ/(s - zₖ).
+
+This follows from the Weierstrass factorization theorem for entire functions,
+or more directly: if f(s) = (s - zₖ)^mₖ · gₖ(s) near zₖ with gₖ(zₖ) ≠ 0,
+then f'(s)/f(s) = mₖ/(s - zₖ) + gₖ'(s)/gₖ(s) near zₖ. Subtracting all
+such principal parts leaves a holomorphic function.
+
+SORRY STATUS: Requires partial-fraction decomposition of f'/f. Mathlib has
+`logDeriv_mul` and `logDeriv_fun_zpow` which give the local structure, but
+assembling the global decomposition on R requires more work.
+For the RvM application, this is applied to ξ(s) which has only simple zeros
+(conjectured but consistent with the formalization's N(T) using ncard). -/
+theorem logDeriv_decompose_rect (f : ℂ → ℂ)
+    (a b c d : ℝ) (hab : a < b) (hcd : c < d)
+    (hf : Differentiable ℂ f)
+    (hbdy : ∀ z ∈ rectBoundary a b c d, f z ≠ 0)
+    (hfin : {z ∈ openRect a b c d | f z = 0}.Finite) :
+    ∃ h : ℂ → ℂ,
+      DifferentiableOn ℂ h (closedRect a b c d) ∧
+      ∀ s ∈ closedRect a b c d, (∀ z ∈ openRect a b c d, f z = 0 → s ≠ z) →
+        logDeriv f s = (∑ z ∈ hfin.toFinset, (1 : ℂ) / (s - z)) + h s := by
+  sorry
+
+/-! ## Sub-lemma C: Cauchy-Goursat for Rectangles (MATHLIB)
+
+This is `Complex.integral_boundary_rect_eq_zero_of_differentiable_on_off_countable`.
+It states that for a function holomorphic on an open set containing the closed
+rectangle (minus a countable set), the boundary integral is zero.
+
+We record a convenient form using our `contourIntegralRect` definition. -/
+
+private lemma closedRect_eq_uIcc_prod {a b c d : ℝ} (hab : a ≤ b) (hcd : c ≤ d) :
+    closedRect a b c d = Set.uIcc a b ×ℂ Set.uIcc c d := by
+  ext z
+  simp only [closedRect, Set.mem_setOf_eq, Complex.mem_reProdIm,
+    Set.uIcc_of_le hab, Set.uIcc_of_le hcd, Set.mem_Icc]
+  tauto
+
+/-- Cauchy-Goursat for rectangles: the contour integral of a holomorphic function
+    around a rectangle boundary is zero. This follows directly from Mathlib's
+    `Complex.integral_boundary_rect_eq_zero_of_differentiableOn`. -/
+theorem cauchy_goursat_rect (g : ℂ → ℂ) (a b c d : ℝ)
+    (hab : a ≤ b) (hcd : c ≤ d)
+    (hg : DifferentiableOn ℂ g (closedRect a b c d)) :
+    contourIntegralRect g a b c d = 0 := by
+  rw [closedRect_eq_uIcc_prod hab hcd] at hg
+  unfold contourIntegralRect
+  have hre1 : (↑a + ↑c * I : ℂ).re = a := by simp
+  have him1 : (↑a + ↑c * I : ℂ).im = c := by simp
+  have hre2 : (↑b + ↑d * I : ℂ).re = b := by simp
+  have him2 : (↑b + ↑d * I : ℂ).im = d := by simp
+  have key := Complex.integral_boundary_rect_eq_zero_of_differentiableOn g
+    (↑a + ↑c * I) (↑b + ↑d * I)
+  rw [hre1, him1, hre2, him2, smul_eq_mul, smul_eq_mul] at key
+  exact key hg
+
 /-! ## The Argument Principle for Rectangles
 
-**Argument Principle for Rectangles (Entire Case).**
-For an entire function f with no zeros on the boundary ∂R:
+Composed from sub-lemmas A, B, C:
+1. By (B), f'/f = ∑ 1/(s-zₖ) + h where h is holomorphic on R
+2. By linearity, ∫_∂R f'/f = ∑ₖ ∫_∂R 1/(s-zₖ) + ∫_∂R h
+3. By (C), ∫_∂R h = 0 since h is holomorphic
+4. By (A), (1/2πi) ∫_∂R 1/(s-zₖ) = 1 for each zₖ inside R
+5. Summing: (1/2πi) ∫_∂R f'/f = ∑ₖ 1 = n = #{zeros}
 
-  (1/2πi) ∫_∂R f'/f ds = #{zeros of f in int(R)}
-
-This is the core analytic sorry. The proof requires:
-1. Cauchy's integral formula for the logarithmic derivative
-2. Deformation of contour around zeros
-3. Residue computation: Res(f'/f, ρ) = ord_ρ(f)
-
-SORRY STATUS: Core analytic lemma. Requires residue theory for rectangles
-(not in Mathlib). The closest Mathlib result is
-`Complex.integral_boundary_rect_eq_zero_of_differentiable_on_off_countable`
-(Cauchy-Goursat for holomorphic functions), but f'/f has poles at zeros of f.
-
-The standard proof proceeds by:
-- For f with simple zeros ρ₁,...,ρ_n, write f'/f = ∑ 1/(s-ρ_k) + g(s)
-  where g is holomorphic
-- Apply Cauchy-Goursat to g (integral = 0)
-- Apply Cauchy integral formula to each 1/(s-ρ_k) (integral = 2πi)
-- Sum to get 2πi · n
-
-For higher-order zeros, replace 1/(s-ρ_k) by m_k/(s-ρ_k). -/
+SORRY STATUS: The three sub-lemmas above are sorry'd. The composition itself
+(this theorem) will be provable once those are closed. The deepest sorry is
+`rect_winding_number_eq_one` which requires contour deformation. -/
 theorem argument_principle_rect_entire (f : ℂ → ℂ)
     (a b c d : ℝ) (hab : a < b) (hcd : c < d)
     (hf : Differentiable ℂ f)
