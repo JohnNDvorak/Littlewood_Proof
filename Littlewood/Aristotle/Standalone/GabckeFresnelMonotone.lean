@@ -81,7 +81,7 @@ theorem sqrt_block_shift_le (k : ℕ) (p : ℝ) (hp : 0 ≤ p) :
 /-- The reciprocal √ factor decreases with k: 1/√(k+2+p) ≤ 1/√(k+1+p). -/
 theorem inv_sqrt_block_antitone (k : ℕ) (p : ℝ) (hp : 0 ≤ p) :
     1 / Real.sqrt ((k : ℝ) + 2 + p) ≤ 1 / Real.sqrt ((k : ℝ) + 1 + p) := by
-  apply div_le_div_of_nonneg_left (by norm_num : (0:ℝ) < 1)
+  apply div_le_div_of_nonneg_left (by norm_num : (0:ℝ) ≤ 1)
     (Real.sqrt_pos_of_pos (by positivity))
     (sqrt_block_shift_le k p hp)
 
@@ -93,7 +93,7 @@ theorem gabcke_abs_bound_antitone (k : ℕ) (p : ℝ) (hp0 : 0 ≤ p) (_hp1 : p 
   have h2 : Real.sqrt (2 * Real.pi) * Real.sqrt ((k : ℝ) + 1 + p) ≤
       Real.sqrt (2 * Real.pi) * Real.sqrt ((k : ℝ) + 2 + p) := by
     apply mul_le_mul_of_nonneg_left (sqrt_block_shift_le k p hp0) (by positivity)
-  exact div_le_div_of_nonneg_left Real.pi_pos h1 h2
+  exact div_le_div_of_nonneg_left Real.pi_pos.le h1 h2
 
 /-! ## Part 4: Block coordinate factor identities
 
@@ -104,12 +104,12 @@ to the block parameter u = k+1+p when t = blockCoord(k,p) = 2πu².
 /-- blockCoord(k,p) = 2π·(k+1+p)². -/
 theorem blockCoord_eq (k : ℕ) (p : ℝ) :
     blockCoord k p = 2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 := by
-  unfold blockCoord
+  unfold blockCoord; ring
 
 /-- blockJacobian(k,p) = 4π·(k+1+p). -/
 theorem blockJacobian_eq (k : ℕ) (p : ℝ) :
     blockJacobian k p = 4 * Real.pi * ((k : ℝ) + 1 + p) := by
-  unfold blockJacobian
+  unfold blockJacobian; ring
 
 /-- On block coordinates, (2π/t)^{1/4} · J = 4π·√(k+1+p).
 
@@ -131,22 +131,37 @@ theorem amplitude_times_jacobian (k : ℕ) (p : ℝ) (hp : 0 ≤ p) :
       1 / ((k : ℝ) + 1 + p) ^ 2 := by
     field_simp
   rw [h_ratio]
-  -- (1/u²)^{1/4} = ((u²)^{-1})^{1/4} = u^{-1/2}
-  -- This needs rpow arithmetic
-  rw [one_div, ← Real.rpow_natCast ((k : ℝ) + 1 + p) 2]
-  rw [inv_rpow (by positivity : (0 : ℝ) ≤ ((k : ℝ) + 1 + p) ^ (2 : ℝ))]
-  rw [← Real.rpow_mul (by positivity : (0 : ℝ) ≤ (k : ℝ) + 1 + p)]
-  norm_num
-  -- Now: u^{-1/2} · 4πu = 4π · u^{1/2} = 4π · √u
-  rw [show ((k : ℝ) + 1 + p) ^ (-(1 : ℝ) / 2) * (4 * Real.pi * ((k : ℝ) + 1 + p)) =
-      4 * Real.pi * (((k : ℝ) + 1 + p) ^ (-(1 : ℝ) / 2) * ((k : ℝ) + 1 + p)) from by ring]
+  -- (1/u²)^{1/4} · 4πu = 4π√u
+  -- Strategy: both sides are positive, square both sides
+  set u := (k : ℝ) + 1 + p with hu_def
+  -- (1/u²)^{1/4} = 1/√u
+  -- Since (1/u²)^{1/4} = ((1/u²)^{1/2})^{1/2} = (1/u)^{1/2} = 1/√u
+  -- Then (1/√u) · 4πu = 4πu/√u = 4π√u
+  -- Direct: multiply both sides by √u
+  have hsq := Real.sq_sqrt hu_pos.le  -- (√u)^2 = u
+  -- The LHS is (1/u²)^{1/4} · 4πu. We show this equals 4π√u by squaring.
+  -- LHS² = (1/u²)^{1/2} · (4πu)² = (1/u) · 16π²u² = 16π²u
+  -- RHS² = (4π√u)² = 16π²u ✓
+  have hlhs_nn : 0 ≤ (1 / u ^ 2) ^ ((1:ℝ)/4) * (4 * Real.pi * u) := by positivity
+  have hrhs_nn : 0 ≤ 4 * Real.pi * Real.sqrt u := by positivity
+  rw [← Real.sqrt_sq hlhs_nn, ← Real.sqrt_sq hrhs_nn]
   congr 1
-  rw [show (-(1 : ℝ) / 2) = -(1 : ℝ) / 2 from rfl]
-  rw [← Real.rpow_one ((k : ℝ) + 1 + p)] at *
-  rw [show ((k : ℝ) + 1 + p) ^ (-(1 : ℝ) / 2) * ((k : ℝ) + 1 + p) ^ (1 : ℝ) =
-      ((k : ℝ) + 1 + p) ^ (-(1 : ℝ) / 2 + 1) from by
-    rw [← Real.rpow_add hu_pos]]
-  norm_num
-  rw [Real.sqrt_eq_rpow]
+  -- Show squares are equal
+  have h_sq_lhs : ((1 / u ^ 2) ^ ((1:ℝ)/4) * (4 * Real.pi * u)) ^ 2 = 16 * Real.pi ^ 2 * u := by
+    rw [mul_pow]
+    have h1 : ((1 / u ^ 2) ^ ((1:ℝ)/4)) ^ 2 = (1 / u ^ 2) ^ ((1:ℝ)/2) := by
+      rw [← Real.rpow_natCast ((1 / u ^ 2) ^ ((1:ℝ)/4)) 2,
+          ← Real.rpow_mul (by positivity : 0 ≤ 1 / u ^ 2)]
+      norm_num
+    rw [h1]
+    have h2 : (1 / u ^ 2) ^ ((1:ℝ)/2) = 1 / u := by
+      rw [← Real.sqrt_eq_rpow, Real.sqrt_div' 1 (by positivity), Real.sqrt_one,
+          Real.sqrt_sq hu_pos.le]
+    rw [h2]
+    field_simp
+    ring
+  have h_sq_rhs : (4 * Real.pi * Real.sqrt u) ^ 2 = 16 * Real.pi ^ 2 * u := by
+    rw [mul_pow, mul_pow]; rw [Real.sq_sqrt hu_pos.le]; ring
+  linarith
 
 end Aristotle.Standalone.GabckeFresnelMonotone
