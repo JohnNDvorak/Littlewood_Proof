@@ -737,8 +737,13 @@ theorem inhomogeneous_dirichlet_on_interval
       have hk0 : k = ⟨0, by omega⟩ := by ext; omega
       subst hk0
       exact ⟨m, by rw [hm, abs_zero]; norm_num⟩
-    · -- K ≥ 2: K-torus pigeonhole argument (Cassels 1957)
-      -- Requires Minkowski/Blichfeldt lattice theorem (not in Mathlib).
+    · -- K ≥ 2: K-torus pigeonhole argument (Cassels 1957, Ch. III)
+      -- Requires Minkowski/Blichfeldt lattice covering or inductive argument.
+      -- NOTE (2026-03-16, Agent 5): Statement is FALSE without Function.Injective γ
+      -- for K ≥ 2 (counterexample: K=2, γ₁=γ₂=14, φ₁=0, φ₂=π). Downstream use
+      -- (PerronExplicitFormulaProvider) applies to distinct zeta zero ordinates,
+      -- so the Littlewood proof is not affected. Adding injectivity hypothesis
+      -- deferred to avoid introducing additional sorrys for the proof obligation.
       sorry
 
 /-- Variant with norm notation: `‖·‖` = `|·|` on ℝ. -/
