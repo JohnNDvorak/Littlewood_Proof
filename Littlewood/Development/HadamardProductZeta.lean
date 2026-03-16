@@ -352,22 +352,60 @@ theorem small_T_from_general
 /-! ## Section 6: The Two Atomic Sorry Claims
 
 These are the irreducible analytic content needed to close the B5a sorrys.
-Each encapsulates a specific piece of complex analysis not yet in Mathlib. -/
+Each encapsulates a specific piece of complex analysis not yet in Mathlib.
 
-/-- **ATOMIC SORRY CLAIM #1**: Hadamard product contour bound (T ≥ 16).
+### Irreducibility Analysis (2026-03-16)
+
+Both claims require the truncated explicit formula for psi(x), which decomposes as:
+  psi(x) = x - Sum_{|gamma|<=T} x^rho/rho + R(x,T)
+where R(x,T) is the contour remainder from shifting the Perron integral.
+The bound |R(x,T)| <= f(x,T) is the content of these sorrys.
+All algebraic reductions are proved sorry-free in surrounding infrastructure.
+
+### Required Mathlib Development
+
+To close these sorrys, Mathlib needs (in order of priority):
+1. Rectangle contour integrals: decomposition into side integrals.
+   (PrimeNumberTheoremAnd has RectangleIntegral but not full API.)
+2. Cauchy residue theorem for rectangles.
+3. Perron's formula: (1/2pi i) integral x^s/s ds -> step function.
+4. zeta'/zeta pointwise bound in critical strip (via Hadamard product).
+
+### CriticalZeros Finiteness
+
+The `ZerosBelow T` definition uses a `dite` on `(CriticalZeros cap {|Im| <= T}).Finite`.
+This finiteness holds unconditionally (compact + isolated zeros, proved in
+ZetaZerosFiniteBelow.zetaZerosBelow_finite for positive Im). The `dite` always
+takes the "then" branch with Classical.dec.
+
+### Sub-decomposition of hadamard_contour_bound
+
+(a) Perron truncation: |psi(x) - (1/2pi i) integral| <= Cp * x * (logx)^2/T
+(b) Contour shift: integral = x - Sum x^rho/rho + vertical + horizontal
+(c) Vertical segment: |integral_{1/2-iT}^{1/2+iT}| <= A * sqrt(x) * (logT)^3/T
+(d) Horizontal segments: |horizontal| <= B * sqrt(x) * (logT)^2/T
+Note: PerronExplicitFormulaProvider uses a PLACEHOLDER witness making (a) trivially 0.
+
+### Sub-decomposition of perron_small_T_bound
+
+For T < 14.13, ZerosBelow T is empty (no zeta zeros below first ordinate ~14.134),
+so shiftedRemainderRe x T = psi(x) - x. For T in [14.13, 16], exactly one zero
+contributes O(sqrt(x)). The bound requires |psi(x) - x + zero_sum| <= C*(sqrt(x) + (logx)^2). -/
+
+/-- **ATOMIC SORRY CLAIM #1**: Hadamard product contour bound (T >= 16).
 
     Mathematical content (Davenport Ch. 12 + Ch. 17):
-    The Hadamard product gives |ζ'/ζ(s)| ≤ C·(logT)² on the Perron rectangle
+    The Hadamard product gives |zeta'/zeta(s)| <= C*(logT)^2 on the Perron rectangle
     boundary. Contour integration converts this to:
-      |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ A·√x·(logT)³/T + 2A·√x·(logT)²/T
+      |psi(x) - x + Sum Re(x^rho/rho)| <= A*sqrt(x)*(logT)^3/T + 2A*sqrt(x)*(logT)^2/T
 
     Requires:
-    1. Hadamard product representation of ξ(s)
-    2. Zero density: N(T+1)-N(T) ≤ C·logT
-    3. Contour integration of ζ'/ζ · x^s/s over the Perron rectangle
+    1. Hadamard product representation of xi(s)
+    2. Zero density: N(T+1)-N(T) <= C*logT
+    3. Contour integration of zeta'/zeta * x^s/s over the Perron rectangle
     None of (1)-(3) are in Mathlib as of v4.27.0-rc1.
 
-    Reference: Titchmarsh §9.6.1, Davenport Ch. 12. -/
+    Reference: Titchmarsh SS9.6.1, Davenport Ch. 12. -/
 theorem hadamard_contour_bound :
     ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
       |shiftedRemainderRe x T| ≤
@@ -375,23 +413,25 @@ theorem hadamard_contour_bound :
         2 * A * (Real.sqrt x * (Real.log T) ^ 2 / T) := by
   sorry
 
-/-- **ATOMIC SORRY CLAIM #2**: Perron contour bound for small T (T ∈ [2, 16]).
+/-- **ATOMIC SORRY CLAIM #2**: Perron contour bound for small T (T in [2, 16]).
 
-    Mathematical content (Montgomery-Vaughan §12.5):
+    Mathematical content (Montgomery-Vaughan SS12.5):
     For T in the bounded range [2, 16], the Perron contour integral
-    ∫ ζ'/ζ(s) · x^s/s ds over a rectangle of height T gives:
-      |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C₂·(√x·(logT)²/√T + (logx)²)
+    gives: |psi(x) - x + Sum Re(x^rho/rho)| <= C2*(sqrt(x)*(logT)^2/sqrt(T) + (logx)^2)
 
-    The (logx)² term arises from the truncation of the Perron integral
-    at finite height T. For fixed T ∈ [2,16], this is a bounded-height
-    contour integration — no large-T asymptotics needed.
+    The (logx)^2 term arises from the truncation of the Perron integral
+    at finite height T. For fixed T in [2,16], this is a bounded-height
+    contour integration -- no large-T asymptotics needed.
+
+    Key observation: For T < 14.13, ZerosBelow T = empty (no zeta zeros below
+    the first zero ordinate ~14.134), so shiftedRemainderRe x T = psi(x) - x.
 
     Requires:
-    1. Perron's formula: (1/2πi)∫ ζ'/ζ(s) x^s/s ds = ψ(x) + error
+    1. Perron's formula: (1/2pi i) integral zeta'/zeta(s) x^s/s ds = psi(x) + error
     2. Rectangle contour evaluation with bounded height
     Neither is in Mathlib as of v4.27.0-rc1.
 
-    Reference: Davenport Ch. 17, Montgomery-Vaughan §12.5. -/
+    Reference: Davenport Ch. 17, Montgomery-Vaughan SS12.5. -/
 theorem perron_small_T_bound :
     ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
       |shiftedRemainderRe x T| ≤
