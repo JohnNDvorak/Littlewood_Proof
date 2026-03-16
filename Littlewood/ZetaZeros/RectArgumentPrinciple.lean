@@ -119,12 +119,55 @@ theorem logIntegralRect_eq_normalized_contour (f : ℂ → ℂ) (a b c d : ℝ) 
   unfold logIntegralRect contourIntegralRect
   ring
 
+/-! ## Compactness and Finiteness -/
+
+theorem isCompact_closedRect (a b c d : ℝ) : IsCompact (closedRect a b c d) := by
+  rw [show closedRect a b c d = (Set.Icc a b) ×ℂ (Set.Icc c d) from by
+    ext z; simp [closedRect, Complex.mem_reProdIm, Set.mem_Icc]; tauto]
+  exact isCompact_Icc.reProdIm isCompact_Icc
+
+/-- An entire function that is not identically zero has finitely many zeros in any
+    compact set. This follows from isolated zeros (Mathlib) + compactness. -/
+theorem finite_zeros_in_compact (f : ℂ → ℂ) (hf : Differentiable ℂ f) (hz : ∃ z, f z ≠ 0)
+    (K : Set ℂ) (hK : IsCompact K) :
+    {z ∈ K | f z = 0}.Finite := by
+  have hanalytic : AnalyticOnNhd ℂ f Set.univ := fun z _ => hf.analyticAt z
+  obtain ⟨w, hw⟩ := hz
+  rcases hanalytic.eqOn_zero_or_eventually_ne_zero_of_preconnected isPreconnected_univ with h | h
+  · exact absurd (h (Set.mem_univ w)) hw
+  · have hmem : {x | f x ≠ 0} ∈ Filter.codiscreteWithin (Set.univ : Set ℂ) := h
+    rw [codiscreteWithin_iff_locallyFiniteComplementWithin] at hmem
+    have key : ∀ z : ℂ, ∃ t ∈ nhds z, Set.Finite (t ∩ {x | f x = 0}) := by
+      intro z
+      obtain ⟨t, ht, hfin⟩ := hmem z (Set.mem_univ z)
+      exact ⟨t, ht, hfin.subset (fun x hx =>
+        ⟨hx.1, Set.mem_univ x, not_not.mpr hx.2⟩)⟩
+    choose U hU_nhds hU_fin using key
+    have hopen : ∀ z, ∃ V ⊆ U z, IsOpen V ∧ z ∈ V :=
+      fun z => mem_nhds_iff.mp (hU_nhds z)
+    choose V hV_sub hV_open hV_mem using hopen
+    obtain ⟨s, hs_cover⟩ := hK.elim_finite_subcover V (fun z => hV_open z)
+      (fun z _ => Set.mem_iUnion.2 ⟨z, hV_mem z⟩)
+    refine (s.finite_toSet.biUnion (fun z _ => hU_fin z)).subset ?_
+    intro x ⟨hxK, hfx⟩
+    obtain ⟨z, hz_mem, hxV⟩ := Set.mem_iUnion₂.mp (hs_cover hxK)
+    exact Set.mem_biUnion hz_mem ⟨hV_sub z hxV, hfx⟩
+
 /-! ## Zero Counting for Rectangles -/
 
 /-- The number of zeros of f (counted with multiplicity) inside the open rectangle.
     For entire functions, all zeros have positive multiplicity. -/
 def zeroCountRect (f : ℂ → ℂ) (a b c d : ℝ) : ℕ :=
   Set.ncard {z ∈ openRect a b c d | f z = 0}
+
+/-- For a non-zero entire function, the zero set in the open rectangle is finite.
+    This ensures `zeroCountRect` gives a meaningful natural number. -/
+theorem finite_zeros_in_openRect (f : ℂ → ℂ)
+    (a b c d : ℝ) (_hab : a < b) (_hcd : c < d)
+    (hf : Differentiable ℂ f) (hz : ∃ z, f z ≠ 0) :
+    {z ∈ openRect a b c d | f z = 0}.Finite :=
+  (finite_zeros_in_compact f hf hz (closedRect a b c d) (isCompact_closedRect a b c d)).subset
+    (fun _ ⟨h1, h2⟩ => ⟨openRect_subset_closedRect h1, h2⟩)
 
 /-! ## Sub-lemma A: Winding Number for Rectangles
 
