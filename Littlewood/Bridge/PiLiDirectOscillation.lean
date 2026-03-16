@@ -175,7 +175,7 @@ class PiApproxFromExplicitFormulaHyp : Prop where
       |piLiError x + (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T,
         (x : ℂ) ^ ρ / ρ).re / Real.log x| ≤ D * (Real.sqrt x / Real.log x)
 
-/-- Abel summation correction: π(x) - li(x) ≈ (ψ(x) - x)/logx at √x/logx scale.
+/- Abel summation correction: π(x) - li(x) ≈ (ψ(x) - x)/logx at √x/logx scale.
     SORRY: Mathematically true (classical Abel/partial summation, Davenport Ch. 17).
 
     BLOCKER ANALYSIS (2026-03-15, Agent 3):
@@ -208,75 +208,19 @@ class PiApproxFromExplicitFormulaHyp : Prop where
     (a) Strong PNT error term O(x·exp(-c·√(logx))) — not in any Lean 4 library, or
     (b) A weaker approach that avoids the O(√x/logx) scale entirely.
     The main theorem path BYPASSES this via LandauOscillation.lean (priority 2000). -/
-instance : AbelCorrectionPsiPiHyp where
-  correction_bound := by sorry
 
-/-- Instance for PiApproxFromExplicitFormulaHyp (T-parameterized O-bound).
-    Proof: triangle inequality combining the ψ-level Perron bound (divided by logx)
-    with the Abel summation correction. For fixed T ≥ 2:
-    D_T = Cc·(logT)²/√T + D_abel + 1. -/
-instance : PiApproxFromExplicitFormulaHyp where
-  pi_approx_bound := by
-    intro T hT
-    -- Get ψ-level bound from ContourRemainderBoundHyp
-    obtain ⟨Cc, hCc_pos, hCc_bound⟩ :=
-      Aristotle.Standalone.ExplicitFormulaPsiSkeleton.ContourRemainderBoundHyp.bound
-    -- Get Abel correction bound
-    obtain ⟨Da, hDa_pos, hDa_bound⟩ := AbelCorrectionPsiPiHyp.correction_bound
-    -- D = Cc·(logT)²/√T + Da + 1
-    set C_T := Cc * ((Real.log T) ^ 2 / Real.sqrt T)
-    refine ⟨C_T + Da + 1, by positivity, ?_⟩
-    -- Combine the bounds eventually
-    filter_upwards [hDa_bound, AbelSummationPsiPi.log_eventually_pos,
-                    Filter.eventually_ge_atTop (2 : ℝ)] with x hAbel hlog_pos hx_ge2
-    -- Algebraic identity for the remainder
-    have h_remainder_eq :
-        Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T =
-        Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
-          (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T, (↑x : ℂ) ^ ρ / ρ).re := by
-      simp only [Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe,
-                  Aristotle.Standalone.ExplicitFormulaPsiSkeleton.zeroSumRe]
-    -- ψ-level bound for this T
-    have h_psi_bound := hCc_bound x T hx_ge2 hT
-    -- Abbreviation for the zero sum
-    set S_re := (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T,
-        (↑x : ℂ) ^ ρ / ρ).re
-    set ψx := Aristotle.DirichletPhaseAlignment.chebyshevPsi x
-    -- Triangle: split piLiError x + S_re/logx into Abel correction + remainder/logx
-    have h_split : piLiError x + S_re / Real.log x =
-      (piLiError x - (ψx - x) / Real.log x) +
-      ((ψx - x + S_re) / Real.log x) := by
-      field_simp; ring
-    -- The remainder equals shiftedRemainderRe
-    have h_rem_eq : ψx - x + S_re =
-        Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T := by
-      show Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
-        (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T, (↑x : ℂ) ^ ρ / ρ).re =
-        Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T
-      simp only [Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe,
-                  Aristotle.Standalone.ExplicitFormulaPsiSkeleton.zeroSumRe]
-    -- Bound |shiftedRemainderRe / logx| ≤ C_T · √x / logx
-    have h_rem_bound :
-        |(ψx - x + S_re) / Real.log x| ≤ C_T * (Real.sqrt x / Real.log x) := by
-      rw [h_rem_eq, abs_div, abs_of_pos hlog_pos]
-      have : C_T * (Real.sqrt x / Real.log x) = C_T * Real.sqrt x / Real.log x := by
-        rw [mul_div_assoc]
-      rw [this]
-      apply div_le_div_of_nonneg_right _ hlog_pos.le
-      calc |Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T|
-          ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := h_psi_bound
-        _ = C_T * Real.sqrt x := by ring
-    rw [h_split]
-    -- Bound |A + B| ≤ |A| + |B| ≤ Da·√x/logx + C_T·√x/logx
-    calc |_ + _|
-        ≤ |piLiError x - (ψx - x) / Real.log x| +
-          |(ψx - x + S_re) / Real.log x| := abs_add_le _ _
-      _ ≤ Da * (Real.sqrt x / Real.log x) +
-          C_T * (Real.sqrt x / Real.log x) := add_le_add hAbel h_rem_bound
-      _ ≤ (C_T + Da + 1) * (Real.sqrt x / Real.log x) := by
-          have hsql : 0 ≤ Real.sqrt x / Real.log x :=
-            div_nonneg (Real.sqrt_nonneg x) hlog_pos.le
-          nlinarith
+-- DEPRECATED (2026-03-16): AbelCorrectionPsiPiHyp instance removed — dead code.
+-- Class retained as reference. The PiApproxFromExplicitFormulaHyp instance below
+-- was the sole consumer; it too is removed. Neither typeclass is consumed downstream.
+-- instance : AbelCorrectionPsiPiHyp where
+--   correction_bound := by sorry
+
+-- DEPRECATED (2026-03-16): PiApproxFromExplicitFormulaHyp instance removed — dead code.
+-- Never consumed as a typeclass parameter by any file. Main theorem uses
+-- LandauOscillation (priority 2000). Original proof combined ψ-level Perron
+-- bound with Abel summation correction.
+-- instance : PiApproxFromExplicitFormulaHyp where
+--   pi_approx_bound := by sorry
 
 /-- Ω₋ direction for `π(x) - li(x)` from aligned phases. -/
 private theorem omega_minus_from_zeros
