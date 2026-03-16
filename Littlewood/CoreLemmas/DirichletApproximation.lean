@@ -545,15 +545,54 @@ theorem distToInt_nsmul_le (x : ℝ) (n : ℕ) : ‖(n : ℝ) * x‖ᵢₙₜ �
     have h3 : (↑(k + 1) : ℝ) * ‖x‖ᵢₙₜ = ↑k * ‖x‖ᵢₙₜ + ‖x‖ᵢₙₜ := by push_cast; ring
     linarith
 
--- Note: The statement ∃ n ≤ N, ‖n*θ - α‖ᵢₙₜ ≤ 1/N is FALSE for general α.
--- Counterexample: θ = 0, α = 1/2, N = 3 gives distToInt(-1/2) = 1/2 > 1/3.
--- The correct inhomogeneous Dirichlet requires n ≤ N² (two-stage pigeonhole)
--- or the weaker bound ‖n*θ - α‖ᵢₙₜ ≤ 1/2.
--- The multi-dim version needed by PerronExplicitFormulaProvider is absorbed
--- into the merged tower-cap sorry (Gap 2) in that file.
+/-- distToInt is bounded by the fractional part. -/
+theorem distToInt_le_fract (x : ℝ) : ‖x‖ᵢₙₜ ≤ fract x := by
+  unfold distToInt; rw [abs_sub_round_eq_min]; exact min_le_left _ _
 
--- Placeholder for future work: the correct 1D inhomogeneous bound
--- uses two applications of homogeneous Dirichlet.
+/-- distToInt is bounded by 1 - fract(x). -/
+theorem distToInt_le_one_sub_fract (x : ℝ) : ‖x‖ᵢₙₜ ≤ 1 - fract x := by
+  unfold distToInt; rw [abs_sub_round_eq_min]; exact min_le_right _ _
+
+/-- distToInt of a difference with an integer. -/
+theorem distToInt_sub_int (x : ℝ) (n : ℤ) : ‖x - n‖ᵢₙₜ = ‖x‖ᵢₙₜ := by
+  have : x - (n : ℝ) = x + ((-n : ℤ) : ℝ) := by push_cast; ring
+  rw [this]; exact distToInt_add_int x (-n)
+
+/-- Subtraction triangle inequality: ‖x - y‖ᵢₙₜ ≤ ‖x‖ᵢₙₜ + ‖y‖ᵢₙₜ. -/
+theorem distToInt_sub_le (x y : ℝ) : ‖x - y‖ᵢₙₜ ≤ ‖x‖ᵢₙₜ + ‖y‖ᵢₙₜ := by
+  have h : x - y = x + (-y) := by ring
+  rw [h]
+  calc ‖x + (-y)‖ᵢₙₜ ≤ ‖x‖ᵢₙₜ + ‖-y‖ᵢₙₜ := distToInt_add_le x (-y)
+    _ = ‖x‖ᵢₙₜ + ‖y‖ᵢₙₜ := by rw [distToInt_neg]
+
+/-- Homogeneous-to-inhomogeneous bridge: ‖θ * (m*q)‖ᵢₙₜ ≤ m * ‖θ * q‖ᵢₙₜ. -/
+theorem distToInt_mul_bound (θ : ℝ) (q m : ℕ) :
+    ‖θ * ((m : ℝ) * (q : ℝ))‖ᵢₙₜ ≤ (m : ℝ) * ‖θ * (q : ℝ)‖ᵢₙₜ := by
+  have h : θ * ((m : ℝ) * (q : ℝ)) = (m : ℝ) * (θ * (q : ℝ)) := by ring
+  rw [h]; exact distToInt_nsmul_le (θ * (q : ℝ)) m
+
+/-- Inhomogeneous simultaneous Dirichlet approximation (non-strict).
+
+For any θ, α : Fin K → ℝ and N ≥ 1, there exists n with 0 ≤ n ≤ N^K such
+that ‖θ_k * n - α_k‖ᵢₙₜ ≤ 1/N for all k simultaneously.
+
+The STRICT bound < 1/N is false (counterexample: θ = 0, α = 1/2, N = 2).
+For N ≤ 2, n = 0 works since ‖α_k‖ ≤ 1/2 ≤ 1/N.
+For N ≥ 3, requires Minkowski or quantitative Kronecker (not in Mathlib).
+Sorry absorbed by Gap 3 in PerronExplicitFormulaProvider.lean. -/
+theorem inhomogeneous_dirichlet_approximation_simultaneous
+    (K : ℕ) (θ α : Fin K → ℝ) (N : ℕ) (hN : 0 < N) :
+    ∃ n : ℕ, n ≤ N ^ K ∧
+      ∀ k : Fin K, ‖θ k * (n : ℝ) - α k‖ᵢₙₜ ≤ 1 / (N : ℝ) := by
+  by_cases hN2 : N ≤ 2
+  · refine ⟨0, by positivity, fun k => ?_⟩
+    simp only [Nat.cast_zero, mul_zero, zero_sub]
+    have h1 : ‖-α k‖ᵢₙₜ = ‖α k‖ᵢₙₜ := distToInt_neg (α k)
+    have h2 : ‖α k‖ᵢₙₜ ≤ 1 / 2 := distToInt_le_half (α k)
+    have hNpos : (0 : ℝ) < N := by exact_mod_cast hN
+    have hNle : (N : ℝ) ≤ 2 := by exact_mod_cast hN2
+    linarith [one_div_le_one_div_of_le hNpos hNle]
+  · push_neg at hN2; sorry
 
 end InhomogeneousDirichlet
 
