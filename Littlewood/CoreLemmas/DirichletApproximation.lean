@@ -652,7 +652,18 @@ theorem exists_int_approx_period {p : ℝ} (hp : 0 < p) (x : ℝ) :
     γ_k = ρ.im for zeta zeros with |ρ.im| ≥ 14.13..., so `1 ≤ |γ k|` holds.
 
     SORRY STATUS: Statement is now CORRECT. Sorry is for the K-torus
-    pigeonhole formalization (substantial but routine combinatorial argument). -/
+    pigeonhole formalization (substantial but routine combinatorial argument).
+
+    ANALYSIS (2026-03-15, Agent 3v3): The standard grid-pigeonhole approach
+    requires N^K + 1 sample points where N = ⌈2π/(1/2)⌉ = ⌈4π⌉ = 13 gives
+    cells of side < 1/2. But the interval length (4π)^K ≈ 12.57^K < 13^K,
+    so we don't have enough sample points for standard pigeonhole on the
+    N=13 grid. The proof likely requires either:
+    (a) Blichfeldt/Minkowski lattice covering theorem, or
+    (b) A non-standard grid choice (e.g., N=12 with side 2π/12 ≈ 0.524
+        and a modified inhomogeneous argument), or
+    (c) Induction on K with IVT for the base case.
+    All approaches require significant formalization infrastructure. -/
 theorem inhomogeneous_dirichlet_on_interval
     (K : ℕ) (γ φ : Fin K → ℝ) (a b : ℝ) (hab : a < b)
     (hγ_lb : ∀ k, 1 ≤ |γ k|)
