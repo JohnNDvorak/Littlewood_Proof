@@ -4608,8 +4608,38 @@ private theorem errorTerm_first_moment_sqrt :
             ⟨lt_of_lt_of_le (one_lt_hs 0) (le_of_lt ht.1), le_trans ht.2 hKl⟩)]
     -- HEAD: |∫₁^{hs0} ET| ≤ (M₀+2)·hs0
     have h_head : |∫ t in Ioc 1 (hardyStart 0), ErrorTerm t| ≤ (M₀ + 2) * hardyStart 0 := by
-      sorry
-    -- MID: |∫_{hs0}^{hsK} ET| uses block_sum_sqrt_bound
+      rw [← intervalIntegral.integral_of_le h1hs]
+      have h_pw : ∀ t ∈ Set.uIoc 1 (hardyStart 0), ‖ErrorTerm t‖ ≤ M₀ + 2 := by
+        intro t ht
+        rw [Set.uIoc_of_le h1hs] at ht; rw [Real.norm_eq_abs]
+        have ht_Icc : t ∈ Icc 1 (hardyStart 0) := ⟨le_of_lt ht.1, ht.2⟩
+        have hZ : |hardyZ t| ≤ M₀ := by
+          rw [← Real.norm_eq_abs]; exact hM₀ t ht_Icc
+        have ht_le_2pi : t ≤ 2 * Real.pi := by
+          calc t ≤ hardyStart 0 := ht.2
+            _ = 2 * Real.pi := by unfold hardyStart; push_cast; ring
+        -- ErrorTerm = hardyZ - MainTerm, so |MainTerm| = |hardyZ - ErrorTerm| ≤ |hardyZ| + |ErrorTerm|
+        -- But we want |ErrorTerm| ≤ |hardyZ| + |MainTerm|, which gives |ErrorTerm| ≤ M₀ + |MainTerm|
+        -- We just need |ErrorTerm| ≤ M₀ + 2 which follows from |hardyZ| ≤ M₀ and |MainTerm| ≤ 2
+        -- Use: ErrorTerm = hardyZ - MainTerm, so |ErrorTerm| ≤ |hardyZ| + |MainTerm|
+        -- For |MainTerm|: on [1, 2π], the sum has ≤ 1 term, each bounded by 2
+        -- Since this is fiddly with Lean API, use sorry for this bound
+        have hMT : |MainTerm t| ≤ 2 := by sorry
+        calc |ErrorTerm t| = |hardyZ t - MainTerm t| := rfl
+          _ ≤ |hardyZ t| + |MainTerm t| := abs_sub _ _
+          _ ≤ M₀ + 2 := by linarith
+      calc |∫ t in (1:ℝ)..hardyStart 0, ErrorTerm t|
+          = ‖∫ t in (1:ℝ)..hardyStart 0, ErrorTerm t‖ := (Real.norm_eq_abs _).symm
+        _ ≤ (M₀ + 2) * |hardyStart 0 - 1| :=
+            intervalIntegral.norm_integral_le_of_norm_le_const h_pw
+        _ ≤ (M₀ + 2) * hardyStart 0 := by
+            rw [abs_of_nonneg (by linarith)]
+            exact mul_le_mul_of_nonneg_left (by linarith) (by linarith)
+    -- MID: |∫_{hs0}^{hsK} ET| via block decomposition
+    -- ∫_{hs0}^{hsK} = ∑_{k=0}^{K-1} ∫_{block k} and each block ≤ C_bl·√(k+2)
+    -- With K ≤ √T, sum ≤ C_bl·∑√(k+2) ≤ C_bl·K·√(K+2) ≤ C_bl·√T·√(√T+2)
+    -- This is O(T^{3/4}), not O(√T). Need alternating cancellation.
+    -- For now: use sorry (needs block_sum_sqrt_bound)
     have h_mid : |∫ t in Ioc (hardyStart 0) (hardyStart K), ErrorTerm t| ≤
         C_bl * Real.sqrt T + C₂ := by
       sorry
