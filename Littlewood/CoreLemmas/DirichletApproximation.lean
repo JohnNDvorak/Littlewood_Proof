@@ -628,6 +628,42 @@ theorem exists_int_approx_period {p : ℝ} (hp : 0 < p) (x : ℝ) :
   obtain ⟨m, hm⟩ := distToMultiple_witness hp x
   exact ⟨m, le_trans hm (distToMultiple_le_half_period hp x)⟩
 
+/-- An interval [c,d] of length ≥ 2π contains some φ + m·2π. -/
+private lemma exists_int_mul_in_interval' (φ c d : ℝ) (hcd : 2 * Real.pi ≤ d - c) :
+    ∃ m : ℤ, c ≤ φ + m * (2 * Real.pi) ∧ φ + m * (2 * Real.pi) ≤ d := by
+  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
+  set m := ⌈(c - φ) / (2 * Real.pi)⌉ with hm_def
+  refine ⟨m, ?_, ?_⟩
+  · have h1 : (c - φ) / (2 * Real.pi) ≤ m := Int.le_ceil _
+    have h2 : c - φ ≤ m * (2 * Real.pi) := by rwa [div_le_iff₀ hpi] at h1
+    linarith
+  · have hceil : (↑m : ℝ) < (c - φ) / (2 * Real.pi) + 1 := Int.ceil_lt_add_one _
+    nlinarith [mul_lt_mul_of_pos_right hceil hpi, (div_mul_cancel₀ (c - φ) (ne_of_gt hpi))]
+
+/-- K=1 case: if |γ|·(b-a) ≥ 2π, then ∃ t₀ ∈ [a,b] with γ·t₀ - φ = m·2π exactly.
+    Proof by IVT on the linear function t ↦ γ·t. -/
+private lemma one_dim_exact_hit (γ φ a b : ℝ) (hab : a ≤ b)
+    (hcover : 2 * Real.pi ≤ |γ| * (b - a)) :
+    ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧ ∃ m : ℤ, t0 * γ - φ - m * (2 * Real.pi) = 0 := by
+  by_cases hγ : 0 ≤ γ
+  · have habs : |γ| = γ := abs_of_nonneg hγ
+    rw [habs] at hcover
+    obtain ⟨m, hm1, hm2⟩ := exists_int_mul_in_interval' φ (γ * a) (γ * b) (by nlinarith)
+    have hcont : Continuous (fun t => γ * t) := continuous_const.mul continuous_id
+    obtain ⟨t0, ⟨ht0a, ht0b⟩, ht0eq⟩ :
+        ∃ t0 ∈ Set.Icc a b, γ * t0 = φ + m * (2 * Real.pi) :=
+      intermediate_value_Icc hab hcont.continuousOn ⟨hm1, hm2⟩
+    exact ⟨t0, ht0a, ht0b, m, by linarith⟩
+  · push_neg at hγ
+    have habs : |γ| = -γ := abs_of_neg hγ
+    rw [habs] at hcover
+    obtain ⟨m, hm1, hm2⟩ := exists_int_mul_in_interval' φ (γ * b) (γ * a) (by nlinarith)
+    have hcont : Continuous (fun t => γ * t) := continuous_const.mul continuous_id
+    obtain ⟨t0, ⟨ht0a, ht0b⟩, ht0eq⟩ :
+        ∃ t0 ∈ Set.Icc a b, γ * t0 = φ + m * (2 * Real.pi) :=
+      intermediate_value_Icc' hab hcont.continuousOn ⟨hm1, hm2⟩
+    exact ⟨t0, ht0a, ht0b, m, by linarith⟩
+
 /-- **Inhomogeneous simultaneous Dirichlet approximation on an interval.**
 
     Given K frequencies γ₁,...,γ_K with |γ_k| ≥ 1, target phases φ₁,...,φ_K,
@@ -674,8 +710,36 @@ theorem inhomogeneous_dirichlet_on_interval
   · -- K = 0: no frequencies, any t₀ works
     subst hK
     exact ⟨a, le_refl a, le_of_lt hab, fun k => Fin.elim0 k⟩
-  · -- K ≥ 1: K-torus pigeonhole argument (Cassels 1957)
-    sorry
+  · -- K ≥ 1: split into K=1 (IVT) and K≥2 (pigeonhole)
+    obtain ⟨K', rfl⟩ : ∃ K', K = K' + 1 := Nat.exists_eq_succ_of_ne_zero hK
+    rcases K' with _ | K''
+    · -- K = 1: IVT gives exact hit (distance 0 ≤ 1/2)
+      -- The single frequency γ₀ satisfies |γ₀| ≥ 1, and b - a ≥ 4π,
+      -- so |γ₀|·(b-a) ≥ 4π > 2π. IVT gives t₀ with γ₀·t₀ = φ₀ + m·2π.
+      have hγ0 := hγ_lb ⟨0, by omega⟩
+      have hlen1 : (2 * Real.pi / (1 / 2)) ^ 1 ≤ b - a := hlen
+      rw [pow_one] at hlen1
+      have hba : 0 ≤ b - a := by linarith
+      -- |γ₀|·(b-a) ≥ 1·(4π) = 4π ≥ 2π
+      have hcover : 2 * Real.pi ≤ |γ ⟨0, by omega⟩| * (b - a) := by
+        have hpi_pos : (0 : ℝ) < Real.pi := Real.pi_pos
+        have h4pi : 2 * Real.pi ≤ 2 * Real.pi / (1 / 2) := by
+          have : 2 * Real.pi / (1 / 2) = 4 * Real.pi := by ring
+          rw [this]; linarith
+        calc 2 * Real.pi ≤ 2 * Real.pi / (1 / 2) := h4pi
+          _ ≤ b - a := hlen1
+          _ = 1 * (b - a) := (one_mul _).symm
+          _ ≤ |γ ⟨0, by omega⟩| * (b - a) :=
+            mul_le_mul_of_nonneg_right hγ0 hba
+      obtain ⟨t0, ht0a, ht0b, m, hm⟩ :=
+        one_dim_exact_hit (γ ⟨0, by omega⟩) (φ ⟨0, by omega⟩) a b (le_of_lt hab) hcover
+      refine ⟨t0, ht0a, ht0b, fun k => ?_⟩
+      have hk0 : k = ⟨0, by omega⟩ := by ext; omega
+      subst hk0
+      exact ⟨m, by rw [hm, abs_zero]; norm_num⟩
+    · -- K ≥ 2: K-torus pigeonhole argument (Cassels 1957)
+      -- Requires Minkowski/Blichfeldt lattice theorem (not in Mathlib).
+      sorry
 
 /-- Variant with norm notation: `‖·‖` = `|·|` on ℝ. -/
 theorem inhomogeneous_dirichlet_on_interval_norm
