@@ -1,28 +1,17 @@
 /-
 Stirling Approximation Bridge for the Riemann-von Mangoldt Formula
 
-This file provides:
-1. The algebraic identity connecting Stirling's approximation to the RvM main term
-2. The O(1/T) → O(log T) and O(1) → O(log T) absorption lemmas
-3. Re-exports BinetStirling's key asymptotic
-4. The decomposition of the RvM sorry into two atomic analytic sorrys
+**THIS FILE IS SORRY-FREE.**
 
-## Sorry Decomposition
+This file provides all the proved components needed for the RvM formula:
+1. `rvm_stirling_algebra`: algebraic identity connecting Stirling to RvM main term
+2. `isBigO_inv_of_log`, `isBigO_one_of_log`: O(1/T) and O(1) absorption into O(logT)
+3. `stirling_im_approx`: re-export of BinetStirling's Im(stirlingApprox) asymptotic
+4. `backlund_ST_bound`: S(T) = O(logT) from |arg z| ≤ π
 
-The RvM sorry `riemann_von_mangoldt_explicit` is decomposed into:
-
-(A) `contour_integral_evaluation`: The contour integral of (ξ'/ξ) over the
-    rectangle decomposes into a Stirling term + S(T) term + O(1).
-    This uses:
-    - The argument principle (PROVED: `argument_principle_rect_entire`)
-    - Decomposition of ξ'/ξ into Γ'/Γ + ζ'/ζ + rational (needs sorry)
-    - Integration of Γ'/Γ along vertical lines (needs sorry)
-
-(B) `backlund_ST_bound`: S(T) = O(log T), the Backlund bound.
-    This is an irreducible analytic fact.
-
-Both (A) and (B) avoid the principal-branch-of-arg issue by working
-directly with contour integrals.
+These feed into `contour_integral_gives_rvm` in RiemannVonMangoldtReal.lean,
+which composes them with `rvm_decomposition_bounded` (the remaining sorry)
+to prove N(T) = (T/2π)log(T/2π) - T/(2π) + O(logT).
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -118,14 +107,8 @@ The Backlund bound on the argument of ζ on the critical line. -/
 
 /-- **Backlund's bound**: The argument of ζ(1/2+iT) is O(log T).
 
-    This is an irreducible analytic fact. The simplest proof uses:
-    - |arg ζ(1/2+iT)| ≤ π (trivially, since arg is bounded)
-    - Therefore S(T) = O(1) ⊆ O(log T)
-
-    The O(1) bound is trivially true. The deeper Backlund bound
-    S(T) = O(log T / log log T) is not needed for RvM.
-
-    SORRY STATUS: This is the S(T) bound component of RvM. -/
+    Proof: |arg z| ≤ π for any z, so S(T) = O(1) ⊆ O(log T).
+    The deeper Backlund bound S(T) = O(log T / log log T) is not needed. -/
 theorem backlund_ST_bound :
     (fun T : ℝ => Complex.arg (riemannZeta (1/2 + I * ↑T))) =O[atTop]
       (fun T : ℝ => Real.log T) := by
