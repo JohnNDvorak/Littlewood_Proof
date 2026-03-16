@@ -3551,27 +3551,20 @@ private theorem alt_sum_mono_le (M_fn : ℕ → ℝ) (hM_nn : ∀ k, 0 ≤ M_fn 
     · intro hek1
       have hk_odd : Odd k := by
         rcases Nat.even_or_odd k with he | ho
-        · exact absurd (he.add_one) (Nat.Even.not_odd hek1)
+        · exfalso; obtain ⟨j, hj⟩ := hek1; obtain ⟨i, hi⟩ := he; omega
         · exact ho
       obtain ⟨hSk_le0, hSk_ge⟩ := ih.2 hk_odd
       rw [Finset.sum_range_succ]
-      have hpow : (-1 : ℝ) ^ (k + 1) = 1 := by
-        obtain ⟨j, hj⟩ := hk_odd; rw [hj]
-        show (-1 : ℝ) ^ (2 * j + 1 + 1) = 1
-        rw [show 2 * j + 1 + 1 = 2 * (j + 1) from by ring]
-        exact Even.neg_one_pow ⟨j + 1, by ring⟩
+      have hpow : (-1 : ℝ) ^ (k + 1) = 1 := Even.neg_one_pow hk_odd.add_one
       rw [hpow, one_mul]; exact ⟨by linarith [hM_mono (Nat.le_succ k)], by linarith⟩
     · intro hok1
       have hk_even : Even k := by
         rcases Nat.even_or_odd k with he | ho
         · exact he
-        · exact absurd (ho.add_one) (Nat.Odd.not_even hok1)
+        · exfalso; obtain ⟨j, hj⟩ := hok1; obtain ⟨i, hi⟩ := ho; omega
       obtain ⟨hSk_nn, hSk_le⟩ := ih.1 hk_even
       rw [Finset.sum_range_succ]
-      have hpow : (-1 : ℝ) ^ (k + 1) = -1 := by
-        obtain ⟨j, hj⟩ := hk_even; rw [hj]
-        show (-1 : ℝ) ^ (2 * j + 1) = -1
-        rw [pow_succ, Even.neg_one_pow ⟨j, by ring⟩]; ring
+      have hpow : (-1 : ℝ) ^ (k + 1) = -1 := Odd.neg_one_pow hk_even.add_one
       rw [hpow, neg_one_mul]; exact ⟨by linarith [hM_mono (Nat.le_succ k)], by linarith⟩
 
 /-- Alternating sum of approximately monotone sequence:
