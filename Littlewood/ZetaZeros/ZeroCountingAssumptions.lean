@@ -1,18 +1,13 @@
 /-
-Standalone sorry'd instances for zero-counting hypotheses.
-
-This file provides global instances of ZeroCountingLowerBoundHyp,
-ZeroCountingSpecialValuesHyp, and FirstZeroOrdinateHyp WITHOUT importing
+Standalone sorry'd instance for ZeroCountingLowerBoundHyp WITHOUT importing
 Assumptions.lean. This breaks the import cycle:
 
   Assumptions → CriticalAssumptions → ... → PerronExplicitFormulaProvider
 
 allowing PerronExplicitFormulaProvider to import this file directly.
 
-The instances are sorry'd pending formalization of:
+The instance is sorry'd pending formalization of:
 - N(T) ≥ T/(3π) log T for T ≥ T₀ (Riemann-von Mangoldt formula)
-- N(14) = 0 (first zero at γ₁ ≈ 14.134...)
-- γ₁ ∈ (14.13, 14.14) (numerical computation)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -27,9 +22,5 @@ namespace ZetaZeros
     This is a consequence of the Riemann-von Mangoldt formula. -/
 instance zeroCountingLowerBound_from_rvm : ZeroCountingLowerBoundHyp where
   lower_bound := by sorry
-
-/-- The first zeta zero ordinate γ₁ lies in (14.13, 14.14). -/
-instance firstZeroOrdinate_numerical : FirstZeroOrdinateHyp where
-  bounds := by sorry
 
 end ZetaZeros

@@ -34,12 +34,9 @@ import Littlewood.Aristotle.Standalone.PerronCriticalLineBridge
 import Littlewood.Aristotle.ZeroFreeRegionV3
 import Littlewood.Aristotle.Standalone.KroneckerEquidistribution
 import Littlewood.Aristotle.Standalone.RHPiTowerHeightBudget
--- Note: ZeroCountingLowerBoundHyp and FirstZeroOrdinateHyp are not in scope
--- globally because importing Assumptions.lean would create a cycle.
--- ZeroCountingAssumptions.lean is cycle-free and compiles, but importing it
--- exposes 2 additional sorry warnings (lower_bound + first_zero_ordinate).
--- Local sorry'd instances are used inside proofs that need them to keep
--- the global sorry count minimal.
+import Littlewood.ZetaZeros.ZeroCountingAssumptions
+-- ZeroCountingAssumptions provides ZeroCountingLowerBoundHyp instance
+-- (cycle-free, imports only ZeroCountingFunction).
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -2023,9 +2020,8 @@ the shifted lattice argument. -/
     Sets ε = 1/2, t₀ = log(max(X, perronThreshold(hRH, T)) + 1).
     Three sub-gaps, two remaining as sorry:
 
-    **Gap 1 (CLOSED via haveI)**: ZeroCountingLowerBoundHyp import cycle.
-    Injected inline: `haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩`.
-    Justified by the proved instance in Assumptions.lean (inaccessible here).
+    **Gap 1 (CLOSED via import)**: ZeroCountingLowerBoundHyp now provided by
+    ZeroCountingAssumptions.lean import (cycle-free). No inline sorry needed.
 
     **Gap 2 (sorry: perronThreshold growth bound)**:
     Need ∃ T ≥ 4 with tower_cap(T, 1/2) ≥ max(X, perronThreshold(hRH, T)) + 1.
@@ -2099,8 +2095,9 @@ private lemma tower_cap_dominates_perronThreshold
 
     **SORRY STATUS**: Targeted sorry for the K-torus pigeonhole argument.
     The 1D case (inhomogeneous_dirichlet_1d) is proved in
-    CoreLemmas/DirichletApproximation.lean. The K-dimensional extension
-    requires the shifted-lattice partition argument (Cassels 1957). -/
+    CoreLemmas/DirichletApproximation.lean. Bridge proved: sorry delegated to
+    `DirichletApprox.inhomogeneous_dirichlet_on_interval` (K-torus covering).
+    The Finset-to-Fin enumeration and norm conversions are sorry-free. -/
 private lemma simultaneous_dirichlet_on_interval
     {T : ℝ} (hT4 : 4 ≤ T) (hNpos : 0 < N T)
     (phase : ℂ → ℝ) (a b : ℝ) (hab : a < b)
@@ -2122,11 +2119,7 @@ private theorem seed_witness_from_perron_core
         ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
         (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
-  -- === GAP 1: ZeroCountingLowerBoundHyp (import cycle workaround) ===
-  -- The instance lives in Assumptions.lean which transitively imports this file.
-  -- We inject it here; the sorry is justified by the proved instance in
-  -- Assumptions.lean (just inaccessible from this file).
-  haveI : ZeroCountingLowerBoundHyp := ⟨sorry⟩
+  -- GAP 1 CLOSED: ZeroCountingLowerBoundHyp now in scope via ZeroCountingAssumptions import.
   -- === STEP 1: Tower-cap domination (Gap 2A) ===
   -- Get T ≥ 4 where tower_cap(T) ≥ max(X, perronThreshold(hRH, T)) + 1.
   -- This uses `tower_cap_dominates_perronThreshold` which encapsulates the
