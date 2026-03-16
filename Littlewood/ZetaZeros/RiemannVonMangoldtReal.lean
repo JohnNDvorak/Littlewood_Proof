@@ -260,16 +260,18 @@ theorem exists_nearby_non_ordinate (T : ℝ) :
       |N(T) - (T/2π) log(T/2π) + T/2π| ≤ C · log T
 
     ## Sorry status
-    This is the single remaining sorry for the RvM formula. It packages
-    the deep analytic content:
-    (a) Stirling's approximation for the Gamma function integral
-    (b) The Backlund bound S(T) = O(log T)
-    (c) Standard zeta log-derivative bounds on vertical lines
+    Delegates to `contour_integral_gives_rvm` in StirlingForRvM.lean via a
+    `ring` rewrite (|x - a + b| = |x - (a - b)|). The sorry is isolated
+    there as a contour integral evaluation problem.
 
-    All algebraic and set-theoretic infrastructure is proved:
+    ## Proved infrastructure feeding into this:
     - `xi_zero_count_eq_N`: N(T) = #{zeros of RiemannXiAlt in rectangle}
     - `argument_principle_rect_entire`: log-integral = zero count
     - `riemannXiAlt_ne_zero_of_re_ge_one/le_zero`: no zeros outside critical strip
+    - `rvm_stirling_algebra`: algebraic identity for the main term
+    - `backlund_ST_bound`: S(T) = O(log T) from |arg z| ≤ π
+    - `stirling_im_approx`: Im(stirlingApprox) = main term + O(1/T)
+    - `isBigO_inv_of_log`, `isBigO_one_of_log`: absorption lemmas
 
     References: Titchmarsh, "Theory of the Riemann Zeta Function", Thm 9.4. -/
 theorem riemann_von_mangoldt_explicit :
