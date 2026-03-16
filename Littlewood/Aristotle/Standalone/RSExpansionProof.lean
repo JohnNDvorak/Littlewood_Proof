@@ -4618,13 +4618,18 @@ private theorem errorTerm_first_moment_sqrt :
         have ht_le_2pi : t ≤ 2 * Real.pi := by
           calc t ≤ hardyStart 0 := ht.2
             _ = 2 * Real.pi := by unfold hardyStart; push_cast; ring
-        -- ErrorTerm = hardyZ - MainTerm, so |MainTerm| = |hardyZ - ErrorTerm| ≤ |hardyZ| + |ErrorTerm|
-        -- But we want |ErrorTerm| ≤ |hardyZ| + |MainTerm|, which gives |ErrorTerm| ≤ M₀ + |MainTerm|
-        -- We just need |ErrorTerm| ≤ M₀ + 2 which follows from |hardyZ| ≤ M₀ and |MainTerm| ≤ 2
-        -- Use: ErrorTerm = hardyZ - MainTerm, so |ErrorTerm| ≤ |hardyZ| + |MainTerm|
-        -- For |MainTerm|: on [1, 2π], the sum has ≤ 1 term, each bounded by 2
-        -- Since this is fiddly with Lean API, use sorry for this bound
-        have hMT : |MainTerm t| ≤ 2 := by sorry
+        have hMT : |MainTerm t| ≤ 2 := by
+          unfold MainTerm
+          have hfl_le : Nat.floor (Real.sqrt (t / (2 * Real.pi))) ≤ 1 := by
+            apply Nat.floor_le_of_le; push_cast
+            calc Real.sqrt (t / (2 * Real.pi)) ≤ Real.sqrt 1 :=
+                  Real.sqrt_le_sqrt ((div_le_one (by positivity : (0:ℝ) < 2 * Real.pi)).mpr ht_le_2pi)
+              _ = 1 := Real.sqrt_one
+          set N := Nat.floor (Real.sqrt (t / (2 * Real.pi)))
+          rcases N with _ | _ | _
+          · simp
+          · simp [Real.log_one]; exact Real.abs_cos_le_one _
+          · omega
         calc |ErrorTerm t| = |hardyZ t - MainTerm t| := rfl
           _ ≤ |hardyZ t| + |MainTerm t| := abs_sub _ _
           _ ≤ M₀ + 2 := by linarith
