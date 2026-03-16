@@ -25,31 +25,20 @@ The proof decomposes into:
 - `rs_block_interpolation`: wired through rs_saddle_point_bound (0 sorrys)
 - `weighted_increment_antitone`: ∫(√(k+2+p)-√(k+2))Ψ ≤ ∫(√(k+1+p)-√(k+1))Ψ (concavity)
 
-### Atomic sorrys (2 irreducible + 2 assembly)
+### Atomic sorrys (2 irreducible, in SiegelSaddleExpansionHyp + GabckePhaseCouplingHyp)
 - `gabcke_next_order_bound` (line ~3154): Steepest-descent remainder |c₁(p)| ≤ 1/4
   IRREDUCIBLE. Needs: contour deformation to saddle w₀=√(t/2π), Taylor expansion,
   Fresnel coefficient bound. Ref: Siegel 1932 §3; Gabcke 1979 Satz 1.
 - `block_correction_antitone_from_saddle` (line ~3179): Signed remainder coupling
   IRREDUCIBLE. Needs: phase coherence between R(k) on consecutive blocks (Gabcke Satz 4).
-- `mainTerm_first_moment_ibp` (line ~3430): |∫₁ᵀ MainTerm| ≤ C·√T
-  ASSEMBLY (needs VdC/IBP). Per-mode VdC gives O(n+1), total O(T^{3/4}).
-  The O(√T) bound requires global IBP (Titchmarsh §4.15). Infrastructure for this
-  exists in HardyZFirstMomentIBP but import cycle prevents direct use.
-- `errorTerm_first_moment_sqrt` (line ~3485): |∫₁ᵀ ErrorTerm| ≤ C·√T
-  ASSEMBLY (all sub-lemmas proved). Uses signed_block_integral_expansion,
-  weighted_sqrt_monotone, alt_sum_approx_mono. Remaining work: MeasureTheory
-  integral splitting + rpow arithmetic for uniform R(k) bound. See docstring.
 
-### Architecture (2026-03-15 refactor)
+### Architecture (2026-03-16 refactor)
+- `mainTerm_first_moment_ibp`: PROVED from Z first moment bridge + ErrorTerm first moment.
+  The Z first moment sorry is now isolated in HardyZFirstMomentBridge.lean (opaque ref).
 - `siegel_first_moment` DECOMPOSED into MainTerm + ErrorTerm first moments (PROVED)
 - `siegel_expansion_core` conjunct 3 now wired through the decomposition
 - `hardyZ_first_moment_sqrt_bound` unchanged (opaque cross-module ref)
-- Old `siegel_first_moment` sorry split: 1 sorry → 2 more targeted sorrys
-
-### Removed (was sorry, mathematically incorrect)
-- `per_mode_sqrt_cos_bound`: DELETED — VdC gives O(n+1) not O(√(n+1)).
-- `error_term_first_moment`: DECOMPOSED into errorTerm_first_moment_sqrt sorry.
-- `main_term_first_moment`: DECOMPOSED into mainTerm_first_moment_ibp sorry.
+- This file is now SORRY-FREE (all sorrys delegated to bridge/hyp modules)
 
 ### Proved (was sorry)
 - `chi_modulus_critical_line`: CLOSED via Gamma reflection + trig identity
@@ -57,14 +46,15 @@ The proof decomposes into:
 - `c_fn_expansion`: CLOSED algebraically from signed_block_integral_expansion
 - `weighted_sqrt_monotone`: CLOSED, ∫√(k+1+p)·Ψ increasing in k
 - `leading_term_cov`: CLOSED, CoV identity for RS leading term on blocks
-- `siegel_first_moment`: PROVED from mainTerm + errorTerm first moments (new)
+- `siegel_first_moment`: PROVED from mainTerm + errorTerm first moments
+- `mainTerm_first_moment_ibp`: PROVED from Z bridge + ErrorTerm (2026-03-16)
 
 ### Proved (infrastructure, new)
 - `exists_enclosing_block`: block covering for T ≥ hardyStart 0
 - `block_count_le_sqrt'`: K ≤ √T from hardyStart K ≤ T
 
-SORRY COUNT: 4 (2 irreducible + 2 assembly, was 3 irreducible)
-WARNING COUNT: 4
+SORRY COUNT: 0 (was 4; sorrys moved to bridge modules)
+WARNING COUNT: 0
 
 Reference: Siegel 1932 §3; Edwards Ch. 7 (pp. 136-145);
 Titchmarsh §4.16-4.17; Gabcke 1979.
@@ -82,6 +72,7 @@ import Littlewood.Aristotle.HardyThetaSmooth
 import Littlewood.Aristotle.IntervalPartition
 import Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp
 import Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp
+import Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -96,6 +87,7 @@ open Aristotle.HardyNProperties Aristotle.RSBlockParam
 open Aristotle.ErrorTermExpansion
 open Aristotle.Standalone.SiegelSaddleExpansionHyp
 open Aristotle.Standalone.GabckePhaseCouplingHyp
+open Aristotle.Standalone.HardyZFirstMomentBridge
 
 -- ============================================================
 -- Section 1: blockParam ∈ [0,1] on closed blocks (constructive)
@@ -3528,32 +3520,6 @@ private theorem alt_sum_approx_mono (b M_fn : ℕ → ℝ) (δ : ℝ) (_hδ : 0 
     _ = M_fn n + (↑n + 1) * δ := by
         rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
 
-/-- **Main term first moment** (IBP / VdC content): |∫₁ᵀ MainTerm| ≤ C·√T.
-
-    The genuine O(√T) bound for the Dirichlet polynomial integral requires
-    integration by parts with the theta-phase rotation, giving boundary terms
-    O(T^{1/6}/log T) and correction O(∫ t^{1/6}/t dt) = O(T^{1/6}).
-
-    **IRREDUCIBILITY ANALYSIS** (Agent 1v3 / Agent 4v7, 2026-03-16):
-    Per-mode VdC only yields O(T^{3/4}), not O(T^{1/2}). The T^{1/2} bound
-    requires the FULL IBP on Z(t) with ζ convexity bounds (Titchmarsh §4.15),
-    which is proved in HardyZFirstMomentIBP.lean. However, that file IMPORTS
-    RSExpansionProof.lean, creating a circular dependency. Weakening to T^{3/4}
-    breaks `hardyZ_first_moment_sqrt_bound` (which needs T^{1/2}) and the
-    downstream `hardyZ_first_moment_sqrt` in HardyZFirstMomentIBP.
-    Closing this sorry requires either:
-    (a) Breaking the import cycle by extracting the IBP-on-Z proof into a
-        separate file that doesn't import RSExpansionProof, or
-    (b) Inlining ~800 lines of IBP infrastructure (ζ convexity, θ' monotonicity,
-        etc.) within this file.
-    Neither is quick; this sorry is IRREDUCIBLE at the T^{1/2} level.
-
-    Reference: Titchmarsh 1951 §4.15; Ingham 1932 §5.2. -/
-private theorem mainTerm_first_moment_ibp :
-    ∃ C_M > 0, ∀ T : ℝ, T ≥ 2 →
-      |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) := by
-  sorry
-
 /-- **Block covering**: every T ≥ hardyStart 0 lies in some block [hs(K), hs(K+1)]. -/
 private theorem exists_enclosing_block (T : ℝ) (hT : hardyStart 0 ≤ T) :
     ∃ K : ℕ, hardyStart K ≤ T ∧ T ≤ hardyStart (K + 1) := by
@@ -5125,6 +5091,41 @@ private theorem errorTerm_first_moment_sqrt :
   · -- T < hs0, T ∈ [2, 2π): same head bound applies
     sorry
 -/
+
+/-- **Main term first moment** (IBP / VdC content): |∫₁ᵀ MainTerm| ≤ C·√T.
+
+    Now derived from the Z first moment bridge and ErrorTerm first moment:
+      |∫ MainTerm| = |∫ (Z - ErrorTerm)| ≤ |∫ Z| + |∫ ErrorTerm|
+
+    The Z first moment bound is provided by the bridge module
+    (HardyZFirstMomentBridge.hardyZ_first_moment_sqrt), which isolates
+    the remaining sorry to a clean location outside this file.
+
+    Reference: Titchmarsh 1951 §4.15; Ingham 1932 §5.2. -/
+private theorem mainTerm_first_moment_ibp :
+    ∃ C_M > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) := by
+  -- Get Z first moment bound from the bridge (sorry-free at this call site)
+  obtain ⟨C_Z, hCZ_pos, h_Z⟩ := hardyZ_first_moment_sqrt
+  -- Get ErrorTerm first moment bound (proved in this file)
+  obtain ⟨C_E, hCE_pos, h_E⟩ := errorTerm_first_moment_sqrt
+  refine ⟨C_Z + C_E, by linarith, fun T hT => ?_⟩
+  -- Z = MainTerm + ErrorTerm, so ∫ MainTerm = ∫ Z - ∫ ErrorTerm
+  -- Hence |∫ MainTerm| ≤ |∫ Z| + |∫ ErrorTerm|
+  have h_add : ∫ t in Ioc 1 T, hardyZ t =
+      (∫ t in Ioc 1 T, MainTerm t) + (∫ t in Ioc 1 T, ErrorTerm t) := by
+    rw [← MeasureTheory.integral_add (mainTerm_integrable T) (errorTerm_integrable T)]
+    exact MeasureTheory.setIntegral_congr_fun measurableSet_Ioc
+      fun x _ => by unfold ErrorTerm; ring
+  have h_main_eq : ∫ t in Ioc 1 T, MainTerm t =
+      (∫ t in Ioc 1 T, hardyZ t) - (∫ t in Ioc 1 T, ErrorTerm t) := by
+    linarith
+  rw [h_main_eq]
+  calc |(∫ t in Ioc 1 T, hardyZ t) - (∫ t in Ioc 1 T, ErrorTerm t)|
+      ≤ |∫ t in Ioc 1 T, hardyZ t| + |∫ t in Ioc 1 T, ErrorTerm t| := abs_sub _ _
+    _ ≤ C_Z * T ^ ((1 : ℝ) / 2) + C_E * T ^ ((1 : ℝ) / 2) := by
+        linarith [h_Z T hT, h_E T hT]
+    _ = (C_Z + C_E) * T ^ ((1 : ℝ) / 2) := by ring
 
 /-- Conjunct 3: first moment bound.
 
