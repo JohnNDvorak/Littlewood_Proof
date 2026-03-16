@@ -25,20 +25,24 @@ The proof decomposes into:
 - `rs_block_interpolation`: wired through rs_saddle_point_bound (0 sorrys)
 - `weighted_increment_antitone`: ∫(√(k+2+p)-√(k+2))Ψ ≤ ∫(√(k+1+p)-√(k+1))Ψ (concavity)
 
-### Atomic sorrys (ALL 4 are irreducible mathematical content)
+### Atomic sorrys (ALL 3 are irreducible mathematical content)
 - `gabcke_next_order_bound` (line ~3140): Steepest-descent remainder |c₁(p)| ≤ 1/4
   Needs: contour deformation to saddle w₀=√(t/2π), Taylor expansion of phase,
   Fresnel coefficient bound. Ref: Siegel 1932 §3; Gabcke 1979 Satz 1.
 - `block_correction_antitone_from_saddle` (line ~3161): Signed remainder coupling
   Needs: phase coherence between R(k) on consecutive blocks (Gabcke Satz 4).
   Cannot be derived from pointwise |R(k)| bounds alone.
-- `main_term_first_moment`: |∫₁ᵀ MainTerm| ≤ C·√T
-  The O(√(n+1)) per-mode bound was MATHEMATICALLY INCORRECT — correct bound
-  is O(n+1) via VdC 2nd derivative test, giving O(T^{3/4}) total from per-mode.
-  The genuine O(√T) bound needs global IBP on Z(t) (Titchmarsh §4.15) or
-  Atkinson–Heath-Brown exponential sum estimates. Irreducible analytic content.
-- `error_term_first_moment` (line ~3548): |∫₁ᵀ ErrorTerm| ≤ C·√T
-  Uses block decomposition + approximately-monotone alternating sum bound.
+- `siegel_first_moment` (line ~3430): |∫₁ᵀ Z(t) dt| ≤ C·√T
+  Needs: global IBP on Z(t) = Re[e^{iθ(t)}ζ(1/2+it)] (Titchmarsh §4.15).
+  The per-mode VdC approach gives only O(T^{3/4}) (per-mode bound is O(n+1),
+  NOT O(√(n+1)) as was previously claimed — that was mathematically incorrect).
+  Ref: Titchmarsh 1951 §4.15; Ingham 1932 §5.2.
+
+### Removed (was sorry, mathematically incorrect)
+- `per_mode_sqrt_cos_bound`: DELETED — claimed O(√(n+1)) per mode, but
+  VdC 2nd derivative test gives O(n+1). Total from per-mode is O(T^{3/4}).
+- `error_term_first_moment`: ABSORBED into siegel_first_moment direct sorry.
+- `main_term_first_moment`: ABSORBED into siegel_first_moment direct sorry.
 
 ### Proved (was sorry)
 - `chi_modulus_critical_line`: CLOSED via Gamma reflection + trig identity
@@ -51,9 +55,12 @@ The proof decomposes into:
 - `polynomial_mismatch_sum_bound`: ‖mismatch sum‖ ≤ 4√(k+1) on block k
 - `sqrt_block_le_sqrt_t_param`: √(k+1) ≤ √(t/(2π)+1) from hardyStart
 - `polynomial_mismatch_crude_order`: ‖mismatch sum‖ ≤ 4√(t/(2π)+1) (O(t^{1/4}))
+- `first_moment_from_main_and_error`: DELETED (dead code after siegel refactor)
+- `main_term_per_mode_bound`: DELETED (dead code after siegel refactor)
+- `main_term_first_moment_of_per_mode_sqrt`: DELETED (dead code after siegel refactor)
 
-SORRY COUNT: 4 (all irreducible — no assembly sorrys remain)
-WARNING COUNT: 4
+SORRY COUNT: 3 (all irreducible — no assembly sorrys remain)
+WARNING COUNT: 3
 
 Reference: Siegel 1932 §3; Edwards Ch. 7 (pp. 136-145);
 Titchmarsh §4.16-4.17; Gabcke 1979.
