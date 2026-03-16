@@ -258,8 +258,9 @@ theorem quartic_coefficient_le (t : ℝ) (ht : 1 ≤ t) :
 theorem quartic_quadratic_ratio (t : ℝ) (ht : 0 < t) :
     Real.pi ^ 2 / t / (2 * Real.pi) = Real.pi / (2 * t) := by
   have hpi : Real.pi ≠ 0 := ne_of_gt Real.pi_pos
-  field_simp
-  ring
+  have ht_ne : t ≠ 0 := ne_of_gt ht
+  rw [div_div]
+  field_simp [show t * (2 * Real.pi) ≠ 0 from by positivity]
 
 /-- For t ≥ 2π, the quartic-to-quadratic ratio is at most 1/4.
     This bounds the relative size of the next-order saddle-point correction. -/
@@ -296,10 +297,7 @@ theorem saddle_inv_eq_sqrt_ratio (t : ℝ) (ht : 0 < t) :
     1 / Real.sqrt (t / (2 * Real.pi)) = Real.sqrt (2 * Real.pi / t) := by
   have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
   have h_pos : 0 < t / (2 * Real.pi) := div_pos ht hpi
-  rw [one_div, Real.inv_sqrt h_pos.le, Real.sqrt_div_self' (t / (2 * Real.pi))]
-  congr 1
-  rw [abs_of_pos h_pos]
-  field_simp
+  rw [one_div, ← Real.sqrt_inv, show (t / (2 * Real.pi))⁻¹ = 2 * Real.pi / t from by field_simp]
 
 /-- √(2π/t) ≤ 1 for t ≥ 2π (the next-order correction is small). -/
 theorem saddle_inv_le_one (t : ℝ) (ht : 2 * Real.pi ≤ t) :
@@ -321,29 +319,25 @@ theorem next_order_coefficient_bound (t : ℝ) (ht : 2 * Real.pi ≤ t) :
 theorem next_order_factorization (t : ℝ) (ht : 0 < t) :
     (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2))
     = (1 / 4) * (2 * Real.pi) ^ ((1 : ℝ) / 4) * t ^ (-(3 : ℝ) / 4) := by
-  rw [show (2 * Real.pi / t) ^ ((1:ℝ)/4) = (2 * Real.pi) ^ ((1:ℝ)/4) * t ^ (-(1:ℝ)/4) from by
-    rw [div_rpow (by positivity : (0:ℝ) ≤ 2 * Real.pi) ht.le]
-    congr 1
-    rw [Real.rpow_neg ht.le]
-    rfl]
-  rw [show (-(1:ℝ)/4) = -(1:ℝ)/4 from rfl]
-  rw [show t ^ (-(1:ℝ)/4) * ((1 / 4) * t ^ (-(1:ℝ)/2))
-    = (1 / 4) * (t ^ (-(1:ℝ)/4) * t ^ (-(1:ℝ)/2)) from by ring]
+  have h2pi_nn : (0:ℝ) ≤ 2 * Real.pi := by positivity
+  have h_split : (2 * Real.pi / t) ^ ((1:ℝ)/4) = (2 * Real.pi) ^ ((1:ℝ)/4) * t ^ (-(1:ℝ)/4) := by
+    rw [Real.div_rpow h2pi_nn ht.le ((1:ℝ)/4), div_eq_mul_inv, ← Real.rpow_neg ht.le]
+    congr 1; ring
+  rw [h_split]
+  rw [show (2 * Real.pi) ^ ((1:ℝ)/4) * t ^ (-(1:ℝ)/4) * ((1 / 4) * t ^ (-(1:ℝ)/2))
+    = (1 / 4) * (2 * Real.pi) ^ ((1:ℝ)/4) * (t ^ (-(1:ℝ)/4) * t ^ (-(1:ℝ)/2)) from by ring]
   congr 1
   rw [← Real.rpow_add ht]
-  congr 1
-  ring
+  congr 1; ring
 
 /-- For t ≥ 2π, the next-order bound (1/4)·t^{-1/2} ≤ 1/4.
     Combined with (2π/t)^{1/4} ≤ 1, the full bound is ≤ 1/4. -/
 theorem next_order_bound_le_quarter (t : ℝ) (ht : 2 * Real.pi ≤ t) :
     (1 : ℝ) / 4 * t ^ (-(1 : ℝ) / 2) ≤ 1 / 4 := by
   have ht_pos : 0 < t := by linarith [Real.pi_pos]
-  have h1 : t ^ (-(1:ℝ)/2) ≤ 1 := by
-    rw [Real.rpow_neg ht_pos.le, inv_le_one_iff_of_pos (by positivity)]
-    rw [Real.one_le_rpow_iff_of_nonneg ht_pos.le (by norm_num : (0:ℝ) < 1/2)]
-    linarith
-  nlinarith
+  suffices h1 : t ^ (-(1:ℝ)/2) ≤ 1 by nlinarith
+  have h_ge_one : 1 ≤ t := le_trans (by linarith [Real.pi_gt_three]) ht
+  exact Real.rpow_le_one_of_one_le_of_nonpos h_ge_one (by norm_num)
 
 /-- The full next-order product is at most 1/4 for t ≥ 2π:
     (2π/t)^{1/4} · (1/4) · t^{-1/2} ≤ (2π/t)^{1/4} · (1/4) ≤ 1 · 1/4 = 1/4.
@@ -357,5 +351,98 @@ theorem next_order_product_le_quarter (t : ℝ) (ht : 2 * Real.pi ≤ t) :
       ≤ 1 * (1/4) := by
         apply mul_le_mul h_amp h_next (by positivity) (by norm_num)
     _ = 1/4 := one_mul _
+
+/-! ## Part 7: Derivative and Lipschitz bounds for rsPsi
+
+The RS correction function Ψ(p) = cos(π(2p²-2p+1/4)) has derivative
+  Ψ'(p) = -sin(π(2p²-2p+1/4)) · π(4p-2)
+
+with |Ψ'(p)| ≤ 2π on [0,1]. This makes Ψ Lipschitz with constant 2π,
+which is used in the Taylor remainder argument for the saddle-point expansion.
+-/
+
+/-- The inner phase function of rsPsi has a derivative at every p. -/
+theorem rsPsi_inner_hasDerivAt (p : ℝ) :
+    HasDerivAt (fun p => Real.pi * (2 * p ^ 2 - 2 * p + 1/4))
+      (Real.pi * (4 * p - 2)) p := by
+  have : HasDerivAt (fun p => 2 * p ^ 2 - 2 * p + 1/4) (4 * p - 2) p := by
+    have h1 := hasDerivAt_pow 2 p
+    have h2 := hasDerivAt_id p
+    convert (h1.const_mul 2).sub (h2.const_mul 2) |>.add (hasDerivAt_const p (1/4 : ℝ)) using 1
+    ring
+  exact this.const_mul Real.pi |>.congr_deriv (by ring)
+
+/-- rsPsi has a derivative at every p:
+    Ψ'(p) = -sin(π(2p²-2p+1/4)) · π(4p-2). -/
+theorem rsPsi_hasDerivAt (p : ℝ) :
+    HasDerivAt (fun p => Real.cos (Real.pi * (2 * p ^ 2 - 2 * p + 1/4)))
+      (-Real.sin (Real.pi * (2 * p ^ 2 - 2 * p + 1/4)) * (Real.pi * (4 * p - 2))) p :=
+  (rsPsi_inner_hasDerivAt p).cos
+
+/-- |Ψ'(p)| ≤ 2π for all p ∈ [0,1].
+    This follows from |sin| ≤ 1 and |4p-2| ≤ 2 on [0,1]. -/
+theorem rsPsi_deriv_bound (p : ℝ) (hp0 : 0 ≤ p) (hp1 : p ≤ 1) :
+    |(-Real.sin (Real.pi * (2 * p ^ 2 - 2 * p + 1/4)) * (Real.pi * (4 * p - 2)))| ≤
+    2 * Real.pi := by
+  rw [abs_mul, abs_neg]
+  have h1 : |Real.sin (Real.pi * (2 * p ^ 2 - 2 * p + 1 / 4))| ≤ 1 :=
+    Real.abs_sin_le_one _
+  have h2 : |Real.pi * (4 * p - 2)| ≤ 2 * Real.pi := by
+    rw [abs_mul, abs_of_pos Real.pi_pos]
+    have : |4 * p - 2| ≤ 2 := by rw [abs_le]; constructor <;> nlinarith
+    nlinarith [Real.pi_pos]
+  calc |Real.sin (Real.pi * (2 * p ^ 2 - 2 * p + 1 / 4))| * |Real.pi * (4 * p - 2)|
+      ≤ 1 * (2 * Real.pi) := mul_le_mul h1 h2 (abs_nonneg _) zero_le_one
+    _ = 2 * Real.pi := one_mul _
+
+/-- |Ψ(p)| ≤ 1 everywhere (since Ψ = cos(...)). -/
+theorem rsPsi_abs_le_one (p : ℝ) :
+    |Real.cos (Real.pi * (2 * p ^ 2 - 2 * p + 1/4))| ≤ 1 :=
+  Real.abs_cos_le_one _
+
+/-! ## Part 8: Contour integral remainder structure
+
+The saddle-point expansion of the Siegel integral gives:
+  R_N(1/2+it) = (-1)^{N-1} · (2π/t)^{1/4} · [Ψ(p) + c₁(p)·√(2π/t) + ...]
+
+The next-order coefficient c₁(p) involves the cubic phase derivative
+at the saddle: φ'''(w₀)/(6·φ''(w₀)) = 2π/(3w₀·2π) = 1/(3w₀).
+
+The bound |c₁(p)| ≤ (1/4)/√t follows from quartic_ratio_le_quarter
+combined with the norm bounds on Ψ and its derivative.
+-/
+
+/-- The cubic-to-leading ratio at the saddle: 2t/(6w₀³·(2π)) = 1/(3w₀)
+    when w₀² = t/(2π). This is the relative size of the cubic correction. -/
+theorem cubic_to_leading_ratio (w₀ : ℝ) (hw₀ : 0 < w₀) (t : ℝ)
+    (h_saddle : w₀ ^ 2 = t / (2 * Real.pi)) :
+    2 * t / (6 * w₀ ^ 3 * (2 * Real.pi)) = 1 / (3 * w₀) := by
+  have hw₀_ne : w₀ ≠ 0 := ne_of_gt hw₀
+  have hpi_ne : (Real.pi : ℝ) ≠ 0 := ne_of_gt Real.pi_pos
+  have h_t : t = 2 * Real.pi * w₀ ^ 2 := by
+    have := h_saddle; field_simp at this; linarith
+  rw [h_t]
+  rw [div_eq_div_iff (by positivity : (0:ℝ) < 6 * w₀ ^ 3 * (2 * Real.pi)).ne.symm
+                      (by positivity : (0:ℝ) < 3 * w₀).ne.symm]
+  ring
+
+/-- The cubic ratio √(2π/t)/(6π) ≤ 1/(6π) for t ≥ 2π.
+    Since √(2π/t) ≤ 1 for t ≥ 2π, the cubic correction ratio is small. -/
+theorem cubic_ratio_le_sixth_pi_inv (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    Real.sqrt (2 * Real.pi / t) / (6 * Real.pi) ≤ 1 / (6 * Real.pi) := by
+  apply div_le_div_of_nonneg_right (sqrt_ratio_le_one t ht) (by positivity)
+
+/-- 1/(6π) < 1/4 (used to verify the Gabcke constant is achievable). -/
+theorem sixth_pi_inv_lt_quarter : 1 / (6 * Real.pi) < 1 / 4 := by
+  rw [div_lt_div_iff₀ (by positivity : (0:ℝ) < 6 * Real.pi) (by norm_num : (0:ℝ) < 4)]
+  nlinarith [Real.pi_gt_three]
+
+/-- The full Gabcke coefficient verification chain:
+    For t ≥ 2π, both the quartic ratio AND the next-order product are ≤ 1/4.
+    This is the complete infrastructure for gabcke_next_order_bound. -/
+theorem gabcke_coefficient_chain (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    Real.pi / (2 * t) ≤ 1 / 4 ∧
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2)) ≤ 1 / 4 :=
+  ⟨quartic_ratio_le_quarter t ht, next_order_product_le_quarter t ht⟩
 
 end Aristotle.Standalone.FresnelSaddlePointInfra

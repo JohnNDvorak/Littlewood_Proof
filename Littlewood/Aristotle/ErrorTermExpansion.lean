@@ -570,4 +570,69 @@ theorem rsPsi_weighted_integral_lower (k : ℕ) :
     exact this.symm
   linarith
 
+-- ============================================================
+-- Section 5: rsPsi differentiability and derivative bounds
+-- ============================================================
+
+/-- rsPsi is differentiable everywhere. -/
+theorem rsPsi_differentiable : Differentiable ℝ rsPsi := by
+  unfold rsPsi
+  fun_prop
+
+/-- rsPsi has derivative -sin(π(2p²-2p+1/4))·π(4p-2) at every p. -/
+theorem rsPsi_hasDerivAt (p : ℝ) :
+    HasDerivAt rsPsi
+      (-Real.sin (Real.pi * (2 * p ^ 2 - 2 * p + 1/4)) * (Real.pi * (4 * p - 2))) p := by
+  unfold rsPsi
+  have hinner : HasDerivAt (fun p => Real.pi * (2 * p ^ 2 - 2 * p + 1/4))
+      (Real.pi * (4 * p - 2)) p := by
+    have : HasDerivAt (fun p => 2 * p ^ 2 - 2 * p + 1/4) (4 * p - 2) p := by
+      have h1 := hasDerivAt_pow 2 p
+      have h2 := hasDerivAt_id p
+      convert (h1.const_mul 2).sub (h2.const_mul 2) |>.add (hasDerivAt_const p (1/4 : ℝ)) using 1
+      ring
+    exact this.const_mul Real.pi |>.congr_deriv (by ring)
+  exact hinner.cos
+
+/-- The derivative of rsPsi is bounded by 2π on [0,1]:
+    |Ψ'(p)| ≤ 2π for p ∈ [0,1]. -/
+theorem rsPsi_deriv_abs_le (p : ℝ) (hp : p ∈ Icc (0 : ℝ) 1) :
+    ‖deriv rsPsi p‖ ≤ 2 * Real.pi := by
+  have hd := rsPsi_hasDerivAt p
+  rw [hd.deriv]
+  rw [Real.norm_eq_abs]
+  rw [abs_mul, abs_neg]
+  have h1 : |Real.sin (Real.pi * (2 * p ^ 2 - 2 * p + 1 / 4))| ≤ 1 :=
+    Real.abs_sin_le_one _
+  have h2 : |Real.pi * (4 * p - 2)| ≤ 2 * Real.pi := by
+    rw [abs_mul, abs_of_pos Real.pi_pos]
+    have : |4 * p - 2| ≤ 2 := by rw [abs_le]; constructor <;> nlinarith [hp.1, hp.2]
+    nlinarith [Real.pi_pos]
+  calc |Real.sin (Real.pi * (2 * p ^ 2 - 2 * p + 1 / 4))| * |Real.pi * (4 * p - 2)|
+      ≤ 1 * (2 * Real.pi) := mul_le_mul h1 h2 (abs_nonneg _) zero_le_one
+    _ = 2 * Real.pi := one_mul _
+
+/-- |Ψ(p)| ≤ 1 for all p (immediate from Ψ = cos(...)). -/
+theorem rsPsi_abs_le_one (p : ℝ) : |rsPsi p| ≤ 1 := by
+  unfold rsPsi; exact Real.abs_cos_le_one _
+
+/-- Ψ at the block boundaries: Ψ(0) = cos(π/4) = √2/2. -/
+theorem rsPsi_zero : rsPsi 0 = Real.cos (Real.pi / 4) := by
+  unfold rsPsi; congr 1; ring
+
+/-- Ψ at the block midpoint: Ψ(1/2) = cos(-π/4) = cos(π/4).
+    The phase 2·(1/4)-1+1/4 = -1/4, and cos is even. -/
+theorem rsPsi_half : rsPsi (1/2) = Real.cos (Real.pi / 4) := by
+  unfold rsPsi
+  rw [show Real.pi * (2 * (1 / 2 : ℝ) ^ 2 - 2 * (1 / 2) + 1 / 4) = -(Real.pi / 4) from by ring]
+  rw [Real.cos_neg]
+
+/-- Ψ at the right boundary: Ψ(1) = cos(π/4). -/
+theorem rsPsi_one : rsPsi 1 = Real.cos (Real.pi / 4) := by
+  unfold rsPsi; congr 1; ring
+
+/-- The symmetry Ψ(p) = Ψ(1-p): the phase is invariant under p ↦ 1-p. -/
+theorem rsPsi_symm (p : ℝ) : rsPsi p = rsPsi (1 - p) := by
+  unfold rsPsi; congr 1; ring
+
 end Aristotle.ErrorTermExpansion
