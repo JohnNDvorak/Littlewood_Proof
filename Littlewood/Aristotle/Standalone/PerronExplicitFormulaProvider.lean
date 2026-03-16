@@ -2099,13 +2099,38 @@ private lemma tower_cap_dominates_perronThreshold
     `DirichletApprox.inhomogeneous_dirichlet_on_interval` (K-torus covering).
     The Finset-to-Fin enumeration and norm conversions are sorry-free. -/
 private lemma simultaneous_dirichlet_on_interval
-    {T : ℝ} (hT4 : 4 ≤ T) (hNpos : 0 < N T)
+    {T : ℝ} (_hT4 : 4 ≤ T) (_hNpos : 0 < N T)
     (phase : ℂ → ℝ) (a b : ℝ) (hab : a < b)
     (hlen : (2 * Real.pi / (1 / 2)) ^ (N T : ℕ) ≤ b - a) :
     ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
       ∀ ρ ∈ (finite_zeros_le T).toFinset,
         ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ 1 / 2 := by
-  sorry
+  -- Bridge: enumerate the finset as Fin K and apply the abstract Dirichlet theorem.
+  set S := (finite_zeros_le T).toFinset with hS_def
+  set K := S.card with hK_def
+  let e : Fin K ≃ S := S.equivFin.symm
+  let γ : Fin K → ℝ := fun k => (e k).val.im
+  let φ : Fin K → ℝ := fun k => phase (e k).val
+  have hK_eq : K = N T := by
+    simp only [hK_def, hS_def]
+    rw [show N T = (zerosUpTo T).ncard from rfl]
+    exact (Set.ncard_eq_toFinset_card _ (finite_zeros_le T)).symm
+  have hlen' : (2 * Real.pi / (1 / 2)) ^ K ≤ b - a := by rwa [hK_eq]
+  have hdir :
+      ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
+        ∀ k : Fin K, ∃ m : ℤ, ‖t0 * γ k - φ k - m • (2 * Real.pi)‖ ≤ 1 / 2 :=
+    DirichletApprox.inhomogeneous_dirichlet_on_interval_zsmul K γ φ a b hab hlen'
+  obtain ⟨t0, ht0a, ht0b, happrox⟩ := hdir
+  refine ⟨t0, ht0a, ht0b, fun ρ hρ => ?_⟩
+  set k : Fin K := e.symm ⟨ρ, hρ⟩ with hk_def
+  have hek : e k = ⟨ρ, hρ⟩ := e.apply_symm_apply ⟨ρ, hρ⟩
+  obtain ⟨m, hm⟩ := happrox k
+  refine ⟨m, ?_⟩
+  have hval : (e k).val = ρ := congr_arg Subtype.val hek
+  have hγ : γ k = ρ.im := show (e k).val.im = ρ.im by rw [hval]
+  have hφ : φ k = phase ρ := show phase (e k).val = phase ρ by rw [hval]
+  simp only [hγ, hφ] at hm
+  exact hm
 
 private theorem seed_witness_from_perron_core
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
