@@ -4537,6 +4537,15 @@ private theorem one_lt_hs (k : ℕ) : (1 : ℝ) < hardyStart k := by
   have : (1 : ℝ) ≤ ((k : ℝ) + 1) ^ 2 := by nlinarith
   nlinarith [Real.pi_gt_three]
 
+/-- **Block-sum bound**: |∑_{k<K} ∫ block_k ET| ≤ C·√K for some universal C.
+    Uses alternating cancellation via alt_sum_approx_mono. -/
+private theorem block_sum_sqrt_bound :
+    ∃ C_S > 0, ∀ K : ℕ, 0 < K →
+      |∑ k ∈ Finset.range K,
+        ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t| ≤
+      C_S * Real.sqrt ((K : ℝ) + 1) := by
+  sorry
+
 private theorem errorTerm_first_moment_sqrt :
     ∃ C_E > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Ioc 1 T, ErrorTerm t| ≤ C_E * T ^ ((1 : ℝ) / 2) := by
@@ -4552,15 +4561,15 @@ private theorem errorTerm_first_moment_sqrt :
   have hM₀_nn : (0 : ℝ) ≤ M₀ :=
     le_trans (norm_nonneg _) (hM₀ 1 ⟨le_refl _, le_of_lt (one_lt_hs 0)⟩)
   -- Constants
-  set C_E := (M₀ + 2) * hardyStart 0 + C_bl + C₂ + 1
-  refine ⟨C_E, by show 0 < (M₀ + 2) * hardyStart 0 + C_bl + C₂ + 1; nlinarith [hardyStart_pos' 0],
+  set C_E := (M₀ + 2) * hardyStart 0 + 2 * C_bl + 2 * C₂ + 1
+  refine ⟨C_E, by show 0 < (M₀ + 2) * hardyStart 0 + 2 * C_bl + 2 * C₂ + 1; nlinarith [hardyStart_pos' 0],
     fun T hT => ?_⟩
   have hT_pos : (0 : ℝ) < T := by linarith
   have hT1 : (1 : ℝ) ≤ T ^ ((1 : ℝ) / 2) := by
     calc (1 : ℝ) = Real.sqrt 1 := by simp
       _ ≤ Real.sqrt T := Real.sqrt_le_sqrt (by linarith)
       _ = T ^ ((1:ℝ)/2) := Real.sqrt_eq_rpow T
-  have hCE_pos : (0 : ℝ) < C_E := by show 0 < (M₀ + 2) * hardyStart 0 + C_bl + C₂ + 1; nlinarith [hardyStart_pos' 0]
+  have hCE_pos : (0 : ℝ) < C_E := by show 0 < (M₀ + 2) * hardyStart 0 + 2 * C_bl + 2 * C₂ + 1; nlinarith [hardyStart_pos' 0]
   by_cases hhs : hardyStart 0 ≤ T
   · -- Case T ≥ hs0: block decomposition
     obtain ⟨K, hKl, hKh⟩ := exists_enclosing_block T hhs
@@ -4580,8 +4589,93 @@ private theorem errorTerm_first_moment_sqrt :
               exact mul_le_of_le_one_left (abs_nonneg _) hβ_le1
             linarith
         _ ≤ C_bl * Real.sqrt ((K : ℝ) + 2) + C₂ := by linarith [h_bl K]
-    -- Main case sorry: needs integral splitting + alternating sum assembly
-    sorry
+    -- Big-T case: split [1,T] = [1,hs0] + [hs0,hsK] + [hsK,T]
+    have hEI := errorTerm_integrable T
+    have h1hs : (1 : ℝ) ≤ hardyStart 0 := le_of_lt (one_lt_hs 0)
+    have hK_sqrt : (K : ℝ) ≤ Real.sqrt T := block_count_le_sqrt' K T hKl
+    -- Split [1,T] into [1,hsK] ∪ [hsK,T]
+    rw [Aristotle.IntervalPartition.integral_split_at ErrorTerm 1 (hardyStart K) T
+          (le_trans h1hs (hs_zero_le K)) hKl
+          (hEI.mono_set (Ioc_subset_Ioc_right hKl))
+          (hEI.mono_set fun t ht =>
+            ⟨lt_of_lt_of_le (one_lt_hs 0) (le_trans (hs_zero_le K) (le_of_lt ht.1)), ht.2⟩)]
+    -- Further split [1,hsK] = [1,hs0] ∪ [hs0,hsK]
+    rw [Aristotle.IntervalPartition.integral_split_at ErrorTerm 1 (hardyStart 0) (hardyStart K)
+          h1hs (hs_zero_le K)
+          (hEI.mono_set fun t ht =>
+            ⟨ht.1, le_trans ht.2 (le_trans (hs_zero_le K) hKl)⟩)
+          (hEI.mono_set fun t ht =>
+            ⟨lt_of_lt_of_le (one_lt_hs 0) (le_of_lt ht.1), le_trans ht.2 hKl⟩)]
+    -- HEAD: |∫₁^{hs0} ET| ≤ (M₀+2)·hs0
+    have h_head : |∫ t in Ioc 1 (hardyStart 0), ErrorTerm t| ≤ (M₀ + 2) * hardyStart 0 := by
+      sorry
+    -- MID: |∫_{hs0}^{hsK} ET| uses block_sum_sqrt_bound
+    have h_mid : |∫ t in Ioc (hardyStart 0) (hardyStart K), ErrorTerm t| ≤
+        C_bl * Real.sqrt T + C₂ := by
+      sorry
+    -- Combine
+    calc |((∫ t in Ioc 1 (hardyStart 0), ErrorTerm t) +
+          (∫ t in Ioc (hardyStart 0) (hardyStart K), ErrorTerm t)) +
+          (∫ t in Ioc (hardyStart K) T, ErrorTerm t)|
+        ≤ (|∫ t in Ioc 1 (hardyStart 0), ErrorTerm t| +
+           |∫ t in Ioc (hardyStart 0) (hardyStart K), ErrorTerm t|) +
+          |∫ t in Ioc (hardyStart K) T, ErrorTerm t| := by
+          linarith [abs_add_le (∫ t in Ioc 1 (hardyStart 0), ErrorTerm t)
+            (∫ t in Ioc (hardyStart 0) (hardyStart K), ErrorTerm t),
+            abs_add_le ((∫ t in Ioc 1 (hardyStart 0), ErrorTerm t) +
+              (∫ t in Ioc (hardyStart 0) (hardyStart K), ErrorTerm t))
+              (∫ t in Ioc (hardyStart K) T, ErrorTerm t)]
+      _ ≤ ((M₀ + 2) * hardyStart 0 + (C_bl * Real.sqrt T + C₂)) +
+            (C_bl * Real.sqrt ((K : ℝ) + 2) + C₂) := by
+          linarith [h_head, h_mid, h_tail]
+      _ ≤ C_E * T ^ ((1:ℝ)/2) := by
+          -- All terms are O(1) or O(√T)
+          have hSqrt_eq : Real.sqrt T = T ^ ((1:ℝ)/2) := Real.sqrt_eq_rpow T
+          -- √(K+2) ≤ √(√T+2) ≤ √T for T ≥ hs0 ≥ 2π > 4
+          have hT4 : (4 : ℝ) ≤ T := by
+            calc (4 : ℝ) ≤ hardyStart 0 := by
+                  unfold hardyStart; push_cast; nlinarith [Real.pi_gt_three]
+              _ ≤ T := hhs
+          have hSqrtT2 : Real.sqrt T + 2 ≤ T := by
+            have : Real.sqrt T ≤ T - 2 := by
+              rw [← Real.sqrt_sq (by linarith : (0:ℝ) ≤ T - 2)]
+              exact Real.sqrt_le_sqrt (by nlinarith)
+            linarith
+          have hK2_le : Real.sqrt ((K : ℝ) + 2) ≤ Real.sqrt T := by
+            exact Real.sqrt_le_sqrt (by linarith [hK_sqrt, hSqrtT2])
+          -- (M₀+2)·hs0 ≤ (M₀+2)·hs0 · T^{1/2} since T^{1/2} ≥ 1
+          -- C_bl·√T = C_bl · T^{1/2}
+          -- C₂ ≤ C₂ · T^{1/2}
+          -- Total ≤ ((M₀+2)·hs0 + C_bl + C_bl + C₂ + C₂) · T^{1/2}
+          calc ((M₀ + 2) * hardyStart 0 + (C_bl * Real.sqrt T + C₂)) +
+                (C_bl * Real.sqrt ((K : ℝ) + 2) + C₂)
+              ≤ (M₀ + 2) * hardyStart 0 + C_bl * Real.sqrt T + C₂ +
+                C_bl * Real.sqrt T + C₂ := by
+                have : C_bl * Real.sqrt ((K : ℝ) + 2) ≤ C_bl * Real.sqrt T :=
+                  mul_le_mul_of_nonneg_left hK2_le (le_of_lt hCbl)
+                linarith
+            _ = (M₀ + 2) * hardyStart 0 + 2 * C_bl * Real.sqrt T + 2 * C₂ := by ring
+            _ ≤ (M₀ + 2) * hardyStart 0 * T ^ ((1:ℝ)/2) +
+                2 * C_bl * T ^ ((1:ℝ)/2) + 2 * C₂ * T ^ ((1:ℝ)/2) := by
+                rw [hSqrt_eq]
+                have h1 : (M₀ + 2) * hardyStart 0 ≤
+                    (M₀ + 2) * hardyStart 0 * T ^ ((1:ℝ)/2) := by
+                  calc (M₀ + 2) * hardyStart 0
+                      = (M₀ + 2) * hardyStart 0 * 1 := by ring
+                    _ ≤ (M₀ + 2) * hardyStart 0 * T ^ ((1:ℝ)/2) := by
+                        exact mul_le_mul_of_nonneg_left hT1
+                          (mul_nonneg (by linarith) (le_of_lt (hardyStart_pos' 0)))
+                have h2 : 2 * C₂ ≤ 2 * C₂ * T ^ ((1:ℝ)/2) := by
+                  calc 2 * C₂ = 2 * C₂ * 1 := by ring
+                    _ ≤ 2 * C₂ * T ^ ((1:ℝ)/2) := by
+                        exact mul_le_mul_of_nonneg_left hT1 (by linarith)
+                linarith
+            _ = ((M₀ + 2) * hardyStart 0 + 2 * C_bl + 2 * C₂) * T ^ ((1:ℝ)/2) := by ring
+            _ ≤ C_E * T ^ ((1:ℝ)/2) := by
+                gcongr
+                show (M₀ + 2) * hardyStart 0 + 2 * C_bl + 2 * C₂ ≤
+                  (M₀ + 2) * hardyStart 0 + 2 * C_bl + 2 * C₂ + 1
+                linarith
   · -- Case T < hs0: pointwise bound on compact [1,T] ⊆ [1,hs0]
     push_neg at hhs
     have h1T : (1 : ℝ) ≤ T := by linarith
@@ -4615,7 +4709,7 @@ private theorem errorTerm_first_moment_sqrt :
       _ ≤ (M₀ + 2) * hardyStart 0 := by
           rw [abs_of_nonneg (by linarith : (0:ℝ) ≤ T - 1)]
           exact mul_le_mul_of_nonneg_left (by linarith [le_of_lt hhs]) (by linarith)
-      _ ≤ C_E * 1 := by show (M₀ + 2) * hardyStart 0 ≤ ((M₀ + 2) * hardyStart 0 + C_bl + C₂ + 1) * 1; nlinarith
+      _ ≤ C_E * 1 := by show (M₀ + 2) * hardyStart 0 ≤ ((M₀ + 2) * hardyStart 0 + 2 * C_bl + 2 * C₂ + 1) * 1; nlinarith
       _ ≤ C_E * T ^ ((1:ℝ)/2) :=
           mul_le_mul_of_nonneg_left hT1 (le_of_lt hCE_pos)
 /-  -- PROOF DRAFT (blocked by Mathlib API issues with push_cast/hardyStart_formula)
