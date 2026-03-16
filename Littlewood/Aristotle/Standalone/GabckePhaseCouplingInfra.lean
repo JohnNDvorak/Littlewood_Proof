@@ -430,4 +430,98 @@ theorem quarter_power_sq_on_block (k : ℕ) (p : ℝ) (hp : 0 ≤ p) :
   rw [h_exp, ← Real.sqrt_eq_rpow,
       Real.sqrt_div' _ (by positivity), Real.sqrt_one, Real.sqrt_sq hx_pos.le]
 
+/-! ## Part 8: Jacobian and amplitude product simplification
+
+On block k at parameter p, the Jacobian is 4π(k+1+p) and the amplitude factor
+is (2π/t)^{1/4} = 1/√(k+1+p). Their product simplifies to 4π·√(k+1+p).
+-/
+
+/-- The product of amplitude factor and Jacobian on block k:
+    (2π/t)^{1/4} · 4π(k+1+p) = 4π · √(k+1+p).
+    This is the key simplification for block integrals under the saddle expansion. -/
+theorem amplitude_jacobian_product (k : ℕ) (p : ℝ) (hp : 0 ≤ p) :
+    1 / Real.sqrt ((k : ℝ) + 1 + p) * (4 * Real.pi * ((k : ℝ) + 1 + p)) =
+    4 * Real.pi * Real.sqrt ((k : ℝ) + 1 + p) := by
+  have hkp : 0 < (k : ℝ) + 1 + p := by positivity
+  have hsqrt_pos : 0 < Real.sqrt ((k : ℝ) + 1 + p) := Real.sqrt_pos_of_pos hkp
+  have hsqrt_ne : Real.sqrt ((k : ℝ) + 1 + p) ≠ 0 := ne_of_gt hsqrt_pos
+  -- 1/√x · (4π·x) = 4π · x/√x = 4π · √x
+  -- x = √x · √x, so x/√x = √x
+  have h_sq : ((k : ℝ) + 1 + p) = Real.sqrt ((k : ℝ) + 1 + p) * Real.sqrt ((k : ℝ) + 1 + p) :=
+    (Real.mul_self_sqrt hkp.le).symm
+  field_simp
+  linarith [Real.sq_sqrt hkp.le]
+
+/-! ## Part 9: Signed block integral positivity (conditional on saddle expansion)
+
+Under the saddle-point expansion, (-1)^k · ∫_{block k} ErrorTerm dt ≈ positive.
+Specifically, the leading term of (-1)^k · I_k equals the positive quantity:
+  4π · ∫₀¹ √(k+1+p) · Ψ(p) dp
+which is at least 4π · √(k+1) · ∫₀¹ Ψ(p) dp = blockCorrectionA · √(k+1).
+-/
+
+/-- The leading asymptotic of (-1)^k · I_k from the saddle-point expansion.
+    This is 4π · ∫₀¹ √(k+1+p) · Ψ(p) dp, which is positive. -/
+def leadingBlockIntegral (k : ℕ) : ℝ :=
+  4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, Real.sqrt ((k : ℝ) + 1 + p) * rsPsi p)
+
+/-- The leading block integral is positive for all k. -/
+theorem leadingBlockIntegral_pos (k : ℕ) : 0 < leadingBlockIntegral k := by
+  unfold leadingBlockIntegral
+  apply mul_pos (by positivity)
+  -- ∫ √(k+1+p) · Ψ(p) dp ≥ √(k+1) · ∫ Ψ(p) dp > 0
+  have h_lower := rsPsi_weighted_integral_lower k
+  have h_int_pos := rsPsi_integral_pos
+  have h_sqrt_nn : 0 ≤ Real.sqrt ((k : ℝ) + 1) := Real.sqrt_nonneg _
+  -- √(k+1) · ∫Ψ ≥ 0 and √(k+1) · ∫Ψ ≤ ∫ √(k+1+p)·Ψ
+  -- so ∫ √(k+1+p)·Ψ ≥ √(k+1) · ∫Ψ ≥ 0 · ∫Ψ = 0
+  -- Actually need strictly positive.
+  have h_sqrt_pos : 0 < Real.sqrt ((k : ℝ) + 1) := Real.sqrt_pos_of_pos (by positivity)
+  have : 0 < Real.sqrt ((k : ℝ) + 1) * (∫ p in Ioc (0 : ℝ) 1, rsPsi p) :=
+    mul_pos h_sqrt_pos h_int_pos
+  linarith
+
+/-- Lower bound: leadingBlockIntegral k ≥ blockCorrectionA · √(k+1)
+    where blockCorrectionA = 4π · ∫₀¹ Ψ dp.
+
+    This follows from √(k+1+p) ≥ √(k+1) for p ≥ 0. -/
+theorem leadingBlockIntegral_lower (k : ℕ) :
+    (4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)) * Real.sqrt ((k : ℝ) + 1)
+    ≤ leadingBlockIntegral k := by
+  unfold leadingBlockIntegral
+  have h := rsPsi_weighted_integral_lower k
+  nlinarith [Real.pi_pos]
+
+/-- Upper bound: leadingBlockIntegral k ≤ blockCorrectionA · √(k+2). -/
+theorem leadingBlockIntegral_upper (k : ℕ) :
+    leadingBlockIntegral k ≤
+    (4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)) * Real.sqrt ((k : ℝ) + 2) := by
+  unfold leadingBlockIntegral
+  have h := rsPsi_weighted_integral_upper k
+  nlinarith [Real.pi_pos]
+
+/-- The sum of consecutive leading block integrals is at least
+    blockCorrectionA · (√(k+1) + √(k+2)). -/
+theorem consecutive_leading_lower (k : ℕ) :
+    (4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)) *
+      (Real.sqrt ((k : ℝ) + 1) + Real.sqrt ((k : ℝ) + 2))
+    ≤ leadingBlockIntegral k + leadingBlockIntegral (k + 1) := by
+  have h1 := leadingBlockIntegral_lower k
+  have h2 := leadingBlockIntegral_lower (k + 1)
+  -- leadingBlockIntegral(k+1) ≥ A · √(k+2)
+  have h2' : (4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)) * Real.sqrt ((k : ℝ) + 2)
+      ≤ leadingBlockIntegral (k + 1) := by
+    convert h2 using 2; push_cast; ring
+  linarith
+
+/-- For the block estimate: A · (√(k+1) - √(k+2)) ≤ A · (√(k+1) + √(k+2)) - 2A·√(k+2).
+    This is trivially A·(√(k+1)-√(k+2)) = A·√(k+1) + A·(-√(k+2)). -/
+theorem block_estimate_from_leading (k : ℕ) (A : ℝ) (hA : 0 < A)
+    (L_k L_k1 : ℝ)
+    (hL_k : A * Real.sqrt ((k : ℝ) + 1) ≤ L_k)
+    (hL_k1 : A * Real.sqrt ((k : ℝ) + 2) ≤ L_k1) :
+    A * (Real.sqrt ((k : ℝ) + 1) - Real.sqrt ((k : ℝ) + 2))
+    ≤ L_k + L_k1 - 2 * A * Real.sqrt ((k : ℝ) + 2) := by
+  nlinarith
+
 end Aristotle.Standalone.GabckePhaseCouplingInfra
