@@ -227,6 +227,31 @@ Together these give: N(T) = (T/2π)log(T/2π) - T/2π + O(log T).
 - `argument_principle_rect_entire`: argument principle for rectangles (RectArgumentPrinciple.lean)
 -/
 
+/-! ## Utility: Nearby non-ordinate
+
+Zero ordinates form a discrete (in fact finite in bounded intervals) set,
+so for any T there exists T' close to T that is not a zero ordinate. -/
+
+/-- For any T, there exists T' ∈ (T, T+1] that is not a zero ordinate.
+    This follows from the finite zero density: zetaZeroOrdinates ∩ (T, T+1]
+    is finite (since zerosUpTo(T+1) is finite), but (T, T+1] is infinite. -/
+theorem exists_nearby_non_ordinate (T : ℝ) :
+    ∃ T' ∈ Set.Ioc T (T + 1), T' ∉ zetaZeroOrdinates := by
+  by_contra hall
+  push_neg at hall
+  -- Every point of (T, T+1] is a zero ordinate
+  have hsub : Set.Ioc T (T + 1) ⊆ zetaZeroOrdinates ∩ Set.Ioc T (T + 1) :=
+    fun x hx => ⟨hall x hx, hx⟩
+  -- But (T, T+1] is infinite
+  have hinf : (Set.Ioc T (T + 1)).Infinite := Set.Ioc_infinite (by linarith)
+  -- And zero ordinates in (T, T+1] are finite
+  have hfin : (zetaZeroOrdinates ∩ Set.Ioc T (T + 1)).Finite := by
+    apply Set.Finite.subset (Set.Finite.image _ (finite_zeros_le (T + 1)))
+    intro γ ⟨hγ_mem, hγ_range⟩
+    obtain ⟨z, hzpos, rfl⟩ := hγ_mem
+    exact ⟨z, ⟨hzpos, hγ_range.2⟩, rfl⟩
+  exact hinf (hfin.subset hsub)
+
 /-! ## Main Theorem: Riemann-von Mangoldt Formula -/
 
 /-- **Riemann-von Mangoldt formula (explicit bound form).**
