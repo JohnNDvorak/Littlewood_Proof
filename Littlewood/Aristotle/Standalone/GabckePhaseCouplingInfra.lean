@@ -638,18 +638,25 @@ theorem block_estimate_iff_remainder_antitone (k : ℕ) :
 /-- **Signed remainder antitonicity** (Gabcke Satz 4, irreducible content).
 
     The block remainder R(k) = (-1)^k · I_k - L_k is antitone for k ≥ 1.
-    This encodes:
-    (a) The steepest-descent expansion gives signed (not just absolute) control
-    (b) The Fresnel correction phase rotates monotonically across blocks
-    (c) The remainder R(k) decreases as k → ∞
 
-    IRREDUCIBILITY: Pointwise bounds |R(t)| ≤ C·t^{-3/4} from SiegelSaddleExpansionHyp
-    give |R_k| = O(k^{-1/2}) but NOT the signed antitonicity R_k ≥ R_{k+1}.
-    The concavity surplus (Part 5) is O(k^{-3/2}) while |R_k - R_{k+1}| could be
-    O(k^{-1/2}), so surplus alone cannot absorb the remainder difference.
+    Proof route (Gabcke 1979 Satz 4):
+    (1) Via CoV: R(k) = ∫₀¹ ρ(k,p) dp where ρ is the remainder density.
+    (2) From the steepest-descent expansion at w₀ = √(t/2π):
+        ρ(k,p) = 4π√(k+1+p) · (-1)^k · SPR(k, blockCoord(k,p))
+        where SPR is the saddlePointRemainder.
+    (3) The signed SPR satisfies (-1)^k · SPR(k,t) ≈ c₁(p)/√t where c₁(p) > 0
+        for all p ∈ [0,1] (Gabcke Tabelle 1: c₁ ranges from 0.0417 to 0.0833).
+    (4) Therefore ρ(k,p) ≈ 4π · c₁(p) · √(2π) / √(k+1+p) > 0.
+    (5) Since 1/√(k+1+p) > 1/√(k+2+p), we get ρ(k,p) > ρ(k+1,p) pointwise.
+    (6) By integral_mono: R(k) > R(k+1).
 
-    Requires: explicit Fresnel integral evaluation with monotone error bounds
-    as in Gabcke 1979 proof of Satz 4. -/
+    BLOCKER: Step (3) requires the *signed* steepest-descent bound, not just
+    the absolute bound |SPR| ≤ (1/4)/√t from SiegelSaddleExpansionHyp.
+    Specifically, we need a lower bound: 0 ≤ (-1)^k · SPR(k,t) on each block.
+    This captures that c₁(p) > 0, which is the irreducible content of Gabcke
+    Satz 4 beyond what Satz 1 (absolute bounds) provides.
+
+    Reference: Gabcke 1979 Satz 4, Tabelle 1. -/
 theorem remainder_antitone_for_ge_one (k : ℕ) (hk : 1 ≤ k) :
     blockRemainder (k + 1) ≤ blockRemainder k := by
   sorry
