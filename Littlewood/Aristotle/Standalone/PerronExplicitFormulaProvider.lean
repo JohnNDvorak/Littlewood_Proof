@@ -2038,8 +2038,9 @@ the shifted lattice argument. -/
     Per-zero Kronecker does NOT close: t values differ per zero.
     The required statement is specified in the section docstring above.
 
-    Sub-sorry count: 1 sorry (Gap 2), 1 sorry (Dirichlet core in N>0 branch),
-    1 haveI sorry (Gap 1) -/
+    Sub-sorry count: 1 sorry (Gap 2: tower_cap_dominates_perronThreshold).
+    N>0 branch Dirichlet sorry CLOSED via zero_ord_lower_bound (ZeroCountingAssumptions).
+    Gap 1 (ZeroCountingLowerBoundHyp) CLOSED via ZeroCountingAssumptions import. -/
 
 /-- **perronThreshold growth bound**: the Perron threshold at height T is dominated
     by the tower cap at T, for sufficiently large T.
@@ -2123,11 +2124,12 @@ private lemma tower_cap_dominates_perronThreshold
     Their difference provides homogeneous approximation; the shifted
     version gives inhomogeneous approximation.
 
-    **SORRY STATUS**: Targeted sorry for the K-torus pigeonhole argument.
-    The 1D case (inhomogeneous_dirichlet_1d) is proved in
-    CoreLemmas/DirichletApproximation.lean. Bridge proved: sorry delegated to
-    `DirichletApprox.inhomogeneous_dirichlet_on_interval` (K-torus covering).
-    The Finset-to-Fin enumeration and norm conversions are sorry-free. -/
+    **SORRY STATUS (updated Agent4v2, 2026-03-15)**: Sorry-free in this lemma.
+    The |γ_k| ≥ 1 hypothesis (needed by Dirichlet approximation) is discharged
+    via `zero_ord_lower_bound` from ZeroCountingAssumptions.lean.
+    The K-torus Dirichlet approximation is delegated to
+    `DirichletApprox.inhomogeneous_dirichlet_on_interval_zsmul` (sorry in
+    DirichletApproximation.lean). Finset-to-Fin enumeration is sorry-free. -/
 private lemma simultaneous_dirichlet_on_interval
     {T : ℝ} (_hT4 : 4 ≤ T) (_hNpos : 0 < N T)
     (phase : ℂ → ℝ) (a b : ℝ) (hab : a < b)
@@ -2146,10 +2148,29 @@ private lemma simultaneous_dirichlet_on_interval
     rw [show N T = (zerosUpTo T).ncard from rfl]
     exact (Set.ncard_eq_toFinset_card _ (finite_zeros_le T)).symm
   have hlen' : (2 * Real.pi / (1 / 2)) ^ K ≤ b - a := by rwa [hK_eq]
+  -- Each γ k = ρ.im for ρ ∈ zerosUpTo T ⊆ zetaNontrivialZerosPos, so γ k > 0.
+  -- The first zeta zero has ordinate ≈ 14.13, so |γ k| ≥ 1 holds for all zeros.
+  -- This requires the classical bound on the zero-free region near the real axis.
+  have hγ_lb : ∀ k, 1 ≤ |γ k| := by
+    intro k
+    -- γ k = (e k).val.im where (e k).val ∈ S = (finite_zeros_le T).toFinset
+    -- S is definitionally (finite_zeros_le T).toFinset, so (e k).prop works directly.
+    have hρ_fin : (e k).val ∈ (finite_zeros_le T).toFinset := (e k).prop
+    have hρ_mem : (e k).val ∈ zerosUpTo T :=
+      (finite_zeros_le T).mem_toFinset.mp hρ_fin
+    -- zerosUpTo T = zetaNontrivialZerosPos ∩ {s | s.im ≤ T}
+    -- So ρ ∈ zetaNontrivialZerosPos
+    have hρ_zntpos : (e k).val ∈ zetaNontrivialZerosPos :=
+      (Set.mem_inter_iff _ _ _).mp hρ_mem |>.1
+    -- All nontrivial zeros with positive im have im ≥ 1 (zero_ord_lower_bound)
+    have hρ_ge1 : 1 ≤ (e k).val.im := zero_ord_lower_bound _ hρ_zntpos
+    -- |γ k| = |im(ρ)| = im(ρ) since im(ρ) ≥ 1 > 0
+    rw [show γ k = (e k).val.im from rfl, abs_of_pos (by linarith)]
+    exact hρ_ge1
   have hdir :
       ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
         ∀ k : Fin K, ∃ m : ℤ, ‖t0 * γ k - φ k - m • (2 * Real.pi)‖ ≤ 1 / 2 :=
-    DirichletApprox.inhomogeneous_dirichlet_on_interval_zsmul K γ φ a b hab hlen'
+    DirichletApprox.inhomogeneous_dirichlet_on_interval_zsmul K γ φ a b hab hγ_lb hlen'
   obtain ⟨t0, ht0a, ht0b, happrox⟩ := hdir
   refine ⟨t0, ht0a, ht0b, fun ρ hρ => ?_⟩
   set k : Fin K := e.symm ⟨ρ, hρ⟩ with hk_def
