@@ -2,26 +2,50 @@
 Bridge for the Hardy Z first moment bound: |∫₁ᵀ Z(t) dt| ≤ C·T^{1/2}.
 
 This isolates the O(T^{1/2}) first moment bound for the Hardy Z function
-to a single sorry, replacing the previous sorry in `mainTerm_first_moment_ibp`
-(RSExpansionProof.lean).
+to a single sorry. The import cycle (IBP ↔ RSExpansionProof) has been broken:
+IBP now imports this bridge directly.
 
-The mathematical content is Titchmarsh 1951 §4.15: integration by parts on
-Z(t) = Re(e^{iθ(t)} ζ(½+it)) using the monotone phase θ(t), with:
-  - Boundary terms O(|ζ(½+iT)|/θ'(T)) = O(T^{1/6}/log T) = O(T^{1/2})
-  - Correction integral involving d/dt[ζ/(iθ')] controlled by convexity
+## Mathematical content (Titchmarsh 1951 §4.15)
 
-The sub-lemmas (boundary bound, correction integrand bound, mode sum estimates)
-are proved in HardyZFirstMomentIBP.lean. The assembly into the final O(T^{1/2})
-bound requires the actual IBP computation on ∫ Z, which is blocked by
-the import cycle (HardyZFirstMomentIBP imports RSExpansionProof).
+Z(t) = MainTerm(t) + ErrorTerm(t) where
+  MainTerm = 2·∑_{n ≤ N(t)} (n+1)^{-1/2} · cos(θ(t) - t·log(n+1))
+  ErrorTerm = Z - MainTerm  (Riemann-Siegel remainder)
 
-Breaking the import cycle and completing the assembly will close this sorry.
+|∫₁ᵀ Z| ≤ |∫₁ᵀ MainTerm| + |∫₁ᵀ ErrorTerm|
+
+(A) ErrorTerm: O(√T) by alternating block cancellation.
+    Requires: Siegel saddle-point expansion (SiegelSaddleExpansionHyp sorry)
+              + Gabcke phase coupling (GabckePhaseCouplingHyp sorry).
+    Infrastructure: signed_block_integral_nonneg, error_term_first_moment_assembly.
+    STATUS: Proved in RSExpansionProof.errorTerm_first_moment_sqrt, but that
+    file imports THIS bridge, so we cannot use it here.
+
+(B) MainTerm: O(√T) by per-mode VdC on the Dirichlet polynomial.
+    Each mode n has oscillatory integral bounded by C_vdc/log((k+1)/(n+1))
+    per block. Sum over modes + blocks gives O(√T).
+    Infrastructure: off_resonance_integral_bound_smooth (OffResonanceSmoothVdC),
+    block_sum_assembly (IBP Part 7), Abel summation.
+    STATUS: Sub-lemmas proved, final assembly not done.
+
+## Closing strategy
+
+Extract ErrorTerm first moment infrastructure from RSExpansionProof into
+a standalone file (no bridge dependency), then import here. Then assemble
+the MainTerm bound from the per-mode VdC infrastructure.
+
+## Dependency note (2026-03-16)
+
+This sorry is NOT irreducible: it follows from the two Siegel/Gabcke sorrys
+(SiegelSaddleExpansionHyp, GabckePhaseCouplingHyp) plus the per-mode VdC
+infrastructure. The sorry exists because the proof assembly requires code
+currently in RSExpansionProof (which imports this file, creating a cycle).
 
 Reference: Titchmarsh 1951 §4.15; Ingham 1932 §5.2.
 -/
 
 import Mathlib
 import Littlewood.Aristotle.HardyEstimatesPartial
+import Littlewood.Aristotle.HardyZFirstMoment
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -32,25 +56,20 @@ open MeasureTheory Set
 
 namespace Aristotle.Standalone.HardyZFirstMomentBridge
 
+open HardyEstimatesPartial
+
 /-- **Hardy Z first moment O(√T) bridge**.
 
     |∫₁ᵀ Z(t) dt| ≤ C·T^{1/2} for all T ≥ 2.
 
     This is the classical result of Titchmarsh (1951, §4.15).
-    The proof requires integration by parts on the oscillatory integral
-    ∫ Re(e^{iθ(t)} ζ(½+it)) dt with the monotone phase θ(t).
 
-    SORRY: Assembly of IBP sub-lemmas into final bound.
-    All ingredients are proved in HardyZFirstMomentIBP.lean:
-    - ibp_boundary_both_endpoints_le_sqrt (boundary terms O(√T))
-    - ibp_correction_integrand_bound (correction O(t^{3/4}/log t))
-    - per-mode VdC infrastructure (OffResonanceSmoothVdC)
-    - mode sum estimates (AbelSummationPsiPi)
-    Closing requires: breaking the HardyZFirstMomentIBP ↔ RSExpansionProof
-    import cycle, then assembling the IBP computation. -/
+    SORRY STATUS: Derived from SiegelSaddleExpansionHyp + GabckePhaseCouplingHyp
+    sorrys + per-mode VdC assembly. Not independently irreducible.
+    See module docstring for closing strategy. -/
 theorem hardyZ_first_moment_sqrt :
     ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
-      |∫ t in Ioc 1 T, HardyEstimatesPartial.hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) := by
+      |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) := by
   sorry
 
 end Aristotle.Standalone.HardyZFirstMomentBridge
