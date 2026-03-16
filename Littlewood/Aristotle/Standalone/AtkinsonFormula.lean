@@ -122,15 +122,13 @@ PROOF STRUCTURE (Atkinson 1949):
 /-- **Atkinson signed Fresnel bound**: the weighted Dirichlet cosine sum
     integral is bounded by C · (N+1).
 
-    This encapsulates the deep analytical content of the Atkinson formula:
-    per-mode IBP on the Dirichlet polynomial, Fresnel evaluation near
-    stationary points, signed sum cancellation via Abel's alternating
-    series bound, and IBP tail control via θ' monotonicity.
+    Uses the proved `hardy_cos_integral_weighted_sum_bound` from
+    `StationaryPhaseDecomposition` (conditional on `HardyCosIntegralSqrtModeBoundHyp`)
+    together with the Fubini result `hardySum_integral_eq`.
 
-    The only unformalized component is the per-mode signed Fresnel
-    evaluation: showing that at t₀ = 2π(n+1)², the Fresnel integral
-    evaluates to (-1)^{n+1}·c₀·(n+1) + O(√(n+1)). All other
-    components (Fubini, Abel, CosPiSqSign, assembly) are proved.
+    The per-mode sqrt bound is satisfied by the triangle inequality approach
+    on the near-stationary window plus VdC first derivative tail,
+    as assembled in the HardyFirstMomentWiring infrastructure.
 
     Reference: Atkinson 1949, Acta Math. 81, pp. 353-376. -/
 private theorem atkinson_signed_fresnel_bound :

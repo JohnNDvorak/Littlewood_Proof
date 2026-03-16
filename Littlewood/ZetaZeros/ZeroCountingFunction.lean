@@ -517,6 +517,19 @@ class FirstZeroOrdinateHyp : Prop where
     ∃ γ₁ ∈ zetaZeroOrdinates, 14.13 < γ₁ ∧ γ₁ < 14.14 ∧
       ∀ γ ∈ zetaZeroOrdinates, γ₁ ≤ γ
 
+/-- **Simplicity of zeta zeros hypothesis.**
+    All nontrivial zeros of the Riemann zeta function are simple:
+    if ζ(s) = 0 with 0 < Re(s) < 1, then ζ'(s) ≠ 0.
+
+    This is widely believed (consistent with GUE, verified for billions of zeros)
+    but is an OPEN PROBLEM. It is used in the argument principle approach to RvM
+    to equate ncard (distinct zeros) with the contour integral output.
+
+    STATUS: Believed true, unproved. Required for the formalization's N(T) = ncard
+    to match the argument principle's sum-of-multiplicities output. -/
+class ZetaZerosSimpleHyp : Prop where
+  simple : ∀ (s : ℂ), s ∈ zetaNontrivialZeros → deriv riemannZeta s ≠ 0
+
 /-! ### Global instances (assumptions) -/
 
 instance instZeroCountingSpecialValuesHyp [FirstZeroOrdinateHyp] :

@@ -37,21 +37,35 @@ noncomputable section
 
 namespace ZetaZeros
 
--- ZeroCountingLowerBoundHyp is now automatically available via the instance chain:
--- rvm_explicit_hyp → instZeroCountingAsymptoticHyp → zeroCountingMainTermHyp_of_asymptotic
---   → zeroCountingLowerBoundHyp_of_mainTerm
--- No explicit instance needed here.
-
--- Verify the instance resolves:
-#check (inferInstance : ZeroCountingLowerBoundHyp)
-
 /-- Provide `FirstZeroOrdinateHyp`: the first zero ordinate γ₁ ∈ (14.13, 14.14).
     SORRY STATUS: Computational fact — the first nontrivial zero of ζ(s) has
     imaginary part ≈ 14.134725..., verified numerically (e.g., Odlyzko tables).
     This is the SAME sorry as in Assumptions.lean and LittlewoodFullStrengthInstances.lean;
-    duplicated here to break the import cycle. -/
+    duplicated here to break the import cycle.
+
+    NOTE: Must be declared BEFORE ZeroCountingLowerBoundHyp is synthesized,
+    because `rvm_explicit_hyp` now requires `[FirstZeroOrdinateHyp]`
+    (the rectangle was restructured to use bottom edge at Im=1). -/
 instance instFirstZeroOrdinateHyp : FirstZeroOrdinateHyp where
   bounds := by sorry
+
+/-- Provide `ZetaZerosSimpleHyp`: all nontrivial zeta zeros are simple.
+    SORRY STATUS: OPEN PROBLEM — believed true, verified for billions of zeros,
+    consistent with GUE hypothesis. Required for the argument principle approach
+    to equate ncard with multiplicity-counted zeros.
+    This is an honest conditional assumption, not a provable fact. -/
+instance instZetaZerosSimpleHyp : ZetaZerosSimpleHyp where
+  simple := by
+    intro z _ _ _ _
+    sorry  -- Simplicity of zeta zeros: open problem
+
+-- ZeroCountingLowerBoundHyp is now automatically available via the instance chain:
+-- instFirstZeroOrdinateHyp + instZetaZerosSimpleHyp → rvm_explicit_hyp
+--   → instZeroCountingAsymptoticHyp → zeroCountingMainTermHyp_of_asymptotic
+--   → zeroCountingLowerBoundHyp_of_mainTerm
+
+-- Verify the instance resolves:
+#check (inferInstance : ZeroCountingLowerBoundHyp)
 
 /-- All nontrivial zeta zeros with positive imaginary part have Im(ρ) ≥ 1.
     Proof: By `FirstZeroOrdinateHyp`, the minimal zero ordinate γ₁ > 14.13 > 1.

@@ -134,55 +134,59 @@ theorem riemannXiAlt_ne_zero_of_re_neg {s : ℂ} (hre : s.re < 0) :
 
 /-! ## Sub-lemma: Zeros in rectangle = N(T)
 
-For T not equal to any zero ordinate, the zeros of RiemannXiAlt in the open
-rectangle (-1, 2) × (0, T) are exactly the nontrivial zeta zeros with
-0 < Im(ρ) < T. Since N(T) counts zeros with Im(ρ) ≤ T (not strictly <),
-we need T to not be a zero ordinate.
+For T not equal to any zero ordinate and T > 14, the zeros of RiemannXiAlt
+in the open rectangle (-1, 2) × (1, T) are exactly the nontrivial zeta zeros
+with 0 < Im(ρ) < T. We use `FirstZeroOrdinateHyp` to show that all nontrivial
+zeros have Im ≥ γ₁ > 14.13 > 1, so the restriction Im > 1 is equivalent to
+Im > 0 for nontrivial zeros.
 -/
 
-/-- The set of zeros of RiemannXiAlt in the critical strip rectangle equals
+/-- The set of zeros of RiemannXiAlt in the rectangle (-1,2)×(1,T) equals
     the set of nontrivial zeta zeros with 0 < Im(ρ) < T, provided T is not
-    a zero ordinate. -/
-theorem xi_zeros_in_rect_eq_strip (T : ℝ) (hT : 0 < T)
+    a zero ordinate and γ₁ > 14.13 (so all zeros have Im > 1). -/
+theorem xi_zeros_in_rect_eq_strip [FirstZeroOrdinateHyp] (T : ℝ) (hT : 14 ≤ T)
     (hT_not_ord : T ∉ zetaZeroOrdinates) :
-    {z ∈ openRect (-1) 2 0 T | RiemannXiAlt z = 0} =
+    {z ∈ openRect (-1) 2 1 T | RiemannXiAlt z = 0} =
     {s : ℂ | riemannZeta s = 0 ∧ 0 < s.re ∧ s.re < 1 ∧ 0 < s.im ∧ s.im < T} := by
   ext z
   constructor
   · rintro ⟨hz_rect, hz_zero⟩
     obtain ⟨ha, hb, hc, hd⟩ := hz_rect
-    -- z ∈ (-1, 2) × (0, T) and RiemannXiAlt z = 0
-    -- Must show 0 < Re(z) < 1: outside this range RiemannXiAlt ≠ 0
+    have him_pos : 0 < z.im := by linarith
     have hre_pos : 0 < z.re := by
       by_contra h
       push_neg at h
-      -- Re(z) ≤ 0. Since Im(z) > 0 (from hc), z ≠ 0.
       have hz_ne_zero : z ≠ 0 := by
-        intro heq; rw [heq] at hc; simp at hc
+        intro heq; rw [heq] at hc; simp at hc; linarith
       exact riemannXiAlt_ne_zero_of_re_le_zero h hz_ne_zero hz_zero
     have hre_lt : z.re < 1 := by
       by_contra h
       push_neg at h
-      -- Re(z) ≥ 1. Since Im(z) > 0 (from hc), z ≠ 1.
       have hz_ne_one : z ≠ 1 := by
-        intro heq; rw [heq] at hc; simp at hc
+        intro heq; rw [heq] at hc; simp at hc; linarith
       exact riemannXiAlt_ne_zero_of_re_ge_one h hz_ne_one hz_zero
     exact ⟨(riemannXiAlt_zero_iff_zeta_zero hre_pos hre_lt).mp hz_zero,
-      hre_pos, hre_lt, hc, hd⟩
+      hre_pos, hre_lt, him_pos, hd⟩
   · rintro ⟨hzeta, hre_pos, hre_lt, him_pos, him_lt⟩
     constructor
-    · exact ⟨by linarith, by linarith, him_pos, him_lt⟩
+    · refine ⟨by linarith, by linarith, ?_, him_lt⟩
+      -- Need Im(z) > 1. All nontrivial zeros have Im ≥ γ₁ > 14.13 > 1.
+      rcases firstZeroOrdinate_bounds with ⟨γ₁, _, hγ₁_low, _, hγ₁_min⟩
+      have hzpos : z ∈ zetaNontrivialZerosPos := by
+        rw [mem_zetaNontrivialZerosPos, mem_zetaNontrivialZeros]
+        exact ⟨⟨hzeta, hre_pos, hre_lt⟩, him_pos⟩
+      have hord : z.im ∈ zetaZeroOrdinates := ⟨z, hzpos, rfl⟩
+      have : γ₁ ≤ z.im := hγ₁_min z.im hord
+      linarith
     · exact (riemannXiAlt_zero_iff_zeta_zero hre_pos hre_lt).mpr hzeta
 
-/-- The ncard of zeros of RiemannXiAlt in the rectangle equals N(T) for
-    T not a zero ordinate. -/
-theorem xi_zero_count_eq_N (T : ℝ) (hT : 0 < T)
+/-- The ncard of zeros of RiemannXiAlt in the rectangle (-1,2)×(1,T) equals N(T)
+    for T not a zero ordinate. Uses `FirstZeroOrdinateHyp` to show zeros with
+    Im ∈ (1,T) = zeros with Im ∈ (0,T] (all zeros have Im ≥ 14.13 > 1). -/
+theorem xi_zero_count_eq_N [FirstZeroOrdinateHyp] (T : ℝ) (hT : 14 ≤ T)
     (hT_not_ord : T ∉ zetaZeroOrdinates) :
-    Set.ncard {z ∈ openRect (-1) 2 0 T | RiemannXiAlt z = 0} = N T := by
+    Set.ncard {z ∈ openRect (-1) 2 1 T | RiemannXiAlt z = 0} = N T := by
   rw [xi_zeros_in_rect_eq_strip T hT hT_not_ord]
-  -- N(T) = ncard (zerosUpTo T) = ncard {s | s ∈ zetaNontrivialZerosPos ∧ s.im ≤ T}
-  -- The LHS has Im < T (strict), RHS has Im ≤ T.
-  -- Since T ∉ zetaZeroOrdinates, no zero has Im = T, so the sets agree.
   show Set.ncard {s : ℂ | riemannZeta s = 0 ∧ 0 < s.re ∧ s.re < 1 ∧ 0 < s.im ∧ s.im < T} = N T
   congr 1
   ext z
@@ -200,7 +204,6 @@ theorem xi_zero_count_eq_N (T : ℝ) (hT : 0 < T)
     obtain ⟨hznon, him_pos⟩ := mem_zetaNontrivialZerosPos.mp hzpos
     obtain ⟨hzeta, hre_pos, hre_lt⟩ := mem_zetaNontrivialZeros.mp hznon
     refine ⟨hzeta, hre_pos, hre_lt, him_pos, ?_⟩
-    -- Need Im(z) < T, not just ≤ T. Use hT_not_ord.
     rcases lt_or_eq_of_le hle with h | h
     · exact h
     · exfalso
@@ -290,19 +293,32 @@ Reference: Titchmarsh, "Theory of the Riemann Zeta Function", §9.3-9.4 -/
 
 /-! ### Sub-lemma: Xi is nonvanishing on the rectangle boundary
 
-On the boundary of (-1, 2) × (0, T) for T not a zero ordinate:
-- Bottom edge (Im = 0): xi(x) = (1/2)(x(x-1) completedZeta₀(x) + 1) is real and nonzero
-  for x ∈ [-1, 2] since completedZeta₀ has at most simple poles at 0, 1
+We use the rectangle (-1, 2) × (1, T) with bottom edge at height 1 to avoid
+the hard analytic fact that ζ(s) ≠ 0 for real s ∈ (0,1). Instead, we use
+`FirstZeroOrdinateHyp` which gives γ₁ > 14.13, so all zero ordinates are > 1.
+This means neither Im = 1 nor Im = T (T not an ordinate) can be a zero ordinate.
+
+On the boundary of (-1, 2) × (1, T) for T not a zero ordinate:
+- Bottom edge (Im = 1): no nontrivial zero has Im = 1 (all ordinates ≥ 14.13)
 - Top edge (Im = T): xi ≠ 0 since no zero has imaginary part T (T not an ordinate)
 - Right edge (Re = 2): xi ≠ 0 by riemannXiAlt_ne_zero_of_re_ge_one
 - Left edge (Re = -1): xi ≠ 0 by riemannXiAlt_ne_zero_of_re_le_zero
 -/
 
-/-- Xi does not vanish on the boundary of the rectangle (-1, 2) × (0, T)
-    when T > 0 is not a zero ordinate. -/
-private theorem xi_ne_zero_on_boundary (T : ℝ) (hT : 0 < T)
+/-- 1 is not a zero ordinate: all zero ordinates are ≥ γ₁ > 14.13 > 1. -/
+private theorem one_not_zero_ordinate [FirstZeroOrdinateHyp] :
+    (1 : ℝ) ∉ zetaZeroOrdinates := by
+  intro hmem
+  rcases firstZeroOrdinate_bounds with ⟨γ₁, _, hγ₁_low, _, hγ₁_min⟩
+  have h1 : γ₁ ≤ 1 := hγ₁_min 1 hmem
+  linarith
+
+/-- Xi does not vanish on the boundary of the rectangle (-1, 2) × (1, T)
+    when T > 1 is not a zero ordinate. Uses `FirstZeroOrdinateHyp` to
+    ensure no zero ordinate equals 1. -/
+private theorem xi_ne_zero_on_boundary [FirstZeroOrdinateHyp] (T : ℝ) (hT : 1 < T)
     (hT_not_ord : T ∉ zetaZeroOrdinates) :
-    ∀ z ∈ RectArgumentPrinciple.rectBoundary (-1) 2 0 T, RiemannXiAlt z ≠ 0 := by
+    ∀ z ∈ RectArgumentPrinciple.rectBoundary (-1) 2 1 T, RiemannXiAlt z ≠ 0 := by
   intro z ⟨hclosed, hnot_open⟩
   -- z is in the closed rectangle but not the open rectangle
   obtain ⟨hre_lo, hre_hi, him_lo, him_hi⟩ := hclosed
@@ -322,27 +338,21 @@ private theorem xi_ne_zero_on_boundary (T : ℝ) (hT : 0 < T)
     have hz_ne : z ≠ 1 := by
       intro heq; subst heq; simp [RiemannXiAlt] at h
     exact (riemannXiAlt_ne_zero_of_re_ge_one h2 hz_ne) h
-  -- So z is in the critical strip. Since z is on the boundary but not in the open rect,
-  -- either Im(z) = 0 or Im(z) = T
-  have hopen_def : z ∈ RectArgumentPrinciple.openRect (-1) 2 0 T := by
+  -- So z is in the critical strip with Re ∈ (0,1). Since z is on the boundary
+  -- but not in the open rect, either Im(z) = 1 or Im(z) = T.
+  -- In either case, z would be a nontrivial zero with Im equal to 1 or T,
+  -- making that value a zero ordinate — contradiction.
+  have him_pos : 0 < z.im := by linarith
+  have hzeta_zero := (riemannXiAlt_zero_iff_zeta_zero hre_pos hre_lt).mp h
+  have hmem : z ∈ zetaNontrivialZeros := ⟨hzeta_zero, hre_pos, hre_lt⟩
+  have hzpos : z ∈ zetaNontrivialZerosPos := ⟨hmem, him_pos⟩
+  have hopen_def : z ∈ RectArgumentPrinciple.openRect (-1) 2 1 T := by
     refine ⟨by linarith, by linarith, ?_, ?_⟩
-    · -- Need Im(z) > 0. If Im(z) ≤ 0, then by him_lo Im(z) = 0, so z is real.
-      -- For real z ∈ (0,1), RiemannXiAlt z ≠ 0 (xi is positive on the real line).
+    · -- Need Im(z) > 1.
       by_contra h_le
       push_neg at h_le
       have him_eq : z.im = 0 := le_antisymm h_le him_lo
-      -- z is real. Use the functional equation: RiemannXiAlt s = RiemannXiAlt(1-s).
-      -- For Re(s) in (0,1/2], 1-s has Re in [1/2,1), and we can use zeta nonvanishing.
-      -- For Re(s) in [1/2,1), use riemannXiAlt_zero_iff_zeta_zero and the functional equation.
-      -- Since z is real with Im=0, z = Re(z) as a real number.
-      -- RiemannXiAlt z = 0 iff riemannZeta z = 0 (by riemannXiAlt_zero_iff_zeta_zero)
       have hzeta_zero := (riemannXiAlt_zero_iff_zeta_zero hre_pos hre_lt).mp h
-      -- zeta has no zeros on the real line in (0,1): by the functional equation,
-      -- zeta(s) = chi(s) * zeta(1-s) where chi is nonzero, and for real s ∈ (0,1),
-      -- 1-s ∈ (0,1) as well. The only real zeros of zeta are at negative even integers.
-      -- In (0,1), zeta(s) < 0 (classical), hence zeta(s) ≠ 0.
-      -- This follows from the representation zeta(s) = s/(s-1) - s * integral for 0 < s < 1.
-      -- For the formalization: zeta at real s in (0,1) is nonzero by explicit calculation.
       -- z is real (Im = 0), so z = ↑(z.re). Use DirichletEtaZetaSign for ζ(σ) ≠ 0 on (0,1).
       have hz_eq : z = (↑z.re : ℂ) := Complex.ext rfl (by simp [him_eq])
       rw [hz_eq] at hzeta_zero
@@ -351,30 +361,34 @@ private theorem xi_ne_zero_on_boundary (T : ℝ) (hT : 0 < T)
     · -- Need Im(z) < T. If Im(z) = T, then z is a zero with Im = T, contradicting hT_not_ord
       by_contra h_ge
       push_neg at h_ge
-      -- Im(z) ≥ T, but we have him_hi : Im(z) ≤ T, so Im(z) = T
       have him_eq : z.im = T := le_antisymm him_hi h_ge
-      -- z is a nontrivial zero with Im(z) = T, so T is a zero ordinate
-      have : T ∈ zetaZeroOrdinates := by
-        have hzeta_zero := (riemannXiAlt_zero_iff_zeta_zero hre_pos hre_lt).mp h
-        have hmem : z ∈ zetaNontrivialZeros := ⟨hzeta_zero, hre_pos, hre_lt⟩
-        have hpos : 0 < z.im := by rw [him_eq]; exact hT
-        exact ⟨z, ⟨hmem, hpos⟩, him_eq⟩
-      exact hT_not_ord this
+      exact hT_not_ord ⟨z, hzpos, him_eq⟩
   exact hnot_open hopen_def
 
-/-! ### Sub-lemma: Simple zeros of xi (Backlund hypothesis)
+/-! ### Sub-lemma: Simple zeros of xi
 
 All nontrivial zeros of ζ(s) are believed to be simple. This follows from
 computations (all known zeros are simple) and is consistent with the GUE hypothesis.
-For the formalization, this is an atomic input from analytic number theory. -/
+This is sourced from `ZetaZerosSimpleHyp` (which states deriv(ζ,s) ≠ 0 at zeros)
+via the product rule for ξ(s) = (1/2)s(s-1)Λ(s). -/
 
 /-- All zeros of RiemannXiAlt in the critical strip are simple.
-    This is equivalent to all nontrivial zeta zeros being simple.
-    It is a standard hypothesis in number theory (consistent with all known zeros). -/
-private theorem xi_zeros_are_simple :
+    Derived from `ZetaZerosSimpleHyp` via the product rule:
+    ξ(s) = (1/2)s(s-1)Λ(s) and Λ = Γ_R · ζ, so at a zero z with z ≠ 0,1:
+    deriv(ξ,z) = (1/2)z(z-1)·deriv(Λ,z) = (1/2)z(z-1)·Γ_R(z)·deriv(ζ,z). -/
+private theorem xi_zeros_are_simple [ZetaZerosSimpleHyp] :
     ∀ z : ℂ, 0 < z.re → z.re < 1 → 0 < z.im → RiemannXiAlt z = 0 →
       deriv RiemannXiAlt z ≠ 0 := by
-  sorry  -- Simplicity of zeta zeros: open problem, believed true for all known zeros
+  intro z hre_pos hre_lt him_pos hxi_zero
+  -- z is a nontrivial zero with Im > 0. By ZetaZerosSimpleHyp, deriv ζ z ≠ 0.
+  have hzeta_zero : riemannZeta z = 0 :=
+    (riemannXiAlt_zero_iff_zeta_zero hre_pos hre_lt).mp hxi_zero
+  have hmem : z ∈ zetaNontrivialZeros := ⟨hzeta_zero, hre_pos, hre_lt⟩
+  have hderiv_zeta := ZetaZerosSimpleHyp.simple z hmem
+  -- The product rule computation: ξ'(z) = (1/2)z(z-1)·Λ'(z) since Λ(z) = 0.
+  -- And Λ'(z) = Γ_R(z)·ζ'(z) since Λ = Γ_R · ζ and ζ(z) = 0.
+  -- Since z(z-1) ≠ 0 and Γ_R(z) ≠ 0, ξ'(z) ≠ 0.
+  sorry  -- Product rule bridge: deriv(ζ,z) ≠ 0 → deriv(ξ,z) ≠ 0
 
 /-! ### Sub-lemma: Contour evaluation
 
@@ -387,7 +401,7 @@ The evaluation uses:
 - On horizontal edges: bounded integrals contributing O(1)
 - The S(T) term from the zeta log-derivative on the critical line -/
 
-/-- The contour integral evaluation: logIntegralRect(xi) equals
+/-- The contour integral evaluation: logIntegralRect(xi) on (-1,2)×(1,T) equals
     (1/pi) · Im(stirlingApprox T) - (T/2pi) log(pi) + (1/pi) arg(zeta(1/2+iT)) + 1
     up to O(log T) error.
 
@@ -395,10 +409,11 @@ The evaluation uses:
     (i) Decomposition of xi'/xi = Gamma'/Gamma + zeta'/zeta + rational
     (ii) Evaluation of vertical edge integrals via Stirling
     (iii) Evaluation of the zeta term as arg(zeta)
-    (iv) Bounds on horizontal edges O(1) -/
+    (iv) Bounds on horizontal edges O(1)
+    The bottom edge at Im=1 gives a bounded (O(1)) contribution absorbed into O(logT). -/
 private theorem contour_evaluation_bound :
     ∃ C : ℝ, ∀ T : ℝ, 14 ≤ T → T ∉ zetaZeroOrdinates →
-      |(logIntegralRect RiemannXiAlt (-1) 2 0 T).re
+      |(logIntegralRect RiemannXiAlt (-1) 2 1 T).re
         - ((1 / Real.pi) * (stirlingApprox T).im
            - (T / (2 * Real.pi)) * Real.log Real.pi
            + (1 / Real.pi) * Complex.arg (riemannZeta (1/2 + I * ↑T))
@@ -409,8 +424,9 @@ private theorem contour_evaluation_bound :
 
 /-- For T ≥ 14 not a zero ordinate, N(T) equals the RvM expression up to O(log T).
     Proof: apply argument principle (xi_zero_count_eq_N + argument_principle_rect_entire)
-    to get N(T) = logIntegralRect(xi), then use contour_evaluation_bound. -/
-private theorem rvm_at_generic_T :
+    on rectangle (-1,2)×(1,T) to get N(T) = logIntegralRect(xi), then use
+    contour_evaluation_bound. -/
+private theorem rvm_at_generic_T [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
     ∃ C : ℝ, ∀ T : ℝ, 14 ≤ T → T ∉ zetaZeroOrdinates →
       |(N T : ℝ)
         - ((1 / Real.pi) * (stirlingApprox T).im
@@ -419,32 +435,30 @@ private theorem rvm_at_generic_T :
            + 1)| ≤ C * Real.log T := by
   obtain ⟨C, hC⟩ := contour_evaluation_bound
   refine ⟨C, fun T hT hT_not_ord => ?_⟩
-  have hT_pos : 0 < T := by linarith
-  -- Step 1: Apply the argument principle to get N(T) = logIntegralRect
+  have hT_gt : 1 < T := by linarith
+  -- Step 1: Apply the argument principle on rectangle (-1,2)×(1,T)
   have hxi_entire := RiemannXiAlt_entire
-  have hxi_bdy := xi_ne_zero_on_boundary T hT_pos hT_not_ord
-  have hsimple : ∀ z ∈ openRect (-1) 2 0 T, RiemannXiAlt z = 0 →
+  have hxi_bdy := xi_ne_zero_on_boundary T hT_gt hT_not_ord
+  have hsimple : ∀ z ∈ openRect (-1) 2 1 T, RiemannXiAlt z = 0 →
       deriv RiemannXiAlt z ≠ 0 := by
     intro z hz hfz
     obtain ⟨hre_lo, hre_hi, him_lo, him_hi⟩ := hz
-    -- z is a zero of xi in the rectangle. Zeros of xi are in the critical strip.
+    have him_pos : 0 < z.im := by linarith
     have hre_pos : 0 < z.re := by
       by_contra hle; push_neg at hle
-      exact riemannXiAlt_ne_zero_of_re_le_zero hle (by intro heq; subst heq; simp at him_lo) hfz
+      exact riemannXiAlt_ne_zero_of_re_le_zero hle
+        (by intro heq; subst heq; simp at him_lo; linarith) hfz
     have hre_lt : z.re < 1 := by
       by_contra hge; push_neg at hge
-      exact riemannXiAlt_ne_zero_of_re_ge_one hge (by intro heq; subst heq; simp at him_lo) hfz
-    exact xi_zeros_are_simple z hre_pos hre_lt him_lo hfz
-  have harg_prin := argument_principle_rect_entire RiemannXiAlt (-1) 2 0 T
-    (by norm_num : (-1 : ℝ) < 2) (by linarith : (0 : ℝ) < T) hxi_entire hxi_bdy hsimple
-  -- harg_prin : logIntegralRect RiemannXiAlt (-1) 2 0 T = ↑(zeroCountRect RiemannXiAlt (-1) 2 0 T)
-  have hcount := xi_zero_count_eq_N T hT_pos hT_not_ord
-  -- hcount : Set.ncard {z ∈ openRect (-1) 2 0 T | RiemannXiAlt z = 0} = N T
+      exact riemannXiAlt_ne_zero_of_re_ge_one hge
+        (by intro heq; subst heq; simp at him_lo; linarith) hfz
+    exact xi_zeros_are_simple z hre_pos hre_lt him_pos hfz
+  have harg_prin := argument_principle_rect_entire RiemannXiAlt (-1) 2 1 T
+    (by norm_num : (-1 : ℝ) < 2) (by linarith : (1 : ℝ) < T) hxi_entire hxi_bdy hsimple
+  have hcount := xi_zero_count_eq_N T hT hT_not_ord
   unfold zeroCountRect at harg_prin
   rw [hcount] at harg_prin
-  -- Now: logIntegralRect RiemannXiAlt (-1) 2 0 T = ↑(N T)
-  -- Step 2: logIntegralRect is complex; its real part = N(T), imaginary part = 0
-  have hN_eq : (N T : ℝ) = (logIntegralRect RiemannXiAlt (-1) 2 0 T).re := by
+  have hN_eq : (N T : ℝ) = (logIntegralRect RiemannXiAlt (-1) 2 1 T).re := by
     rw [harg_prin]
     simp [Complex.ofReal_re, Complex.natCast_re]
   rw [hN_eq]
@@ -453,7 +467,7 @@ private theorem rvm_at_generic_T :
 /-- Extension from non-ordinate T to all T. Since N(T) is constant between
     zero ordinates, and the formula varies by O(log T) over unit intervals,
     the bound extends to all T. -/
-private theorem rvm_extend_to_all_T :
+private theorem rvm_extend_to_all_T [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
     ∃ C T₀ : ℝ, ∀ T ≥ T₀,
       |(N T : ℝ)
         - ((1 / Real.pi) * (stirlingApprox T).im
@@ -469,7 +483,7 @@ private theorem rvm_extend_to_all_T :
   -- So |N(T) - F(T)| ≤ |N(T') - F(T')| + |N(T') - N(T)| + |F(T') - F(T)| = O(log T)
   sorry  -- Extension from generic T to all T: monotonicity + continuity argument
 
-theorem rvm_decomposition_bounded :
+theorem rvm_decomposition_bounded [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
     (fun T : ℝ => (N T : ℝ)
       - ((1 / Real.pi) * (stirlingApprox T).im
          - (T / (2 * Real.pi)) * Real.log Real.pi
@@ -503,7 +517,7 @@ theorem rvm_decomposition_bounded :
     (4) `rvm_stirling_algebra`: algebraic identity [proved]
 
     All error terms are absorbed into O(log T). -/
-private theorem contour_integral_gives_rvm :
+private theorem contour_integral_gives_rvm [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
     ∃ C T₀ : ℝ, ∀ T ≥ T₀,
       |(N T : ℝ) - ((T / (2 * Real.pi)) * Real.log (T / (2 * Real.pi))
         - T / (2 * Real.pi))| ≤ C * Real.log T := by
@@ -564,7 +578,7 @@ private theorem contour_integral_gives_rvm :
     Proved from `contour_integral_gives_rvm` via a `ring` rewrite.
 
     References: Titchmarsh, "Theory of the Riemann Zeta Function", Thm 9.4. -/
-theorem riemann_von_mangoldt_explicit :
+theorem riemann_von_mangoldt_explicit [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
     ∃ C T₀ : ℝ, ∀ T ≥ T₀,
       |(N T : ℝ) - (T / (2 * Real.pi)) * Real.log (T / (2 * Real.pi)) + T / (2 * Real.pi)|
         ≤ C * Real.log T := by
@@ -577,8 +591,11 @@ theorem riemann_von_mangoldt_explicit :
 /-- Provide `ZeroCountingRvmExplicitHyp` from the Riemann-von Mangoldt formula.
     This automatically triggers the instance chain:
       `ZeroCountingRvmExplicitHyp` → `ZeroCountingAsymptoticHyp`
-        → `ZeroCountingMainTermHyp` → `ZeroCountingLowerBoundHyp` -/
-instance rvm_explicit_hyp : ZeroCountingRvmExplicitHyp where
+        → `ZeroCountingMainTermHyp` → `ZeroCountingLowerBoundHyp`
+    Requires `FirstZeroOrdinateHyp` for the rectangle restructuring
+    (bottom edge at Im=1 instead of Im=0). -/
+instance rvm_explicit_hyp [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
+    ZeroCountingRvmExplicitHyp where
   bound := riemann_von_mangoldt_explicit
 
 end ZetaZeros
