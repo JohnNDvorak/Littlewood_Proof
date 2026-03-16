@@ -1,44 +1,19 @@
 /-
 Bridge for the Hardy Z first moment bound: |∫₁ᵀ Z(t) dt| ≤ C·T^{1/2}.
 
-This isolates the O(T^{1/2}) first moment bound for the Hardy Z function
-to a single sorry. The import cycle (IBP ↔ RSExpansionProof) has been broken:
-IBP now imports this bridge directly.
+The O(T^{1/2}) bound decomposes into:
+  |∫ Z| ≤ |∫ MainTerm| + |∫ ErrorTerm|
 
-## Mathematical content (Titchmarsh 1951 §4.15)
+(A) |∫ ErrorTerm| ≤ C·√T: proved in RSExpansionProof.errorTerm_first_moment_sqrt
+    (imported here, cycle-free since RSExpansionProof no longer imports this file).
 
-Z(t) = MainTerm(t) + ErrorTerm(t) where
-  MainTerm = 2·∑_{n ≤ N(t)} (n+1)^{-1/2} · cos(θ(t) - t·log(n+1))
-  ErrorTerm = Z - MainTerm  (Riemann-Siegel remainder)
+(B) |∫ MainTerm| ≤ C·√T: requires per-mode VdC assembly on the Dirichlet polynomial.
+    SORRY: The per-mode VdC infrastructure exists (OffResonanceSmoothVdC, IBP Parts 6-7)
+    but the final assembly into the MainTerm first moment bound is not yet written.
 
-|∫₁ᵀ Z| ≤ |∫₁ᵀ MainTerm| + |∫₁ᵀ ErrorTerm|
-
-(A) ErrorTerm: O(√T) by alternating block cancellation.
-    Requires: Siegel saddle-point expansion (SiegelSaddleExpansionHyp sorry)
-              + Gabcke phase coupling (GabckePhaseCouplingHyp sorry).
-    Infrastructure: signed_block_integral_nonneg, error_term_first_moment_assembly.
-    STATUS: Proved in RSExpansionProof.errorTerm_first_moment_sqrt, but that
-    file imports THIS bridge, so we cannot use it here.
-
-(B) MainTerm: O(√T) by per-mode VdC on the Dirichlet polynomial.
-    Each mode n has oscillatory integral bounded by C_vdc/log((k+1)/(n+1))
-    per block. Sum over modes + blocks gives O(√T).
-    Infrastructure: off_resonance_integral_bound_smooth (OffResonanceSmoothVdC),
-    block_sum_assembly (IBP Part 7), Abel summation.
-    STATUS: Sub-lemmas proved, final assembly not done.
-
-## Closing strategy
-
-Extract ErrorTerm first moment infrastructure from RSExpansionProof into
-a standalone file (no bridge dependency), then import here. Then assemble
-the MainTerm bound from the per-mode VdC infrastructure.
-
-## Dependency note (2026-03-16)
-
-This sorry is NOT irreducible: it follows from the two Siegel/Gabcke sorrys
-(SiegelSaddleExpansionHyp, GabckePhaseCouplingHyp) plus the per-mode VdC
-infrastructure. The sorry exists because the proof assembly requires code
-currently in RSExpansionProof (which imports this file, creating a cycle).
+This sorry is NOT independently irreducible: it follows from the Siegel/Gabcke sorrys
+plus per-mode VdC assembly. The remaining work is assembling per-mode VdC bounds
+into |∫ MainTerm| ≤ C·√T.
 
 Reference: Titchmarsh 1951 §4.15; Ingham 1932 §5.2.
 -/
@@ -46,9 +21,11 @@ Reference: Titchmarsh 1951 §4.15; Ingham 1932 §5.2.
 import Mathlib
 import Littlewood.Aristotle.HardyEstimatesPartial
 import Littlewood.Aristotle.HardyZFirstMoment
+import Littlewood.Aristotle.Standalone.RSExpansionProof
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
+set_option maxHeartbeats 400000
 
 noncomputable section
 
@@ -62,14 +39,37 @@ open HardyEstimatesPartial
 
     |∫₁ᵀ Z(t) dt| ≤ C·T^{1/2} for all T ≥ 2.
 
-    This is the classical result of Titchmarsh (1951, §4.15).
-
-    SORRY STATUS: Derived from SiegelSaddleExpansionHyp + GabckePhaseCouplingHyp
-    sorrys + per-mode VdC assembly. Not independently irreducible.
-    See module docstring for closing strategy. -/
+    Proof strategy:
+    - ErrorTerm: O(√T) by alternating block cancellation (PROVED: errorTerm_first_moment_sqrt)
+    - MainTerm: O(√T) by per-mode VdC on Dirichlet polynomial (SORRY)
+    - Combine: |∫ Z| = |∫ MainTerm + ∫ ErrorTerm| ≤ C₁√T + C₂√T -/
 theorem hardyZ_first_moment_sqrt :
     ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) := by
+  -- Step 1: ErrorTerm first moment O(√T) — PROVED
+  obtain ⟨C_E, hCE_pos, h_error⟩ :=
+    Aristotle.Standalone.RSExpansionProof.errorTerm_first_moment_sqrt
+  -- Step 2: MainTerm first moment O(√T) — SORRY (per-mode VdC assembly)
+  suffices h_main : ∃ C_M > 0, ∀ T : ℝ, T ≥ 2 →
+      |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) by
+    obtain ⟨C_M, hCM_pos, h_M⟩ := h_main
+    refine ⟨C_M + C_E, by linarith, fun T hT => ?_⟩
+    -- Z = MainTerm + ErrorTerm
+    have h_split : ∫ t in Ioc 1 T, hardyZ t =
+        (∫ t in Ioc 1 T, MainTerm t) + (∫ t in Ioc 1 T, ErrorTerm t) := by
+      rw [← MeasureTheory.integral_add (mainTerm_integrable T) (errorTerm_integrable T)]
+      exact MeasureTheory.setIntegral_congr_fun measurableSet_Ioc
+        fun x _ => by unfold ErrorTerm; ring
+    rw [h_split]
+    calc |(∫ t in Ioc 1 T, MainTerm t) + (∫ t in Ioc 1 T, ErrorTerm t)|
+        ≤ |∫ t in Ioc 1 T, MainTerm t| + |∫ t in Ioc 1 T, ErrorTerm t| :=
+          abs_add_le _ _
+      _ ≤ C_M * T ^ ((1 : ℝ) / 2) + C_E * T ^ ((1 : ℝ) / 2) := by
+          linarith [h_M T hT, h_error T hT]
+      _ = (C_M + C_E) * T ^ ((1 : ℝ) / 2) := by ring
+  -- SORRY: MainTerm first moment bound from per-mode VdC assembly
+  -- Infrastructure exists in OffResonanceSmoothVdC + HardyZFirstMomentIBP Parts 6-7
+  -- but final assembly into |∫ MainTerm| ≤ C·√T is not yet written.
   sorry
 
 end Aristotle.Standalone.HardyZFirstMomentBridge

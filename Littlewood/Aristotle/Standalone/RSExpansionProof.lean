@@ -72,7 +72,6 @@ import Littlewood.Aristotle.HardyThetaSmooth
 import Littlewood.Aristotle.IntervalPartition
 import Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp
 import Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp
-import Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -87,7 +86,6 @@ open Aristotle.HardyNProperties Aristotle.RSBlockParam
 open Aristotle.ErrorTermExpansion
 open Aristotle.Standalone.SiegelSaddleExpansionHyp
 open Aristotle.Standalone.GabckePhaseCouplingHyp
-open Aristotle.Standalone.HardyZFirstMomentBridge
 
 -- ============================================================
 -- Section 1: blockParam ∈ [0,1] on closed blocks (constructive)
@@ -4745,7 +4743,7 @@ private theorem block_sum_sqrt_bound :
     _ = (4 * Real.pi + δ + 1) * ((↑(K - 1 + 1) : ℝ) + 1) := by
         congr 1; push_cast [hKpred_eq]; ring
 
-private theorem errorTerm_first_moment_sqrt :
+theorem errorTerm_first_moment_sqrt :
     ∃ C_E > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Ioc 1 T, ErrorTerm t| ≤ C_E * T ^ ((1 : ℝ) / 2) := by
   -- Obtain infrastructure
@@ -5092,70 +5090,13 @@ private theorem errorTerm_first_moment_sqrt :
     sorry
 -/
 
-/-- **Main term first moment** (IBP / VdC content): |∫₁ᵀ MainTerm| ≤ C·√T.
+/-- **Siegel expansion core** (conjuncts 1+2): saddle-point bound + block antitone.
 
-    Now derived from the Z first moment bridge and ErrorTerm first moment:
-      |∫ MainTerm| = |∫ (Z - ErrorTerm)| ≤ |∫ Z| + |∫ ErrorTerm|
+    Conjunct 3 (Z first moment O(√T)) was removed from this file because it
+    depended on HardyZFirstMomentBridge (creating a cycle). The Z first moment
+    bound now lives in the bridge, which imports this file for the ErrorTerm bound.
 
-    The Z first moment bound is provided by the bridge module
-    (HardyZFirstMomentBridge.hardyZ_first_moment_sqrt), which isolates
-    the remaining sorry to a clean location outside this file.
-
-    Reference: Titchmarsh 1951 §4.15; Ingham 1932 §5.2. -/
-private theorem mainTerm_first_moment_ibp :
-    ∃ C_M > 0, ∀ T : ℝ, T ≥ 2 →
-      |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) := by
-  -- Get Z first moment bound from the bridge (sorry-free at this call site)
-  obtain ⟨C_Z, hCZ_pos, h_Z⟩ := hardyZ_first_moment_sqrt
-  -- Get ErrorTerm first moment bound (proved in this file)
-  obtain ⟨C_E, hCE_pos, h_E⟩ := errorTerm_first_moment_sqrt
-  refine ⟨C_Z + C_E, by linarith, fun T hT => ?_⟩
-  -- Z = MainTerm + ErrorTerm, so ∫ MainTerm = ∫ Z - ∫ ErrorTerm
-  -- Hence |∫ MainTerm| ≤ |∫ Z| + |∫ ErrorTerm|
-  have h_add : ∫ t in Ioc 1 T, hardyZ t =
-      (∫ t in Ioc 1 T, MainTerm t) + (∫ t in Ioc 1 T, ErrorTerm t) := by
-    rw [← MeasureTheory.integral_add (mainTerm_integrable T) (errorTerm_integrable T)]
-    exact MeasureTheory.setIntegral_congr_fun measurableSet_Ioc
-      fun x _ => by unfold ErrorTerm; ring
-  have h_main_eq : ∫ t in Ioc 1 T, MainTerm t =
-      (∫ t in Ioc 1 T, hardyZ t) - (∫ t in Ioc 1 T, ErrorTerm t) := by
-    linarith
-  rw [h_main_eq]
-  calc |(∫ t in Ioc 1 T, hardyZ t) - (∫ t in Ioc 1 T, ErrorTerm t)|
-      ≤ |∫ t in Ioc 1 T, hardyZ t| + |∫ t in Ioc 1 T, ErrorTerm t| := abs_sub _ _
-    _ ≤ C_Z * T ^ ((1 : ℝ) / 2) + C_E * T ^ ((1 : ℝ) / 2) := by
-        linarith [h_Z T hT, h_E T hT]
-    _ = (C_Z + C_E) * T ^ ((1 : ℝ) / 2) := by ring
-
-/-- Conjunct 3: first moment bound.
-
-    |∫₁ᵀ Z(t) dt| ≤ C·√T (Titchmarsh §4.15; Heath-Brown 1978).
-
-    Proved by decomposing Z = MainTerm + ErrorTerm:
-    - MainTerm: O(√T) by IBP/VdC on the Dirichlet polynomial (sorry)
-    - ErrorTerm: O(√T) by alternating block cancellation (proved)
-
-    Reference: Titchmarsh 1951 §4.15; Ingham 1932 §5.2. -/
-private theorem siegel_first_moment :
-    ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
-      |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) := by
-  obtain ⟨C_M, hCM_pos, h_main⟩ := mainTerm_first_moment_ibp
-  obtain ⟨C_E, hCE_pos, h_error⟩ := errorTerm_first_moment_sqrt
-  refine ⟨C_M + C_E, by linarith, fun T hT => ?_⟩
-  have hT_pos : (0 : ℝ) < T := by linarith
-  -- Split: ∫ hardyZ = ∫ MainTerm + ∫ ErrorTerm
-  have h_split : ∫ t in Ioc 1 T, hardyZ t =
-      (∫ t in Ioc 1 T, MainTerm t) + (∫ t in Ioc 1 T, ErrorTerm t) := by
-    rw [← MeasureTheory.integral_add (mainTerm_integrable T) (errorTerm_integrable T)]
-    exact MeasureTheory.setIntegral_congr_fun measurableSet_Ioc
-      fun x _ => by unfold ErrorTerm; ring
-  rw [h_split]
-  calc |(∫ t in Ioc 1 T, MainTerm t) + (∫ t in Ioc 1 T, ErrorTerm t)|
-      ≤ |∫ t in Ioc 1 T, MainTerm t| + |∫ t in Ioc 1 T, ErrorTerm t| := abs_add_le _ _
-    _ ≤ C_M * T ^ ((1 : ℝ) / 2) + C_E * T ^ ((1 : ℝ) / 2) := by
-        linarith [h_main T hT, h_error T hT]
-    _ = (C_M + C_E) * T ^ ((1 : ℝ) / 2) := by ring
-
+    Reference: Siegel 1932 §3; Gabcke 1979 Satz 1 + Satz 4. -/
 private theorem siegel_expansion_core :
     -- (1) Pointwise saddle-point bound
     (∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
@@ -5168,26 +5109,8 @@ private theorem siegel_expansion_core :
      let c_fn := fun k : ℕ =>
        (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
          - A_val * Real.sqrt ((k : ℝ) + 1)
-     AntitoneOn c_fn (Ici (1 : ℕ)))
-    ∧
-    -- (3) First moment bound for hardyZ (Titchmarsh §4.15; Heath-Brown 1978)
-    (∃ C > 0, ∀ T : ℝ, T ≥ 2 →
-      |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2)) :=
-  ⟨siegel_saddle_and_antitone.1, siegel_saddle_and_antitone.2, siegel_first_moment⟩
-
-
-/-- **Hardy Z first moment bound** — extracted from `siegel_expansion_core` (3).
-
-    The classical result |∫₁ᵀ Z(t) dt| ≤ C·T^{1/2} (Titchmarsh §4.15).
-    This is derived from the per-mode VdC analysis of the Dirichlet polynomial
-    combined with the ErrorTerm alternating block cancellation.
-
-    Cross-module references to this theorem are opaque, preventing sorry-warning
-    propagation to consumer files. -/
-theorem hardyZ_first_moment_sqrt_bound :
-    ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
-      |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) :=
-  siegel_first_moment
+     AntitoneOn c_fn (Ici (1 : ℕ))) :=
+  ⟨siegel_saddle_and_antitone.1, siegel_saddle_and_antitone.2⟩
 
 -- ============================================================
 -- Section 12: Log-ratio expansion — connecting Stirling phase to rsPsi
