@@ -385,10 +385,59 @@ private theorem xi_zeros_are_simple [ZetaZerosSimpleHyp] :
     (riemannXiAlt_zero_iff_zeta_zero hre_pos hre_lt).mp hxi_zero
   have hmem : z ∈ zetaNontrivialZeros := ⟨hzeta_zero, hre_pos, hre_lt⟩
   have hderiv_zeta := ZetaZerosSimpleHyp.simple z hmem
-  -- The product rule computation: ξ'(z) = (1/2)z(z-1)·Λ'(z) since Λ(z) = 0.
-  -- And Λ'(z) = Γ_R(z)·ζ'(z) since Λ = Γ_R · ζ and ζ(z) = 0.
-  -- Since z(z-1) ≠ 0 and Γ_R(z) ≠ 0, ξ'(z) ≠ 0.
-  sorry  -- Product rule bridge: deriv(ζ,z) ≠ 0 → deriv(ξ,z) ≠ 0
+  -- Step 1: z ≠ 0 and z ≠ 1
+  have hz0 : z ≠ 0 := by intro h; rw [h] at hre_pos; simp at hre_pos
+  have hz1 : z ≠ 1 := by intro h; rw [h] at hre_lt; simp at hre_lt
+  -- Step 2: RiemannXiAlt agrees with (1/2)*s*(s-1)*Λ(s) on a nhd of z
+  have h_eq : ∀ᶠ s in nhds z,
+      RiemannXiAlt s = (1/2 : ℂ) * s * (s - 1) * completedRiemannZeta s := by
+    have h01 : ({0, 1} : Set ℂ)ᶜ ∈ nhds z :=
+      IsOpen.mem_nhds (isOpen_compl_iff.mpr (Set.Finite.isClosed
+        (Set.Finite.insert 0 (Set.finite_singleton 1))))
+        (Set.mem_compl (by simp [hz0, hz1]))
+    apply Filter.Eventually.mono h01
+    intro s hs
+    simp only [Set.mem_compl_iff, Set.mem_insert_iff, Set.mem_singleton_iff] at hs
+    push_neg at hs
+    exact RiemannXiAlt_eq_formula hs.1 hs.2
+  -- Step 3: deriv RiemannXiAlt z = deriv of the product form at z
+  have h_deriv_eq : deriv RiemannXiAlt z =
+      deriv (fun s => (1/2 : ℂ) * s * (s - 1) * completedRiemannZeta s) z :=
+    Filter.EventuallyEq.deriv_eq h_eq
+  -- Step 4: completedRiemannZeta z = 0 (since ζ(z) = 0)
+  have h_comp_zero : completedRiemannZeta z = 0 := by
+    rwa [completedRiemannZeta_eq_zero_iff_riemannZeta hre_pos]
+  -- Step 5: deriv completedRiemannZeta z ≠ 0
+  -- At a simple zero z of ζ: Λ(s) = π^{-s/2}·Γ(s/2)·ζ(s) for s ≠ 0,1.
+  -- Product rule at z where ζ(z) = 0: Λ'(z) = π^{-z/2}·Γ(z/2)·ζ'(z).
+  -- Each factor nonzero: cpow of π, Gamma has no zeros, ζ'(z) ≠ 0.
+  have h_comp_deriv_ne : deriv completedRiemannZeta z ≠ 0 := by
+    sorry  -- Λ'(z) = π^{-z/2}·Γ(z/2)·ζ'(z) ≠ 0 (product rule at zero of ζ)
+  -- Step 6: Compute the derivative via product rule and show nonzero
+  -- f(s) = (1/2)·s·(s-1)·Λ(s), so f'(z) = (1/2)·(2z-1)·Λ(z) + (1/2)·z·(z-1)·Λ'(z)
+  -- Since Λ(z) = 0: f'(z) = (1/2)·z·(z-1)·Λ'(z) ≠ 0.
+  rw [h_deriv_eq]
+  have h_diff_comp : DifferentiableAt ℂ completedRiemannZeta z :=
+    differentiableAt_completedZeta hz0 hz1
+  have h_p : HasDerivAt (fun s => (1/2 : ℂ) * s * (s - 1))
+      ((1/2 : ℂ) * (2 * z - 1)) z := by
+    have h1 : HasDerivAt (fun s : ℂ => s) 1 z := hasDerivAt_id z
+    have h2 : HasDerivAt (fun s : ℂ => s - 1) 1 z := (hasDerivAt_id z).sub_const 1
+    have h3 : HasDerivAt (fun s : ℂ => s * (s - 1)) (1 * (z - 1) + z * 1) z := h1.mul h2
+    have h4 := h3.const_mul (1/2 : ℂ)
+    convert h4 using 1 <;> ring
+  have h_c : HasDerivAt completedRiemannZeta (deriv completedRiemannZeta z) z :=
+    h_diff_comp.hasDerivAt
+  have h_prod := h_p.mul h_c
+  have hfg : (fun s => (1/2 : ℂ) * s * (s - 1) * completedRiemannZeta s) =
+      ((fun s => (1/2 : ℂ) * s * (s - 1)) * completedRiemannZeta) := by
+    ext s; simp [Pi.mul_apply]
+  rw [hfg, h_prod.deriv, h_comp_zero, mul_zero, zero_add]
+  apply mul_ne_zero
+  · apply mul_ne_zero
+    · exact mul_ne_zero (by norm_num : (1/2 : ℂ) ≠ 0) hz0
+    · exact sub_ne_zero.mpr hz1
+  · exact h_comp_deriv_ne
 
 /-! ### Sub-lemma: Contour evaluation
 
