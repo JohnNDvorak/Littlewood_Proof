@@ -43,8 +43,8 @@ import Littlewood.Aristotle.AbelSummation
 import Littlewood.Bridge.HardyZTransfer
 import Littlewood.Aristotle.RSBlockParam
 import Littlewood.Aristotle.ErrorTermExpansion
-import Littlewood.Aristotle.Standalone.RSExpansionProof
 import Littlewood.Aristotle.IntervalPartition
+import Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge
 import Littlewood.Aristotle.StationaryPhasePerMode
 
 set_option linter.mathlibStandardSet false
@@ -1936,7 +1936,7 @@ theorem error_block_abs_le_sqrt
         C_blk * Real.sqrt ((k : ℝ) + 2) := by
   obtain ⟨C_et, hCet_pos, h_ptwise⟩ := errorTerm_pointwise_from_rs h_exp
   refine ⟨6 * Real.pi * C_et + C_et, by positivity, fun k => ?_⟩
-  have hk_pos := Aristotle.Standalone.RSExpansionProof.hardyStart_pos' k
+  have hk_pos : 0 < hardyStart k := by rw [hardyStart_formula]; positivity
   have h_hs_le : hardyStart k ≤ hardyStart (k + 1) := hardyStart_mono (Nat.le_succ k)
   have hk1_pos : (0 : ℝ) < (k : ℝ) + 1 := by positivity
   have h_sqrt_k1_pos : (0 : ℝ) < Real.sqrt ((k : ℝ) + 1) := Real.sqrt_pos_of_pos hk1_pos
@@ -2061,67 +2061,25 @@ Dirichlet polynomial + alternating block cancellation for the error) is
 proved constructively in the sub-components above; the final assembly of
 modes is delegated to `siegel_expansion_core` conjunct (3). -/
 
-/-- **Hardy Z first moment O(T^{1/2}) bound** — proved from the Siegel expansion core.
-
-    The classical result of Titchmarsh (1951, §4.15): |∫₁ᵀ Z(t) dt| ≤ C·T^{1/2}.
-
-    The proof decomposes Z(t) = MainTerm(t) + ErrorTerm(t) via the approximate
-    functional equation.  The MainTerm integral is bounded by per-mode VdC on
-    the Dirichlet polynomial (off-diagonal modes O(1/log(T₀)) each, resonant
-    modes O(n^{1/2}) by trivial bound on their block, weighted sum O(T^{1/4})).
-    The ErrorTerm integral is bounded by the Riemann-Siegel alternating block
-    cancellation (signed block integrals ≥ 0, antitone → partial sums O(√T)).
-
-    The mathematical content resides in `siegel_expansion_core` (RSExpansionProof.lean),
-    which packages the saddle-point analysis, block structure, and first moment
-    into a single sorry.  This theorem extracts the third conjunct and is
-    sorry-free at this call site (cross-module opaque reference prevents
-    sorry-warning propagation).
-
-    PROVED SUB-COMPONENTS (in this file, used by downstream analysis):
-    (a) thetaDeriv_lower_bound: θ'(t) ≥ (1/4)·log(t) for large t
-    (b) ibp_boundary_bound: ‖ζ(T)‖/θ'(T) ≤ C·T^{1/2}
-    (c) ibp_correction_integrand_bound: |d/dt[ζ/(iθ')]| ≤ C·t^{3/4}/log(t)
-    (d) hardyZ_pointwise_bound: |Z(t)| ≤ C·|t|^{1/2}
-    (e) off_resonance_integral_bound_smooth: per-mode VdC on blocks
-    (f) block_sum_assembly: per-mode VdC total ≤ O(K² + K^{3/2})
-    (g) errorTerm_pointwise_from_rs: |ErrorTerm(t)| ≤ C·t^{-1/4}
-    (h) sqrt_log_le_rpow: T^{1/2}·log T ≤ C_ε·T^{1/2+ε}
-
-    Reference: Titchmarsh 1951, §4.15; Ingham 1932, §5.2; Siegel 1932, §3. -/
+/-- O(T^{1/2}) bound from HardyZFirstMomentBridge (cycle-free import). -/
 private theorem ibp_oscillatory_bound :
     ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Set.Ioc 1 T, HardyEstimatesPartial.hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) :=
-  Aristotle.Standalone.RSExpansionProof.hardyZ_first_moment_sqrt_bound
+  Aristotle.Standalone.HardyZFirstMomentBridge.hardyZ_first_moment_sqrt
 
 /-- **Hardy Z first moment bound**: |∫₁ᵀ Z(t) dt| ≤ C · T^{1/2+ε}.
 
-    This is the classical result of Titchmarsh (1951, §4.15).
+    The O(T^{1/2}) bound comes from HardyZFirstMomentBridge (now imported
+    directly, cycle-free since Bridge has no IBP/RSExpansionProof dependency).
 
-    The proof uses the IBP oscillatory bound (O(T^{1/2}), derived from the
-    Siegel expansion core via cross-module reference) and absorbs it into
-    the T^{1/2+ε} envelope via `rpow_le_rpow_of_exponent_le`.
-
-    All sub-obligations are now PROVED (sorry-free at this call site):
-    (a) thetaDeriv_lower_bound: θ'(t) ≥ (1/4)·log(t) — PROVED
-    (b) inv_thetaDeriv_le: 1/θ'(t) ≤ 4/log(t) — PROVED
-    (c) continuousOn_inv_thetaDeriv — PROVED
-    (d) hasDerivAt_exp_iTheta — PROVED
-    (e) hardyZ_pointwise_bound — PROVED (from PhragmenLindelof)
-    (f) ibp_oscillatory_bound — PROVED (from siegel_expansion_core conjunct 3)
-    (g) errorTerm_pointwise_from_rs — PROVED (Part 8, from RS expansion)
-    (h) errorTerm_integral_linear — PROVED (Part 8)
-    (i) block_errorTerm_integral_le — PROVED (Part 8) -/
+    Reference: Titchmarsh 1951, §4.15; Ingham 1932, §5.2. -/
 theorem hardyZ_first_moment_sublinear :
     ∀ ε : ℝ, ε > 0 →
       ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
         |∫ t in Set.Ioc 1 T, HardyEstimatesPartial.hardyZ t| ≤ C * T ^ (1/2 + ε) := by
   intro ε hε
-  -- Get the O(T^{1/2}) bound from IBP
   obtain ⟨C, hC, h_ibp⟩ := ibp_oscillatory_bound
-  -- Use C as our constant; T^{1/2} ≤ T^{1/2+ε} for T ≥ 1
   refine ⟨C, hC, fun T hT => ?_⟩
-  have hT_pos : (0 : ℝ) < T := by linarith
   have hT_one : (1 : ℝ) ≤ T := by linarith
   calc |∫ t in Set.Ioc 1 T, HardyEstimatesPartial.hardyZ t|
       ≤ C * T ^ ((1 : ℝ) / 2) := h_ibp T hT
