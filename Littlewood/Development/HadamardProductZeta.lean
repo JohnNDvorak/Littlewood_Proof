@@ -512,9 +512,9 @@ theorem hadamard_contour_bound :
   -- ✓ Per-term Perron bounds PROVED (PerronTruncationInfra)
   -- ✓ CIF for rectangles PROVED (CauchyRectangleFormula)
   -- ✓ CIF rectangle contour shift PROVED (PerronContourShift.right_vertical_from_cif)
-  --   Decomposes right vertical integral = 2πi·g(w) + three boundary edges
+  --   → Decomposes right vertical integral = 2πi·g(w) + three boundary edges
   -- ✓ Boundary segment bounds PROVED (PerronContourShift.three_edges_bound)
-  --   Given pointwise bound M, edges bounded by M·2T + 2M·(c-σ₀)
+  --   → Given pointwise bound M, edges ≤ M·2T + 2M·(c-σ₀)
   -- ✗ Remaining: SINGLE atomic sorry (PerronContourShift.zeta_logderiv_pointwise_bound):
   --   |ζ'/ζ(σ+it)| ≤ C·(log|t|)² for 1/2 ≤ σ ≤ 2, |t| ≥ 2
   --   Requires: Hadamard factorization of ξ(s) — not in Mathlib
