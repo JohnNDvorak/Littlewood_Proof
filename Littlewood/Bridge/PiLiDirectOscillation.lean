@@ -18,6 +18,7 @@ import Littlewood.Oscillation.SchmidtTheorem
 import Littlewood.Aristotle.DirichletPhaseAlignment
 import Littlewood.Aristotle.Standalone.AbelSummationPsiPi
 import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aDefs
+import Littlewood.Aristotle.Standalone.ZeroSumNegFrequently
 
 noncomputable section
 
@@ -31,16 +32,12 @@ private def piLiError (x : ℝ) : ℝ :=
   (Nat.primeCounting (Nat.floor x) : ℝ) -
     LogarithmicIntegral.logarithmicIntegral x
 
-/-- Input hypothesis for extracting π-li oscillation from critical-line zeros. -/
-class TruncatedExplicitFormulaPiHyp : Prop where
-  /-- Truncated explicit formula for `π(x) - li(x)` at `√x/log x` scale. -/
-  pi_approx :
-    ∀ (S : Finset ℂ),
-      (∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2) →
-      ∀ ε : ℝ, 0 < ε → ∀ᶠ x in atTop,
-        |piLiError x + ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
-          ≤ ε * (Real.sqrt x / Real.log x)
+/-- **Proved parent class**: anti-alignment for singleton critical-line zeros.
+    Separated from the false `pi_approx` field so that downstream files needing
+    only this result can depend on a sorry-free typeclass.
 
+    SORRY COUNT: 0 (proved in ZeroSumNegFrequently.lean via cosine oscillation). -/
+class ZeroSumNegFrequentlyPiHyp : Prop where
   /-- Anti-alignment for singleton critical-line zeros, scaled by `1/log x`. -/
   zero_sum_neg_frequently :
     ∀ (ρ₀ : ℂ), ρ₀ ∈ zetaNontrivialZeros →
@@ -49,6 +46,42 @@ class TruncatedExplicitFormulaPiHyp : Prop where
         1 < x ∧
           ((∑ ρ ∈ ({ρ₀} : Finset ℂ), ((x : ℂ) ^ ρ / ρ)).re) / Real.log x
             ≤ -(c * (Real.sqrt x / Real.log x))
+
+/-- Sorry-free global instance of `ZeroSumNegFrequentlyPiHyp`.
+    Proof: direct from `ZeroSumNegFrequently.zero_sum_neg_frequently_core`. -/
+instance : ZeroSumNegFrequentlyPiHyp where
+  zero_sum_neg_frequently := by
+    intro ρ₀ _hρ₀_mem hρ₀_re hρ₀_im
+    exact Aristotle.Standalone.ZeroSumNegFrequently.zero_sum_neg_frequently_core
+      ρ₀ hρ₀_re hρ₀_im
+
+/-- Input hypothesis for extracting π-li oscillation from critical-line zeros.
+    Contains both `pi_approx` (mathematically false, sorry) and `zero_sum_neg_frequently`
+    (proved). The `pi_approx` field is retained for the B7/lll-factor chain; the main
+    theorem path bypasses it via LandauOscillation.lean (priority 2000). -/
+class TruncatedExplicitFormulaPiHyp : Prop where
+  /-- Truncated explicit formula for `π(x) - li(x)` at `√x/log x` scale.
+      **MATHEMATICALLY FALSE** for S=∅. Retained for backward compatibility. -/
+  pi_approx :
+    ∀ (S : Finset ℂ),
+      (∀ ρ ∈ S, ρ ∈ zetaNontrivialZeros ∧ ρ.re = 1 / 2) →
+      ∀ ε : ℝ, 0 < ε → ∀ᶠ x in atTop,
+        |piLiError x + ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
+          ≤ ε * (Real.sqrt x / Real.log x)
+  /-- Anti-alignment for singleton critical-line zeros, scaled by `1/log x`. -/
+  zero_sum_neg_frequently :
+    ∀ (ρ₀ : ℂ), ρ₀ ∈ zetaNontrivialZeros →
+      ρ₀.re = 1 / 2 → ρ₀.im ≠ 0 →
+      ∃ c > 0, ∀ X : ℝ, ∃ x > X,
+        1 < x ∧
+          ((∑ ρ ∈ ({ρ₀} : Finset ℂ), ((x : ℂ) ^ ρ / ρ)).re) / Real.log x
+            ≤ -(c * (Real.sqrt x / Real.log x))
+
+/-- Any `TruncatedExplicitFormulaPiHyp` instance automatically provides
+    `ZeroSumNegFrequentlyPiHyp`. This allows downstream code to depend only on the
+    sorry-free parent class when `pi_approx` is not needed. -/
+instance (priority := 100) [h : TruncatedExplicitFormulaPiHyp] : ZeroSumNegFrequentlyPiHyp where
+  zero_sum_neg_frequently := h.zero_sum_neg_frequently
 
 /-! ### MATHEMATICAL ANALYSIS: pi_approx soundness (2026-03-15)
 

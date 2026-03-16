@@ -1703,7 +1703,7 @@ theorem pi_explicit_formula_from_perron :
     -- Retained with sorry to avoid breaking 50+ downstream files.
     sorry
   zero_sum_neg_frequently := by
-    intro ρ₀ hρ₀_mem hρ₀_re hρ₀_im
+    intro ρ₀ _hρ₀_mem hρ₀_re hρ₀_im
     exact Aristotle.Standalone.ZeroSumNegFrequently.zero_sum_neg_frequently_core
       ρ₀ hρ₀_re hρ₀_im
 
