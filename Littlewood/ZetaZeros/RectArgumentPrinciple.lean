@@ -47,9 +47,11 @@ Co-authored-by: Claude (Anthropic)
 
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Calculus.LogDeriv
+import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
+import Mathlib.Analysis.SpecialFunctions.Complex.Log
 import Mathlib.NumberTheory.LSeries.RiemannZeta
 
-set_option maxHeartbeats 800000
+set_option maxHeartbeats 1600000
 set_option autoImplicit false
 
 noncomputable section
@@ -180,16 +182,191 @@ holomorphic on R \ {w}, so by Cauchy-Goursat on R minus the ε-disk, the rectang
 integral equals the circle integral. The circle integral gives 2πi by
 `Complex.circleIntegral_sub_center_inv_smul`.
 
-SORRY STATUS: Requires contour deformation (rectangle → circle). The individual
-pieces are in Mathlib:
-- Cauchy-Goursat: `integral_boundary_rect_eq_zero_of_differentiable_on_off_countable`
-- Circle CIF: `circleIntegral_sub_inv_smul_of_differentiable_on_off_countable`
-but connecting them requires constructing the deformation path explicitly. -/
+Proved via the fundamental theorem of calculus. On each edge, `Complex.log(z - w)` is an
+antiderivative (valid when `z - w ∈ slitPlane`). The left edge crosses the branch cut at
+`Im(w)`, producing a `2πi` jump that yields the winding number.
+
+Specifically, the four edge integrals are:
+- Bottom: `log(b+ic-w) - log(a+ic-w)`  (Im ≠ 0)
+- Top (negated): `-(log(b+id-w) - log(a+id-w))`  (Im ≠ 0)
+- Right: `log(b+id-w) - log(b+ic-w)`  (Re > 0)
+- Left (split at Im(w)): `-(log(a+id-w) - log(a+ic-w) - 2πi)`
+These telescope to `2πi`. -/
+
+/-! ### FTC Infrastructure for Winding Number -/
+
+section WindingFTC
+
+set_option maxHeartbeats 3200000
+
+private theorem im_sub_pt {x y : ℝ} {w : ℂ} : (↑x + ↑y * I - w).im = y - w.im := by
+  simp [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_im, Complex.I_re,
+    Complex.sub_im]
+
+private theorem re_sub_pt {x y : ℝ} {w : ℂ} : (↑x + ↑y * I - w).re = x - w.re := by
+  simp [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re, Complex.ofReal_im,
+    Complex.I_im, Complex.sub_re]
+
+/-- d/dx [log(x + c'I - w)] = (x + c'I - w)⁻¹ when Im ≠ Im(w). -/
+private theorem hasDerivAt_log_horiz_sub {w : ℂ} {x c' : ℝ} (hc : c' ≠ w.im) :
+    HasDerivAt (fun t : ℝ => Complex.log (↑t + ↑c' * I - w)) ((↑x + ↑c' * I - w)⁻¹) x := by
+  have hsp := Complex.mem_slitPlane_iff.mpr (Or.inr (show (↑x + ↑c' * I - w).im ≠ 0 from
+    by rw [im_sub_pt]; exact sub_ne_zero.mpr hc))
+  have h1 : HasDerivAt (fun t : ℝ => (↑t + ↑c' * I - w : ℂ)) 1 x := by
+    have h2 : HasDerivAt (fun t : ℝ => (t : ℂ) + (↑c' * I - w)) 1 x := by
+      simpa using Complex.ofRealCLM.hasDerivAt.add_const (↑c' * I - w : ℂ)
+    have heq : (fun t : ℝ => (↑t : ℂ) + (↑c' * I - w)) = (fun t : ℝ => ↑t + ↑c' * I - w) :=
+      funext fun t => by ring
+    rwa [heq] at h2
+  exact ((Complex.hasDerivAt_log hsp).comp x h1).congr_deriv (mul_one _)
+
+/-- d/dy [I⁻¹ · log(x₀ + yI - w)] = (x₀ + yI - w)⁻¹ when x₀+yI-w ∈ slitPlane. -/
+private theorem hasDerivAt_log_vert_sub {w : ℂ} {x₀ y : ℝ}
+    (hsp : (↑x₀ + ↑y * I - w) ∈ Complex.slitPlane) :
+    HasDerivAt (fun t : ℝ => I⁻¹ * Complex.log (↑x₀ + ↑t * I - w))
+      ((↑x₀ + ↑y * I - w)⁻¹) y := by
+  have h1 : HasDerivAt (fun t : ℝ => (↑x₀ + ↑t * I - w : ℂ)) I y := by
+    have hd := Complex.ofRealCLM.hasDerivAt (x := y)
+    have : ⇑Complex.ofRealCLM = fun (t : ℝ) => (t : ℂ) := rfl; rw [this] at hd; simp at hd
+    have hd2 : HasDerivAt (fun t : ℝ => ((t : ℂ) * I)) I y :=
+      (hd.mul_const I).congr_deriv (one_mul I)
+    have h3 := hd2.const_add (↑x₀ - w : ℂ)
+    have heq : (fun t : ℝ => ↑x₀ - w + (↑t : ℂ) * I) = (fun t : ℝ => ↑x₀ + ↑t * I - w) :=
+      funext fun t => by ring
+    rwa [heq] at h3
+  exact ((Complex.hasDerivAt_log hsp).comp y h1 |>.const_mul I⁻¹).congr_deriv (by
+    rw [← mul_assoc, mul_comm I⁻¹, mul_assoc, inv_mul_cancel₀ I_ne_zero, mul_one])
+
+/-- (·-w)⁻¹ is integrable on horizontal edges where Im ≠ Im(w). -/
+private theorem intble_horiz_sub {w : ℂ} {c' : ℝ} (hc : c' ≠ w.im) (p q : ℝ) :
+    IntervalIntegrable (fun x => (↑x + ↑c' * I - w)⁻¹) MeasureTheory.volume p q := by
+  apply ContinuousOn.intervalIntegrable; apply ContinuousOn.inv₀
+  · exact (continuous_ofReal.add (continuous_const.mul continuous_const)).continuousOn.sub
+      continuousOn_const
+  · intro x _; exact Complex.slitPlane_ne_zero (Complex.mem_slitPlane_iff.mpr (Or.inr
+      (by rw [im_sub_pt]; exact sub_ne_zero.mpr hc)))
+
+/-- (·-w)⁻¹ is integrable on vertical edges where Re ≠ Re(w). -/
+private theorem intble_vert_sub {w : ℂ} {x₀ : ℝ} (hx : x₀ ≠ w.re) (p q : ℝ) :
+    IntervalIntegrable (fun y => (↑x₀ + ↑y * I - w)⁻¹) MeasureTheory.volume p q := by
+  apply ContinuousOn.intervalIntegrable; apply ContinuousOn.inv₀
+  · exact (continuous_const.add (continuous_ofReal.mul continuous_const)).continuousOn.sub
+      continuousOn_const
+  · intro y _ h; have := congr_arg Complex.re h
+    simp [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re, Complex.ofReal_im,
+      Complex.I_im, Complex.sub_re, Complex.zero_re] at this; exact hx (by linarith)
+
+/-- Tendsto of the antiderivative at the branch cut from below. -/
+private theorem tendsto_antideriv_lower {w : ℂ} {a₀ : ℝ} (ha : a₀ < w.re) :
+    Filter.Tendsto (fun y : ℝ => I⁻¹ * Complex.log (↑a₀ + ↑y * I - w))
+      (nhdsWithin w.im (Set.Iio w.im))
+      (nhds (I⁻¹ * (↑(Real.log ‖(↑a₀ + ↑w.im * I - w : ℂ)‖) - ↑Real.pi * I))) := by
+  set φ : ℝ → ℂ := fun y => ↑a₀ + ↑y * I - w
+  set z₀ := φ w.im
+  have hz₀_re : z₀.re < 0 := by
+    simp [z₀, φ, Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
+      Complex.ofReal_im, Complex.I_im, Complex.sub_re]; linarith
+  have hz₀_im : z₀.im = 0 := by
+    simp [z₀, φ, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_im,
+      Complex.I_re, Complex.sub_im]
+  have hcont : Continuous φ :=
+    continuous_const.add (continuous_ofReal.mul continuous_const) |>.sub continuous_const
+  have htend : Filter.Tendsto φ (nhdsWithin w.im (Set.Iio w.im))
+      (nhdsWithin z₀ {z : ℂ | z.im < 0}) := by
+    rw [tendsto_nhdsWithin_iff]
+    exact ⟨hcont.continuousAt.tendsto.mono_left nhdsWithin_le_nhds,
+      Filter.eventually_of_mem self_mem_nhdsWithin (fun y (hy : y < w.im) => by
+        show (φ y).im < 0
+        simp [φ, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_im,
+          Complex.I_re, Complex.sub_im]; linarith)⟩
+  exact ((Complex.tendsto_log_nhdsWithin_im_neg_of_re_neg_of_im_zero hz₀_re hz₀_im).comp
+    htend).const_mul I⁻¹
+
+/-- Tendsto of the antiderivative at the branch cut from above. -/
+private theorem tendsto_antideriv_upper {w : ℂ} {a₀ : ℝ} (ha : a₀ < w.re) :
+    Filter.Tendsto (fun y : ℝ => I⁻¹ * Complex.log (↑a₀ + ↑y * I - w))
+      (nhdsWithin w.im (Set.Ioi w.im))
+      (nhds (I⁻¹ * (↑(Real.log ‖(↑a₀ + ↑w.im * I - w : ℂ)‖) + ↑Real.pi * I))) := by
+  set φ : ℝ → ℂ := fun y => ↑a₀ + ↑y * I - w
+  set z₀ := φ w.im
+  have hz₀_re : z₀.re < 0 := by
+    simp [z₀, φ, Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
+      Complex.ofReal_im, Complex.I_im, Complex.sub_re]; linarith
+  have hz₀_im : z₀.im = 0 := by
+    simp [z₀, φ, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_im,
+      Complex.I_re, Complex.sub_im]
+  have hcont : Continuous φ :=
+    continuous_const.add (continuous_ofReal.mul continuous_const) |>.sub continuous_const
+  have htend : Filter.Tendsto φ (nhdsWithin w.im (Set.Ioi w.im))
+      (nhdsWithin z₀ {z : ℂ | 0 ≤ z.im}) := by
+    rw [tendsto_nhdsWithin_iff]
+    exact ⟨hcont.continuousAt.tendsto.mono_left nhdsWithin_le_nhds,
+      Filter.eventually_of_mem self_mem_nhdsWithin (fun y (hy : w.im < y) => by
+        show 0 ≤ (φ y).im
+        simp [φ, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_im,
+          Complex.I_re, Complex.sub_im]; linarith)⟩
+  exact ((Complex.tendsto_log_nhdsWithin_im_nonneg_of_re_neg_of_im_zero hz₀_re hz₀_im).comp
+    htend).const_mul I⁻¹
+
+end WindingFTC
+
 theorem rect_winding_number_eq_one (w : ℂ) (a b c d : ℝ)
     (hab : a < b) (hcd : c < d)
     (hw : w ∈ openRect a b c d) :
     (1 / (2 * ↑Real.pi * I)) * contourIntegralRect (fun s => 1 / (s - w)) a b c d = 1 := by
-  sorry
+  obtain ⟨ha_w, hw_b, hc_w, hw_d⟩ := hw
+  -- Rewrite 1/(s-w) to (s-w)⁻¹
+  simp_rw [one_div]
+  -- Suffices: contourIntegralRect (·-w)⁻¹ = 2πi
+  suffices h : contourIntegralRect (fun s => (s - w)⁻¹) a b c d = 2 * ↑Real.pi * I by
+    rw [h]; field_simp [Real.pi_ne_zero, I_ne_zero]
+  unfold contourIntegralRect
+  -- Apply FTC on horizontal edges
+  have hbot := intervalIntegral.integral_eq_sub_of_hasDerivAt
+    (fun x _ => hasDerivAt_log_horiz_sub (ne_of_lt hc_w)) (intble_horiz_sub (ne_of_lt hc_w) a b)
+  have htop := intervalIntegral.integral_eq_sub_of_hasDerivAt
+    (fun x _ => hasDerivAt_log_horiz_sub (ne_of_gt hw_d)) (intble_horiz_sub (ne_of_gt hw_d) a b)
+  -- Apply FTC on right vertical edge
+  have hright := intervalIntegral.integral_eq_sub_of_hasDerivAt
+    (fun y _ => hasDerivAt_log_vert_sub (Complex.mem_slitPlane_iff.mpr
+      (Or.inl (by rw [re_sub_pt]; linarith)))) (intble_vert_sub (ne_of_gt hw_b) c d)
+  -- Split left edge at w.im
+  have hleft_split := (intervalIntegral.integral_add_adjacent_intervals
+    (intble_vert_sub (ne_of_lt ha_w) c w.im)
+    (intble_vert_sub (ne_of_lt ha_w) w.im d)).symm
+  -- FTC on left lower half [c, w.im]
+  have hcont_c : Filter.Tendsto (fun y : ℝ => I⁻¹ * Complex.log (↑a + ↑y * I - w))
+      (nhdsWithin c (Set.Ioi c)) (nhds (I⁻¹ * Complex.log (↑a + ↑c * I - w))) :=
+    (hasDerivAt_log_vert_sub (Complex.mem_slitPlane_iff.mpr (Or.inr (by
+      rw [im_sub_pt]; linarith)))).continuousAt.tendsto.mono_left nhdsWithin_le_nhds
+  have hleft_lo := intervalIntegral.integral_eq_sub_of_hasDerivAt_of_tendsto hc_w
+    (fun y hy => hasDerivAt_log_vert_sub (Complex.mem_slitPlane_iff.mpr
+      (Or.inr (by rw [im_sub_pt]; linarith [hy.2]))))
+    (intble_vert_sub (ne_of_lt ha_w) c w.im) hcont_c (tendsto_antideriv_lower ha_w)
+  -- FTC on left upper half [w.im, d]
+  have hcont_d : Filter.Tendsto (fun y : ℝ => I⁻¹ * Complex.log (↑a + ↑y * I - w))
+      (nhdsWithin d (Set.Iio d)) (nhds (I⁻¹ * Complex.log (↑a + ↑d * I - w))) :=
+    (hasDerivAt_log_vert_sub (Complex.mem_slitPlane_iff.mpr (Or.inr (by
+      rw [im_sub_pt]; linarith)))).continuousAt.tendsto.mono_left nhdsWithin_le_nhds
+  have hleft_up := intervalIntegral.integral_eq_sub_of_hasDerivAt_of_tendsto hw_d
+    (fun y hy => hasDerivAt_log_vert_sub (Complex.mem_slitPlane_iff.mpr
+      (Or.inr (by rw [im_sub_pt]; linarith [hy.1]))))
+    (intble_vert_sub (ne_of_lt ha_w) w.im d) (tendsto_antideriv_upper ha_w) hcont_d
+  -- Substitute all FTC results
+  rw [hbot, htop, hright, hleft_split, hleft_lo, hleft_up]
+  -- Now the goal is a pure algebraic identity involving log values and I, I⁻¹
+  -- (L_bc - L_ac) - (L_bd - L_ad) + I*(I⁻¹*L_bd - I⁻¹*L_bc) -
+  --   I*((I⁻¹*(ln-πi) - I⁻¹*L_ac) + (I⁻¹*L_ad - I⁻¹*(ln+πi))) = 2πi
+  -- Using I*I⁻¹ = 1, this telescopes to 2πi
+  have hII : I * I⁻¹ = 1 := mul_inv_cancel₀ I_ne_zero
+  -- Goal after substitution should be purely algebraic in log values
+  -- Let's try to simplify step by step
+  -- First, distribute I * (sum)
+  simp only [mul_add, mul_sub]
+  -- Simplify I * (I⁻¹ * _) = _
+  simp only [← mul_assoc, hII, one_mul]
+  -- Now everything should telescope
+  ring
 
 /-! ## Sub-lemma B: Log-Derivative Decomposition
 
