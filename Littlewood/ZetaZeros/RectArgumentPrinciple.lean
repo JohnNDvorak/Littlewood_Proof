@@ -253,6 +253,84 @@ theorem cauchy_goursat_rect (g : ℂ → ℂ) (a b c d : ℝ)
   rw [hre1, him1, hre2, him2, smul_eq_mul, smul_eq_mul] at key
   exact key hg
 
+/-! ## Contour Integral Linearity
+
+Infrastructure for composing the argument principle from sub-lemmas. -/
+
+/-- `contourIntegralRect` distributes over addition, given integrability. -/
+theorem contourIntegralRect_add (g₁ g₂ : ℂ → ℂ) (a b c d : ℝ)
+    (h₁b : IntervalIntegrable (fun x => g₁ (↑x + ↑c * I)) MeasureTheory.volume a b)
+    (h₂b : IntervalIntegrable (fun x => g₂ (↑x + ↑c * I)) MeasureTheory.volume a b)
+    (h₁t : IntervalIntegrable (fun x => g₁ (↑x + ↑d * I)) MeasureTheory.volume a b)
+    (h₂t : IntervalIntegrable (fun x => g₂ (↑x + ↑d * I)) MeasureTheory.volume a b)
+    (h₁r : IntervalIntegrable (fun y => g₁ (↑b + ↑y * I)) MeasureTheory.volume c d)
+    (h₂r : IntervalIntegrable (fun y => g₂ (↑b + ↑y * I)) MeasureTheory.volume c d)
+    (h₁l : IntervalIntegrable (fun y => g₁ (↑a + ↑y * I)) MeasureTheory.volume c d)
+    (h₂l : IntervalIntegrable (fun y => g₂ (↑a + ↑y * I)) MeasureTheory.volume c d) :
+    contourIntegralRect (g₁ + g₂) a b c d =
+    contourIntegralRect g₁ a b c d + contourIntegralRect g₂ a b c d := by
+  simp only [contourIntegralRect, Pi.add_apply]
+  rw [intervalIntegral.integral_add h₁b h₂b, intervalIntegral.integral_add h₁t h₂t,
+      intervalIntegral.integral_add h₁r h₂r, intervalIntegral.integral_add h₁l h₂l]
+  ring
+
+/-- Points on rectangle edges lie in the closed rectangle. -/
+private theorem edge_mem_closedRect {a b c d : ℝ} (hab : a ≤ b) (hcd : c ≤ d)
+    (x : ℝ) (hx1 : a ≤ x) (hx2 : x ≤ b) (y : ℝ) (hy1 : c ≤ y) (hy2 : y ≤ d) :
+    (↑x + ↑y * I : ℂ) ∈ closedRect a b c d := by
+  simp only [closedRect, Set.mem_setOf_eq]
+  refine ⟨?_, ?_, ?_, ?_⟩ <;> simp [Complex.add_re, Complex.ofReal_re, Complex.mul_re,
+    Complex.I_re, Complex.I_im, Complex.ofReal_im,
+    Complex.add_im, Complex.mul_im] <;> linarith
+
+/-- Points on rectangle edges are NOT in the open rectangle (at least one coord is extremal). -/
+private theorem bottom_edge_not_openRect {a b c d : ℝ} (x : ℝ) :
+    (↑x + ↑c * I : ℂ) ∉ openRect a b c d := by
+  intro ⟨_, _, h3, _⟩
+  simp [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_im, Complex.I_re] at h3
+
+private theorem top_edge_not_openRect {a b c d : ℝ} (x : ℝ) :
+    (↑x + ↑d * I : ℂ) ∉ openRect a b c d := by
+  intro ⟨_, _, _, h4⟩
+  simp [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_im, Complex.I_re] at h4
+
+private theorem right_edge_not_openRect {a b c d : ℝ} (y : ℝ) :
+    (↑b + ↑y * I : ℂ) ∉ openRect a b c d := by
+  intro ⟨_, h2, _, _⟩
+  simp [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re, Complex.ofReal_im,
+    Complex.I_im] at h2
+
+private theorem left_edge_not_openRect {a b c d : ℝ} (y : ℝ) :
+    (↑a + ↑y * I : ℂ) ∉ openRect a b c d := by
+  intro ⟨h1, _, _, _⟩
+  simp [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re, Complex.ofReal_im,
+    Complex.I_im] at h1
+
+/-- On rectangle edges, a point not in openRect cannot equal any point in openRect. -/
+private theorem edge_ne_interior_zero {a b c d : ℝ} {s z : ℂ} (hs : s ∉ openRect a b c d)
+    (hz : z ∈ openRect a b c d) : s ≠ z :=
+  fun h => hs (h ▸ hz)
+
+/-- `contourIntegralRect` respects pointwise equality on the rectangle boundary.
+    If g₁ = g₂ at all points traversed by the contour, then the integrals agree. -/
+theorem contourIntegralRect_congr_boundary (g₁ g₂ : ℂ → ℂ) (a b c d : ℝ)
+    (hab : a ≤ b) (hcd : c ≤ d)
+    (hbot : ∀ x ∈ Set.Icc a b, g₁ (↑x + ↑c * I) = g₂ (↑x + ↑c * I))
+    (htop : ∀ x ∈ Set.Icc a b, g₁ (↑x + ↑d * I) = g₂ (↑x + ↑d * I))
+    (hright : ∀ y ∈ Set.Icc c d, g₁ (↑b + ↑y * I) = g₂ (↑b + ↑y * I))
+    (hleft : ∀ y ∈ Set.Icc c d, g₁ (↑a + ↑y * I) = g₂ (↑a + ↑y * I)) :
+    contourIntegralRect g₁ a b c d = contourIntegralRect g₂ a b c d := by
+  unfold contourIntegralRect
+  congr 1; congr 1; congr 1
+  · apply intervalIntegral.integral_congr
+    intro x hx; rw [Set.uIcc_of_le hab, Set.mem_Icc] at hx; exact hbot x hx
+  · apply intervalIntegral.integral_congr
+    intro x hx; rw [Set.uIcc_of_le hab, Set.mem_Icc] at hx; exact htop x hx
+  · congr 1; apply intervalIntegral.integral_congr
+    intro y hy; rw [Set.uIcc_of_le hcd, Set.mem_Icc] at hy; exact hright y hy
+  · congr 1; apply intervalIntegral.integral_congr
+    intro y hy; rw [Set.uIcc_of_le hcd, Set.mem_Icc] at hy; exact hleft y hy
+
 /-! ## The Argument Principle for Rectangles
 
 Composed from sub-lemmas A, B, C:
@@ -265,11 +343,207 @@ Composed from sub-lemmas A, B, C:
 SORRY STATUS: The three sub-lemmas above are sorry'd. The composition itself
 (this theorem) will be provable once those are closed. The deepest sorry is
 `rect_winding_number_eq_one` which requires contour deformation. -/
+/-- The boundary of a rectangle lies inside the closed rectangle. -/
+theorem rectBoundary_subset_closedRect {a b c d : ℝ} :
+    rectBoundary a b c d ⊆ closedRect a b c d :=
+  fun _ h => h.1
+
+/-- Points on the boundary are not in the open rectangle. -/
+theorem rectBoundary_disjoint_openRect {a b c d : ℝ} :
+    Disjoint (rectBoundary a b c d) (openRect a b c d) := by
+  rw [Set.disjoint_iff]
+  intro z ⟨hbdy, hopen⟩
+  exact hbdy.2 hopen
+
+/-- Sum of interval-integrable functions is interval-integrable. -/
+private theorem intervalIntegrable_finset_sum {ι : Type*} (t : Finset ι)
+    (f : ι → ℝ → ℂ) (p q : ℝ)
+    (hf : ∀ i ∈ t, IntervalIntegrable (f i) volume p q) :
+    IntervalIntegrable (fun x => ∑ i ∈ t, f i x) volume p q := by
+  classical
+  induction t using Finset.induction_on with
+  | empty => simp only [Finset.sum_empty]; exact intervalIntegrable_const
+  | @insert a t' hna ih =>
+    simp only [Finset.sum_insert hna]
+    exact (hf a (Finset.mem_insert_self a t')).add
+      (ih (fun i hi => hf i (Finset.mem_insert_of_mem hi)))
+
+/-- Contour integral distributes over a finite sum plus a remainder term.
+    Each g_i must be interval-integrable on each edge. -/
+theorem contourIntegralRect_finset_sum_add {ι : Type*} (s : Finset ι)
+    (g : ι → ℂ → ℂ) (h : ℂ → ℂ) (a b c d : ℝ) (hab : a ≤ b) (hcd : c ≤ d)
+    -- Integrability of each gᵢ on the 4 edges
+    (hg_bot : ∀ i ∈ s, IntervalIntegrable (fun x => g i (↑x + ↑c * I)) MeasureTheory.volume a b)
+    (hg_top : ∀ i ∈ s, IntervalIntegrable (fun x => g i (↑x + ↑d * I)) MeasureTheory.volume a b)
+    (hg_right : ∀ i ∈ s, IntervalIntegrable (fun y => g i (↑b + ↑y * I)) MeasureTheory.volume c d)
+    (hg_left : ∀ i ∈ s, IntervalIntegrable (fun y => g i (↑a + ↑y * I)) MeasureTheory.volume c d)
+    -- Integrability of h on the 4 edges
+    (hh_bot : IntervalIntegrable (fun x => h (↑x + ↑c * I)) MeasureTheory.volume a b)
+    (hh_top : IntervalIntegrable (fun x => h (↑x + ↑d * I)) MeasureTheory.volume a b)
+    (hh_right : IntervalIntegrable (fun y => h (↑b + ↑y * I)) MeasureTheory.volume c d)
+    (hh_left : IntervalIntegrable (fun y => h (↑a + ↑y * I)) MeasureTheory.volume c d) :
+    contourIntegralRect (fun z => (∑ i ∈ s, g i z) + h z) a b c d =
+    (∑ i ∈ s, contourIntegralRect (g i) a b c d) + contourIntegralRect h a b c d := by
+  -- Sum is integrable on each edge
+  have sum_bot := intervalIntegrable_finset_sum s _ a b (fun i hi => hg_bot i hi)
+  have sum_top := intervalIntegrable_finset_sum s _ a b (fun i hi => hg_top i hi)
+  have sum_right := intervalIntegrable_finset_sum s _ c d (fun i hi => hg_right i hi)
+  have sum_left := intervalIntegrable_finset_sum s _ c d (fun i hi => hg_left i hi)
+  -- Unfold and use linearity on each edge
+  unfold contourIntegralRect
+  rw [intervalIntegral.integral_add sum_bot hh_bot,
+      intervalIntegral.integral_add sum_top hh_top,
+      intervalIntegral.integral_add sum_right hh_right,
+      intervalIntegral.integral_add sum_left hh_left,
+      intervalIntegral.integral_finset_sum (fun i hi => hg_bot i hi),
+      intervalIntegral.integral_finset_sum (fun i hi => hg_top i hi),
+      intervalIntegral.integral_finset_sum (fun i hi => hg_right i hi),
+      intervalIntegral.integral_finset_sum (fun i hi => hg_left i hi)]
+  simp only [mul_add, Finset.mul_sum, Finset.sum_sub_distrib, Finset.sum_add_distrib]
+  ring
+
+/-- The lower-left corner of a rectangle lies on its boundary. -/
+theorem corner_mem_rectBoundary {a b c d : ℝ} (hab : a < b) (hcd : c < d) :
+    (↑a + ↑c * I : ℂ) ∈ rectBoundary a b c d := by
+  constructor
+  · -- In closedRect
+    simp only [closedRect, Set.mem_setOf_eq, Complex.add_re, Complex.ofReal_re,
+      Complex.mul_re, Complex.ofReal_re, Complex.I_re, Complex.ofReal_im, Complex.I_im,
+      Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.ofReal_re, Complex.I_re,
+      Complex.ofReal_im, Complex.I_im]
+    exact ⟨by linarith, by linarith, by linarith, by linarith⟩
+  · -- Not in openRect
+    simp only [openRect, Set.mem_setOf_eq, Complex.add_re, Complex.ofReal_re,
+      Complex.mul_re, Complex.ofReal_re, Complex.I_re, Complex.ofReal_im, Complex.I_im,
+      Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.ofReal_re, Complex.I_re,
+      Complex.ofReal_im, Complex.I_im]
+    push_neg; intro _; linarith
+
+/-- **Argument principle for rectangles (entire functions).**
+    Composed from sub-lemmas A (winding number), B (log-derivative decomposition),
+    and C (Cauchy-Goursat). The structure:
+    1. f'/f = ∑ₖ 1/(s-zₖ) + h(s) where h is holomorphic on R
+    2. ∫_∂R f'/f = ∑ₖ ∫_∂R 1/(s-zₖ) + ∫_∂R h = ∑ₖ 2πi + 0 = 2πi·n -/
 theorem argument_principle_rect_entire (f : ℂ → ℂ)
     (a b c d : ℝ) (hab : a < b) (hcd : c < d)
     (hf : Differentiable ℂ f)
     (hbdy : ∀ z ∈ rectBoundary a b c d, f z ≠ 0) :
     logIntegralRect f a b c d = ↑(zeroCountRect f a b c d) := by
-  sorry
+  -- Obtain the zero set and its finiteness
+  have hz : ∃ z, f z ≠ 0 := ⟨_, hbdy _ (corner_mem_rectBoundary hab hcd)⟩
+  have hfin := finite_zeros_in_openRect f a b c d hab hcd hf hz
+  -- Get the decomposition from sub-lemma B
+  obtain ⟨h, hh_diff, hh_eq⟩ := logDeriv_decompose_rect f a b c d hab hcd hf hbdy hfin
+  -- Apply Cauchy-Goursat to the holomorphic part h
+  have hh_zero := cauchy_goursat_rect h a b c d (le_of_lt hab) (le_of_lt hcd) hh_diff
+  -- Apply the winding number formula to each zero
+  have hwinding : ∀ z ∈ hfin.toFinset,
+    (1 / (2 * ↑Real.pi * I)) * contourIntegralRect (fun s => 1 / (s - z)) a b c d = 1 := by
+    intro z hz
+    have hz_open : z ∈ openRect a b c d := by
+      rw [Set.Finite.mem_toFinset] at hz; exact hz.1
+    exact rect_winding_number_eq_one z a b c d hab hcd hz_open
+  -- The logIntegralRect = (1/2πi) * contourIntegralRect (logDeriv f)
+  rw [logIntegralRect_eq_normalized_contour]
+  -- Unfold zeroCountRect and relate to Finset.card via finiteness
+  unfold zeroCountRect
+  rw [Set.ncard_eq_toFinset_card _ hfin]
+  -- Step 1: On the boundary, logDeriv f = ∑ 1/(·-zₖ) + h, so the contour integrals agree
+  -- Edge points are in closedRect but not in openRect, so the decomposition applies
+  have hdecomp_eq : ∀ s ∈ closedRect a b c d, s ∉ openRect a b c d →
+      logDeriv f s = (∑ z ∈ hfin.toFinset, (1 : ℂ) / (s - z)) + h s := by
+    intro s hs hsnot
+    exact hh_eq s hs (fun z hz hfz => edge_ne_interior_zero hsnot hz)
+  -- Step 2: Replace logDeriv f by the decomposition on the contour
+  have hcontour_eq : contourIntegralRect (logDeriv f) a b c d =
+      contourIntegralRect (fun s => (∑ z ∈ hfin.toFinset, (1 : ℂ) / (s - z)) + h s)
+        a b c d := by
+    apply contourIntegralRect_congr_boundary _ _ _ _ _ _ (le_of_lt hab) (le_of_lt hcd)
+    · -- Bottom edge
+      intro x hx
+      exact hdecomp_eq _ (edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) x hx.1 hx.2 c
+        (le_refl _) (le_of_lt hcd)) (bottom_edge_not_openRect x)
+    · -- Top edge
+      intro x hx
+      exact hdecomp_eq _ (edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) x hx.1 hx.2 d
+        (le_of_lt hcd) (le_refl _)) (top_edge_not_openRect x)
+    · -- Right edge
+      intro y hy
+      exact hdecomp_eq _ (edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) b
+        (le_of_lt hab) (le_refl _) y hy.1 hy.2) (right_edge_not_openRect y)
+    · -- Left edge
+      intro y hy
+      exact hdecomp_eq _ (edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) a
+        (le_refl _) (le_of_lt hab) y hy.1 hy.2) (left_edge_not_openRect y)
+  rw [hcontour_eq]
+  -- Step 3: Suffices to show the contour integral decomposes linearly
+  suffices h_linear : contourIntegralRect
+      (fun s => (∑ z ∈ hfin.toFinset, (1 : ℂ) / (s - z)) + h s) a b c d =
+      (∑ z ∈ hfin.toFinset, contourIntegralRect (fun s => 1 / (s - z)) a b c d) +
+      contourIntegralRect h a b c d by
+    rw [h_linear, hh_zero, add_zero, Finset.mul_sum]
+    -- Now goal: ∑ₖ (1/2πi * contourIntegralRect (1/(·-zₖ))) = ↑card
+    have : ∀ z ∈ hfin.toFinset, (1 / (2 * ↑Real.pi * I)) *
+        contourIntegralRect (fun s => 1 / (s - z)) a b c d = (1 : ℂ) := hwinding
+    rw [Finset.sum_congr rfl this]
+    simp [Finset.sum_const, mul_one]
+  exact contourIntegralRect_finset_sum_add hfin.toFinset
+    (fun z s => 1 / (s - z)) h a b c d (le_of_lt hab) (le_of_lt hcd)
+    (by intro z hz; rw [Set.Finite.mem_toFinset] at hz
+        apply ContinuousOn.intervalIntegrable
+        apply ContinuousOn.div continuousOn_const
+        · exact (continuous_ofReal.add (continuous_const.mul continuous_const)).continuousOn.sub
+            continuousOn_const
+        · intro x hx; rw [Set.uIcc_of_le (le_of_lt hab), Set.mem_Icc] at hx
+          simp only [sub_ne_zero]
+          exact edge_ne_interior_zero (bottom_edge_not_openRect x) hz.1)
+    (by intro z hz; rw [Set.Finite.mem_toFinset] at hz
+        apply ContinuousOn.intervalIntegrable
+        apply ContinuousOn.div continuousOn_const
+        · exact (continuous_ofReal.add (continuous_const.mul continuous_const)).continuousOn.sub
+            continuousOn_const
+        · intro x hx; rw [Set.uIcc_of_le (le_of_lt hab), Set.mem_Icc] at hx
+          simp only [sub_ne_zero]
+          exact edge_ne_interior_zero (top_edge_not_openRect x) hz.1)
+    (by intro z hz; rw [Set.Finite.mem_toFinset] at hz
+        apply ContinuousOn.intervalIntegrable
+        apply ContinuousOn.div continuousOn_const
+        · exact (continuous_const.add (continuous_ofReal.mul continuous_const)).continuousOn.sub
+            continuousOn_const
+        · intro y hy; rw [Set.uIcc_of_le (le_of_lt hcd), Set.mem_Icc] at hy
+          simp only [sub_ne_zero]
+          exact edge_ne_interior_zero (right_edge_not_openRect y) hz.1)
+    (by intro z hz; rw [Set.Finite.mem_toFinset] at hz
+        apply ContinuousOn.intervalIntegrable
+        apply ContinuousOn.div continuousOn_const
+        · exact (continuous_const.add (continuous_ofReal.mul continuous_const)).continuousOn.sub
+            continuousOn_const
+        · intro y hy; rw [Set.uIcc_of_le (le_of_lt hcd), Set.mem_Icc] at hy
+          simp only [sub_ne_zero]
+          exact edge_ne_interior_zero (left_edge_not_openRect y) hz.1)
+    (hh_diff.continuousOn.comp
+      (continuous_ofReal.add (continuous_const.mul continuous_const)).continuousOn
+      (fun x hx => by
+        rw [Set.uIcc_of_le (le_of_lt hab), Set.mem_Icc] at hx
+        exact edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) x hx.1 hx.2 c
+          (le_refl _) (le_of_lt hcd))).intervalIntegrable
+    (hh_diff.continuousOn.comp
+      (continuous_ofReal.add (continuous_const.mul continuous_const)).continuousOn
+      (fun x hx => by
+        rw [Set.uIcc_of_le (le_of_lt hab), Set.mem_Icc] at hx
+        exact edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) x hx.1 hx.2 d
+          (le_of_lt hcd) (le_refl _))).intervalIntegrable
+    (hh_diff.continuousOn.comp
+      (continuous_const.add (continuous_ofReal.mul continuous_const)).continuousOn
+      (fun y hy => by
+        rw [Set.uIcc_of_le (le_of_lt hcd), Set.mem_Icc] at hy
+        exact edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) b
+          (le_of_lt hab) (le_refl _) y hy.1 hy.2)).intervalIntegrable
+    (hh_diff.continuousOn.comp
+      (continuous_const.add (continuous_ofReal.mul continuous_const)).continuousOn
+      (fun y hy => by
+        rw [Set.uIcc_of_le (le_of_lt hcd), Set.mem_Icc] at hy
+        exact edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) a
+          (le_refl _) (le_of_lt hab) y hy.1 hy.2)).intervalIntegrable
 
 end RectArgumentPrinciple
