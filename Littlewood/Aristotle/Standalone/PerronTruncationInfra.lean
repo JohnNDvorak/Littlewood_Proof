@@ -42,6 +42,7 @@ Co-authored-by: Claude (Anthropic)
 import Mathlib
 import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aDefs
 import Littlewood.Aristotle.Standalone.PerronVerticalFromRectangle
+import Littlewood.Development.PerronFormulaProof
 
 set_option linter.mathlibStandardSet false
 
@@ -1115,7 +1116,148 @@ private theorem perron_vertical_eq_tsum (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT :
     perronVerticalIntegral x T =
       ∑' (n : ℕ), ArithmeticFunction.vonMangoldt n *
         perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T := by
-  sorry
+  set c := 1 + 1 / Real.log x with hc_def
+  have hc1 : 1 < c := c_param_gt_one x hx
+  have hc0 : 0 < c := by linarith
+  have hx0 : 0 < x := by linarith
+  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
+  have hpi_inv_ne : (2 * Real.pi : ℝ)⁻¹ ≠ 0 := inv_ne_zero (ne_of_gt hpi)
+  have hT_neg_le : -T ≤ T := by linarith
+  -- Step 1: Unfold perronVerticalIntegral
+  unfold perronVerticalIntegral
+  -- Step 2: Suffices to show the integrals match after cancelling (2π)⁻¹
+  -- LHS = (2π)⁻¹ * ∫ t in (-T)..T, Re((-ζ'/ζ)(c+it) * x^(c+it) / (c+it))
+  -- RHS = ∑' n, Λ(n) * ((2π)⁻¹ * ∫ t in (-T)..T, Re((x/n)^(c+it) / (c+it)))
+  -- Rewrite RHS: pull (2π)⁻¹ out of each term
+  conv_rhs =>
+    ext n
+    rw [show ArithmeticFunction.vonMangoldt n *
+        perronPerTermIntegral (x / ↑n) c T =
+        (2 * Real.pi)⁻¹ * (ArithmeticFunction.vonMangoldt n *
+          ∫ t in (-T)..T,
+            ((↑(x / ↑n) : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+             ((c : ℂ) + (t : ℂ) * Complex.I)).re) from by
+      unfold perronPerTermIntegral; ring]
+  rw [tsum_mul_left]
+  -- Now both sides are (2π)⁻¹ * _; cancel (2π)⁻¹
+  congr 1
+  -- Goal: ∫ t in (-T)..T, Re((-ζ'/ζ)(c+it) * x^(c+it) / (c+it))
+  --     = ∑' n, Λ(n) * ∫ t in (-T)..T, Re((x/n)^(c+it) / (c+it))
+  -- Step 3: Convert interval integrals to set integrals
+  rw [intervalIntegral.integral_of_le hT_neg_le]
+  -- Step 4: Use Re-integral interchange: ∫ Re(f) = Re(∫ f)
+  -- For the LHS
+  have h_lhs_integrable :
+      MeasureTheory.Integrable
+        (fun t : ℝ => (-deriv riemannZeta ((c : ℂ) + (t : ℂ) * Complex.I) /
+          riemannZeta ((c : ℂ) + (t : ℂ) * Complex.I)) *
+          (x : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+          ((c : ℂ) + (t : ℂ) * Complex.I))
+        (MeasureTheory.Measure.restrict MeasureTheory.volume (Set.Ioc (-T) T)) := by
+    -- The integrand is continuous on the compact set Icc
+    apply ContinuousOn.integrableOn_compact isCompact_Icc |>.mono_set Ioc_subset_Icc_self
+    apply ContinuousOn.div
+    · apply ContinuousOn.mul
+      · apply ContinuousOn.div
+        · exact (riemannZeta_differentiable.deriv.neg).continuous.continuousOn
+        · exact riemannZeta_differentiable.continuous.continuousOn
+        · intro t _
+          exact riemannZeta_ne_zero_of_one_lt_re (by
+            simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re,
+              Complex.I_re, mul_zero, Complex.ofReal_im, Complex.I_im,
+              mul_one, sub_zero, add_zero]; linarith)
+      · exact (Complex.continuous_ofReal_cpow_const hx0.le).continuousOn
+    · exact (continuous_const.add
+        (continuous_ofReal.mul continuous_const)).continuousOn
+    · intro t _
+      have : ((c : ℂ) + (t : ℂ) * Complex.I).re = c := by
+        simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re,
+          Complex.I_re, mul_zero, Complex.ofReal_im, Complex.I_im,
+          mul_one, sub_zero, add_zero]
+      exact ne_of_apply_ne Complex.re (by rw [this, Complex.zero_re]; linarith)
+  rw [show (∫ t in Set.Ioc (-T) T,
+      ((-deriv riemannZeta ((c : ℂ) + (↑t) * Complex.I) /
+        riemannZeta ((c : ℂ) + (↑t) * Complex.I)) *
+        (↑x) ^ ((c : ℂ) + (↑t) * Complex.I) /
+        ((c : ℂ) + (↑t) * Complex.I)).re) =
+    (∫ t in Set.Ioc (-T) T,
+      (-deriv riemannZeta ((c : ℂ) + (↑t) * Complex.I) /
+        riemannZeta ((c : ℂ) + (↑t) * Complex.I)) *
+        (↑x) ^ ((c : ℂ) + (↑t) * Complex.I) /
+        ((c : ℂ) + (↑t) * Complex.I)).re from
+    (Complex.reCLM.integral_comp_comm h_lhs_integrable).symm]
+  -- Step 5: Use perron_sum_integral_interchange
+  -- Need: the integrand matches the form in PerronFormulaProof
+  -- PerronFormulaProof has: (-ζ'/ζ(c+it)) * (x^(c+it) / (c+it))
+  -- We have: (-ζ'/ζ(c+it)) * x^(c+it) / (c+it)
+  -- These are equal by associativity of multiplication/division
+  have h_integrand_eq : ∀ t : ℝ,
+      (-deriv riemannZeta ((c : ℂ) + (↑t) * Complex.I) /
+        riemannZeta ((c : ℂ) + (↑t) * Complex.I)) *
+        (↑x) ^ ((c : ℂ) + (↑t) * Complex.I) /
+        ((c : ℂ) + (↑t) * Complex.I) =
+      (-deriv riemannZeta ((c : ℂ) + (↑t) * Complex.I) /
+        riemannZeta ((c : ℂ) + (↑t) * Complex.I)) *
+        ((↑x) ^ ((c : ℂ) + (↑t) * Complex.I) /
+        ((c : ℂ) + (↑t) * Complex.I)) := by
+    intro t; ring
+  simp_rw [h_integrand_eq]
+  rw [Littlewood.Development.PerronFormulaProof.perron_sum_integral_interchange hx0 hc1 hT]
+  -- Goal: Re(∑' n, ∫ t in Ioc, term(Λ, s, n) * (x^s/s))
+  --     = ∑' n, Λ(n) * ∫ t in (-T)..T, Re((x/n)^(c+it) / (c+it))
+  -- Step 6: Distribute Re through tsum
+  have h_sum_integrable :
+      Summable (fun n => ∫ t in Set.Ioc (-T) T,
+        LSeries.term (↗ArithmeticFunction.vonMangoldt)
+          ((c : ℂ) + (↑t) * Complex.I) n *
+          ((↑x) ^ ((c : ℂ) + (↑t) * Complex.I) /
+          ((c : ℂ) + (↑t) * Complex.I))) := by
+    exact (Littlewood.Development.PerronFormulaProof.integral_norms_summable
+      hx0 hc1 hT).of_norm
+  rw [Complex.hasSum_re h_sum_integrable.hasSum |>.tsum_eq]
+  -- Goal: ∑' n, Re(∫ t in Ioc, term * x^s/s)
+  --     = ∑' n, Λ(n) * ∫ t in (-T)..T, Re((x/n)^(c+it) / (c+it))
+  -- Step 7: For each n, Re(∫ ...) = ∫ Re(...)
+  -- and then unfold LSeries.term to get Λ(n) * ...
+  congr 1; ext n
+  -- Show: Re(∫ t ∈ Ioc(-T,T), term(Λ, c+it, n) * (x^(c+it)/(c+it)))
+  --     = Λ(n) * ∫ t ∈ (-T)..T, Re((x/n)^(c+it) / (c+it))
+  have h_n_integrable := Littlewood.Development.PerronFormulaProof.term_integrable
+    hx0 hc0 n T
+  rw [Complex.reCLM.integral_comp_comm h_n_integrable]
+  -- Goal: ∫ t ∈ Ioc(-T,T), Re(term(Λ, c+it, n) * (x^(c+it)/(c+it)))
+  --     = Λ(n) * ∫ t ∈ (-T)..T, Re((x/n)^(c+it) / (c+it))
+  rw [← intervalIntegral.integral_of_le hT_neg_le]
+  -- Goal: ∫ t in (-T)..T, Re(term(Λ, c+it, n) * (x^(c+it)/(c+it)))
+  --     = Λ(n) * ∫ t in (-T)..T, Re((x/n)^(c+it) / (c+it))
+  -- Step 8: Show the integrands are equal pointwise
+  by_cases hn : n = 0
+  · -- n = 0: both sides are 0
+    simp [hn, LSeries.term_zero]
+  · -- n ≠ 0: unfold LSeries.term
+    congr 1; ext t
+    simp only [LSeries.term_of_ne_zero hn]
+    -- Re(Λ(n)/n^s * (x^s/s)) = Λ(n) * Re((x/n)^s / s)
+    -- where s = c + it
+    set s := (c : ℂ) + (↑t) * Complex.I with hs_def
+    -- Λ(n)/n^s * x^s/s = Λ(n) * (x/n)^s / s
+    have hn_ne : (n : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hn
+    have hn_pos : (0 : ℝ) < n := Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn)
+    have hxn : (x / ↑n : ℝ) = x / (↑n : ℝ) := rfl
+    -- Key: x^s / n^s = (x/n)^s
+    have h_cpow_div : (↑x : ℂ) ^ s / (↑n : ℂ) ^ s = (↑(x / ↑n) : ℂ) ^ s := by
+      rw [Complex.ofReal_div]
+      rw [Complex.div_cpow (by exact_mod_cast hx0.le : (0 : ℝ) ≤ x)
+          (by exact_mod_cast hn_pos.le : (0 : ℝ) ≤ (↑n : ℝ))]
+    -- So: Λ(n)/n^s * (x^s/s) = Λ(n) * (x/n)^s / s
+    have h_term : ↑(ArithmeticFunction.vonMangoldt n) / (↑n : ℂ) ^ s *
+        ((↑x : ℂ) ^ s / s) =
+        ↑(ArithmeticFunction.vonMangoldt n) * ((↑(x / ↑n) : ℂ) ^ s / s) := by
+      rw [div_mul_eq_mul_div, mul_div_assoc', ← h_cpow_div, div_mul_eq_mul_div,
+          mul_comm ((↑x : ℂ) ^ s) _, mul_div_assoc']
+    rw [h_term]
+    -- Re(Λ(n) * z) = Λ(n) * Re(z) since Λ(n) is real
+    rw [Complex.ofReal_mul_re]
 
 /-- **Fubini sub-lemma 2**: The tail of the Dirichlet series
     `Σ_{n > ⌊x⌋} Λ(n) · perronPerTermIntegral(x/n, c, T)` is bounded by 1.
