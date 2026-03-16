@@ -1079,8 +1079,21 @@ theorem log_sq_absorbed_by_error (x T : ℝ) (hx : 1 ≤ x) (hT_lo : 2 ≤ T) (h
     Combining:
       |shiftedRemainderRe x T| ≤ C₂·(1+K) · (√x·(logT)²/√T).
 
-    **SORRY FLOW**: Transits `SmallTPerronBoundHyp` (sorry in B5aDefs) circularly
-    via `general_formula_accessible` -> `ContourRemainderBoundHyp.bound`. -/
+    **SORRY FLOW**: CIRCULAR. Transits `SmallTPerronBoundHyp` (sorry #2 in B5aDefs)
+    via `general_formula_accessible` → `general_explicit_formula_from_perron` →
+    `shifted_remainder_bound_from_perron` → `contour_shift_atomic` →
+    `contour_integral_remainder_bound` = `ContourRemainderBoundHyp.bound` →
+    `SmallTPerronBoundHyp.bound` (the very sorry we're trying to prove).
+
+    This theorem is NOT an independent proof of the small-T case. It is valid Lean
+    (compiles without error) because sorry makes any Prop true, but it provides no
+    mathematical content. The actual non-circular assembly is in B5aDefs line 371:
+    `ContourRemainderBoundHyp` combines sorry #1 (large-T) and sorry #2 (small-T) directly.
+
+    **CANNOT BE BROKEN BY PNT** (analyzed 2026-03-15): PNT gives |ψ(x)-x| = o(x),
+    but the required bound shape √x·(logT)²/√T grows only as √x. Since x/(logx)² → ∞,
+    one cannot dominate |ψ(x)-x| ≈ x/logx by C·√x even for fixed T. The small-T Perron
+    contour integration is genuinely required. -/
 theorem small_T_contour_bound :
     ∃ C₀ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
       |shiftedRemainderRe x T| ≤
@@ -1226,11 +1239,13 @@ theorem segment_reduction_witness (A : ℝ) (hA : 0 < A) :
     of the contour bound are handled. Combined via `contour_bound_from_small_and_large`
     to produce the full existential matching `ContourRemainderBoundHyp.bound`.
 
-    - Small-T: proved sorry-free from `general_formula_accessible` + log²/√x absorption
+    - Small-T: `small_T_contour_bound` — CIRCULAR (transits `SmallTPerronBoundHyp`
+      sorry via `general_formula_accessible` → `ContourRemainderBoundHyp.bound`)
     - Large-T: transits `ZetaLogDerivPointwiseBoundHyp.bound` (1 upstream sorry)
 
-    NET SORRY FLOW: 1 sorry (the ZetaLogDerivPointwiseBoundHyp instance in B5aDefs).
-    When that sorry is closed, this theorem becomes sorry-free automatically. -/
+    NET SORRY FLOW: 2 sorrys (both in B5aDefs). The small-T case here is NOT
+    independently proved — it circularly depends on the `SmallTPerronBoundHyp` sorry.
+    The actual non-circular assembly is in B5aDefs (ContourRemainderBoundHyp instance). -/
 theorem contour_bound_fully_assembled :
     ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
@@ -1241,22 +1256,25 @@ theorem contour_bound_fully_assembled :
 
 The contour bound sorry chain now decomposes as:
 
-  **ZetaLogDerivPointwiseBoundHyp** (the ONLY genuine gap, in B5aDefs):
-    ∃ A > 0, ∀ x T, x ≥ 2 → T ≥ 16 →
-      |shiftedRemainderRe x T| ≤ A·√x·(logT)³/T + 2A·√x·(logT)²/T
+  **TWO genuine gaps** (both in B5aDefs):
+  1. **ZetaLogDerivPointwiseBoundHyp** (sorry #1, T ≥ 16):
+     ∃ A > 0, ∀ x T, x ≥ 2 → T ≥ 16 →
+       |shiftedRemainderRe x T| ≤ A·√x·(logT)³/T + 2A·√x·(logT)²/T
+     Requires Hadamard product + contour integration (not in Mathlib).
 
-  This is the Perron contour integral in segment form, BEFORE the algebraic
-  reduction to standard form. Requires:
-  1. Hadamard product decomposition of ζ'/ζ (Davenport Ch. 12)
-  2. Contour integration of ζ'/ζ · x^s/s (complex analysis not in Mathlib)
+  2. **SmallTPerronBoundHyp** (sorry #2, T ∈ [2,16]):
+     ∃ C₂ > 0, ∀ x T, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+       |shiftedRemainderRe x T| ≤ C₂·(√x·(logT)²/√T + (logx)²)
+     Requires Perron contour integration for bounded height. Cannot be replaced
+     by PNT (x/(logx)² → ∞ defeats the √x error shape).
 
-  The downstream chain (all sorry-free):
+  The downstream chain (sorry-free given both sorrys):
   - `ZetaLogDerivPointwiseBoundHyp` → `LargeTContourBoundHyp` via `segment_to_standard_form`
   - `LargeTContourBoundHyp` → `large_T_contour_bound` (direct reference)
-  - `small_T_contour_bound` + `large_T_contour_bound` → `contour_bound_fully_assembled`
+  - `small_T_contour_bound` — CIRCULAR (compiles but transits sorry #2)
 
   All ALGEBRAIC reductions are sorry-free:
-  - Small-T: `small_T_contour_bound` — PROVED
+  - Small-T: `small_T_contour_bound` — CIRCULAR (not an independent proof)
   - Segment → standard: `segment_to_standard_form` (B5aDefs) — PROVED
   - Large-T assembly: `large_T_assembly` — PROVED (bridge witness)
   - Case split: `case_split_T_bound` — PROVED

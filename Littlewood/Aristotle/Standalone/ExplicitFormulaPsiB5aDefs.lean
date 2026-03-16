@@ -357,7 +357,21 @@ theorem small_T_from_general_formula
 
 /-- Small-T general formula hypothesis -- the Perron explicit formula for T ∈ [2,16].
     This is IRREDUCIBLE sorry #2. INDEPENDENT of `ZetaLogDerivPointwiseBoundHyp` (sorry #1).
-    Sorry #1 covers T ≥ 16 (Hadamard), sorry #2 covers T ∈ [2,16] (general Perron). -/
+    Sorry #1 covers T ≥ 16 (Hadamard), sorry #2 covers T ∈ [2,16] (general Perron).
+
+    **CIRCULARITY NOTE** (2026-03-15):
+    The bridge's `small_T_contour_bound` appears to prove the small-T case "sorry-free"
+    via `general_formula_accessible`, but `general_formula_accessible` transits through
+    `ContourRemainderBoundHyp.bound` which itself depends on THIS sorry. So the bridge
+    proof is circular. The actual non-circular proof path is HERE in B5aDefs:
+      SmallTPerronBoundHyp (sorry) → ContourRemainderBoundHyp (line 371)
+    with the small-T and large-T sorrys combined directly.
+
+    **CANNOT BE BROKEN BY PNT**: For fixed T ∈ [2,16], PNT gives |ψ(x)-x| = o(x),
+    but the required bound shape √x·(logT)²/√T grows only as √x, while x/(logx)² → ∞.
+    So the small-T bound genuinely requires Perron contour integration, not just PNT.
+    This sorry is IRREDUCIBLE: it needs complex analysis (contour integration of
+    ζ'/ζ · x^s/s over a rectangle with bounded height). -/
 class SmallTPerronBoundHyp : Prop where
   bound : ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
     |shiftedRemainderRe x T| ≤

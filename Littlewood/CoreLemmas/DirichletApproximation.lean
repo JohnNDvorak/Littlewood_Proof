@@ -571,28 +571,25 @@ theorem distToInt_mul_bound (θ : ℝ) (q m : ℕ) :
   have h : θ * ((m : ℝ) * (q : ℝ)) = (m : ℝ) * (θ * (q : ℝ)) := by ring
   rw [h]; exact distToInt_nsmul_le (θ * (q : ℝ)) m
 
-/-- Inhomogeneous simultaneous Dirichlet approximation (non-strict).
+/-- Inhomogeneous simultaneous Dirichlet approximation (universal bound).
 
 For any θ, α : Fin K → ℝ and N ≥ 1, there exists n with 0 ≤ n ≤ N^K such
-that ‖θ_k * n - α_k‖ᵢₙₜ ≤ 1/N for all k simultaneously.
+that ‖θ_k * n - α_k‖ᵢₙₜ ≤ 1/2 for all k simultaneously.
 
-The STRICT bound < 1/N is false (counterexample: θ = 0, α = 1/2, N = 2).
-For N ≤ 2, n = 0 works since ‖α_k‖ ≤ 1/2 ≤ 1/N.
-For N ≥ 3, requires Minkowski or quantitative Kronecker (not in Mathlib).
-Sorry absorbed by Gap 3 in PerronExplicitFormulaProvider.lean. -/
+Note: The tighter bound ‖θ_k * n - α_k‖ᵢₙₜ ≤ 1/N is FALSE in general
+(counterexample: K = 1, θ = 0, α = 0.4, N = 3 gives ‖-0.4‖ = 0.4 > 1/3).
+Even the non-strict ≤ 1/N fails for N ≥ 3 when θ = 0 and α is not near ℤ.
+The 1/N bound requires either irrationality hypotheses on θ or Minkowski's
+theorem (not in Mathlib). The ≤ 1/2 bound suffices for downstream uses
+via `distToInt_le_half`. -/
 theorem inhomogeneous_dirichlet_approximation_simultaneous
-    (K : ℕ) (θ α : Fin K → ℝ) (N : ℕ) (hN : 0 < N) :
+    (K : ℕ) (θ α : Fin K → ℝ) (N : ℕ) (_hN : 0 < N) :
     ∃ n : ℕ, n ≤ N ^ K ∧
-      ∀ k : Fin K, ‖θ k * (n : ℝ) - α k‖ᵢₙₜ ≤ 1 / (N : ℝ) := by
-  by_cases hN2 : N ≤ 2
-  · refine ⟨0, by positivity, fun k => ?_⟩
-    simp only [Nat.cast_zero, mul_zero, zero_sub]
-    have h1 : ‖-α k‖ᵢₙₜ = ‖α k‖ᵢₙₜ := distToInt_neg (α k)
-    have h2 : ‖α k‖ᵢₙₜ ≤ 1 / 2 := distToInt_le_half (α k)
-    have hNpos : (0 : ℝ) < N := by exact_mod_cast hN
-    have hNle : (N : ℝ) ≤ 2 := by exact_mod_cast hN2
-    linarith [one_div_le_one_div_of_le hNpos hNle]
-  · push_neg at hN2; sorry
+      ∀ k : Fin K, ‖θ k * (n : ℝ) - α k‖ᵢₙₜ ≤ 1 / 2 := by
+  refine ⟨0, by positivity, fun k => ?_⟩
+  simp only [Nat.cast_zero, mul_zero, zero_sub]
+  rw [distToInt_neg]
+  exact distToInt_le_half (α k)
 
 end InhomogeneousDirichlet
 

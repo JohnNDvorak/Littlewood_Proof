@@ -2062,14 +2062,25 @@ the shifted lattice argument. -/
     the Dirichlet approximation obligation. Closing this requires either:
     (A) An explicit polynomial upper bound on perronThreshold (from the Perron
         formula error analysis), or
-    (B) Refactoring the Classical.choose to carry the bound explicitly. -/
+    (B) Refactoring the Classical.choose to carry the bound explicitly.
+
+    The second conjunct provides the Dirichlet interval-length bound:
+    log(cap) - log(B) ≥ (4π)^{N(T)}, where B = max(X, P) + 1.
+    This is the key growth comparison: triple-exponential tower_cap minus
+    a polynomial-growth log(B) leaves room for single-exponential (4π)^N.
+    Both conjuncts are one sorry since they require the same T. -/
 private lemma tower_cap_dominates_perronThreshold
     [ZeroCountingLowerBoundHyp]
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ) :
     ∃ T : ℝ, 4 ≤ T ∧
       max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 ≤
         Real.exp (Real.exp (Real.exp
-          (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) := by
+          (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) ∧
+      (0 < N T →
+        (2 * Real.pi / (1 / 2)) ^ (N T : ℕ) ≤
+          Real.log (Real.exp (Real.exp (Real.exp
+            (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2)))) -
+          Real.log (max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1)) := by
   sorry
 
 /-- **Simultaneous inhomogeneous Dirichlet approximation on an interval**.
@@ -2120,7 +2131,7 @@ private theorem seed_witness_from_perron_core
   -- Get T ≥ 4 where tower_cap(T) ≥ max(X, perronThreshold(hRH, T)) + 1.
   -- This uses `tower_cap_dominates_perronThreshold` which encapsulates the
   -- fact that triple-exponential growth beats any reasonable threshold growth.
-  obtain ⟨T, hT4, hdom⟩ := tower_cap_dominates_perronThreshold hRH X
+  obtain ⟨T, hT4, hdom, hlen_gap⟩ := tower_cap_dominates_perronThreshold hRH X
   -- === STEP 2: Set t₀ and verify conditions ===
   -- Let B = max(X, perronThreshold(hRH, T)) + 1 and t₀ = log B.
   set P := @perronThreshold pi_explicit_formula_from_perron hRH T with hP_def
@@ -2158,12 +2169,9 @@ private theorem seed_witness_from_perron_core
     -- Need: interval length ≥ (4π)^{N(T)}
     have hlen_suff : (2 * Real.pi / (1 / 2)) ^ (N T : ℕ) ≤
         Real.log cap - Real.log B := by
-      -- The interval [log B, log cap] has length log(cap/B).
-      -- cap = exp(exp(exp(c·N/(T+1)))) grows triple-exponentially.
-      -- (4π)^{N(T)} ≤ exp(N·log(4π)) grows single-exponentially.
-      -- For large enough T (provided by tower_cap_dominates_perronThreshold),
-      -- the triple-exponential dominates.
-      sorry
+      -- Provided directly by the strengthened tower_cap_dominates_perronThreshold.
+      -- The second conjunct gives exactly this bound (with cap/B unfolded).
+      exact hlen_gap hNpos
     -- Need log B < log cap (strict inequality for Dirichlet)
     have hlog_lt : Real.log B < Real.log cap := by
       by_contra h_not_lt
