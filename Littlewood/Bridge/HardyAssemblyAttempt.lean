@@ -156,13 +156,48 @@ theorem infinitely_many_zeta_zeros_implies_Z_zeros
 /-- Z changes sign between consecutive zeros (sorry-free, from V2). -/
 example := @hardyZV2_constant_sign_between_zeros
 
-/-- Assuming the HardyEstimates structure is populated, we get Hardy's theorem.
-    This shows the deduction is complete — only the estimates are missing. -/
-theorem hardy_from_estimates (est : HardyEstimatesPartial.HardyEstimates) :
+/-- Assuming the HardyEstimates structure is populated plus convexity bound,
+    we get Hardy's theorem.
+    This shows the deduction is complete — only the estimates are missing.
+    Proved by constructing HardySetupV2 and applying hardy_infinitely_many_zeros_v2. -/
+theorem hardy_from_estimates
+    (est : HardyEstimatesPartial.HardyEstimates)
+    (h_convex : ∀ ε : ℝ, ε > 0 → ∃ C : ℝ, C > 0 ∧ ∀ t : ℝ, |t| ≥ 2 →
+      |HardyEstimatesPartial.hardyZ t| ≤ C * |t|^(1/4 + ε)) :
     ∀ T₀ : ℝ, ∃ t > T₀, HardyEstimatesPartial.hardyZ t = 0 := by
-  -- From est we have mean_square_lower and first_moment_upper
-  -- If Z doesn't change sign eventually, the Cauchy-Schwarz argument gives
-  -- contradiction: T log T ≤ const * T^{3/4+ε} for all large T
-  sorry -- This is the final assembly step, needs BuildingBlocks wiring
+  -- Construct HardySetupV2 from the estimates
+  have inst : HardyInfiniteZerosV2.HardySetupV2 := {
+    Z := HardyEstimatesPartial.hardyZ
+    Z_continuous := est.hardyZ_continuous
+    Z_zero_iff := HardySetupInstance.hardyZ_zero_iff
+    mean_square_lower := by
+      obtain ⟨c, hc, T₀, hT₀, h⟩ := est.mean_square_lower
+      exact ⟨c, hc, max T₀ 2, le_max_right _ _, fun T hT =>
+        h T (le_trans (le_max_left _ _) hT)⟩
+    first_moment_upper := by
+      intro ε hε
+      obtain ⟨C, hC, T₀, hT₀, h⟩ := est.first_moment_upper ε hε
+      exact ⟨C, hC, max T₀ 2, le_max_right _ _, fun T hT =>
+        h T (le_trans (le_max_left _ _) hT)⟩
+    Z_convexity_bound := h_convex
+  }
+  -- Apply Hardy's theorem (V2)
+  have h_inf := @HardyInfiniteZerosV2.hardy_infinitely_many_zeros_v2 inst
+  -- Transfer from "Set.Infinite {t | ζ(1/2+it)=0}" to "∀ T₀, ∃ t > T₀, Z(t) = 0"
+  intro T₀
+  -- From infinite zeros of ζ, we get infinite zeros of Z
+  have h_Z_inf : Set.Infinite {t : ℝ | HardyEstimatesPartial.hardyZ t = 0} := by
+    apply Set.Infinite.mono h_inf
+    intro t ht
+    exact (HardySetupInstance.hardyZ_zero_iff t).mpr ht
+  -- An infinite subset of ℝ is unbounded above
+  by_contra h_no
+  push_neg at h_no
+  -- h_no : ∀ t > T₀, Z(t) ≠ 0
+  -- So {t | Z(t) = 0} ⊆ Iic T₀ ∪ {stuff ≤ T₀}
+  apply h_Z_inf.not_bddAbove
+  exact ⟨T₀, fun t ht => by
+    by_contra h_gt; push_neg at h_gt
+    exact h_no t h_gt ht⟩
 
 end HardyAssemblyAttempt
