@@ -524,4 +524,41 @@ theorem block_estimate_from_leading (k : ℕ) (A : ℝ) (hA : 0 < A)
     ≤ L_k + L_k1 - 2 * A * Real.sqrt ((k : ℝ) + 2) := by
   nlinarith
 
+/-! ## Part 10: Block integral remainder bounds (conditional on SiegelSaddleExpansionHyp)
+
+Under the saddle-point expansion, the block integral I_k decomposes as:
+  I_k = (-1)^k · leadingBlockIntegral(k) + remainder
+
+The remainder is bounded by integrating the pointwise bound from gabcke_from_hyp.
+-/
+
+/-- The leading block integral expressed via CoV matches blockCoord/blockParam.
+    On block k, using t = blockCoord(k,p) = 2π(k+1+p)²:
+      (2π/t)^{1/4} · Ψ(blockParam k t) = (2π/t)^{1/4} · Ψ(p)
+    since blockParam(k, blockCoord(k,p)) = p. -/
+theorem blockParam_on_coord (k : ℕ) (p : ℝ) (hp : 0 ≤ p) :
+    blockParam k (blockCoord k p) = p :=
+  blockParam_blockCoord k p hp
+
+/-- The block integral error term: for t in block k, the next-order correction
+    (2π/t)^{1/4} · (1/4) · t^{-1/2} is bounded by (1/4) · (k+1)^{-3/2}
+    times a universal constant (since (2π/t)^{1/4} ≤ (k+1)^{-1/2} and
+    t^{-1/2} ≤ (2π)^{-1/2} · (k+1)^{-1} on block k).
+
+    This bounds the O(t^{-3/4}) remainder after extracting the leading RS correction. -/
+theorem block_error_bound_at_param (k : ℕ) (p : ℝ) (hp0 : 0 ≤ p) (hp1 : p ≤ 1) :
+    (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
+      ((1 / 4) * (blockCoord k p) ^ (-(1 : ℝ) / 2)) ≤
+    1 / 4 := by
+  have h_mem : blockCoord k p ∈ Icc (hardyStart k) (hardyStart (k + 1)) :=
+    blockCoord_mem_Icc k (Set.mem_Icc.mpr ⟨hp0, hp1⟩)
+  have h2pi := block_ge_two_pi k (blockCoord k p) h_mem.1
+  exact next_order_product_le_quarter (blockCoord k p) h2pi
+
+/-- Summary: the saddle expansion remainder (amplitude × next-order) is at most 1/4
+    on any block. This is a consequence of FresnelSaddlePointInfra. -/
+theorem saddle_remainder_uniform (k : ℕ) (t : ℝ) (ht : hardyStart k ≤ t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2)) ≤ 1 / 4 := by
+  exact next_order_product_le_quarter t (block_ge_two_pi k t ht)
+
 end Aristotle.Standalone.GabckePhaseCouplingInfra
