@@ -84,7 +84,7 @@ theorem saddlePoint_ge_block (k : ℕ) (t : ℝ)
   apply Real.sqrt_le_sqrt
   rw [le_div_iff₀ (show (0 : ℝ) < 2 * Real.pi by positivity)]
   have : hardyStart k = 2 * Real.pi * ((k : ℝ) + 1) ^ 2 := by
-    unfold hardyStart; simp only [Nat.cast_add, Nat.cast_one]; ring
+    unfold hardyStart; push_cast; ring
   linarith
 
 /-! ## Part 2: Phase function Taylor coefficients at the saddle -/
@@ -170,5 +170,67 @@ theorem saddlePoint_mono : Monotone saddlePoint := by
   unfold saddlePoint
   apply Real.sqrt_le_sqrt
   exact div_le_div_of_nonneg_right hab (le_of_lt (by positivity : (0 : ℝ) < 2 * Real.pi))
+
+/-! ## Part 6: Gabcke constant and remainder bound chain -/
+
+/-- The Gabcke constant: sup of |c₁(p)| on [0,1]. -/
+def gabckeConstant : ℝ := 0.083
+
+/-- The Gabcke constant is positive. -/
+theorem gabckeConstant_pos : 0 < gabckeConstant := by
+  unfold gabckeConstant; norm_num
+
+/-- The Gabcke constant is at most 1/4 (conservative bound). -/
+theorem gabckeConstant_le_quarter : gabckeConstant ≤ 1 / 4 := by
+  unfold gabckeConstant; norm_num
+
+/-- For t ≥ 2π, C_G · t^{-1/2} ≤ C_G (since t^{-1/2} ≤ 1). -/
+theorem gabcke_remainder_le_constant (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    gabckeConstant * t ^ (-(1 : ℝ) / 2) ≤ gabckeConstant := by
+  have ht_pos : 0 < t := by linarith [Real.pi_pos]
+  have h_ge_one : 1 ≤ t := le_trans (by linarith [Real.pi_gt_three]) ht
+  have h_rpow : t ^ (-(1:ℝ)/2) ≤ 1 :=
+    Real.rpow_le_one_of_one_le_of_nonpos h_ge_one (by norm_num)
+  nlinarith [gabckeConstant_pos]
+
+/-- For t ≥ 2π, C_G · t^{-1/2} ≤ 1/4. -/
+theorem gabcke_remainder_le_quarter (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    gabckeConstant * t ^ (-(1 : ℝ) / 2) ≤ 1 / 4 :=
+  le_trans (gabcke_remainder_le_constant t ht) gabckeConstant_le_quarter
+
+/-- The amplitude factor times remainder: (2π/t)^{1/4} · C_G · t^{-1/2} ≤ 1/4. -/
+theorem full_error_bound (t : ℝ) (ht : 2 * Real.pi ≤ t) :
+    (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * (gabckeConstant * t ^ (-(1 : ℝ) / 2)) ≤ 1 / 4 := by
+  have ht_pos : 0 < t := by linarith [Real.pi_pos]
+  have h_amp : (2 * Real.pi / t) ^ ((1:ℝ)/4) ≤ 1 := quarter_power_le_one t ht
+  have h_rem := gabcke_remainder_le_quarter t ht
+  have h_rem_nn : 0 ≤ gabckeConstant * t ^ (-(1:ℝ)/2) :=
+    mul_nonneg gabckeConstant_pos.le (Real.rpow_nonneg ht_pos.le _)
+  calc (2 * Real.pi / t) ^ ((1:ℝ)/4) * (gabckeConstant * t ^ (-(1:ℝ)/2))
+      ≤ 1 * (1/4) := mul_le_mul h_amp h_rem h_rem_nn (by norm_num)
+    _ = 1/4 := one_mul _
+
+/-! ## Part 7: Saddle-point and block parameter relationship -/
+
+/-- The saddle point w₀ = √(t/(2π)) equals k+1+p where p = blockParam k t. -/
+theorem saddlePoint_eq_block (k : ℕ) (t : ℝ) :
+    saddlePoint t = (k : ℝ) + 1 + blockParam k t := by
+  unfold saddlePoint blockParam; ring
+
+/-- The inverse saddle scale 1/w₀ ≤ 1/(k+1) on block k. -/
+theorem inv_saddlePoint_le (k : ℕ) (t : ℝ) (ht : hardyStart k ≤ t) :
+    1 / saddlePoint t ≤ 1 / ((k : ℝ) + 1) := by
+  have hk : 0 < (k : ℝ) + 1 := by positivity
+  have hw := saddlePoint_ge_block k t ht
+  have hw_pos : 0 < saddlePoint t := lt_of_lt_of_le hk hw
+  exact div_le_div_of_nonneg_left (by norm_num) hk hw
+
+/-- On block k, 1/w₀ ≤ 1 (since t ≥ 2π implies w₀ ≥ 1). -/
+theorem inv_saddlePoint_le_one (k : ℕ) (t : ℝ) (ht : hardyStart k ≤ t) :
+    1 / saddlePoint t ≤ 1 := by
+  have h2pi := block_ge_two_pi k t ht
+  have hw := saddlePoint_ge_one t h2pi
+  have ht_pos : 0 < t := by linarith [Real.pi_pos]
+  exact div_le_one_of_le₀ hw (le_of_lt (saddlePoint_pos t ht_pos))
 
 end Aristotle.Standalone.SteepestDescentContour
