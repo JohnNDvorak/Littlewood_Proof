@@ -5,25 +5,15 @@ PROOF STRUCTURE:
   Z(t) = MainTerm(t) + ErrorTerm(t).
 
   (A) |∫ ErrorTerm| ≤ C_E·√T: from RSExpansionProof.errorTerm_first_moment_sqrt.
-  (B) |∫ MainTerm| ≤ C_M·√T: sorry — requires a global technique.
+  (B) |∫ MainTerm| ≤ C_M·√T: from AtkinsonFormula.mainTerm_first_moment_sqrt.
 
-MATHEMATICAL NOTE ON THE PER-MODE APPROACH:
-  The per-mode VdC approach (bounding |∫ hardyCos_n| uniformly in n) is
-  MATHEMATICALLY IMPOSSIBLE for getting O(√T):
+The MainTerm bound uses the Atkinson formula (1949): per-mode integration by parts
+on the Dirichlet polynomial, with the boundary sum controlled by the kernel sum
+estimate and the signed Fresnel contributions bounded by Abel's alternating sum lemma.
+The per-mode absolute value bound gives only O(T^{3/4}); the O(T^{1/2}) bound
+requires the signed cancellation of the Fresnel integrals (Atkinson's key insight).
 
-  • The stationary point of mode n sits at hardyStart(n) = 2π(n+1)².
-  • θ''(hardyStart(n)) ≈ 1/(4π(n+1)²), so the Fresnel integral gives
-    |∫ cos(θ - t·log(n+1))| = Θ(n+1) per mode.
-  • Weighted: (n+1)^{-1/2} · Θ(n+1) = Θ(√(n+1)).
-  • Summing ∑_{n<N} √(n+1) ≈ N^{3/2} = O(T^{3/4}).
-  • The convexity bound has exponent 1/4, and 3/4 + 1/4 = 1, so O(T^{3/4})
-    is NOT sufficient for the Hardy infinite-zeros contradiction.
-
-  The standard O(T^{1/2}) proof (Titchmarsh §4.15) uses integration by parts on
-  the integral of Z(t) directly, exploiting the functional equation of ζ, NOT
-  mode-by-mode Van der Corput. A future agent should pursue this global approach.
-
-Reference: Titchmarsh 1951 §4.15; Ingham 1932 §5.2; Ivić 2003 §4.2.
+Reference: Atkinson 1949; Titchmarsh 1951 §4.15; Ingham 1932 §5.2; Ivić 2003 §4.2.
 -/
 
 import Mathlib
@@ -32,6 +22,7 @@ import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.HardyZMeasurability
 import Littlewood.Aristotle.HardyNProperties
 import Littlewood.Aristotle.Standalone.RSExpansionProof
+import Littlewood.Aristotle.Standalone.AtkinsonFormula
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -48,15 +39,15 @@ open HardyEstimatesPartial
 /-- **Main term first moment O(√T) bound**.
     |∫₁ᵀ MainTerm(t) dt| ≤ C_M·T^{1/2}.
 
-    This requires a global technique (IBP on the integral of Z with
-    the functional equation), not per-mode VdC.
-    See module docstring for why per-mode analysis gives only O(T^{3/4}).
+    Proved by the Atkinson formula: per-mode IBP on the Dirichlet polynomial
+    with signed Fresnel cancellation. The per-mode absolute value bound gives
+    only O(T^{3/4}); the O(T^{1/2}) bound requires the Atkinson signed sum.
 
-    Reference: Titchmarsh 1951, §4.15 (integration by parts on ∫ Z(t) dt). -/
+    Reference: Atkinson 1949; Titchmarsh 1951, §4.15. -/
 private theorem mainTerm_first_moment_sqrt :
     ∃ C_M > 0, ∀ T : ℝ, T ≥ 2 →
-      |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) := by
-  sorry
+      |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) :=
+  Aristotle.Standalone.AtkinsonFormula.mainTerm_first_moment_sqrt
 
 /-- **Hardy Z first moment O(√T) bridge**.
     |∫₁ᵀ Z(t) dt| ≤ C·T^{1/2} for all T ≥ 2.
