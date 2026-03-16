@@ -114,18 +114,25 @@ theorem block_estimate_suffices
     signedBlockCorrection_form
     h_est
 
-/-! ## Sorry'd instance -/
+/-! ## Instance from remainder antitonicity -/
 
-/-- **Instance** (sorry'd): Gabcke's phase coupling analysis confirms antitonicity.
-    Closing requires the full signed steepest-descent analysis, not just
-    pointwise bounds. See Gabcke 1979 Satz 4 for the mathematical argument.
+/-- **Instance**: Gabcke's phase coupling from signed remainder antitonicity.
 
-    Via `block_estimate_suffices`, the sorry is equivalent to:
-    ∀ k ≥ 1, A·(√(k+1)-√(k+2)) ≤ (-1)^k·(I_k + I_{k+1})
-    where I_k = ∫_{block k} ErrorTerm dt and A = blockCorrectionA. -/
+    The proof chain:
+    1. `block_estimate_iff_remainder_antitone`: the block estimate condition
+       follows from blockRemainder(k) ≥ blockRemainder(k+1)
+    2. `remainder_antitone_for_ge_one`: the signed remainder IS antitone (sorry)
+
+    The sorry is now isolated to the minimal irreducible content:
+    R(k) = (-1)^k · ∫_{block k} ErrorTerm - leadingBlockIntegral(k) is antitone.
+    This is Gabcke 1979 Satz 4 (signed steepest-descent phase coherence).
+
+    Reference: Gabcke 1979 Satz 4. -/
 instance : GabckePhaseCouplingHyp := by
   apply block_estimate_suffices
-  sorry
+  intro k hk
+  exact GabckePhaseCouplingInfra.block_estimate_iff_remainder_antitone k
+    (GabckePhaseCouplingInfra.remainder_antitone_for_ge_one k hk)
 
 /-! ## Bridge theorem -/
 

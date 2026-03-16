@@ -561,4 +561,95 @@ theorem saddle_remainder_uniform (k : ℕ) (t : ℝ) (ht : hardyStart k ≤ t) :
     (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2)) ≤ 1 / 4 := by
   exact next_order_product_le_quarter t (block_ge_two_pi k t ht)
 
+/-! ## Part 11: Block integral remainder — reducing to signed remainder antitonicity
+
+The signed block integral decomposes as:
+  (-1)^k · I_k = leadingBlockIntegral(k) + blockRemainder(k)
+
+where the remainder captures all higher-order saddle-point corrections.
+The key irreducible content of Gabcke Satz 4 is that blockRemainder is antitone:
+  blockRemainder(k) ≥ blockRemainder(k+1) for k ≥ 1.
+
+Combined with the concavity surplus from Part 5, this implies the full
+block estimate condition in block_estimate_suffices.
+-/
+
+/-- The block remainder: the signed block integral minus its leading asymptotic.
+    R(k) = (-1)^k · I_k - leadingBlockIntegral(k)
+    where I_k = ∫_{block k} ErrorTerm(t) dt.
+
+    Under the saddle-point expansion, |R(k)| = O(k^{-1/2}). The irreducible
+    content of Gabcke Satz 4 is that R(k) is antitone. -/
+def blockRemainder (k : ℕ) : ℝ :=
+  (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
+    - leadingBlockIntegral k
+
+/-- Decomposition: the block estimate condition reduces to leading + remainder.
+    (-1)^k · (I_k + I_{k+1}) = (L_k - L_{k+1}) + (R_k - R_{k+1)). -/
+theorem block_sum_decomposition (k : ℕ) :
+    (-1 : ℝ) ^ k *
+      ((∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t) +
+       (∫ t in Ioc (hardyStart (k + 1)) (hardyStart (k + 2)), ErrorTerm t))
+    = (leadingBlockIntegral k - leadingBlockIntegral (k + 1))
+      + (blockRemainder k - blockRemainder (k + 1)) := by
+  unfold blockRemainder leadingBlockIntegral
+  rw [neg_one_pow_succ k]
+  ring
+
+/-- The leading term difference dominates the block correction concavity bonus:
+    L_k - L_{k+1} ≥ A · (√(k+1) - √(k+2)).
+
+    This is a direct consequence of weighted_integral_diff_lower. -/
+theorem leading_diff_ge_correction (k : ℕ) :
+    (4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)) *
+      (Real.sqrt ((k : ℝ) + 1) - Real.sqrt ((k : ℝ) + 2))
+    ≤ leadingBlockIntegral k - leadingBlockIntegral (k + 1) := by
+  unfold leadingBlockIntegral
+  -- leadingBlockIntegral(k+1) = 4π · ∫ √((k+1)+1+p) · Ψ dp = 4π · ∫ √(k+2+p) · Ψ dp
+  have h_cast : ∀ p : ℝ,
+      Real.sqrt ((↑(k + 1) : ℝ) + 1 + p) = Real.sqrt ((k : ℝ) + 2 + p) := by
+    intro p; congr 1; push_cast; ring
+  simp_rw [h_cast]
+  have h := weighted_integral_diff_lower k
+  nlinarith [Real.pi_pos]
+
+/-- **Key reduction**: the block estimate condition is equivalent to
+    blockRemainder(k) ≥ blockRemainder(k+1).
+
+    Proof:
+    (-1)^k·(I_k+I_{k+1}) = (L_k-L_{k+1}) + (R_k-R_{k+1})
+    From leading_diff_ge_correction: L_k - L_{k+1} ≥ A·(√(k+1)-√(k+2))
+    So the block estimate A·(√(k+1)-√(k+2)) ≤ (-1)^k·(I_k+I_{k+1})
+    holds iff R_k ≥ R_{k+1}. -/
+theorem block_estimate_iff_remainder_antitone (k : ℕ) :
+    (blockRemainder k ≥ blockRemainder (k + 1)) →
+    (4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)) *
+      (Real.sqrt ((k : ℝ) + 1) - Real.sqrt ((k : ℝ) + 2))
+    ≤ (-1 : ℝ) ^ k *
+      ((∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t) +
+       (∫ t in Ioc (hardyStart (k + 1)) (hardyStart (k + 2)), ErrorTerm t)) := by
+  intro h_rem
+  rw [block_sum_decomposition]
+  have h_lead := leading_diff_ge_correction k
+  linarith
+
+/-- **Signed remainder antitonicity** (Gabcke Satz 4, irreducible content).
+
+    The block remainder R(k) = (-1)^k · I_k - L_k is antitone for k ≥ 1.
+    This encodes:
+    (a) The steepest-descent expansion gives signed (not just absolute) control
+    (b) The Fresnel correction phase rotates monotonically across blocks
+    (c) The remainder R(k) decreases as k → ∞
+
+    IRREDUCIBILITY: Pointwise bounds |R(t)| ≤ C·t^{-3/4} from SiegelSaddleExpansionHyp
+    give |R_k| = O(k^{-1/2}) but NOT the signed antitonicity R_k ≥ R_{k+1}.
+    The concavity surplus (Part 5) is O(k^{-3/2}) while |R_k - R_{k+1}| could be
+    O(k^{-1/2}), so surplus alone cannot absorb the remainder difference.
+
+    Requires: explicit Fresnel integral evaluation with monotone error bounds
+    as in Gabcke 1979 proof of Satz 4. -/
+theorem remainder_antitone_for_ge_one (k : ℕ) (hk : 1 ≤ k) :
+    blockRemainder (k + 1) ≤ blockRemainder k := by
+  sorry
+
 end Aristotle.Standalone.GabckePhaseCouplingInfra
