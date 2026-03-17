@@ -140,6 +140,8 @@ import Littlewood.Aristotle.ZeroCountingRectangle       -- Zero-counting rectang
 import Littlewood.Aristotle.ZetaLogDerivInfra           -- -ζ'/ζ pole/log-derivative infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.VanDerCorputInfra           -- Van der Corput oscillatory integral infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.VdcFirstDerivTest            -- Van der Corput first derivative test: |∫cos(φ)| ≤ 3/m (0 sorries) ✓
+import Littlewood.Aristotle.VdcSecondDerivTest           -- Van der Corput second derivative test: |∫cos(φ)| ≤ 8/√λ (0 sorries) ✓
+import Littlewood.Aristotle.FresnelBound                 -- Fresnel cosine/sine integral bounds: |∫cos(t²)| ≤ 3/2 (0 sorries) ✓
 import Littlewood.Aristotle.AbelSummation                -- Abel summation + alternating series bound (0 sorries) ✓
 import Littlewood.Aristotle.Standalone.ZeroTailAbelSummation  -- Zero tail Abel summation for Hadamard route (0 sorries) ✓
 import Littlewood.Aristotle.Standalone.AbelSummationPsiPi    -- ψ→π Abel summation asymptotics for pi_approx (0 sorries) ✓
