@@ -108,4 +108,46 @@ theorem logDeriv_xi_functional_eq (s : ℂ) :
   rw [riemannXiAlt_one_sub', ← hderiv_eq, hcomp]
   ring
 
+/-! ## Section 4: Contour integral symmetry from functional equation
+
+The functional equation ξ(1-s) = ξ(s) combined with the map s ↦ 1-s
+sends the left edge (σ=-1, y↑) to the right edge (σ=2, y↓):
+  s = -1+iy ↦ 1-s = 2-iy
+
+And logDeriv(ξ)(1-s) = -logDeriv(ξ)(s), so:
+  logDeriv(ξ)(-1+iy) = logDeriv(ξ)(1-(2-iy)) = -logDeriv(ξ)(2-iy)
+
+This relates the left and right edge integrals. -/
+
+/-- logDeriv(ξ) on the left edge relates to logDeriv(ξ) on the right edge:
+    logDeriv(ξ)(-1+iy) = -logDeriv(ξ)(2-iy) for all y.
+
+    Proof: -1+iy = 1-(2-iy), so logDeriv(ξ)(-1+iy) = logDeriv(ξ)(1-(2-iy))
+    = -logDeriv(ξ)(2-iy) by the functional equation. -/
+theorem logDeriv_xi_left_right_edge (y : ℝ) :
+    logDeriv RiemannXiAlt ((-1 : ℂ) + ↑y * I) =
+    -logDeriv RiemannXiAlt ((2 : ℂ) - ↑y * I) := by
+  have : ((-1 : ℂ) + ↑y * I) = 1 - ((2 : ℂ) - ↑y * I) := by push_cast; ring
+  rw [this, logDeriv_xi_functional_eq]
+
+/-- The bottom edge integral is O(1) in norm.
+
+    On the bottom edge (Im = 1, σ from -1 to 2), logDeriv(ξ) is continuous
+    and bounded on the compact set. The integral of a bounded function over
+    a bounded interval is bounded. -/
+theorem bottom_edge_bounded (B : ℝ)
+    (hB : ∀ σ ∈ Set.Icc (-1 : ℝ) 2,
+      ‖logDeriv RiemannXiAlt (↑σ + (1 : ℂ) * I)‖ ≤ B) :
+    ‖∫ x in (-1 : ℝ)..2, logDeriv RiemannXiAlt (↑x + (1 : ℂ) * I)‖ ≤ 3 * B := by
+  calc ‖∫ x in (-1 : ℝ)..2, logDeriv RiemannXiAlt (↑x + (1 : ℂ) * I)‖
+      ≤ ∫ x in (-1 : ℝ)..2, ‖logDeriv RiemannXiAlt (↑x + (1 : ℂ) * I)‖ :=
+        intervalIntegral.norm_integral_le_integral_norm (by norm_num : (-1 : ℝ) ≤ 2)
+    _ ≤ ∫ _ in (-1 : ℝ)..2, B := by
+        apply intervalIntegral.integral_mono_on (by norm_num)
+        · exact (Continuous.intervalIntegrable (by fun_prop) _ _).norm
+        · exact intervalIntegrable_const
+        · intro x hx; exact hB x ⟨hx.1, hx.2⟩
+    _ = 3 * B := by
+        rw [intervalIntegral.integral_const]; simp; linarith
+
 end ZetaZeros.RvMContour
