@@ -84,6 +84,19 @@ theorem pi_sq_lt_twelve : Real.pi ^ 2 < 12 := by
         sq_le_sq' (by linarith [Real.pi_pos]) hpi
     _ < 12 := by norm_num
 
+/-! ## ζ(2) tail bound
+
+From π² < 12 and hasSum_zeta_two: the tail Σ_{n≥2} 1/n² < 1.
+This is the key ingredient for proving |ζ(s) - 1| < 1 at Re(s) ≥ 2. -/
+
+/-- The sum Σ_{n≥0} 1/n² = ζ(2) satisfies ζ(2) - 1 < 1 (i.e., ζ(2) < 2).
+    Equivalently: Σ_{n≥2} 1/n² < 1.
+    Proof: ζ(2) = π²/6 and π² < 12, so ζ(2) < 2. -/
+theorem zeta_two_minus_one_lt_one :
+    (∑' (b : ℕ), 1 / (b : ℝ) ^ 2) - 1 < 1 := by
+  rw [hasSum_zeta_two.tsum_eq]
+  linarith [pi_sq_lt_twelve]
+
 /-! ## Re-exports from Mathlib -/
 
 /-- ζ(s) ≠ 0 for Re(s) ≥ 1. Re-export from Mathlib. -/
