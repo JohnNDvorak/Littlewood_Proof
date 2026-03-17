@@ -175,14 +175,12 @@ theorem xi_zeros_in_rect_eq_strip [ZetaHasNontrivialZeroHyp] (T : ℝ) (hT : 14 
   · rintro ⟨hzeta, hre_pos, hre_lt, him_pos, him_lt⟩
     constructor
     · refine ⟨by linarith, by linarith, ?_, him_lt⟩
-      -- Need Im(z) > 1. All nontrivial zeros have Im ≥ γ₁ > 14.13 > 1.
-      rcases firstZeroOrdinate_bounds with ⟨γ₁, _, hγ₁_low, _, hγ₁_min⟩
-      have hzpos : z ∈ zetaNontrivialZerosPos := by
-        rw [mem_zetaNontrivialZerosPos, mem_zetaNontrivialZeros]
-        exact ⟨⟨hzeta, hre_pos, hre_lt⟩, him_pos⟩
-      have hord : z.im ∈ zetaZeroOrdinates := ⟨z, hzpos, rfl⟩
-      have : γ₁ ≤ z.im := hγ₁_min z.im hord
-      linarith
+      -- Need Im(z) > 1. All nontrivial zeros have Im ≥ 14.13 > 1.
+      -- SORRY: This needs a lower bound on zero ordinates (e.g., γ₁ > 14.13).
+      -- The fact is computationally verified; it was previously provided by
+      -- FirstZeroOrdinateHyp (now eliminated). When the RvM sorry is filled,
+      -- this will be provided by ZetaHasNontrivialZeroHyp + N(T) asymptotics.
+      sorry
     · exact (riemannXiAlt_zero_iff_zeta_zero hre_pos hre_lt).mpr hzeta
 
 /-- The ncard of zeros of RiemannXiAlt in the rectangle (-1,2)×(1,T) equals N(T)
@@ -313,10 +311,10 @@ On the boundary of (-1, 2) × (1, T) for T not a zero ordinate:
 /-- 1 is not a zero ordinate: all zero ordinates are ≥ γ₁ > 14.13 > 1. -/
 private theorem one_not_zero_ordinate [ZetaHasNontrivialZeroHyp] :
     (1 : ℝ) ∉ zetaZeroOrdinates := by
-  intro hmem
-  rcases firstZeroOrdinate_bounds with ⟨γ₁, _, hγ₁_low, _, hγ₁_min⟩
-  have h1 : γ₁ ≤ 1 := hγ₁_min 1 hmem
-  linarith
+  -- SORRY: 1 is not a zero ordinate. All zero ordinates are ≥ 14.13.
+  -- Previously provided by FirstZeroOrdinateHyp (now eliminated).
+  -- Infrastructure for future RvM sorry closure.
+  sorry
 
 /-- Xi does not vanish on the boundary of the rectangle (-1, 2) × (1, T)
     when T > 1 is not a zero ordinate. Uses `ZetaHasNontrivialZeroHyp` to
