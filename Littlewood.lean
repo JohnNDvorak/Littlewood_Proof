@@ -13,6 +13,8 @@ import Littlewood.ZetaZeros.RvMContourFTC            -- FTC for logDeriv along v
 import Littlewood.ZetaZeros.RvMZetaBound             -- π²<12 + ζ bounds for Re(s)≥2 (0 sorries) ✓
 import Littlewood.ZetaZeros.RvMFormulaProof          -- |ζ-1|<1, ζ∈slitPlane, log(ζ) bounded (0 sorries) ✓
 import Littlewood.Aristotle.XiLogDerivDecomposition  -- logDeriv(ξ) product decomposition (0 sorries) ✓
+import Littlewood.ZetaZeros.RvMZetaFTC              -- FTC for logDeriv(ζ) on σ=2 line (0 sorries) ✓
+import Littlewood.ZetaZeros.RvMContourLinearity     -- Contour integral linearity for RvM (0 sorries) ✓
 
 -- Explicit formulas
 import Littlewood.ExplicitFormulas.ExplicitFormulaPsi
