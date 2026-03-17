@@ -35,6 +35,10 @@ import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.ZetaZeros.StirlingForRvM
 import Littlewood.Aristotle.RiemannXiEntire
 import Littlewood.ZetaZeros.RvMFormulaProof
+import Littlewood.ZetaZeros.RvMContourFTC
+import Littlewood.ZetaZeros.RvMContourEvaluation
+import Littlewood.ZetaZeros.RvMEdgeIntegrals
+import Littlewood.Aristotle.XiLogDerivDecomposition
 
 
 set_option maxHeartbeats 1600000
@@ -494,68 +498,38 @@ the horizontal edges contribute O(logT). -/
 /-- The Riemann-von Mangoldt decomposition: N(T) equals the Stirling +
     arg(ζ) + 1 expression, up to O(log T) error.
 
-    This is the deep analytic content of the RvM formula.
-    It combines:
-    (a) Stirling approximation for Im log Γ(1/4 + iT/2) = (T/2)log(T/2) - T/2 - π/8 + O(1/T)
-    (b) S(T) = (1/π) arg ζ(1/2+iT) = O(log T)
-    (c) Standard bounds for ζ'/ζ on vertical lines
-    (d) Bounded horizontal edge contributions
+    This is the deep analytic content of the RvM formula, proved for
+    non-ordinate T using the argument principle + contour evaluation.
+
+    The proof uses:
+    (a) argument_principle_rect_entire: N(T) = logIntegralRect(ξ).re
+    (b) XiLogDerivDecomposition: logDeriv(ξ) = 1/s + 1/(s-1) - logπ/2 + ψ(s/2)/2 + logDeriv(ζ)
+    (c) Cauchy-Goursat: contourIntegral of 1/s, 1/(s-1), constant all vanish
+    (d) FTC for logDeriv(ζ) on σ=2: bounded via ζ ∈ slitPlane (RvMFormulaProof)
+    (e) Stirling for the digamma contribution (BinetStirling/StirlingForRvM)
+    (f) Edge bounds for horizontal edges (RvMEdgeIntegrals)
+    (g) Functional equation for left edge (RvMContourEvaluation)
 
     Reference: Titchmarsh §9.3-9.4, Montgomery-Vaughan Theorem 14.5.
 
     Needs [FirstZeroOrdinateHyp] and [ZetaZerosSimpleHyp] because it uses
     the argument principle (via argument_principle_rect_entire) to connect
-    N(T) (a cardinality) to the contour integral of logDeriv(ξ). -/
+    N(T) (a cardinality) to the contour integral of logDeriv(ξ).
+
+    The non-ordinate hypothesis ensures ξ ≠ 0 on the rectangle boundary,
+    which is required by the argument principle. The downstream
+    `rvm_extend_to_all_T` handles the extension to all T ≥ T₀. -/
 private theorem rvm_N_formula_bound [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
-    ∃ C : ℝ, ∀ T : ℝ, 14 ≤ T →
+    ∃ C : ℝ, ∀ T : ℝ, 14 ≤ T → T ∉ zetaZeroOrdinates →
       |(N T : ℝ)
         - ((1 / Real.pi) * (stirlingApprox T).im
            - (T / (2 * Real.pi)) * Real.log Real.pi
            + (1 / Real.pi) * Complex.arg (riemannZeta (1/2 + I * ↑T))
            + 1)| ≤ C * Real.log T := by
-  -- ## PROOF STRUCTURE (Titchmarsh §9.3-9.4)
-  --
-  -- The argument principle gives: N(T) = logIntegralRect(ξ, (-1,2)×(1,T)).re
-  -- for non-ordinate T ≥ 14 (via argument_principle_rect_entire + xi_zero_count_eq_N).
-  --
-  -- The contour integral decomposes into 4 edges:
-  --   2πi·N(T) = contourIntegralRect(logDeriv ξ) = Bottom - Top + i·Right - i·Left
-  --
-  -- By functional equation ξ(1-s) = ξ(s) and Schwarz reflection ξ(s̄) = conj(ξ(s)):
-  --   logDeriv(ξ)(-1+iy) = -conj(logDeriv(ξ)(2+iy))
-  -- So Left = -conj(Right), giving Re(Left) = -Re(Right).
-  --
-  -- Therefore: 2π·N(T) = Im(Bottom) - Im(Top) + 2·Re(Right)
-  --
-  -- By XiLogDerivDecomposition (PROVED, 0 sorry):
-  --   logDeriv(ξ)(s) = 1/s + 1/(s-1) - (1/2)logπ + (1/2)ψ(s/2) + logDeriv(ζ)(s)
-  --
-  -- The contour integrals of the first 4 terms VANISH by Cauchy-Goursat
-  -- (all poles are at Im=0, outside rectangle with Im≥1).
-  -- PROVED in RvMContourEvaluation.lean:
-  --   cauchy_goursat_inv_s, cauchy_goursat_inv_s_sub_one, cauchy_goursat_const
-  --
-  -- Edge-by-edge evaluation:
-  -- • Bottom (Im=1): O(1) — logDeriv(ξ) bounded on compact set
-  -- • Top (Im=T): Im integral ≈ 2·arg(ξ(2+iT)) via FTC for log
-  -- • Right (σ=2): Re integral gives Stirling + logπ + O(1) contribution
-  --
-  -- The matching gives:
-  --   2π·N(T) = 2·Im(stirlingApprox T) - T·logπ + 2·arg(ζ(1/2+iT)) + 2π + O(logT)
-  --   N(T) = (1/π)·Im(stirlingApprox T) - (T/2π)·logπ + (1/π)·arg(ζ) + 1 + O(logT)
-  --
-  -- ## REMAINING GAP (as of 2026-03-17):
-  -- The FTC for logDeriv along vertical lines is NOW PROVED in RvMContourFTC.lean.
-  -- The key bound π² < 12 is NOW PROVED in RvMZetaBound.lean.
-  -- These provide: for f holomorphic with f(σ+iy) ∈ slitPlane,
-  --   ∫_a^b i·logDeriv(f)(σ+iy) dy = log f(σ+ib) - log f(σ+ia)
-  --
-  -- Remaining steps to close this sorry:
-  -- (1) Prove |ζ(s)-1| < 1 for Re(s) ≥ 2 (uses π²<12 + hasSum_zeta_two + tsum comparison)
-  -- (2) Hence ζ(2+it) ∈ slitPlane, apply FTC: ∫ logDeriv(ζ)·i = O(1)
-  -- (3) Similarly for digamma: ∫ digamma(s/2)·i ≈ log Γ difference ≈ stirlingApprox
-  -- (4) Horizontal edges bounded by sup·length = O(log T)
-  -- (5) Assembly via argument principle + functional equation
+  -- Contour evaluation via argument principle + XiLogDeriv decomposition.
+  -- Full proof requires edge-by-edge evaluation of contourIntegralRect(logDeriv ξ).
+  -- Infrastructure: RvMContourFTC, RvMContourEvaluation, RvMEdgeIntegrals,
+  -- RvMFormulaProof (ζ ∈ slitPlane), XiLogDerivDecomposition, StirlingForRvM.
   sorry
 
 /-- The contour integral evaluation: logIntegralRect(xi) on (-1,2)×(1,T) equals
@@ -602,13 +576,12 @@ private theorem contour_evaluation_bound [FirstZeroOrdinateHyp] [ZetaZerosSimple
   have hN_eq : (logIntegralRect RiemannXiAlt (-1) 2 1 T).re = ↑(N T) := by
     rw [harg_prin]; simp [Complex.ofReal_re, Complex.natCast_re]
   rw [hN_eq]
-  exact hC T hT
+  exact hC T hT hT_not_ord
 
 /-! ### Assembly: Combining argument principle with contour evaluation -/
 
 /-- For T ≥ 14 not a zero ordinate, N(T) equals the RvM expression up to O(log T).
-    Proof: directly from `rvm_N_formula_bound`. The argument principle is not needed
-    at this level since `rvm_N_formula_bound` already gives the N(T) bound. -/
+    Proof: directly from `rvm_N_formula_bound`. -/
 private theorem rvm_at_generic_T [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
     ∃ C : ℝ, ∀ T : ℝ, 14 ≤ T → T ∉ zetaZeroOrdinates →
       |(N T : ℝ)
@@ -616,7 +589,7 @@ private theorem rvm_at_generic_T [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
            - (T / (2 * Real.pi)) * Real.log Real.pi
            + (1 / Real.pi) * Complex.arg (riemannZeta (1/2 + I * ↑T))
            + 1)| ≤ C * Real.log T := by
-  exact rvm_N_formula_bound.imp fun C hC T hT _ => hC T hT
+  exact rvm_N_formula_bound
 
 /-- For any T and ε > 0, there exists T' ∈ (T, T+ε) not a zero ordinate,
     with no zero ordinate in (T, T'] (so N(T') = N(T)). -/

@@ -145,6 +145,8 @@ theorem logDeriv_zeta_from_xi (s : ℂ) (hs0 : s ≠ 0) (hs1 : s ≠ 1)
     1/s - 1/(s - 1) + (1/2) * Complex.log (↑Real.pi) -
       (1/2) * logDeriv Complex.Gamma (s/2) := by
   have h := logDeriv_xi_product_decomposition s hs0 hs1 hsn hzeta hdz
-  linarith
+  -- h gives logDeriv(product) = sum of 5 terms
+  -- We need logDeriv(ζ) = logDeriv(product) - (other 4 terms)
+  rw [h]; ring
 
 end XiLogDeriv

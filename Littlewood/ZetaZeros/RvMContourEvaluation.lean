@@ -138,18 +138,19 @@ theorem logDeriv_xi_left_right_edge (y : ℝ) :
     a bounded interval is bounded. -/
 theorem bottom_edge_bounded (B : ℝ)
     (hB : ∀ σ ∈ Set.Icc (-1 : ℝ) 2,
-      ‖logDeriv RiemannXiAlt (↑σ + (1 : ℂ) * I)‖ ≤ B) :
+      ‖logDeriv RiemannXiAlt (↑σ + (1 : ℂ) * I)‖ ≤ B)
+    (hf_int : IntervalIntegrable
+      (fun x : ℝ => logDeriv RiemannXiAlt (↑x + (1 : ℂ) * I)) MeasureTheory.volume (-1) 2) :
     ‖∫ x in (-1 : ℝ)..2, logDeriv RiemannXiAlt (↑x + (1 : ℂ) * I)‖ ≤ 3 * B := by
   calc ‖∫ x in (-1 : ℝ)..2, logDeriv RiemannXiAlt (↑x + (1 : ℂ) * I)‖
       ≤ ∫ x in (-1 : ℝ)..2, ‖logDeriv RiemannXiAlt (↑x + (1 : ℂ) * I)‖ :=
         intervalIntegral.norm_integral_le_integral_norm (by norm_num : (-1 : ℝ) ≤ 2)
     _ ≤ ∫ _ in (-1 : ℝ)..2, B := by
-        apply intervalIntegral.integral_mono_on (by norm_num)
-        · exact (Continuous.intervalIntegrable (by fun_prop) _ _).norm
-        · exact intervalIntegrable_const
-        · intro x hx; exact hB x ⟨hx.1, hx.2⟩
+        apply intervalIntegral.integral_mono_on (by norm_num) hf_int.norm
+          (_root_.intervalIntegrable_const)
+        intro x hx; exact hB x ⟨hx.1, hx.2⟩
     _ = 3 * B := by
-        rw [intervalIntegral.integral_const]; simp; linarith
+        rw [intervalIntegral.integral_const]; simp only [smul_eq_mul]; linarith
 
 /-! ## Section 5: Schwarz reflection for RiemannXiAlt
 
