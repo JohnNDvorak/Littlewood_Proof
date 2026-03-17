@@ -408,7 +408,29 @@ private theorem xi_zeros_are_simple [ZetaZerosSimpleHyp] :
   -- Product rule at z where ζ(z) = 0: Λ'(z) = π^{-z/2}·Γ(z/2)·ζ'(z).
   -- Each factor nonzero: cpow of π, Gamma has no zeros, ζ'(z) ≠ 0.
   have h_comp_deriv_ne : deriv completedRiemannZeta z ≠ 0 := by
-    sorry  -- Λ'(z) = π^{-z/2}·Γ(z/2)·ζ'(z) ≠ 0 (product rule at zero of ζ)
+    -- Proof: ζ(s) = Λ(s)/Γ_R(s) near z, so by product rule at Λ(z)=0:
+    --   ζ'(z) = Λ'(z) · (Γ_R(z))⁻¹. Since ζ'(z) ≠ 0, Λ'(z) ≠ 0.
+    have h_eq : ∀ᶠ s in nhds z,
+        riemannZeta s = completedRiemannZeta s * (Gammaℝ s)⁻¹ := by
+      have h0_nhds : ({0} : Set ℂ)ᶜ ∈ nhds z :=
+        IsOpen.mem_nhds isOpen_compl_singleton (Set.mem_compl_singleton_iff.mpr hz0)
+      apply Filter.Eventually.mono h0_nhds
+      intro s hs
+      simp only [Set.mem_singleton_iff] at hs
+      rw [riemannZeta_def_of_ne_zero hs, div_eq_mul_inv]
+    have h_diff_comp' : DifferentiableAt ℂ completedRiemannZeta z :=
+      differentiableAt_completedZeta hz0 hz1
+    have h_diff_inv : DifferentiableAt ℂ (fun s => (Gammaℝ s)⁻¹) z :=
+      differentiable_Gammaℝ_inv.differentiableAt
+    have h_key : deriv riemannZeta z =
+        deriv completedRiemannZeta z * (Gammaℝ z)⁻¹ +
+        completedRiemannZeta z * deriv (fun s => (Gammaℝ s)⁻¹) z := by
+      conv_lhs => rw [Filter.EventuallyEq.deriv_eq h_eq]
+      exact deriv_mul h_diff_comp' h_diff_inv
+    rw [h_comp_zero, zero_mul, add_zero] at h_key
+    intro h_contra
+    apply hderiv_zeta
+    rw [h_key, h_contra, zero_mul]
   -- Step 6: Compute the derivative via product rule and show nonzero
   -- f(s) = (1/2)·s·(s-1)·Λ(s), so f'(z) = (1/2)·(2z-1)·Λ(z) + (1/2)·z·(z-1)·Λ'(z)
   -- Since Λ(z) = 0: f'(z) = (1/2)·z·(z-1)·Λ'(z) ≠ 0.
