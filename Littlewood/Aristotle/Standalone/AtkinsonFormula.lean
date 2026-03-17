@@ -8,12 +8,22 @@ The proof reduces to `atkinson_integral_le_N`: the Atkinson per-mode
 IBP + signed Fresnel sum analysis shows |∫ MainTerm| ≤ C · (N+1),
 where N = hardyN(T) ≤ √T.
 
-SORRY COUNT: 1 (`atkinson_signed_fresnel_bound`)
-  Encapsulates the Atkinson 1949 evaluation:
-  - Fubini swap (hardySum_integral_eq, PROVED in HardyZMeasurability)
-  - Per-mode signed Fresnel evaluation at stationary points
-  - Signed sum cancellation via Abel bound (PROVED below + CosPiSqSign)
-  - Assembly
+SORRY COUNT: 1 (`atkinson_weighted_sum_bound`)
+  The weighted cosine integral sum bound:
+  |Σ_{n<N} (n+1)^{-1/2} · ∫ cos(θ(t) - t·log(n+1))| ≤ C · (N+1)
+
+  This encapsulates the Atkinson 1949 signed cancellation argument:
+  - Per-mode stationary phase: I_n = (-1)^{n+1}·c₀·(n+1) + O(√(n+1))
+  - After weighting: (n+1)^{-1/2}·I_n = (-1)^{n+1}·c₀·√(n+1) + O(1)
+  - Signed sum: |Σ (-1)^{n+1}·c₀·√(n+1)| ≤ c₀·√N  (Abel, PROVED)
+  - Remainder sum: |Σ r_n| ≤ C_rem·N  (triangle inequality)
+  - Assembly: c₀·√N + C_rem·N ≤ (c₀+C_rem)·(N+1)
+
+  NOTE: the PREVIOUS sorry (`per_mode_weighted_bound`) was FALSE.
+  It claimed (n+1)^{-1/2}·|I_n| ≤ B uniformly, but the Fresnel integral
+  at the stationary point t₀ = 2π(n+1)² gives I_n = O(n+1), so the
+  weighted absolute value is O(√(n+1)), not O(1). The correct approach
+  uses signed cancellation on the sum, not a per-mode absolute bound.
 
 Reference: Atkinson 1949; Titchmarsh 1951 §4.15.
 -/
@@ -100,98 +110,78 @@ theorem abel_alternating_bound (a : ℕ → ℝ) (ha_nn : ∀ n, 0 ≤ a n)
         have hmk : a (k - 1) ≤ a k := ha_mono (Nat.sub_le k 1)
         constructor <;> linarith
 
-/-! ## Section 3: Atkinson signed Fresnel bound
+/-! ## Section 3: Atkinson weighted sum bound
 
-The deep analytical content: the weighted per-mode cosine integrals
-satisfy a signed cancellation bound.
+The deep analytical content: the weighted sum of per-mode cosine integrals
+satisfies a signed cancellation bound.
 
 |Σ_{n<N} (n+1)^{-1/2} · ∫_{hardyStart(n)}^T cos(θ(t) - t·log(n+1)) dt|
 ≤ C · (N + 1)
 
 PROOF STRUCTURE (Atkinson 1949):
 1. Fubini: ∫ MainTerm = 2 Σ (n+1)^{-1/2} ∫ cos(φ_n) — PROVED (hardySum_integral_eq)
-2. Per-mode signed evaluation:
-   (n+1)^{-1/2} I_n = (-1)^{n+1} c₀ √(n+1) + R_n, |R_n| ≤ C_rem
+2. Per-mode stationary phase evaluation:
+   I_n = (-1)^{n+1} · c₀ · (n+1) + R_n, |R_n| ≤ C_rem · √(n+1)
    — Uses Stirling for θ at 2π(n+1)² + Fresnel evaluation + VdC tail
    — cos(π(n+1)²) = (-1)^{n+1} PROVED in CosPiSqSign
-3. Signed sum: |Σ (-1)^{n+1} c₀ √(n+1)| ≤ c₀·√N — PROVED (CosPiSqSign)
-4. Remainder sum: |Σ R_n| ≤ C_rem·N — trivial
-5. Assembly: c₀·√N + C_rem·N ≤ (c₀+C_rem+1)·(N+1)
+3. After weighting by (n+1)^{-1/2}:
+   (n+1)^{-1/2} · I_n = (-1)^{n+1} · c₀ · √(n+1) + r_n, |r_n| ≤ C_rem
+4. Signed sum: |Σ (-1)^{n+1} c₀ √(n+1)| ≤ c₀·√N — Abel bound (PROVED)
+5. Remainder sum: |Σ r_n| ≤ C_rem·N — triangle inequality
+6. Assembly: c₀·√N + C_rem·N ≤ (c₀+C_rem)·(N+1)
+
+NOTE: A previous version had `per_mode_weighted_bound` claiming
+(n+1)^{-1/2} · |I_n| ≤ B uniformly. This is FALSE: the Fresnel integral
+at the stationary point t₀ = 2π(n+1)² gives I_n = Θ(n+1), so the
+weighted ABSOLUTE value is Θ(√(n+1)), not O(1). The correct bound
+requires signed cancellation across modes (Atkinson's key insight).
 -/
 
-/-- **Atkinson signed Fresnel bound**: the weighted Dirichlet cosine sum
-    integral is bounded by C · (N+1).
+/-- **Atkinson weighted sum bound**: the weighted sum of per-mode cosine
+    integrals satisfies |Σ (n+1)^{-1/2} · ∫ hardyCos n| ≤ C · (N+1).
 
-    Uses the proved `hardy_cos_integral_weighted_sum_bound` from
-    `StationaryPhaseDecomposition` (conditional on `HardyCosIntegralSqrtModeBoundHyp`)
-    together with the Fubini result `hardySum_integral_eq`.
+    This is the analytical heart of the Atkinson formula.
+    The per-mode integrals are NOT individually O(√(n+1)) after weighting —
+    they grow as Θ(√(n+1)) — but the signed alternation gives cancellation.
 
-    The per-mode sqrt bound is satisfied by the triangle inequality approach
-    on the near-stationary window plus VdC first derivative tail,
-    as assembled in the HardyFirstMomentWiring infrastructure.
+    The proof uses:
+    (a) Stationary phase: I_n = (-1)^{n+1} c₀(n+1) + O(√(n+1))
+        - cos(π(n+1)²) = (-1)^{n+1}  (PROVED: CosPiSqSign)
+        - Fresnel evaluation near t₀ = 2π(n+1)²
+        - VdC first derivative tail
+    (b) After (n+1)^{-1/2} weight: signed sum + O(1) remainders
+    (c) Abel alternating bound on √(n+1) terms (PROVED above)
+    (d) Triangle inequality on O(1) remainders
 
-    Reference: Atkinson 1949, Acta Math. 81, pp. 353-376.
-
-## Sub-sorry: Per-mode stationary phase evaluation (Atkinson 1949)
-
-The per-mode cosine integral decomposes as:
-  ∫_{hardyStart(n)}^T cos(θ(t) - t·log(n+1)) dt
-  = (-1)^{n+1} · c₀ · (n+1) + R_n
-
-where c₀ = 2π√2 · cos(π/4) = 2π and |R_n| ≤ C_rem · √(n+1).
-
-After weighting by (n+1)^{-1/2}:
-  (n+1)^{-1/2} · I_n = (-1)^{n+1} · c₀ · √(n+1) + r_n
-
-where |r_n| ≤ C_rem.
-
-The proof uses:
-1. Stationary phase at t₀ = 2π(n+1)²: the cosine evaluates to (-1)^{n+1}
-   (PROVED: CosPiSqSign.cos_pi_mul_succ_sq)
-2. Fresnel integral near the stationary point: amplitude ~ c₀·(n+1)
-3. VdC first derivative tail bound: the remaining integral is O(√(n+1))
-
-SORRY: per_mode_weighted_bound encapsulates the per-mode evaluation. -/
-
-/-- **Per-mode weighted bound**: each weighted cosine integral is bounded
-    in absolute value by a constant. This is the core analytical content
-    of the Atkinson formula.
-
-    Specifically: |(n+1)^{-1/2} · ∫ hardyCos n| ≤ B for all n and T ≥ 2.
-
-    Proof route (Atkinson 1949):
-    (a) Near stationary point t₀ = 2π(n+1)²: Fresnel evaluation gives
-        (-1)^{n+1} · c₀ · √(n+1). After (n+1)^{-1/2} weight: (-1)^{n+1} · c₀.
-    (b) Far from stationary point: VdC first-derivative gives O(1/m)
-        where m = min|θ'(t) - log(n+1)| on the tail. After weight: O(1).
-    (c) Total: O(1) uniformly in n.
-
-    Reference: Atkinson 1949; Titchmarsh 1951 §4.15. -/
-private theorem per_mode_weighted_bound :
-    ∃ B > 0, ∀ n : ℕ, ∀ T : ℝ, T ≥ 2 →
-      ((n + 1 : ℝ) ^ (-(1/2 : ℝ))) *
-        |∫ t in Ioc (hardyStart n) T, hardyCos n t| ≤ B := by
-  -- The per-mode cosine integral is bounded by C·√(n+1) (Fresnel + VdC).
-  -- After weighting by (n+1)^{-1/2}, the product is bounded by C.
-  -- This is the irreducible analytical content of Atkinson's formula.
+    Reference: Atkinson 1949, Acta Math. 81; Titchmarsh 1951 §4.15. -/
+private theorem atkinson_weighted_sum_bound :
+    ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
+      |∑ n ∈ Finset.range (hardyN T),
+        ((n + 1 : ℝ) ^ (-(1/2 : ℝ))) *
+          ∫ t in Ioc (hardyStart n) T, hardyCos n t|
+      ≤ C * ((↑(hardyN T) : ℝ) + 1) := by
+  -- Atkinson 1949: per-mode stationary phase + signed cancellation.
+  -- Each I_n = (-1)^{n+1} · c₀ · (n+1) + O(√(n+1)).
+  -- After weighting: (-1)^{n+1} · c₀ · √(n+1) + r_n with |r_n| ≤ C_rem.
+  -- Abel gives |Σ (-1)^{n+1} √(n+1)| ≤ √N.
+  -- Triangle gives |Σ r_n| ≤ C_rem · N.
+  -- Total: c₀·√N + C_rem·N ≤ (c₀+C_rem)·(N+1).
   sorry
 
-/-- Assembly: the per-mode weighted bound implies the signed Fresnel bound.
-    |hardySumInt T| = 2|Σ (n+1)^{-1/2} · ∫ hardyCos| ≤ 2·Σ B ≤ 2B·N. -/
+/-- Assembly: the weighted sum bound gives the signed Fresnel bound
+    on the MainTerm integral via the Fubini result. -/
 private theorem atkinson_signed_fresnel_bound :
     ∃ C_atk > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Ioc 1 T, MainTerm t| ≤ C_atk * ((↑(hardyN T) : ℝ) + 1) := by
-  obtain ⟨B, hB, h_mode⟩ := per_mode_weighted_bound
-  refine ⟨2 * B, by positivity, fun T hT => ?_⟩
+  obtain ⟨C, hC, h_sum⟩ := atkinson_weighted_sum_bound
+  refine ⟨2 * C, by positivity, fun T hT => ?_⟩
   have hT1 : (1 : ℝ) ≤ T := by linarith
-  -- Step 1: ∫ MainTerm = hardySumInt T (Fubini, proved)
+  -- Fubini: ∫ MainTerm = hardySumInt T = 2 · Σ weighted integrals
   have h_fubini : ∫ t in Ioc 1 T, MainTerm t = hardySumInt T := by
     rw [MainTerm_eq_hardySum]
     exact hardySum_integral_eq T hT1
-  -- Step 2: |hardySumInt| ≤ 2 · Σ |(n+1)^{-1/2}| · |∫ hardyCos|
   rw [h_fubini, hardySumInt]
   set N := hardyN T
-  -- |2 · Σ a_n · b_n| ≤ 2 · Σ |a_n · b_n|
   calc |2 * ∑ n ∈ Finset.range N,
         ((n + 1 : ℝ) ^ (-(1/2 : ℝ))) *
           ∫ t in Ioc (hardyStart n) T, hardyCos n t|
@@ -199,22 +189,9 @@ private theorem atkinson_signed_fresnel_bound :
         ((n + 1 : ℝ) ^ (-(1/2 : ℝ))) *
           ∫ t in Ioc (hardyStart n) T, hardyCos n t| := by
         rw [abs_mul, abs_of_nonneg (by norm_num : (0:ℝ) ≤ 2)]
-    _ ≤ 2 * ∑ n ∈ Finset.range N,
-        |((n + 1 : ℝ) ^ (-(1/2 : ℝ))) *
-          ∫ t in Ioc (hardyStart n) T, hardyCos n t| := by
-        gcongr; exact Finset.abs_sum_le_sum_abs _ _
-    _ = 2 * ∑ n ∈ Finset.range N,
-        ((n + 1 : ℝ) ^ (-(1/2 : ℝ))) *
-          |∫ t in Ioc (hardyStart n) T, hardyCos n t| := by
-        congr 1; apply Finset.sum_congr rfl; intro n _
-        rw [abs_mul, abs_of_nonneg (by positivity : (0:ℝ) ≤ (n + 1 : ℝ) ^ (-(1/2 : ℝ)))]
-    _ ≤ 2 * ∑ _n ∈ Finset.range N, B := by
-        gcongr with n _hn; exact h_mode n T hT
-    _ = 2 * ((N : ℝ) * B) := by simp [mul_comm]
-    _ = 2 * B * (N : ℝ) := by ring
-    _ ≤ 2 * B * ((N : ℝ) + 1) := by
-        have : (0 : ℝ) ≤ N := Nat.cast_nonneg N
-        nlinarith
+    _ ≤ 2 * (C * ((↑N : ℝ) + 1)) := by
+        gcongr; exact h_sum T hT
+    _ = 2 * C * ((↑N : ℝ) + 1) := by ring
 
 /-! ## Section 4: Assembly -/
 
