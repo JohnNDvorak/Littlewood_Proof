@@ -504,48 +504,83 @@ theorem shifted_remainder_from_segments
 
     Reference: Titchmarsh §9.6.1, Davenport Ch. 12, 17,
                Montgomery-Vaughan §12.5. -/
-theorem contour_remainder_bound_atomic :
-    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+theorem perron_contour_bound_full_range :
+    ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
-        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+        A * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+        2 * A * (Real.sqrt x * (Real.log T) ^ 2 / T) := by
   sorry
 
-/-- Large-T contour bound (standard form) — derived from the atomic sorry.
-    For T ≥ 16: |shiftedRemainder| ≤ C₁ · √x · (logT)² / √T.
-    This is the form consumed by B5aDefs (ZetaLogDerivPointwiseBoundHyp). -/
-theorem hadamard_contour_bound :
-    ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
-      |shiftedRemainderRe x T| ≤
-        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
-  obtain ⟨Cc, hCc, h⟩ := contour_remainder_bound_atomic
-  exact ⟨Cc, hCc, fun x T hx hT => h x T hx (by linarith)⟩
+/-- **Hadamard contour bound** (T ≥ 16) — proved from the atomic sorry.
+    The segment form is consumed by B5aDefs (ZetaLogDerivPointwiseBoundHyp).
 
-/-- Small-T Perron bound — derived from the atomic sorry.
-    For T ∈ [2, 16]: |shiftedRemainder| ≤ C₂ · (√x·(logT)²/√T + (logx)²).
-    The (logx)² term is vacuously added (standard form already suffices). -/
+    Reference: Titchmarsh §9.6.1, Davenport Ch. 12, 17. -/
+theorem hadamard_contour_bound :
+    ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+      |shiftedRemainderRe x T| ≤
+        A * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+        2 * A * (Real.sqrt x * (Real.log T) ^ 2 / T) := by
+  obtain ⟨A, hA, h⟩ := perron_contour_bound_full_range
+  exact ⟨A, hA, fun x T hx hT => h x T hx (by linarith)⟩
+
+/-- **Perron small-T bound** (T ∈ [2, 16]) — proved from the atomic sorry.
+    Converts segment form → standard error shape via:
+      (logT+2)/T ≤ (log16+2)/√T for T ∈ [2,16].
+
+    Reference: Davenport Ch. 17, Montgomery-Vaughan §12.5. -/
 theorem perron_small_T_bound :
     ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
       |shiftedRemainderRe x T| ≤
         C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
-  obtain ⟨Cc, hCc, h⟩ := contour_remainder_bound_atomic
-  refine ⟨Cc, hCc, fun x T hx hT_lo _hT_hi => ?_⟩
+  obtain ⟨A, hA, h_full⟩ := perron_contour_bound_full_range
+  refine ⟨A * (Real.log 16 + 2), by positivity, fun x T hx hT_lo hT_hi => ?_⟩
+  have hT_pos : 0 < T := by linarith
+  have h_sqrtT_pos : 0 < Real.sqrt T := Real.sqrt_pos_of_pos hT_pos
+  have h_base := h_full x T hx hT_lo
+  have h_segment_eq : A * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+      2 * A * (Real.sqrt x * (Real.log T) ^ 2 / T) =
+      A * (Real.sqrt x * (Real.log T) ^ 2 * (Real.log T + 2) / T) := by ring
+  rw [h_segment_eq] at h_base
+  have h_logT_le : Real.log T ≤ Real.log 16 :=
+    Real.log_le_log (by linarith) (by linarith)
+  have h_sqrtT_le : Real.sqrt T ≤ T := by
+    calc Real.sqrt T ≤ Real.sqrt T * Real.sqrt T :=
+          le_mul_of_one_le_right h_sqrtT_pos.le (by rw [Real.one_le_sqrt]; linarith)
+      _ = T := Real.mul_self_sqrt hT_pos.le
+  have h16 : 0 ≤ Real.log 16 + 2 := by linarith [Real.log_nonneg (show (1:ℝ) ≤ 16 by norm_num)]
+  have hA_sq : 0 ≤ Real.sqrt x * (Real.log T) ^ 2 :=
+    mul_nonneg (Real.sqrt_nonneg _) (sq_nonneg _)
+  have h_ratio : (Real.log T + 2) / T ≤ (Real.log 16 + 2) / Real.sqrt T := by
+    rw [div_le_div_iff₀ hT_pos h_sqrtT_pos]
+    calc (Real.log T + 2) * Real.sqrt T
+        ≤ (Real.log 16 + 2) * Real.sqrt T :=
+          mul_le_mul_of_nonneg_right (by linarith) h_sqrtT_pos.le
+      _ ≤ (Real.log 16 + 2) * T :=
+          mul_le_mul_of_nonneg_left h_sqrtT_le h16
   calc |shiftedRemainderRe x T|
-      ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := h x T hx hT_lo
-    _ ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
-        apply mul_le_mul_of_nonneg_left _ hCc.le
-        linarith [sq_nonneg (Real.log x)]
+      ≤ A * (Real.sqrt x * (Real.log T) ^ 2 * (Real.log T + 2) / T) := h_base
+    _ = A * (Real.sqrt x * (Real.log T) ^ 2 * ((Real.log T + 2) / T)) := by ring
+    _ ≤ A * (Real.sqrt x * (Real.log T) ^ 2 * ((Real.log 16 + 2) / Real.sqrt T)) :=
+        mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left h_ratio hA_sq) hA.le
+    _ = A * (Real.log 16 + 2) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by ring
+    _ ≤ A * (Real.log 16 + 2) *
+        (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
+        mul_le_mul_of_nonneg_left (le_add_of_nonneg_right (sq_nonneg _)) (by positivity)
 
 /-! ## Section 7: Derived Bounds from Atomic Claim
 
 The following are sorry-free consequences of the single atomic sorry above.
 They provide the exact form needed by B5aDefs. -/
 
-/-- Large-T standard form — same as hadamard_contour_bound. -/
+/-- Large-T standard form: from hadamard_contour_bound, reduce segment form
+    to standard √x·(logT)²/√T form. -/
 theorem large_T_standard_bound :
     ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
       |shiftedRemainderRe x T| ≤
-        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
-  hadamard_contour_bound
+        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  obtain ⟨A, hA, h_seg⟩ := hadamard_contour_bound
+  exact ⟨3 * A, by positivity, fun x T hx hT =>
+    (h_seg x T hx hT).trans (segment_to_standard hA hx hT)⟩
 
 /-- Small-T standard form: from perron_small_T_bound, absorb (logx)². -/
 theorem small_T_standard_bound :
@@ -555,17 +590,32 @@ theorem small_T_standard_bound :
   obtain ⟨C₂, hC₂, h_perron⟩ := perron_small_T_bound
   exact small_T_from_general C₂ hC₂ h_perron
 
-/-- Full contour bound: combining large-T and small-T cases.
-    Now a direct consequence of the atomic sorry. -/
+/-- Full contour bound: combining large-T and small-T cases. -/
 theorem full_contour_bound :
     ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
-        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
-  contour_remainder_bound_atomic
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  obtain ⟨C₀, hC₀, h₀⟩ := small_T_standard_bound
+  obtain ⟨C₁, hC₁, h₁⟩ := large_T_standard_bound
+  refine ⟨max C₀ C₁, lt_max_of_lt_left hC₀, ?_⟩
+  intro x T hx hT
+  have h_err_nn : 0 ≤ Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T :=
+    error_shape_nonneg x T
+  by_cases hT16 : T ≤ 16
+  · calc |shiftedRemainderRe x T|
+        ≤ C₀ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := h₀ x T hx hT hT16
+      _ ≤ max C₀ C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+          mul_le_mul_of_nonneg_right (le_max_left _ _) h_err_nn
+  · push_neg at hT16
+    calc |shiftedRemainderRe x T|
+        ≤ C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+          h₁ x T hx (by linarith)
+      _ ≤ max C₀ C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+          mul_le_mul_of_nonneg_right (le_max_right _ _) h_err_nn
 
 /-! ## Section 8: Gap Specification
 
-Documents exactly what `contour_remainder_bound_atomic` requires from
+Documents exactly what `perron_contour_bound_full_range` requires from
 future Mathlib development.
 
 ### Proof chain (all steps proved EXCEPT the pointwise Hadamard bound):
