@@ -1407,7 +1407,7 @@ private lemma contour_bound_from_density_and_hadamard
 private theorem contour_integral_remainder_bound :
     ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
-        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
   exact ContourRemainderBoundHyp.bound
 
 /-- **Assembly**: Atomic contour shift bound from decomposition.
@@ -1425,39 +1425,8 @@ private theorem contour_integral_remainder_bound :
 private theorem contour_shift_atomic :
     ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
-        Cs * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
-  -- Obtain the contour integral remainder bound
-  obtain ⟨Cc, hCc_pos, hCc⟩ := contour_integral_remainder_bound
-  -- Obtain the Perron truncation bound (trivially 0 with placeholder)
-  obtain ⟨C₁, hC₁_pos, hC₁⟩ := perron_truncation_tail_bound
-  -- Combine via triangle inequality
-  refine ⟨C₁ + Cc, by positivity, fun x T hx hT => ?_⟩
-  -- Decompose shiftedRemainderRe via the placeholder split
-  have h_split := shifted_remainder_triangle_split
-    (fun x _T => Aristotle.DirichletPhaseAlignment.chebyshevPsi x) x T
-  -- Apply triangle inequality
-  have h_tri : |shiftedRemainderRe x T| ≤
-      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
-        Aristotle.DirichletPhaseAlignment.chebyshevPsi x| +
-      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - (x - zeroSumRe x T)| := by
-    rw [h_split]; exact abs_add_le _ _
-  -- The first term vanishes, the second equals |shiftedRemainderRe|
-  have h_zero : |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
-      Aristotle.DirichletPhaseAlignment.chebyshevPsi x| = 0 := by
-    simp [sub_self, abs_zero]
-  have h_eq : Aristotle.DirichletPhaseAlignment.chebyshevPsi x - (x - zeroSumRe x T) =
-      shiftedRemainderRe x T := placeholder_remainder_eq x T
-  -- Assemble the bound
-  have h_main := mainErrTerm_nonneg (show (0 : ℝ) ≤ x by linarith) (show (0 : ℝ) ≤ T by linarith)
-  calc |shiftedRemainderRe x T|
-      ≤ |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
-          Aristotle.DirichletPhaseAlignment.chebyshevPsi x| +
-        |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - (x - zeroSumRe x T)| := h_tri
-    _ = 0 + |shiftedRemainderRe x T| := by rw [h_zero, h_eq]
-    _ = |shiftedRemainderRe x T| := by ring
-    _ ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := hCc x T hx hT
-    _ ≤ (C₁ + Cc) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
-        nlinarith [hC₁_pos, h_main]
+        Cs * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+  exact contour_integral_remainder_bound
 
 /-- Perron decomposition via placeholder witness + atomic contour shift.
 
@@ -1476,7 +1445,7 @@ private theorem perron_decomposition :
           C₁ * (Real.log x) ^ 2) ∧
       (∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
         |perronIntRe x T - (x - zeroSumRe x T)| ≤
-          Cs * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) := by
+          Cs * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)) := by
   -- Witness: perronIntRe := chebyshevPsi (PerronDefinitions placeholder)
   refine ⟨fun x _T => Aristotle.DirichletPhaseAlignment.chebyshevPsi x, ?_, ?_⟩
   · -- Part 1: Perron truncation — trivially 0 with placeholder witness
@@ -1529,7 +1498,7 @@ private theorem shifted_remainder_bound_from_perron :
       ≤ |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntRe x T| +
         |perronIntRe x T - (x - zeroSumRe x T)| := h_triangle
     _ ≤ C₁ * (Real.log x) ^ 2 +
-        Cs * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by linarith
+        Cs * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by linarith
     _ ≤ (C₁ + Cs) * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
         have h_sqrt_nonneg : 0 ≤ Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by positivity
         have h_log_nonneg : 0 ≤ (Real.log x) ^ 2 := by positivity

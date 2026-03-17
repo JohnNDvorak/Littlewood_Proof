@@ -156,16 +156,11 @@ instance : PsiExplicitFormulaZerosHyp where
     -- Get Cc from ContourRemainderBoundHyp (sorry upstream in B5aDefs)
     obtain ⟨Cc, hCc_pos, hCc_bound⟩ :=
       Aristotle.Standalone.ExplicitFormulaPsiSkeleton.ContourRemainderBoundHyp.bound
-    -- Upgrade one-term bound to two-term bound needed by psi_bound_div_log_eventually_small
+    -- ContourRemainderBoundHyp now directly provides the two-term bound
     have hR : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
         |Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T| ≤
-          Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
-      intro x T hx hT
-      calc |Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T|
-          ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := hCc_bound x T hx hT
-        _ ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
-            apply mul_le_mul_of_nonneg_left _ hCc_pos.le
-            linarith [sq_nonneg (Real.log x)]
+          Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
+      hCc_bound
     -- Apply the AbelSummationPsiPi workhorse to get T₀ and eventually-small
     obtain ⟨T₀, hT₀, hev⟩ := AbelSummationPsiPi.psi_bound_div_log_eventually_small
       (fun x T => Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T)

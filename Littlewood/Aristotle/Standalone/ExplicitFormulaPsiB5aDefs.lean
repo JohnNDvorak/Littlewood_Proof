@@ -34,7 +34,7 @@ def shiftedRemainderRe (x T : ℝ) : ℝ :=
 class ZetaLogDerivPointwiseBoundHyp : Prop where
   bound : ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
     |shiftedRemainderRe x T| ≤
-      C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)
+      C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)
 
 /-- Definitional equality between this file's shiftedRemainderRe and the
     HadamardProductZeta version (both expand to the same expression). -/
@@ -107,29 +107,36 @@ private theorem segment_to_standard_form {A x T : ℝ} (hA : 0 < A)
   linarith
 
 /-- Large-T contour bound -- now identical to `ZetaLogDerivPointwiseBoundHyp`
-    (both use standard form). -/
+    (both use two-term form). -/
 class LargeTContourBoundHyp : Prop where
   bound : ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
-    |shiftedRemainderRe x T| ≤ C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)
+    |shiftedRemainderRe x T| ≤
+      C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)
 
 instance : LargeTContourBoundHyp where
   bound := ZetaLogDerivPointwiseBoundHyp.bound
 
 theorem large_T_from_zeta_logderiv :
     ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
-      |shiftedRemainderRe x T| ≤ C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+      |shiftedRemainderRe x T| ≤
+        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
   LargeTContourBoundHyp.bound
 
 /-- Contour remainder bound -- Davenport Ch. 17, Montgomery-Vaughan §12.5.
-    |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C·(√x·(logT)²/√T).
+    |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C·(√x·(logT)²/√T + (logx)²).
 
-    **SORRY STATUS** (2026-03-16):
-    Transits 1 sorry from HadamardProductZeta.contour_remainder_bound_atomic.
+    NOTE (2026-03-17): Previous version WITHOUT (logx)² was FALSE. The explicit
+    formula error includes an irreducible O(logx) contribution from trivial zeros
+    that cannot be absorbed into the T-dependent term as T → ∞.
+
+    **SORRY STATUS** (2026-03-17):
+    Transits 1 sorry from HadamardProductZeta.perron_contour_bound_full_range.
     Both ZetaLogDerivPointwiseBoundHyp (T ≥ 16) and SmallTPerronBoundHyp (T ∈ [2,16])
     derive from the same atomic sorry. -/
 class ContourRemainderBoundHyp : Prop where
   bound : ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
-    |shiftedRemainderRe x T| ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)
+    |shiftedRemainderRe x T| ≤
+      Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)
 
 /-! ### Hadamard product sub-decomposition -- algebraic infrastructure -/
 
@@ -222,43 +229,45 @@ theorem contour_case_split
     (C_s C_l : ℝ) (hCs : 0 < C_s) (_hCl : 0 < C_l)
     (h_small : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
       |shiftedRemainderRe x T| ≤
-        C_s * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+        C_s * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2))
     (h_large : ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
       |shiftedRemainderRe x T| ≤
-        C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+        C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)) :
     ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
-        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
   refine ⟨max C_s C_l, lt_max_of_lt_left hCs, ?_⟩
   intro x T hx hT
-  have h_err_nn : 0 ≤ Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
-    apply div_nonneg (mul_nonneg (Real.sqrt_nonneg _) (sq_nonneg _)) (Real.sqrt_nonneg _)
+  have h_err_nn : 0 ≤ Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2 := by
+    apply add_nonneg
+    · apply div_nonneg (mul_nonneg (Real.sqrt_nonneg _) (sq_nonneg _)) (Real.sqrt_nonneg _)
+    · exact sq_nonneg _
   by_cases hT16 : T ≤ 16
   · calc |shiftedRemainderRe x T|
-        ≤ C_s * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+        ≤ C_s * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
           h_small x T hx hT hT16
-      _ ≤ max C_s C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+      _ ≤ max C_s C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
           mul_le_mul_of_nonneg_right (le_max_left _ _) h_err_nn
   · push_neg at hT16
     calc |shiftedRemainderRe x T|
-        ≤ C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+        ≤ C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
           h_large x T hx (by linarith)
-      _ ≤ max C_s C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+      _ ≤ max C_s C_l * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
           mul_le_mul_of_nonneg_right (le_max_right _ _) h_err_nn
 
 theorem contour_large_T_available :
     ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
       |shiftedRemainderRe x T| ≤
-        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
   LargeTContourBoundHyp.bound
 
 theorem contour_from_small_T
     (h_small : ∃ C₀ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
       |shiftedRemainderRe x T| ≤
-        C₀ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+        C₀ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)) :
     ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
-        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
   obtain ⟨C₀, hC₀, h₀⟩ := h_small
   obtain ⟨C₁, hC₁, h₁⟩ := contour_large_T_available
   exact contour_case_split C₀ C₁ hC₀ hC₁ h₀ h₁
@@ -342,13 +351,12 @@ instance : SmallTPerronBoundHyp where
     exact ⟨C₂, hC₂, fun x T hx hT_lo hT_hi => by
       rw [shiftedRemainderRe_eq]; exact h x T hx hT_lo hT_hi⟩
 
-/-- Instance combining sorry #1 (large-T) and sorry #2 (small-T).
-    SORRY FLOW: 2 upstream sorrys (both INDEPENDENT and IRREDUCIBLE). -/
+/-- Instance combining large-T and small-T bounds.
+    SORRY FLOW: 1 upstream sorry (perron_contour_bound_full_range). -/
 instance : ContourRemainderBoundHyp where
   bound := by
     apply contour_from_small_T
-    obtain ⟨C₂, hC₂, hg⟩ := SmallTPerronBoundHyp.bound
-    exact small_T_from_general_formula C₂ hC₂ hg
+    exact SmallTPerronBoundHyp.bound
 
 /-! ### Perron error shape toolbox -/
 

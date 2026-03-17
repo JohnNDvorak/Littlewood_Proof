@@ -1221,7 +1221,7 @@ When `ZetaLogDerivPointwiseBoundHyp` is closed, the entire chain becomes sorry-f
 theorem large_T_contour_bound :
     ∃ C₁ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
       |shiftedRemainderRe x T| ≤
-        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
   LargeTContourBoundHyp.bound
 
 /-- **Bridge verification**: `large_T_assembly` provides an independent proof that
