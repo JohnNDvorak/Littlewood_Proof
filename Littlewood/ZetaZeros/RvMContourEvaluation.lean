@@ -17,6 +17,7 @@ Co-authored-by: Claude (Anthropic)
 
 import Littlewood.ZetaZeros.RectArgumentPrinciple
 import Littlewood.Aristotle.RiemannXiEntire
+import Littlewood.Aristotle.HardyZConjugation
 
 set_option maxHeartbeats 3200000
 set_option autoImplicit false
@@ -149,5 +150,31 @@ theorem bottom_edge_bounded (B : ℝ)
         · intro x hx; exact hB x ⟨hx.1, hx.2⟩
     _ = 3 * B := by
         rw [intervalIntegral.integral_const]; simp; linarith
+
+/-! ## Section 5: Schwarz reflection for RiemannXiAlt
+
+ξ(conj(s)) = conj(ξ(s)), which with the functional equation
+logDeriv(ξ)(1-s) = -logDeriv(ξ)(s) gives the full left-right edge
+relation: logDeriv(ξ)(-1+iy) = -conj(logDeriv(ξ)(2+iy)). -/
+
+/-- completedRiemannZeta₀ satisfies Schwarz reflection:
+    Λ₀(conj s) = conj(Λ₀(s)). -/
+theorem completedRiemannZeta₀_conj (s : ℂ) :
+    completedRiemannZeta₀ (starRingEnd ℂ s) = starRingEnd ℂ (completedRiemannZeta₀ s) := by
+  have h_conj := HardyZConjugation.completedRiemannZeta_conj s
+  have h_eq : ∀ w : ℂ, completedRiemannZeta₀ w = completedRiemannZeta w + 1/w + 1/(1-w) := by
+    intro w; linear_combination -(completedRiemannZeta_eq w)
+  rw [h_eq, h_eq, h_conj]
+  simp [map_add, map_sub, map_one]
+
+/-- RiemannXiAlt satisfies Schwarz reflection:
+    ξ(conj s) = conj(ξ(s)). -/
+theorem riemannXiAlt_conj (s : ℂ) :
+    RiemannXiAlt (starRingEnd ℂ s) = starRingEnd ℂ (RiemannXiAlt s) := by
+  unfold RiemannXiAlt
+  rw [completedRiemannZeta₀_conj s]
+  simp only [map_mul, map_add, map_sub, map_one]
+  have h12 : starRingEnd ℂ (1/2 : ℂ) = 1/2 := by simp [starRingEnd_apply]
+  rw [h12]
 
 end ZetaZeros.RvMContour
