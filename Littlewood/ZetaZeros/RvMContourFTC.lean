@@ -76,4 +76,41 @@ theorem vertical_logDeriv_integral_bound (f : ℂ → ℂ) (σ a b : ℝ)
   rw [vertical_logDeriv_integral f σ a b hf_diff hf_slit hf_cont]
   exact norm_sub_le _ _
 
+/-! ## FTC for logDeriv along horizontal lines -/
+
+/-- Derivative of the path x ↦ x + it is 1. -/
+private theorem hasDerivAt_horizontal_path (t : ℝ) (x : ℝ) :
+    HasDerivAt (fun u : ℝ => (↑u : ℂ) + ↑t * I) 1 x := by
+  have h1 : HasDerivAt (fun u : ℝ => (u : ℂ)) 1 x := Complex.ofRealCLM.hasDerivAt
+  have h2 : HasDerivAt (fun _ : ℝ => (↑t : ℂ) * I) 0 x := hasDerivAt_const x (↑t * I)
+  convert h1.add h2 using 1; simp
+
+/-- d/dx log(f(x+it)) = logDeriv(f)(x+it), when f(x+it) ∈ slitPlane. -/
+theorem hasDerivAt_log_comp_horizontal (f : ℂ → ℂ) (t : ℝ) (x : ℝ)
+    (hf_diff : DifferentiableAt ℂ f (↑x + ↑t * I))
+    (hf_slit : f (↑x + ↑t * I) ∈ slitPlane) :
+    HasDerivAt (fun u : ℝ => log (f (↑u + ↑t * I)))
+      (logDeriv f (↑x + ↑t * I)) x := by
+  have h_path := hasDerivAt_horizontal_path t x
+  have h_logf : HasDerivAt (log ∘ f)
+      ((f (↑x + ↑t * I))⁻¹ * deriv f (↑x + ↑t * I)) (↑x + ↑t * I) :=
+    (hasDerivAt_log hf_slit).comp _ hf_diff.hasDerivAt
+  have h_comp := h_logf.scomp x h_path
+  refine h_comp.congr_deriv ?_
+  simp only [smul_eq_mul, logDeriv_apply, one_mul, inv_mul_eq_div]
+
+/-- **FTC for logDeriv along a horizontal line.**
+    If f is differentiable and maps into slitPlane along [a,b]+it, then
+    ∫_a^b logDeriv(f)(x+it) dx = log(f(b+it)) - log(f(a+it)). -/
+theorem horizontal_logDeriv_integral (f : ℂ → ℂ) (t a b : ℝ)
+    (hf_diff : ∀ x ∈ uIcc a b, DifferentiableAt ℂ f (↑x + ↑t * I))
+    (hf_slit : ∀ x ∈ uIcc a b, f (↑x + ↑t * I) ∈ slitPlane)
+    (hf_cont : ContinuousOn (fun x : ℝ => logDeriv f (↑x + ↑t * I)) (uIcc a b)) :
+    ∫ x in a..b, logDeriv f (↑x + ↑t * I) =
+      log (f (↑b + ↑t * I)) - log (f (↑a + ↑t * I)) := by
+  apply intervalIntegral.integral_eq_sub_of_hasDerivAt
+  · intro x hx
+    exact hasDerivAt_log_comp_horizontal f t x (hf_diff x hx) (hf_slit x hx)
+  · exact hf_cont.intervalIntegrable
+
 end ZetaZeros.RvMFTC
