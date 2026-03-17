@@ -531,9 +531,109 @@ private theorem rvm_at_generic_T [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
   rw [hN_eq]
   exact hC T hT hT_not_ord
 
-/-- Extension from non-ordinate T to all T. Since N(T) is constant between
-    zero ordinates, and the formula varies by O(log T) over unit intervals,
-    the bound extends to all T. -/
+/-- For any T and ε > 0, there exists T' ∈ (T, T+ε) not a zero ordinate,
+    with no zero ordinate in (T, T'] (so N(T') = N(T)). -/
+private theorem exists_right_gap (T ε : ℝ) (hε : 0 < ε) :
+    ∃ T' ∈ Set.Ioo T (T + ε), T' ∉ zetaZeroOrdinates ∧
+      ∀ γ ∈ zetaZeroOrdinates, γ ≤ T ∨ T' < γ := by
+  -- The zero ordinates in (T, T+ε) form a finite set
+  have hfin : (zetaZeroOrdinates ∩ Set.Ioo T (T + ε)).Finite := by
+    apply Set.Finite.subset (Set.Finite.image _ (finite_zeros_le (T + ε)))
+    intro γ ⟨hγ_mem, hγ_range⟩
+    obtain ⟨z, hzpos, rfl⟩ := hγ_mem
+    exact ⟨z, ⟨hzpos, le_of_lt hγ_range.2⟩, rfl⟩
+  by_cases h : (zetaZeroOrdinates ∩ Set.Ioo T (T + ε)).Nonempty
+  · -- There are ordinates in (T, T+ε). Find the minimum.
+    let F := hfin.toFinset
+    have hF_nonempty : F.Nonempty := by rwa [Set.Finite.toFinset_nonempty]
+    let m := F.min' hF_nonempty
+    have hm_mem : m ∈ zetaZeroOrdinates ∩ Set.Ioo T (T + ε) :=
+      hfin.mem_toFinset.mp (Finset.min'_mem F hF_nonempty)
+    have hm_min : ∀ x ∈ F, m ≤ x := fun x hx => Finset.min'_le F x hx
+    obtain ⟨_, hm_lo, hm_hi⟩ := hm_mem
+    -- Pick T' = (T + m) / 2, which is in (T, m) ⊆ (T, T+ε) with no ordinate in (T, T']
+    refine ⟨(T + m) / 2, ⟨by linarith, by linarith⟩, ?_, ?_⟩
+    · intro hmem
+      have : (T + m) / 2 ∈ zetaZeroOrdinates ∩ Set.Ioo T (T + ε) :=
+        ⟨hmem, by constructor <;> linarith⟩
+      have := hm_min _ (hfin.mem_toFinset.mpr this)
+      linarith
+    · intro γ hγ
+      by_cases hγ_range : γ ∈ Set.Ioo T (T + ε)
+      · have hγ_F : γ ∈ F := hfin.mem_toFinset.mpr ⟨hγ, hγ_range⟩
+        have := hm_min γ hγ_F
+        right; linarith
+      · simp only [Set.mem_Ioo, not_and_or, not_lt] at hγ_range
+        rcases hγ_range with h | h
+        · exact Or.inl h
+        · right; linarith
+  · -- No ordinates in (T, T+ε). Pick T' = T + ε/2.
+    refine ⟨T + ε / 2, ⟨by linarith, by linarith⟩, ?_, ?_⟩
+    · intro hmem
+      exact h ⟨T + ε / 2, hmem, by constructor <;> linarith⟩
+    · intro γ hγ
+      by_cases hle : γ ≤ T
+      · exact Or.inl hle
+      · push_neg at hle
+        have : γ ∉ Set.Ioo T (T + ε) := by
+          intro hmem; exact h ⟨γ, hγ, hmem⟩
+        simp only [Set.mem_Ioo, not_and_or, not_lt] at this
+        rcases this with h' | h'
+        · exact absurd hle (not_lt.mpr h')
+        · right; linarith
+
+/-- When no ordinate lies in (T, T'], the zero counting function is constant. -/
+private theorem N_eq_of_no_ordinate_between {T T' : ℝ} (hle : T ≤ T')
+    (h_no_ord : ∀ γ ∈ zetaZeroOrdinates, γ ≤ T ∨ T' < γ) :
+    N T' = N T := by
+  show (zerosUpTo T').ncard = (zerosUpTo T).ncard
+  congr 1
+  show zetaNontrivialZerosPos ∩ {s : ℂ | s.im ≤ T'} =
+       zetaNontrivialZerosPos ∩ {s : ℂ | s.im ≤ T}
+  ext s
+  simp only [Set.mem_inter_iff, Set.mem_setOf_eq]
+  constructor
+  · rintro ⟨hpos, him⟩
+    refine ⟨hpos, ?_⟩
+    have hord : s.im ∈ zetaZeroOrdinates := ⟨s, hpos, rfl⟩
+    rcases h_no_ord s.im hord with h | h
+    · exact h
+    · linarith
+  · rintro ⟨hpos, him⟩
+    exact ⟨hpos, by linarith⟩
+
+/-- The "continuous part" of the RvM formula (everything except the arg term). -/
+private def rvmContinuousPart (T : ℝ) : ℝ :=
+  (1 / Real.pi) * (stirlingApprox T).im
+    - (T / (2 * Real.pi)) * Real.log Real.pi + 1
+
+/-- The stirling approx imaginary part is continuous. -/
+private theorem continuous_stirlingApprox_im :
+    Continuous (fun t : ℝ => (stirlingApprox t).im) := by
+  apply Complex.continuous_im.comp
+  unfold stirlingApprox
+  have hs : Continuous (fun t : ℝ => (1/4 : ℂ) + I * ↑t / 2) := by fun_prop
+  have hlog : Continuous (fun t : ℝ => Complex.log ((1/4 : ℂ) + I * ↑t / 2)) := by
+    apply Continuous.clog hs
+    intro t; left
+    simp [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re, Complex.I_im]
+  exact ((hs.sub continuous_const).mul hlog).sub hs |>.add continuous_const
+
+/-- The continuous part is continuous. -/
+private theorem continuous_rvmContinuousPart : Continuous rvmContinuousPart := by
+  unfold rvmContinuousPart
+  have h1 : Continuous (fun t : ℝ => (1 / Real.pi) * (stirlingApprox t).im) :=
+    continuous_const.mul continuous_stirlingApprox_im
+  have h2 : Continuous (fun t : ℝ => (t / (2 * Real.pi)) * Real.log Real.pi) := by
+    fun_prop
+  exact (h1.sub h2).add continuous_const
+
+/-- Extension from non-ordinate T to all T.
+
+    Proof strategy: for any T, find T' > T arbitrarily close, not an ordinate,
+    with N(T') = N(T) (right-continuity). Apply rvm_at_generic_T at T'.
+    The "continuous part" G of the formula satisfies G(T') → G(T).
+    The "arg part" H is bounded by 1. Use le_of_forall_pos_le_add. -/
 private theorem rvm_extend_to_all_T [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
     ∃ C T₀ : ℝ, ∀ T ≥ T₀,
       |(N T : ℝ)
@@ -541,14 +641,113 @@ private theorem rvm_extend_to_all_T [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] 
            - (T / (2 * Real.pi)) * Real.log Real.pi
            + (1 / Real.pi) * Complex.arg (riemannZeta (1/2 + I * ↑T))
            + 1)| ≤ C * Real.log T := by
-  obtain ⟨C₀, hC₀⟩ := rvm_at_generic_T
-  -- For non-ordinate T, we have the bound. For ordinate T, we approximate by nearby T'.
-  -- Since N(T) is monotone and the formula is continuous, the bound extends.
-  -- The key: for any T, choose T' ∈ (T, T+1] not an ordinate.
-  -- Then N(T') - N(T) ≤ N(T+1) - N(T) ≤ #zeros in [T, T+1] = O(log T)
-  -- And |F(T') - F(T)| ≤ O(log T) since F' = O(log T)
-  -- So |N(T) - F(T)| ≤ |N(T') - F(T')| + |N(T') - N(T)| + |F(T') - F(T)| = O(log T)
-  sorry  -- Extension from generic T to all T: monotonicity + continuity argument
+  obtain ⟨C₀', hC₀'⟩ := rvm_at_generic_T
+  set C₀ := max C₀' 0
+  have hC₀_nn : 0 ≤ C₀ := le_max_right _ _
+  have hC₀ : ∀ T : ℝ, 14 ≤ T → T ∉ zetaZeroOrdinates →
+      |(N T : ℝ) - ((1 / Real.pi) * (stirlingApprox T).im -
+        (T / (2 * Real.pi)) * Real.log Real.pi +
+        (1 / Real.pi) * (riemannZeta (1 / 2 + I * ↑T)).arg + 1)| ≤ C₀ * Real.log T := by
+    intro T hT hT_ord
+    calc _ ≤ C₀' * Real.log T := hC₀' T hT hT_ord
+      _ ≤ C₀ * Real.log T := by
+        apply mul_le_mul_of_nonneg_right (le_max_left _ _)
+        exact le_of_lt (Real.log_pos (by linarith))
+  refine ⟨2 * C₀ + 1, max 14 (Real.exp 2), fun T hT => ?_⟩
+  have hT14 : 14 ≤ T := le_trans (le_max_left _ _) hT
+  have hTe2 : Real.exp 2 ≤ T := le_trans (le_max_right _ _) hT
+  have hT_pos : 0 < T := lt_of_lt_of_le (by positivity) hTe2
+  have hlog_ge2 : 2 ≤ Real.log T := by
+    rw [show (2 : ℝ) = Real.log (Real.exp 2) from (Real.log_exp 2).symm]
+    exact Real.log_le_log (Real.exp_pos 2) hTe2
+  have hlog_pos : 0 < Real.log T := by linarith
+  -- Decompose F(T) = G(T) + H(T) where G is continuous and |H| ≤ 1
+  set G := rvmContinuousPart with hG_def
+  set H : ℝ → ℝ := fun T => (1 / Real.pi) * Complex.arg (riemannZeta (1/2 + I * ↑T))
+  -- The full formula is G(T) + H(T)
+  have hF_eq : ∀ t : ℝ,
+      (1 / Real.pi) * (stirlingApprox t).im
+        - (t / (2 * Real.pi)) * Real.log Real.pi
+        + (1 / Real.pi) * Complex.arg (riemannZeta (1/2 + I * ↑t)) + 1
+      = G t + H t := by
+    intro t; show _ = rvmContinuousPart t + H t; unfold rvmContinuousPart; ring
+  -- |H(t)| ≤ 1 for all t
+  have hH_bound : ∀ t : ℝ, |H t| ≤ 1 := by
+    intro t
+    show |((1 : ℝ) / Real.pi) * Complex.arg (riemannZeta (1/2 + I * ↑t))| ≤ 1
+    rw [abs_mul, abs_of_pos (by positivity : (0 : ℝ) < 1 / Real.pi)]
+    calc (1 / Real.pi) * |Complex.arg (riemannZeta (1/2 + I * ↑t))|
+        ≤ (1 / Real.pi) * Real.pi := by
+          gcongr; exact Complex.abs_arg_le_pi _
+      _ = 1 := by field_simp
+  -- G is continuous
+  have hG_cont : Continuous G := continuous_rvmContinuousPart
+  -- For any δ > 0, bound |N(T) - F(T)| ≤ 2C₀ · log(T) + 2 + δ
+  suffices h : ∀ δ > 0, |(N T : ℝ) - (G T + H T)| ≤ 2 * C₀ * Real.log T + 2 + δ by
+    have hle : |(N T : ℝ) - (G T + H T)| ≤ 2 * C₀ * Real.log T + 2 := by
+      apply le_of_forall_pos_le_add
+      intro ε hε; linarith [h ε hε]
+    rw [hF_eq T]
+    calc |(N T : ℝ) - (G T + H T)| ≤ 2 * C₀ * Real.log T + 2 := hle
+      _ ≤ 2 * C₀ * Real.log T + Real.log T := by linarith
+      _ = (2 * C₀ + 1) * Real.log T := by ring
+  intro δ hδ
+  -- By continuity of G at T, there exists ε > 0 such that |G(T') - G(T)| < δ for |T' - T| < ε
+  have hG_cont_at := hG_cont.continuousAt
+  rw [Metric.continuousAt_iff] at hG_cont_at
+  obtain ⟨ε₀, hε₀_pos, hε₀⟩ := hG_cont_at δ hδ
+  -- Find T' ∈ (T, T + min(ε₀, 1)) not an ordinate with N(T') = N(T)
+  set ε := min ε₀ 1 with hε_def
+  have hε_pos : 0 < ε := lt_min hε₀_pos one_pos
+  obtain ⟨T', ⟨hT'_lo, hT'_hi⟩, hT'_not_ord, hT'_gap⟩ := exists_right_gap T ε hε_pos
+  -- N(T') = N(T) since no ordinate lies in (T, T']
+  have hN_eq : N T' = N T := N_eq_of_no_ordinate_between (le_of_lt hT'_lo) hT'_gap
+  -- T' ≥ 14
+  have hT'14 : 14 ≤ T' := by linarith
+  -- T' < T + 1
+  have hT'_lt_T1 : T' < T + 1 := by
+    have : ε ≤ 1 := min_le_right ε₀ 1
+    linarith
+  -- Apply rvm_at_generic_T at T'
+  have hbound := hC₀ T' hT'14 hT'_not_ord
+  -- Rewrite using N(T') = N(T)
+  rw [hN_eq] at hbound
+  rw [hF_eq T'] at hbound
+  -- log(T') ≤ log(T + 1) ≤ 2 · log(T)
+  have hlog_T' : Real.log T' ≤ 2 * Real.log T := by
+    have : Real.log T' ≤ Real.log (T + 1) :=
+      Real.log_le_log (by linarith) (le_of_lt hT'_lt_T1)
+    have : Real.log (T + 1) ≤ Real.log (T * T) := by
+      apply Real.log_le_log (by linarith)
+      nlinarith
+    calc Real.log T' ≤ Real.log (T * T) := by linarith
+      _ = Real.log T + Real.log T := Real.log_mul (ne_of_gt hT_pos) (ne_of_gt hT_pos)
+      _ = 2 * Real.log T := by ring
+  -- |H(T') - H(T)| ≤ 2
+  have hH_diff : |H T' - H T| ≤ 2 := by
+    have h1 : |H T' - H T| ≤ |H T'| + |H T| := by
+      have := abs_sub_le (H T') 0 (H T); simp at this; linarith
+    linarith [hH_bound T', hH_bound T]
+  -- |G(T') - G(T)| < δ
+  have hG_diff : |G T' - G T| < δ := by
+    have hdist : dist T' T < ε₀ := by
+      rw [Real.dist_eq, abs_of_pos (by linarith)]
+      calc T' - T < ε := by linarith
+        _ ≤ ε₀ := min_le_left _ _
+    have := hε₀ hdist
+    rwa [Real.dist_eq] at this
+  -- Triangle inequality
+  calc |(N T : ℝ) - (G T + H T)|
+      = |((N T : ℝ) - (G T' + H T')) + ((G T' - G T) + (H T' - H T))| := by ring_nf
+    _ ≤ |(N T : ℝ) - (G T' + H T')| + |(G T' - G T) + (H T' - H T)| := abs_add _ _
+    _ ≤ |(N T : ℝ) - (G T' + H T')| + |G T' - G T| + |H T' - H T| := by
+        linarith [abs_add (G T' - G T) (H T' - H T)]
+    _ ≤ C₀ * Real.log T' + δ + 2 := by linarith [hG_diff]
+    _ ≤ C₀ * (2 * Real.log T) + δ + 2 := by
+        have : C₀ * Real.log T' ≤ C₀ * (2 * Real.log T) :=
+          mul_le_mul_of_nonneg_left hlog_T' hC₀_nn
+        linarith
+    _ = 2 * C₀ * Real.log T + 2 + δ := by ring
 
 theorem rvm_decomposition_bounded [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
     (fun T : ℝ => (N T : ℝ)
