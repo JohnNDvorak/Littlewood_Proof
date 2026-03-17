@@ -693,7 +693,7 @@ private theorem rvm_extend_to_all_T [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] 
       _ = (2 * C₀ + 1) * Real.log T := by ring
   intro δ hδ
   -- By continuity of G at T, there exists ε > 0 such that |G(T') - G(T)| < δ for |T' - T| < ε
-  have hG_cont_at := hG_cont.continuousAt
+  have hG_cont_at : ContinuousAt G T := hG_cont.continuousAt
   rw [Metric.continuousAt_iff] at hG_cont_at
   obtain ⟨ε₀, hε₀_pos, hε₀⟩ := hG_cont_at δ hδ
   -- Find T' ∈ (T, T + min(ε₀, 1)) not an ordinate with N(T') = N(T)
@@ -739,9 +739,9 @@ private theorem rvm_extend_to_all_T [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] 
   -- Triangle inequality
   calc |(N T : ℝ) - (G T + H T)|
       = |((N T : ℝ) - (G T' + H T')) + ((G T' - G T) + (H T' - H T))| := by ring_nf
-    _ ≤ |(N T : ℝ) - (G T' + H T')| + |(G T' - G T) + (H T' - H T)| := abs_add _ _
+    _ ≤ |(N T : ℝ) - (G T' + H T')| + |(G T' - G T) + (H T' - H T)| := abs_add_le _ _
     _ ≤ |(N T : ℝ) - (G T' + H T')| + |G T' - G T| + |H T' - H T| := by
-        linarith [abs_add (G T' - G T) (H T' - H T)]
+        linarith [abs_add_le (G T' - G T) (H T' - H T)]
     _ ≤ C₀ * Real.log T' + δ + 2 := by linarith [hG_diff]
     _ ≤ C₀ * (2 * Real.log T) + δ + 2 := by
         have : C₀ * Real.log T' ≤ C₀ * (2 * Real.log T) :=
