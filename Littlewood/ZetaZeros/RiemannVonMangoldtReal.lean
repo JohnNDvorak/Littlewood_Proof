@@ -34,7 +34,7 @@ import Littlewood.ZetaZeros.RectArgumentPrinciple
 import Littlewood.ZetaZeros.ZeroCountingFunction
 import Littlewood.ZetaZeros.StirlingForRvM
 import Littlewood.Aristotle.RiemannXiEntire
-import Littlewood.Aristotle.Standalone.DirichletEtaZetaSign
+
 
 set_option maxHeartbeats 1600000
 set_option autoImplicit false
@@ -351,13 +351,9 @@ private theorem xi_ne_zero_on_boundary [FirstZeroOrdinateHyp] (T : ℝ) (hT : 1 
     · -- Need Im(z) > 1.
       by_contra h_le
       push_neg at h_le
-      have him_eq : z.im = 0 := le_antisymm h_le him_lo
-      have hzeta_zero := (riemannXiAlt_zero_iff_zeta_zero hre_pos hre_lt).mp h
-      -- z is real (Im = 0), so z = ↑(z.re). Use DirichletEtaZetaSign for ζ(σ) ≠ 0 on (0,1).
-      have hz_eq : z = (↑z.re : ℂ) := Complex.ext rfl (by simp [him_eq])
-      rw [hz_eq] at hzeta_zero
-      exact Aristotle.Standalone.DirichletEtaZetaSign.riemannZeta_ofReal_ne_zero_of_mem_Ioo
-        hre_pos hre_lt hzeta_zero
+      have him_eq : z.im = 1 := le_antisymm h_le him_lo
+      -- z is a nontrivial zero with Im = 1, making 1 a zero ordinate — contradiction
+      exact one_not_zero_ordinate ⟨z, hzpos, him_eq⟩
     · -- Need Im(z) < T. If Im(z) = T, then z is a zero with Im = T, contradicting hT_not_ord
       by_contra h_ge
       push_neg at h_ge
