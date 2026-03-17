@@ -656,8 +656,9 @@ theorem block_estimate_iff_remainder_antitone (k : ℕ) :
     This captures that c₁(p) > 0, which is the irreducible content of Gabcke
     Satz 4 beyond what Satz 1 (absolute bounds) provides.
 
-    Reference: Gabcke 1979 Satz 4, Tabelle 1. -/
-/-- **Signed remainder density positivity** (Gabcke Satz 4, key sub-lemma).
+    Reference: Gabcke 1979 Satz 4, Tabelle 1.
+
+**Signed remainder density positivity** (Gabcke Satz 4, key sub-lemma).
 
     The remainder density ρ(k,p) := blockRemainder expressed as an integral
     over [0,1] satisfies ρ(k,p) ≥ 0 for all k ≥ 1 and p ∈ [0,1].

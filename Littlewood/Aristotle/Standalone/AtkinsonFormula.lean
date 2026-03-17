@@ -130,8 +130,9 @@ PROOF STRUCTURE (Atkinson 1949):
     on the near-stationary window plus VdC first derivative tail,
     as assembled in the HardyFirstMomentWiring infrastructure.
 
-    Reference: Atkinson 1949, Acta Math. 81, pp. 353-376. -/
-/-! ## Sub-sorry: Per-mode stationary phase evaluation (Atkinson 1949)
+    Reference: Atkinson 1949, Acta Math. 81, pp. 353-376.
+
+## Sub-sorry: Per-mode stationary phase evaluation (Atkinson 1949)
 
 The per-mode cosine integral decomposes as:
   ∫_{hardyStart(n)}^T cos(θ(t) - t·log(n+1)) dt
