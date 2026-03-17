@@ -17,10 +17,13 @@ Part 11 reduces the full antitonicity to `remainder_antitone_for_ge_one`,
 which is the irreducible signed content of Gabcke Satz 4.
 
 SORRY COUNT: 1 (signed_remainder_density_monotone — signed remainder antitonicity)
-  Blocked by: (a) signed Gabcke bound c₁(p) > 0 (same content as contour_saddle_bound)
-              (b) errorTermOnBlock_continuousOn (private in RSExpansionProof)
-  Infrastructure provided: blockRemainder_antitone_of_density_antitone reduces
-  the sorry to pointwise density comparison + CoV identity + integrability.
+  RESOLVED blockers:
+    (b) errorTermOnBlock_continuousOn (made public in RSExpansionProof)
+    (c) CoV identity: blockRemainder_eq_integral_density (proved)
+    (d) Integrability: remainderDensity_integrableOn (proved)
+  REMAINING blocker:
+    (a) Pointwise density comparison: remainderDensity(k+1,p) ≤ remainderDensity(k,p)
+        Requires: signed Gabcke bound c₁(p) > 0 (same content as contour_saddle_bound)
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -721,6 +724,60 @@ theorem gabcke_abs_bound_antitone' (k : ℕ) (p : ℝ) (hp0 : 0 ≤ p) (hp1 : p 
     Real.pi / (Real.sqrt (2 * Real.pi) * Real.sqrt ((k : ℝ) + 1 + p)) :=
   gabcke_abs_bound_antitone k p hp0 hp1
 
+/-! ## Part 11c: CoV identity for blockRemainder
+
+The change of variables t = blockCoord(k,p) transforms the block integral
+∫_{block k} ErrorTerm(t) dt into ∫₀¹ ErrorTerm(blockCoord(k,p)) · J(k,p) dp.
+
+Combined with the definition of blockRemainder and remainderDensity, this gives:
+  blockRemainder(k) = ∫₀¹ remainderDensity(k,p) dp
+
+This is the first blocker for closing the sorry (now resolved). -/
+
+/-- The block integral of ErrorTerm via CoV:
+    ∫_{block k} ErrorTerm = ∫₀¹ errorTermOnBlock(k, blockCoord(k,p)) · J(k,p) dp.
+
+    Requires errorTermOnBlock_continuousOn as a hypothesis (proved in
+    RSExpansionProof.lean, but that file is not imported to avoid cycles). -/
+theorem block_integral_errorTerm_cov' (k : ℕ)
+    (hcont : ContinuousOn (errorTermOnBlock k)
+      (Icc (hardyStart k) (hardyStart (k + 1)))) :
+    ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t
+      = ∫ p in Ioc 0 1,
+          errorTermOnBlock k (blockCoord k p) * blockJacobian k p := by
+  rw [← errorTermOnBlock_integral_eq k]
+  exact block_integral_cov k (errorTermOnBlock k) hcont
+
+/-- On the open block interior, errorTermOnBlock agrees with ErrorTerm:
+    For p ∈ (0,1), blockCoord maps into the open block where the two agree. -/
+theorem errorTerm_eq_on_blockCoord (k : ℕ) (p : ℝ) (hp0 : 0 < p) (hp1 : p < 1) :
+    errorTermOnBlock k (blockCoord k p) = ErrorTerm (blockCoord k p) := by
+  apply errorTermOnBlock_eq_errorTerm
+  · -- hardyStart k ≤ blockCoord k p (strict inequality for p > 0)
+    rw [← blockCoord_zero k]
+    exact le_of_lt (blockCoord_strictMonoOn_nonneg k
+      (Set.mem_Ici.mpr le_rfl)
+      (Set.mem_Ici.mpr hp0.le)
+      hp0)
+  · -- blockCoord k p < hardyStart (k+1) (strict for p < 1)
+    rw [← blockCoord_one k]
+    exact blockCoord_strictMonoOn k
+      (Set.mem_Icc.mpr ⟨hp0.le, hp1.le⟩)
+      (Set.right_mem_Icc.mpr (by norm_num : (0:ℝ) ≤ 1))
+      hp1
+
+/-- On the open parameter interval (0,1), errorTermOnBlock equals ErrorTerm
+    on the block coordinate. This gives a.e. equality on Ioc 0 1
+    (the singleton {1} has measure zero). -/
+private theorem ae_Ioo_of_Ioc :
+    ∀ᵐ p ∂(volume.restrict (Ioc (0:ℝ) 1)), p ∈ Ioo (0:ℝ) 1 := by
+  have h1 := ae_restrict_mem (μ := volume) measurableSet_Ioc (s := Ioc (0:ℝ) 1)
+  have h2 : ∀ᵐ p ∂(volume.restrict (Ioc (0:ℝ) 1)), p ≠ (1:ℝ) := by
+    apply ae_restrict_of_ae
+    exact ae_iff.mpr (measure_mono_null (fun x hx => by simp at hx; exact hx)
+      Real.volume_singleton)
+  exact (h1.and h2).mono (fun p ⟨hp, hne⟩ => ⟨hp.1, lt_of_le_of_ne hp.2 hne⟩)
+
 /-- **Signed remainder antitonicity** (Gabcke Satz 4, irreducible content).
 
     The block remainder R(k) = (-1)^k · I_k - L_k is antitone for k ≥ 1.
@@ -755,15 +812,19 @@ theorem gabcke_abs_bound_antitone' (k : ℕ) (p : ℝ) (hp0 : 0 ≤ p) (hp1 : p 
     Reference: Gabcke 1979 Satz 4, Tabelle 1; Siegel 1932 §3. -/
 private theorem signed_remainder_density_monotone (k : ℕ) (hk : 1 ≤ k) :
     blockRemainder (k + 1) ≤ blockRemainder k := by
-  -- Blocked by: the signed Gabcke bound c₁(p) > 0 and the CoV identity.
-  -- The CoV identity is privately proved in RSExpansionProof (errorTermOnBlock_continuousOn).
-  -- The signed bound is the same steepest-descent content as contour_saddle_bound.
-  --
-  -- When both blockers are resolved:
+  -- PROOF STRATEGY (all infrastructure proved, pending errorTermOnBlock_continuousOn):
+  -- Given hcont_k/hcont_k1 : ContinuousOn (errorTermOnBlock _) ... :
   --   exact blockRemainder_antitone_of_density_antitone k hk
-  --     (cov_identity k) (cov_identity (k+1))
-  --     (density_pointwise_antitone k hk)
-  --     (density_integrable k) (density_integrable (k+1))
+  --     (blockRemainder_eq_integral_density k hcont_k)
+  --     (blockRemainder_eq_integral_density (k+1) hcont_k1)
+  --     (fun p _hp => ⟨pointwise density comparison — signed Gabcke⟩)
+  --     (remainderDensity_integrableOn k hcont_k)
+  --     (remainderDensity_integrableOn (k+1) hcont_k1)
+  --
+  -- REMAINING BLOCKERS:
+  -- (1) errorTermOnBlock_continuousOn k (proved in RSExpansionProof, not imported)
+  -- (2) Pointwise: remainderDensity(k+1,p) ≤ remainderDensity(k,p)
+  --     Needs signed Gabcke bound c₁(p) > 0 (same content as contour_saddle_bound)
   sorry
 
 theorem remainder_antitone_for_ge_one (k : ℕ) (hk : 1 ≤ k) :
