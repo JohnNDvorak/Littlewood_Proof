@@ -508,18 +508,41 @@ private theorem rvm_N_formula_bound :
            - (T / (2 * Real.pi)) * Real.log Real.pi
            + (1 / Real.pi) * Complex.arg (riemannZeta (1/2 + I * ↑T))
            + 1)| ≤ C * Real.log T := by
-  -- The formula decomposes into: main Stirling term + arg(ζ) + 1.
-  -- By stirling_im_approx: Im(stirlingApprox T) = (T/2)log(T/2) - T/2 - π/8 + O(1/T)
-  -- By rvm_stirling_algebra: (1/π)·[(T/2)log(T/2) - T/2 - π/8] - (T/2π)logπ + 1
-  --   = (T/2π)log(T/2π) - T/2π + 7/8
-  -- By backlund_ST_bound: (1/π)arg(ζ(1/2+iT)) = O(logT)
-  -- So the full formula = (T/2π)log(T/2π) - T/2π + 7/8 + O(logT).
-  -- Meanwhile, the Riemann-von Mangoldt formula (Titchmarsh Thm 9.4) states
-  -- N(T) = (T/2π)log(T/2π) - T/2π + 7/8 + S(T) + O(1/T) where S(T) = O(logT).
-  -- Combining: |N(T) - formula| = |O(1/T)| ≤ O(logT). QED.
+  -- ## PROOF STRATEGY (Titchmarsh §9.3-9.4)
   --
-  -- The deep content is the RvM formula itself. We package it as a single
-  -- well-stated analytic fact (Titchmarsh §9.4, verified by all ANT texts).
+  -- The formula says: N(T) ≈ (1/π)·Im(stirlingApprox T) - (T/2π)·log π
+  --                           + (1/π)·arg ζ(1/2+iT) + 1  [up to O(log T)]
+  --
+  -- By rvm_stirling_algebra + stirling_im_approx (both PROVED):
+  --   RHS ≈ (T/2π)·log(T/2π) - T/(2π) + 7/8 + (1/π)·arg ζ + O(1/T)
+  --       = main_term + O(1)  [since |arg ζ| ≤ π]
+  --
+  -- The Riemann-von Mangoldt formula (Titchmarsh Thm 9.4) states:
+  --   N(T) = main_term + 7/8 + S_cont(T) + O(1/T)
+  -- where S_cont is the continuously-wound (1/π)·arg ζ along the critical line.
+  --
+  -- ## WHAT REMAINS (argument principle content):
+  --
+  -- The formula relates N(T) (a cardinality of zeros) to an analytic expression.
+  -- This connection requires the ARGUMENT PRINCIPLE for ξ along the half-boundary
+  -- of the rectangle (-1,2)×(1,T), combined with the functional equation ξ(1-s)=ξ(s).
+  --
+  -- Specifically, the proof tracks arg(ξ) along 2+i → 2+iT → 1/2+iT, decomposing:
+  --   arg(ξ) = arg(s·(s-1)) + arg(π^{-s/2}) + arg(Γ(s/2)) + arg(ζ(s))
+  -- - Γ contribution → θ(T) ≈ Im(stirlingApprox) (Stirling, PROVED)
+  -- - ζ contribution → arg ζ(1/2+iT) + O(log T) (horizontal edge bound)
+  -- - Rational contributions → ±π (bounded, absorbed into O(log T))
+  --
+  -- ## PROVED INFRASTRUCTURE (all 0 sorry):
+  -- - XiLogDerivDecomposition: pointwise decomposition of logDeriv(ξ)
+  -- - StirlingForRvM: Stirling ↔ main term algebra + Im asymptotic
+  -- - RvMEdgeIntegrals: |∫₁ᵀ 1/(2+iy) dy| ≤ log T, horizontal bounds
+  -- - RectArgumentPrinciple: argument principle for rectangles
+  -- - BinetStirling: Im(stirlingApprox) ≈ (T/2)log(T/2) - T/2 - π/8 + O(1/T)
+  --
+  -- ## MISSING PIECE:
+  -- Formalizing "change of arg along a path" = Im(∫_path logDeriv(f) ds)
+  -- and connecting this to N(T) via the argument principle + functional equation.
   sorry
 
 /-- The contour integral evaluation: logIntegralRect(xi) on (-1,2)×(1,T) equals
