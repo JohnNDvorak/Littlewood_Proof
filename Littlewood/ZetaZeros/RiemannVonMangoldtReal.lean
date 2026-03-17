@@ -543,10 +543,18 @@ private theorem rvm_N_formula_bound [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] 
   --   2π·N(T) = 2·Im(stirlingApprox T) - T·logπ + 2·arg(ζ(1/2+iT)) + 2π + O(logT)
   --   N(T) = (1/π)·Im(stirlingApprox T) - (T/2π)·logπ + (1/π)·arg(ζ) + 1 + O(logT)
   --
-  -- ## MISSING FORMALIZATION:
-  -- The FTC step: ∫_a^b logDeriv(f)(γ(t))·γ'(t) dt = log f(γ(b)) - log f(γ(a))
-  -- requires a continuous branch of log along the path. This is the
-  -- "continuously wound argument" formalism, not yet built in the project.
+  -- ## REMAINING GAP (as of 2026-03-17):
+  -- The FTC for logDeriv along vertical lines is NOW PROVED in RvMContourFTC.lean.
+  -- The key bound π² < 12 is NOW PROVED in RvMZetaBound.lean.
+  -- These provide: for f holomorphic with f(σ+iy) ∈ slitPlane,
+  --   ∫_a^b i·logDeriv(f)(σ+iy) dy = log f(σ+ib) - log f(σ+ia)
+  --
+  -- Remaining steps to close this sorry:
+  -- (1) Prove |ζ(s)-1| < 1 for Re(s) ≥ 2 (uses π²<12 + hasSum_zeta_two + tsum comparison)
+  -- (2) Hence ζ(2+it) ∈ slitPlane, apply FTC: ∫ logDeriv(ζ)·i = O(1)
+  -- (3) Similarly for digamma: ∫ digamma(s/2)·i ≈ log Γ difference ≈ stirlingApprox
+  -- (4) Horizontal edges bounded by sup·length = O(log T)
+  -- (5) Assembly via argument principle + functional equation
   sorry
 
 /-- The contour integral evaluation: logIntegralRect(xi) on (-1,2)×(1,T) equals

@@ -9,6 +9,8 @@ import Littlewood.ZetaZeros.ZeroDensity
 import Littlewood.ZetaZeros.SupremumRealPart
 import Littlewood.ZetaZeros.RvMEdgeIntegrals         -- Edge integral bounds for RvM contour (0 sorries) ✓
 import Littlewood.ZetaZeros.RvMContourEvaluation     -- Cauchy-Goursat + func eq + Schwarz (0 sorries) ✓
+import Littlewood.ZetaZeros.RvMContourFTC            -- FTC for logDeriv along vertical lines (0 sorries) ✓
+import Littlewood.ZetaZeros.RvMZetaBound             -- π²<12 + ζ bounds for Re(s)≥2 (0 sorries) ✓
 
 -- Explicit formulas
 import Littlewood.ExplicitFormulas.ExplicitFormulaPsi
