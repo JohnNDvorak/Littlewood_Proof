@@ -3755,7 +3755,9 @@ private theorem continuous_cosSum (k : ℕ) :
 /-- errorTermOnBlock is continuous on the block (and in fact everywhere).
     Proved by decomposing into hardyZ (continuous via HardyZTransfer) minus
     a finite sum of continuous cos terms (via hardyPhaseSmooth bridge). -/
-private theorem errorTermOnBlock_continuousOn (k : ℕ) :
+/-- errorTermOnBlock is continuous on the block. Public for use in
+    GabckePhaseCouplingInfra (CoV identity for blockRemainder). -/
+theorem errorTermOnBlock_continuousOn (k : ℕ) :
     ContinuousOn (errorTermOnBlock k) (Icc (hardyStart k) (hardyStart (k + 1))) := by
   -- errorTermOnBlock k t = hardyZ t - 2 * ∑ n, (n+1)^{-1/2} * cos(θ(t) - t·log(n+1))
   unfold errorTermOnBlock
