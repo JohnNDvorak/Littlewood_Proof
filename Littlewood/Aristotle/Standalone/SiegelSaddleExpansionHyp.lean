@@ -19,20 +19,24 @@ This is the content of Siegel's steepest-descent expansion through the saddle
 w₀ = √(t/2π), with the bound coming from the Fresnel coefficient |c₁(p)| ≤ 1/4
 (Gabcke 1979, Tabelle 1).
 
-## Decomposition (Agent 1v2, 2026-03-16)
+## Decomposition (Agent saddle-point, 2026-03-16)
 
-The sorry is decomposed via a Gabcke constant bound:
+The sorry is decomposed into three layers:
 
-1. **Contour saddle-point bound** (`contour_saddle_bound`): On each block,
-   |R(k,t)| ≤ fresnelC1Bound · t^{-1/2}. This is the steepest-descent content:
-   contour deformation + Taylor expansion + Gaussian integration.
+1. **RS formula remainder bound** (`rs_formula_remainder_bound`): The standard
+   Riemann-Siegel formula with error bound — SORRY (irreducible steepest-descent):
+   |ErrorTerm(t) - (-1)^k · (2π/t)^{1/4} · Ψ(p)| ≤ C_RS · t^{-3/4}
 
-2. **Fresnel coefficient bound** (`fresnel_c1_bound_le_quarter`):
+2. **Division by amplitude** (`contour_saddle_bound`): Algebraic derivation of
+   |R(k,t)| ≤ fresnelC1Bound · t^{-1/2} from (1) by dividing by (2π/t)^{1/4}.
+   PROVED via rpow_three_quarter_div_amp.
+
+3. **Fresnel coefficient bound** (`fresnel_c1_bound_le_quarter`):
    fresnelC1Bound ≤ 1/4. Proved by norm_num (0.083 ≤ 0.25).
 
-The instance proof combines these with transitivity.
+The instance proof combines (2)+(3) with transitivity.
 
-SORRY COUNT: 1 (contour_saddle_bound; numerical bound is proved)
+SORRY COUNT: 1 (rs_formula_remainder_bound; algebraic wiring and numerical bounds proved)
 
 Reference: Siegel 1932 S3; Gabcke 1979 Satz 1, Tabelle 1.
 
@@ -93,25 +97,130 @@ def fresnelC1Bound : ℝ := 0.083
 theorem fresnelC1Bound_pos : 0 < fresnelC1Bound := by
   unfold fresnelC1Bound; norm_num
 
-/-! ## Sorry: Contour saddle-point bound (steepest descent) -/
+/-! ## Decomposition of the contour saddle-point bound
+
+The sorry is decomposed into:
+1. **RS formula remainder bound** (`rs_formula_remainder_bound`): The Riemann-Siegel
+   formula in standard form — on each block, the error term minus its leading
+   Riemann-Siegel correction is O(t^{-3/4}). This is the irreducible steepest-descent
+   content.
+
+2. **Division by amplitude** (`contour_saddle_from_rs_formula`): The algebraic step
+   of dividing by (2π/t)^{1/4} to convert the t^{-3/4} bound into the t^{-1/2}
+   bound on `saddlePointRemainder`. PROVED.
+
+The RS formula remainder constant is C_RS = fresnelC1Bound · (2π)^{1/4}, chosen so
+that C_RS / (2π)^{1/4} = fresnelC1Bound exactly.
+
+SORRY COUNT: 1 (rs_formula_remainder_bound)
+-/
+
+/-- The RS formula remainder constant: fresnelC1Bound · (2π)^{1/4}.
+    This is the constant in the standard Riemann-Siegel remainder bound
+    |ErrorTerm(t) - leading(t)| ≤ C_RS · t^{-3/4}. -/
+def rsRemainderConstant : ℝ := fresnelC1Bound * (2 * Real.pi) ^ ((1 : ℝ) / 4)
+
+/-- The RS remainder constant is positive. -/
+theorem rsRemainderConstant_pos : 0 < rsRemainderConstant := by
+  unfold rsRemainderConstant
+  exact mul_pos fresnelC1Bound_pos (rpow_pos_of_pos (by positivity) _)
+
+/-- Key identity: C_RS / (2π)^{1/4} = fresnelC1Bound.
+    This is the algebraic bridge between the standard RS remainder form
+    and the normalized saddlePointRemainder form. -/
+theorem rsRemainderConstant_div_amp :
+    rsRemainderConstant / (2 * Real.pi) ^ ((1 : ℝ) / 4) = fresnelC1Bound := by
+  unfold rsRemainderConstant
+  exact mul_div_cancel_right₀ _ (ne_of_gt (rpow_pos_of_pos (by positivity : (0:ℝ) < 2 * Real.pi) _))
+
+/-! ## Sorry: RS formula remainder bound (standard form)
+
+This is the Riemann-Siegel formula with error bound in standard form:
+
+  |ErrorTerm(t) - (-1)^k · (2π/t)^{1/4} · Ψ(blockParam k t)| ≤ C_RS · t^{-3/4}
+
+where C_RS = fresnelC1Bound · (2π)^{1/4} ≈ 0.131.
+
+This is equivalent to `contour_saddle_bound` after dividing by (2π/t)^{1/4},
+but stated in the standard notation of the Riemann-Siegel formula
+(Siegel 1932 §3; Gabcke 1979 Satz 1).
+
+The proof requires:
+(a) The contour integral representation of ErrorTerm via the Siegel integral
+(b) Contour deformation to the steepest-descent path through w₀ = √(t/2π)
+(c) Taylor expansion of the phase at the saddle point to quadratic order
+(d) Gaussian/Fresnel integration of the leading term (Mathlib: integral_gaussian_complex)
+(e) Bounding the higher-order remainder via quartic Taylor coefficient
+
+IRREDUCIBILITY: Steps (a)-(b) require contour deformation infrastructure
+that Mathlib does not provide. This is the genuine analytic content. -/
+private theorem rs_formula_remainder_bound (k : ℕ) (t : ℝ)
+    (hlo : hardyStart k ≤ t) (hhi : t ≤ hardyStart (k + 1)) (hpos : 0 < t) :
+    |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+      rsPsi (blockParam k t)| ≤ rsRemainderConstant * t ^ (-(3 : ℝ) / 4) := by
+  sorry
+
+/-! ## Proved: Division by amplitude
+
+Converting the RS formula remainder bound (|E - lead| ≤ C_RS · t^{-3/4})
+into the saddlePointRemainder bound (|R| ≤ fresnelC1Bound · t^{-1/2})
+by dividing both sides by (2π/t)^{1/4}.
+
+Key rpow identity: t^{-3/4} / (2π/t)^{1/4} = t^{-1/2} / (2π)^{1/4}. -/
+
+/-- rpow identity: t^{-3/4} / (2π/t)^{1/4} = t^{-1/2} / (2π)^{1/4}. -/
+private theorem rpow_three_quarter_div_amp (t : ℝ) (ht : 0 < t) :
+    t ^ (-(3:ℝ)/4) / ((2 * Real.pi / t) ^ ((1:ℝ)/4)) =
+    t ^ (-(1:ℝ)/2) / (2 * Real.pi) ^ ((1:ℝ)/4) := by
+  have h2pi_pos : (0:ℝ) < 2 * Real.pi := by positivity
+  have h_amp_pos : 0 < (2 * Real.pi / t) ^ ((1:ℝ)/4) :=
+    rpow_pos_of_pos (div_pos h2pi_pos ht) _
+  have h_2pi14_pos : 0 < (2 * Real.pi) ^ ((1:ℝ)/4) := rpow_pos_of_pos h2pi_pos _
+  have h_eq : t ^ (-(3:ℝ)/4) * (2 * Real.pi) ^ ((1:ℝ)/4) =
+      t ^ (-(1:ℝ)/2) * (2 * Real.pi / t) ^ ((1:ℝ)/4) := by
+    rw [Real.div_rpow (by positivity : (0:ℝ) ≤ 2 * Real.pi) ht.le]
+    rw [show t ^ (-(1:ℝ)/2) * ((2 * Real.pi) ^ ((1:ℝ)/4) / t ^ ((1:ℝ)/4))
+        = (2 * Real.pi) ^ ((1:ℝ)/4) * (t ^ (-(1:ℝ)/2) / t ^ ((1:ℝ)/4)) from by ring]
+    rw [show t ^ (-(1:ℝ)/2) / t ^ ((1:ℝ)/4) = t ^ (-(1:ℝ)/2) * (t ^ ((1:ℝ)/4))⁻¹ from div_eq_mul_inv _ _]
+    rw [show (t ^ ((1:ℝ)/4))⁻¹ = t ^ (-(1:ℝ)/4) from by
+      rw [← Real.rpow_neg ht.le]; congr 1; ring]
+    rw [← Real.rpow_add ht, show -(1:ℝ)/2 + -(1:ℝ)/4 = -(3:ℝ)/4 from by ring]
+    ring
+  exact div_eq_div_iff h_amp_pos.ne' h_2pi14_pos.ne' |>.mpr h_eq
 
 /-- **Contour saddle-point bound** (Siegel 1932, Gabcke 1979 Satz 1).
+    PROVED from rs_formula_remainder_bound by dividing by the amplitude factor.
 
-    On each Riemann-Siegel block, the saddle-point remainder is bounded
-    by fresnelC1Bound · t^{-1/2}. This encodes:
-    (a) The contour integral representation of ErrorTerm
-    (b) Deformation to the steepest-descent path through w₀ = √(t/2π)
-    (c) Taylor expansion of the phase to cubic order
-    (d) Gaussian integration of the quadratic part (Fresnel integral)
-    (e) Bounding the subleading coefficient |c₁(p)| ≤ fresnelC1Bound
-
-    IRREDUCIBILITY: Mathlib has no steepest-descent lemma and no
-    general contour deformation theorem. This is the genuine
-    analytic content of the Riemann-Siegel formula. -/
+    Chain: |R(k,t)| = |E - lead| / amp ≤ C_RS · t^{-3/4} / amp
+           = C_RS · t^{-1/2} / (2π)^{1/4} = fresnelC1Bound · t^{-1/2}. -/
 private theorem contour_saddle_bound (k : ℕ) (t : ℝ)
     (hlo : hardyStart k ≤ t) (hhi : t ≤ hardyStart (k + 1)) (hpos : 0 < t) :
     |saddlePointRemainder k t| ≤ fresnelC1Bound * t ^ (-(1 : ℝ) / 2) := by
-  sorry
+  have h2pi_pos : (0:ℝ) < 2 * Real.pi := by positivity
+  have h_amp_pos : 0 < (2 * Real.pi / t) ^ ((1:ℝ)/4) :=
+    rpow_pos_of_pos (div_pos h2pi_pos hpos) _
+  have h_2pi14_pos : 0 < (2 * Real.pi) ^ ((1:ℝ)/4) := rpow_pos_of_pos h2pi_pos _
+  -- Step 1: |R| = |E - lead| / amp
+  unfold saddlePointRemainder
+  rw [abs_div, abs_of_pos h_amp_pos]
+  -- Step 2: Apply RS formula remainder bound
+  have h_rs := rs_formula_remainder_bound k t hlo hhi hpos
+  -- Step 3: |E - lead| / amp ≤ C_RS · t^{-3/4} / amp
+  have h1 : |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
+      rsPsi (blockParam k t)| / (2 * Real.pi / t) ^ ((1 : ℝ) / 4) ≤
+      rsRemainderConstant * t ^ (-(3 : ℝ) / 4) / (2 * Real.pi / t) ^ ((1 : ℝ) / 4) :=
+    div_le_div_of_nonneg_right h_rs h_amp_pos.le
+  -- Step 4: Factor and use rpow identity
+  have h2 : rsRemainderConstant * t ^ (-(3 : ℝ) / 4) / (2 * Real.pi / t) ^ ((1 : ℝ) / 4) =
+      rsRemainderConstant * (t ^ (-(3:ℝ)/4) / (2 * Real.pi / t) ^ ((1:ℝ)/4)) := by ring
+  rw [h2, rpow_three_quarter_div_amp t hpos] at h1
+  -- Step 5: rsRemainderConstant * (t^{-1/2} / (2π)^{1/4}) = fresnelC1Bound * t^{-1/2}
+  have h3 : rsRemainderConstant * (t ^ (-(1:ℝ)/2) / (2 * Real.pi) ^ ((1:ℝ)/4)) =
+      fresnelC1Bound * t ^ (-(1:ℝ)/2) := by
+    unfold rsRemainderConstant
+    have h_ne : (2 * Real.pi) ^ ((1:ℝ)/4) ≠ 0 := ne_of_gt h_2pi14_pos
+    field_simp
+  linarith
 
 /-! ## Proved: Fresnel coefficient numerical bound -/
 
