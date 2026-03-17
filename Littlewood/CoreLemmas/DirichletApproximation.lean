@@ -727,86 +727,34 @@ private lemma am_gm_two_pi (ε : ℝ) (hε : 0 < ε) :
                Real.sqrt_nonneg (4 * Real.pi)]
   linarith
 
-/-- **Inhomogeneous simultaneous Dirichlet approximation on an interval (corrected).**
+/-! ### Inhomogeneous multi-dimensional Dirichlet — REMOVED (false statement)
 
-    Given K frequencies γ₁,...,γ_K with pairwise separation ≥ gap,
-    individual lower bound |γ_k| ≥ gap, tolerance ε > 0, and interval
-    [a,b] with b-a ≥ (2π/(ε·gap))^K, there exists t₀ ∈ [a,b] such that
-    for all k, γ_k·t₀ ≈ φ_k (mod 2π) within tolerance ε.
+**Deleted theorem**: `inhomogeneous_dirichlet_on_interval` for K ≥ 2.
 
-    K=0 and K=1 are sorry-free. K≥2 requires Minkowski (Cassels 1957).
+**Counterexample (K=2)**: γ₁ = 2, γ₂ = 3, φ₁ = 0, φ₂ = 1, ε = 0.1, gap = 1.
+The gap hypotheses hold: |γ₁| = 2 ≥ 1, |γ₂| = 3 ≥ 1, |γ₁ - γ₂| = 1 ≥ 1.
+But the constraint |t₀·γ₁ - m₁·2π| ≤ 0.1 forces t₀ ≈ m₁·π ± 0.05.
+Then 3t₀ ≈ 3m₁·π, and |3m₁·π - 1 - m₂·2π| = |π(3m₁ - 2m₂) - 1|.
+Since 3m₁ - 2m₂ is an integer and 1/π ≈ 0.318 is irrational,
+|πk - 1| ≥ |π·0 - 1| = 1 > 0.1 for all integers k. No solution exists,
+regardless of interval length.
 
-    **History (Agent 6v2, 2026-03-16):** Previous statement without gap was
-    FALSE for K≥2 (counterexample: γ₁=γ₂=14, φ₁=0, φ₂=π).
+The root cause: pairwise gap ≥ 1 does NOT prevent the frequency RATIO
+γ₂/γ₁ from being rational. When frequency ratios are rational, the
+curve t ↦ (tγ₁, tγ₂) mod 2π is periodic and misses generic targets.
+The correct hypothesis is Q-linear independence of the frequencies,
+which is Kronecker's theorem (equivalent to density of the curve on
+the K-torus). For zeta zeros this is the Grand Simplicity Hypothesis,
+which is unproven even conditionally on RH.
 
-    **Downstream:** PerronExplicitFormulaProvider must supply hγ_gap and
-    update hlen to (2π/(ε·gap))^K. Tower_cap exp(exp(cK)) suffices. -/
-theorem inhomogeneous_dirichlet_on_interval
-    (K : ℕ) (γ φ : Fin K → ℝ) (ε gap a b : ℝ)
-    (hε : 0 < ε) (hgap : 0 < gap) (hab : a < b)
-    (hγ_lb : ∀ k, gap ≤ |γ k|)
-    (hγ_gap : ∀ i j : Fin K, i ≠ j → gap ≤ |γ i - γ j|)
-    (hlen : (2 * Real.pi / (ε * gap)) ^ K ≤ b - a) :
-    ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
-      ∀ k : Fin K, ∃ m : ℤ, |t0 * γ k - φ k - m * (2 * Real.pi)| ≤ ε := by
-  by_cases hK : K = 0
-  · subst hK; exact ⟨a, le_refl a, le_of_lt hab, fun k => Fin.elim0 k⟩
-  · obtain ⟨K', rfl⟩ : ∃ K', K = K' + 1 := Nat.exists_eq_succ_of_ne_zero hK
-    rcases K' with _ | K''
-    · -- K = 1: Clamped IVT (sorry-free for all ε > 0)
-      have hγ0 := hγ_lb ⟨0, by omega⟩
-      have hba : 0 ≤ b - a := by linarith
-      have hεgap : 0 < ε * gap := mul_pos hε hgap
-      have hlen1 : 2 * Real.pi / (ε * gap) ≤ b - a := by
-        simpa [pow_succ, pow_zero, one_mul] using hlen
-      have h_2pi_ε : 2 * Real.pi / ε ≤ |γ ⟨0, by omega⟩| * (b - a) := by
-        calc 2 * Real.pi / ε = gap * (2 * Real.pi / (ε * gap)) := by field_simp
-          _ ≤ gap * (b - a) := by nlinarith
-          _ ≤ |γ ⟨0, by omega⟩| * (b - a) := mul_le_mul_of_nonneg_right hγ0 hba
-      have hcov : 2 * Real.pi ≤ |γ ⟨0, by omega⟩| * (b - a) + 2 * ε :=
-        le_trans (am_gm_two_pi ε hε) (by linarith)
-      have hγ0_ne : γ ⟨0, by omega⟩ ≠ 0 := by
-        intro h; rw [h, abs_zero] at hγ0; linarith
-      obtain ⟨t0, ht0a, ht0b, m, hm⟩ :=
-        one_dim_clamped_hit (γ ⟨0, by omega⟩) (φ ⟨0, by omega⟩) ε a b
-          hε (le_of_lt hab) hγ0_ne hcov
-      refine ⟨t0, ht0a, ht0b, fun k => ?_⟩
-      have hk0 : k = ⟨0, by omega⟩ := by ext; omega
-      rw [hk0]; exact ⟨m, hm⟩
-    · -- K ≥ 2: Correct TRUE statement. Proof requires Minkowski's lattice
-      -- point theorem (not in Mathlib). Reference: Cassels 1957, Ch. III.
-      -- Previous sorry was on a FALSE statement; this sorry is on a TRUE one.
-      sorry
+The π-chain main theorem `littlewood_pi_li` uses
+`PhaseAlignmentToTargetHyp` (a typeclass assumption equivalent to
+the Grand Simplicity Hypothesis) and does NOT depend on this file's
+sorry. The Perron formula path that attempted to construct this
+instance was never on the critical path.
 
-/-- Variant with norm notation. -/
-theorem inhomogeneous_dirichlet_on_interval_norm
-    (K : ℕ) (γ φ : Fin K → ℝ) (ε gap a b : ℝ)
-    (hε : 0 < ε) (hgap : 0 < gap) (hab : a < b)
-    (hγ_lb : ∀ k, gap ≤ |γ k|)
-    (hγ_gap : ∀ i j : Fin K, i ≠ j → gap ≤ |γ i - γ j|)
-    (hlen : (2 * Real.pi / (ε * gap)) ^ K ≤ b - a) :
-    ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
-      ∀ k : Fin K, ∃ m : ℤ, ‖t0 * γ k - φ k - m * (2 * Real.pi)‖ ≤ ε := by
-  obtain ⟨t0, ht0a, ht0b, h⟩ :=
-    inhomogeneous_dirichlet_on_interval K γ φ ε gap a b hε hgap hab hγ_lb hγ_gap hlen
-  refine ⟨t0, ht0a, ht0b, fun k => ?_⟩
-  obtain ⟨m, hm⟩ := h k
-  exact ⟨m, by rwa [Real.norm_eq_abs]⟩
-
-/-- Variant using zsmul notation, matching PerronExplicitFormulaProvider. -/
-theorem inhomogeneous_dirichlet_on_interval_zsmul
-    (K : ℕ) (γ φ : Fin K → ℝ) (ε gap a b : ℝ)
-    (hε : 0 < ε) (hgap : 0 < gap) (hab : a < b)
-    (hγ_lb : ∀ k, gap ≤ |γ k|)
-    (hγ_gap : ∀ i j : Fin K, i ≠ j → gap ≤ |γ i - γ j|)
-    (hlen : (2 * Real.pi / (ε * gap)) ^ K ≤ b - a) :
-    ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
-      ∀ k : Fin K, ∃ m : ℤ, ‖t0 * γ k - φ k - m • (2 * Real.pi)‖ ≤ ε := by
-  obtain ⟨t0, ht0a, ht0b, h⟩ :=
-    inhomogeneous_dirichlet_on_interval_norm K γ φ ε gap a b hε hgap hab hγ_lb hγ_gap hlen
-  refine ⟨t0, ht0a, ht0b, fun k => ?_⟩
-  obtain ⟨m, hm⟩ := h k
-  exact ⟨m, by rwa [zsmul_eq_mul]⟩
+**What remains**: K=0 and K=1 cases are sorry-free (below).
+-/
 
 /-! ### K=1 Parameterized Version -/
 

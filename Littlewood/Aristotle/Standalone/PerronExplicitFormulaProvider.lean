@@ -2112,80 +2112,30 @@ private lemma tower_cap_dominates_perronThreshold
 
 /-- **Simultaneous inhomogeneous Dirichlet approximation on an interval**.
 
-    Given K frequencies γ₁,...,γ_K (imaginary parts of zeros ≤ T),
-    target phases φ₁,...,φ_K, tolerance ε > 0, and an interval [a, b]
-    of length ≥ (2π/ε)^K, there exists t₀ ∈ [a, b] with
-    ‖t₀·γ_k - φ_k - m_k·2π‖ ≤ ε for all k simultaneously.
+    Given the finite set of zeta zero ordinates ≤ T, target phases,
+    and a sufficiently long interval, find t₀ satisfying approximate
+    congruences for all zeros simultaneously.
 
-    **Mathematical justification** (Cassels 1957, Ch. III, Theorem I):
-    The K-torus T^K = (ℝ/2πℤ)^K is covered by (2π/ε)^K boxes of side ε.
-    Mapping t ↦ (t·γ₁,...,t·γ_K) mod 2π, with ⌈(b-a)·max|γ_k|/(2π)⌉
-    sample points, pigeonhole gives two points in the same box.
-    Their difference provides homogeneous approximation; the shifted
-    version gives inhomogeneous approximation.
+    **SORRY STATUS**: This lemma requires the multi-dimensional
+    inhomogeneous Dirichlet theorem, which needs Q-linear independence
+    of the zero ordinates (Grand Simplicity Hypothesis). The previous
+    attempt via `inhomogeneous_dirichlet_on_interval` was on a FALSE
+    statement — pairwise gaps do NOT suffice for K ≥ 2.
+    See DirichletApproximation.lean for the counterexample.
 
-    **SORRY STATUS (updated Agent4v2, 2026-03-15)**: Sorry-free in this lemma.
-    The |γ_k| ≥ 1 hypothesis (needed by Dirichlet approximation) is discharged
-    via `zero_ord_lower_bound` from ZeroCountingAssumptions.lean.
-    The K-torus Dirichlet approximation is delegated to
-    `DirichletApprox.inhomogeneous_dirichlet_on_interval_zsmul` (sorry in
-    DirichletApproximation.lean). Finset-to-Fin enumeration is sorry-free. -/
+    NOT ON CRITICAL PATH: The main theorem `littlewood_pi_li` uses
+    `PhaseAlignmentToTargetHyp` as a typeclass assumption, which
+    is equivalent to this and does not flow through this file. -/
 private lemma simultaneous_dirichlet_on_interval
     {T : ℝ} (_hT4 : 4 ≤ T) (_hNpos : 0 < N T)
-    (phase : ℂ → ℝ) (a b : ℝ) (hab : a < b)
-    (hlen : (2 * Real.pi / (1 / 2)) ^ (N T : ℕ) ≤ b - a) :
+    (phase : ℂ → ℝ) (a b : ℝ) (_hab : a < b)
+    (_hlen : (2 * Real.pi / (1 / 2)) ^ (N T : ℕ) ≤ b - a) :
     ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
       ∀ ρ ∈ (finite_zeros_le T).toFinset,
         ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ 1 / 2 := by
-  -- Bridge: enumerate the finset as Fin K and apply the abstract Dirichlet theorem.
-  set S := (finite_zeros_le T).toFinset with hS_def
-  set K := S.card with hK_def
-  let e : Fin K ≃ S := S.equivFin.symm
-  let γ : Fin K → ℝ := fun k => (e k).val.im
-  let φ : Fin K → ℝ := fun k => phase (e k).val
-  have hK_eq : K = N T := by
-    simp only [hK_def, hS_def]
-    rw [show N T = (zerosUpTo T).ncard from rfl]
-    exact (Set.ncard_eq_toFinset_card _ (finite_zeros_le T)).symm
-  -- With gap = 1: (2π/(ε·gap))^K = (2π/(1/2·1))^K = (4π)^K = (2π/(1/2))^K
-  have hlen' : (2 * Real.pi / ((1 / 2) * 1)) ^ K ≤ b - a := by
-    rw [show (2 : ℝ) * Real.pi / ((1 : ℝ) / 2 * 1) = 2 * Real.pi / (1 / 2) from by ring]
-    rwa [hK_eq]
-  -- Each γ k = ρ.im for ρ ∈ zerosUpTo T ⊆ zetaNontrivialZerosPos, so γ k > 0.
-  -- The first zeta zero has ordinate ≈ 14.13, so |γ k| ≥ 1 holds for all zeros.
-  have hγ_lb : ∀ k, (1 : ℝ) ≤ |γ k| := by
-    intro k
-    have hρ_fin : (e k).val ∈ (finite_zeros_le T).toFinset := (e k).prop
-    have hρ_mem : (e k).val ∈ zerosUpTo T :=
-      (finite_zeros_le T).mem_toFinset.mp hρ_fin
-    have hρ_zntpos : (e k).val ∈ zetaNontrivialZerosPos :=
-      (Set.mem_inter_iff _ _ _).mp hρ_mem |>.1
-    have hρ_ge1 : 1 ≤ (e k).val.im := zero_ord_lower_bound _ hρ_zntpos
-    rw [show γ k = (e k).val.im from rfl, abs_of_pos (by linarith)]
-    exact hρ_ge1
-  -- Pairwise gap: distinct zeta zeros have |γ_i - γ_j| ≥ 1.
-  -- This follows from the fact that distinct nontrivial zeros with positive
-  -- imaginary parts have distinct ordinates, and the minimum gap between
-  -- consecutive zeros is > 1 (the first gap is ~7 between γ₁≈14.13 and γ₂≈21.02).
-  -- A formal proof would require a zero spacing bound; for now we use sorry.
-  have hγ_gap : ∀ i j : Fin K, i ≠ j → (1 : ℝ) ≤ |γ i - γ j| := by
-    sorry
-  have hdir :
-      ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
-        ∀ k : Fin K, ∃ m : ℤ, ‖t0 * γ k - φ k - m • (2 * Real.pi)‖ ≤ (1 : ℝ) / 2 :=
-    DirichletApprox.inhomogeneous_dirichlet_on_interval_zsmul K γ φ (1/2) 1 a b
-      (by norm_num) (by norm_num) hab hγ_lb hγ_gap hlen'
-  obtain ⟨t0, ht0a, ht0b, happrox⟩ := hdir
-  refine ⟨t0, ht0a, ht0b, fun ρ hρ => ?_⟩
-  set k : Fin K := e.symm ⟨ρ, hρ⟩ with hk_def
-  have hek : e k = ⟨ρ, hρ⟩ := e.apply_symm_apply ⟨ρ, hρ⟩
-  obtain ⟨m, hm⟩ := happrox k
-  refine ⟨m, ?_⟩
-  have hval : (e k).val = ρ := congr_arg Subtype.val hek
-  have hγ : γ k = ρ.im := show (e k).val.im = ρ.im by rw [hval]
-  have hφ : φ k = phase ρ := show phase (e k).val = phase ρ by rw [hval]
-  simp only [hγ, hφ] at hm
-  exact hm
+  -- Blocked: requires Q-linear independence of zeta zero ordinates
+  -- (Grand Simplicity Hypothesis), not just pairwise separation.
+  sorry
 
 private theorem seed_witness_from_perron_core
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
