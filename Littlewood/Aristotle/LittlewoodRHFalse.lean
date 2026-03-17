@@ -13,7 +13,7 @@ Steps:
   4. √x · lll x ≤ x^α eventually (since α > 1/2 and lll x = o(x^δ) for any δ)
   5. From Ω± monotonicity: ψ-x = Ω±(√x · lll x)
 
-SORRY COUNT: 0 (uses hypothesis classes SchmidtPsiOscillationHyp, FirstZeroOrdinateHyp)
+SORRY COUNT: 0 (uses hypothesis classes SchmidtPsiOscillationHyp, ZetaHasNontrivialZeroHyp)
 -/
 
 import Littlewood.Oscillation.SchmidtTheorem
@@ -72,7 +72,7 @@ private theorem lll_le_rpow (δ : ℝ) (hδ : 0 < δ) :
 
 /-- When RH fails, x^{Θ-ε} eventually dominates √x · lll x for small ε. -/
 private theorem rpow_dominates_sqrt_lll_of_not_RH
-    [FirstZeroOrdinateHyp]
+    [ZetaHasNontrivialZeroHyp]
     (hRH : ¬ZetaZeros.RiemannHypothesis) :
     ∃ ε : ℝ, 0 < ε ∧
     ∀ᶠ x in atTop, Real.sqrt x * lll x ≤ x ^ (Θ - ε) := by
@@ -96,7 +96,7 @@ private theorem rpow_dominates_sqrt_lll_of_not_RH
 
 Uses Schmidt oscillation (Ω±(x^{Θ-ε})) + domination + Ω± monotonicity. -/
 theorem littlewood_psi_rh_false
-    [SchmidtPsiOscillationHyp] [FirstZeroOrdinateHyp]
+    [SchmidtPsiOscillationHyp] [ZetaHasNontrivialZeroHyp]
     (hRH : ¬ZetaZeros.RiemannHypothesis) :
     (fun x => chebyshevPsi x - x)
     =Ω±[fun x => Real.sqrt x * lll x] := by

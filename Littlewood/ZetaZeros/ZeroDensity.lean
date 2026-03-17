@@ -219,10 +219,11 @@ theorem summable_inv_gamma_sq [ZeroCountingSummabilityHyp] :
   summable_inv_gamma_pow 2 one_lt_two
 
 /-- The value of ∑ 1/γ² is finite and positive -/
-theorem tsum_inv_gamma_sq_pos [ZeroCountingSummabilityHyp] [FirstZeroOrdinateHyp] :
+theorem tsum_inv_gamma_sq_pos [ZeroCountingSummabilityHyp] [ZetaHasNontrivialZeroHyp] :
     0 < ∑' γ : ZeroOrdinate, 1 / (γ : ℝ) ^ (2 : ℝ) := by
-  obtain ⟨γ₁, hγ₁_mem, _hγ₁_low, _hγ₁_high, _hmin⟩ := firstZeroOrdinate_bounds
-  let γ0 : ZeroOrdinate := ⟨γ₁, hγ₁_mem⟩
+  rcases zetaNontrivialZerosPos_nonempty with ⟨s, hs⟩
+  have hord : s.im ∈ zetaZeroOrdinates := ⟨s, hs, rfl⟩
+  let γ0 : ZeroOrdinate := ⟨s.im, hord⟩
   have hterm_pos : 0 < 1 / (γ0 : ℝ) ^ (2 : ℝ) := by
     have hγpos : 0 < (γ0 : ℝ) := ZeroOrdinate.pos γ0
     have hpow_pos : 0 < (γ0 : ℝ) ^ (2 : ℝ) := Real.rpow_pos_of_pos hγpos _

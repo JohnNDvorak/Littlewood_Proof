@@ -316,10 +316,6 @@ instance : ZetaZeros.ZeroCountingFifteenHyp := by
   refine ⟨?_⟩
   sorry
 
-instance : ZetaZeros.FirstZeroOrdinateHyp := by
-  refine ⟨?_⟩
-  sorry
-
 instance : ZetaZeros.ZeroCountingAsymptoticHyp := by
   refine ⟨?_⟩
   sorry

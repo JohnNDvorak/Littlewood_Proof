@@ -2,16 +2,14 @@
 Sorry-backed instances for the full-strength Littlewood theorem.
 
 These instances provide the hypotheses needed by the RH case split:
-  - FirstZeroOrdinateHyp: existence of the first zeta zero at ~14.134...
+  - ZetaHasNontrivialZeroHyp: existence of nontrivial zeros (derived from ZeroCountingTendstoHyp)
   - SchmidtPsiOscillationHyp: ψ-x = Ω±(x^{Θ-ε}) for any ε > 0
   - PsiOscillationLLLRHHyp: under RH, ψ-x = Ω±(√x · lll x)
 
-SORRY COUNT: 3 (one per instance)
+SORRY COUNT: 2 (one per sorry-backed instance)
 
 MATHEMATICAL STATUS:
-  All three are classical results requiring the explicit formula for ψ(x)
-  (Perron's formula + residue extraction), which is not available in Lean/Mathlib.
-  - FirstZeroOrdinateHyp: numerical computation (γ₁ ≈ 14.134725...)
+  - ZetaHasNontrivialZeroHyp: DERIVED from ZeroCountingTendstoHyp (no sorry needed)
   - SchmidtPsiOscillationHyp: Schmidt 1903, explicit formula + Landau's lemma
   - PsiOscillationLLLRHHyp: Littlewood 1914, explicit formula + Dirichlet alignment
 
@@ -34,10 +32,8 @@ open ZetaZeros Schmidt
 
 namespace Bridge.LittlewoodFullStrengthInstances
 
-/-- The first zeta zero ordinate γ₁ ≈ 14.134725... exists and is the smallest. -/
-instance : FirstZeroOrdinateHyp where
-  bounds := by
-    sorry -- Numerical computation: γ₁ ∈ (14.13, 14.14), minimal among positive ordinates
+-- ZetaHasNontrivialZeroHyp is derived automatically from ZeroCountingTendstoHyp
+-- via the instance `zetaHasNontrivialZero_of_tendsto` (no sorry needed).
 
 /-- Schmidt's oscillation theorem: ψ-x = Ω±(x^{Θ-ε}) for any ε > 0. -/
 instance : SchmidtPsiOscillationHyp where

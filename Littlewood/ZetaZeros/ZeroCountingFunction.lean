@@ -276,7 +276,7 @@ private lemma riemannZeta_ne_zero_punctured_nhds_one :
   have hne :
       ((fun s => (s - 1) * riemannZeta s) ⁻¹' ({0}ᶜ : Set ℂ)) ∈ 𝓝[≠] (1 : ℂ) := by
     have h0 : ({0}ᶜ : Set ℂ) ∈ 𝓝 (1 : ℂ) := by
-      simpa using (compl_singleton_mem_nhds (show (1 : ℂ) ≠ 0 from one_ne_zero))
+      simpa using (compl_singleton_mem_nhds (show (1 : ℂ) ≠ 0 by exact one_ne_zero))
     exact (tendsto_def.1 hres) ({0}ᶜ) h0
   rcases (Metric.mem_nhdsWithin_iff.1 hne) with ⟨ε, εpos, hε⟩
   refine ⟨ε, εpos, ?_⟩
@@ -447,6 +447,12 @@ theorem xiZerosUpTo_finite (T : ℝ) : (xiZerosUpTo T).Finite := by
 class ZeroCountingTendstoHyp : Prop where
   tendsto_atTop : Tendsto (fun T => (N T : ℝ)) atTop atTop
 
+/-- Zeta has at least one nontrivial zero with positive imaginary part.
+This is the only thing downstream theorems about Θ actually need from `FirstZeroOrdinateHyp`.
+It follows from N(T) → ∞ (i.e., `ZeroCountingTendstoHyp`). -/
+class ZetaHasNontrivialZeroHyp : Prop where
+  nonempty : zetaNontrivialZerosPos.Nonempty
+
 /-! ## Basic Properties -/
 
 section BasicProperties
@@ -512,43 +518,7 @@ class ZeroCountingSpecialValuesHyp : Prop where
 class ZeroCountingFifteenHyp : Prop where
   fifteen : N 15 = 1
 
-class FirstZeroOrdinateHyp : Prop where
-  bounds :
-    ∃ γ₁ ∈ zetaZeroOrdinates, 14.13 < γ₁ ∧ γ₁ < 14.14 ∧
-      ∀ γ ∈ zetaZeroOrdinates, γ₁ ≤ γ
-
-/-- **Simplicity of zeta zeros hypothesis.**
-    All nontrivial zeros of the Riemann zeta function are simple:
-    if ζ(s) = 0 with 0 < Re(s) < 1, then ζ'(s) ≠ 0.
-
-    This is widely believed (consistent with GUE, verified for billions of zeros)
-    but is an OPEN PROBLEM. It is used in the argument principle approach to RvM
-    to equate ncard (distinct zeros) with the contour integral output.
-
-    STATUS: Believed true, unproved. Required for the formalization's N(T) = ncard
-    to match the argument principle's sum-of-multiplicities output. -/
-class ZetaZerosSimpleHyp : Prop where
-  simple : ∀ (s : ℂ), s ∈ zetaNontrivialZeros → deriv riemannZeta s ≠ 0
-
 /-! ### Global instances (assumptions) -/
-
-instance instZeroCountingSpecialValuesHyp [FirstZeroOrdinateHyp] :
-    ZeroCountingSpecialValuesHyp := by
-  refine ⟨?_⟩
-  rcases FirstZeroOrdinateHyp.bounds with ⟨γ₁, _, hγ₁low, _, hγ₁min⟩
-  apply (zeroCountingFunction_eq_zero_iff 14).2
-  apply Set.eq_empty_iff_forall_notMem.mpr
-  intro z hz
-  have hz' : z ∈ zetaNontrivialZerosPos ∧ z.im ≤ 14 := by
-    simpa [zerosUpTo] using hz
-  have hzpos : z ∈ zetaNontrivialZerosPos := hz'.1
-  have hle : z.im ≤ 14 := hz'.2
-  have hzord : z.im ∈ zetaZeroOrdinates := ⟨z, hzpos, rfl⟩
-  have h14lt : (14 : ℝ) < γ₁ := by
-    have h14 : (14 : ℝ) < 14.13 := by norm_num
-    exact lt_trans h14 hγ₁low
-  have hlt : z.im < γ₁ := lt_of_le_of_lt hle h14lt
-  exact (not_le_of_gt hlt) (hγ₁min _ hzord)
 
 /-! ## Specific Bounds -/
 
@@ -567,11 +537,16 @@ theorem zeroCountingFunction_fourteen [ZeroCountingSpecialValuesHyp] : N 14 = 0 
 theorem zeroCountingFunction_fifteen [ZeroCountingFifteenHyp] : N 15 = 1 := by
   simpa using ZeroCountingFifteenHyp.fifteen
 
-/-- The first zero ordinate γ₁ ≈ 14.134725... -/
-theorem firstZeroOrdinate_bounds [FirstZeroOrdinateHyp] :
-    ∃ γ₁ ∈ zetaZeroOrdinates, 14.13 < γ₁ ∧ γ₁ < 14.14 ∧
-      ∀ γ ∈ zetaZeroOrdinates, γ₁ ≤ γ := by
-  simpa using FirstZeroOrdinateHyp.bounds
+/-- The set of nontrivial zeros with positive imaginary part is nonempty. -/
+theorem zetaNontrivialZerosPos_nonempty [ZetaHasNontrivialZeroHyp] :
+    zetaNontrivialZerosPos.Nonempty :=
+  ZetaHasNontrivialZeroHyp.nonempty
+
+/-- The set of nontrivial zeros is nonempty. -/
+theorem zetaNontrivialZeros_nonempty [ZetaHasNontrivialZeroHyp] :
+    zetaNontrivialZeros.Nonempty := by
+  rcases zetaNontrivialZerosPos_nonempty with ⟨s, hs⟩
+  exact ⟨s, (mem_zetaNontrivialZerosPos.mp hs).1⟩
 
 end SpecificBounds
 
@@ -947,6 +922,28 @@ instance zeroCountingTendstoHyp_of_lower_bound [ZeroCountingLowerBoundHyp] :
     have hlow' := hT1 T hT1'
     simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hlow'
   exact hb.trans hlow
+
+/-- N(T) → ∞ implies ζ has nontrivial zeros.
+If N(T) → ∞ then for any bound b there exists T with N(T) ≥ b.
+Taking b = 1 gives some T with N(T) ≥ 1, so zerosUpTo(T) is nonempty,
+hence zetaNontrivialZerosPos (and thus zetaNontrivialZeros) is nonempty. -/
+instance zetaHasNontrivialZero_of_tendsto [ZeroCountingTendstoHyp] :
+    ZetaHasNontrivialZeroHyp := by
+  refine ⟨?_⟩
+  have htend := ZeroCountingTendstoHyp.tendsto_atTop
+  rw [Filter.tendsto_atTop_atTop] at htend
+  rcases htend 1 with ⟨T, hT⟩
+  have hNT : 1 ≤ (N T : ℝ) := hT T le_rfl
+  have hNT' : 0 < N T := by
+    have : (1 : ℕ) ≤ N T := by exact_mod_cast hNT
+    omega
+  have hne : (zerosUpTo T).Nonempty := by
+    rw [Set.nonempty_iff_ne_empty]
+    intro hempty
+    have := (zeroCountingFunction_eq_zero_iff T).mpr hempty
+    omega
+  rcases hne with ⟨s, hs⟩
+  exact ⟨s, (Set.mem_inter_iff _ _ _).mp hs |>.1⟩
 
 /-- Upper bound: `N(T) ≤ C * T * log T` for `T ≥ 4`. -/
 theorem zeroCountingFunction_upper_bound [ZeroCountingAsymptoticHyp] :

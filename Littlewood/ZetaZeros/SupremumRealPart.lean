@@ -115,29 +115,27 @@ theorem zetaZeroRealParts_bddBelow : BddBelow zetaZeroRealParts := by
   exact le_of_lt (zetaZeroRealPart_pos hρ)
 
 /-- The set of real parts is nonempty (there exist zeros) -/
-theorem zetaZeroRealParts_nonempty [FirstZeroOrdinateHyp] : zetaZeroRealParts.Nonempty := by
-  rcases firstZeroOrdinate_bounds with ⟨γ₁, hγ₁_mem, _hγ₁_low, _hγ₁_high, _hmin⟩
-  rcases hγ₁_mem with ⟨s, hs, rfl⟩
-  have hs' : s ∈ zetaNontrivialZeros := (mem_zetaNontrivialZerosPos.1 hs).1
-  refine ⟨s.re, ?_⟩
-  exact ⟨s, hs', rfl⟩
+theorem zetaZeroRealParts_nonempty [ZetaHasNontrivialZeroHyp] : zetaZeroRealParts.Nonempty := by
+  rcases zetaNontrivialZerosPos_nonempty with ⟨s, hs⟩
+  have hs' : s ∈ zetaNontrivialZeros := (mem_zetaNontrivialZerosPos.mp hs).1
+  exact ⟨s.re, s, hs', rfl⟩
 
 /-- Θ ≤ 1 -/
-theorem zetaZeroSupRealPart_le_one [FirstZeroOrdinateHyp] : Θ ≤ 1 := by
+theorem zetaZeroSupRealPart_le_one [ZetaHasNontrivialZeroHyp] : Θ ≤ 1 := by
   apply csSup_le zetaZeroRealParts_nonempty
   intro σ hσ
   obtain ⟨ρ, hρ, rfl⟩ := hσ
   exact le_of_lt (zetaZeroRealPart_lt_one hρ)
 
 /-- 0 < Θ -/
-theorem zetaZeroSupRealPart_pos [FirstZeroOrdinateHyp] : 0 < Θ := by
+theorem zetaZeroSupRealPart_pos [ZetaHasNontrivialZeroHyp] : 0 < Θ := by
   have hne := zetaZeroRealParts_nonempty
   obtain ⟨σ, ρ, hρ, rfl⟩ := hne
   calc 0 < ρ.re := zetaZeroRealPart_pos hρ
     _ ≤ Θ := le_csSup zetaZeroRealParts_bddAbove ⟨ρ, hρ, rfl⟩
 
 /-- 1/2 ≤ Θ (there exist zeros with real part = 1/2 on the critical line) -/
-theorem zetaZeroSupRealPart_ge_half [FirstZeroOrdinateHyp] : 1/2 ≤ Θ := by
+theorem zetaZeroSupRealPart_ge_half [ZetaHasNontrivialZeroHyp] : 1/2 ≤ Θ := by
   have hne := zetaZeroRealParts_nonempty
   rcases hne with ⟨r, hr⟩
   rcases hr with ⟨ρ, hρ, hrre⟩
@@ -154,7 +152,7 @@ theorem zetaZeroSupRealPart_ge_half [FirstZeroOrdinateHyp] : 1/2 ≤ Θ := by
     exact le_trans hge hle_r
 
 /-- Θ is achieved: there exists a sequence of zeros whose real parts → Θ -/
-theorem zetaZeroSupRealPart_achieved [FirstZeroOrdinateHyp] :
+theorem zetaZeroSupRealPart_achieved [ZetaHasNontrivialZeroHyp] :
     ∃ ρₙ : ℕ → zetaNontrivialZeros, Tendsto (fun n => (ρₙ n).val.re) atTop (𝓝 Θ) := by
   classical
   obtain ⟨u, _hu_mono, hu_tendsto, hu_mem⟩ :=
@@ -182,7 +180,7 @@ def RiemannHypothesis : Prop :=
   ∀ ρ ∈ zetaNontrivialZeros, ρ.re = 1/2
 
 /-- RH is equivalent to Θ = 1/2 -/
-theorem RiemannHypothesis_iff [FirstZeroOrdinateHyp] : RiemannHypothesis ↔ Θ = 1/2 := by
+theorem RiemannHypothesis_iff [ZetaHasNontrivialZeroHyp] : RiemannHypothesis ↔ Θ = 1/2 := by
   constructor
   · -- RH → Θ = 1/2
     intro hRH
@@ -214,12 +212,12 @@ theorem RiemannHypothesis_iff [FirstZeroOrdinateHyp] : RiemannHypothesis ↔ Θ 
     linarith
 
 /-- Under RH, Θ = 1/2 -/
-theorem zetaZeroSupRealPart_eq_half_of_RH [FirstZeroOrdinateHyp]
+theorem zetaZeroSupRealPart_eq_half_of_RH [ZetaHasNontrivialZeroHyp]
     (hRH : RiemannHypothesis) : Θ = 1/2 :=
   RiemannHypothesis_iff.mp hRH
 
 /-- If RH fails, then Θ > 1/2 -/
-theorem zetaZeroSupRealPart_gt_half_of_not_RH [FirstZeroOrdinateHyp]
+theorem zetaZeroSupRealPart_gt_half_of_not_RH [ZetaHasNontrivialZeroHyp]
     (hRH : ¬RiemannHypothesis) : 1/2 < Θ := by
   by_contra h
   push_neg at h
@@ -239,13 +237,13 @@ theorem zeroFreeRegion_delaValleePoussin [ZeroFreeRegionHyp] :
   simpa using ZeroFreeRegionHyp.region
 
 /-- This implies Θ = 1 (i.e., zeros can get arbitrarily close to Re = 1) -/
-theorem zetaZeroSupRealPart_eq_one_or_half [FirstZeroOrdinateHyp]
+theorem zetaZeroSupRealPart_eq_one_or_half [ZetaHasNontrivialZeroHyp]
     [ZetaZeroSupRealPartDichotomyHyp] :
     Θ = 1 ∨ Θ = 1/2 := by
   simpa using ZetaZeroSupRealPartDichotomyHyp.eq_one_or_half
 
 /-- The infimum of real parts is 1 - Θ (by symmetry ρ ↔ 1-ρ) -/
-theorem zetaZeroInfRealPart [FirstZeroOrdinateHyp] : sInf zetaZeroRealParts = 1 - Θ := by
+theorem zetaZeroInfRealPart [ZetaHasNontrivialZeroHyp] : sInf zetaZeroRealParts = 1 - Θ := by
   -- The functional equation ρ ↔ 1-ρ gives this symmetry
   have hsymm : ∀ r ∈ zetaZeroRealParts, 1 - r ∈ zetaZeroRealParts := by
     intro r hr
@@ -276,7 +274,7 @@ section ErrorTerms
 
 open Chebyshev in
 /-- ψ(x) - x = O(x^Θ) (elementary consequence of explicit formula) -/
-theorem chebyshev_error_bound_Theta [FirstZeroOrdinateHyp] [ChebyshevErrorBoundThetaHyp]
+theorem chebyshev_error_bound_Theta [ZetaHasNontrivialZeroHyp] [ChebyshevErrorBoundThetaHyp]
     (ε : ℝ) (hε : 0 < ε) :
     ∃ C > 0, ∀ x ≥ 2, |chebyshevPsi x - x| ≤ C * x ^ (Θ + ε) := by
   refine ⟨10 / ε, by positivity, ?_⟩
@@ -306,7 +304,7 @@ theorem chebyshev_error_bound_Theta [FirstZeroOrdinateHyp] [ChebyshevErrorBoundT
 
 open Chebyshev in
 /-- Under RH: ψ(x) - x = O(x^{1/2} log²x) -/
-theorem chebyshev_error_bound_RH [FirstZeroOrdinateHyp]
+theorem chebyshev_error_bound_RH [ZetaHasNontrivialZeroHyp]
     [ExplicitFormula.PsiErrorBoundRHHyp] (hRH : RiemannHypothesis) :
     ∃ C > 0, ∀ x ≥ 2, |chebyshevPsi x - x| ≤ C * x ^ (1/2 : ℝ) * (Real.log x) ^ 2 := by
   have hRH' : RiemannHypothesis' := by
@@ -318,7 +316,7 @@ theorem chebyshev_error_bound_RH [FirstZeroOrdinateHyp]
 
 open Chebyshev in
 /-- The zero-free region gives: ψ(x) - x = O(x exp(-c √log x)) -/
-theorem chebyshev_error_bound_zeroFree [FirstZeroOrdinateHyp]
+theorem chebyshev_error_bound_zeroFree [ZetaHasNontrivialZeroHyp]
     [ChebyshevErrorBoundZeroFreeHyp] :
     ∃ c > 0, ∃ C > 0, ∀ x ≥ 2,
       |chebyshevPsi x - x| ≤ C * x * Real.exp (-c * (Real.log x).sqrt) := by
