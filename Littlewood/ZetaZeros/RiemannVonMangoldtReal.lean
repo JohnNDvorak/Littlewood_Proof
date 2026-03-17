@@ -500,49 +500,53 @@ the horizontal edges contribute O(logT). -/
     (c) Standard bounds for ζ'/ζ on vertical lines
     (d) Bounded horizontal edge contributions
 
-    Reference: Titchmarsh §9.3-9.4, Montgomery-Vaughan Theorem 14.5. -/
-private theorem rvm_N_formula_bound :
+    Reference: Titchmarsh §9.3-9.4, Montgomery-Vaughan Theorem 14.5.
+
+    Needs [FirstZeroOrdinateHyp] and [ZetaZerosSimpleHyp] because it uses
+    the argument principle (via argument_principle_rect_entire) to connect
+    N(T) (a cardinality) to the contour integral of logDeriv(ξ). -/
+private theorem rvm_N_formula_bound [FirstZeroOrdinateHyp] [ZetaZerosSimpleHyp] :
     ∃ C : ℝ, ∀ T : ℝ, 14 ≤ T →
       |(N T : ℝ)
         - ((1 / Real.pi) * (stirlingApprox T).im
            - (T / (2 * Real.pi)) * Real.log Real.pi
            + (1 / Real.pi) * Complex.arg (riemannZeta (1/2 + I * ↑T))
            + 1)| ≤ C * Real.log T := by
-  -- ## PROOF STRATEGY (Titchmarsh §9.3-9.4)
+  -- ## PROOF STRUCTURE (Titchmarsh §9.3-9.4)
   --
-  -- The formula says: N(T) ≈ (1/π)·Im(stirlingApprox T) - (T/2π)·log π
-  --                           + (1/π)·arg ζ(1/2+iT) + 1  [up to O(log T)]
+  -- The argument principle gives: N(T) = logIntegralRect(ξ, (-1,2)×(1,T)).re
+  -- for non-ordinate T ≥ 14 (via argument_principle_rect_entire + xi_zero_count_eq_N).
   --
-  -- By rvm_stirling_algebra + stirling_im_approx (both PROVED):
-  --   RHS ≈ (T/2π)·log(T/2π) - T/(2π) + 7/8 + (1/π)·arg ζ + O(1/T)
-  --       = main_term + O(1)  [since |arg ζ| ≤ π]
+  -- The contour integral decomposes into 4 edges:
+  --   2πi·N(T) = contourIntegralRect(logDeriv ξ) = Bottom - Top + i·Right - i·Left
   --
-  -- The Riemann-von Mangoldt formula (Titchmarsh Thm 9.4) states:
-  --   N(T) = main_term + 7/8 + S_cont(T) + O(1/T)
-  -- where S_cont is the continuously-wound (1/π)·arg ζ along the critical line.
+  -- By functional equation ξ(1-s) = ξ(s) and Schwarz reflection ξ(s̄) = conj(ξ(s)):
+  --   logDeriv(ξ)(-1+iy) = -conj(logDeriv(ξ)(2+iy))
+  -- So Left = -conj(Right), giving Re(Left) = -Re(Right).
   --
-  -- ## WHAT REMAINS (argument principle content):
+  -- Therefore: 2π·N(T) = Im(Bottom) - Im(Top) + 2·Re(Right)
   --
-  -- The formula relates N(T) (a cardinality of zeros) to an analytic expression.
-  -- This connection requires the ARGUMENT PRINCIPLE for ξ along the half-boundary
-  -- of the rectangle (-1,2)×(1,T), combined with the functional equation ξ(1-s)=ξ(s).
+  -- By XiLogDerivDecomposition (PROVED, 0 sorry):
+  --   logDeriv(ξ)(s) = 1/s + 1/(s-1) - (1/2)logπ + (1/2)ψ(s/2) + logDeriv(ζ)(s)
   --
-  -- Specifically, the proof tracks arg(ξ) along 2+i → 2+iT → 1/2+iT, decomposing:
-  --   arg(ξ) = arg(s·(s-1)) + arg(π^{-s/2}) + arg(Γ(s/2)) + arg(ζ(s))
-  -- - Γ contribution → θ(T) ≈ Im(stirlingApprox) (Stirling, PROVED)
-  -- - ζ contribution → arg ζ(1/2+iT) + O(log T) (horizontal edge bound)
-  -- - Rational contributions → ±π (bounded, absorbed into O(log T))
+  -- The contour integrals of the first 4 terms VANISH by Cauchy-Goursat
+  -- (all poles are at Im=0, outside rectangle with Im≥1).
+  -- PROVED in RvMContourEvaluation.lean:
+  --   cauchy_goursat_inv_s, cauchy_goursat_inv_s_sub_one, cauchy_goursat_const
   --
-  -- ## PROVED INFRASTRUCTURE (all 0 sorry):
-  -- - XiLogDerivDecomposition: pointwise decomposition of logDeriv(ξ)
-  -- - StirlingForRvM: Stirling ↔ main term algebra + Im asymptotic
-  -- - RvMEdgeIntegrals: |∫₁ᵀ 1/(2+iy) dy| ≤ log T, horizontal bounds
-  -- - RectArgumentPrinciple: argument principle for rectangles
-  -- - BinetStirling: Im(stirlingApprox) ≈ (T/2)log(T/2) - T/2 - π/8 + O(1/T)
+  -- Edge-by-edge evaluation:
+  -- • Bottom (Im=1): O(1) — logDeriv(ξ) bounded on compact set
+  -- • Top (Im=T): Im integral ≈ 2·arg(ξ(2+iT)) via FTC for log
+  -- • Right (σ=2): Re integral gives Stirling + logπ + O(1) contribution
   --
-  -- ## MISSING PIECE:
-  -- Formalizing "change of arg along a path" = Im(∫_path logDeriv(f) ds)
-  -- and connecting this to N(T) via the argument principle + functional equation.
+  -- The matching gives:
+  --   2π·N(T) = 2·Im(stirlingApprox T) - T·logπ + 2·arg(ζ(1/2+iT)) + 2π + O(logT)
+  --   N(T) = (1/π)·Im(stirlingApprox T) - (T/2π)·logπ + (1/π)·arg(ζ) + 1 + O(logT)
+  --
+  -- ## MISSING FORMALIZATION:
+  -- The FTC step: ∫_a^b logDeriv(f)(γ(t))·γ'(t) dt = log f(γ(b)) - log f(γ(a))
+  -- requires a continuous branch of log along the path. This is the
+  -- "continuously wound argument" formalism, not yet built in the project.
   sorry
 
 /-- The contour integral evaluation: logIntegralRect(xi) on (-1,2)×(1,T) equals
