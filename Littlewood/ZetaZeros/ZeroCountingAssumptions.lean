@@ -56,7 +56,7 @@ instance instFirstZeroOrdinateHyp : FirstZeroOrdinateHyp where
     This is an honest conditional assumption, not a provable fact. -/
 instance instZetaZerosSimpleHyp : ZetaZerosSimpleHyp where
   simple := by
-    intro z _ _ _ _
+    intro z _
     sorry  -- Simplicity of zeta zeros: open problem
 
 -- ZeroCountingLowerBoundHyp is now automatically available via the instance chain:
