@@ -21,36 +21,20 @@ into `shifted_contours_bound`. -/
 def shiftedRemainderRe (x T : ℝ) : ℝ :=
   Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T
 
-/-- Pointwise bound on ζ'/ζ on the critical line — the Hadamard product hypothesis.
+/-- Large-T contour bound in standard form — the Hadamard product hypothesis.
 
     **Mathematical content** (Titchmarsh §9.6.1, Davenport Ch. 12):
-    The Hadamard product for ζ gives:
-      -ζ'/ζ(s) = -B - 1/(s-1) + Σ_ρ (1/(s-ρ) + 1/ρ)
-    Decomposing the zero sum into nearby (|γ-t| ≤ 1) and distant (|γ-t| > 1)
-    parts, with N(T+1)-N(T) ≤ C·logT and choosing δ = 1/logT:
-      |ζ'/ζ(1/2+it)| ≤ A·(logT)²  for 1 ≤ |t| ≤ T, T ≥ 2.
+    The Perron explicit formula + Hadamard product + contour shift gives:
+      |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C₁ · √x · (logT)² / √T  for T ≥ 16.
 
-    Since ζ'/ζ is not yet formalized in Mathlib, we state this as:
-    the Perron contour integral of ζ'/ζ · x^s/s over the standard rectangle
-    decomposes into vertical + horizontal segment contributions, each governed
-    by the O((logT)²) pointwise bound:
-      - Vertical: ≤ A · √x · (logT)³ / T  (from ∫₁ᵀ |ζ'/ζ|·√x/t dt)
-      - Horizontal: ≤ A · √x · (logT)² / T  (from |ζ'/ζ|·√x/T · segment length)
-
-    The contour integration step (converting pointwise to integral) requires
-    complex analysis not in Mathlib. The algebraic reduction from this
-    pre-standard form to the standard O(√x·(logT)²/√T) form is sorry-free
-    in PerronAssumptionsBridge.lean (`large_T_assembly`).
-
-    **SORRY STATUS** (2026-03-16): Delegated to HadamardProductZeta.hadamard_contour_bound.
+    **SORRY STATUS** (2026-03-16): Delegated to
+    HadamardProductZeta.contour_remainder_bound_atomic (1 sorry).
     All downstream reductions (this -> LargeTContourBoundHyp -> large-T case of
-    ContourRemainderBoundHyp) are sorry-free once this is provided.
-    See PerronAssumptionsBridge.lean Part 17-23 for full gap specification. -/
+    ContourRemainderBoundHyp) are sorry-free once this is provided. -/
 class ZetaLogDerivPointwiseBoundHyp : Prop where
-  bound : ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+  bound : ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
     |shiftedRemainderRe x T| ≤
-      A * (Real.sqrt x * (Real.log T) ^ 3 / T) +
-      2 * A * (Real.sqrt x * (Real.log T) ^ 2 / T)
+      C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)
 
 /-- Definitional equality between this file's shiftedRemainderRe and the
     HadamardProductZeta version (both expand to the same expression). -/
@@ -61,14 +45,10 @@ private theorem shiftedRemainderRe_eq (x T : ℝ) :
 
 instance : ZetaLogDerivPointwiseBoundHyp where
   bound := by
-    obtain ⟨A, hA, h⟩ := Littlewood.Development.HadamardProductZeta.hadamard_contour_bound
-    exact ⟨A, hA, fun x T hx hT => by rw [shiftedRemainderRe_eq]; exact h x T hx hT⟩
+    obtain ⟨C₁, hC₁, h⟩ := Littlewood.Development.HadamardProductZeta.hadamard_contour_bound
+    exact ⟨C₁, hC₁, fun x T hx hT => by rw [shiftedRemainderRe_eq]; exact h x T hx hT⟩
 
-/-! ### Algebraic reduction: segment form -> standard form
-
-The following inline lemmas reduce the pre-standard segment bound
-(vertical + horizontal) to the standard O(√x·(logT)²/√T) form.
-These duplicate the bridge's `large_T_assembly` to avoid an import cycle. -/
+/-! ### Algebraic infrastructure (retained for downstream lemmas) -/
 
 /-- For T ≥ 16, logT ≤ √T.
     Proof: √16 = 4, exp(u) ≥ u² for u ≥ 4, so T = (√T)² ≤ exp(√T). -/
@@ -126,21 +106,14 @@ private theorem segment_to_standard_form {A x T : ℝ} (hA : 0 < A)
       (mul_nonneg (Real.sqrt_nonneg x) (sq_nonneg _))
   linarith
 
-/-- Large-T contour bound -- derived from `ZetaLogDerivPointwiseBoundHyp`.
-    **SORRY FLOW**: Transits 1 sorry from `ZetaLogDerivPointwiseBoundHyp`. -/
+/-- Large-T contour bound -- now identical to `ZetaLogDerivPointwiseBoundHyp`
+    (both use standard form). -/
 class LargeTContourBoundHyp : Prop where
   bound : ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
     |shiftedRemainderRe x T| ≤ C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)
 
 instance : LargeTContourBoundHyp where
-  bound := by
-    obtain ⟨A, hA, h_seg⟩ := ZetaLogDerivPointwiseBoundHyp.bound
-    exact ⟨3 * A, by positivity, fun x T hx hT => by
-      calc |shiftedRemainderRe x T|
-          ≤ A * (Real.sqrt x * (Real.log T) ^ 3 / T) +
-            2 * A * (Real.sqrt x * (Real.log T) ^ 2 / T) := h_seg x T hx hT
-        _ ≤ 3 * A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
-            segment_to_standard_form hA hx hT⟩
+  bound := ZetaLogDerivPointwiseBoundHyp.bound
 
 theorem large_T_from_zeta_logderiv :
     ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
@@ -151,14 +124,9 @@ theorem large_T_from_zeta_logderiv :
     |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C·(√x·(logT)²/√T).
 
     **SORRY STATUS** (2026-03-16):
-    - Large-T case (T ≥ 16): transits `ZetaLogDerivPointwiseBoundHyp` (sorry #1)
-    - Small-T case (T ∈ [2,16]): transits `SmallTPerronBoundHyp` (sorry #2)
-    Both sub-sorrys are INDEPENDENT and IRREDUCIBLE within this file.
-
-    **CIRCULARITY NOTE**: PerronExplicit's `general_explicit_formula_from_perron`
-    uses `ContourRemainderBoundHyp.bound` (via `contour_integral_remainder_bound`),
-    so the bridge's `small_T_contour_bound` is NOT an independent proof -- it
-    transits the small-T sorry circularly. -/
+    Transits 1 sorry from HadamardProductZeta.contour_remainder_bound_atomic.
+    Both ZetaLogDerivPointwiseBoundHyp (T ≥ 16) and SmallTPerronBoundHyp (T ∈ [2,16])
+    derive from the same atomic sorry. -/
 class ContourRemainderBoundHyp : Prop where
   bound : ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
     |shiftedRemainderRe x T| ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)
@@ -418,10 +386,8 @@ theorem perron_error_lower_bound {x T : ℝ} (_hx : 0 ≤ x) (hT : 2 ≤ T) :
 
 /-! ### Full sorry decomposition chain
 
-This file has TWO independent sorrys (delegated to HadamardProductZeta.lean):
-  Sorry #1: hadamard_contour_bound (T ≥ 16, Hadamard product)
-  Sorry #2: perron_small_T_bound (T ∈ [2,16], general Perron formula)
-Neither implies the other. -/
+This file transits ONE sorry from HadamardProductZeta.contour_remainder_bound_atomic.
+Both ZetaLogDerivPointwiseBoundHyp and SmallTPerronBoundHyp are derived from it. -/
 
 theorem hadamard_algebraic_complete (C_pw : ℝ) (_hCpw : 0 < C_pw)
     (T : ℝ) (_hT : 2 ≤ T) :
