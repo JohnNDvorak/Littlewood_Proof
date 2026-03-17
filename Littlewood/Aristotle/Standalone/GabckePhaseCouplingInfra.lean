@@ -16,7 +16,11 @@ This file provides algebraic infrastructure and key reduction lemmas.
 Part 11 reduces the full antitonicity to `remainder_antitone_for_ge_one`,
 which is the irreducible signed content of Gabcke Satz 4.
 
-SORRY COUNT: 1 (remainder_antitone_for_ge_one — signed remainder antitonicity)
+SORRY COUNT: 1 (signed_remainder_density_monotone — signed remainder antitonicity)
+  Blocked by: (a) signed Gabcke bound c₁(p) > 0 (same content as contour_saddle_bound)
+              (b) errorTermOnBlock_continuousOn (private in RSExpansionProof)
+  Infrastructure provided: blockRemainder_antitone_of_density_antitone reduces
+  the sorry to pointwise density comparison + CoV identity + integrability.
 
 Co-authored-by: Claude (Anthropic)
 -/
@@ -26,6 +30,8 @@ import Littlewood.Aristotle.RSBlockParam
 import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.Standalone.FresnelSaddlePointInfra
 import Littlewood.Aristotle.Standalone.SteepestDescentContour
+import Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp
+import Littlewood.Aristotle.Standalone.GabckeFresnelMonotone
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -39,6 +45,8 @@ open MeasureTheory Set Real Filter Topology HardyEstimatesPartial
 open Aristotle.RSBlockParam Aristotle.ErrorTermExpansion
 open Aristotle.Standalone.FresnelSaddlePointInfra
 open Aristotle.Standalone.SteepestDescentContour
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckeFresnelMonotone
 
 /-! ## Part 1: Sign structure of (-1)^k across consecutive blocks -/
 
@@ -635,55 +643,127 @@ theorem block_estimate_iff_remainder_antitone (k : ℕ) :
   have h_lead := leading_diff_ge_correction k
   linarith
 
+/-! ## Part 11a: Signed saddle-point coefficient
+
+The Gabcke expansion (Satz 4) shows that the signed saddle-point remainder
+(-1)^k · saddlePointRemainder(k, t) is nonneg for t in block k. Specifically:
+
+  (-1)^k · R(k,t) = c₁(p)/√t + O(1/t)
+
+where c₁(p) = cos(π·p)/8 + ... is the first Gabcke correction coefficient
+(Gabcke 1979, Tabelle 1). Since c₁(p) > 0 for all p ∈ [0,1] (ranging from
+0.0417 at p=0,1 to 0.0833 at p=1/2), the signed remainder is nonneg.
+
+This is the genuine irreducible content of Gabcke Satz 4 beyond the absolute
+bound of Satz 1. The absolute bound |R| ≤ (1/4)/√t is already captured by
+SiegelSaddleExpansionHyp. The signed positivity requires the phase structure.
+
+We formalize the "signed saddle-point remainder" σ(k,t) := (-1)^k ·
+saddlePointRemainder(k,t) and provide:
+- The definition
+- The absolute bound (from SiegelSaddleExpansionHyp, 0 sorry)
+- The 1/√ decay of the absolute bound in k
+- The reduction of blockRemainder antitonicity to a pointwise density comparison
+
+The irreducible sorry remains at the level of the SIGNED density comparison:
+remainderDensity(k+1,p) ≤ remainderDensity(k,p) for k ≥ 1, p ∈ [0,1].
+This comparison requires:
+(a) c₁(p) > 0 (Gabcke Tabelle 1)
+(b) The leading-term approximation σ ≈ c₁(p)/√t dominates subleading terms
+Both (a) and (b) are steepest-descent content at the same level as
+SiegelSaddleExpansionHyp.contour_saddle_bound. -/
+
+/-- The signed saddle-point remainder: σ(k,t) := (-1)^k · saddlePointRemainder(k,t).
+    This is the sign-corrected steepest-descent remainder on block k. -/
+def signedSPR (k : ℕ) (t : ℝ) : ℝ :=
+  (-1 : ℝ) ^ k * saddlePointRemainder k t
+
+/-- The absolute value of signedSPR equals the absolute value of saddlePointRemainder.
+    Since |(-1)^k| = 1, the sign factor doesn't affect the absolute value. -/
+theorem abs_signedSPR (k : ℕ) (t : ℝ) :
+    |signedSPR k t| = |saddlePointRemainder k t| := by
+  unfold signedSPR
+  rw [abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul]
+
+/-! ## Part 11b: Sufficient condition for remainder antitonicity via density comparison
+
+The blockRemainder can be expressed via CoV as an integral of remainderDensity
+over [0,1] (from GabckeFresnelMonotone). If the density is pointwise antitone
+in k, then blockRemainder is antitone by integral_mono.
+
+This theorem is sorry-free: it's pure integration theory. -/
+
+/-- Sufficient condition for remainder antitonicity: if the remainder density
+    is pointwise antitone on [0,1] for k ≥ 1, then blockRemainder is antitone.
+
+    This reduces the block-level antitonicity to a pointwise comparison of
+    the remainder density function. The hypotheses:
+    - h_cov_k/h_cov_k1: CoV identities (require errorTermOnBlock continuity)
+    - h_pw: pointwise density comparison (requires signed Gabcke bound)
+    - h_int_k/h_int_k1: integrability (from continuity of the density) -/
+theorem blockRemainder_antitone_of_density_antitone (k : ℕ) (_hk : 1 ≤ k)
+    (h_cov_k : blockRemainder k = ∫ p in Ioc (0:ℝ) 1, remainderDensity k p)
+    (h_cov_k1 : blockRemainder (k + 1) = ∫ p in Ioc (0:ℝ) 1, remainderDensity (k + 1) p)
+    (h_pw : ∀ p, p ∈ Ioc (0:ℝ) 1 →
+      remainderDensity (k + 1) p ≤ remainderDensity k p)
+    (h_int_k : IntegrableOn (remainderDensity k) (Ioc 0 1))
+    (h_int_k1 : IntegrableOn (remainderDensity (k + 1)) (Ioc 0 1)) :
+    blockRemainder (k + 1) ≤ blockRemainder k := by
+  rw [h_cov_k, h_cov_k1]
+  exact integral_mono_ae h_int_k1 h_int_k
+    ((ae_restrict_mem measurableSet_Ioc).mono (fun p hp => h_pw p hp))
+
+/-- The Gabcke absolute bound is antitone in k (from GabckeFresnelMonotone):
+    the bound π/(√(2π)·√(k+2+p)) ≤ π/(√(2π)·√(k+1+p)).
+    This gives that the ABSOLUTE BOUND on remainderDensity decreases with k. -/
+theorem gabcke_abs_bound_antitone' (k : ℕ) (p : ℝ) (hp0 : 0 ≤ p) (hp1 : p ≤ 1) :
+    Real.pi / (Real.sqrt (2 * Real.pi) * Real.sqrt ((k : ℝ) + 2 + p)) ≤
+    Real.pi / (Real.sqrt (2 * Real.pi) * Real.sqrt ((k : ℝ) + 1 + p)) :=
+  gabcke_abs_bound_antitone k p hp0 hp1
+
 /-- **Signed remainder antitonicity** (Gabcke Satz 4, irreducible content).
 
     The block remainder R(k) = (-1)^k · I_k - L_k is antitone for k ≥ 1.
 
-    Proof route (Gabcke 1979 Satz 4):
-    (1) Via CoV: R(k) = ∫₀¹ ρ(k,p) dp where ρ is the remainder density.
-    (2) From the steepest-descent expansion at w₀ = √(t/2π):
-        ρ(k,p) = 4π√(k+1+p) · (-1)^k · SPR(k, blockCoord(k,p))
-        where SPR is the saddlePointRemainder.
-    (3) The signed SPR satisfies (-1)^k · SPR(k,t) ≈ c₁(p)/√t where c₁(p) > 0
-        for all p ∈ [0,1] (Gabcke Tabelle 1: c₁ ranges from 0.0417 to 0.0833).
-    (4) Therefore ρ(k,p) ≈ 4π · c₁(p) · √(2π) / √(k+1+p) > 0.
-    (5) Since 1/√(k+1+p) > 1/√(k+2+p), we get ρ(k,p) > ρ(k+1,p) pointwise.
-    (6) By integral_mono: R(k) > R(k+1).
+    PROOF CHAIN (Gabcke 1979 Satz 4):
+    (1) Via CoV: R(k) = ∫₀¹ ρ(k,p) dp where ρ = remainderDensity.
+    (2) ρ(k,p) = 4π√(k+1+p) · signedSPR(k, blockCoord(k,p))
+        where signedSPR = (-1)^k · saddlePointRemainder.
+    (3) signedSPR(k,t) ≥ 0 for t in block k, k ≥ 1.
+        This is the SIGNED Gabcke bound: c₁(p) > 0 for p ∈ [0,1].
+    (4) signedSPR(k,blockCoord(k,p)) ≈ c₁(p)/(√(2π)·(k+1+p))
+    (5) 4π√(k+1+p) · c₁(p)/(√(2π)·(k+1+p)) = 4π·c₁(p)/(√(2π)·√(k+1+p))
+    (6) This is antitone in k, so ρ(k,p) ≥ ρ(k+1,p) pointwise.
+    (7) By integral_mono (blockRemainder_antitone_of_density_antitone):
+        R(k) ≥ R(k+1).
 
-    BLOCKER: Step (3) requires the *signed* steepest-descent bound, not just
-    the absolute bound |SPR| ≤ (1/4)/√t from SiegelSaddleExpansionHyp.
-    Specifically, we need a lower bound: 0 ≤ (-1)^k · SPR(k,t) on each block.
-    This captures that c₁(p) > 0, which is the irreducible content of Gabcke
-    Satz 4 beyond what Satz 1 (absolute bounds) provides.
+    ATOMIC SORRY CONTENT:
+    Step (3) — the positivity c₁(p) > 0. This requires:
+      (a) Contour integral representation of saddlePointRemainder
+          (same as SiegelSaddleExpansionHyp.contour_saddle_bound)
+      (b) Explicit sign of the Gabcke correction coefficient c₁(p)
+          = cos(πp)/8 - π²p(1-p)csc³(πp)/8 + ... via Taylor of phase
+    Step (1) CoV identity requires errorTermOnBlock_continuousOn
+      (privately proved in RSExpansionProof.lean)
 
-    Reference: Gabcke 1979 Satz 4, Tabelle 1.
+    All infrastructure for steps (1), (2), (5), (6), (7) is proved:
+    - blockRemainder_antitone_of_density_antitone (this file)
+    - amplitude_times_jacobian (GabckeFresnelMonotone)
+    - inv_sqrt_block_antitone (GabckeFresnelMonotone)
+    - gabcke_abs_bound_antitone (GabckeFresnelMonotone)
 
-**Signed remainder density positivity** (Gabcke Satz 4, key sub-lemma).
-
-    The remainder density ρ(k,p) := blockRemainder expressed as an integral
-    over [0,1] satisfies ρ(k,p) ≥ 0 for all k ≥ 1 and p ∈ [0,1].
-
-    This captures that the first RS correction coefficient c₁(p) > 0
-    for all p ∈ [0,1] (Gabcke 1979 Tabelle 1: c₁ ranges from 0.0417 to 0.0833).
-
-    Combined with the 1/√(k+1+p) decay, this gives:
-    blockRemainder(k) = ∫₀¹ c₁(p)·4π/√(k+1+p) dp > 0 and decreasing in k.
-
-    Reference: Gabcke 1979 Satz 4, Tabelle 1. -/
+    Reference: Gabcke 1979 Satz 4, Tabelle 1; Siegel 1932 §3. -/
 private theorem signed_remainder_density_monotone (k : ℕ) (hk : 1 ≤ k) :
     blockRemainder (k + 1) ≤ blockRemainder k := by
-  -- The proof requires showing that the "remainder density" function
-  -- ρ(k,p) = (signed saddle-point remainder) · (Jacobian factor)
-  -- is pointwise ≥ ρ(k+1,p) for all p ∈ [0,1].
+  -- Blocked by: the signed Gabcke bound c₁(p) > 0 and the CoV identity.
+  -- The CoV identity is privately proved in RSExpansionProof (errorTermOnBlock_continuousOn).
+  -- The signed bound is the same steepest-descent content as contour_saddle_bound.
   --
-  -- This follows from:
-  -- (1) ρ(k,p) ≈ 4π · c₁(p) · √(2π) / √(k+1+p) where c₁(p) > 0
-  -- (2) 1/√(k+1+p) > 1/√(k+2+p) for all p
-  -- (3) Therefore ρ(k,p) > ρ(k+1,p) pointwise
-  -- (4) By integral_mono: blockRemainder(k) > blockRemainder(k+1)
-  --
-  -- The irreducible content is step (1): c₁(p) > 0, which is
-  -- the positivity of the first RS correction coefficient.
+  -- When both blockers are resolved:
+  --   exact blockRemainder_antitone_of_density_antitone k hk
+  --     (cov_identity k) (cov_identity (k+1))
+  --     (density_pointwise_antitone k hk)
+  --     (density_integrable k) (density_integrable (k+1))
   sorry
 
 theorem remainder_antitone_for_ge_one (k : ℕ) (hk : 1 ≤ k) :
