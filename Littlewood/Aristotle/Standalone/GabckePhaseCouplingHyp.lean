@@ -33,6 +33,7 @@ import Littlewood.Aristotle.RSBlockParam
 import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp
 import Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra
+import Littlewood.Aristotle.Standalone.GabckeSignedProfileInstance
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -114,25 +115,64 @@ theorem block_estimate_suffices
     signedBlockCorrection_form
     h_est
 
-/-! ## Instance from remainder antitonicity -/
+/-! ## Instance from atomic Gabcke leaves -/
 
-/-- **Instance**: Gabcke's phase coupling from signed remainder antitonicity.
+/-- Direct theorem-first packaging of Gabcke's phase coupling from the two
+no-axiom atomic Gabcke leaves.
 
     The proof chain:
-    1. `block_estimate_iff_remainder_antitone`: the block estimate condition
-       follows from blockRemainder(k) ≥ blockRemainder(k+1)
-    2. `remainder_antitone_for_ge_one`: the signed remainder IS antitone (sorry)
-
-    The sorry is now isolated to the minimal irreducible content:
-    R(k) = (-1)^k · ∫_{block k} ErrorTerm - leadingBlockIntegral(k) is antitone.
-    This is Gabcke 1979 Satz 4 (signed steepest-descent phase coherence).
+    1. `GabckeBlockIndependence` + `GabckeSignPositivity` give the direct
+       adjacent theorem surface via
+       `GabckeSignedProfileInstance.remainder_antitone_for_ge_one_of_atoms`
+    2. `block_estimate_iff_remainder_antitone` turns that into the block
+       estimate condition
+    3. `block_estimate_suffices` packages the result as
+       `GabckePhaseCouplingHyp`
 
     Reference: Gabcke 1979 Satz 4. -/
-instance : GabckePhaseCouplingHyp := by
+theorem gabckePhaseCouplingHyp_of_atoms
+    [GabckeSignedProfileInstance.GabckeBlockIndependence]
+    [GabckeSignedProfileInstance.GabckeSignPositivity] :
+    GabckePhaseCouplingHyp := by
   apply block_estimate_suffices
   intro k hk
   exact GabckePhaseCouplingInfra.block_estimate_iff_remainder_antitone k
-    (GabckePhaseCouplingInfra.remainder_antitone_for_ge_one k hk)
+    (Aristotle.Standalone.GabckeSignedProfileInstance.remainder_antitone_for_ge_one_of_atoms k hk)
+
+/-- Direct theorem-first packaging of Gabcke's phase coupling from the exact
+atomic boundary proposition. -/
+theorem gabckePhaseCouplingHyp_of_atomicHyp
+    (h : GabckeSignedProfileInstance.GabckeAtomicHyp) :
+    GabckePhaseCouplingHyp := by
+  let _ : GabckeSignedProfileInstance.GabckeBlockIndependence :=
+    GabckeSignedProfileInstance.gabckeBlockIndependence_of_atomicHyp h
+  let _ : GabckeSignedProfileInstance.GabckeSignPositivity :=
+    GabckeSignedProfileInstance.gabckeSignPositivity_of_atomicHyp h
+  exact gabckePhaseCouplingHyp_of_atoms
+
+/-- Direct theorem-first block-correction antitonicity from the two no-axiom
+atomic Gabcke leaves. This exposes the true current frontier without requiring
+callers to go through the wrapper class explicitly. -/
+theorem block_correction_antitone_of_atoms
+    [GabckeSignedProfileInstance.GabckeBlockIndependence]
+    [GabckeSignedProfileInstance.GabckeSignPositivity] :
+    AntitoneOn signedBlockCorrection (Ici (1 : ℕ)) :=
+  (gabckePhaseCouplingHyp_of_atoms).block_correction_antitone
+
+/-- Direct theorem-first block-correction antitonicity from the exact atomic
+boundary proposition. -/
+theorem block_correction_antitone_of_atomicHyp
+    (h : GabckeSignedProfileInstance.GabckeAtomicHyp) :
+    AntitoneOn signedBlockCorrection (Ici (1 : ℕ)) :=
+  (gabckePhaseCouplingHyp_of_atomicHyp h).block_correction_antitone
+
+/-- Compatibility instance: the wrapper class is now secondary to the direct
+theorem-first atomic route above. -/
+instance
+    [GabckeSignedProfileInstance.GabckeBlockIndependence]
+    [GabckeSignedProfileInstance.GabckeSignPositivity] :
+    GabckePhaseCouplingHyp :=
+  gabckePhaseCouplingHyp_of_atoms
 
 /-! ## Bridge theorem -/
 
@@ -154,5 +194,30 @@ theorem antitone_from_hyp [GabckePhaseCouplingHyp] :
       - (4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)) *
         Real.sqrt ((k : ℝ) + 1)) (Ici (1 : ℕ))
   convert GabckePhaseCouplingHyp.block_correction_antitone using 1
+
+/-- Direct theorem-first bridge theorem from the two no-axiom atomic Gabcke
+leaves, bypassing the wrapper class. -/
+theorem antitone_from_atoms
+    [GabckeSignedProfileInstance.GabckeBlockIndependence]
+    [GabckeSignedProfileInstance.GabckeSignPositivity] :
+    let A_val := 4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)
+    let c_fn := fun k : ℕ =>
+      (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
+        - A_val * Real.sqrt ((k : ℝ) + 1)
+    AntitoneOn c_fn (Ici (1 : ℕ)) := by
+  let _ : GabckePhaseCouplingHyp := gabckePhaseCouplingHyp_of_atoms
+  exact antitone_from_hyp
+
+/-- Direct theorem-first bridge theorem from the exact atomic boundary
+proposition, bypassing all wrapper classes. -/
+theorem antitone_from_atomicHyp
+    (h : GabckeSignedProfileInstance.GabckeAtomicHyp) :
+    let A_val := 4 * Real.pi * (∫ p in Ioc (0 : ℝ) 1, rsPsi p)
+    let c_fn := fun k : ℕ =>
+      (-1 : ℝ) ^ k * (∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t)
+        - A_val * Real.sqrt ((k : ℝ) + 1)
+    AntitoneOn c_fn (Ici (1 : ℕ)) := by
+  let _ : GabckePhaseCouplingHyp := gabckePhaseCouplingHyp_of_atomicHyp h
+  exact antitone_from_hyp
 
 end Aristotle.Standalone.GabckePhaseCouplingHyp

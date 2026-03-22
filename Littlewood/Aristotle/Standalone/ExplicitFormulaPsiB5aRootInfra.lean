@@ -60,8 +60,20 @@ theorem shifted_remainder_bound_of_general_hyp
       Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
           (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re) =
         shiftedRemainderRe x T := by
-    unfold shiftedRemainderRe zeroSumRe
-    ring
+    have hzero :
+        (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re = zeroSumRe x T := rfl
+    calc
+      Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+          (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re)
+          = -x + (Aristotle.DirichletPhaseAlignment.chebyshevPsi x +
+              (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re) := by
+              ring
+      _ = -x + (Aristotle.DirichletPhaseAlignment.chebyshevPsi x + zeroSumRe x T) := by
+            rw [hzero]
+      _ = shiftedRemainderRe x T := by
+            rw [show shiftedRemainderRe x T =
+                Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T by rfl]
+            ring
   have hBase :
       |shiftedRemainderRe x T| ≤
         C * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
@@ -109,8 +121,20 @@ theorem explicitFormulaPsiGeneralHyp_of_shifted_remainder_bound
       Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
           (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re) =
         shiftedRemainderRe x T := by
-    unfold shiftedRemainderRe zeroSumRe
-    ring
+    have hzero :
+        (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re = zeroSumRe x T := rfl
+    calc
+      Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+          (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re)
+          = -x + (Aristotle.DirichletPhaseAlignment.chebyshevPsi x +
+              (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re) := by
+              ring
+      _ = -x + (Aristotle.DirichletPhaseAlignment.chebyshevPsi x + zeroSumRe x T) := by
+            rw [hzero]
+      _ = shiftedRemainderRe x T := by
+            rw [show shiftedRemainderRe x T =
+                Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T by rfl]
+            ring
   calc
     |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
         (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re)|
@@ -222,8 +246,20 @@ theorem shifted_remainder_bound_of_legacy_explicit_formula
       Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
           (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re) =
         shiftedRemainderRe x T := by
-    unfold shiftedRemainderRe zeroSumRe
-    ring
+    have hzero :
+        (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re = zeroSumRe x T := rfl
+    calc
+      Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+          (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re)
+          = -x + (Aristotle.DirichletPhaseAlignment.chebyshevPsi x +
+              (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re) := by
+              ring
+      _ = -x + (Aristotle.DirichletPhaseAlignment.chebyshevPsi x + zeroSumRe x T) := by
+            rw [hzero]
+      _ = shiftedRemainderRe x T := by
+            rw [show shiftedRemainderRe x T =
+                Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T by rfl]
+            ring
   have hBase :
       |shiftedRemainderRe x T| ≤
         hLegacy.C * (Real.sqrt x * Real.log T / Real.sqrt T + Real.log x) := by

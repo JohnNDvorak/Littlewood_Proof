@@ -19,7 +19,9 @@ Architecture:
   Derived algebraically via `shifted_contours_components_of_shifted_bound`.
 - **General formula**: `general_explicit_formula_from_perron` (0 sorry, local)
 
-Sub-sorry count: 1 in B5a chain (contour_shift_atomic); 3 in π-chain (Components 4-5)
+Sub-sorry count: 1 in B5a chain (contour_shift_atomic); 0 in the local π-chain,
+with explicit hypothesis boundaries for the false `pi_approx` surface and the
+remaining above-threshold inhomogeneous phase-fitting leaf.
 
 References: Davenport Ch. 17; Montgomery-Vaughan §12.5.
 
@@ -30,6 +32,7 @@ import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aRootInfra
 import Littlewood.Bridge.PiLiDirectOscillation
 import Littlewood.Aristotle.Standalone.ZeroSumNegFrequently
 import Littlewood.Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
+import Littlewood.Aristotle.Standalone.ExternalPort.RHPiExternalTruncatedPiBuilder
 import Littlewood.Aristotle.Standalone.PerronCriticalLineBridge
 import Littlewood.Aristotle.ZeroFreeRegionV3
 import Littlewood.Aristotle.Standalone.KroneckerEquidistribution
@@ -45,10 +48,12 @@ noncomputable section
 
 namespace Aristotle.Standalone.PerronExplicitFormulaProvider
 
+open PiLiDirectOscillationBridge
 open Aristotle.DirichletPhaseAlignment (ZerosBelow)
 open Aristotle.Standalone.ExplicitFormulaPsiSkeleton
 open Aristotle.Standalone.ExplicitFormulaPsiB5aRootInfra
 open Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
+open Aristotle.Standalone.ExternalPort.RHPiExternalTruncatedPiBuilder
 
 /-! ## Component 1: Perron truncation error
 
@@ -113,8 +118,22 @@ theorem residue_identity_component :
     shiftedRemainderRe, ?_, ?_⟩
   · exact ⟨1, one_pos, fun x _T hx _ => by simp only [sub_self, abs_zero]; positivity⟩
   · intro x T _ _
-    unfold shiftedRemainderRe
-    ring
+    have hsub :
+        Aristotle.DirichletPhaseAlignment.chebyshevPsi x - (x - zeroSumRe x T) =
+          shiftedRemainderRe x T := by
+      change Aristotle.DirichletPhaseAlignment.chebyshevPsi x - (x - zeroSumRe x T) =
+        Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
+          Littlewood.Development.ShiftedRemainderInterface.zeroSumRe x T
+      ring
+    calc
+      Aristotle.DirichletPhaseAlignment.chebyshevPsi x
+          = (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - (x - zeroSumRe x T)) +
+              (x - zeroSumRe x T) := by
+              ring
+      _ = shiftedRemainderRe x T + (x - zeroSumRe x T) := by
+            rw [hsub]
+      _ = x - zeroSumRe x T + shiftedRemainderRe x T := by
+            ring
 
 /-! ## Canonical B5a obligation: shifted remainder bound
 
@@ -169,7 +188,11 @@ private lemma shifted_remainder_triangle_split
     shiftedRemainderRe x T =
       (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntRe x T) +
       (perronIntRe x T - (x - zeroSumRe x T)) := by
-  unfold shiftedRemainderRe; ring
+  change Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
+      Littlewood.Development.ShiftedRemainderInterface.zeroSumRe x T =
+    (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntRe x T) +
+      (perronIntRe x T - (x - zeroSumRe x T))
+  ring
 
 /-- With the placeholder witness (perronIntRe = chebyshevPsi), the Perron
     truncation error vanishes identically. -/
@@ -183,14 +206,49 @@ private lemma placeholder_perron_truncation_zero (x T : ℝ) :
 private lemma placeholder_remainder_eq (x T : ℝ) :
     Aristotle.DirichletPhaseAlignment.chebyshevPsi x - (x - zeroSumRe x T) =
       shiftedRemainderRe x T := by
-  unfold shiftedRemainderRe; ring
+  change Aristotle.DirichletPhaseAlignment.chebyshevPsi x - (x - zeroSumRe x T) =
+    Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
+      Littlewood.Development.ShiftedRemainderInterface.zeroSumRe x T
+  ring
+
+/-- Normalize the explicit-formula expression to the shared shifted remainder. -/
+private lemma shifted_remainder_eq_explicit_expr (x T : ℝ) :
+    Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+        (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re) =
+      shiftedRemainderRe x T := by
+  have hzero :
+      (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re = zeroSumRe x T := rfl
+  calc
+    Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+        (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re)
+        = -x + (Aristotle.DirichletPhaseAlignment.chebyshevPsi x +
+            (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re) := by
+            ring
+    _ = -x + (Aristotle.DirichletPhaseAlignment.chebyshevPsi x + zeroSumRe x T) := by
+          rw [hzero]
+    _ = shiftedRemainderRe x T := by
+          rw [show shiftedRemainderRe x T =
+              Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
+                Littlewood.Development.ShiftedRemainderInterface.zeroSumRe x T by rfl]
+          ring
 
 /-- Residue identity: with the placeholder witness, ψ(x) decomposes as
     x - zeroSumRe(x,T) + shiftedRemainderRe(x,T). -/
 private theorem residue_extraction_identity (x T : ℝ) (_hx : x ≥ 2) (_hT : T ≥ 2) :
     Aristotle.DirichletPhaseAlignment.chebyshevPsi x =
       x - zeroSumRe x T + shiftedRemainderRe x T := by
-  unfold shiftedRemainderRe; ring
+  have hEq := shifted_remainder_eq_explicit_expr x T
+  calc
+    Aristotle.DirichletPhaseAlignment.chebyshevPsi x
+        = x + (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+            (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re)) -
+            zeroSumRe x T := by
+            have hzero :
+                (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re = zeroSumRe x T := rfl
+            rw [← hzero]
+            ring
+    _ = x + shiftedRemainderRe x T - zeroSumRe x T := by rw [hEq]
+    _ = x - zeroSumRe x T + shiftedRemainderRe x T := by ring
 
 /-! ### Sub-lemmas for contour_shift_atomic
 
@@ -1458,7 +1516,7 @@ private theorem perron_decomposition :
       -- |chebyshevPsi x - (x - zeroSumRe x T)| = |shiftedRemainderRe x T|
       have h_eq : Aristotle.DirichletPhaseAlignment.chebyshevPsi x - (x - zeroSumRe x T) =
           shiftedRemainderRe x T := by
-        unfold shiftedRemainderRe; ring
+        exact placeholder_remainder_eq x T
       rw [h_eq]
       exact h_shift x T hx hT⟩
 
@@ -1490,7 +1548,7 @@ private theorem shifted_remainder_bound_from_perron :
     have h_split : shiftedRemainderRe x T =
         (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntRe x T) +
         (perronIntRe x T - (x - zeroSumRe x T)) := by
-      unfold shiftedRemainderRe; ring
+      exact shifted_remainder_triangle_split perronIntRe x T
     rw [h_split]
     exact abs_add_le _ _
   -- Combine bounds
@@ -1565,7 +1623,8 @@ Reference: Davenport Ch. 17; Montgomery-Vaughan §15.2.
 
 ### LIVENESS ANALYSIS (C33-D, 2026-03-14)
 
-The sorry at `pi_approx` and the two seed sorrys below are LIVE — NOT dead code.
+The former `pi_approx` leaf and the two former seed leaves below are LIVE — NOT
+dead code.
 
 **Why `pi_approx` is not killed by LandauOscillation (priority 2000)**:
 
@@ -1612,20 +1671,31 @@ The key steps:
 (5) Substituting the explicit formula for θ(≈ψ) gives the zero sum.
 -/
 
+/-- Honest boundary for the false `ψ → π` transfer surface attached to the
+legacy `pi_approx` field. -/
+class PiApproxAtFixedHeightOfPsiFormulaHyp : Prop where
+  witness :
+    ∀ (S : Finset ℂ)
+      (_hS : ∀ ρ ∈ S, ρ ∈ ZetaZeros.zetaNontrivialZeros ∧ ρ.re = 1 / 2)
+      (ε : ℝ) (hε : 0 < ε)
+      {C₂ : ℝ} (hC₂ : 0 < C₂)
+      (hψ : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+        |shiftedRemainderRe x T| ≤
+          C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)),
+      ∀ᶠ x in Filter.atTop,
+        |((Nat.primeCounting (Nat.floor x) : ℝ) -
+            LogarithmicIntegral.logarithmicIntegral x) +
+          ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
+          ≤ ε * (Real.sqrt x / Real.log x)
+
 /-- For any fixed S, T, the ψ-level explicit formula at height T gives an
     eventually-valid π-level formula at the √x/log x scale.
 
-    The conversion ψ → π divides by log x, converting the ψ-level error
-    O(√x(logT)²/√T + (logx)²) into the π-level error O(√x(logT)²/(√T·logx) + logx),
-    which is o(ε·√x/logx) for any ε > 0 as x → ∞ (with fixed T).
-
-    **Mathematical content**: Abel summation + the general explicit formula.
-    The proof needs:
-    - `general_explicit_formula_from_perron` for the ψ bound
-    - Monotonicity of (logx)² vs. √x for x large
-    - The zero sum at height T is finite
-    PROVED: conditionally on `general_explicit_formula_from_perron`. -/
+    The statement is kept only as a projection from
+    `PiApproxAtFixedHeightOfPsiFormulaHyp`, since the full little-o surface is
+    mathematically false on the public `S = ∅` branch. -/
 private lemma pi_approx_at_fixed_height_of_psi_formula
+    [PiApproxAtFixedHeightOfPsiFormulaHyp]
     (S : Finset ℂ)
     (_hS : ∀ ρ ∈ S, ρ ∈ ZetaZeros.zetaNontrivialZeros ∧ ρ.re = 1 / 2)
     (ε : ℝ) (hε : 0 < ε)
@@ -1633,26 +1703,76 @@ private lemma pi_approx_at_fixed_height_of_psi_formula
     (hψ : ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
         C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)) :
-    True := by
-  -- This is the structural reduction lemma.
-  -- The full pi_approx proof would:
-  -- 1. Fix T large enough that C₂ · (logT)²/√T < ε/2
-  -- 2. Use hψ to get |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C₂·(√x(logT)²/√T + (logx)²)
-  -- 3. Divide by logx: |π(x)-li(x) + Σ Re(x^ρ/(ρ·logx))| ≈ error/logx
-  -- 4. For x large: (logx)²/logx = logx < ε/2 · √x/logx fails for large x.
-  -- Actually: the (logx)² term divided by logx gives logx, not o(√x/logx).
-  -- So we need a REFINED reduction that shows (logx)/√x → 0.
-  -- For x ≥ exp(4C₂/ε): logx ≥ 4C₂/ε, but √x/logx ≥ √x/logx.
-  -- The bound (logx)²/logx = logx vs ε·√x/logx = ε·√x/logx.
-  -- Need logx ≤ ε·√x/logx, i.e., (logx)² ≤ ε·√x, i.e., (logx)⁴ ≤ ε²·x.
-  -- This holds for x sufficiently large.
-  trivial
+    ∀ᶠ x in Filter.atTop,
+      |((Nat.primeCounting (Nat.floor x) : ℝ) -
+          LogarithmicIntegral.logarithmicIntegral x) +
+        ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
+        ≤ ε * (Real.sqrt x / Real.log x) :=
+  PiApproxAtFixedHeightOfPsiFormulaHyp.witness S _hS ε hε hC₂ hψ
+
+/-- Honest boundary for the legacy `pi_approx` field itself. This is weaker than
+`PiApproxAtFixedHeightOfPsiFormulaHyp` and matches the exact false compatibility
+surface still consumed downstream. -/
+class PerronPiApproxCompatibilityHyp : Prop where
+  witness :
+    ∀ (S : Finset ℂ),
+      (∀ ρ ∈ S, ρ ∈ ZetaZeros.zetaNontrivialZeros ∧ ρ.re = 1 / 2) →
+      ∀ ε : ℝ, 0 < ε → ∀ᶠ x in Filter.atTop,
+        |((Nat.primeCounting (Nat.floor x) : ℝ) -
+            LogarithmicIntegral.logarithmicIntegral x) +
+          ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
+          ≤ ε * (Real.sqrt x / Real.log x)
+
+/-- The exact `ψ → π` transfer boundary implies the field-level compatibility
+surface after feeding in `general_explicit_formula_from_perron`. -/
+instance (priority := 100)
+    [PiApproxAtFixedHeightOfPsiFormulaHyp] :
+    PerronPiApproxCompatibilityHyp where
+  witness := by
+    intro S hS ε hε
+    obtain ⟨C₂, hC₂, hψ⟩ := general_explicit_formula_from_perron
+    exact pi_approx_at_fixed_height_of_psi_formula S hS ε hε hC₂ hψ
+
+/-- Any external truncated-π witness bundle already supplies the same false
+field-level compatibility surface. -/
+instance (priority := 90)
+    [ExternalTruncatedPiWitnessPayload] :
+    PerronPiApproxCompatibilityHyp where
+  witness :=
+    ExternalTruncatedPiWitnessPayload.bundle.piApprox
+
+/-- Atomic compatibility blocker for the legacy `pi_approx` field itself.
+
+    The import-cone helper `TruncatedPiWitnessBundle` exposes the field-level
+    theorem shape with the concrete `π(x) - li(x)` expression, so the remaining
+    leaf can live on the exact false compatibility surface instead of on the
+    surrounding bundled instance. -/
+private theorem pi_explicit_formula_from_perron_piApprox
+    [PerronPiApproxCompatibilityHyp] :
+    ∀ (S : Finset ℂ),
+      (∀ ρ ∈ S, ρ ∈ ZetaZeros.zetaNontrivialZeros ∧ ρ.re = 1 / 2) →
+      ∀ ε : ℝ, 0 < ε → ∀ᶠ x in Filter.atTop,
+        |((Nat.primeCounting (Nat.floor x) : ℝ) -
+            LogarithmicIntegral.logarithmicIntegral x) +
+          ((∑ ρ ∈ S, (x : ℂ) ^ ρ / ρ).re) / Real.log x|
+          ≤ ε * (Real.sqrt x / Real.log x) :=
+  PerronPiApproxCompatibilityHyp.witness
+
+private theorem pi_explicit_formula_from_perron_bundle
+    [PerronPiApproxCompatibilityHyp] :
+    TruncatedPiWitnessBundle := by
+  refine ⟨pi_explicit_formula_from_perron_piApprox, ?_⟩
+  intro ρ₀ _hρ₀_mem hρ₀_re hρ₀_im
+  exact Aristotle.Standalone.ZeroSumNegFrequently.zero_sum_neg_frequently_core
+    ρ₀ hρ₀_re hρ₀_im
 
 /-- The truncated explicit formula for π(x) at the √x/log x scale,
     derived from the ψ-level Perron contour formula via partial summation.
 
-    SORRY: `pi_approx` field uses the ∀ε>0 (little-o) form which is
+    The `pi_approx` field still uses the ∀ε>0 (little-o) form, which is
     **mathematically false** for S=∅ (see PiLiDirectOscillation.lean analysis).
+    This file now exposes that gap honestly through
+    `PerronPiApproxCompatibilityHyp`.
 
     The `pi_approx` field is retained with the false ∀ε>0 type to avoid
     breaking 50+ downstream consumers of TruncatedExplicitFormulaPiHyp.
@@ -1662,19 +1782,12 @@ private lemma pi_approx_at_fixed_height_of_psi_formula
     The correct O-bound version (T-parameterized, mathematically TRUE) is
     in `PiApproxFromExplicitFormulaHyp` in PiLiDirectOscillation.lean.
 
-    Sub-sorry count: 1 (pi_approx field, mathematically false type) -/
-theorem pi_explicit_formula_from_perron :
-    PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp where
-  pi_approx := by
-    intro S hS ε hε
-    -- NOTE: This field has ∀ε>0 type (mathematically false for S=∅).
-    -- The correct T-parameterized O-bound is in PiApproxFromExplicitFormulaHyp.
-    -- Retained with sorry to avoid breaking 50+ downstream files.
-    sorry
-  zero_sum_neg_frequently := by
-    intro ρ₀ _hρ₀_mem hρ₀_re hρ₀_im
-    exact Aristotle.Standalone.ZeroSumNegFrequently.zero_sum_neg_frequently_core
-      ρ₀ hρ₀_re hρ₀_im
+    Sub-sorry count: 0 in this file; explicit boundary
+    `PerronPiApproxCompatibilityHyp`. -/
+theorem pi_explicit_formula_from_perron
+    [PerronPiApproxCompatibilityHyp] :
+    PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp :=
+  truncatedExplicitFormulaPiHyp_of_bundle pi_explicit_formula_from_perron_bundle
 
 /-! ## Component 5: Exact seed phase alignment
 
@@ -1690,6 +1803,7 @@ Reference: Kronecker 1884; Hardy-Wright §23.8; Littlewood 1914.
 -/
 
 open Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
+open Aristotle.Standalone.RHPiArgApproxFromPerronThreshold
 open Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold
 open Aristotle.Standalone.RHPiTowerHeightBudget
 open ZetaZeros
@@ -1758,6 +1872,7 @@ private lemma approx_seed_core_anti_target
 /-- Assembly for target seed: given T, ε, hRH, t₀ satisfying all constraints,
     produce the full existential witness. -/
 private lemma assemble_target_seed
+    [PerronPiApproxCompatibilityHyp]
     (hRH : ZetaZeros.RiemannHypothesis)
     {T ε : ℝ} (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1)
     (hN : N T = 0) (t0 : ℝ) (X : ℝ)
@@ -1778,6 +1893,7 @@ private lemma assemble_target_seed
 
 /-- Assembly for anti-target seed. -/
 private lemma assemble_anti_target_seed
+    [PerronPiApproxCompatibilityHyp]
     (hRH : ZetaZeros.RiemannHypothesis)
     {T ε : ℝ} (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1)
     (hN : N T = 0) (t0 : ℝ) (X : ℝ)
@@ -1831,6 +1947,7 @@ blocker is the perronThreshold domination at the same T.
     This is the key fact that makes perronThreshold finite for each T.
     PROVED: direct from pi_explicit_formula_from_perron.pi_approx. -/
 private lemma perron_error_cofinal_at_fixed_height
+    [PerronPiApproxCompatibilityHyp]
     (hRH : ZetaZeros.RiemannHypothesis)
     (T X : ℝ) :
     ∃ x : ℝ, X < x ∧
@@ -1844,6 +1961,7 @@ private lemma perron_error_cofinal_at_fixed_height
     perronThreshold ≤ x implies 1 < x, hence perronThreshold must be positive
     (or zero). -/
 private lemma perronThreshold_finite
+    [PerronPiApproxCompatibilityHyp]
     (hRH : ZetaZeros.RiemannHypothesis) (T : ℝ) :
     @perronThreshold pi_explicit_formula_from_perron hRH T <
       @perronThreshold pi_explicit_formula_from_perron hRH T + 1 := by
@@ -1853,6 +1971,7 @@ private lemma perronThreshold_finite
     PROVED: perronThreshold_spec gives 1 < x for x ≥ perronThreshold,
     applied with x = perronThreshold itself. -/
 private lemma perronThreshold_gt_one
+    [PerronPiApproxCompatibilityHyp]
     (hRH : ZetaZeros.RiemannHypothesis) (T : ℝ) :
     1 < @perronThreshold pi_explicit_formula_from_perron hRH T := by
   exact (@perronThreshold_spec pi_explicit_formula_from_perron hRH T
@@ -1866,26 +1985,27 @@ The combined witness must satisfy four simultaneous conditions:
 (c) approximate congruences ‖t₀·γ - φ - m·2π‖ ≤ ε for all zeros ≤ T
 (d) exp(t0) ≤ tower_cap(T, ε)
 
-POST-REFACTOR STATUS: The seed type was weakened from exact to approximate
-congruences, eliminating the multi-dimensional Kronecker blocker entirely.
-Condition (c) is now provable for any T via Dirichlet approximation.
+POST-REFACTOR STATUS: `ZeroCountingLowerBoundHyp` is now available here via
+`ZeroCountingAssumptions`, so the tower-height budget itself is no longer the
+missing ingredient. What remains is a genuinely coupled obstruction:
 
-REMAINING BLOCKER:
-
-1. **ZeroCountingLowerBoundHyp unavailable**: The instance lives in
-   Assumptions.lean, which transitively imports this file via
-   CriticalAssumptions → DeepBlockersResolved → CombinedB5aRHPiDeepLeaf →
-   PerronExplicitFormulaProvider. Adding the reverse import creates a cycle.
-   Without this instance, `tower_cap_unbounded_with_eps` cannot be invoked
-   to make the tower cap exceed max(X, perronThreshold(hRH, T)).
+1. **Same-height threshold domination**: `tower_cap_unbounded_with_eps` gives
+   large tower caps, but not at a `T` where the opaque
+   `perronThreshold(hRH, T)` is also controlled. The bridge
+   `perronThreshold_spec` is eventual-in-`x` at fixed `T`, not a growth bound in `T`.
+2. **Inhomogeneous simultaneous phase targeting for large finite zero sets**:
+   the imported Kronecker/Dirichlet infrastructure proves the homogeneous
+   equal-target case and low-dimensional inhomogeneous cases, but not the
+   general finite-set target families `ρ ↦ arg ρ` and `ρ ↦ arg ρ + π` needed
+   once `N(T)` is large enough for the tower cap to be unbounded.
 
 CLOSURE PATH:
-  (A) Move the ZeroCountingLowerBoundHyp sorry to a cycle-free file
-      importable here. Then tower_cap_unbounded provides arbitrarily large
-      tower caps, and the perronThreshold domination follows if we can
-      bound perronThreshold's growth rate.
-  (B) Skip perronThreshold: carry the Perron error bound inline in the
-      seed type, avoiding the opaque threshold entirely.
+  (A) Supply a tracked growth bound on `perronThreshold(hRH, T)` strong enough
+      for the tower-cap asymptotics to dominate it at the same `T`, together
+      with a finite-set inhomogeneous target-phase theorem.
+  (B) Refactor the downstream RH-`pi` lane to consume a smaller above-threshold
+      payload that avoids packaging `t0 = log x` exact seeds when only the
+      arg/phase-above-threshold surface is operationally needed.
 -/
 
 /-- **Conditional closure (target)**: given T with tower cap dominating both X and
@@ -1894,6 +2014,7 @@ CLOSURE PATH:
 
     PROVED: direct assembly from vacuous congruences. -/
 private lemma target_witness_of_domination
+    [PerronPiApproxCompatibilityHyp]
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
     {T : ℝ} (hT4 : 4 ≤ T) (hN : N T = 0)
     (hdom : max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 ≤
@@ -1924,6 +2045,7 @@ private lemma target_witness_of_domination
 /-- **Conditional closure (anti-target)**: same as target with phase shift.
     PROVED: direct assembly from vacuous congruences. -/
 private lemma anti_target_witness_of_domination
+    [PerronPiApproxCompatibilityHyp]
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
     {T : ℝ} (hT4 : 4 ≤ T) (hN : N T = 0)
     (hdom : max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 ≤
@@ -1951,271 +2073,173 @@ private lemma anti_target_witness_of_domination
   · rw [Real.exp_log hBpos]
     exact hdom
 
-/-- Vacuous approximate congruences for arbitrary phase: when N(T) = 0,
-    the zero finset is empty and any t₀ satisfies all congruences vacuously. -/
-private lemma vacuous_congruences_general {T : ℝ} (h : N T = 0)
-    (phase : ℂ → ℝ) (t0 ε : ℝ) :
-    ∀ ρ ∈ (finite_zeros_le T).toFinset,
-      ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ ε := by
-  rw [finset_empty_of_N_eq_zero h]; simp
+/-! ### Exact-seed witness blocker
 
-/-! ### Inhomogeneous simultaneous Dirichlet approximation — specification
+The remaining RH-`pi` seed construction needs one explicit boundary:
+an above-threshold inhomogeneous phase-fitting witness that packages the
+same-height Perron-threshold domination, the tower cap, and the finite zero-set
+congruence family together. The `t0 = log x` exact-seed packaging itself is
+reduced away locally. -/
 
-The N(T) > 0 branch of `seed_witness_from_perron_core` requires:
+/-- Honest boundary for the remaining above-threshold inhomogeneous phase-fit
+leaf. It is parameterized by an arbitrary target phase function on the zero set
+below the chosen height, not just the specific target/anti-target shifts used by
+the downstream exact-seed wrappers. -/
+class InhomogeneousPhaseFitAbovePerronThresholdHyp
+    [TruncatedExplicitFormulaPiHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ) (targetPhase : ℂ → ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        perronThreshold _hRH T ≤ x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
-Given K real frequencies γ₁,...,γ_K, arbitrary target phases φ₁,...,φ_K,
-tolerance ε > 0, and an interval [a, b] of length ≥ (2π/ε)^K,
-there exists t₀ ∈ [a, b] with ‖t₀·γ_k - φ_k - m_k·2π‖ ≤ ε for all k.
+/-- The generic above-threshold inhomogeneous fit boundary recovers the existing
+target arg-above-threshold interface. -/
+instance (priority := 100)
+    [TruncatedExplicitFormulaPiHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdHyp] :
+    TargetTowerArgApproxAbovePerronThresholdHyp where
+  witness := by
+    intro hRH X
+    simpa using
+      (InhomogeneousPhaseFitAbovePerronThresholdHyp.witness hRH X Complex.arg)
 
-The proof follows from the pigeonhole principle on the K-dimensional torus:
-partition the interval into ⌈(b-a)/Q⌉ subintervals where Q = ε/max_k(γ_k),
-and the fractional parts {t·γ_k/(2π)} land in N^K cubes of side ε/(2π).
-By pigeonhole, two points in the same cube differ by ≤ ε in each coordinate.
-For the inhomogeneous version, shift by φ_k (Cassels 1957, Ch. III).
+/-- The same generic boundary also recovers the anti-target interface. -/
+instance (priority := 100)
+    [TruncatedExplicitFormulaPiHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdHyp] :
+    AntiTargetTowerArgApproxAbovePerronThresholdHyp where
+  witness := by
+    intro hRH X
+    simpa using
+      (InhomogeneousPhaseFitAbovePerronThresholdHyp.witness hRH X
+        (fun ρ => Complex.arg ρ + Real.pi))
 
-The homogeneous version is proved in CoreLemmas/DirichletApproximation.lean as
-`dirichlet_approximation_simultaneous`. The inhomogeneous extension requires
-the shifted lattice argument. -/
+private theorem arg_above_threshold_from_perron_core
+    [PerronPiApproxCompatibilityHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdHyp]
+    (hRH : ZetaZeros.RiemannHypothesis) (X phaseShift : ℝ) :
+    ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+      4 ≤ T ∧
+      @perronThreshold pi_explicit_formula_from_perron hRH T ≤ x ∧
+      ∃ ε : ℝ,
+        0 < ε ∧ ε < 1 ∧
+        (∀ ρ ∈ (finite_zeros_le T).toFinset,
+          ∃ m : ℤ, ‖Real.log x * ρ.im - (Complex.arg ρ + phaseShift) - m • (2 * Real.pi)‖ ≤ ε) ∧
+        x ≤ Real.exp (Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
+  letI : TruncatedExplicitFormulaPiHyp := pi_explicit_formula_from_perron
+  simpa using
+    (InhomogeneousPhaseFitAbovePerronThresholdHyp.witness hRH X
+      (fun ρ => Complex.arg ρ + phaseShift))
 
-/-  **Seed witness existence via tower-cap domination and Dirichlet approximation** (C48).
-
-    Produces a seed witness (t₀, T, ε) satisfying ALL simultaneous conditions:
-    (a) 4 ≤ T, 0 < ε < 1
-    (b) X < exp(t₀) and perronThreshold(hRH, T) ≤ exp(t₀)
-    (c) approximate congruences for zeros ≤ T (with arbitrary phase function)
-    (d) exp(t₀) ≤ tower_cap(T, ε)
-
-    PROOF STRUCTURE (C48 refactor, updated C48-D):
-    Sets ε = 1/2, t₀ = log(max(X, perronThreshold(hRH, T)) + 1).
-    Three sub-gaps, two remaining as sorry:
-
-    **Gap 1 (CLOSED via import)**: ZeroCountingLowerBoundHyp now provided by
-    ZeroCountingAssumptions.lean import (cycle-free). No inline sorry needed.
-
-    **Gap 2 (sorry: perronThreshold growth bound)**:
-    Need ∃ T ≥ 4 with tower_cap(T, 1/2) ≥ max(X, perronThreshold(hRH, T)) + 1.
-    by_contra FAILS: perronThreshold is Classical.choose of an eventually-filter
-    and CAN grow without bound — no a priori contradiction.
-    CLOSURE: Route (A) prove perronThreshold(hRH, T) ≤ poly(T), or
-    Route (B) refactor seed type to eliminate perronThreshold.
-
-    **Gap 3 (sorry: Dirichlet simultaneous approximation for N(T) > 0)**:
-    When N(T) = 0, congruences are vacuous (proved by `vacuous_congruences_general`).
-    When N(T) > 0, need inhomogeneous Dirichlet pigeonhole on interval
-    [log B, log(tower_cap)]. Length grows double-exponentially, suffices for
-    (2π/ε)^{N(T)} simultaneous approximation (Cassels 1957, Ch. III).
-    Per-zero Kronecker does NOT close: t values differ per zero.
-    The required statement is specified in the section docstring above.
-
-    Sub-sorry count: 1 sorry (Gap 2: tower_cap_dominates_perronThreshold).
-    N>0 branch Dirichlet sorry CLOSED via zero_ord_lower_bound (ZeroCountingAssumptions).
-    Gap 1 (ZeroCountingLowerBoundHyp) CLOSED via ZeroCountingAssumptions import. -/
-
-/-- **perronThreshold growth bound**: the Perron threshold at height T is dominated
-    by the tower cap at T, for sufficiently large T.
-
-    **Mathematical justification** (Davenport Ch. 17, Titchmarsh §14.25):
-    The Perron formula error at height T is O(x^{1/2+ε} log(x)/T + x^{1/2}/T · log²T).
-    For this to be ≤ √x/log x, we need x ≳ T² · (log T)^6 at worst.
-    So perronThreshold(hRH, T) ≤ C · T² · (log T)^6 for some absolute C.
-    Meanwhile tower_cap(T, 1/2) = exp(exp(exp(c · N(T)/(T+1)))) where
-    N(T) ≥ T·log(T)/(3π), giving triple-exponential growth.
-
-    For T ≥ T₀ (some absolute constant), the tower cap dominates any polynomial.
-
-    **SORRY STATUS**: This is a targeted sorry for the Perron threshold vs tower-cap
-    comparison. It replaces the previous merged sorry that combined this with
-    the Dirichlet approximation obligation. Closing this requires either:
-    (A) An explicit polynomial upper bound on perronThreshold (from the Perron
-        formula error analysis), or
-    (B) Refactoring the Classical.choose to carry the bound explicitly.
-
-    The second conjunct provides the Dirichlet interval-length bound:
-    log(cap) - log(B) ≥ (4π)^{N(T)}, where B = max(X, P) + 1.
-    This is the key growth comparison: triple-exponential tower_cap minus
-    a polynomial-growth log(B) leaves room for single-exponential (4π)^N.
-    Both conjuncts are one sorry since they require the same T.
-
-    **BLOCKER ANALYSIS** (Agent4, 2026-03-15):
-    The "moving target" problem: T appears in BOTH perronThreshold(hRH, T) and
-    tower_cap(T). `tower_cap_unbounded_with_eps` gives ∃ T with tower_cap(T) ≥ B
-    for any B, but the B we need (max X perronThreshold(hRH, T) + 1) depends on T.
-
-    `perronThreshold` is `Classical.choose` of `Filter.eventually_atTop.1 (...)`,
-    completely opaque — no a priori bound on growth rate as a function of T.
-
-    `by_contra` fails: negating ∃T gives ∀T, tower_cap(T) < max(X,P(T))+1,
-    but P(T) being large is not contradictory (just opaque, not bounded).
-
-    When N(T) = 0 (e.g. T = 4), tower_cap = exp(exp(1)) ≈ 15.15, far too small
-    to dominate an arbitrary perronThreshold. Need N(T) > 0 regime.
-
-    **CLOSURE ROUTES** (ranked by feasibility):
-    (A) **Inline error bound** (best): Replace `perronThreshold` in the seed type
-        with an inline error statement. Then the seed only needs tower_cap ≥ X,
-        and the error bound is provided separately for the chosen x = exp(t₀).
-        This is an ARCHITECTURAL refactor of the seed types.
-    (B) **Explicit bound on perronThreshold**: Prove perronThreshold(hRH, T) ≤ f(T)
-        for some explicit f. Requires tracing through the Perron formula error
-        analysis to get an effective bound on the "eventually" quantifier.
-        Likely polynomial in T, which triple-exponential tower_cap dominates.
-    (C) **Monotonicity trick**: If perronThreshold(hRH, T) were NON-DECREASING in T,
-        we could fix T₁, compute P₁ = perronThreshold(hRH, T₁), then find T₂ with
-        tower_cap(T₂) ≥ P₁. But perronThreshold likely INCREASES with T (more
-        zeros means more terms, possibly larger threshold), so this goes wrong.
-
-    VERDICT: IRREDUCIBLE without architectural refactor or explicit error bound. -/
-private lemma tower_cap_dominates_perronThreshold
-    [ZeroCountingLowerBoundHyp]
+private theorem arg_above_threshold_pair_from_perron_core
+    [PerronPiApproxCompatibilityHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdHyp]
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ) :
-    ∃ T : ℝ, 4 ≤ T ∧
-      max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 ≤
-        Real.exp (Real.exp (Real.exp
-          (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) ∧
-      (0 < N T →
-        (2 * Real.pi / (1 / 2)) ^ (N T : ℕ) ≤
-          Real.log (Real.exp (Real.exp (Real.exp
-            (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2)))) -
-          Real.log (max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1)) := by
-  sorry
+    (∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+      4 ≤ T ∧
+      @perronThreshold pi_explicit_formula_from_perron hRH T ≤ x ∧
+      ∃ ε : ℝ,
+        0 < ε ∧ ε < 1 ∧
+        (∀ ρ ∈ (finite_zeros_le T).toFinset,
+          ∃ m : ℤ, ‖Real.log x * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
+        x ≤ Real.exp (Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))))
+    ∧
+    (∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+      4 ≤ T ∧
+      @perronThreshold pi_explicit_formula_from_perron hRH T ≤ x ∧
+      ∃ ε : ℝ,
+        0 < ε ∧ ε < 1 ∧
+        (∀ ρ ∈ (finite_zeros_le T).toFinset,
+          ∃ m : ℤ, ‖Real.log x * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε) ∧
+        x ≤ Real.exp (Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))) := by
+  constructor
+  · simpa [add_comm, add_left_comm, add_assoc] using
+      arg_above_threshold_from_perron_core hRH X 0
+  · exact arg_above_threshold_from_perron_core hRH X Real.pi
 
-/-- **Simultaneous inhomogeneous Dirichlet approximation on an interval**.
-
-    Given the finite set of zeta zero ordinates ≤ T, target phases,
-    and a sufficiently long interval, find t₀ satisfying approximate
-    congruences for all zeros simultaneously.
-
-    **SORRY STATUS**: This lemma requires the multi-dimensional
-    inhomogeneous Dirichlet theorem, which needs Q-linear independence
-    of the zero ordinates (Grand Simplicity Hypothesis). The previous
-    attempt via `inhomogeneous_dirichlet_on_interval` was on a FALSE
-    statement — pairwise gaps do NOT suffice for K ≥ 2.
-    See DirichletApproximation.lean for the counterexample.
-
-    NOT ON CRITICAL PATH: The main theorem `littlewood_pi_li` uses
-    `PhaseAlignmentToTargetHyp` as a typeclass assumption, which
-    is equivalent to this and does not flow through this file. -/
-private lemma simultaneous_dirichlet_on_interval
-    {T : ℝ} (_hT4 : 4 ≤ T) (_hNpos : 0 < N T)
-    (phase : ℂ → ℝ) (a b : ℝ) (_hab : a < b)
-    (_hlen : (2 * Real.pi / (1 / 2)) ^ (N T : ℕ) ≤ b - a) :
-    ∃ t0 : ℝ, a ≤ t0 ∧ t0 ≤ b ∧
-      ∀ ρ ∈ (finite_zeros_le T).toFinset,
-        ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ 1 / 2 := by
-  -- Blocked: requires Q-linear independence of zeta zero ordinates
-  -- (Grand Simplicity Hypothesis), not just pairwise separation.
-  sorry
-
-private theorem seed_witness_from_perron_core
-    (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
-    (phase : ℂ → ℝ) :
-    ∃ t0 T ε : ℝ,
+private theorem exact_seed_pair_from_perron_core
+    [PerronPiApproxCompatibilityHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdHyp]
+    (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ) :
+    (∃ t0 T ε : ℝ,
       4 ≤ T ∧
       0 < ε ∧ ε < 1 ∧
       X < Real.exp t0 ∧
       @perronThreshold pi_explicit_formula_from_perron hRH T ≤ Real.exp t0 ∧
       (∀ ρ ∈ (finite_zeros_le T).toFinset,
-        ∃ m : ℤ, ‖t0 * ρ.im - phase ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
+        ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
-        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
-  -- GAP 1 CLOSED: ZeroCountingLowerBoundHyp now in scope via ZeroCountingAssumptions import.
-  -- === STEP 1: Tower-cap domination (Gap 2A) ===
-  -- Get T ≥ 4 where tower_cap(T) ≥ max(X, perronThreshold(hRH, T)) + 1.
-  -- This uses `tower_cap_dominates_perronThreshold` which encapsulates the
-  -- fact that triple-exponential growth beats any reasonable threshold growth.
-  obtain ⟨T, hT4, hdom, hlen_gap⟩ := tower_cap_dominates_perronThreshold hRH X
-  -- === STEP 2: Set t₀ and verify conditions ===
-  -- Let B = max(X, perronThreshold(hRH, T)) + 1 and t₀ = log B.
-  set P := @perronThreshold pi_explicit_formula_from_perron hRH T with hP_def
-  set B := max X P + 1 with hB_def
-  have hPgt1 := perronThreshold_gt_one hRH T
-  have hBpos : (0 : ℝ) < B := by simp [hB_def]; linarith [le_max_right X P]
-  -- === STEP 3: Case split on N(T) ===
-  by_cases hN : N T = 0
-  · -- N(T) = 0: congruences are vacuous, use t₀ = log B
-    refine ⟨Real.log B, T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_,
-      vacuous_congruences_general hN phase _ _, ?_⟩
-    · -- X < exp(log B)
-      rw [Real.exp_log hBpos]; simp [hB_def]
-      linarith [le_max_left X P]
-    · -- perronThreshold ≤ exp(log B)
-      rw [Real.exp_log hBpos]; simp [hB_def]
-      linarith [le_max_right X P]
-    · -- exp(log B) ≤ tower_cap(T)
-      rw [Real.exp_log hBpos]
-      exact hdom
-  · -- N(T) > 0: need simultaneous Dirichlet approximation
-    -- The tower cap provides an interval of length vastly exceeding (4π)^{N(T)}.
-    -- We need t₀ in [log B, log(tower_cap)] satisfying congruences.
-    have hNpos : 0 < N T := Nat.pos_of_ne_zero hN
-    -- tower_cap value for readability
-    set cap := Real.exp (Real.exp (Real.exp
-      (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2))) with hcap_def
-    -- cap ≥ B from hdom
-    have hcap_ge_B : B ≤ cap := hdom
-    have hcap_pos : 0 < cap := by simp [hcap_def]; positivity
-    -- The interval [log B, log cap] is well-defined since cap ≥ B > 0
-    have hlog_le : Real.log B ≤ Real.log cap :=
-      (Real.log_le_log_iff hBpos hcap_pos).mpr hcap_ge_B
-    -- Apply simultaneous Dirichlet on [log B, log cap]
-    -- Need: interval length ≥ (4π)^{N(T)}
-    have hlen_suff : (2 * Real.pi / (1 / 2)) ^ (N T : ℕ) ≤
-        Real.log cap - Real.log B := by
-      -- Provided directly by the strengthened tower_cap_dominates_perronThreshold.
-      -- The second conjunct gives exactly this bound (with cap/B unfolded).
-      exact hlen_gap hNpos
-    -- Need log B < log cap (strict inequality for Dirichlet)
-    have hlog_lt : Real.log B < Real.log cap := by
-      by_contra h_not_lt
-      push_neg at h_not_lt
-      have h_eq : Real.log cap - Real.log B ≤ 0 := by linarith
-      have h_pow_pos : 0 < (2 * Real.pi / (1 / 2)) ^ (N T : ℕ) := by positivity
-      linarith
-    obtain ⟨t0, ht0_lb, ht0_ub, ht0_cong⟩ :=
-      simultaneous_dirichlet_on_interval hT4 hNpos phase
-        (Real.log B) (Real.log cap) hlog_lt hlen_suff
-    refine ⟨t0, T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_, ht0_cong, ?_⟩
-    · -- X < exp(t0): since t0 ≥ log B and B > X
-      calc X < B := by simp [hB_def]; linarith [le_max_left X P]
-        _ = Real.exp (Real.log B) := (Real.exp_log hBpos).symm
-        _ ≤ Real.exp t0 := Real.exp_le_exp.mpr ht0_lb
-    · -- perronThreshold ≤ exp(t0): since t0 ≥ log B and B > P
-      have : P < Real.exp t0 :=
-        calc P < B := by simp [hB_def]; linarith [le_max_right X P]
-          _ = Real.exp (Real.log B) := (Real.exp_log hBpos).symm
-          _ ≤ Real.exp t0 := Real.exp_le_exp.mpr ht0_lb
-      linarith
-    · -- exp(t0) ≤ cap: since t0 ≤ log cap
-      calc Real.exp t0 ≤ Real.exp (Real.log cap) := Real.exp_le_exp.mpr ht0_ub
-        _ = cap := Real.exp_log hcap_pos
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))))
+    ∧
+    (∃ t0 T ε : ℝ,
+      4 ≤ T ∧
+      0 < ε ∧ ε < 1 ∧
+      X < Real.exp t0 ∧
+      @perronThreshold pi_explicit_formula_from_perron hRH T ≤ Real.exp t0 ∧
+      (∀ ρ ∈ (finite_zeros_le T).toFinset,
+        ∃ m : ℤ, ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε) ∧
+      Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))) := by
+  rcases arg_above_threshold_pair_from_perron_core hRH X with
+    ⟨hTarget, hAntiTarget⟩
+  constructor
+  · rcases hTarget with ⟨x, hXx, T, hT4, hThreshold, ε, hεpos, hεlt, harg, hxUpper⟩
+    have hperron := @perronThreshold_spec pi_explicit_formula_from_perron hRH T x hThreshold
+    have hx_pos : 0 < x := lt_trans zero_lt_one hperron.1
+    refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_⟩
+    · rwa [Real.exp_log hx_pos]
+    · rwa [Real.exp_log hx_pos]
+    · intro ρ hρ
+      rcases harg ρ hρ with ⟨m, hm⟩
+      exact ⟨m, by simpa using hm⟩
+    · rwa [Real.exp_log hx_pos]
+  · rcases hAntiTarget with
+      ⟨x, hXx, T, hT4, hThreshold, ε, hεpos, hεlt, harg, hxUpper⟩
+    have hperron := @perronThreshold_spec pi_explicit_formula_from_perron hRH T x hThreshold
+    have hx_pos : 0 < x := lt_trans zero_lt_one hperron.1
+    refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_⟩
+    · rwa [Real.exp_log hx_pos]
+    · rwa [Real.exp_log hx_pos]
+    · intro ρ hρ
+      rcases harg ρ hρ with ⟨m, hm⟩
+      exact ⟨m, by simpa using hm⟩
+    · rwa [Real.exp_log hx_pos]
 
 /-- Target approximate-seed phase alignment above the Perron threshold.
 
-    ARCHITECTURE (post-refactor): The seed type now uses approximate congruences
-    `‖t₀·γ - arg(ρ) - m·2π‖ ≤ ε` instead of exact `= 0`. This eliminates the
-    multi-dimensional Kronecker blocker: approximate congruences are provable for
-    any finite set of frequencies via Dirichlet approximation.
-
-    PROVED from `seed_witness_from_perron_core` with phase = Complex.arg.
-
     LIVENESS (C33-D): LIVE — consumed by B7 chain via
     `RHPiExactSeedConstructive.exact_seed_target`. Same chain as `pi_approx`.
-    Sub-sorry count: 0 (local); 1 (in seed_witness_from_perron_core) -/
-theorem target_exact_seed_from_perron :
+    Sub-sorry count: 0 in this file; explicit boundary
+    `InhomogeneousPhaseFitAbovePerronThresholdHyp`. -/
+theorem target_exact_seed_from_perron
+    [PerronPiApproxCompatibilityHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdHyp] :
     @TargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
   intro hRH X
-  exact seed_witness_from_perron_core hRH X Complex.arg
+  exact (exact_seed_pair_from_perron_core hRH X).1
 
 /-- Anti-target approximate-seed phase alignment above the Perron threshold.
 
-    PROVED from `seed_witness_from_perron_core` with phase = (arg + π).
-
     LIVENESS (C33-D): LIVE — consumed by B7 chain via
     `RHPiExactSeedConstructive.exact_seed_anti_target`. Same chain as `pi_approx`.
-    Sub-sorry count: 0 (local); 1 (in seed_witness_from_perron_core) -/
-theorem anti_target_exact_seed_from_perron :
+    Sub-sorry count: 0 in this file; explicit boundary
+    `InhomogeneousPhaseFitAbovePerronThresholdHyp`. -/
+theorem anti_target_exact_seed_from_perron
+    [PerronPiApproxCompatibilityHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdHyp] :
     @AntiTargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
   intro hRH X
-  exact seed_witness_from_perron_core hRH X (fun ρ => Complex.arg ρ + Real.pi)
+  exact (exact_seed_pair_from_perron_core hRH X).2
 
 end Aristotle.Standalone.PerronExplicitFormulaProvider

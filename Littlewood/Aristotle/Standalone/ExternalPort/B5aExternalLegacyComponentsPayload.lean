@@ -20,6 +20,35 @@ open Aristotle.Standalone.ExplicitFormulaPsiLegacyGlobalInstance
 open Aristotle.Standalone.ExplicitFormulaPsiB5aRootInfra
 open Aristotle.Standalone.ExternalPort.B5aExternalLegacyWitnessPayload
 
+/-- Normalize the explicit-formula expression to the shared shifted remainder. -/
+private lemma shifted_remainder_eq_explicit_expr (x T : ℝ) :
+    Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+        (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re) =
+      shiftedRemainderRe x T := by
+  have hzero :
+      (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re = zeroSumRe x T := rfl
+  calc
+    Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
+        (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re)
+        = -x + (Aristotle.DirichletPhaseAlignment.chebyshevPsi x +
+            (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re) := by
+            ring
+    _ = -x + (Aristotle.DirichletPhaseAlignment.chebyshevPsi x + zeroSumRe x T) := by
+          rw [hzero]
+    _ = shiftedRemainderRe x T := by
+          rw [show shiftedRemainderRe x T =
+              Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T by rfl]
+          ring
+
+/-- Normalize the residue-side subtraction to the shared shifted remainder. -/
+private lemma shifted_remainder_eq_sub_expr (x T : ℝ) :
+    Aristotle.DirichletPhaseAlignment.chebyshevPsi x - (x - zeroSumRe x T) =
+      shiftedRemainderRe x T := by
+  change Aristotle.DirichletPhaseAlignment.chebyshevPsi x - (x - zeroSumRe x T) =
+    Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
+      Littlewood.Development.ShiftedRemainderInterface.zeroSumRe x T
+  ring
+
 /-- External payload class for legacy linear-log explicit-formula components.
 This mirrors the exact shape expected by
 `ExplicitFormulaPsiLegacyLinearLogComponentsHyp`. -/
@@ -90,8 +119,7 @@ theorem external_legacy_components_of_witness
         Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
             (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re) =
           shiftedRemainderRe x T := by
-      unfold shiftedRemainderRe zeroSumRe
-      ring
+      exact shifted_remainder_eq_explicit_expr x T
     have hShift : |shiftedRemainderRe x T| ≤ K * D := by
       have hBase : |shiftedRemainderRe x T| ≤ C * D := by
         calc
@@ -109,8 +137,16 @@ theorem external_legacy_components_of_witness
     have hPerEq :
         Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T =
           shiftedRemainderRe x T - contourRemainderRe x T := by
-      unfold perronIntegralRe contourRemainderRe shiftedRemainderRe zeroSumRe
-      ring
+      calc
+        Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T
+            = Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+                (x - zeroSumRe x T + contourRemainderRe x T) := by
+                  rfl
+        _ = (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - (x - zeroSumRe x T)) -
+              contourRemainderRe x T := by
+                ring
+        _ = shiftedRemainderRe x T - contourRemainderRe x T := by
+              rw [shifted_remainder_eq_sub_expr]
     have hContour_def :
         contourRemainderRe x T = shiftedRemainderRe x T * (A / D) := by
       unfold contourRemainderRe
@@ -162,8 +198,7 @@ theorem external_legacy_components_of_witness
         Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x -
             (-(∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re) =
           shiftedRemainderRe x T := by
-      unfold shiftedRemainderRe zeroSumRe
-      ring
+      exact shifted_remainder_eq_explicit_expr x T
     have hShift : |shiftedRemainderRe x T| ≤ K * D := by
       have hBase : |shiftedRemainderRe x T| ≤ C * D := by
         calc

@@ -57,6 +57,93 @@ theorem blockMode_zero_asymptotic :
   simpa [blockMode_zero] using
     Aristotle.StationaryPhaseStartValue.hardyCosExp_at_hardyStart_asymptotic
 
+/-- Exact `p = 2` phase-shift identity: the `p = 2` block is the
+`(n+2)`-zero block multiplied by the exact phase mismatch coming from the
+change in the logarithmic factor. -/
+private lemma blockMode_p2_shifted_zero_factor (n : ℕ) :
+    blockMode n 2 =
+      blockMode (n + 2) 0 *
+        Complex.exp
+          (Complex.I *
+            (((hardyStart (n + 2) *
+                (Real.log (((n + 2 : ℕ) : ℝ) + 1) - Real.log ((n : ℝ) + 1)) : ℝ) : ℂ))) := by
+  have hcoord : blockCoord n 2 = hardyStart (n + 2) := by
+    unfold blockCoord hardyStart
+    push_cast
+    ring_nf
+  have hcoord' : blockCoord (n + 2) 0 = hardyStart (n + 2) := by
+    unfold blockCoord hardyStart
+    push_cast
+    ring_nf
+  have hleft :
+      blockMode n 2 =
+        Complex.exp
+          (Complex.I *
+            (((hardyTheta (hardyStart (n + 2)) -
+                hardyStart (n + 2) * Real.log ((n : ℝ) + 1)) : ℝ) : ℂ)) := by
+    dsimp [blockMode]
+    rw [hcoord, HardyCosSmooth.hardyCosExp_eq_cexp_phaseArg,
+      HardyCosSmooth.hardyPhaseArg_eq_hardyTheta_sub_log]
+  have hright :
+      blockMode (n + 2) 0 =
+        Complex.exp
+          (Complex.I *
+            (((hardyTheta (hardyStart (n + 2)) -
+                hardyStart (n + 2) * Real.log (((n + 2 : ℕ) : ℝ) + 1)) : ℝ) : ℂ)) := by
+    dsimp [blockMode]
+    rw [hcoord', HardyCosSmooth.hardyCosExp_eq_cexp_phaseArg,
+      HardyCosSmooth.hardyPhaseArg_eq_hardyTheta_sub_log]
+  have hsplit :
+      (hardyTheta (hardyStart (n + 2)) -
+          hardyStart (n + 2) * Real.log ((n : ℝ) + 1) : ℝ)
+        = (hardyTheta (hardyStart (n + 2)) -
+            hardyStart (n + 2) * Real.log (((n + 2 : ℕ) : ℝ) + 1) : ℝ)
+            + hardyStart (n + 2) *
+                (Real.log (((n + 2 : ℕ) : ℝ) + 1) - Real.log ((n : ℝ) + 1)) := by
+    ring
+  calc
+    blockMode n 2
+        = Complex.exp
+            (Complex.I *
+              (((hardyTheta (hardyStart (n + 2)) -
+                  hardyStart (n + 2) * Real.log ((n : ℝ) + 1)) : ℝ) : ℂ)) := hleft
+    _ = Complex.exp
+          (Complex.I *
+            (((hardyTheta (hardyStart (n + 2)) -
+                hardyStart (n + 2) * Real.log (((n + 2 : ℕ) : ℝ) + 1)
+                + hardyStart (n + 2) *
+                    (Real.log (((n + 2 : ℕ) : ℝ) + 1) - Real.log ((n : ℝ) + 1)) : ℝ) : ℂ))) := by
+          rw [hsplit]
+    _ = Complex.exp
+          (Complex.I *
+            (((hardyTheta (hardyStart (n + 2)) -
+                hardyStart (n + 2) * Real.log (((n + 2 : ℕ) : ℝ) + 1) : ℝ) : ℂ))) *
+        Complex.exp
+          (Complex.I *
+            (((hardyStart (n + 2) *
+                (Real.log (((n + 2 : ℕ) : ℝ) + 1) - Real.log ((n : ℝ) + 1)) : ℝ) : ℂ))) := by
+          have hmul :
+              Complex.I *
+                  (((hardyTheta (hardyStart (n + 2)) -
+                      hardyStart (n + 2) * Real.log (((n + 2 : ℕ) : ℝ) + 1)
+                      + hardyStart (n + 2) *
+                          (Real.log (((n + 2 : ℕ) : ℝ) + 1) - Real.log ((n : ℝ) + 1)) : ℝ) : ℂ))
+                = Complex.I *
+                    (((hardyTheta (hardyStart (n + 2)) -
+                        hardyStart (n + 2) * Real.log (((n + 2 : ℕ) : ℝ) + 1) : ℝ) : ℂ))
+                  + Complex.I *
+                    (((hardyStart (n + 2) *
+                        (Real.log (((n + 2 : ℕ) : ℝ) + 1) - Real.log ((n : ℝ) + 1)) : ℝ) : ℂ)) := by
+            push_cast
+            ring_nf
+          rw [hmul, Complex.exp_add]
+    _ = blockMode (n + 2) 0 *
+          Complex.exp
+            (Complex.I *
+              (((hardyStart (n + 2) *
+                  (Real.log (((n + 2 : ℕ) : ℝ) + 1) - Real.log ((n : ℝ) + 1)) : ℝ) : ℂ))) := by
+          simpa [hright, mul_comm, mul_left_comm, mul_assoc]
+
 lemma blockMode_norm (n : ℕ) (p : ℝ) : ‖blockMode n p‖ = 1 := by
   rw [blockMode, HardyCosSmooth.hardyCosExp_eq_cexp_phaseArg, mul_comm]
   exact Complex.norm_exp_ofReal_mul_I _
@@ -127,6 +214,80 @@ private lemma abs_log_one_add_sub_self_le_sq {u : ℝ} (hu : 0 ≤ u) :
     ring
   rw [habs]
   exact hdiff_le
+
+/-- The local `p ≤ 2` logarithmic remainder estimate used by the
+`[0,2]` block-omega model. This is the only non-asymptotic arithmetic input
+in the proof of `blockOmega_linear_model_upto_two_eventually`. -/
+private lemma blockOmega_linear_model_upto_two_inner_bound
+    {m p : ℝ} (hm_pos : 0 < m) (hm_ge_one : 1 ≤ m) (hp0 : 0 ≤ p) (hp2 : p ≤ 2) :
+    |(m + p) * (Real.log (1 + p / m) - p / m) + p ^ 2 / m| ≤ 16 / m := by
+  have hu_nonneg : 0 ≤ p / m := by positivity
+  have hu_bound :
+      |Real.log (1 + p / m) - p / m| ≤ (p / m) ^ 2 :=
+    abs_log_one_add_sub_self_le_sq hu_nonneg
+  have hp_sq_div_nonneg : 0 ≤ p ^ 2 / m := by positivity
+  have hp_div_nonneg : 0 ≤ p / m := by positivity
+  have hp_div_le : p / m ≤ 2 / m := by
+    exact div_le_div_of_nonneg_right hp2 (le_of_lt hm_pos)
+  have hp_div_sq_le : (p / m) ^ 2 ≤ (2 / m) ^ 2 := by
+    have hsq' : (p / m) ^ 2 ≤ (2 / m) ^ 2 := by
+      nlinarith [hp_div_nonneg, hp_div_le]
+    simpa [sq, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hsq'
+  have hp_sq_le_four : p ^ 2 ≤ 4 := by
+    nlinarith
+  have hm_sq_pos : 0 < m ^ 2 := by positivity
+  calc
+    |(m + p) * (Real.log (1 + p / m) - p / m) + p ^ 2 / m|
+        ≤ |(m + p) * (Real.log (1 + p / m) - p / m)| + |p ^ 2 / m| := by
+              exact abs_add_le _ _
+    _ = (m + p) * |Real.log (1 + p / m) - p / m| + p ^ 2 / m := by
+          rw [abs_mul, abs_of_nonneg (by linarith), abs_of_nonneg hp_sq_div_nonneg]
+    _ ≤ (m + p) * (p / m) ^ 2 + p ^ 2 / m := by
+          gcongr
+    _ ≤ (m + p) * (2 / m) ^ 2 + 4 / m := by
+          refine add_le_add ?_ ?_
+          · exact mul_le_mul_of_nonneg_left hp_div_sq_le (by linarith)
+          · exact div_le_div_of_nonneg_right hp_sq_le_four (le_of_lt hm_pos)
+    _ ≤ (m + 2) * (2 / m) ^ 2 + 4 / m := by
+          gcongr
+    _ = (8 * m + 8) / m ^ 2 := by
+          have hm_ne : m ≠ 0 := ne_of_gt hm_pos
+          field_simp [hm_ne]
+          ring
+    _ ≤ 16 / m := by
+          refine (div_le_iff₀ (by positivity : 0 < m ^ 2)).2 ?_
+          rw [div_eq_mul_inv]
+          have hm_ne : m ≠ 0 := ne_of_gt hm_pos
+          field_simp [hm_ne]
+          nlinarith [hm_ge_one]
+
+/-- The local `p ≤ 2` logarithmic remainder estimate used by the
+`[0,2]` block-omega model. This is the only non-asymptotic arithmetic input
+in the proof of `blockOmega_linear_model_upto_two_eventually`. -/
+private lemma blockOmega_linear_model_upto_two_main_bound
+    {m p : ℝ} (hm_pos : 0 < m) (hm_ge_one : 1 ≤ m) (hp0 : 0 ≤ p) (hp2 : p ≤ 2) :
+    |4 * Real.pi * (m + p) * Real.log (1 + p / m) - 4 * Real.pi * p|
+      ≤ 64 * Real.pi / m := by
+  have hsplit :
+      4 * Real.pi * (m + p) * Real.log (1 + p / m) - 4 * Real.pi * p
+        = 4 * Real.pi *
+            ((m + p) * (Real.log (1 + p / m) - p / m) + p ^ 2 / m) := by
+    have hm_ne : m ≠ 0 := ne_of_gt hm_pos
+    field_simp [hm_ne]
+    ring
+  have hinner :=
+    blockOmega_linear_model_upto_two_inner_bound hm_pos hm_ge_one hp0 hp2
+  calc
+    |4 * Real.pi * (m + p) * Real.log (1 + p / m) - 4 * Real.pi * p|
+        = |4 * Real.pi *
+            ((m + p) * (Real.log (1 + p / m) - p / m) + p ^ 2 / m)| := by
+              rw [hsplit]
+    _ = 4 * Real.pi *
+          |(m + p) * (Real.log (1 + p / m) - p / m) + p ^ 2 / m| := by
+            rw [abs_mul, abs_of_nonneg (by positivity)]
+    _ ≤ 4 * Real.pi * (16 / m) := by
+          gcongr
+    _ = 64 * Real.pi / m := by ring
 
 /-- On the first stationary block `p ∈ [0,1]`, the branch-free angular velocity
 is the quadratic-model velocity `4πp` up to `O((n+1)⁻¹)`, uniformly for all
@@ -357,6 +518,175 @@ theorem blockOmega_linear_model_eventually :
     _ = (2 * |C0| + 12 * Real.pi) / m := by
           ring
     _ ≤ (2 * |C0| + 12 * Real.pi) / ((n : ℝ) + 1) := by
+          simp [m]
+
+/-- The same block-omega linear model remains valid up to the second stationary
+start `p = 2`, with a larger but still uniform `O((n+1)⁻¹)` constant. This is
+the exact `hOmega2` input needed by the second-start increment route. -/
+theorem blockOmega_linear_model_upto_two_eventually :
+    ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+      ∀ p ∈ Icc (0 : ℝ) 2,
+        |blockOmega n p - 4 * Real.pi * p| ≤ C / ((n : ℝ) + 1) := by
+  have h_asymp := theta_deriv_asymptotic
+  rw [Asymptotics.isBigO_iff] at h_asymp
+  obtain ⟨C0, hC0⟩ := h_asymp
+  rw [Filter.eventually_atTop] at hC0
+  obtain ⟨T0, hT0⟩ := hC0
+  obtain ⟨N0, hN0⟩ :
+      ∃ N0 : ℕ, ∀ n ≥ N0, 2 * Real.pi * ((n : ℝ) + 1) ^ 2 ≥ T0 := by
+    obtain ⟨M, hM⟩ := exists_nat_ge (max T0 0 / (2 * Real.pi))
+    refine ⟨M, fun n hn => ?_⟩
+    calc
+      T0 ≤ max T0 0 := le_max_left _ _
+      _ = 2 * Real.pi * (max T0 0 / (2 * Real.pi)) := by
+            field_simp [Real.pi_ne_zero]
+      _ ≤ 2 * Real.pi * (M : ℝ) := by
+            exact mul_le_mul_of_nonneg_left hM (by positivity)
+      _ ≤ 2 * Real.pi * (n : ℝ) := by
+            exact mul_le_mul_of_nonneg_left (by exact_mod_cast hn) (by positivity)
+      _ ≤ 2 * Real.pi * ((n : ℝ) + 1) ^ 2 := by
+            gcongr
+            nlinarith [show (0 : ℝ) ≤ (n : ℝ) by exact_mod_cast Nat.zero_le n]
+  refine ⟨2 * |C0| + 64 * Real.pi, by positivity, N0, ?_⟩
+  intro n hn p hp
+  set m : ℝ := (n : ℝ) + 1
+  set t : ℝ := blockCoord n p
+  have hm_pos : 0 < m := by
+    dsimp [m]
+    positivity
+  have hm_ge_one : 1 ≤ m := by
+    dsimp [m]
+    nlinarith [show (0 : ℝ) ≤ (n : ℝ) by exact_mod_cast Nat.zero_le n]
+  have hp0 : 0 ≤ p := hp.1
+  have hp2 : p ≤ 2 := hp.2
+  have hmp_pos : 0 < m + p := by
+    linarith
+  have ht_eq : t = 2 * Real.pi * (m + p) ^ 2 := by
+    dsimp [t, m]
+    unfold blockCoord
+    ring
+  have hJ_eq : blockJacobian n p = 4 * Real.pi * (m + p) := by
+    dsimp [m]
+    unfold blockJacobian
+    ring
+  have ht_ge_T0 : T0 ≤ t := by
+    calc
+      T0 ≤ 2 * Real.pi * m ^ 2 := hN0 n hn
+      _ ≤ 2 * Real.pi * (m + p) ^ 2 := by
+            gcongr
+            nlinarith
+      _ = t := ht_eq.symm
+  have htheta :
+      |thetaDeriv t - (1 / 2 : ℝ) * Real.log (t / (2 * Real.pi))|
+        ≤ |C0| / t := by
+    have hraw := hT0 t ht_ge_T0
+    rw [Real.norm_eq_abs, Real.norm_eq_abs] at hraw
+    have ht_pos : 0 < t := by
+      rw [ht_eq]
+      positivity
+    calc
+      |thetaDeriv t - (1 / 2 : ℝ) * Real.log (t / (2 * Real.pi))|
+          ≤ C0 * |1 / t| := hraw
+      _ ≤ |C0| * |1 / t| := by
+            gcongr
+            exact le_abs_self C0
+      _ = |C0| / t := by
+            rw [abs_of_pos (div_pos one_pos ht_pos), one_div, div_eq_mul_inv]
+  have htheta_block :
+      |blockJacobian n p *
+            (thetaDeriv t - (1 / 2 : ℝ) * Real.log (t / (2 * Real.pi)))|
+        ≤ 2 * |C0| / m := by
+    have ht_pos : 0 < t := by
+      rw [ht_eq]
+      positivity
+    have hratio :
+        blockJacobian n p / t = 2 / (m + p) := by
+      rw [hJ_eq, ht_eq]
+      field_simp [Real.pi_ne_zero, ne_of_gt hmp_pos]
+      ring
+    have hJ_nonneg : 0 ≤ blockJacobian n p := by
+      rw [hJ_eq]
+      positivity
+    calc
+      |blockJacobian n p *
+            (thetaDeriv t - (1 / 2 : ℝ) * Real.log (t / (2 * Real.pi)))|
+          = blockJacobian n p *
+              |thetaDeriv t - (1 / 2 : ℝ) * Real.log (t / (2 * Real.pi))| := by
+                rw [abs_mul, abs_of_nonneg hJ_nonneg]
+      _ ≤ blockJacobian n p * (|C0| / t) := by
+            gcongr
+      _ = |C0| * (blockJacobian n p / t) := by
+            rw [div_eq_mul_inv]
+            ring
+      _ = |C0| * (2 / (m + p)) := by rw [hratio]
+      _ ≤ |C0| * (2 / m) := by
+            have hrec : 1 / (m + p) ≤ 1 / m := by
+              exact one_div_le_one_div_of_le hm_pos (by linarith)
+            have hC_nonneg : 0 ≤ |C0| := abs_nonneg C0
+            have htwo : 2 / (m + p) ≤ 2 / m := by
+              have htwo' :=
+                mul_le_mul_of_nonneg_left hrec (show 0 ≤ (2 : ℝ) by positivity)
+              simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using htwo'
+            exact mul_le_mul_of_nonneg_left htwo hC_nonneg
+      _ = 2 * |C0| / m := by ring
+  have hmain_eq :
+      blockJacobian n p *
+          ((1 / 2 : ℝ) * Real.log (t / (2 * Real.pi)) - Real.log m)
+        = 4 * Real.pi * (m + p) * Real.log (1 + p / m) := by
+    have hdiv :
+        t / (2 * Real.pi) = (m + p) ^ 2 := by
+      rw [ht_eq]
+      field_simp [Real.pi_ne_zero]
+    have hm_ne : m ≠ 0 := ne_of_gt hm_pos
+    calc
+      blockJacobian n p * ((1 / 2 : ℝ) * Real.log (t / (2 * Real.pi)) - Real.log m)
+          = 4 * Real.pi * (m + p) *
+              ((1 / 2 : ℝ) * Real.log ((m + p) ^ 2) - Real.log m) := by
+                rw [hJ_eq, hdiv]
+      _ = 4 * Real.pi * (m + p) * (Real.log (m + p) - Real.log m) := by
+            rw [Real.log_pow]
+            ring
+      _ = 4 * Real.pi * (m + p) * Real.log ((m + p) / m) := by
+            rw [← Real.log_div (ne_of_gt hmp_pos) hm_ne]
+      _ = 4 * Real.pi * (m + p) * Real.log (1 + p / m) := by
+            congr 2
+            field_simp [hm_ne]
+  have hmain_bound :
+      |4 * Real.pi * (m + p) * Real.log (1 + p / m) - 4 * Real.pi * p|
+        ≤ 64 * Real.pi / m := by
+    exact blockOmega_linear_model_upto_two_main_bound hm_pos hm_ge_one hp0 hp2
+  have hrewrite :
+      blockOmega n p - 4 * Real.pi * p
+        = blockJacobian n p *
+            (thetaDeriv t - (1 / 2 : ℝ) * Real.log (t / (2 * Real.pi)))
+          + (4 * Real.pi * (m + p) * Real.log (1 + p / m) - 4 * Real.pi * p) := by
+    calc
+      blockOmega n p - 4 * Real.pi * p
+          = blockJacobian n p * (thetaDeriv t - Real.log m) - 4 * Real.pi * p := by
+              simp [blockOmega, t, m, mul_comm, mul_left_comm, mul_assoc]
+      _ = blockJacobian n p *
+            (thetaDeriv t - (1 / 2 : ℝ) * Real.log (t / (2 * Real.pi)))
+          + blockJacobian n p *
+              ((1 / 2 : ℝ) * Real.log (t / (2 * Real.pi)) - Real.log m)
+          - 4 * Real.pi * p := by
+              ring
+      _ = blockJacobian n p *
+            (thetaDeriv t - (1 / 2 : ℝ) * Real.log (t / (2 * Real.pi)))
+          + (4 * Real.pi * (m + p) * Real.log (1 + p / m) - 4 * Real.pi * p) := by
+              rw [hmain_eq]
+              ring
+  calc
+    |blockOmega n p - 4 * Real.pi * p|
+        ≤ |blockJacobian n p *
+              (thetaDeriv t - (1 / 2 : ℝ) * Real.log (t / (2 * Real.pi)))|
+            + |4 * Real.pi * (m + p) * Real.log (1 + p / m) - 4 * Real.pi * p| := by
+              rw [hrewrite]
+              exact abs_add_le _ _
+    _ ≤ 2 * |C0| / m + 64 * Real.pi / m := by
+          exact add_le_add htheta_block hmain_bound
+    _ = (2 * |C0| + 64 * Real.pi) / m := by
+          ring
+    _ ≤ (2 * |C0| + 64 * Real.pi) / ((n : ℝ) + 1) := by
           simp [m]
 
 /-- On the tail `p ≥ 1`, the branch-free angular velocity stays uniformly
@@ -1307,6 +1637,345 @@ theorem blockMode_quadratic_model_eventually :
     _ = ‖blockModeQuadraticComp n p - blockMode n 0‖ := by
           rw [norm_mul, hexp_norm, mul_one]
     _ ≤ C / ((n : ℝ) + 1) := hcomp n hn p hp
+
+/-- Endpoint specialization of the first-block quadratic model at `p = 1`. -/
+theorem blockMode_one_minus_zero_asymptotic :
+    ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+      ‖blockMode n 1 - blockMode n 0‖ ≤ C / ((n : ℝ) + 1) := by
+  obtain ⟨C, hC, N0, hquad⟩ := blockMode_quadratic_model_eventually
+  refine ⟨C, hC, N0, ?_⟩
+  intro n hn
+  have h := hquad n hn 1 (by simp)
+  have hexp :
+      Complex.exp (Complex.I * (((2 * Real.pi * (1 : ℝ) ^ 2 : ℝ)) : ℂ)) = 1 := by
+    simpa [pow_two, mul_comm, mul_left_comm, mul_assoc] using Complex.exp_two_pi_mul_I
+  calc
+    ‖blockMode n 1 - blockMode n 0‖
+        = ‖blockMode n 1
+            - blockMode n 0
+                * Complex.exp (Complex.I * (((2 * Real.pi * (1 : ℝ) ^ 2 : ℝ)) : ℂ))‖ := by
+              rw [hexp, mul_one]
+    _ ≤ C / ((n : ℝ) + 1) := h
+
+/-- Endpoint anchor asymptotic at `p = 1`, extracted from the first-block model
+and the stationary-point anchor at `p = 0`. -/
+theorem blockMode_one_anchor_asymptotic :
+    ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+      ‖blockMode n 1
+          - ((((-1 : ℝ) ^ (n + 1) : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseStartValue.hardyStationaryAnchor)‖
+        ≤ C / ((n : ℝ) + 1) := by
+  obtain ⟨C1, hC1, N1, hOne⟩ := blockMode_one_minus_zero_asymptotic
+  obtain ⟨C0, hC0, hZero⟩ := blockMode_zero_asymptotic
+  refine ⟨C1 + C0, add_pos hC1 hC0, N1, ?_⟩
+  intro n hn
+  let a : ℂ :=
+    ((((-1 : ℝ) ^ (n + 1) : ℝ) : ℂ) *
+      Aristotle.StationaryPhaseStartValue.hardyStationaryAnchor)
+  have hOne' := hOne n hn
+  have hZero' : ‖blockMode n 0 - a‖ ≤ C0 / ((n : ℝ) + 1) := by
+    simpa [a] using hZero n
+  have hsplit :
+      blockMode n 1 - a = (blockMode n 1 - blockMode n 0) + (blockMode n 0 - a) := by
+    ring_nf
+  have hn1_pos : 0 < ((n : ℝ) + 1) := by positivity
+  calc
+    ‖blockMode n 1 - a‖
+        = ‖(blockMode n 1 - blockMode n 0) + (blockMode n 0 - a)‖ := by
+            exact congrArg norm hsplit
+    _ ≤ ‖blockMode n 1 - blockMode n 0‖ + ‖blockMode n 0 - a‖ := norm_add_le _ _
+    _ ≤ C1 / ((n : ℝ) + 1) + C0 / ((n : ℝ) + 1) := by
+          gcongr
+    _ = (C1 + C0) / ((n : ℝ) + 1) := by
+          field_simp [ne_of_gt hn1_pos]
+
+/-- If the second stationary-block start differs from the first by `O((n+1)⁻¹)`,
+then the second-start block mode inherits the same stationary anchor. This is
+the direct bridge needed by the Atkinson shift-1 upper-prefix route. -/
+theorem blockMode_two_minus_zero_asymptotic_of_blockMode_two_minus_one_asymptotic
+    (hInc :
+      ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+        ‖blockMode n 2 - blockMode n 1‖ ≤ C / ((n : ℝ) + 1)) :
+    ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+      ‖blockMode n 2 - blockMode n 0‖ ≤ C / ((n : ℝ) + 1) := by
+  obtain ⟨C21, hC21, N21, h21⟩ := hInc
+  obtain ⟨C10, hC10, N10, h10⟩ := blockMode_one_minus_zero_asymptotic
+  refine ⟨C21 + C10, add_pos hC21 hC10, max N21 N10, ?_⟩
+  intro n hn
+  have hn21 : N21 ≤ n := le_trans (le_max_left _ _) hn
+  have hn10 : N10 ≤ n := le_trans (le_max_right _ _) hn
+  have h21' := h21 n hn21
+  have h10' := h10 n hn10
+  have hsplit :
+      blockMode n 2 - blockMode n 0
+        = (blockMode n 2 - blockMode n 1) + (blockMode n 1 - blockMode n 0) := by
+    ring_nf
+  have hn1_pos : 0 < ((n : ℝ) + 1) := by positivity
+  calc
+    ‖blockMode n 2 - blockMode n 0‖
+        = ‖(blockMode n 2 - blockMode n 1) + (blockMode n 1 - blockMode n 0)‖ := by
+            exact congrArg norm hsplit
+    _ ≤ ‖blockMode n 2 - blockMode n 1‖ + ‖blockMode n 1 - blockMode n 0‖ := norm_add_le _ _
+    _ ≤ C21 / ((n : ℝ) + 1) + C10 / ((n : ℝ) + 1) := by
+          gcongr
+    _ = (C21 + C10) / ((n : ℝ) + 1) := by
+          field_simp [ne_of_gt hn1_pos]
+
+/-- If the second-start mode is `O((n+1)⁻¹)` away from the stationary-point
+mode, then it inherits the same stationary anchor. -/
+theorem blockMode_two_anchor_asymptotic_of_blockMode_two_minus_zero_asymptotic
+    (h20 :
+      ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+        ‖blockMode n 2 - blockMode n 0‖ ≤ C / ((n : ℝ) + 1)) :
+    ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+      ‖blockMode n 2
+          - ((((-1 : ℝ) ^ (n + 1) : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseStartValue.hardyStationaryAnchor)‖
+        ≤ C / ((n : ℝ) + 1) := by
+  obtain ⟨C20, hC20, N20, h20'⟩ := h20
+  obtain ⟨C0, hC0, hZero⟩ := blockMode_zero_asymptotic
+  refine ⟨C20 + C0, add_pos hC20 hC0, N20, ?_⟩
+  intro n hn
+  let a : ℂ :=
+    ((((-1 : ℝ) ^ (n + 1) : ℝ) : ℂ) *
+      Aristotle.StationaryPhaseStartValue.hardyStationaryAnchor)
+  have h20n := h20' n hn
+  have hZero' : ‖blockMode n 0 - a‖ ≤ C0 / ((n : ℝ) + 1) := by
+    simpa [a] using hZero n
+  have hsplit :
+      blockMode n 2 - a = (blockMode n 2 - blockMode n 0) + (blockMode n 0 - a) := by
+    ring_nf
+  have hn1_pos : 0 < ((n : ℝ) + 1) := by positivity
+  calc
+    ‖blockMode n 2 - a‖
+        = ‖(blockMode n 2 - blockMode n 0) + (blockMode n 0 - a)‖ := by
+            exact congrArg norm hsplit
+    _ ≤ ‖blockMode n 2 - blockMode n 0‖ + ‖blockMode n 0 - a‖ := norm_add_le _ _
+    _ ≤ C20 / ((n : ℝ) + 1) + C0 / ((n : ℝ) + 1) := by
+          gcongr
+    _ = (C20 + C0) / ((n : ℝ) + 1) := by
+          field_simp [ne_of_gt hn1_pos]
+
+/-- If the second stationary-block start differs from the first by `O((n+1)⁻¹)`,
+then the second-start block mode inherits the same stationary anchor. This is
+the direct bridge needed by the Atkinson shift-1 upper-prefix route. -/
+theorem blockMode_two_anchor_asymptotic_of_blockMode_two_minus_one_asymptotic
+    (hInc :
+      ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+        ‖blockMode n 2 - blockMode n 1‖ ≤ C / ((n : ℝ) + 1)) :
+    ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+      ‖blockMode n 2
+          - ((((-1 : ℝ) ^ (n + 1) : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseStartValue.hardyStationaryAnchor)‖
+        ≤ C / ((n : ℝ) + 1) := by
+  exact blockMode_two_anchor_asymptotic_of_blockMode_two_minus_zero_asymptotic
+    (blockMode_two_minus_zero_asymptotic_of_blockMode_two_minus_one_asymptotic hInc)
+
+/-- Conditional `[0,2]` extension of the compensated quadratic model. This is
+the smallest local stationary-phase helper below the second-start increment
+theorem: if the linear phase model is available uniformly up to `p = 2`, then
+the same quadratic-model stabilization argument already used on `[0,1]`
+propagates to `[0,2]`. -/
+private theorem blockMode_quadratic_comp_upto_two_of_blockOmega_linear_model_eventually
+    (hOmega2 :
+      ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+        ∀ p ∈ Icc (0 : ℝ) 2,
+          |blockOmega n p - 4 * Real.pi * p| ≤ C / ((n : ℝ) + 1)) :
+    ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+      ∀ p ∈ Icc (0 : ℝ) 2,
+        ‖blockModeQuadraticComp n p - blockMode n 0‖ ≤ C / ((n : ℝ) + 1) := by
+  obtain ⟨C0, hC0, N0, hOmega⟩ := hOmega2
+  refine ⟨2 * C0, by positivity, N0, ?_⟩
+  intro n hn p hp
+  have hderiv :
+      ∀ x ∈ Icc (0 : ℝ) p,
+        HasDerivWithinAt (blockModeQuadraticComp n)
+          (Complex.I * ((blockOmega n x - 4 * Real.pi * x : ℝ) : ℂ)
+            * blockModeQuadraticComp n x)
+          (Icc (0 : ℝ) p) x := by
+    intro x hx
+    exact (blockModeQuadraticComp_hasDerivAt n x).hasDerivWithinAt
+  have hbound :
+      ∀ x ∈ Ico (0 : ℝ) p,
+        ‖Complex.I * ((blockOmega n x - 4 * Real.pi * x : ℝ) : ℂ)
+            * blockModeQuadraticComp n x‖ ≤ C0 / ((n : ℝ) + 1) := by
+    intro x hx
+    have hx02 : x ∈ Icc (0 : ℝ) 2 := ⟨hx.1, le_trans (le_of_lt hx.2) hp.2⟩
+    have hω := hOmega n hn x hx02
+    calc
+      ‖Complex.I * ((blockOmega n x - 4 * Real.pi * x : ℝ) : ℂ)
+          * blockModeQuadraticComp n x‖
+          = ‖Complex.I‖ * ‖(((blockOmega n x - 4 * Real.pi * x : ℝ)) : ℂ)‖
+              * ‖blockModeQuadraticComp n x‖ := by
+                rw [norm_mul, norm_mul]
+      _ = |blockOmega n x - 4 * Real.pi * x| := by
+            rw [Complex.norm_I, one_mul, Complex.norm_real, Real.norm_eq_abs,
+              blockModeQuadraticComp_norm, mul_one]
+      _ ≤ C0 / ((n : ℝ) + 1) := hω
+  have hmv :=
+    norm_image_sub_le_of_norm_deriv_le_segment'
+      (f := blockModeQuadraticComp n) (a := 0) (b := p)
+      hderiv hbound p ⟨hp.1, le_rfl⟩
+  calc
+    ‖blockModeQuadraticComp n p - blockMode n 0‖
+        = ‖blockModeQuadraticComp n p - blockModeQuadraticComp n 0‖ := by
+            simp [blockModeQuadraticComp, quadraticRotator_zero]
+    _ ≤ (C0 / ((n : ℝ) + 1)) * (p - 0) := hmv
+    _ ≤ (C0 / ((n : ℝ) + 1)) * 2 := by
+          have hCn_nonneg : 0 ≤ C0 / ((n : ℝ) + 1) := by positivity
+          nlinarith [hp.1, hp.2]
+    _ = (2 * C0) / ((n : ℝ) + 1) := by
+          ring
+
+/-- Conditional `[0,2]` quadratic-model form corresponding to
+`blockMode_quadratic_comp_upto_two_of_blockOmega_linear_model_eventually`. -/
+private theorem blockMode_quadratic_model_upto_two_of_blockOmega_linear_model_eventually
+    (hOmega2 :
+      ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+        ∀ p ∈ Icc (0 : ℝ) 2,
+          |blockOmega n p - 4 * Real.pi * p| ≤ C / ((n : ℝ) + 1)) :
+    ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+      ∀ p ∈ Icc (0 : ℝ) 2,
+        ‖blockMode n p
+            - blockMode n 0
+                * Complex.exp (Complex.I * (((2 * Real.pi * p ^ 2 : ℝ)) : ℂ))‖
+          ≤ C / ((n : ℝ) + 1) := by
+  obtain ⟨C, hC, N0, hcomp⟩ :=
+    blockMode_quadratic_comp_upto_two_of_blockOmega_linear_model_eventually hOmega2
+  refine ⟨C, hC, N0, ?_⟩
+  intro n hn p hp
+  let e : ℂ := Complex.exp (Complex.I * (((2 * Real.pi * p ^ 2 : ℝ)) : ℂ))
+  change ‖blockMode n p - blockMode n 0 * e‖ ≤ C / ((n : ℝ) + 1)
+  have hexp_norm :
+      ‖e‖ = 1 := by
+    dsimp [e]
+    exact Complex.norm_exp_I_mul_ofReal (2 * Real.pi * p ^ 2)
+  have hrepr :
+      blockMode n p
+        - blockMode n 0 * e
+      = (blockModeQuadraticComp n p - blockMode n 0) * e := by
+    have hcancel :
+        quadraticRotator p * e = 1 := by
+      have hsum :
+          ((quadraticPhase p : ℂ) * Complex.I) + Complex.I * (((2 * Real.pi * p ^ 2 : ℝ)) : ℂ) = 0 := by
+        let a : ℝ := 2 * Real.pi * p ^ 2
+        have hcomm : Complex.I * ((a : ℝ) : ℂ) = (((a : ℝ) : ℂ) * Complex.I) := by
+          rw [mul_comm]
+        have hzero : ((-(a : ℝ) : ℂ) + ((a : ℝ) : ℂ)) = 0 := by
+          norm_num [a]
+        calc
+          ((quadraticPhase p : ℂ) * Complex.I) + Complex.I * (((2 * Real.pi * p ^ 2 : ℝ)) : ℂ)
+              = ((-(a : ℝ) : ℂ) * Complex.I) + (((a : ℝ) : ℂ) * Complex.I) := by
+                  rw [show (quadraticPhase p : ℂ) = ((-(a : ℝ) : ℂ) : ℂ) by
+                    simp [quadraticPhase, a]]
+                  rw [hcomm]
+          _ = (((-(a : ℝ) : ℂ) + ((a : ℝ) : ℂ)) * Complex.I) := by
+                rw [← add_mul]
+          _ = 0 := by simp [hzero]
+      calc
+        quadraticRotator p * e
+            = Complex.exp (((quadraticPhase p : ℂ) * Complex.I)
+                + Complex.I * (((2 * Real.pi * p ^ 2 : ℝ)) : ℂ)) := by
+                  simp [quadraticRotator, e, Complex.exp_add]
+        _ = 1 := by rw [hsum, Complex.exp_zero]
+    calc
+      blockMode n p - blockMode n 0 * e
+        = blockMode n p * 1 - blockMode n 0 * e := by ring
+      _ = blockMode n p * (quadraticRotator p * e) - blockMode n 0 * e := by
+            rw [hcancel]
+      _ = (blockMode n p * quadraticRotator p - blockMode n 0) * e := by
+            ring
+      _ = (blockModeQuadraticComp n p - blockMode n 0) * e := by
+            rfl
+  calc
+    ‖blockMode n p - blockMode n 0 * e‖
+        = ‖(blockModeQuadraticComp n p - blockMode n 0) * e‖ := by
+            rw [hrepr]
+    _ = ‖blockModeQuadraticComp n p - blockMode n 0‖ := by
+          rw [norm_mul, hexp_norm, mul_one]
+    _ ≤ C / ((n : ℝ) + 1) := hcomp n hn p hp
+
+/-- Conditional endpoint control at the second stationary start. If the linear
+block-omega model extends to `p = 2`, then the quadratic model yields the
+second-start mode up to the stationary-point mode with `O((n+1)⁻¹)` error. -/
+theorem blockMode_two_minus_zero_asymptotic_of_blockOmega_linear_model_upto_two_eventually
+    (hOmega2 :
+      ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+        ∀ p ∈ Icc (0 : ℝ) 2,
+          |blockOmega n p - 4 * Real.pi * p| ≤ C / ((n : ℝ) + 1)) :
+    ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+      ‖blockMode n 2 - blockMode n 0‖ ≤ C / ((n : ℝ) + 1) := by
+  obtain ⟨C, hC, N0, hquad⟩ :=
+    blockMode_quadratic_model_upto_two_of_blockOmega_linear_model_eventually hOmega2
+  refine ⟨C, hC, N0, ?_⟩
+  intro n hn
+  have h := hquad n hn 2 (by simp)
+  have hexp :
+      Complex.exp (Complex.I * (((2 * Real.pi * (2 : ℝ) ^ 2 : ℝ)) : ℂ)) = 1 := by
+    have harg :
+        Complex.I * (((2 * Real.pi * (2 : ℝ) ^ 2 : ℝ)) : ℂ)
+          = (4 : ℕ) * (2 * Real.pi * Complex.I) := by
+      norm_num [pow_two]
+      ring
+    rw [harg]
+    exact Complex.exp_nat_mul_two_pi_mul_I 4
+  calc
+    ‖blockMode n 2 - blockMode n 0‖
+        = ‖blockMode n 2
+            - blockMode n 0
+                * Complex.exp (Complex.I * (((2 * Real.pi * (2 : ℝ) ^ 2 : ℝ)) : ℂ))‖ := by
+              rw [hexp, mul_one]
+    _ ≤ C / ((n : ℝ) + 1) := h
+
+/-- Conditional second-start increment theorem. This is the smallest build-clean
+helper immediately below the missing external stationary-phase input for the
+first Atkinson small-shift route. -/
+theorem blockMode_two_minus_one_asymptotic_of_blockOmega_linear_model_upto_two_eventually
+    (hOmega2 :
+      ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+        ∀ p ∈ Icc (0 : ℝ) 2,
+          |blockOmega n p - 4 * Real.pi * p| ≤ C / ((n : ℝ) + 1)) :
+    ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+      ‖blockMode n 2 - blockMode n 1‖ ≤ C / ((n : ℝ) + 1) := by
+  obtain ⟨C20, hC20, N20, h20⟩ :=
+    blockMode_two_minus_zero_asymptotic_of_blockOmega_linear_model_upto_two_eventually hOmega2
+  obtain ⟨C10, hC10, N10, h10⟩ := blockMode_one_minus_zero_asymptotic
+  refine ⟨C20 + C10, add_pos hC20 hC10, max N20 N10, ?_⟩
+  intro n hn
+  have hn20 : N20 ≤ n := le_trans (le_max_left _ _) hn
+  have hn10 : N10 ≤ n := le_trans (le_max_right _ _) hn
+  have h20' := h20 n hn20
+  have h10' := h10 n hn10
+  have hsplit :
+      blockMode n 2 - blockMode n 1
+        = (blockMode n 2 - blockMode n 0) + (blockMode n 0 - blockMode n 1) := by
+    ring_nf
+  have hrev :
+      ‖blockMode n 0 - blockMode n 1‖ = ‖blockMode n 1 - blockMode n 0‖ := by
+    rw [show blockMode n 0 - blockMode n 1 = -(blockMode n 1 - blockMode n 0) by ring]
+    rw [norm_neg]
+  have hn1_pos : 0 < ((n : ℝ) + 1) := by positivity
+  calc
+    ‖blockMode n 2 - blockMode n 1‖
+        = ‖(blockMode n 2 - blockMode n 0) + (blockMode n 0 - blockMode n 1)‖ := by
+            exact congrArg norm hsplit
+    _ ≤ ‖blockMode n 2 - blockMode n 0‖ + ‖blockMode n 0 - blockMode n 1‖ := norm_add_le _ _
+    _ = ‖blockMode n 2 - blockMode n 0‖ + ‖blockMode n 1 - blockMode n 0‖ := by
+          rw [hrev]
+    _ ≤ C20 / ((n : ℝ) + 1) + C10 / ((n : ℝ) + 1) := by
+          gcongr
+    _ = (C20 + C10) / ((n : ℝ) + 1) := by
+          field_simp [ne_of_gt hn1_pos]
+
+/-- The second stationary-block start differs from the first by
+`O((n+1)⁻¹)`. This is the exact stationary-phase theorem consumed by the
+first Atkinson small-shift upper-prefix route. -/
+theorem blockMode_two_minus_one_asymptotic :
+    ∃ C > 0, ∃ N0 : ℕ, ∀ n : ℕ, N0 ≤ n →
+      ‖blockMode n 2 - blockMode n 1‖ ≤ C / ((n : ℝ) + 1) := by
+  exact
+    blockMode_two_minus_one_asymptotic_of_blockOmega_linear_model_upto_two_eventually
+      blockOmega_linear_model_upto_two_eventually
 
 /-- The quadratic stationary-phase model kernel on the first block. -/
 def quadraticKernel (p : ℝ) : ℂ :=

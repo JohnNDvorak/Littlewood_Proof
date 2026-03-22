@@ -46,10 +46,12 @@ Co-authored-by: Claude (Anthropic)
 -/
 
 import Mathlib.Analysis.Complex.CauchyIntegral
+import Mathlib.Analysis.Analytic.Order
 import Mathlib.Analysis.Calculus.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Complex.Log
 import Mathlib.NumberTheory.LSeries.RiemannZeta
+import Littlewood.Aristotle.ZetaLogDerivInfra
 
 set_option maxHeartbeats 1600000
 set_option autoImplicit false
@@ -162,6 +164,26 @@ theorem finite_zeros_in_compact (f : ℂ → ℂ) (hf : Differentiable ℂ f) (h
 def zeroCountRect (f : ℂ → ℂ) (a b c d : ℝ) : ℕ :=
   Set.ncard {z ∈ openRect a b c d | f z = 0}
 
+/-- The multiplicity-counted number of zeros of `f` inside the open rectangle.
+    This sums `analyticOrderAt f z` over the interior zero set. If the zero set is
+    infinite, this returns `0`; the entire-function route below supplies finiteness. -/
+noncomputable def zeroCountRectMult (f : ℂ → ℂ) (a b c d : ℝ) : ℕ :=
+  by
+    classical
+    exact
+      if hfin : {z ∈ openRect a b c d | f z = 0}.Finite then
+        ∑ z ∈ hfin.toFinset, (analyticOrderAt f z).toNat
+      else
+        0
+
+theorem zeroCountRectMult_eq_sum (f : ℂ → ℂ) (a b c d : ℝ)
+    (hfin : {z ∈ openRect a b c d | f z = 0}.Finite) :
+    zeroCountRectMult f a b c d =
+      ∑ z ∈ hfin.toFinset, (analyticOrderAt f z).toNat := by
+  classical
+  unfold zeroCountRectMult
+  simp [hfin]
+
 /-- For a non-zero entire function, the zero set in the open rectangle is finite.
     This ensures `zeroCountRect` gives a meaningful natural number. -/
 theorem finite_zeros_in_openRect (f : ℂ → ℂ)
@@ -170,6 +192,151 @@ theorem finite_zeros_in_openRect (f : ℂ → ℂ)
     {z ∈ openRect a b c d | f z = 0}.Finite :=
   (finite_zeros_in_compact f hf hz (closedRect a b c d) (isCompact_closedRect a b c d)).subset
     (fun _ ⟨h1, h2⟩ => ⟨openRect_subset_closedRect h1, h2⟩)
+
+private theorem differentiable_dslope (f : ℂ → ℂ) (a : ℂ)
+    (hf : Differentiable ℂ f) :
+    Differentiable ℂ (dslope f a) := by
+  show Differentiable ℂ (dslope f a)
+  rw [← differentiableOn_univ]
+  exact (Complex.differentiableOn_dslope (isOpen_univ.mem_nhds (Set.mem_univ a))).mpr
+    hf.differentiableOn
+
+private theorem mul_dslope_eq (f : ℂ → ℂ) {a z : ℂ} (ha : f a = 0) :
+    (z - a) * dslope f a z = f z := by
+  simpa [ha, smul_eq_mul] using sub_smul_dslope f a z
+
+private theorem analyticOrderAt_ne_top_of_differentiable (f : ℂ → ℂ)
+    (hf : Differentiable ℂ f) {w z : ℂ} (hw : f w ≠ 0) :
+    analyticOrderAt f z ≠ ⊤ := by
+  have hanalytic : AnalyticOnNhd ℂ f Set.univ := hf.differentiableOn.analyticOnNhd isOpen_univ
+  have hbase : analyticOrderAt f w ≠ ⊤ := by
+    have hzero : analyticOrderAt f w = 0 :=
+      (hf.analyticAt w).analyticOrderAt_eq_zero.mpr hw
+    simpa [hzero]
+  exact hanalytic.analyticOrderAt_ne_top_of_isPreconnected isPreconnected_univ
+    (Set.mem_univ w) (Set.mem_univ z) hbase
+
+private theorem analyticOrderAt_toNat_pos_of_mem_zeroSet (f : ℂ → ℂ)
+    (hf : Differentiable ℂ f) (hw : ∃ w, f w ≠ 0)
+    {a b c d : ℝ} {z : ℂ}
+    (hz : z ∈ {z ∈ openRect a b c d | f z = 0}) :
+    0 < (analyticOrderAt f z).toNat := by
+  rcases hw with ⟨w, hw⟩
+  have hanalytic : AnalyticAt ℂ f z := hf.analyticAt z
+  have hne_top : analyticOrderAt f z ≠ ⊤ :=
+    analyticOrderAt_ne_top_of_differentiable f hf hw
+  have hne_zero : analyticOrderAt f z ≠ 0 :=
+    (hanalytic.analyticOrderAt_ne_zero).2 hz.2
+  have hnat_ne_zero : (analyticOrderAt f z).toNat ≠ 0 := by
+    intro hzero
+    have hcast : (((analyticOrderAt f z).toNat : ℕ) : ℕ∞) = analyticOrderAt f z :=
+      ENat.coe_toNat hne_top
+    apply hne_zero
+    rw [← hcast, hzero]
+    simp
+  exact Nat.pos_of_ne_zero hnat_ne_zero
+
+private theorem logDeriv_eq_one_div_add_logDeriv_dslope (f : ℂ → ℂ)
+    (z₀ s : ℂ) (hf : Differentiable ℂ f) (hfz₀ : f z₀ = 0)
+    (hs : s ≠ z₀) (hgs : dslope f z₀ s ≠ 0) :
+    logDeriv f s = (1 : ℂ) / (s - z₀) + logDeriv (dslope f z₀) s := by
+  let g := dslope f z₀
+  have hg : Differentiable ℂ g := differentiable_dslope f z₀ hf
+  have hfg : f = fun z => (z - z₀) * g z := by
+    funext z
+    simpa [g, hfz₀, smul_eq_mul] using (mul_dslope_eq f (a := z₀) (z := z) hfz₀).symm
+  have hderiv : deriv f s = g s + (s - z₀) * deriv g s := by
+    rw [hfg]
+    have h1 : HasDerivAt (fun z : ℂ => z - z₀) 1 s := (hasDerivAt_id s).sub_const z₀
+    have h2 : HasDerivAt g (deriv g s) s := (hg s).hasDerivAt
+    simpa [one_mul, g] using (h1.mul h2).deriv
+  have hfs : f s = (s - z₀) * g s := by
+    simpa [g, hfz₀, smul_eq_mul] using (mul_dslope_eq f (a := z₀) (z := s) hfz₀).symm
+  have hsub : s - z₀ ≠ 0 := sub_ne_zero.mpr hs
+  rw [logDeriv_apply, logDeriv_apply, hderiv, hfs]
+  field_simp [hgs, hsub]
+  simp [g, mul_assoc, mul_left_comm, mul_comm, hgs, hsub]
+
+private theorem intervalIntegrable_logDeriv_horiz (f : ℂ → ℂ)
+    (hf : Differentiable ℂ f) {y : ℝ} {p q : ℝ}
+    (hzero : ∀ x ∈ Set.uIcc p q, f (↑x + ↑y * I) ≠ 0) :
+    IntervalIntegrable (fun x => logDeriv f (↑x + ↑y * I)) MeasureTheory.volume p q := by
+  apply ContinuousOn.intervalIntegrable
+  intro x hx
+  have hlog : AnalyticAt ℂ (logDeriv f) (↑x + ↑y * I) := by
+    simpa [logDeriv_apply] using Aristotle.ZetaLogDerivInfra.analyticAt_log_deriv
+      (hf.analyticAt _) (hzero x hx)
+  have hmap : Continuous (fun x : ℝ => (↑x + ↑y * I : ℂ)) :=
+    continuous_ofReal.add (continuous_const.mul continuous_const)
+  have hcont : ContinuousAt (fun x : ℝ => logDeriv f (↑x + ↑y * I)) x := by
+    exact ContinuousAt.comp
+      (show ContinuousAt (fun z : ℂ => logDeriv f z) ((fun x : ℝ => (↑x + ↑y * I : ℂ)) x) from
+        hlog.continuousAt)
+      (show ContinuousAt (fun x : ℝ => (↑x + ↑y * I : ℂ)) x from hmap.continuousAt)
+  exact hcont.continuousWithinAt
+
+private theorem intervalIntegrable_logDeriv_vert (f : ℂ → ℂ)
+    (hf : Differentiable ℂ f) {x : ℝ} {p q : ℝ}
+    (hzero : ∀ y ∈ Set.uIcc p q, f (↑x + ↑y * I) ≠ 0) :
+    IntervalIntegrable (fun y => logDeriv f (↑x + ↑y * I)) MeasureTheory.volume p q := by
+  apply ContinuousOn.intervalIntegrable
+  intro y hy
+  have hlog : AnalyticAt ℂ (logDeriv f) (↑x + ↑y * I) := by
+    simpa [logDeriv_apply] using Aristotle.ZetaLogDerivInfra.analyticAt_log_deriv
+      (hf.analyticAt _) (hzero y hy)
+  have hmap : Continuous (fun y : ℝ => (↑x + ↑y * I : ℂ)) :=
+    continuous_const.add (continuous_ofReal.mul continuous_const)
+  have hcont : ContinuousAt (fun y : ℝ => logDeriv f (↑x + ↑y * I)) y := by
+    exact ContinuousAt.comp
+      (show ContinuousAt (fun z : ℂ => logDeriv f z) ((fun y : ℝ => (↑x + ↑y * I : ℂ)) y) from
+        hlog.continuousAt)
+      (show ContinuousAt (fun y : ℝ => (↑x + ↑y * I : ℂ)) y from hmap.continuousAt)
+  exact hcont.continuousWithinAt
+
+private theorem analyticOrderNatAt_dslope_eq (f : ℂ → ℂ) (z₀ z : ℂ)
+    (hf : Differentiable ℂ f) (hfz₀ : f z₀ = 0)
+    (hwf : ∃ w, f w ≠ 0) (hwg : ∃ w, dslope f z₀ w ≠ 0) :
+    analyticOrderNatAt f z = analyticOrderNatAt (dslope f z₀) z + if z = z₀ then 1 else 0 := by
+  let g := dslope f z₀
+  have hg : Differentiable ℂ g := differentiable_dslope f z₀ hf
+  have hfg : f = fun s => (s - z₀) * g s := by
+    funext s
+    simpa [g, hfz₀, smul_eq_mul] using (mul_dslope_eq f (a := z₀) (z := s) hfz₀).symm
+  have hne_top_f : analyticOrderAt f z ≠ ⊤ := by
+    rcases hwf with ⟨w, hw⟩
+    exact analyticOrderAt_ne_top_of_differentiable f hf hw
+  have hne_top_g : analyticOrderAt g z ≠ ⊤ := by
+    rcases hwg with ⟨w, hw⟩
+    exact analyticOrderAt_ne_top_of_differentiable g hg hw
+  by_cases hzz : z = z₀
+  · have hlin_one : analyticOrderAt (fun s : ℂ => s - z₀) z₀ = 1 := by
+      simpa using (analyticOrderAt_centeredMonomial (z₀ := z₀) (n := 1))
+    have hlin_top : analyticOrderAt (fun s : ℂ => s - z₀) z₀ ≠ ⊤ := by
+      rw [hlin_one]
+      simp
+    have hne_top_g0 : analyticOrderAt g z₀ ≠ ⊤ := by
+      rcases hwg with ⟨w, hw⟩
+      exact analyticOrderAt_ne_top_of_differentiable g hg hw
+    have hmul :=
+      analyticOrderNatAt_mul (f := fun s : ℂ => s - z₀) (g := g)
+        (by fun_prop) (hg.analyticAt _) hlin_top hne_top_g0
+    have hmul' : analyticOrderNatAt f z₀ = analyticOrderNatAt (fun s : ℂ => s - z₀) z₀ +
+        analyticOrderNatAt g z₀ := by
+      simpa [Pi.mul_apply, hfg] using hmul
+    simpa [g, analyticOrderNatAt, hzz, hlin_one, add_comm, add_left_comm, add_assoc] using hmul'
+  · have hlin_zero : analyticOrderAt (fun s : ℂ => s - z₀) z = 0 := by
+      exact ((by fun_prop : AnalyticAt ℂ (fun s : ℂ => s - z₀) z).analyticOrderAt_eq_zero).mpr
+        (sub_ne_zero.mpr hzz)
+    have hlin_top : analyticOrderAt (fun s : ℂ => s - z₀) z ≠ ⊤ := by
+      rw [hlin_zero]
+      simp
+    have hmul :=
+      analyticOrderNatAt_mul (f := fun s : ℂ => s - z₀) (g := g)
+        (by fun_prop) (hg.analyticAt _) hlin_top hne_top_g
+    have hmul' : analyticOrderNatAt f z = analyticOrderNatAt (fun s : ℂ => s - z₀) z +
+        analyticOrderNatAt g z := by
+      simpa [Pi.mul_apply, hfg] using hmul
+    simpa [g, analyticOrderNatAt, hlin_zero, hzz] using hmul'
 
 /-! ## Sub-lemma A: Winding Number for Rectangles
 
@@ -506,6 +673,158 @@ theorem logDeriv_decompose_rect (f : ℂ → ℂ)
     let ⟨hz_open, hfz⟩ := Set.Finite.mem_toFinset hfin |>.mp hmem
     absurd rfl (hne _ hz_open hfz))⟩
 
+/-- Multiplicity-counted version of `logDeriv_decompose_rect`: subtract the full principal part
+    with coefficients given by analytic orders. This is the sharp local ingredient needed for the
+    multiplicity-counted argument principle. -/
+private theorem exists_local_logDeriv_remainder_at_zero (f : ℂ → ℂ) (z₀ : ℂ)
+    (hf : Differentiable ℂ f) (hfz₀ : f z₀ = 0) (hwf : ∃ w, f w ≠ 0) :
+    ∃ g : ℂ → ℂ, DifferentiableAt ℂ g z₀ ∧
+      ∀ᶠ s in 𝓝[≠] z₀,
+        logDeriv f s = (((analyticOrderAt f z₀).toNat : ℂ) / (s - z₀)) + g s := by
+  have hne_top : analyticOrderAt f z₀ ≠ ⊤ := by
+    rcases hwf with ⟨w, hw⟩
+    exact analyticOrderAt_ne_top_of_differentiable f hf hw
+  obtain ⟨G, hG_analytic, hG_nonzero, hfac⟩ :=
+    (hf.analyticAt z₀).analyticOrderAt_ne_top.mp hne_top
+  let m : ℕ := analyticOrderNatAt f z₀
+  let F : ℂ → ℂ := fun s => (s - z₀) ^ m * G s
+  have hfac' : ∀ᶠ s in 𝓝 z₀, f s = F s := by
+    simpa [F, m, smul_eq_mul] using hfac
+  have hpow :
+      ∀ᶠ s in 𝓝[≠] z₀,
+        logDeriv F s = ((m : ℂ) / (s - z₀)) + logDeriv G s := by
+    simpa [F, logDeriv_apply] using
+      Aristotle.ZetaLogDerivInfra.log_deriv_pow_mul_analytic z₀ m G hG_analytic hG_nonzero
+  obtain ⟨U, hUf, hUo, hzU⟩ := eventually_nhds_iff.mp hfac'
+  have hU : U ∈ 𝓝[≠] z₀ := mem_nhdsWithin_of_mem_nhds (hUo.mem_nhds hzU)
+  have hlogG : DifferentiableAt ℂ (logDeriv G) z₀ := by
+    simpa [logDeriv_apply] using
+      (Aristotle.ZetaLogDerivInfra.analyticAt_log_deriv hG_analytic hG_nonzero).differentiableAt
+  refine ⟨logDeriv G, hlogG, ?_⟩
+  filter_upwards [hpow, hU] with s hs_pow hsU
+  have hfs : f s = F s := hUf s hsU
+  have hderiv : deriv f s = deriv F s := by
+    exact Filter.EventuallyEq.deriv_eq (Filter.eventuallyEq_of_mem (hUo.mem_nhds hsU) hUf)
+  simpa [F, m, analyticOrderNatAt, logDeriv_apply, hderiv, hfs] using hs_pow
+
+theorem logDeriv_decompose_rect_mult (f : ℂ → ℂ)
+    (a b c d : ℝ) (hab : a < b) (hcd : c < d)
+    (hf : Differentiable ℂ f)
+    (hbdy : ∀ z ∈ rectBoundary a b c d, f z ≠ 0)
+    (hfin : {z ∈ openRect a b c d | f z = 0}.Finite) :
+    ∃ h : ℂ → ℂ,
+      DifferentiableOn ℂ h (closedRect a b c d) ∧
+      ∀ s ∈ closedRect a b c d, (∀ z ∈ openRect a b c d, f z = 0 → s ≠ z) →
+        logDeriv f s =
+          (∑ z ∈ hfin.toFinset, (((analyticOrderAt f z).toNat : ℂ) / (s - z))) + h s := by
+  classical
+  let S : Finset ℂ := hfin.toFinset
+  have hS_zeros : ∀ z ∈ S, f z = 0 := by
+    intro z hz
+    exact (Set.Finite.mem_toFinset hfin |>.mp hz).2
+  have hK_nonzero : ∀ z ∈ closedRect a b c d, z ∉ S → f z ≠ 0 := by
+    intro z hz hzS
+    by_cases hopen : z ∈ openRect a b c d
+    · intro hfz
+      exact hzS (Set.Finite.mem_toFinset hfin |>.mpr ⟨hopen, hfz⟩)
+    · exact hbdy z ⟨hz, hopen⟩
+  have hcorner : ((a : ℂ) + (c : ℂ) * I) ∈ rectBoundary a b c d := by
+    constructor
+    · simp [closedRect, hab.le, hcd.le]
+    · simp [openRect, not_lt.mpr hab.le]
+  have hwf : ∃ w, f w ≠ 0 := ⟨(a : ℂ) + (c : ℂ) * I, hbdy _ hcorner⟩
+  have hS_local : ∀ z ∈ S, ∃ g : ℂ → ℂ, DifferentiableAt ℂ g z ∧
+      ∀ᶠ s in 𝓝[≠] z,
+        logDeriv f s = (((analyticOrderAt f z).toNat : ℂ) / (s - z)) + g s := by
+    intro z hz
+    exact exists_local_logDeriv_remainder_at_zero f z hf (hS_zeros z hz) hwf
+  choose H hHdiff hHeq using hS_local
+  let h : ℂ → ℂ := fun s =>
+    if hs : s ∈ S then
+      H s hs s - ∑ z ∈ S.erase s, (((analyticOrderAt f z).toNat : ℂ) / (s - z))
+    else
+      logDeriv f s - ∑ z ∈ S, (((analyticOrderAt f z).toNat : ℂ) / (s - z))
+  refine ⟨h, ?_, ?_⟩
+  · intro s hs_closed
+    by_cases hsS : s ∈ S
+    · let g : ℂ → ℂ := fun w =>
+        H s hsS w - ∑ z ∈ S.erase s, (((analyticOrderAt f z).toNat : ℂ) / (w - z))
+      have hg_sum : DifferentiableAt ℂ
+          (fun w => ∑ z ∈ S.erase s, (((analyticOrderAt f z).toNat : ℂ) / (w - z))) s := by
+        refine DifferentiableAt.fun_sum ?_
+        intro z hz
+        have hne : z ≠ s := (Finset.mem_erase.mp hz).1
+        exact (differentiableAt_const (((analyticOrderAt f z).toNat : ℂ))).div
+          (differentiableAt_id.sub_const z)
+          (sub_ne_zero.mpr hne.symm)
+      have hg_diff : DifferentiableWithinAt ℂ g (closedRect a b c d) s :=
+        ((hHdiff s hsS).sub hg_sum).differentiableWithinAt
+      let C : Set ℂ := {w | w ≠ s ∧ w ∉ S.erase s ∧
+        logDeriv f w = (((analyticOrderAt f s).toNat : ℂ) / (w - s)) + H s hsS w}
+      have hC : C ∈ 𝓝[≠] s := by
+        have hne : {w | w ≠ s} ∈ 𝓝[≠] s := self_mem_nhdsWithin
+        have havoid : {w | w ∉ S.erase s} ∈ 𝓝[≠] s := by
+          have hmem : s ∈ ((↑(S.erase s) : Set ℂ)ᶜ) := by
+            simp
+          exact mem_nhdsWithin_of_mem_nhds
+            (((S.erase s).finite_toSet.isClosed.isOpen_compl).mem_nhds hmem)
+        exact Filter.inter_mem hne <|
+          Filter.inter_mem havoid (by simpa [C] using hHeq s hsS)
+      have hEq : h =ᶠ[𝓝[closedRect a b c d] s] g := by
+        have hC' : insert s C ∈ 𝓝 s := (insert_mem_nhds_iff).2 hC
+        have hC'' : insert s C ∈ 𝓝[closedRect a b c d] s :=
+          mem_nhdsWithin_of_mem_nhds hC'
+        filter_upwards [hC''] with w hw
+        rcases hw with rfl | hwC
+        · simp [h, g, hsS]
+        · have hw_notS : w ∉ S := by
+            intro hwS
+            exact hwC.2.1 (by simpa [Finset.mem_erase, hwC.1, hwS])
+          have hw_sum :
+              (∑ z ∈ S, (((analyticOrderAt f z).toNat : ℂ) / (w - z))) =
+                (((analyticOrderAt f s).toNat : ℂ) / (w - s)) +
+                  ∑ z ∈ S.erase s, (((analyticOrderAt f z).toNat : ℂ) / (w - z)) := by
+            rw [← Finset.insert_erase hsS, Finset.sum_insert]
+            · simp
+            · simp
+          simp [h, g, hw_notS, hw_sum, hwC.2.2]
+      exact hg_diff.congr_of_eventuallyEq_of_mem hEq hs_closed
+    · let g : ℂ → ℂ := fun w =>
+        logDeriv f w - ∑ z ∈ S, (((analyticOrderAt f z).toNat : ℂ) / (w - z))
+      have hs_nonzero : f s ≠ 0 := hK_nonzero s hs_closed hsS
+      have hg_log_an : AnalyticAt ℂ (logDeriv f) s := by
+        simpa [logDeriv_apply] using
+          Aristotle.ZetaLogDerivInfra.analyticAt_log_deriv (hf.analyticAt s) hs_nonzero
+      have hg_log : DifferentiableAt ℂ (logDeriv f) s := hg_log_an.differentiableAt
+      have hg_sum : DifferentiableAt ℂ
+          (fun w => ∑ z ∈ S, (((analyticOrderAt f z).toNat : ℂ) / (w - z))) s := by
+        refine DifferentiableAt.fun_sum ?_
+        intro z hz
+        have hne : s ≠ z := by
+          intro hsz
+          apply hsS
+          simpa [hsz] using hz
+        exact (differentiableAt_const (((analyticOrderAt f z).toNat : ℂ))).div
+          (differentiableAt_id.sub_const z)
+          (sub_ne_zero.mpr hne)
+      have hg_diff : DifferentiableWithinAt ℂ g (closedRect a b c d) s :=
+        (hg_log.sub hg_sum).differentiableWithinAt
+      have havoid : {w | w ∉ S} ∈ 𝓝[closedRect a b c d] s := by
+        have hmem : s ∈ ((↑S : Set ℂ)ᶜ) := by simpa using hsS
+        exact mem_nhdsWithin_of_mem_nhds
+          ((S.finite_toSet.isClosed.isOpen_compl).mem_nhds hmem)
+      have hEq : h =ᶠ[𝓝[closedRect a b c d] s] g := by
+        filter_upwards [havoid] with w hw
+        simp [h, g, hw]
+      exact hg_diff.congr_of_eventuallyEq_of_mem hEq hs_closed
+  · intro s hs_closed hne
+    have hsS : s ∉ S := by
+      intro hs_mem
+      rcases Set.Finite.mem_toFinset hfin |>.mp hs_mem with ⟨hs_open, hs_zero⟩
+      exact (hne s hs_open hs_zero) rfl
+    simp [h, hsS]
+    ring
+
 /-! ## Sub-lemma C: Cauchy-Goursat for Rectangles (MATHLIB)
 
 This is `Complex.integral_boundary_rect_eq_zero_of_differentiable_on_off_countable`.
@@ -558,6 +877,18 @@ theorem contourIntegralRect_add (g₁ g₂ : ℂ → ℂ) (a b c d : ℝ)
   simp only [contourIntegralRect, Pi.add_apply]
   rw [intervalIntegral.integral_add h₁b h₂b, intervalIntegral.integral_add h₁t h₂t,
       intervalIntegral.integral_add h₁r h₂r, intervalIntegral.integral_add h₁l h₂l]
+  ring
+
+/-- `contourIntegralRect` commutes with multiplication by a complex constant. -/
+theorem contourIntegralRect_const_mul (c : ℂ) (g : ℂ → ℂ) (a b c' d : ℝ)
+    (hb : IntervalIntegrable (fun x => g (↑x + ↑c' * I)) MeasureTheory.volume a b)
+    (ht : IntervalIntegrable (fun x => g (↑x + ↑d * I)) MeasureTheory.volume a b)
+    (hr : IntervalIntegrable (fun y => g (↑b + ↑y * I)) MeasureTheory.volume c' d)
+    (hl : IntervalIntegrable (fun y => g (↑a + ↑y * I)) MeasureTheory.volume c' d) :
+    contourIntegralRect (fun z => c * g z) a b c' d = c * contourIntegralRect g a b c' d := by
+  unfold contourIntegralRect
+  rw [intervalIntegral.integral_const_mul, intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul, intervalIntegral.integral_const_mul]
   ring
 
 /-- Points on rectangle edges lie in the closed rectangle. -/
@@ -833,5 +1164,205 @@ theorem argument_principle_rect_entire (f : ℂ → ℂ)
         rw [Set.uIcc_of_le (le_of_lt hcd), Set.mem_Icc] at hy
         exact edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) a
           (le_refl _) (le_of_lt hab) y hy.1 hy.2)).intervalIntegrable
+
+/-- Multiplicity-counted rectangle argument principle, with the zero count expressed as
+    an explicit sum of analytic orders over the interior zero set. This is the additive
+    parallel surface to `argument_principle_rect_entire`, leaving the simple-zero API intact
+    for current callers. -/
+theorem argument_principle_rect_entire_mult_sum (f : ℂ → ℂ)
+    (a b c d : ℝ) (hab : a < b) (hcd : c < d)
+    (hf : Differentiable ℂ f)
+    (hbdy : ∀ z ∈ rectBoundary a b c d, f z ≠ 0)
+    (hfin : {z ∈ openRect a b c d | f z = 0}.Finite) :
+    logIntegralRect f a b c d =
+      ↑(∑ z ∈ hfin.toFinset, (analyticOrderAt f z).toNat) := by
+  obtain ⟨h, hh_diff, hh_eq⟩ :=
+    logDeriv_decompose_rect_mult f a b c d hab hcd hf hbdy hfin
+  have hh_zero := cauchy_goursat_rect h a b c d (le_of_lt hab) (le_of_lt hcd) hh_diff
+  have hwinding : ∀ z ∈ hfin.toFinset,
+    (1 / (2 * ↑Real.pi * I)) *
+        contourIntegralRect
+          (fun s => (((analyticOrderAt f z).toNat : ℂ) / (s - z))) a b c d =
+      ↑((analyticOrderAt f z).toNat) := by
+    intro z hz
+    have hz_open : z ∈ openRect a b c d := by
+      rw [Set.Finite.mem_toFinset] at hz
+      exact hz.1
+    have hconst :=
+      contourIntegralRect_const_mul (((analyticOrderAt f z).toNat : ℂ))
+        (fun s => 1 / (s - z)) a b c d
+        (by
+          apply ContinuousOn.intervalIntegrable
+          apply ContinuousOn.div continuousOn_const
+          · exact (continuous_ofReal.add (continuous_const.mul continuous_const)).continuousOn.sub
+              continuousOn_const
+          · intro x hx
+            rw [Set.uIcc_of_le (le_of_lt hab), Set.mem_Icc] at hx
+            simp only [sub_ne_zero]
+            exact edge_ne_interior_zero (bottom_edge_not_openRect x) hz_open)
+        (by
+          apply ContinuousOn.intervalIntegrable
+          apply ContinuousOn.div continuousOn_const
+          · exact (continuous_ofReal.add (continuous_const.mul continuous_const)).continuousOn.sub
+              continuousOn_const
+          · intro x hx
+            rw [Set.uIcc_of_le (le_of_lt hab), Set.mem_Icc] at hx
+            simp only [sub_ne_zero]
+            exact edge_ne_interior_zero (top_edge_not_openRect x) hz_open)
+        (by
+          apply ContinuousOn.intervalIntegrable
+          apply ContinuousOn.div continuousOn_const
+          · exact (continuous_const.add (continuous_ofReal.mul continuous_const)).continuousOn.sub
+              continuousOn_const
+          · intro y hy
+            rw [Set.uIcc_of_le (le_of_lt hcd), Set.mem_Icc] at hy
+            simp only [sub_ne_zero]
+            exact edge_ne_interior_zero (right_edge_not_openRect y) hz_open)
+        (by
+          apply ContinuousOn.intervalIntegrable
+          apply ContinuousOn.div continuousOn_const
+          · exact (continuous_const.add (continuous_ofReal.mul continuous_const)).continuousOn.sub
+              continuousOn_const
+          · intro y hy
+            rw [Set.uIcc_of_le (le_of_lt hcd), Set.mem_Icc] at hy
+            simp only [sub_ne_zero]
+            exact edge_ne_interior_zero (left_edge_not_openRect y) hz_open)
+    have hwind := rect_winding_number_eq_one z a b c d hab hcd hz_open
+    calc
+      (1 / (2 * ↑Real.pi * I)) *
+          contourIntegralRect
+            (fun s => (((analyticOrderAt f z).toNat : ℂ) / (s - z))) a b c d
+          = (1 / (2 * ↑Real.pi * I)) *
+              contourIntegralRect
+                (fun s => (((analyticOrderAt f z).toNat : ℂ) * (1 / (s - z)))) a b c d := by
+                  congr 2
+                  ext s
+                  rw [div_eq_mul_inv, one_div]
+      _ = (1 / (2 * ↑Real.pi * I)) *
+            ((((analyticOrderAt f z).toNat : ℂ) *
+              contourIntegralRect (fun s => 1 / (s - z)) a b c d)) := by
+                rw [hconst]
+      _ = (((analyticOrderAt f z).toNat : ℂ) *
+            ((1 / (2 * ↑Real.pi * I)) *
+              contourIntegralRect (fun s => 1 / (s - z)) a b c d)) := by ring
+      _ = ↑((analyticOrderAt f z).toNat) := by rw [hwind]; ring
+  rw [logIntegralRect_eq_normalized_contour]
+  have hdecomp_eq : ∀ s ∈ closedRect a b c d, s ∉ openRect a b c d →
+      logDeriv f s =
+        (∑ z ∈ hfin.toFinset, (((analyticOrderAt f z).toNat : ℂ) / (s - z))) + h s := by
+    intro s hs hsnot
+    exact hh_eq s hs (fun z hz hfz => edge_ne_interior_zero hsnot hz)
+  have hcontour_eq : contourIntegralRect (logDeriv f) a b c d =
+      contourIntegralRect
+        (fun s => (∑ z ∈ hfin.toFinset, (((analyticOrderAt f z).toNat : ℂ) / (s - z))) + h s)
+        a b c d := by
+    apply contourIntegralRect_congr_boundary _ _ _ _ _ _ (le_of_lt hab) (le_of_lt hcd)
+    · intro x hx
+      exact hdecomp_eq _ (edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) x hx.1 hx.2 c
+        (le_refl _) (le_of_lt hcd)) (bottom_edge_not_openRect x)
+    · intro x hx
+      exact hdecomp_eq _ (edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) x hx.1 hx.2 d
+        (le_of_lt hcd) (le_refl _)) (top_edge_not_openRect x)
+    · intro y hy
+      exact hdecomp_eq _ (edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) b
+        (le_of_lt hab) (le_refl _) y hy.1 hy.2) (right_edge_not_openRect y)
+    · intro y hy
+      exact hdecomp_eq _ (edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) a
+        (le_refl _) (le_of_lt hab) y hy.1 hy.2) (left_edge_not_openRect y)
+  rw [hcontour_eq]
+  suffices h_linear : contourIntegralRect
+      (fun s => (∑ z ∈ hfin.toFinset, (((analyticOrderAt f z).toNat : ℂ) / (s - z))) + h s)
+        a b c d =
+      (∑ z ∈ hfin.toFinset,
+        contourIntegralRect
+          (fun s => (((analyticOrderAt f z).toNat : ℂ) / (s - z))) a b c d) +
+      contourIntegralRect h a b c d by
+    rw [h_linear, hh_zero, add_zero, Finset.mul_sum]
+    rw [Finset.sum_congr rfl hwinding]
+    rw [Nat.cast_sum]
+  exact contourIntegralRect_finset_sum_add hfin.toFinset
+    (fun z s => (((analyticOrderAt f z).toNat : ℂ) / (s - z))) h a b c d
+    (le_of_lt hab) (le_of_lt hcd)
+    (by
+      intro z hz
+      rw [Set.Finite.mem_toFinset] at hz
+      apply ContinuousOn.intervalIntegrable
+      apply ContinuousOn.div continuousOn_const
+      · exact (continuous_ofReal.add (continuous_const.mul continuous_const)).continuousOn.sub
+          continuousOn_const
+      · intro x hx
+        rw [Set.uIcc_of_le (le_of_lt hab), Set.mem_Icc] at hx
+        simp only [sub_ne_zero]
+        exact edge_ne_interior_zero (bottom_edge_not_openRect x) hz.1)
+    (by
+      intro z hz
+      rw [Set.Finite.mem_toFinset] at hz
+      apply ContinuousOn.intervalIntegrable
+      apply ContinuousOn.div continuousOn_const
+      · exact (continuous_ofReal.add (continuous_const.mul continuous_const)).continuousOn.sub
+          continuousOn_const
+      · intro x hx
+        rw [Set.uIcc_of_le (le_of_lt hab), Set.mem_Icc] at hx
+        simp only [sub_ne_zero]
+        exact edge_ne_interior_zero (top_edge_not_openRect x) hz.1)
+    (by
+      intro z hz
+      rw [Set.Finite.mem_toFinset] at hz
+      apply ContinuousOn.intervalIntegrable
+      apply ContinuousOn.div continuousOn_const
+      · exact (continuous_const.add (continuous_ofReal.mul continuous_const)).continuousOn.sub
+          continuousOn_const
+      · intro y hy
+        rw [Set.uIcc_of_le (le_of_lt hcd), Set.mem_Icc] at hy
+        simp only [sub_ne_zero]
+        exact edge_ne_interior_zero (right_edge_not_openRect y) hz.1)
+    (by
+      intro z hz
+      rw [Set.Finite.mem_toFinset] at hz
+      apply ContinuousOn.intervalIntegrable
+      apply ContinuousOn.div continuousOn_const
+      · exact (continuous_const.add (continuous_ofReal.mul continuous_const)).continuousOn.sub
+          continuousOn_const
+      · intro y hy
+        rw [Set.uIcc_of_le (le_of_lt hcd), Set.mem_Icc] at hy
+        simp only [sub_ne_zero]
+        exact edge_ne_interior_zero (left_edge_not_openRect y) hz.1)
+    (hh_diff.continuousOn.comp
+      (continuous_ofReal.add (continuous_const.mul continuous_const)).continuousOn
+      (fun x hx => by
+        rw [Set.uIcc_of_le (le_of_lt hab), Set.mem_Icc] at hx
+        exact edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) x hx.1 hx.2 c
+          (le_refl _) (le_of_lt hcd))).intervalIntegrable
+    (hh_diff.continuousOn.comp
+      (continuous_ofReal.add (continuous_const.mul continuous_const)).continuousOn
+      (fun x hx => by
+        rw [Set.uIcc_of_le (le_of_lt hab), Set.mem_Icc] at hx
+        exact edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) x hx.1 hx.2 d
+          (le_of_lt hcd) (le_refl _))).intervalIntegrable
+    (hh_diff.continuousOn.comp
+      (continuous_const.add (continuous_ofReal.mul continuous_const)).continuousOn
+      (fun y hy => by
+        rw [Set.uIcc_of_le (le_of_lt hcd), Set.mem_Icc] at hy
+        exact edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) b
+          (le_of_lt hab) (le_refl _) y hy.1 hy.2)).intervalIntegrable
+    (hh_diff.continuousOn.comp
+      (continuous_const.add (continuous_ofReal.mul continuous_const)).continuousOn
+      (fun y hy => by
+        rw [Set.uIcc_of_le (le_of_lt hcd), Set.mem_Icc] at hy
+        exact edge_mem_closedRect (le_of_lt hab) (le_of_lt hcd) a
+          (le_refl _) (le_of_lt hab) y hy.1 hy.2)).intervalIntegrable
+
+/-- Multiplicity-counted rectangle argument principle. This wraps
+    `argument_principle_rect_entire_mult_sum` in the same outer hypotheses as the existing
+    distinct-count theorem, but drops the simple-zero requirement. -/
+theorem argument_principle_rect_entire_mult (f : ℂ → ℂ)
+    (a b c d : ℝ) (hab : a < b) (hcd : c < d)
+    (hf : Differentiable ℂ f)
+    (hbdy : ∀ z ∈ rectBoundary a b c d, f z ≠ 0) :
+    logIntegralRect f a b c d = ↑(zeroCountRectMult f a b c d) := by
+  have hz : ∃ z, f z ≠ 0 := ⟨_, hbdy _ (corner_mem_rectBoundary hab hcd)⟩
+  have hfin := finite_zeros_in_openRect f a b c d hab hcd hf hz
+  rw [zeroCountRectMult_eq_sum (f := f) (a := a) (b := b) (c := c) (d := d) hfin]
+  simpa using argument_principle_rect_entire_mult_sum f a b c d hab hcd hf hbdy hfin
 
 end RectArgumentPrinciple

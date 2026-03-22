@@ -1,4 +1,5 @@
 import Littlewood.Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
+import Littlewood.Development.ShiftedRemainderInterface
 import Littlewood.Development.HadamardProductZeta
 
 set_option relaxedAutoImplicit false
@@ -8,18 +9,14 @@ noncomputable section
 
 namespace Aristotle.Standalone.ExplicitFormulaPsiSkeleton
 
-open Aristotle.DirichletPhaseAlignment (ZerosBelow)
-
-/-- The real part of the zero sum Σ_{|γ|≤T} x^ρ/ρ, abstracted behind a def
-to prevent `ring` failures on Finset.sum expressions. -/
-def zeroSumRe (x T : ℝ) : ℝ :=
-  (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re
+abbrev zeroSumRe :=
+  Littlewood.Development.ShiftedRemainderInterface.zeroSumRe
 
 /-- The explicit formula error: ψ(x) - x + Σ Re(x^ρ/ρ).
-Defined concretely so all B5a mathematical content concentrates
-into `shifted_contours_bound`. -/
-def shiftedRemainderRe (x T : ℝ) : ℝ :=
-  Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T
+Shared from the cycle-free development interface so this file no longer
+duplicates the concrete remainder definition. -/
+abbrev shiftedRemainderRe :=
+  Littlewood.Development.ShiftedRemainderInterface.shiftedRemainderRe
 
 /-- Large-T contour bound in standard form — the Hadamard product hypothesis.
 
@@ -27,8 +24,9 @@ def shiftedRemainderRe (x T : ℝ) : ℝ :=
     The Perron explicit formula + Hadamard product + contour shift gives:
       |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ C₁ · √x · (logT)² / √T  for T ≥ 16.
 
-    **SORRY STATUS** (2026-03-16): Delegated to
-    HadamardProductZeta.contour_remainder_bound_atomic (1 sorry).
+    **SORRY STATUS** (2026-03-17): Shared remainder definitions now come from
+    the cycle-free `ShiftedRemainderInterface`, while the current large-`T`
+    theorem still delegates to `HadamardProductZeta.hadamard_contour_bound`.
     All downstream reductions (this -> LargeTContourBoundHyp -> large-T case of
     ContourRemainderBoundHyp) are sorry-free once this is provided. -/
 class ZetaLogDerivPointwiseBoundHyp : Prop where

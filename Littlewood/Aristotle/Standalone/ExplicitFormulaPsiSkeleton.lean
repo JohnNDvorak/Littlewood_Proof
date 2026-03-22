@@ -21,9 +21,8 @@ The sole atomic contour payload is delegated to
 
 import Littlewood.Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
 import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aDefs
-import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aComponents
-import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aContourBounds
 import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aRootInfra
+import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aGeneralProvider
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -35,7 +34,6 @@ namespace Aristotle.Standalone.ExplicitFormulaPsiSkeleton
 
 open Aristotle.DirichletPhaseAlignment (ZerosBelow)
 open Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
-open Aristotle.Standalone.ExplicitFormulaPsiB5aContourBounds
 open ZetaZeros
 
 -- ============================================================
@@ -57,11 +55,8 @@ bound after Perron truncation + contour shift + residue extraction.
 theorem shifted_contours_bound :
     ∃ C₂ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
-        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
-  rcases shifted_contours_components_atomic with
-    ⟨perronIntegralRe, contourRemainderRe, hPerronRaw, hResidue, hContour⟩
-  exact shifted_contours_bound_of_components
-    perronIntegralRe contourRemainderRe hPerronRaw hResidue hContour
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
+  Aristotle.Standalone.ExplicitFormulaPsiB5aGeneralProvider.general_explicit_formula_from_perron
 
 -- ============================================================
 -- Wiring: ExplicitFormulaPsiGeneralHyp from shifted_contours_bound

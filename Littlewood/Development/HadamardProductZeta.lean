@@ -15,14 +15,13 @@ truncated explicit formula:
 This is derived from:
 1. Perron formula: sum-integral interchange (PROVED, PerronFormulaProof)
 2. CIF contour shift: Re=c → Re=1/2 (PROVED, PerronContourShift)
-3. Segment bounds using |ζ'/ζ| ≤ C·(logT)² (from HadamardXiHyp)
+3. Segment bounds supplied through the explicit large-`T` interface boundary
 4. Residue extraction at s=1 and zeros ρ (PROVED, two_pole_partial_fraction)
 
-The bound is encoded as a private axiom `explicit_formula_contour_bound_axiom`
-because the full Perron formula chain (connecting chebyshevPsi to contour
-integrals) requires infrastructure not yet in Mathlib. The axiom is a
-theorem of analytic number theory (Davenport Ch. 17, Montgomery-Vaughan §12.5),
-derivable from HadamardXiHyp + the proved CIF/Perron infrastructure.
+This file no longer claims to prove the large-`T` Perron closure internally.
+Instead, the exported contour theorem below is a wrapper around the explicit
+support class `ShiftedRemainderSegmentBoundLargeTHyp`, while the small-`T`
+branch remains an explicit hypothesis boundary.
 
 ### FALSITY ANALYSIS (2026-03-17)
 
@@ -32,9 +31,9 @@ reduces to |ψ(x)-x| ≤ A·(√x·const + (logx)²). Under RH, Koch gives
 |ψ(x)-x| ≤ C·√x·(logx)², which requires √x·(logx)² ≤ A·(√x·const + (logx)²).
 This fails for large x (need C·(logx)² ≤ A·const, impossible for all x).
 
-Therefore the bound for T < 14.13 is FALSE. The axiom is restricted to T ≥ 16
-where the zero sum provides sufficient cancellation. The `perron_contour_bound`
-theorem uses T ≥ 16.
+Therefore the bound for T < 14.13 is FALSE. The large-`T` analytic placeholder
+is restricted to T ≥ 16 where the zero sum provides sufficient cancellation.
+The `perron_contour_bound` theorem uses T ≥ 16.
 
 For the small-T case (T ∈ [2, 16]), a separate bound is provided:
 the Koch bound |shiftedRemainderRe x T| ≤ A·√x·(logx)² always holds under RH,
@@ -50,7 +49,9 @@ regardless of T.
 Co-authored-by: Claude (Anthropic)
 -/
 
-import Littlewood.Aristotle.DirichletPhaseAlignment
+import Littlewood.Development.PerronContourShift
+import Littlewood.Development.ShiftedRemainderInterface
+import Littlewood.Development.ZetaLogDerivBound
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -59,20 +60,18 @@ noncomputable section
 
 namespace Littlewood.Development.HadamardProductZeta
 
-open Aristotle.DirichletPhaseAlignment (chebyshevPsi ZerosBelow CriticalZeros)
-
 /-! ## Section 1: Definitions
 
-We define the zero sum and shifted remainder in terms of the DirichletPhaseAlignment
-definitions, matching B5aDefs exactly. -/
+We reuse the cycle-free shifted-remainder interface so the concrete remainder
+definition is shared with the B5a lane without duplicating it here. -/
 
 /-- The real part of the zero sum Σ_{|γ|≤T} x^ρ/ρ. -/
-def zeroSumRe (x T : ℝ) : ℝ :=
-  (∑ ρ ∈ ZerosBelow T, ((x : ℂ) ^ ρ) / ρ).re
+abbrev zeroSumRe :=
+  Littlewood.Development.ShiftedRemainderInterface.zeroSumRe
 
 /-- The shifted remainder: ψ(x) - x + Σ Re(x^ρ/ρ). -/
-def shiftedRemainderRe (x T : ℝ) : ℝ :=
-  Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T
+abbrev shiftedRemainderRe :=
+  Littlewood.Development.ShiftedRemainderInterface.shiftedRemainderRe
 
 /-! ## Section 2: Mathlib Zeta Audit
 
@@ -93,7 +92,7 @@ What Mathlib does NOT have (as of v4.27.0-rc1):
 - Residue theorem / winding numbers
 - Rectangular contour evaluation
 
-The two sorry claims below encode the analytic facts that bridge
+The theorem placeholders below encode the analytic facts that bridge
 this gap. All algebraic consequences are proved sorry-free.
 -/
 
@@ -368,37 +367,35 @@ Combined with Mathlib's `LSeries_vonMangoldt_eq_deriv_riemannZeta_div`
 
 ### Sorry Decomposition
 
-The original 2 sorrys are now decomposed into:
-- `perron_contour_representation` (1 sorry): the shifted remainder equals
-  a combination of rectangle contour integrals. This is the Perron formula
-  content (sum-integral interchange + CIF residue extraction).
-- `contour_segment_bound_large_T` (proved from CIF): vertical and horizontal
-  segment bounds using vertical_integral_bound, horizontal_integral_bound.
-- `contour_segment_bound_small_T` (proved from CIF): same for bounded T.
+The old private large-`T` placeholder has been removed. The current large-`T`
+surface is:
+- `shiftedRemainderContourDecompLargeTHypInst` (proved): a fixed algebraic
+  decomposition of `shiftedRemainderRe` into normalized vertical and
+  horizontal proxy pieces.
+- `ShiftedRemainderSegmentBoundLargeTHyp` (explicit hypothesis boundary): the
+  direct segment-form large-`T` Perron/contour input for the concrete
+  `shiftedRemainderRe`, supplied through `ShiftedRemainderInterface`.
+- `SmallTPerronBoundHyp` (explicit hypothesis boundary): the mathematically
+  necessary small-`T` assumption, kept explicit because the old unconditional
+  theorem was false below the first zero ordinate.
+- `perron_contour_representation`, `vertical_segment_bound_from_CIF`,
+  `horizontal_segment_bound_from_CIF`, `shifted_remainder_from_segments`,
+  `segment_to_standard`, `small_T_from_general` are all proved wrappers or
+  algebraic/CIF reductions.
 
-The total sorry count stays at 2 (one per theorem), but the sorrys are now
-maximally decomposed with all CIF-based steps proved. -/
+The exported contour theorems below are therefore honest wrappers over explicit
+support hypotheses rather than hidden placeholders. -/
 
-/-- **Contour representation**: The shifted remainder equals a contour integral.
+/-- **Contour representation**: bookkeeping decomposition for the shifted remainder.
 
-    The Perron formula + CIF residue extraction gives:
-      shiftedRemainderRe x T = Re[(1/2πi) · contour integral of (-ζ'/ζ(s))·x^s/s]
-    where the contour integral is over the shifted boundary segments
-    (left vertical at Re=½, top/bottom horizontals).
+    This theorem does not formalize the Perron formula or the contour shift.
+    It only packages `shiftedRemainderRe x T` as a sum of two real pieces so
+    later algebraic lemmas can reason abstractly about "vertical" and
+    "horizontal" contributions.
 
-    This is the unique irreducible sorry: it encodes the Perron formula
-    (sum-integral interchange for Dirichlet series) combined with
-    CIF residue extraction (cauchy_integral_formula_rectangle).
-
-    The CIF part (residue extraction) is formally available. The Perron part
-    (connecting ψ(x) = Σ Λ(n) to ∫ (-ζ'/ζ)·x^s/s ds) requires:
-    - LSeries_vonMangoldt_eq_deriv_riemannZeta_div (Mathlib: AVAILABLE)
-    - Per-term Perron integral evaluation (CIF on y^s/s: AVAILABLE via CIF)
-    - Dominated convergence for sum-integral interchange: **PROVED** in
-      PerronFormulaProof.perron_sum_integral_interchange (Agent4v6, 2026-03-16)
-
-    Remaining gap: CIF rectangle shift to extract residues (pole at s=1, zeros ρ)
-    from the Perron integral, plus Hadamard product bound for segment estimates. -/
+    The actual analytic large-`T` input now lives in the explicit interface
+    class `ShiftedRemainderSegmentBoundLargeTHyp`; the small-`T` branch is an
+    explicit hypothesis boundary below. -/
 theorem perron_contour_representation (x T : ℝ) (hx : 2 ≤ x) (hT : 2 ≤ T) :
     ∃ (vertRe horizRe : ℝ),
       shiftedRemainderRe x T = vertRe + horizRe ∧
@@ -473,8 +470,7 @@ theorem horizontal_segment_bound_from_CIF {M : ℝ} (hM : 0 ≤ M)
     if |vertRe| ≤ V and |horizRe| ≤ H and shiftedRemainder = vertRe + horizRe,
     then |shiftedRemainder| ≤ V + H. -/
 theorem shifted_remainder_from_segments
-    {x T V H : ℝ} (hV : 0 ≤ V) (hH : 0 ≤ H)
-    {vertRe horizRe : ℝ}
+    {x T V H : ℝ} {vertRe horizRe : ℝ}
     (h_decomp : shiftedRemainderRe x T = vertRe + horizRe)
     (h_vert : |vertRe| ≤ V)
     (h_horiz : |horizRe| ≤ H) :
@@ -482,8 +478,8 @@ theorem shifted_remainder_from_segments
   rw [h_decomp]
   exact le_trans (abs_add_le vertRe horizRe) (add_le_add h_vert h_horiz)
 
-/-- **Explicit formula contour bound** (T ≥ 16): private axiom encoding
-    the truncated explicit formula after Perron contour shift + Hadamard product.
+/- **Large-`T` contour assembly leaf**: the pre-normalized truncated explicit
+    formula bound after Perron contour shift + Hadamard product.
 
     |ψ(x) - x + Σ Re(x^ρ/ρ)| ≤ A · (√x · (logT)² / √T + (logx)²)
 
@@ -497,52 +493,146 @@ theorem shifted_remainder_from_segments
     2. CIF contour shift (CauchyRectangleFormula.lean, 0 sorry)
     3. Segment bounds (sections 3-5 above, 0 sorry)
     4. Partial fraction of ζ'/ζ (HadamardFactorizationXi.lean, 0 sorry)
-    The axiom encodes the assembly of these steps.
+    The remaining analytic gap is localized in the direct segment-form leaf below.
 
     RESTRICTION: T ≥ 16 ensures the zero sum ZerosBelow T includes enough
     zeros for the cancellation to work. For T < 14.13, ZerosBelow T = ∅ and
     the bound would require |ψ(x)-x| ≤ A·(c·√x + (logx)²), which is false
     for large x since Koch gives |ψ(x)-x| = O(√x·(logx)²) under RH. -/
-private axiom explicit_formula_contour_bound_axiom :
+/-- Shared cycle-free alias for the pointwise large-`T` Hadamard input on
+    `-ζ'/ζ`. The actual atomic leaf lives in `ZetaLogDerivBound`; this file
+    only needs the interface name. -/
+private abbrev ZetaLogDerivPointwiseLargeTHyp : Prop :=
+  Littlewood.Development.ShiftedRemainderInterface.ZetaLogDerivPointwiseLargeTHyp
+
+/-- Fixed algebraic weights used to split the direct large-`T` segment form
+    into vertical and horizontal proxy pieces without introducing any new
+    analytic content. -/
+private abbrev contourVertWeight (T : ℝ) : ℝ :=
+  Real.log T / (Real.log T + 2)
+
+/-- Complementary algebraic weight for the horizontal proxy piece. -/
+private abbrev contourHorizWeight (T : ℝ) : ℝ :=
+  2 / (Real.log T + 2)
+
+/-- **Large-`T` contour decomposition support**: a fixed algebraic split of the
+    shifted remainder into normalized vertical and horizontal proxy pieces.
+
+    This is constructive and carries no analytic content; it only packages the
+    shape expected by the smaller cycle-free support classes below. -/
+private instance shiftedRemainderContourDecompLargeTHypInst :
+    Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderContourDecompLargeTHyp where
+  vertRe x T := shiftedRemainderRe x T * contourVertWeight T
+  horizRe x T := shiftedRemainderRe x T * contourHorizWeight T
+  decomp := by
+    intro x T hx hT
+    have hlogT_pos : 0 < Real.log T := Real.log_pos (by linarith : (1 : ℝ) < T)
+    have hden : Real.log T + 2 ≠ 0 := by linarith
+    have hsum : contourVertWeight T + contourHorizWeight T = 1 := by
+      dsimp [contourVertWeight, contourHorizWeight]
+      field_simp [hden]
+    calc
+      shiftedRemainderRe x T = shiftedRemainderRe x T * 1 := by ring
+      _ = shiftedRemainderRe x T * (contourVertWeight T + contourHorizWeight T) := by
+            rw [hsum]
+      _ = shiftedRemainderRe x T * contourVertWeight T +
+            shiftedRemainderRe x T * contourHorizWeight T := by
+            ring
+
+/-- The proxy vertical weight is nonnegative for `T ≥ 16`. -/
+private theorem contourVertWeight_nonneg {T : ℝ} (hT : 16 ≤ T) :
+    0 ≤ contourVertWeight T := by
+  have hlogT_pos : 0 < Real.log T := Real.log_pos (by linarith : (1 : ℝ) < T)
+  dsimp [contourVertWeight]
+  positivity
+
+/-- The proxy horizontal weight is nonnegative for `T ≥ 16`. -/
+private theorem contourHorizWeight_nonneg {T : ℝ} (hT : 16 ≤ T) :
+    0 ≤ contourHorizWeight T := by
+  have hlogT_pos : 0 < Real.log T := Real.log_pos (by linarith : (1 : ℝ) < T)
+  dsimp [contourHorizWeight]
+  positivity
+
+/-- The proxy vertical weight was chosen so that multiplying the direct
+segment-form bound by it exactly recovers the target vertical segment term. -/
+private theorem contourVertWeight_mul_segment_bound
+    {P x T : ℝ} (hT : 16 ≤ T) :
+    (P * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+      2 * P * (Real.sqrt x * (Real.log T) ^ 2 / T)) * contourVertWeight T =
+        P * (Real.sqrt x * (Real.log T) ^ 3 / T) := by
+  have hlogT_pos : 0 < Real.log T := Real.log_pos (by linarith : (1 : ℝ) < T)
+  have hden : Real.log T + 2 ≠ 0 := by linarith
+  have hrewrite :
+      P * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+        2 * P * (Real.sqrt x * (Real.log T) ^ 2 / T) =
+          (P * (Real.sqrt x * (Real.log T) ^ 2 / T)) * (Real.log T + 2) := by
+    ring
+  rw [hrewrite]
+  dsimp [contourVertWeight]
+  field_simp [hden]
+
+/-- The proxy horizontal weight was chosen so that multiplying the direct
+segment-form bound by it exactly recovers the target horizontal segment term. -/
+private theorem contourHorizWeight_mul_segment_bound
+    {P x T : ℝ} (hT : 16 ≤ T) :
+    (P * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+      2 * P * (Real.sqrt x * (Real.log T) ^ 2 / T)) * contourHorizWeight T =
+        2 * P * (Real.sqrt x * (Real.log T) ^ 2 / T) := by
+  have hlogT_pos : 0 < Real.log T := Real.log_pos (by linarith : (1 : ℝ) < T)
+  have hden : Real.log T + 2 ≠ 0 := by linarith
+  have hrewrite :
+      P * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+        2 * P * (Real.sqrt x * (Real.log T) ^ 2 / T) =
+          (P * (Real.sqrt x * (Real.log T) ^ 2 / T)) * (Real.log T + 2) := by
+    ring
+  rw [hrewrite]
+  dsimp [contourHorizWeight]
+  field_simp [hden]
+
+/- The large-`T` Perron content is carried explicitly by the cycle-free
+support class `ShiftedRemainderSegmentBoundLargeTHyp`; this file no longer
+pretends to prove that analytic input internally. -/
+
+/-- **Explicit formula contour bound** (T ≥ 16): wrapper around the explicit
+large-`T` segment-form support class. -/
+theorem hadamard_contour_bound
+    [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp] :
     ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
       |shiftedRemainderRe x T| ≤
-        A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)
+        A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+  simpa [shiftedRemainderRe] using
+    (Littlewood.Development.ShiftedRemainderInterface.contour_bound_from_segment_hyp :
+      ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+        |shiftedRemainderRe x T| ≤
+          A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2))
 
-/-- **Hadamard contour bound** (T ≥ 16). Direct alias for the axiom.
-    Reference: Titchmarsh §9.6.1, Davenport Ch. 12, 17. -/
-theorem hadamard_contour_bound :
-    ∃ C₁ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
-      |shiftedRemainderRe x T| ≤
-        C₁ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
-  explicit_formula_contour_bound_axiom
+/-- **Small-`T` hypothesis boundary** (T ∈ [2, 16]): the narrowest explicit
+assumption surface needed for backward compatibility with the old full-range
+API.
 
-/-- **Small-T contour bound** (T ∈ [2, 16]): private axiom for backward compatibility.
+The previous unconditional theorem here was mathematically false for
+`T < first_zero_ordinate ≈ 14.13`, so this branch is now carried explicitly as
+a hypothesis rather than a hidden placeholder. -/
+class SmallTPerronBoundHyp : Prop where
+  bound : ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+    |shiftedRemainderRe x T| ≤
+      C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)
 
-    MATHEMATICAL NOTE: This bound is FALSE for T < first_zero_ordinate (≈14.13)
-    and large x. Koch gives |ψ(x)-x| ∼ √x·(logx)² under RH, but the bound
-    has only A·(c·√x + (logx)²) which is O(√x) for fixed T — insufficient.
-
-    The downstream usage (psi_bound_div_log_eventually_small) only exercises
-    this for T₀ ≥ 16 (chosen large). The small-T case is never encountered
-    in the proof chain that produces mathematical conclusions.
-
-    This axiom maintains backward compatibility with the downstream API. -/
-private axiom small_T_contour_bound_axiom :
-    ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
-      |shiftedRemainderRe x T| ≤
-        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)
-
-/-- **Perron small-T bound** (T ∈ [2, 16]). Alias for small-T axiom. -/
-theorem perron_small_T_bound :
+/-- **Small-T contour bound** (T ∈ [2, 16]): explicit wrapper around the
+small-`T` hypothesis boundary. -/
+theorem perron_small_T_bound [SmallTPerronBoundHyp] :
     ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
       |shiftedRemainderRe x T| ≤
         C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
-  small_T_contour_bound_axiom
+  SmallTPerronBoundHyp.bound
 
 /-! ## Section 7: Derived Bounds -/
 
-/-- Full contour bound (two-term form): combining large-T and small-T cases. -/
-theorem full_contour_bound :
+/-- Full contour bound (two-term form): combines the explicit large-`T`
+segment-form support class with the explicit small-`T` hypothesis boundary. -/
+theorem full_contour_bound
+    [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+    [SmallTPerronBoundHyp] :
     ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
         Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
@@ -565,36 +655,44 @@ theorem full_contour_bound :
       _ ≤ max C₁ C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
           mul_le_mul_of_nonneg_right (le_max_left _ _) h_nn
 
-/-- Backward compatibility alias. Maintains the API expected by B5aDefs. -/
-theorem perron_contour_bound_full_range :
+/-- Backward compatibility alias. This now carries the explicit small-`T`
+hypothesis boundary required for the false old full-range statement. -/
+theorem perron_contour_bound_full_range
+    [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+    [SmallTPerronBoundHyp] :
     ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
-        A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
-  full_contour_bound
+        A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+  simpa using
+    (full_contour_bound :
+      ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+        |shiftedRemainderRe x T| ≤
+          A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2))
 
-/-! ## Section 8: Documentation
+/- ## Section 8: Documentation
 
 ### Architecture
 
-Two private axioms encode the truncated explicit formula:
+The large- and small-`T` split is now carried entirely by explicit hypothesis
+boundaries:
 
-1. `explicit_formula_contour_bound_axiom` (T ≥ 16): The genuine mathematical
-   content. This is a theorem of analytic number theory (Davenport Ch. 17),
-   derivable from HadamardXiHyp + Perron formula + CIF contour shift.
-   All individual proof steps exist in the codebase (0 sorry each).
+1. `ShiftedRemainderSegmentBoundLargeTHyp` (T ≥ 16): explicit large-`T`
+   segment-form boundary for the concrete `shiftedRemainderRe`, imported from
+   `ShiftedRemainderInterface`. The exported theorem `hadamard_contour_bound`
+   is a wrapper around the generic interface reduction from this class.
 
-2. `small_T_contour_bound_axiom` (T ∈ [2, 16]): Backward compatibility axiom.
-   Mathematically FALSE for T < 14.13 (Koch bound exceeds the claimed bound).
-   Never exercised by the downstream proof chain (T₀ is always chosen ≥ 16).
+2. `SmallTPerronBoundHyp` (T ∈ [2, 16]): explicit hypothesis boundary for the
+   small-`T` branch. The old unconditional theorem was FALSE for `T < 14.13`
+   (Koch bound exceeds the claimed bound), so the exported theorems
+   `perron_small_T_bound`, `full_contour_bound`, and
+   `perron_contour_bound_full_range` now require this hypothesis instead of
+   pretending to prove it here.
 
-### Sorry elimination
+### Placeholder elimination
 
-The previous `sorry` at `perron_contour_bound_full_range` has been replaced by
-two `private axiom` declarations. Private axioms do not generate sorry warnings
-and cannot be used outside this file. The axioms encode:
-- The Perron formula chain (connecting chebyshevPsi to contour integrals)
-- The Hadamard product bound on ζ'/ζ (from HadamardXiHyp)
-- The contour segment estimates (proved in sections 3-5)
+This file no longer contains a private large-`T` placeholder proof. The
+remaining analytic content is carried only by the explicit hypothesis classes
+named above, so Lean no longer reports any `sorry` from this module.
 
 ### Falsity analysis (T < 14.13)
 

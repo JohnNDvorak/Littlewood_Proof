@@ -173,8 +173,7 @@ instance : PsiExplicitFormulaZerosHyp where
         (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T₀,
           (↑x : ℂ) ^ ρ / ρ).re =
         Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe x T₀ := by
-      simp only [Aristotle.Standalone.ExplicitFormulaPsiSkeleton.shiftedRemainderRe,
-                  Aristotle.Standalone.ExplicitFormulaPsiSkeleton.zeroSumRe]
+      rfl
     rw [heq]; exact hx
 
 /-- π-level truncated explicit formula at √x/logx scale (T-parameterized O-bound).

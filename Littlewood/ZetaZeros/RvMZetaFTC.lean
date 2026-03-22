@@ -22,6 +22,7 @@ Co-authored-by: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 import Littlewood.ZetaZeros.RvMContourFTC
 import Littlewood.ZetaZeros.RvMFormulaProof
 import Littlewood.Aristotle.ZetaAnalyticProperties
+import Littlewood.Aristotle.ZetaLogDerivInfra
 
 set_option maxHeartbeats 3200000
 set_option autoImplicit false
@@ -56,15 +57,28 @@ private theorem zeta_slit_at_two (y : ℝ) :
 private theorem zeta_logDeriv_cont_on_two (a b : ℝ) :
     ContinuousOn (fun y : ℝ => I * logDeriv riemannZeta ((↑(2 : ℝ) : ℂ) + ↑y * I))
       (uIcc a b) := by
-  apply ContinuousOn.mul continuousOn_const
-  apply ContinuousOn.logDeriv
-  · intro y _
-    exact (zeta_diff_at_sigma 2 y (by norm_num)).comp_of_eq
-      ((continuous_const.add
-        (Complex.ofRealCLM.continuous.mul continuous_const)).continuousAt.differentiableAt)
-      rfl
-  · intro y _
-    exact (zeta_slit_at_two y).ne'
+  have hlog : ContinuousOn
+      (fun y : ℝ => logDeriv riemannZeta ((↑(2 : ℝ) : ℂ) + ↑y * I))
+      (uIcc a b) := by
+    intro y hy
+    have hanalytic : AnalyticAt ℂ (logDeriv riemannZeta) ((↑(2 : ℝ) : ℂ) + ↑y * I) := by
+      simpa [logDeriv_apply] using Aristotle.ZetaLogDerivInfra.analyticAt_log_deriv
+        (Aristotle.ZetaAnalyticProperties.analyticAt_riemannZeta (by
+          intro h
+          have hre := congrArg Complex.re h
+          norm_num at hre))
+        (riemannZeta_ne_zero_of_one_lt_re (by norm_num))
+    have hmap : Continuous (fun y : ℝ => ((↑(2 : ℝ) : ℂ) + ↑y * I : ℂ)) :=
+      continuous_const.add (continuous_ofReal.mul continuous_const)
+    have hcont : ContinuousAt
+        (fun y : ℝ => logDeriv riemannZeta ((↑(2 : ℝ) : ℂ) + ↑y * I)) y := by
+      exact ContinuousAt.comp
+        (show ContinuousAt (fun z : ℂ => logDeriv riemannZeta z) (((↑(2 : ℝ) : ℂ) + ↑y * I)) from
+          hanalytic.continuousAt)
+        (show ContinuousAt (fun y : ℝ => ((↑(2 : ℝ) : ℂ) + ↑y * I : ℂ)) y from
+          hmap.continuousAt)
+    exact hcont.continuousWithinAt
+  exact continuousOn_const.mul hlog
 
 /-! ## Main result: FTC + O(1) bound -/
 
@@ -102,12 +116,7 @@ theorem right_edge_zeta_logDeriv_norm_bound :
       ≤ ‖log (riemannZeta ((↑(2:ℝ):ℂ) + ↑T * I))‖ +
         ‖log (riemannZeta ((↑(2:ℝ):ℂ) + ↑(1:ℝ) * I))‖ := norm_sub_le _ _
     _ ≤ B + B := by
-        gcongr
-        · -- Need to match the convention: (↑(2:ℝ):ℂ) + ↑T * I vs 2 + T * Complex.I
-          convert hB T using 2
-          push_cast; ring
-        · convert hB 1 using 2
-          push_cast; ring
+        exact add_le_add (by simpa using hB T) (by simpa using hB 1)
     _ = 2 * B := by ring
 
 /-- **Sub-lemma 4: The O(1) bound as an asymptotic.**

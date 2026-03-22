@@ -6,65 +6,72 @@ Assumptions.lean. This breaks the import cycle:
 
 allowing PerronExplicitFormulaProvider to import this file directly.
 
-## Instance 1: ZeroCountingLowerBoundHyp
-NOW PROVIDED via the Riemann-von Mangoldt infrastructure chain:
+## RvM lower-bound chain
+The Riemann-von Mangoldt route to `ZeroCountingLowerBoundHyp` now also depends
+on the explicit half-top boundary `RvmHalfTopZetaVariationBoundHyp` exposed in
+`RiemannVonMangoldtReal.lean`, so this file no longer claims to synthesize that
+full chain from the local delegated inputs alone:
   `RiemannVonMangoldtReal.rvm_explicit_hyp` provides `ZeroCountingRvmExplicitHyp`
   Instance chain in ZeroCountingFunction.lean:
     `ZeroCountingRvmExplicitHyp` → `ZeroCountingAsymptoticHyp`
       → `ZeroCountingMainTermHyp` → `ZeroCountingLowerBoundHyp`
 
-The sorry is now localized to `riemann_von_mangoldt_explicit` in
-RiemannVonMangoldtReal.lean, which decomposes into:
-  (a) Argument principle for rectangles (RectArgumentPrinciple.lean)
-  (b) Stirling approximation for Gamma integrals
-  (c) Standard zeta bounds on vertical lines
+## Instance 2: ZeroOrdinateLowerBoundHyp
+The constructive route now lives in `FirstZeroComputation.lean`:
+  `FirstZeroExistsHyp`     → `ZetaHasNontrivialZeroHyp`
+  `ZeroFreeBelow1413Hyp`   → `ZeroOrdinateLowerBoundHyp`
 
-## Instance 2: zero_ord_lower_bound
-All nontrivial zeta zeros with positive imaginary part have Im(ρ) ≥ 1.
-This follows from the classical zero-free region (de la Vallée-Poussin 1896).
-The first nontrivial zero has imaginary part ≈ 14.134..., so the bound 1 is
-extremely conservative.
+This file does NOT claim those computational facts are already proved.
+Instead, it exports localized opaque placeholders for the two first-zero
+sub-hypotheses, keeping the import graph cycle-free while making the
+dependency surface explicit.
 
-Used by: simultaneous_dirichlet_on_interval in PerronExplicitFormulaProvider.lean
-to satisfy the |γ_k| ≥ 1 hypothesis of the Dirichlet approximation theorem.
-
-## Changes (2026-03-17):
-- FirstZeroOrdinateHyp ELIMINATED: replaced by ZetaHasNontrivialZeroHyp
-  (derived from ZeroCountingTendstoHyp via instance chain)
-- ZetaZerosSimpleHyp ELIMINATED: the RvM formula sorry now directly
-  encodes the formula for ncard-defined N(T), bypassing simplicity
+Used by: PerronExplicitFormulaProvider.lean, which needs both the large-T zero
+counting lower bound and the coarse ordinate bound `1 < Im(ρ)`.
 
 Co-authored-by: Claude (Anthropic)
 -/
 
+import Littlewood.ZetaZeros.FirstZeroComputation
 import Littlewood.ZetaZeros.RiemannVonMangoldtReal
 
 noncomputable section
 
 namespace ZetaZeros
 
--- ZetaHasNontrivialZeroHyp is provided by a sorry for ZeroCountingTendstoHyp
--- (that N(T) → ∞), which then derives ZetaHasNontrivialZeroHyp automatically
--- via zetaHasNontrivialZero_of_tendsto in ZeroCountingFunction.lean.
-instance instZeroCountingTendstoHyp : ZeroCountingTendstoHyp where
-  tendsto_atTop := by sorry
+open FirstZeroComputation
 
--- ZeroCountingLowerBoundHyp is now automatically available via the instance chain:
--- instZeroCountingTendstoHyp → zetaHasNontrivialZero_of_tendsto
---   → rvm_explicit_hyp → instZeroCountingAsymptoticHyp
---   → zeroCountingMainTermHyp_of_asymptotic → zeroCountingLowerBoundHyp_of_mainTerm
+/-- Delegated witness for the existence of a positive nontrivial zero.
+    The intended constructive route is the Hardy-Z sign-change framework in
+    `FirstZeroComputation.lean`, but that computation is not wired yet. -/
+private axiom firstZeroExistsHyp_witness : FirstZeroExistsHyp
 
--- Verify the instance resolves:
-#check (inferInstance : ZeroCountingLowerBoundHyp)
+/-- Delegated witness for zero-freeness below `14.13`.
+    This is the minimal computational input needed to derive
+    `ZeroOrdinateLowerBoundHyp` via `FirstZeroComputation.lean`. -/
+private axiom zeroFreeBelow1413Hyp_witness : ZeroFreeBelow1413Hyp
 
-/-- All nontrivial zeta zeros with positive imaginary part have Im(ρ) ≥ 1.
-    The first nontrivial zero has Im ≈ 14.134, so this bound is very conservative.
-    SORRY: Computational fact about the location of zeta zeros. -/
-theorem zero_ord_lower_bound :
-    ∀ ρ ∈ zetaNontrivialZerosPos, (1 : ℝ) ≤ ρ.im := by
-  intro ρ _
-  -- The first zero ordinate is ≈ 14.134, so all ordinates are > 1.
-  -- This is a computational fact; previously derived from FirstZeroOrdinateHyp.
-  sorry
+/-- Delegated witness for the remaining constructive `ξ'` contour input behind
+    the RvM common-zero-mass compatibility lane. This is now stated at the
+    boundary/log-integral level rather than the already-composed zero-count
+    bound. -/
+private axiom xiDerivBoundaryLogIntegralBoundFrom14Hyp_witness :
+    XiDerivBoundaryLogIntegralBoundFrom14Hyp
+
+instance instFirstZeroExistsHyp : FirstZeroExistsHyp :=
+  firstZeroExistsHyp_witness
+
+instance instZeroFreeBelow1413Hyp : ZeroFreeBelow1413Hyp :=
+  zeroFreeBelow1413Hyp_witness
+
+instance instXiDerivBoundaryLogIntegralBoundFrom14Hyp :
+    XiDerivBoundaryLogIntegralBoundFrom14Hyp :=
+  xiDerivBoundaryLogIntegralBoundFrom14Hyp_witness
+
+-- Verify the active delegated instances still resolve here.
+#check (inferInstance : ZetaHasNontrivialZeroHyp)
+#check (inferInstance : ZeroOrdinateLowerBoundHyp)
+#check (inferInstance : XiDerivBoundaryLogIntegralBoundFrom14Hyp)
+#check (inferInstance : XiDerivZeroCountRectMultBoundFrom14Hyp)
 
 end ZetaZeros

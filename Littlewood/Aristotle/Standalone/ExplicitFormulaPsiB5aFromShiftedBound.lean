@@ -92,10 +92,22 @@ theorem shifted_contours_components_of_shifted_bound
     have hdiff :
         Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T =
           shiftedRemainderRe x T * (logSqErr x / denom x T) := by
-      unfold perronIntegralRe contourRemainderRe shiftedRemainderRe denom
       have hden_ne : mainErr x T + logSqErr x ≠ 0 := ne_of_gt hden_pos
-      field_simp [hden_ne]
-      ring
+      calc
+        Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T
+            = Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T -
+                shiftedRemainderRe x T * (mainErr x T / denom x T) := by
+                  unfold perronIntegralRe contourRemainderRe shiftedRemainderRe
+                  ring
+        _ = shiftedRemainderRe x T -
+                shiftedRemainderRe x T * (mainErr x T / denom x T) := by
+              rw [show Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T =
+                shiftedRemainderRe x T by rfl]
+        _ = shiftedRemainderRe x T * (1 - mainErr x T / denom x T) := by ring
+        _ = shiftedRemainderRe x T * (logSqErr x / denom x T) := by
+              unfold denom
+              field_simp [hden_ne]
+              ring
     rw [hdiff]
     convert hsplit.2 using 1
   · intro x T _ _

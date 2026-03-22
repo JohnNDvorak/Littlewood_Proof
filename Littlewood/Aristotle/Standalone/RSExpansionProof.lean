@@ -3752,7 +3752,7 @@ private theorem continuous_cosSum (k : ℕ) :
   rw [h_eq]
   exact Real.continuous_cos.comp (HardyThetaSmooth.differentiable_hardyPhaseSmooth n).continuous
 
-/-- errorTermOnBlock is continuous on the block (and in fact everywhere).
+/- errorTermOnBlock is continuous on the block (and in fact everywhere).
     Proved by decomposing into hardyZ (continuous via HardyZTransfer) minus
     a finite sum of continuous cos terms (via hardyPhaseSmooth bridge). -/
 /-- errorTermOnBlock is continuous on the block. Public for use in

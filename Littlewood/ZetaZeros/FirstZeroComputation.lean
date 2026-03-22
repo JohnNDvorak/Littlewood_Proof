@@ -1,9 +1,18 @@
 /-
 First Zero of the Riemann Zeta Function — Computational Infrastructure
 
-Goal: Prove `FirstZeroOrdinateHyp` by establishing that the first nontrivial
-zero of ζ(s) has imaginary part γ₁ ∈ (14.13, 14.14), and γ₁ is minimal among
-positive zero ordinates.
+Goal: package the computational first-zero route in a form that still matches
+the current zero-counting APIs.
+
+The original target was `FirstZeroOrdinateHyp`, but that interface has been
+removed. The active downstream consumers now only need:
+- existence of some nontrivial zero with positive imaginary part
+- a coarse lower bound `1 < Im(ρ)` for all such zeros
+
+This file keeps the old computational decomposition and exports the two current
+bridges:
+- `ZetaHasNontrivialZeroHyp` from `FirstZeroExistsHyp`
+- `ZeroOrdinateLowerBoundHyp` from `ZeroFreeBelow1413Hyp`
 
 ## Strategy
 
@@ -24,13 +33,8 @@ Proof route: Use Backlund's method — evaluate the argument of ζ on the
 boundary of [0,1] × [0,14.13] to show the winding number is 0, hence
 N(14.13) = 0.
 
-### Assembly
-Given both sub-hypotheses, the assembly theorem extracts the minimum
-of the finite set of zero ordinates ≤ t₀ to construct the witness γ₁.
-This uses `finite_zeros_le` from ZeroCountingFunction.lean.
-
 ## Status (2026-03-16)
-- Assembly: PROVED (sorry-free given sub-hypotheses)
+- Current API bridges: to be exported via the two sub-hypotheses
 - Sub-Hypothesis A: Framework built, computation certificates TODO
 - Sub-Hypothesis B: Framework built, computation certificates TODO
 - IVT sign-change framework: PROVED
@@ -40,7 +44,7 @@ This uses `finite_zeros_le` from ZeroCountingFunction.lean.
 Co-authored-by: Claude (Anthropic)
 -/
 
-import Littlewood.ZetaZeros.ZeroCountingFunction
+import Littlewood.ZetaZeros.ZeroCountingMultiplicity
 
 set_option maxHeartbeats 800000
 set_option autoImplicit false
@@ -174,55 +178,37 @@ class FirstZeroExistsHyp : Prop where
 class ZeroFreeBelow1413Hyp : Prop where
   zero_free : ∀ ρ ∈ zetaNontrivialZerosPos, (14.13 : ℝ) < ρ.im
 
-/-! ## Part 5: Assembly — From Sub-Hypotheses to FirstZeroOrdinateHyp
+/-! ## Part 5: Current API Bridges
 
-This is the core theorem: given both sub-hypotheses, construct
-`FirstZeroOrdinateHyp` by extracting the minimum of the finite set
-of zero ordinates up to t₀. -/
+The old `FirstZeroOrdinateHyp` target was removed. The pieces still needed by
+downstream code are simpler:
+- `FirstZeroExistsHyp` gives `ZetaHasNontrivialZeroHyp`
+- `ZeroFreeBelow1413Hyp` gives the coarse bound `1 < Im(ρ)` for every
+  positive nontrivial zero
 
-/-- Given both sub-hypotheses, construct FirstZeroOrdinateHyp. -/
-instance instFirstZeroOrdinateHyp_of_subhyps
-    [FirstZeroExistsHyp] [ZeroFreeBelow1413Hyp] :
-    FirstZeroOrdinateHyp where
-  bounds := by
-    obtain ⟨t₀, ⟨hat₀, ht₀b⟩, hzero⟩ := FirstZeroExistsHyp.exists_zero
-    have ht₀_pos : (0 : ℝ) < t₀ := by linarith
-    have ht₀_mem := criticalLine_zero_mem_pos ht₀_pos hzero
-    -- Finite zeros up to t₀
-    have hfin := finite_zeros_le t₀
-    -- The image set of ordinates ≤ t₀
-    set S := (·.im) '' (zetaNontrivialZerosPos ∩ {s : ℂ | s.im ≤ t₀})
-    have hS_fin : S.Finite := Set.Finite.image _ hfin
-    have hS_ne : S.Nonempty := ⟨t₀, t0_mem_image ht₀_mem⟩
-    -- Extract the minimum of the finite nonempty set S
-    obtain ⟨γ₁, hγ₁_mem, hγ₁_min⟩ :=
-      (⟨hS_fin.toFinset.min' (by rwa [Set.Finite.toFinset_nonempty]),
-        hS_fin.mem_toFinset.mp (Finset.min'_mem _ _),
-        fun x hx => Finset.min'_le _ _ (hS_fin.mem_toFinset.mpr hx)⟩ :
-      ∃ m ∈ S, ∀ x ∈ S, m ≤ x)
-    -- γ₁ is a zero ordinate
-    have hγ₁_ord : γ₁ ∈ zetaZeroOrdinates := by
-      obtain ⟨ρ, ⟨hρ_pos, _⟩, hrfl⟩ := hγ₁_mem
-      exact ⟨ρ, hρ_pos, hrfl⟩
-    -- γ₁ > 14.13 (from zero-free below 14.13)
-    have hγ₁_low : 14.13 < γ₁ := by
-      obtain ⟨ρ, ⟨hρ_pos, _⟩, hrfl⟩ := hγ₁_mem
-      exact hrfl ▸ ZeroFreeBelow1413Hyp.zero_free ρ hρ_pos
-    -- γ₁ < 14.14 (since γ₁ ≤ t₀ < 14.14)
-    have hγ₁_high : γ₁ < 14.14 := by
-      have : γ₁ ≤ t₀ := hγ₁_min t₀ (t0_mem_image ht₀_mem)
+The full first-zero minimization argument can be rebuilt later on top of the
+same sub-hypotheses if a new consumer needs it. -/
+
+/-- A zero in `(14.13, 14.14)` supplies the nonemptiness needed by current
+    downstream zero-counting consumers. -/
+instance instZetaHasNontrivialZeroHyp_of_firstZeroExists [FirstZeroExistsHyp] :
+    ZetaHasNontrivialZeroHyp where
+  nonempty := by
+    obtain ⟨t, ht_mem, hzero⟩ := FirstZeroExistsHyp.exists_zero
+    have ht_pos : (0 : ℝ) < t := by
+      have h1413 : (14.13 : ℝ) < t := ht_mem.1
       linarith
-    -- γ₁ is minimal among ALL zero ordinates
-    have hγ₁_global : ∀ γ ∈ zetaZeroOrdinates, γ₁ ≤ γ := by
-      intro γ ⟨ρ, hρ_pos, hrfl⟩
-      by_cases hle : ρ.im ≤ t₀
-      · rw [← hrfl]
-        exact hγ₁_min ρ.im ⟨ρ, ⟨hρ_pos, hle⟩, rfl⟩
-      · push_neg at hle
-        rw [← hrfl]
-        have : γ₁ ≤ t₀ := hγ₁_min t₀ (t0_mem_image ht₀_mem)
-        linarith
-    exact ⟨γ₁, hγ₁_ord, hγ₁_low, hγ₁_high, hγ₁_global⟩
+    exact ⟨(1 / 2 : ℂ) + (t : ℂ) * I, criticalLine_zero_mem_pos ht_pos hzero⟩
+
+/-- Zero-freeness below `14.13` is far stronger than the coarse lower bound
+    `1 < Im(ρ)` needed in the Perron/Dirichlet lane. -/
+instance instZeroOrdinateLowerBoundHyp_of_zeroFreeBelow1413
+    [ZeroFreeBelow1413Hyp] :
+    ZeroOrdinateLowerBoundHyp where
+  lower_bound := by
+    intro ρ hρ
+    have h1413 : (14.13 : ℝ) < ρ.im := ZeroFreeBelow1413Hyp.zero_free ρ hρ
+    linarith
 
 /-! ## Part 6: Hardy Z-Function Equivalence
 
@@ -292,7 +278,7 @@ theorem sign_change_of_real_function
     is the Riemann-Siegel theta function. -/
 theorem firstZeroExistsHyp_of_sign_change
     {g : ℝ → ℂ} {a b : ℝ} (hab : a < b)
-    (ha_pos : 0 < a) (ha_bound : (14.13 : ℝ) ≤ a) (hb_bound : b ≤ 14.14)
+    (_ha_pos : 0 < a) (ha_bound : (14.13 : ℝ) ≤ a) (hb_bound : b ≤ 14.14)
     (hg_cont : ContinuousOn g (Set.Icc a b))
     (hg_real : ∀ t ∈ Set.Icc a b, (g t).im = 0)
     (hg_zero_iff : ∀ t ∈ Set.Icc a b,

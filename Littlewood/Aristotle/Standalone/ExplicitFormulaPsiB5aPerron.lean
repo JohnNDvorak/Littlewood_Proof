@@ -34,9 +34,14 @@ theorem perron_truncation_error
   have hrewrite :
       shiftedRemainderRe x T - contourRemainderRe x T =
         Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T := by
-    unfold shiftedRemainderRe
-    rw [hres]
-    ring
+    calc
+      shiftedRemainderRe x T - contourRemainderRe x T
+          = Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T -
+              contourRemainderRe x T := by
+                rfl
+      _ = Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T := by
+            rw [hres]
+            ring
   rw [hrewrite]
   exact hCₚ x T hx hT
 
