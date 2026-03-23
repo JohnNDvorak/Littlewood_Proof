@@ -1,4 +1,5 @@
 import Littlewood.ZetaZeros.ZeroCountingFunction
+import Littlewood.ZetaZeros.ZeroCountingMultiplicity
 import Littlewood.CoreLemmas.GrowthDomination
 
 set_option relaxedAutoImplicit false
@@ -122,14 +123,24 @@ theorem coeff_domination_of_zero_count_div
     mul_le_mul_of_nonneg_left hsum hfac_nonneg
   exact le_trans hN hmul
 
+-- REMOVED (2026-03-22): Three dead theorems that used ZeroCountingLowerBoundHyp
+-- (now replaced by ZeroCountingMultLowerBoundHyp after removing false axiom).
+-- sum_inv_norm_unbounded, zero_count_div_unbounded, tower_cap_unbounded
+-- are all duplicated in RHPiTowerHeightBudget.lean with Nmult versions.
+-- No external callers — confirmed dead code.
+
+end Aristotle.Standalone.RHPiReciprocalNormGrowth
+
+/-  REMOVED DEAD CODE:
+
 /-- Quantitative unboundedness of reciprocal-norm finite sums from
-`ZeroCountingLowerBoundHyp`. -/
+`ZeroCountingMultLowerBoundHyp`. -/
 theorem sum_inv_norm_unbounded
-    [ZeroCountingLowerBoundHyp] :
+    [ZeroCountingMultLowerBoundHyp] :
     ∀ B : ℝ, ∃ T : ℝ, 4 ≤ T ∧
       B ≤ Finset.sum (finite_zeros_le T).toFinset (fun ρ => 1 / ‖ρ‖) := by
   intro B
-  rcases zeroCountingFunction_lower_bound with ⟨T0, hT0⟩
+  rcases zeroCountingFunctionMult_lower_bound with ⟨T0, hT0⟩
   let B0 : ℝ := max B 0
   let T : ℝ := max (max T0 4) (Real.exp (6 * Real.pi * B0))
   have hT_ge_T0 : T0 ≤ T := by
@@ -196,12 +207,12 @@ theorem sum_inv_norm_unbounded
   exact hB_le_B0.trans (hB0_le_log.trans (hcoef_le.trans hsum_lower))
 
 /-- Quantitative unboundedness of the zero-count ratio `(N T)/(T+1)` from
-`ZeroCountingLowerBoundHyp`. -/
+`ZeroCountingMultLowerBoundHyp`. -/
 theorem zero_count_div_unbounded
-    [ZeroCountingLowerBoundHyp] :
+    [ZeroCountingMultLowerBoundHyp] :
     ∀ B : ℝ, ∃ T : ℝ, 4 ≤ T ∧ B ≤ (N T : ℝ) / (T + 1) := by
   intro B
-  rcases zeroCountingFunction_lower_bound with ⟨T0, hT0⟩
+  rcases zeroCountingFunctionMult_lower_bound with ⟨T0, hT0⟩
   let B0 : ℝ := max B 0
   let T : ℝ := max (max T0 4) (Real.exp (6 * Real.pi * B0))
   have hT_ge_T0 : T0 ≤ T := by
@@ -263,9 +274,9 @@ theorem zero_count_div_unbounded
   exact hB_le_B0.trans (hB0_le_log.trans hcoef_le)
 
 /-- The triple-exponential tower cap used in RH-`π` witness classes is
-cofinally unbounded under `ZeroCountingLowerBoundHyp`. -/
+cofinally unbounded under `ZeroCountingMultLowerBoundHyp`. -/
 theorem tower_cap_unbounded
-    [ZeroCountingLowerBoundHyp]
+    [ZeroCountingMultLowerBoundHyp]
     {ε : ℝ} (hεpos : 0 < ε) (hεlt : ε < 1) :
     ∀ X : ℝ, ∃ T : ℝ, 4 ≤ T ∧
       X < Real.exp (Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
@@ -308,5 +319,4 @@ theorem tower_cap_unbounded
         (Real.exp_le_exp.mpr hB_le_expArg))
   refine ⟨T, hT4, ?_⟩
   exact lt_of_lt_of_le (lt_trans hB_gt_X hB_lt_tower) hTower_mono
-
-end Aristotle.Standalone.RHPiReciprocalNormGrowth
+-/

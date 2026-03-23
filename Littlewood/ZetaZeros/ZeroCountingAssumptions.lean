@@ -51,12 +51,10 @@ private axiom firstZeroExistsHyp_witness : FirstZeroExistsHyp
     `ZeroOrdinateLowerBoundHyp` via `FirstZeroComputation.lean`. -/
 private axiom zeroFreeBelow1413Hyp_witness : ZeroFreeBelow1413Hyp
 
-/-- Delegated witness for the remaining constructive `ξ'` contour input behind
-    the RvM common-zero-mass compatibility lane. This is now stated at the
-    boundary/log-integral level rather than the already-composed zero-count
-    bound. -/
-private axiom xiDerivBoundaryLogIntegralBoundFrom14Hyp_witness :
-    XiDerivBoundaryLogIntegralBoundFrom14Hyp
+-- REMOVED (2026-03-22): xiDerivBoundaryLogIntegralBoundFrom14Hyp_witness
+-- This axiom was MATHEMATICALLY FALSE (Aristotle job 632e6a63 proved inconsistency).
+-- The downstream chain now routes through multiplicity-counted RvM
+-- (ZeroCountingMultLowerBoundHyp) instead.
 
 instance instFirstZeroExistsHyp : FirstZeroExistsHyp :=
   firstZeroExistsHyp_witness
@@ -64,14 +62,8 @@ instance instFirstZeroExistsHyp : FirstZeroExistsHyp :=
 instance instZeroFreeBelow1413Hyp : ZeroFreeBelow1413Hyp :=
   zeroFreeBelow1413Hyp_witness
 
-instance instXiDerivBoundaryLogIntegralBoundFrom14Hyp :
-    XiDerivBoundaryLogIntegralBoundFrom14Hyp :=
-  xiDerivBoundaryLogIntegralBoundFrom14Hyp_witness
-
 -- Verify the active delegated instances still resolve here.
 #check (inferInstance : ZetaHasNontrivialZeroHyp)
 #check (inferInstance : ZeroOrdinateLowerBoundHyp)
-#check (inferInstance : XiDerivBoundaryLogIntegralBoundFrom14Hyp)
-#check (inferInstance : XiDerivZeroCountRectMultBoundFrom14Hyp)
 
 end ZetaZeros

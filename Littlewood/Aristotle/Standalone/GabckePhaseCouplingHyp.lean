@@ -174,6 +174,25 @@ instance
     GabckePhaseCouplingHyp :=
   gabckePhaseCouplingHyp_of_atoms
 
+/-! ## Route from GabckeSignedAdjacentHyp (bypasses false GabckeBlockIndependence)
+
+GabckeBlockIndependence is mathematically false (exact k-independence doesn't hold).
+The weaker GabckeSignedAdjacentProp (adjacent monotonicity) IS true and suffices.
+The route: GabckeSignedAdjacentHyp → remainder_antitone_for_ge_one_of_adjacent
+→ block_estimate_iff_remainder_antitone → block_estimate_suffices → GabckePhaseCouplingHyp -/
+
+theorem gabckePhaseCouplingHyp_of_adjacent
+    [GabckePhaseCouplingInfra.GabckeSignedAdjacentHyp] :
+    GabckePhaseCouplingHyp := by
+  apply block_estimate_suffices
+  intro k hk
+  exact GabckePhaseCouplingInfra.block_estimate_iff_remainder_antitone k
+    (GabckePhaseCouplingInfra.remainder_antitone_for_ge_one_of_adjacent k hk)
+
+instance [GabckePhaseCouplingInfra.GabckeSignedAdjacentHyp] :
+    GabckePhaseCouplingHyp :=
+  gabckePhaseCouplingHyp_of_adjacent
+
 /-! ## Bridge theorem -/
 
 /-- **Bridge theorem**: derives the exact statement of

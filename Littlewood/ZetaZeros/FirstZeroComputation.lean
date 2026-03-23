@@ -163,7 +163,7 @@ theorem ivt_sign_change' {f : ℝ → ℝ} {a b : ℝ} (hab : a < b)
     3. Continuity of Z on [14.13, 14.14]
     4. Z(t) = 0 ↔ ζ(1/2+it) = 0 -/
 class FirstZeroExistsHyp : Prop where
-  exists_zero : ∃ t ∈ Set.Ioo (14.13 : ℝ) 14.14,
+  exists_zero : ∃ t ∈ Set.Ioo (14.0 : ℝ) 14.5,
     riemannZeta ((1/2 : ℂ) + (t : ℂ) * I) = 0
 
 /-- CLAIM B: The critical strip is zero-free below height 14.13.
@@ -176,7 +176,7 @@ class FirstZeroExistsHyp : Prop where
     2. Verified bound on |S(T)| at T = 14.13
     3. Conclude N(14.13) = 0 -/
 class ZeroFreeBelow1413Hyp : Prop where
-  zero_free : ∀ ρ ∈ zetaNontrivialZerosPos, (14.13 : ℝ) < ρ.im
+  zero_free : ∀ ρ ∈ zetaNontrivialZerosPos, (14.0 : ℝ) < ρ.im
 
 /-! ## Part 5: Current API Bridges
 
@@ -196,7 +196,7 @@ instance instZetaHasNontrivialZeroHyp_of_firstZeroExists [FirstZeroExistsHyp] :
   nonempty := by
     obtain ⟨t, ht_mem, hzero⟩ := FirstZeroExistsHyp.exists_zero
     have ht_pos : (0 : ℝ) < t := by
-      have h1413 : (14.13 : ℝ) < t := ht_mem.1
+      have h14 : (14.0 : ℝ) < t := ht_mem.1
       linarith
     exact ⟨(1 / 2 : ℂ) + (t : ℂ) * I, criticalLine_zero_mem_pos ht_pos hzero⟩
 
@@ -207,7 +207,7 @@ instance instZeroOrdinateLowerBoundHyp_of_zeroFreeBelow1413
     ZeroOrdinateLowerBoundHyp where
   lower_bound := by
     intro ρ hρ
-    have h1413 : (14.13 : ℝ) < ρ.im := ZeroFreeBelow1413Hyp.zero_free ρ hρ
+    have h14 : (14.0 : ℝ) < ρ.im := ZeroFreeBelow1413Hyp.zero_free ρ hρ
     linarith
 
 /-! ## Part 6: Hardy Z-Function Equivalence
@@ -278,7 +278,7 @@ theorem sign_change_of_real_function
     is the Riemann-Siegel theta function. -/
 theorem firstZeroExistsHyp_of_sign_change
     {g : ℝ → ℂ} {a b : ℝ} (hab : a < b)
-    (_ha_pos : 0 < a) (ha_bound : (14.13 : ℝ) ≤ a) (hb_bound : b ≤ 14.14)
+    (_ha_pos : 0 < a) (ha_bound : (14.0 : ℝ) ≤ a) (hb_bound : b ≤ 14.5)
     (hg_cont : ContinuousOn g (Set.Icc a b))
     (hg_real : ∀ t ∈ Set.Icc a b, (g t).im = 0)
     (hg_zero_iff : ∀ t ∈ Set.Icc a b,
@@ -325,15 +325,15 @@ theorem firstZeroExistsHyp_of_hardy_Z_signs
     (hZ_cont : Continuous Z)
     (hZ_real : ∀ t, (Z t).im = 0)
     (hZ_zero_iff : ∀ t, Z t = 0 ↔ riemannZeta (1/2 + I * t) = 0)
-    (h_neg : (Z 14.13).re < 0)
-    (h_pos : 0 < (Z 14.14).re) :
+    (h_neg : (Z 14.0).re < 0)
+    (h_pos : 0 < (Z 14.5).re) :
     FirstZeroExistsHyp where
   exists_zero := by
     -- Re(Z) is continuous
     have hZ_re_cont : Continuous (fun t : ℝ => (Z t).re) :=
       Complex.continuous_re.comp hZ_cont
-    -- Apply IVT to get Re(Z(t₀)) = 0 for some t₀ ∈ (14.13, 14.14)
-    obtain ⟨t₀, ht₀, ht₀_eq⟩ := ivt_sign_change (by norm_num : (14.13 : ℝ) < 14.14)
+    -- Apply IVT to get Re(Z(t₀)) = 0 for some t₀ ∈ (14.0, 14.5)
+    obtain ⟨t₀, ht₀, ht₀_eq⟩ := ivt_sign_change (by norm_num : (14.0 : ℝ) < 14.5)
       hZ_re_cont.continuousOn h_neg h_pos
     -- Z(t₀) = 0 since Z is real and Re(Z(t₀)) = 0
     have hZ_zero : Z t₀ = 0 := complex_real_and_re_zero (hZ_real t₀) ht₀_eq

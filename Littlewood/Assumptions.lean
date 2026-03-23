@@ -87,40 +87,10 @@ open scoped Topology
 -- ============================================================
 -- ExplicitFormulaPsiHyp: provided by CriticalAssumptions.lean
 
-instance : ExplicitFormulaPsiSmoothedHyp := by
-  refine ⟨?_⟩
-  intro k x hx
-  sorry
-
-instance : ExplicitFormulaIntegralHyp := by
-  refine ⟨?_⟩
-  intro x hx
-  sorry
-
-instance : ExplicitFormulaDoubleIntegralHyp := by
-  refine ⟨?_⟩
-  intro x hx
-  sorry
-
-instance : PsiMellinHyp := by
-  refine ⟨?_⟩
-  intro x hx c hc
-  sorry
-
-instance : MellinContourShiftHyp := by
-  refine ⟨?_⟩
-  intro x hx c hc
-  sorry
-
-instance : ZeroSumBoundRHHyp := by
-  refine ⟨?_⟩
-  intro hRH x hx
-  sorry
-
-instance : PsiErrorBoundHyp := by
-  refine ⟨?_⟩
-  intro x hx
-  sorry
+-- Dead instances removed (2026-03-22):
+-- ExplicitFormulaPsiSmoothedHyp, ExplicitFormulaIntegralHyp,
+-- ExplicitFormulaDoubleIntegralHyp, PsiMellinHyp, MellinContourShiftHyp,
+-- ZeroSumBoundRHHyp, PsiErrorBoundHyp — all unused outside this file.
 
 instance : PsiErrorBoundRHHyp := by
   refine ⟨?_⟩
