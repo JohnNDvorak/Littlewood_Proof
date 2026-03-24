@@ -37,6 +37,11 @@ open Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold
 open Aristotle.Standalone.ZeroSumNegFrequently
 open ZetaZeros
 
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.PerronPiApproxCompatibilityHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.InhomogeneousPhaseFitAbovePerronThresholdHyp]
+
 /-- The `TruncatedExplicitFormulaPiHyp` instance.
 
     Closed via cross-module opaque reference to

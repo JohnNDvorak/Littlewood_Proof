@@ -1882,7 +1882,7 @@ private lemma assemble_target_seed
     (ht0_large : X < Real.exp t0)
     (ht0_threshold : @perronThreshold pi_explicit_formula_from_perron hRH T ≤ Real.exp t0)
     (ht0_cap : Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
-        (((1 - ε) * ((Nmult T : ℝ) / (T + 1))) / 2)))) :
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))) :
     ∃ t₀ T' ε' : ℝ,
       4 ≤ T' ∧ 0 < ε' ∧ ε' < 1 ∧
       X < Real.exp t₀ ∧
@@ -1890,7 +1890,7 @@ private lemma assemble_target_seed
       (∀ ρ ∈ (finite_zeros_le T').toFinset,
         ∃ m : ℤ, ‖t₀ * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε') ∧
       Real.exp t₀ ≤ Real.exp (Real.exp (Real.exp
-        (((1 - ε') * ((Nmult T' : ℝ) / (T' + 1))) / 2))) :=
+        (((1 - ε') * ((N T' : ℝ) / (T' + 1))) / 2))) :=
   ⟨t0, T, ε, hT4, hεpos, hεlt, ht0_large, ht0_threshold,
     vacuous_congruences_target hN _ _, ht0_cap⟩
 
@@ -1903,7 +1903,7 @@ private lemma assemble_anti_target_seed
     (ht0_large : X < Real.exp t0)
     (ht0_threshold : @perronThreshold pi_explicit_formula_from_perron hRH T ≤ Real.exp t0)
     (ht0_cap : Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
-        (((1 - ε) * ((Nmult T : ℝ) / (T + 1))) / 2)))) :
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))) :
     ∃ t₀ T' ε' : ℝ,
       4 ≤ T' ∧ 0 < ε' ∧ ε' < 1 ∧
       X < Real.exp t₀ ∧
@@ -1911,7 +1911,7 @@ private lemma assemble_anti_target_seed
       (∀ ρ ∈ (finite_zeros_le T').toFinset,
         ∃ m : ℤ, ‖t₀ * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε') ∧
       Real.exp t₀ ≤ Real.exp (Real.exp (Real.exp
-        (((1 - ε') * ((Nmult T' : ℝ) / (T' + 1))) / 2))) :=
+        (((1 - ε') * ((N T' : ℝ) / (T' + 1))) / 2))) :=
   ⟨t0, T, ε, hT4, hεpos, hεlt, ht0_large, ht0_threshold,
     vacuous_congruences_anti_target hN _ _, ht0_cap⟩
 
@@ -2022,7 +2022,7 @@ private lemma target_witness_of_domination
     {T : ℝ} (hT4 : 4 ≤ T) (hN : N T = 0)
     (hdom : max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 ≤
       Real.exp (Real.exp (Real.exp
-        (((1 - 1 / 2) * ((Nmult T : ℝ) / (T + 1))) / 2)))) :
+        (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2)))) :
     ∃ t0 T' ε : ℝ,
       4 ≤ T' ∧
       0 < ε ∧ ε < 1 ∧
@@ -2031,7 +2031,7 @@ private lemma target_witness_of_domination
       (∀ ρ ∈ (finite_zeros_le T').toFinset,
         ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
-        (((1 - ε) * ((Nmult T' : ℝ) / (T' + 1))) / 2))) := by
+        (((1 - ε) * ((N T' : ℝ) / (T' + 1))) / 2))) := by
   have hPgt1 := perronThreshold_gt_one hRH T
   have hBpos : (0 : ℝ) < max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 :=
     by linarith [le_max_right X (@perronThreshold pi_explicit_formula_from_perron hRH T)]
@@ -2053,7 +2053,7 @@ private lemma anti_target_witness_of_domination
     {T : ℝ} (hT4 : 4 ≤ T) (hN : N T = 0)
     (hdom : max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 ≤
       Real.exp (Real.exp (Real.exp
-        (((1 - 1 / 2) * ((Nmult T : ℝ) / (T + 1))) / 2)))) :
+        (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2)))) :
     ∃ t0 T' ε : ℝ,
       4 ≤ T' ∧
       0 < ε ∧ ε < 1 ∧
@@ -2062,7 +2062,7 @@ private lemma anti_target_witness_of_domination
       (∀ ρ ∈ (finite_zeros_le T').toFinset,
         ∃ m : ℤ, ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
-        (((1 - ε) * ((Nmult T' : ℝ) / (T' + 1))) / 2))) := by
+        (((1 - ε) * ((N T' : ℝ) / (T' + 1))) / 2))) := by
   have hPgt1 := perronThreshold_gt_one hRH T
   have hBpos : (0 : ℝ) < max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 :=
     by linarith [le_max_right X (@perronThreshold pi_explicit_formula_from_perron hRH T)]
@@ -2105,7 +2105,7 @@ class InhomogeneousPhaseFitAbovePerronThresholdHyp
             ∃ m : ℤ,
               ‖Real.log x * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
           x ≤ Real.exp (Real.exp (Real.exp
-            (((1 - ε) * ((Nmult T : ℝ) / (T + 1))) / 2)))
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
 /-- The generic above-threshold inhomogeneous fit boundary recovers the existing
 target arg-above-threshold interface. -/
@@ -2141,7 +2141,7 @@ private theorem arg_above_threshold_from_perron_core
         (∀ ρ ∈ (finite_zeros_le T).toFinset,
           ∃ m : ℤ, ‖Real.log x * ρ.im - (Complex.arg ρ + phaseShift) - m • (2 * Real.pi)‖ ≤ ε) ∧
         x ≤ Real.exp (Real.exp (Real.exp
-          (((1 - ε) * ((Nmult T : ℝ) / (T + 1))) / 2))) := by
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
   letI : TruncatedExplicitFormulaPiHyp := pi_explicit_formula_from_perron
   simpa using
     (InhomogeneousPhaseFitAbovePerronThresholdHyp.witness hRH X
@@ -2159,7 +2159,7 @@ private theorem arg_above_threshold_pair_from_perron_core
         (∀ ρ ∈ (finite_zeros_le T).toFinset,
           ∃ m : ℤ, ‖Real.log x * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
         x ≤ Real.exp (Real.exp (Real.exp
-          (((1 - ε) * ((Nmult T : ℝ) / (T + 1))) / 2))))
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))))
     ∧
     (∃ x : ℝ, X < x ∧ ∃ T : ℝ,
       4 ≤ T ∧
@@ -2169,7 +2169,7 @@ private theorem arg_above_threshold_pair_from_perron_core
         (∀ ρ ∈ (finite_zeros_le T).toFinset,
           ∃ m : ℤ, ‖Real.log x * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε) ∧
         x ≤ Real.exp (Real.exp (Real.exp
-          (((1 - ε) * ((Nmult T : ℝ) / (T + 1))) / 2)))) := by
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))) := by
   constructor
   · simpa [add_comm, add_left_comm, add_assoc] using
       arg_above_threshold_from_perron_core hRH X 0
@@ -2187,7 +2187,7 @@ private theorem exact_seed_pair_from_perron_core
       (∀ ρ ∈ (finite_zeros_le T).toFinset,
         ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
-        (((1 - ε) * ((Nmult T : ℝ) / (T + 1))) / 2))))
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))))
     ∧
     (∃ t0 T ε : ℝ,
       4 ≤ T ∧
@@ -2197,7 +2197,7 @@ private theorem exact_seed_pair_from_perron_core
       (∀ ρ ∈ (finite_zeros_le T).toFinset,
         ∃ m : ℤ, ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
-        (((1 - ε) * ((Nmult T : ℝ) / (T + 1))) / 2)))) := by
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))) := by
   rcases arg_above_threshold_pair_from_perron_core hRH X with
     ⟨hTarget, hAntiTarget⟩
   constructor
