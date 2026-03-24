@@ -4919,6 +4919,57 @@ private lemma atkinsonLowerBoundaryShiftKernel_mul_stepCoeff_sub_one_le_two_div
   rw [atkinsonLowerBoundaryShiftKernel_mul_stepCoeff_sub_one n j r hr hrj]
   exact atkinsonLowerBoundaryShiftKernel_step_sub_le_two_div n j r hr hrj hjn
 
+/-- Kernel Weight Decay (Corrected Lemma 3 of CorePrefix decomposition).
+
+  The original claim was `C_ker / (j * (n + j))`, but this is FALSE:
+  the kernel difference `kernel(n+j, j, r+2) - kernel(n+j, j, r+1)`
+  converges to `1/j` as `n → ∞` (not to 0). The correct bound is `O(1/j)`.
+
+  Numerically: for j=3, n=1000, r=0, the difference ≈ 0.3333, while
+  `1/(j*(n+j)) = 1/3009 ≈ 0.000332`, so no fixed `C_ker` makes the original bound work.
+
+  This lemma states the correct `O(1/j)` bound with explicit constant 2.
+  Proof: the kernel step `kernel(n, j, r+1) - kernel(n, j, r)` equals
+  `phase(n+r+1, 1) / phase(n+j, j)` by `atkinsonLowerBoundaryShiftKernel_step_sub`,
+  and this ratio is bounded by `2/j` via `atkinsonLowerBoundaryShiftKernel_step_sub_le_two_div`.
+  The difference is nonneg (numerator and denominator of the ratio are both positive),
+  so the absolute value equals the difference itself. -/
+private lemma atkinsonLowerBoundaryShiftKernel_diff_le_two_div_j :
+    ∀ j : ℕ, 3 ≤ j → ∀ n : ℕ, ∀ r ∈ Finset.range (j - 1),
+      |atkinsonLowerBoundaryShiftKernel (n + j) j (r + 2)
+        - atkinsonLowerBoundaryShiftKernel (n + j) j (r + 1)|
+      ≤ 2 / (j : ℝ) := by
+  intro j hj n r hr_mem
+  have hr_lt : r < j - 1 := Finset.mem_range.mp hr_mem
+  have hr1 : 1 ≤ r + 1 := Nat.succ_le_succ (Nat.zero_le r)
+  have hr1j : r + 1 < j := by omega
+  have hjnj : j ≤ n + j := Nat.le_add_left j n
+  -- The step_sub formula (note: r+2 = (r+1)+1 definitionally for ℕ)
+  have hdiff_eq := atkinsonLowerBoundaryShiftKernel_step_sub (n + j) j (r + 1) hr1 hr1j
+  -- The difference is nonneg (ratio of positive phases)
+  have hdiff_nonneg : 0 ≤ atkinsonLowerBoundaryShiftKernel (n + j) j (r + 2)
+      - atkinsonLowerBoundaryShiftKernel (n + j) j (r + 1) := by
+    -- r + 2 and (r + 1) + 1 are definitionally equal
+    change 0 ≤ atkinsonLowerBoundaryShiftKernel (n + j) j ((r + 1) + 1)
+        - atkinsonLowerBoundaryShiftKernel (n + j) j (r + 1)
+    rw [hdiff_eq]
+    exact div_nonneg
+      (le_of_lt (atkinsonShiftedRelativePhase_pos _ 1 (by norm_num) (by omega)))
+      (le_of_lt (atkinsonShiftedRelativePhase_pos _ j (by omega) (by omega)))
+  rw [abs_of_nonneg hdiff_nonneg]
+  -- Apply the existing O(1/j) bound
+  change atkinsonLowerBoundaryShiftKernel (n + j) j ((r + 1) + 1)
+      - atkinsonLowerBoundaryShiftKernel (n + j) j (r + 1) ≤ 2 / (j : ℝ)
+  exact atkinsonLowerBoundaryShiftKernel_step_sub_le_two_div (n + j) j (r + 1) hr1 hr1j hjnj
+
+-- The original claimed bound `C_ker / (j * (n + j))` is FALSE.
+-- Proof by counterexample: for j = 3, as n → ∞,
+--   kernel(n+3, 3, 2) - kernel(n+3, 3, 1)
+--     = log(1 + 2/(n+4)) / log(1 + 3/(n+4)) - log(1 + 1/(n+4)) / log(1 + 3/(n+4))
+--     → (2/3) - (1/3) = 1/3,
+-- so `diff * j * (n+j) → (1/3) * 3 * n → ∞`.
+-- No fixed C_ker satisfies the bound.
+
 private lemma atkinsonComplex_sum_range_telescope
     (F : ℕ → ℂ) (m : ℕ) :
     ∑ r ∈ Finset.range m, (F (r + 1) - F r) = F m - F 0 := by
