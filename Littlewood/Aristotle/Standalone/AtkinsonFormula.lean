@@ -10800,6 +10800,207 @@ private theorem atkinson_inversePhaseCorePrefix_bound_j1 :
       _ = (Chead + Cmain + Cerr) * (Real.sqrt (((M + 1 : ℕ) : ℝ) + 1) / (1 : ℝ)) := by
               ring
 
+/-- Head Core Bound for j ≥ 3: the kernel-weighted j=1 prefix sum
+  `∑_k kernel(k+j,j,1) · (1/phase(k+j+1,1)) · core(k+j,1)`
+is bounded by `C · log(j+1) · √(N+j+1) / j`.
+
+The proof uses Abel summation:
+- The kernel weights `kernel(k+j, j, 1)` are nonneg (atkinsonLowerBoundaryShiftKernel_nonneg),
+  antitone in k (atkinsonLowerBoundaryShiftKernel_antitone), and bounded by `2/j`
+  (atkinsonLowerBoundaryShiftKernel_le_two_mul_div with r=1, n=j).
+- Partial sums of the base function `(1/phase(·+1,1)) · core(·,1)` at shifted indices
+  `k+j` are bounded using the proved j=1 bound (`hj1`).
+- The `log(j+1)` factor is absorbed since `log(j+1) ≥ 1` for `j ≥ 3`. -/
+private theorem atkinson_general_kernelWeighted_j1_headCore_bound_of_j1
+    (hj1 :
+      ∃ C1 > 0, ∀ M : ℕ,
+        ‖∑ n ∈ Finset.range (M + 1),
+            ((((1 / atkinsonShiftedRelativePhase (n + 1) 1 : ℝ) : ℂ)) *
+              atkinsonShiftedSingleBoundaryCore n 1)‖
+          ≤ C1 * (Real.sqrt (((M + 1 : ℕ) : ℝ) + 1) / (1 : ℝ))) :
+    ∃ C_head > 0, ∀ j : ℕ, 3 ≤ j → ∀ N : ℕ,
+      ‖∑ k ∈ Finset.range N,
+          ((((atkinsonLowerBoundaryShiftKernel (k + j) j 1 : ℝ) : ℂ)) *
+            ((((1 / atkinsonShiftedRelativePhase (k + j + 1) 1 : ℝ) : ℂ)) *
+              atkinsonShiftedSingleBoundaryCore (k + j) 1))‖
+        ≤ C_head * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+  obtain ⟨C1, hC1, hj1_bound⟩ := hj1
+  refine ⟨8 * C1, by positivity, ?_⟩
+  intro j hj N
+  -- The base oscillatory function (j=1 summand shifted by j)
+  let baseFn : ℕ → ℂ := fun k =>
+    ((((1 / atkinsonShiftedRelativePhase (k + j + 1) 1 : ℝ) : ℂ)) *
+      atkinsonShiftedSingleBoundaryCore (k + j) 1)
+  -- The kernel weights
+  let b : ℕ → ℝ := fun k => atkinsonLowerBoundaryShiftKernel (k + j) j 1
+  -- Handle N = 0 case
+  by_cases hN : N = 0
+  · simp [hN]
+    have hlog_nn : 0 ≤ Real.log (↑j + 1) :=
+      Real.log_nonneg (by exact_mod_cast show (1 : ℕ) ≤ j + 1 by omega)
+    have hC1_nn : 0 ≤ 8 * C1 := by linarith
+    positivity
+  · obtain ⟨n0, hn0⟩ := Nat.exists_eq_succ_of_ne_zero hN
+    subst hn0
+    let target : ℝ := Real.sqrt (((n0 + 1 + j : ℕ) : ℝ) + 1) / j
+    -- Uniform bound on partial sums of baseFn
+    -- baseFn(k) = j=1 base at index (k+j), so
+    -- ∑_{k<K+1} baseFn(k) = prefix(K+j+1) - prefix(j)
+    let C0 : ℝ := 2 * C1 * Real.sqrt (((n0 + 1 + j : ℕ) : ℝ) + 1)
+    -- The j=1 prefix function
+    let prefixFn : ℕ → ℂ := fun M =>
+      ∑ n ∈ Finset.range M, baseFn n
+    -- For k ≤ n0, bound ‖∑_{m<k+1} baseFn(m)‖
+    have hpartial_norm (K : ℕ) (hK : K ≤ n0) :
+        ‖∑ m ∈ Finset.range (K + 1), baseFn m‖ ≤ C0 := by
+      -- baseFn(m) = j=1 base at index (m+j)
+      -- ∑_{m<K+1} baseFn(m) = ∑_{n∈Ico j (K+j+1)} (j=1 base at n)
+      --   = prefix_{j=1}(K+j+1) - prefix_{j=1}(j)
+      let f : ℕ → ℂ := fun n =>
+        ((((1 / atkinsonShiftedRelativePhase (n + 1) 1 : ℝ) : ℂ)) *
+          atkinsonShiftedSingleBoundaryCore n 1)
+      have hbaseFn_eq : ∀ m : ℕ, baseFn m = f (m + j) := by
+        intro m; simp [baseFn, f, Nat.add_assoc, add_comm, add_left_comm]
+      have hsum_shift :
+          ∑ m ∈ Finset.range (K + 1), baseFn m =
+            ∑ m ∈ Finset.range (K + 1), f (m + j) :=
+        Finset.sum_congr rfl (fun m _ => hbaseFn_eq m)
+      -- prefix(K+j+1) = ∑_{n<K+j+1} f(n)
+      have hprefK : ∑ n ∈ Finset.range (K + j + 1), f n =
+          ∑ n ∈ Finset.range j, f n +
+          ∑ m ∈ Finset.range (K + 1), f (m + j) := by
+        rw [show K + j + 1 = j + (K + 1) from by omega]
+        rw [Finset.sum_range_add f j (K + 1)]
+        congr 1
+        apply Finset.sum_congr rfl
+        intro x _
+        congr 1
+        omega
+      have hshift_eq :
+          ∑ m ∈ Finset.range (K + 1), f (m + j) =
+            ∑ n ∈ Finset.range (K + j + 1), f n -
+            ∑ n ∈ Finset.range j, f n := by
+        rw [hprefK]; ring
+      rw [hsum_shift, hshift_eq]
+      calc
+        ‖∑ n ∈ Finset.range (K + j + 1), f n -
+            ∑ n ∈ Finset.range j, f n‖
+          ≤ ‖∑ n ∈ Finset.range (K + j + 1), f n‖ +
+              ‖∑ n ∈ Finset.range j, f n‖ := norm_sub_le _ _
+        _ ≤ C1 * Real.sqrt (((n0 + 1 + j : ℕ) : ℝ) + 1) +
+              C1 * Real.sqrt (((n0 + 1 + j : ℕ) : ℝ) + 1) := by
+            apply add_le_add
+            · have h1 := hj1_bound (K + j)
+              rw [show K + j + 1 = (K + j) + 1 from by omega] at h1
+              calc ‖∑ n ∈ Finset.range (K + j + 1), f n‖
+                  ≤ C1 * (Real.sqrt (↑((K + j) + 1) + 1) / 1) := h1
+                _ = C1 * Real.sqrt (↑((K + j) + 1) + 1) := by rw [div_one]
+                _ ≤ C1 * Real.sqrt (((n0 + 1 + j : ℕ) : ℝ) + 1) := by
+                    apply mul_le_mul_of_nonneg_left _ (le_of_lt hC1)
+                    apply Real.sqrt_le_sqrt
+                    have : K ≤ n0 := hK
+                    exact_mod_cast show ((K + j) + 1 + 1 : ℕ) ≤ (n0 + 1 + j) + 1 by omega
+            · have h2 := hj1_bound (j - 1)
+              have hj_sub : (j - 1) + 1 = j := by omega
+              rw [hj_sub] at h2
+              calc ‖∑ n ∈ Finset.range j, f n‖
+                  ≤ C1 * (Real.sqrt (↑j + 1) / 1) := h2
+                _ = C1 * Real.sqrt (↑j + 1) := by rw [div_one]
+                _ ≤ C1 * Real.sqrt (((n0 + 1 + j : ℕ) : ℝ) + 1) := by
+                    apply mul_le_mul_of_nonneg_left _ (le_of_lt hC1)
+                    apply Real.sqrt_le_sqrt
+                    exact_mod_cast show (j + 1 : ℕ) ≤ (n0 + 1 + j) + 1 by omega
+        _ = C0 := by unfold C0; ring
+    let aRe : ℕ → ℝ := fun k => (baseFn k).re
+    let aIm : ℕ → ℝ := fun k => (baseFn k).im
+    have hpartial_re : ∀ k ≤ n0, |∑ m ∈ Finset.range (k + 1), aRe m| ≤ C0 := by
+      intro k hk
+      calc |∑ m ∈ Finset.range (k + 1), aRe m|
+          = |(∑ m ∈ Finset.range (k + 1), baseFn m).re| := by simp [aRe]
+        _ ≤ ‖∑ m ∈ Finset.range (k + 1), baseFn m‖ := Complex.abs_re_le_norm _
+        _ ≤ C0 := hpartial_norm k hk
+    have hpartial_im : ∀ k ≤ n0, |∑ m ∈ Finset.range (k + 1), aIm m| ≤ C0 := by
+      intro k hk
+      calc |∑ m ∈ Finset.range (k + 1), aIm m|
+          = |(∑ m ∈ Finset.range (k + 1), baseFn m).im| := by simp [aIm]
+        _ ≤ ‖∑ m ∈ Finset.range (k + 1), baseFn m‖ := Complex.abs_im_le_norm _
+        _ ≤ C0 := hpartial_norm k hk
+    have hb_nonneg : ∀ k ≤ n0, 0 ≤ b k := by
+      intro k _
+      simpa [b] using
+        atkinsonLowerBoundaryShiftKernel_nonneg (k + j) j 1 (by norm_num) (by omega)
+    have hb_anti : ∀ k < n0, b (k + 1) ≤ b k := by
+      intro k _
+      simpa [b, show k + 1 + j = (k + j) + 1 from by omega] using
+        (atkinsonLowerBoundaryShiftKernel_antitone j 1 (by norm_num) (by omega)
+          (by omega : k + j ≤ k + 1 + j))
+    have hb_head : b 0 ≤ 2 / (j : ℝ) := by
+      simpa [b] using
+        atkinsonLowerBoundaryShiftKernel_le_two_mul_div j j 1 (by norm_num) (by omega) le_rfl
+    have hsum_re :
+        (∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).re =
+          ∑ k ∈ Finset.range (n0 + 1), aRe k * b k := by
+      simp [aRe, b, baseFn, mul_comm]
+    have hsum_im :
+        (∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).im =
+          ∑ k ∈ Finset.range (n0 + 1), aIm k * b k := by
+      simp [aIm, b, baseFn, mul_comm]
+    have hre :
+        |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).re| ≤ C0 * (2 / j) := by
+      calc
+        |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).re|
+            = |∑ k ∈ Finset.range (n0 + 1), aRe k * b k| := by rw [hsum_re]
+        _ ≤ C0 * b 0 :=
+              AbelSummation.abel_summation_bound aRe b n0 C0 hpartial_re hb_nonneg hb_anti
+        _ ≤ C0 * (2 / j) := by gcongr
+    have him :
+        |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).im| ≤ C0 * (2 / j) := by
+      calc
+        |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).im|
+            = |∑ k ∈ Finset.range (n0 + 1), aIm k * b k| := by rw [hsum_im]
+        _ ≤ C0 * b 0 :=
+              AbelSummation.abel_summation_bound aIm b n0 C0 hpartial_im hb_nonneg hb_anti
+        _ ≤ C0 * (2 / j) := by gcongr
+    have hnorm :
+        ‖∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)‖ ≤
+          2 * (C0 * (2 / j)) := by
+      calc
+        ‖∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)‖
+            ≤ |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).re| +
+                |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).im| :=
+              Complex.norm_le_abs_re_add_abs_im _
+        _ ≤ C0 * (2 / j) + C0 * (2 / j) := add_le_add hre him
+        _ = 2 * (C0 * (2 / j)) := by ring
+    have hlog_ge_one : 1 ≤ Real.log (↑j + 1) := by
+      have hlog4 : (1 : ℝ) ≤ Real.log 4 := by
+        calc (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
+          _ ≤ Real.log 4 := by
+              exact Real.log_le_log (Real.exp_pos 1)
+                (le_of_lt (lt_trans Real.exp_one_lt_d9 (by norm_num)))
+      calc Real.log (↑j + 1) ≥ Real.log 4 := by
+              apply Real.log_le_log (by positivity : (0 : ℝ) < 4)
+              exact_mod_cast show (4 : ℕ) ≤ j + 1 by omega
+        _ ≥ 1 := hlog4
+    calc
+      ‖∑ k ∈ Finset.range (n0 + 1),
+          ((((atkinsonLowerBoundaryShiftKernel (k + j) j 1 : ℝ) : ℂ)) *
+            ((((1 / atkinsonShiftedRelativePhase (k + j + 1) 1 : ℝ) : ℂ)) *
+              atkinsonShiftedSingleBoundaryCore (k + j) 1))‖
+        = ‖∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)‖ := by
+            simp [b, baseFn]
+      _ ≤ 2 * (C0 * (2 / j)) := hnorm
+      _ = (8 * C1) * (Real.sqrt (((n0 + 1 + j : ℕ) : ℝ) + 1) / j) := by
+            unfold C0; field_simp; ring
+      _ ≤ (8 * C1) * Real.log (↑j + 1) *
+            (Real.sqrt (((n0 + 1 + j : ℕ) : ℝ) + 1) / j) := by
+            have htarget_pos : 0 < Real.sqrt (((n0 + 1 + j : ℕ) : ℝ) + 1) / j := by
+              positivity
+            have h8C1_pos : 0 < 8 * C1 := by positivity
+            calc 8 * C1 * (Real.sqrt (((n0 + 1 + j : ℕ) : ℝ) + 1) / ↑j)
+                = 8 * C1 * 1 * (Real.sqrt (((n0 + 1 + j : ℕ) : ℝ) + 1) / ↑j) := by ring
+              _ ≤ 8 * C1 * Real.log (↑j + 1) * (Real.sqrt (((n0 + 1 + j : ℕ) : ℝ) + 1) / ↑j) := by
+                    gcongr
+
 private theorem atkinson_shift1_lowerBoundaryPrefix_bound_atomic_of_j1
     (hj1 :
       ∃ C1 > 0, ∀ M : ℕ,
