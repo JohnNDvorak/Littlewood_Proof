@@ -31,6 +31,16 @@ namespace Aristotle.Standalone.B2FirstMomentFromExpansion
 
 open MeasureTheory Set Real Filter Topology HardyEstimatesPartial
 open Aristotle.ErrorTermExpansion Aristotle.RSBlockParam Aristotle.HardyNProperties
+open Aristotle.Standalone.AtkinsonFormula
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckePhaseCouplingHyp
+
+variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [AtkinsonSmallShiftPrefixBoundHyp]
+variable [AtkinsonLargeShiftPrefixBoundHyp]
+variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [SiegelSaddleExpansionHyp]
+variable [GabckePhaseCouplingHyp]
 
 -- ============================================================
 -- Step 1: ErrorTerm pointwise bound from RS expansion

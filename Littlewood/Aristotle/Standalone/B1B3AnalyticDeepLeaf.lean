@@ -71,6 +71,16 @@ namespace Aristotle.Standalone.B1B3AnalyticDeepLeaf
 open MeasureTheory Set Real Filter Topology HardyEstimatesPartial Asymptotics
 open Aristotle.Standalone.HardyAfeMeanSquareBridgeInfra
 open Aristotle.ErrorTermExpansion
+open Aristotle.Standalone.AtkinsonFormula
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckePhaseCouplingHyp
+
+variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [AtkinsonSmallShiftPrefixBoundHyp]
+variable [AtkinsonLargeShiftPrefixBoundHyp]
+variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [SiegelSaddleExpansionHyp]
+variable [GabckePhaseCouplingHyp]
 
 /-! ## Infrastructure: zetaMsIntegrand = hardyZ² -/
 

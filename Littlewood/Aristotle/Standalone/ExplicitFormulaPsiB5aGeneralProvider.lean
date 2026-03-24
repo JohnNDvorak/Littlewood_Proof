@@ -9,6 +9,9 @@ namespace Aristotle.Standalone.ExplicitFormulaPsiB5aGeneralProvider
 
 open Aristotle.Standalone.ExplicitFormulaPsiSkeleton
 
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+
 /-- B5a-only provider endpoint for the truncated explicit formula bound used by
 `ExplicitFormulaPsiSkeleton`.
 

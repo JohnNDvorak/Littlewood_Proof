@@ -23,6 +23,16 @@ namespace Aristotle.Standalone.HardyAfeSignedGapAtomic
 
 open Filter Asymptotics MeasureTheory Set
 open Aristotle.Standalone.HardyAfeMeanSquareBridgeInfra
+open Aristotle.Standalone.AtkinsonFormula
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckePhaseCouplingHyp
+
+variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [AtkinsonSmallShiftPrefixBoundHyp]
+variable [AtkinsonLargeShiftPrefixBoundHyp]
+variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [SiegelSaddleExpansionHyp]
+variable [GabckePhaseCouplingHyp]
 
 /-- **B1 atomic wrapper**: signed AFE gap has `O(T)` integral growth.
 

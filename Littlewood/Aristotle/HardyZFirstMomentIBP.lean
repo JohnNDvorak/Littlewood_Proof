@@ -63,6 +63,16 @@ namespace HardyZFirstMomentIBP
 
 open Complex Real Set Filter Topology MeasureTheory
 open ThetaDerivAsymptotic ThetaDerivMonotone HardyThetaSmooth
+open Aristotle.Standalone.AtkinsonFormula
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckePhaseCouplingHyp
+
+variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [AtkinsonSmallShiftPrefixBoundHyp]
+variable [AtkinsonLargeShiftPrefixBoundHyp]
+variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [SiegelSaddleExpansionHyp]
+variable [GabckePhaseCouplingHyp]
 
 /-! ## Part 1: Lower bound for θ'(t)
 

@@ -51,6 +51,16 @@ namespace Aristotle.RSBlockBounds
 open MeasureTheory Set Real Filter Topology HardyEstimatesPartial
 open Aristotle.HardyNProperties Aristotle.RSBlockParam
 open Aristotle.ErrorTermExpansion
+open Aristotle.Standalone.AtkinsonFormula
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckePhaseCouplingHyp
+
+variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [AtkinsonSmallShiftPrefixBoundHyp]
+variable [AtkinsonLargeShiftPrefixBoundHyp]
+variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [SiegelSaddleExpansionHyp]
+variable [GabckePhaseCouplingHyp]
 
 -- ============================================================
 -- Section 1: Leading constant A

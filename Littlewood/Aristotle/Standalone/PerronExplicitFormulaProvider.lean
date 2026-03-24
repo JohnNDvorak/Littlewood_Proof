@@ -55,6 +55,9 @@ open Aristotle.Standalone.ExplicitFormulaPsiB5aRootInfra
 open Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
 open Aristotle.Standalone.ExternalPort.RHPiExternalTruncatedPiBuilder
 
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+
 /-! ## Component 1: Perron truncation error
 
 The Perron formula approximation: the truncated contour integral at height T
@@ -2081,6 +2084,10 @@ same-height Perron-threshold domination, the tower cap, and the finite zero-set
 congruence family together. The `t0 = log x` exact-seed packaging itself is
 reduced away locally. -/
 
+section InhomogeneousPhaseFitting
+
+variable [TruncatedExplicitFormulaPiHyp]
+
 /-- Honest boundary for the remaining above-threshold inhomogeneous phase-fit
 leaf. It is parameterized by an arbitrary target phase function on the zero set
 below the chosen height, not just the specific target/anti-target shifts used by
@@ -2241,5 +2248,7 @@ theorem anti_target_exact_seed_from_perron
     @AntiTargetTowerExactSeedAbovePerronThreshold pi_explicit_formula_from_perron := by
   intro hRH X
   exact (exact_seed_pair_from_perron_core hRH X).2
+
+end InhomogeneousPhaseFitting
 
 end Aristotle.Standalone.PerronExplicitFormulaProvider

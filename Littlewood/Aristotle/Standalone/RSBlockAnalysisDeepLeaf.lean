@@ -44,6 +44,16 @@ namespace Aristotle.Standalone.RSBlockAnalysisDeepLeaf
 open MeasureTheory Set Real Filter Topology HardyEstimatesPartial
 open Aristotle.HardyNProperties
 open Aristotle.ErrorTermExpansion
+open Aristotle.Standalone.AtkinsonFormula
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckePhaseCouplingHyp
+
+variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [AtkinsonSmallShiftPrefixBoundHyp]
+variable [AtkinsonLargeShiftPrefixBoundHyp]
+variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [SiegelSaddleExpansionHyp]
+variable [GabckePhaseCouplingHyp]
 
 /-- The RS leading constant, matching `RSBlockBounds.A_block`. -/
 private def A_val : ℝ := 4 * Real.pi * ∫ p in Ioc 0 1, rsPsi p

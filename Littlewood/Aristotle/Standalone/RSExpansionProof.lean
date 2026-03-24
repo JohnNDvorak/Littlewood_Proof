@@ -87,6 +87,8 @@ open Aristotle.ErrorTermExpansion
 open Aristotle.Standalone.SiegelSaddleExpansionHyp
 open Aristotle.Standalone.GabckePhaseCouplingHyp
 
+variable [SiegelSaddleExpansionHyp] [GabckePhaseCouplingHyp]
+
 -- ============================================================
 -- Section 1: blockParam ∈ [0,1] on closed blocks (constructive)
 -- ============================================================

@@ -58,6 +58,16 @@ open Aristotle.Standalone.HardyAfeMeanSquareBridgeInfra
 open Aristotle.ErrorTermExpansion
 open Aristotle.Standalone.B1B3AnalyticDeepLeaf
 open HardyCosSmooth
+open Aristotle.Standalone.AtkinsonFormula
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckePhaseCouplingHyp
+
+variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [AtkinsonSmallShiftPrefixBoundHyp]
+variable [AtkinsonLargeShiftPrefixBoundHyp]
+variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [SiegelSaddleExpansionHyp]
+variable [GabckePhaseCouplingHyp]
 
 -- ============================================================
 -- B1 Infrastructure: Pointwise decomposition of afeGapIntegrand

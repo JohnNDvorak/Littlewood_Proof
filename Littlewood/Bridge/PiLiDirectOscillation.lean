@@ -28,6 +28,9 @@ open scoped BigOperators
 
 namespace PiLiDirectOscillationBridge
 
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+
 private def piLiError (x : ℝ) : ℝ :=
   (Nat.primeCounting (Nat.floor x) : ℝ) -
     LogarithmicIntegral.logarithmicIntegral x

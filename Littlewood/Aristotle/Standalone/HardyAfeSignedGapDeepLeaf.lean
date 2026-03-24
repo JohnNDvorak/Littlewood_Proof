@@ -26,6 +26,16 @@ namespace Aristotle.Standalone.HardyAfeSignedGapDeepLeaf
 
 open Filter Asymptotics MeasureTheory Set
 open Aristotle.Standalone.HardyAfeMeanSquareBridgeInfra
+open Aristotle.Standalone.AtkinsonFormula
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckePhaseCouplingHyp
+
+variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [AtkinsonSmallShiftPrefixBoundHyp]
+variable [AtkinsonLargeShiftPrefixBoundHyp]
+variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [SiegelSaddleExpansionHyp]
+variable [GabckePhaseCouplingHyp]
 
 /-- Assembly route for the B1 signed-gap leaf:
 critical-line zeta mean-square (`ZetaMeanSquareHalfBound`) plus the partial-zeta

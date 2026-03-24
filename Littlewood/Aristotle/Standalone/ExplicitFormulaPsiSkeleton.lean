@@ -36,6 +36,9 @@ open Aristotle.DirichletPhaseAlignment (ZerosBelow)
 open Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
 open ZetaZeros
 
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+
 -- ============================================================
 -- Boundary definitions
 -- ============================================================

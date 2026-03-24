@@ -44,6 +44,16 @@ namespace Aristotle.Standalone.HardyMeanSquareAsymptoticFromZetaMoment
 
 open Filter Asymptotics MeasureTheory Set Real
 open Aristotle.Standalone.HardyAfeMeanSquareBridgeInfra
+open Aristotle.Standalone.AtkinsonFormula
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckePhaseCouplingHyp
+
+variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [AtkinsonSmallShiftPrefixBoundHyp]
+variable [AtkinsonLargeShiftPrefixBoundHyp]
+variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [SiegelSaddleExpansionHyp]
+variable [GabckePhaseCouplingHyp]
 
 /-- Exact formula: ∫₁ᵀ log t = T·log T − T + 1 (integration by parts / FTC). -/
 private lemma integral_log_exact (T : ℝ) (_hT : 1 ≤ T) :

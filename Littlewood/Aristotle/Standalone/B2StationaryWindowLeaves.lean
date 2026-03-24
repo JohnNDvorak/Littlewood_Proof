@@ -18,6 +18,16 @@ namespace Aristotle.Standalone.B2StationaryWindowLeaves
 
 open MeasureTheory Set
 open HardyEstimatesPartial
+open Aristotle.Standalone.AtkinsonFormula
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckePhaseCouplingHyp
+
+variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [AtkinsonSmallShiftPrefixBoundHyp]
+variable [AtkinsonLargeShiftPrefixBoundHyp]
+variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [SiegelSaddleExpansionHyp]
+variable [GabckePhaseCouplingHyp]
 
 /-- Atomic B2 near-window leaf:
 uniform `sqrt(n+1)` control for the short interval

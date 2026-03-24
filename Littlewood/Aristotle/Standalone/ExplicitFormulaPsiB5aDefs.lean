@@ -9,6 +9,9 @@ noncomputable section
 
 namespace Aristotle.Standalone.ExplicitFormulaPsiSkeleton
 
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+
 abbrev zeroSumRe :=
   Littlewood.Development.ShiftedRemainderInterface.zeroSumRe
 

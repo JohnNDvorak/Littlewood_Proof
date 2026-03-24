@@ -35,6 +35,16 @@ open MeasureTheory Set
 namespace Aristotle.Standalone.HardyZFirstMomentBridge
 
 open HardyEstimatesPartial
+open Aristotle.Standalone.AtkinsonFormula
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
+open Aristotle.Standalone.GabckePhaseCouplingHyp
+
+variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [AtkinsonSmallShiftPrefixBoundHyp]
+variable [AtkinsonLargeShiftPrefixBoundHyp]
+variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [SiegelSaddleExpansionHyp]
+variable [GabckePhaseCouplingHyp]
 
 /-- **Main term first moment O(√T) bound**.
     |∫₁ᵀ MainTerm(t) dt| ≤ C_M·T^{1/2}.
