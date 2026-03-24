@@ -5510,6 +5510,300 @@ private lemma atkinsonResonantShiftedBoundary_backwardTail_eq_inversePhaseCoreGa
     atkinsonResonantShiftedBoundaryTail_eq_inversePhaseCoreGap n (r + 2) j
       (by omega) hrj hjn
 
+
+/-! ### Resonant Boundary Tail Bound (Lemma 4 of CorePrefix decomposition)
+
+Bounds the sum of resonant boundary terms in the gap layers:
+  ∃ C_res > 0, ∀ j ≥ 3, ∀ n, j ≤ n + 1 → ∀ r, r + 2 ≤ j →
+    ‖∑ s ∈ Ico (r+1) (j-1), boundaryTerm(n, s+1)‖ ≤ C_res * √(n+j)
+
+The proof uses the telescoping identity
+  `atkinsonResonantShiftedBoundary_backwardTail_eq_inversePhaseCoreGap`,
+which decomposes the sum into two endpoint terms and a correction sum.
+Each endpoint has norm ≤ modeWeight(n)/phase(n+s,s), and the correction
+terms gain a factor of |stepCoeff-1| ≤ 1/(s+1).
+-/
+
+/-- Generalized upper boundary step without the unnecessary `j ≤ n` hypothesis.
+    The identity holds for all `j ≥ 1` since `j ≤ n + j` is trivially true. -/
+private lemma atkinson_upper_boundary_step_general
+    (n j : ℕ) (hj : 1 ≤ j) :
+    atkinsonWeightedResonantBlockMode (n + j) 1 * atkinsonShiftedSinglePrimitive (n + j) j 1
+      =
+    (((atkinsonUpperBoundaryStepCoeff n j : ℝ) : ℂ)) *
+        (atkinsonWeightedResonantBlockMode (n + j + 1) 0 *
+          atkinsonShiftedSinglePrimitive (n + j + 1) (j + 1) 0) := by
+  simpa [atkinsonUpperBoundaryStepCoeff] using
+    atkinsonWeightedResonantBlockMode_one_mul_shiftedSinglePrimitive_step
+      (n + j) j hj (by omega)
+
+/-- Generalized boundary term decomposition without `j ≤ n`.
+    Each boundary term decomposes as: next endpoint - current endpoint + correction. -/
+private lemma atkinsonResonantShiftedBoundaryTerm_eq_inversePhaseCoreGap_general
+    (n j : ℕ) (hj : 1 ≤ j) :
+    atkinsonResonantShiftedBoundaryTerm n j
+      =
+    ((((1 / atkinsonShiftedRelativePhase (n + (j + 1)) (j + 1) : ℝ) : ℂ)) *
+        atkinsonShiftedSingleBoundaryCore n (j + 1))
+      -
+    ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+        atkinsonShiftedSingleBoundaryCore n j)
+      +
+    ((((atkinsonUpperBoundaryStepCoeff n j - 1 : ℝ) : ℂ)) *
+      ((((1 / atkinsonShiftedRelativePhase (n + (j + 1)) (j + 1) : ℝ) : ℂ)) *
+        atkinsonShiftedSingleBoundaryCore n (j + 1))) := by
+  have hnext :=
+    atkinson_inverse_phase_core_eq_lowerBoundaryTerm n (j + 1)
+      (Nat.succ_le_succ (Nat.zero_le j))
+  have hcurr := atkinson_inverse_phase_core_eq_lowerBoundaryTerm n j hj
+  have hstep :
+      atkinsonWeightedResonantBlockMode (n + j) 1 * atkinsonShiftedSinglePrimitive (n + j) j 1
+        =
+      (((atkinsonUpperBoundaryStepCoeff n j : ℝ) : ℂ)) *
+          (atkinsonWeightedResonantBlockMode (n + (j + 1)) 0 *
+            atkinsonShiftedSinglePrimitive (n + (j + 1)) (j + 1) 0) := by
+    simpa [Nat.add_assoc, add_left_comm, add_comm] using
+      atkinson_upper_boundary_step_general n j hj
+  unfold atkinsonResonantShiftedBoundaryTerm
+  rw [hstep, ← hnext, ← hcurr]
+  let x : ℂ :=
+    ((((1 / atkinsonShiftedRelativePhase (n + (j + 1)) (j + 1) : ℝ) : ℂ)) *
+      atkinsonShiftedSingleBoundaryCore n (j + 1))
+  let y : ℂ :=
+    ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+      atkinsonShiftedSingleBoundaryCore n j)
+  have hcoeff :
+      (((atkinsonUpperBoundaryStepCoeff n j : ℝ) : ℂ)) * x - y
+        =
+      x - y + ((((atkinsonUpperBoundaryStepCoeff n j - 1 : ℝ) : ℂ)) * x) := by
+          simp [x, y]
+          ring
+  simpa [x, y, sub_eq_add_neg, add_assoc, add_left_comm, add_comm] using hcoeff
+
+/-- Generalized telescoping identity for the backward tail without the `q ≤ n + 1` hypothesis.
+    The sum telescopes into two endpoint terms plus a correction sum for all `1 ≤ p ≤ q`. -/
+private lemma atkinsonResonantShiftedBoundaryTail_eq_inversePhaseCoreGap_general
+    (n p q : ℕ) (hp : 1 ≤ p) (hpq : p ≤ q) :
+    ∑ s ∈ Finset.Ico p q, atkinsonResonantShiftedBoundaryTerm n s
+      =
+    ((((1 / atkinsonShiftedRelativePhase (n + q) q : ℝ) : ℂ)) *
+        atkinsonShiftedSingleBoundaryCore n q)
+      -
+    ((((1 / atkinsonShiftedRelativePhase (n + p) p : ℝ) : ℂ)) *
+        atkinsonShiftedSingleBoundaryCore n p)
+      +
+    ∑ s ∈ Finset.Ico p q,
+      ((((atkinsonUpperBoundaryStepCoeff n s - 1 : ℝ) : ℂ)) *
+        ((((1 / atkinsonShiftedRelativePhase (n + (s + 1)) (s + 1) : ℝ) : ℂ)) *
+          atkinsonShiftedSingleBoundaryCore n (s + 1))) := by
+  let F : ℕ → ℂ := fun s =>
+    ((((1 / atkinsonShiftedRelativePhase (n + s) s : ℝ) : ℂ)) *
+      atkinsonShiftedSingleBoundaryCore n s)
+  let E : ℕ → ℂ := fun s =>
+    ((((atkinsonUpperBoundaryStepCoeff n s - 1 : ℝ) : ℂ)) * F (s + 1))
+  calc
+    ∑ s ∈ Finset.Ico p q, atkinsonResonantShiftedBoundaryTerm n s
+      =
+    ∑ s ∈ Finset.Ico p q, ((F (s + 1) - F s) + E s) := by
+        refine Finset.sum_congr rfl ?_
+        intro s hs
+        have hs_pos : 1 ≤ s := le_trans hp (Finset.mem_Ico.mp hs).1
+        simp only [F, E]
+        simpa [sub_eq_add_neg, add_assoc, add_left_comm, add_comm] using
+          atkinsonResonantShiftedBoundaryTerm_eq_inversePhaseCoreGap_general n s hs_pos
+    _ =
+      (∑ s ∈ Finset.Ico p q, (F (s + 1) - F s))
+        + ∑ s ∈ Finset.Ico p q, E s := by
+            rw [Finset.sum_add_distrib]
+    _ =
+      (F q - F p)
+        + ∑ s ∈ Finset.Ico p q, E s := by
+            rw [atkinsonComplex_sum_Ico_telescope F p q hpq]
+    _ =
+      ((((1 / atkinsonShiftedRelativePhase (n + q) q : ℝ) : ℂ)) *
+          atkinsonShiftedSingleBoundaryCore n q)
+        -
+      ((((1 / atkinsonShiftedRelativePhase (n + p) p : ℝ) : ℂ)) *
+          atkinsonShiftedSingleBoundaryCore n p)
+        +
+      ∑ s ∈ Finset.Ico p q,
+        ((((atkinsonUpperBoundaryStepCoeff n s - 1 : ℝ) : ℂ)) *
+          ((((1 / atkinsonShiftedRelativePhase (n + (s + 1)) (s + 1) : ℝ) : ℂ)) *
+            atkinsonShiftedSingleBoundaryCore n (s + 1))) := by
+              simp only [F, E, sub_eq_add_neg, add_assoc, add_left_comm, add_comm]
+
+/-- Generalized backward tail identity without `j ≤ n + 1`. -/
+private lemma atkinsonResonantShiftedBoundary_backwardTail_general
+    (n j r : ℕ) (hrj : r + 2 ≤ j) :
+    ∑ s ∈ Finset.Ico (r + 1) (j - 1),
+        atkinsonResonantShiftedBoundaryTerm n (s + 1)
+      =
+    ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+        atkinsonShiftedSingleBoundaryCore n j)
+      -
+    ((((1 / atkinsonShiftedRelativePhase (n + (r + 2)) (r + 2) : ℝ) : ℂ)) *
+        atkinsonShiftedSingleBoundaryCore n (r + 2))
+      +
+    ∑ s ∈ Finset.Ico (r + 1) (j - 1),
+      ((((atkinsonUpperBoundaryStepCoeff n (s + 1) - 1 : ℝ) : ℂ)) *
+        ((((1 / atkinsonShiftedRelativePhase (n + (s + 2)) (s + 2) : ℝ) : ℂ)) *
+          atkinsonShiftedSingleBoundaryCore n (s + 2))) := by
+  simpa [Finset.sum_Ico_eq_sum_range, Nat.add_assoc, add_left_comm, add_comm,
+    show j - (r + 2) = j - 1 - (r + 1) by omega] using
+    atkinsonResonantShiftedBoundaryTail_eq_inversePhaseCoreGap_general n (r + 2) j
+      (by omega) hrj
+
+/-- Norm of (1/phase) * boundaryCore endpoint term. -/
+private lemma atkinsonInversePhaseBoundaryCore_norm
+    (n s : ℕ) (hs : 1 ≤ s) :
+    ‖((((1 / atkinsonShiftedRelativePhase (n + s) s : ℝ) : ℂ)) *
+        atkinsonShiftedSingleBoundaryCore n s)‖
+      = atkinsonModeWeight n / atkinsonShiftedRelativePhase (n + s) s := by
+  have hphase_pos : 0 < atkinsonShiftedRelativePhase (n + s) s :=
+    atkinsonShiftedRelativePhase_pos (n + s) s hs (by omega)
+  rw [norm_mul, Complex.norm_real, Real.norm_eq_abs,
+    abs_of_nonneg (le_of_lt (div_pos one_pos hphase_pos)),
+    atkinsonShiftedSingleBoundaryCore_norm n s hs,
+    one_div]
+  ring
+
+private lemma atkinsonInversePhaseBoundaryCore_norm_le
+    (n s : ℕ) (hs : 1 ≤ s) :
+    ‖((((1 / atkinsonShiftedRelativePhase (n + s) s : ℝ) : ℂ)) *
+        atkinsonShiftedSingleBoundaryCore n s)‖
+      ≤ Real.sqrt (↑n + 1) / ↑s + 1 / Real.sqrt (↑n + 1) := by
+  -- Substitute the norm expression from atkinsonInversePhaseBoundaryCore_norm.
+  have h_norm : ‖(1 / atkinsonShiftedRelativePhase (n + s) s : ℝ) * atkinsonShiftedSingleBoundaryCore n s‖ = atkinsonModeWeight n / atkinsonShiftedRelativePhase (n + s) s := by
+    convert atkinsonInversePhaseBoundaryCore_norm n s hs using 1;
+  -- Using the lower bound for the denominator, we get:
+  have h_div : atkinsonModeWeight n / atkinsonShiftedRelativePhase (n + s) s ≤ atkinsonModeWeight n * ((n + s + 1) / s) := by
+    rw [ div_eq_mul_inv ];
+    gcongr;
+    · exact atkinsonModeWeight_nonneg n;
+    · convert atkinsonShiftedRelativePhase_inv_upper ( n + s ) s hs ( by linarith ) using 1 ; ring;
+      norm_cast;
+  -- Using the definition of `atkinsonModeWeight`, we have:
+  have h_modeWeight : atkinsonModeWeight n = 1 / Real.sqrt (n + 1) := by
+    unfold atkinsonModeWeight; norm_num [ Real.sqrt_eq_rpow, Real.rpow_neg ( by positivity : ( 0 : ℝ ) ≤ n + 1 ) ] ;
+  convert h_norm.le.trans h_div using 1 ; rw [ h_modeWeight ] ; ring;
+  -- Combine like terms and simplify the expression.
+  field_simp
+  ring;
+  rw [ Real.sq_sqrt ( by positivity ) ]
+
+private lemma atkinsonInversePhaseBoundaryCore_le_sqrt
+    (n j s : ℕ) (hj : 3 ≤ j) (hjn : j ≤ n + 1) (hs : 2 ≤ s) (hsj : s ≤ j) :
+    ‖((((1 / atkinsonShiftedRelativePhase (n + s) s : ℝ) : ℂ)) *
+        atkinsonShiftedSingleBoundaryCore n s)‖
+      ≤ Real.sqrt (↑(n + j)) := by
+  rw [ atkinsonInversePhaseBoundaryCore_norm ];
+  · -- Applying the lemma `atkinsonInversePhaseBoundaryCore_norm_le` and simplifying.
+    have h_simplified : (n + 1 : ℝ) ^ (-(1 / 2 : ℝ)) * (n + s + 1) / s ≤ Real.sqrt (n + j) := by
+      have h_simplified : ((n + s + 1) : ℝ) / (s * Real.sqrt (n + 1)) ≤ Real.sqrt (n + j) := by
+        have h_simplified : (n + s + 1 : ℝ) ^ 2 ≤ s ^ 2 * (n + j) * (n + 1) := by
+          norm_cast; ring_nf at *; nlinarith [ Nat.mul_le_mul_left n hj, Nat.mul_le_mul_left n hs, Nat.mul_le_mul_left n hsj ] ;
+        exact Real.le_sqrt_of_sq_le ( by rw [ div_pow, mul_pow, Real.sq_sqrt <| by positivity ] ; rw [ div_le_iff₀ <| by positivity ] ; linarith );
+      convert h_simplified using 1 ; rw [ Real.sqrt_eq_rpow, Real.rpow_neg ( by positivity ) ] ; ring;
+    convert h_simplified.trans' _ using 1;
+    · norm_cast;
+    · convert atkinsonShiftedRelativePhase_inv_upper ( n + s ) s ( by linarith ) ( by linarith ) |> fun x => mul_le_mul_of_nonneg_left x ( atkinsonModeWeight_nonneg n ) using 1 ; ring!;
+      unfold atkinsonModeWeight; push_cast; ring;
+  · linarith
+
+private lemma atkinsonResonantBoundaryCorrection_le_sqrt
+    (n j r : ℕ) (hj : 3 ≤ j) (hjn : j ≤ n + 1) (hrj : r + 2 ≤ j) :
+    ‖∑ s ∈ Finset.Ico (r + 1) (j - 1),
+      ((((atkinsonUpperBoundaryStepCoeff n (s + 1) - 1 : ℝ) : ℂ)) *
+        ((((1 / atkinsonShiftedRelativePhase (n + (s + 2)) (s + 2) : ℝ) : ℂ)) *
+          atkinsonShiftedSingleBoundaryCore n (s + 2)))‖
+      ≤ 2 * Real.sqrt (↑(n + j)) := by
+  refine' le_trans ( norm_sum_le _ _ ) _;
+  -- Apply the bound from atkinsonUpperBoundaryStepCoeff_sub_one_le and atkinsonInversePhaseBoundaryCore_norm_le.
+  have h_term_bound : ∀ s ∈ Finset.Ico (r + 1) (j - 1), ‖(atkinsonUpperBoundaryStepCoeff n (s + 1) - 1 : ℝ) * ((1 / atkinsonShiftedRelativePhase (n + (s + 2)) (s + 2) : ℝ) * atkinsonShiftedSingleBoundaryCore n (s + 2))‖ ≤ (1 / (s + 1) : ℝ) * (Real.sqrt (n + 1) / (s + 2) + 1 / Real.sqrt (n + 1)) := by
+    intros s hs
+    have h_step_coeff : ‖(atkinsonUpperBoundaryStepCoeff n (s + 1) - 1 : ℝ)‖ ≤ 1 / (s + 1) := by
+      norm_num +zetaDelta at *;
+      rw [ abs_of_nonneg ( sub_nonneg_of_le <| atkinsonUpperBoundaryStepCoeff_one_le _ _ <| by linarith ) ] ; exact le_trans ( atkinsonUpperBoundaryStepCoeff_sub_one_le _ _ <| by linarith ) <| by norm_num;
+    have h_inv_phase_core : ‖(1 / atkinsonShiftedRelativePhase (n + (s + 2)) (s + 2) : ℝ) * atkinsonShiftedSingleBoundaryCore n (s + 2)‖ ≤ Real.sqrt (n + 1) / (s + 2) + 1 / Real.sqrt (n + 1) := by
+      convert atkinsonInversePhaseBoundaryCore_norm_le n ( s + 2 ) ( by linarith [ Finset.mem_Ico.mp hs ] ) using 1 ; norm_num [ add_assoc ]
+    exact (by
+    simpa only [ norm_mul, Complex.norm_real ] using mul_le_mul h_step_coeff h_inv_phase_core ( by positivity ) ( by positivity ));
+  refine' le_trans ( Finset.sum_le_sum h_term_bound ) _ |> le_trans <| _;
+  exact ( Real.sqrt ( n + 1 ) / 2 + ( j - 2 ) / Real.sqrt ( n + 1 ) );
+  · -- The sum of the first part is a telescoping series, which simplifies to $\sqrt{n+1}/2$.
+    have h_telescope : ∑ s ∈ Finset.Ico (r + 1) (j - 1), (1 / (s + 1) : ℝ) * (Real.sqrt (n + 1) / (s + 2)) = Real.sqrt (n + 1) * (1 / (r + 2) - 1 / j) := by
+      have h_telescope : ∀ {a b : ℕ}, a ≤ b → ∑ s ∈ Finset.Ico a b, (1 / (s + 1) : ℝ) * (Real.sqrt (n + 1) / (s + 2)) = Real.sqrt (n + 1) * (1 / (a + 1) - 1 / (b + 1)) := by
+        intros a b hab; induction hab <;> simp_all +decide [ Finset.sum_Ico_succ_top ] ; ring;
+        -- Combine like terms and simplify the expression.
+        field_simp
+        ring;
+      convert h_telescope ( show r + 1 ≤ j - 1 from Nat.le_sub_one_of_lt ( by linarith ) ) using 2 ; cases j <;> norm_num at * ; ring;
+    simp_all +decide [ mul_add, Finset.sum_add_distrib ];
+    refine' add_le_add _ _;
+    · exact le_trans ( mul_le_mul_of_nonneg_left ( sub_le_self _ <| by positivity ) <| Real.sqrt_nonneg _ ) <| by rw [ div_eq_mul_inv ] ; exact mul_le_mul_of_nonneg_left ( inv_le_of_inv_le₀ ( by positivity ) <| by linarith [ show ( j : ℝ ) ≥ r + 2 by norm_cast ] ) <| Real.sqrt_nonneg _;
+    · refine' le_trans ( Finset.sum_le_sum fun _ _ => mul_le_mul_of_nonneg_right ( inv_le_one_of_one_le₀ <| by linarith ) <| inv_nonneg.2 <| Real.sqrt_nonneg _ ) _ ; norm_num [ div_eq_mul_inv ];
+      exact mul_le_mul_of_nonneg_right ( by rw [ Nat.cast_sub <| by omega, Nat.cast_sub <| by omega ] ; push_cast ; linarith ) <| inv_nonneg.2 <| Real.sqrt_nonneg _;
+  · rw [ add_div', div_le_iff₀ ] <;> norm_num <;> try positivity;
+    nlinarith only [ show ( j : ℝ ) ≤ n + 1 by norm_cast, show ( 3 : ℝ ) ≤ j by norm_cast, Real.sqrt_nonneg ( n + 1 ), Real.sqrt_nonneg ( n + j ), Real.mul_self_sqrt ( show ( n:ℝ ) + 1 ≥ 0 by positivity ), Real.mul_self_sqrt ( show ( n:ℝ ) + j ≥ 0 by positivity ), Real.sqrt_le_sqrt ( show ( n:ℝ ) + 1 ≤ n + j by norm_cast; linarith ) ]
+
+/-- **Resonant Boundary Tail Bound (Lemma 4)**.
+    The sum of resonant boundary terms in the gap layers is bounded by C·√(n+j).
+
+    Uses the telescoping identity to decompose into two endpoints plus a correction.
+    Each endpoint has norm ≤ √(n+j) and the correction sum is ≤ 2·√(n+j). -/
+private theorem atkinsonResonantShiftedBoundaryTail_bound :
+    ∃ C_res > 0, ∀ j : ℕ, 3 ≤ j → ∀ n : ℕ, j ≤ n + 1 → ∀ r : ℕ, r + 2 ≤ j →
+      ‖∑ s ∈ Finset.Ico (r + 1) (j - 1),
+          atkinsonResonantShiftedBoundaryTerm n (s + 1)‖
+        ≤ C_res * Real.sqrt (↑(n + j)) := by
+  refine ⟨4, by positivity, ?_⟩
+  intro j hj n hjn r hrj
+  have htelescope := atkinsonResonantShiftedBoundary_backwardTail_general n j r hrj
+  rw [htelescope]
+  calc
+    ‖((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+          atkinsonShiftedSingleBoundaryCore n j)
+        -
+      ((((1 / atkinsonShiftedRelativePhase (n + (r + 2)) (r + 2) : ℝ) : ℂ)) *
+          atkinsonShiftedSingleBoundaryCore n (r + 2))
+        +
+      ∑ s ∈ Finset.Ico (r + 1) (j - 1),
+        ((((atkinsonUpperBoundaryStepCoeff n (s + 1) - 1 : ℝ) : ℂ)) *
+          ((((1 / atkinsonShiftedRelativePhase (n + (s + 2)) (s + 2) : ℝ) : ℂ)) *
+            atkinsonShiftedSingleBoundaryCore n (s + 2)))‖
+      ≤
+    ‖((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+          atkinsonShiftedSingleBoundaryCore n j)‖
+      +
+    ‖((((1 / atkinsonShiftedRelativePhase (n + (r + 2)) (r + 2) : ℝ) : ℂ)) *
+          atkinsonShiftedSingleBoundaryCore n (r + 2))‖
+      +
+    ‖∑ s ∈ Finset.Ico (r + 1) (j - 1),
+        ((((atkinsonUpperBoundaryStepCoeff n (s + 1) - 1 : ℝ) : ℂ)) *
+          ((((1 / atkinsonShiftedRelativePhase (n + (s + 2)) (s + 2) : ℝ) : ℂ)) *
+            atkinsonShiftedSingleBoundaryCore n (s + 2)))‖ := by
+          linarith [norm_add_le
+              ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ) *
+                  atkinsonShiftedSingleBoundaryCore n j) -
+               ((1 / atkinsonShiftedRelativePhase (n + (r + 2)) (r + 2) : ℝ) : ℂ) *
+                  atkinsonShiftedSingleBoundaryCore n (r + 2))
+              (∑ s ∈ Finset.Ico (r + 1) (j - 1),
+                (((atkinsonUpperBoundaryStepCoeff n (s + 1) - 1 : ℝ) : ℂ) *
+                  (((1 / atkinsonShiftedRelativePhase (n + (s + 2)) (s + 2) : ℝ) : ℂ) *
+                    atkinsonShiftedSingleBoundaryCore n (s + 2)))),
+            norm_sub_le
+              (((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ) *
+                atkinsonShiftedSingleBoundaryCore n j)
+              (((1 / atkinsonShiftedRelativePhase (n + (r + 2)) (r + 2) : ℝ) : ℂ) *
+                atkinsonShiftedSingleBoundaryCore n (r + 2))]
+    _ ≤ Real.sqrt (↑(n + j)) + Real.sqrt (↑(n + j)) + 2 * Real.sqrt (↑(n + j)) := by
+          exact add_le_add (add_le_add
+            (atkinsonInversePhaseBoundaryCore_le_sqrt n j j hj hjn (by omega) le_rfl)
+            (atkinsonInversePhaseBoundaryCore_le_sqrt n j (r + 2) hj hjn (by omega) hrj))
+            (atkinsonResonantBoundaryCorrection_le_sqrt n j r hj hjn hrj)
+    _ = 4 * Real.sqrt (↑(n + j)) := by ring
+
+
 private theorem atkinsonShiftedInversePhaseCore_step
     (n j : ℕ) (hj : 1 ≤ j) :
     ((((1 / atkinsonShiftedRelativePhase (n + (j + 1)) (j + 1) : ℝ) : ℂ)) *
