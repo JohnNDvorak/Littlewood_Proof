@@ -799,6 +799,33 @@ private lemma atkinson_log_le_sqrt_of_ge_two {x : ℝ} (hx : 2 ≤ x) :
   have htwo := Real.log_two_lt_d9
   nlinarith [Real.sqrt_nonneg x, Real.sq_sqrt (show 0 ≤ x by linarith)]
 
+private lemma atkinson_log_le_sqrt_of_ge_one {y : ℝ} (hy : 1 ≤ y) :
+    Real.log y ≤ Real.sqrt y := by
+  by_cases h2 : 2 ≤ y
+  · exact atkinson_log_le_sqrt_of_ge_two h2
+  · have hlog_le : Real.log y ≤ Real.log 2 := Real.log_le_log (by linarith) (le_of_not_ge h2)
+    linarith [Real.log_two_lt_d9, Real.one_le_sqrt.mpr hy]
+
+/-- `log(x)·(1+log(x)) ≤ 6·√x` for `x ≥ 2`. Uses `log(x) = 2·log(√x)` and
+    `log(y) ≤ √y` to get `log²(y) ≤ y` and `√y ≤ y`. -/
+private lemma atkinson_log_mul_succ_le_sqrt {x : ℝ} (hx : 2 ≤ x) :
+    Real.log x * (1 + Real.log x) ≤ 6 * Real.sqrt x := by
+  set y := Real.sqrt x with hy_def
+  have hy_ge : 1 ≤ y := Real.one_le_sqrt.mpr (by linarith)
+  have hsq : y ^ 2 = x := Real.sq_sqrt (by linarith)
+  have hlog_eq : Real.log x = 2 * Real.log y := by
+    rw [← hsq, Real.log_pow]; simp
+  have hlog_y_nonneg : 0 ≤ Real.log y := Real.log_nonneg hy_ge
+  have hlog_y_le_sqrt_y : Real.log y ≤ Real.sqrt y := atkinson_log_le_sqrt_of_ge_one hy_ge
+  have hlog_y_sq_le_y : Real.log y ^ 2 ≤ y := by
+    calc Real.log y ^ 2 ≤ (Real.sqrt y) ^ 2 :=
+          sq_le_sq' (by linarith) hlog_y_le_sqrt_y
+        _ = y := Real.sq_sqrt (by linarith)
+  have hsqrt_y_le_y : Real.sqrt y ≤ y := by
+    nlinarith [sq_nonneg (Real.sqrt y - 1), Real.sq_sqrt (show 0 ≤ y by linarith)]
+  rw [hlog_eq]
+  nlinarith
+
 private noncomputable def atkinsonShiftedCompleteCell (n j : ℕ) : ℝ :=
   atkinsonModeWeight n *
     ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)), hardyCos n t
@@ -5712,14 +5739,14 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_lower_boundary
         ‖∑ k ∈ Finset.range N,
             ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-          ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
+          ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
     ∃ C_complete > 0, ∀ j : ℕ, 1 ≤ j → ∀ M : ℕ,
       ‖∑ n ∈ Finset.range M,
           (if j ≤ n then
             atkinsonWeightedResonantBlockMode (n + j) 0 *
               atkinsonShiftedSinglePrimitive (n + j) j 0
           else 0)‖
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨C_complete, hC_complete, hshift⟩ := hinv
   refine ⟨C_complete, hC_complete, ?_⟩
   intro j hj M
@@ -5735,8 +5762,10 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_lower_boundary
       have hnlt : n < j := lt_of_lt_of_le (Finset.mem_range.mp hn) hMj
       simp [hnlt.not_ge]
     have hnonneg :
-        0 ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
-      positivity
+        0 ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+      apply mul_nonneg
+      · exact mul_nonneg (le_of_lt hC_complete) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
+      · positivity
     simpa [hzero] using hnonneg
   · have hJM : j ≤ M := le_of_lt (lt_of_not_ge hMj)
     let N : ℕ := M - j
@@ -5851,10 +5880,13 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_lower_boundary
           ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
             atkinsonShiftedSingleBoundaryCore (k + j) j)‖ := by
             rw [hsum]
-      _ ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
-            exact hmain
-      _ ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
-            exact mul_le_mul_of_nonneg_left htarget (le_of_lt hC_complete)
+      _ ≤ C_complete * Real.log (↑j + 1) *
+              (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := hmain
+      _ ≤ C_complete * Real.log (↑j + 1) *
+              (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+            apply mul_le_mul_of_nonneg_left htarget
+            exact mul_nonneg (le_of_lt hC_complete)
+              (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
 
 private theorem atkinsonShiftedInversePhaseCorePrefix_tail_bound_of_hinv
     (hinv :
@@ -5862,13 +5894,13 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_tail_bound_of_hinv
         ‖∑ k ∈ Finset.range N,
             ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-          ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
+          ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
     ∃ C_complete > 0, ∀ j : ℕ, 1 ≤ j → ∀ N : ℕ,
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonShiftedRelativePhase
               (k + ((j + 1) + j)) j : ℝ) : ℂ)) *
             atkinsonShiftedSingleBoundaryCore (k + (j + 1)) j)‖
-        ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨Cl, hCl, hlower⟩ :=
     atkinson_large_modes_complete_resonant_packet_row_lower_boundary_sum_bound_atomic_of_shifted_inverse_phase_core
       hinv
@@ -5921,7 +5953,7 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_tail_bound_of_hinv
           rw [Finset.sum_Ico_eq_sub _ (Nat.le_add_right J N)]
   have hupper_raw :
       ‖∑ n ∈ Finset.range (J + N), rowFn n‖
-        ≤ Cl * (Real.sqrt ((((J + N) + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ Cl * Real.log (↑j + 1) * (Real.sqrt ((((J + N) + j : ℕ) : ℝ) + 1) / j) := by
           simpa [rowFn, J, Nat.add_assoc, add_left_comm, add_comm] using
             hlower j hj (J + N)
   have hupper_target :
@@ -5949,16 +5981,17 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_tail_bound_of_hinv
             unfold target
             ring
   have hupper :
-      ‖∑ n ∈ Finset.range (J + N), rowFn n‖ ≤ Real.sqrt 2 * Cl * target := by
+      ‖∑ n ∈ Finset.range (J + N), rowFn n‖ ≤ Real.sqrt 2 * Cl * Real.log (↑j + 1) * target := by
     calc
       ‖∑ n ∈ Finset.range (J + N), rowFn n‖
-          ≤ Cl * (Real.sqrt ((((J + N) + j : ℕ) : ℝ) + 1) / j) := hupper_raw
-      _ ≤ Cl * (Real.sqrt 2 * target) := by
-            exact mul_le_mul_of_nonneg_left hupper_target (le_of_lt hCl)
-      _ = Real.sqrt 2 * Cl * target := by ring
+          ≤ Cl * Real.log (↑j + 1) * (Real.sqrt ((((J + N) + j : ℕ) : ℝ) + 1) / j) := hupper_raw
+      _ ≤ Cl * Real.log (↑j + 1) * (Real.sqrt 2 * target) := by
+            exact mul_le_mul_of_nonneg_left hupper_target
+              (mul_nonneg (le_of_lt hCl) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
+      _ = Real.sqrt 2 * Cl * Real.log (↑j + 1) * target := by ring
   have hlower_raw :
       ‖∑ n ∈ Finset.range J, rowFn n‖
-        ≤ Cl * (Real.sqrt (((J + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ Cl * Real.log (↑j + 1) * (Real.sqrt (((J + j : ℕ) : ℝ) + 1) / j) := by
           simpa [rowFn, J, Nat.add_assoc, add_left_comm, add_comm] using
             hlower j hj J
   have hlower_target :
@@ -5986,13 +6019,14 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_tail_bound_of_hinv
             unfold target
             ring
   have hlower_tail :
-      ‖∑ n ∈ Finset.range J, rowFn n‖ ≤ Real.sqrt 2 * Cl * target := by
+      ‖∑ n ∈ Finset.range J, rowFn n‖ ≤ Real.sqrt 2 * Cl * Real.log (↑j + 1) * target := by
     calc
       ‖∑ n ∈ Finset.range J, rowFn n‖
-          ≤ Cl * (Real.sqrt (((J + j : ℕ) : ℝ) + 1) / j) := hlower_raw
-      _ ≤ Cl * (Real.sqrt 2 * target) := by
-            exact mul_le_mul_of_nonneg_left hlower_target (le_of_lt hCl)
-      _ = Real.sqrt 2 * Cl * target := by ring
+          ≤ Cl * Real.log (↑j + 1) * (Real.sqrt (((J + j : ℕ) : ℝ) + 1) / j) := hlower_raw
+      _ ≤ Cl * Real.log (↑j + 1) * (Real.sqrt 2 * target) := by
+            exact mul_le_mul_of_nonneg_left hlower_target
+              (mul_nonneg (le_of_lt hCl) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
+      _ = Real.sqrt 2 * Cl * Real.log (↑j + 1) * target := by ring
   calc
     ‖∑ k ∈ Finset.range N,
         ((((1 / atkinsonShiftedRelativePhase
@@ -6004,9 +6038,10 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_tail_bound_of_hinv
           rw [hsplit]
     _ ≤ ‖∑ n ∈ Finset.range (J + N), rowFn n‖ + ‖∑ n ∈ Finset.range J, rowFn n‖ := by
           exact norm_sub_le _ _
-    _ ≤ Real.sqrt 2 * Cl * target + Real.sqrt 2 * Cl * target := by
+    _ ≤ Real.sqrt 2 * Cl * Real.log (↑j + 1) * target +
+          Real.sqrt 2 * Cl * Real.log (↑j + 1) * target := by
           exact add_le_add hupper hlower_tail
-    _ = (2 * Real.sqrt 2 * Cl) * target := by
+    _ = (2 * Real.sqrt 2 * Cl) * Real.log (↑j + 1) * target := by
           ring
 
 private theorem atkinsonShiftedInversePhaseCorePrefix_upper_weighted_bound_of_hinv
@@ -6015,28 +6050,31 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_upper_weighted_bound_of_hi
         ‖∑ k ∈ Finset.range N,
             ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-          ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
+          ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
     ∃ C_complete > 0, ∀ j : ℕ, 1 ≤ j → ∀ N : ℕ,
       ‖∑ k ∈ Finset.range N,
           ((((atkinsonUpperBoundaryWeightedCoeff (k + (j + 1)) j : ℝ) : ℂ)) *
             ((((1 / atkinsonShiftedRelativePhase
                 (k + ((j + 1) + j)) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + (j + 1)) j))‖
-        ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨Ct, hCt, htail⟩ := atkinsonShiftedInversePhaseCorePrefix_tail_bound_of_hinv hinv
   refine ⟨2 * Ct, by positivity, ?_⟩
   intro j hj N
   let J : ℕ := j + 1
   let target : ℝ := Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j
   by_cases hN : N = 0
-  · have hnonneg : 0 ≤ (2 * Ct) * target := by positivity
+  · have hnonneg : 0 ≤ (2 * Ct) * Real.log (↑j + 1) * target := by
+      apply mul_nonneg
+      · exact mul_nonneg (by positivity) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
+      · positivity
     simpa [hN, target] using hnonneg
   · obtain ⟨n0, hn0 : N = n0 + 1⟩ := Nat.exists_eq_succ_of_ne_zero hN
     let baseFn : ℕ → ℂ := fun k =>
       ((((1 / atkinsonShiftedRelativePhase
           (k + (J + j)) j : ℝ) : ℂ)) *
         atkinsonShiftedSingleBoundaryCore (k + J) j)
-    let C0 : ℝ := Ct * target
+    let C0 : ℝ := Ct * Real.log (↑j + 1) * target
     let aRe : ℕ → ℝ := fun k => (baseFn k).re
     let aIm : ℕ → ℝ := fun k => (baseFn k).im
     let b : ℕ → ℝ := fun k => atkinsonUpperBoundaryWeightedCoeff (k + J) j
@@ -6055,10 +6093,11 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_upper_weighted_bound_of_hi
             = |(∑ m ∈ Finset.range (k + 1), baseFn m).re| := by
                 simp [aRe]
         _ ≤ ‖∑ m ∈ Finset.range (k + 1), baseFn m‖ := Complex.abs_re_le_norm _
-        _ ≤ Ct * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / j) := by
+        _ ≤ Ct * Real.log (↑j + 1) * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / j) := by
               simpa [baseFn, J, Nat.add_assoc, add_left_comm, add_comm] using hbound
-        _ ≤ Ct * target := by
-              exact mul_le_mul_of_nonneg_left htarget_k (le_of_lt hCt)
+        _ ≤ Ct * Real.log (↑j + 1) * target := by
+              exact mul_le_mul_of_nonneg_left htarget_k
+                (mul_nonneg (le_of_lt hCt) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
         _ = C0 := by
               rfl
     have hpartial_im : ∀ k ≤ n0, |∑ m ∈ Finset.range (k + 1), aIm m| ≤ C0 := by
@@ -6076,10 +6115,11 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_upper_weighted_bound_of_hi
             = |(∑ m ∈ Finset.range (k + 1), baseFn m).im| := by
                 simp [aIm]
         _ ≤ ‖∑ m ∈ Finset.range (k + 1), baseFn m‖ := Complex.abs_im_le_norm _
-        _ ≤ Ct * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / j) := by
+        _ ≤ Ct * Real.log (↑j + 1) * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / j) := by
               simpa [baseFn, J, Nat.add_assoc, add_left_comm, add_comm] using hbound
-        _ ≤ Ct * target := by
-              exact mul_le_mul_of_nonneg_left htarget_k (le_of_lt hCt)
+        _ ≤ Ct * Real.log (↑j + 1) * target := by
+              exact mul_le_mul_of_nonneg_left htarget_k
+                (mul_nonneg (le_of_lt hCt) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
         _ = C0 := by
               rfl
     have hb_nonneg : ∀ k ≤ n0, 0 ≤ b k := by
@@ -6093,7 +6133,9 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_upper_weighted_bound_of_hi
     have hb0_nonneg : 0 ≤ b 0 := hb_nonneg 0 (by omega)
     have hC0_nonneg : 0 ≤ C0 := by
       unfold C0 target
-      positivity
+      apply mul_nonneg
+      · exact mul_nonneg (le_of_lt hCt) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
+      · positivity
     have hsum_re :
         (∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).re
           =
@@ -6144,7 +6186,7 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_upper_weighted_bound_of_hi
         = ‖∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)‖ := by
               simpa [hn0, b, baseFn, J, Nat.add_assoc, add_left_comm, add_comm]
       _ ≤ 2 * C0 := hnorm
-      _ = (2 * Ct) * target := by
+      _ = (2 * Ct) * Real.log (↑j + 1) * target := by
             unfold C0
             ring
 
@@ -6166,28 +6208,31 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_recipStepCoeff_weighted_bo
         ‖∑ k ∈ Finset.range N,
             ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-          ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
+          ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
     ∃ C_complete > 0, ∀ j : ℕ, 1 ≤ j → ∀ N : ℕ,
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonUpperBoundaryStepCoeff (k + (j + 1)) j : ℝ) : ℂ)) *
             ((((1 / atkinsonShiftedRelativePhase
                 (k + ((j + 1) + j)) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + (j + 1)) j))‖
-        ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨Ct, hCt, htail⟩ := atkinsonShiftedInversePhaseCorePrefix_tail_bound_of_hinv hinv
   refine ⟨2 * Ct, by positivity, ?_⟩
   intro j hj N
   let J : ℕ := j + 1
   let target : ℝ := Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j
   by_cases hN : N = 0
-  · have hnonneg : 0 ≤ (2 * Ct) * target := by positivity
+  · have hnonneg : 0 ≤ (2 * Ct) * Real.log (↑j + 1) * target := by
+      apply mul_nonneg
+      · exact mul_nonneg (by positivity) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
+      · positivity
     simpa [hN, target] using hnonneg
   · obtain ⟨n0, hn0 : N = n0 + 1⟩ := Nat.exists_eq_succ_of_ne_zero hN
     let baseFn : ℕ → ℂ := fun k =>
       ((((1 / atkinsonShiftedRelativePhase
           (k + (J + j)) j : ℝ) : ℂ)) *
         atkinsonShiftedSingleBoundaryCore (k + J) j)
-    let C0 : ℝ := Ct * target
+    let C0 : ℝ := Ct * Real.log (↑j + 1) * target
     let aRe : ℕ → ℝ := fun k => (baseFn k).re
     let aIm : ℕ → ℝ := fun k => (baseFn k).im
     let b : ℕ → ℝ := fun k => 1 / atkinsonUpperBoundaryStepCoeff (k + J) j
@@ -6206,10 +6251,11 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_recipStepCoeff_weighted_bo
             = |(∑ m ∈ Finset.range (k + 1), baseFn m).re| := by
                 simp [aRe]
         _ ≤ ‖∑ m ∈ Finset.range (k + 1), baseFn m‖ := Complex.abs_re_le_norm _
-        _ ≤ Ct * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / j) := by
+        _ ≤ Ct * Real.log (↑j + 1) * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / j) := by
               simpa [baseFn, J, Nat.add_assoc, add_left_comm, add_comm] using hbound
-        _ ≤ Ct * target := by
-              exact mul_le_mul_of_nonneg_left htarget_k (le_of_lt hCt)
+        _ ≤ Ct * Real.log (↑j + 1) * target := by
+              exact mul_le_mul_of_nonneg_left htarget_k
+                (mul_nonneg (le_of_lt hCt) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
         _ = C0 := by
               rfl
     have hpartial_im : ∀ k ≤ n0, |∑ m ∈ Finset.range (k + 1), aIm m| ≤ C0 := by
@@ -6227,10 +6273,11 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_recipStepCoeff_weighted_bo
             = |(∑ m ∈ Finset.range (k + 1), baseFn m).im| := by
                 simp [aIm]
         _ ≤ ‖∑ m ∈ Finset.range (k + 1), baseFn m‖ := Complex.abs_im_le_norm _
-        _ ≤ Ct * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / j) := by
+        _ ≤ Ct * Real.log (↑j + 1) * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / j) := by
               simpa [baseFn, J, Nat.add_assoc, add_left_comm, add_comm] using hbound
-        _ ≤ Ct * target := by
-              exact mul_le_mul_of_nonneg_left htarget_k (le_of_lt hCt)
+        _ ≤ Ct * Real.log (↑j + 1) * target := by
+              exact mul_le_mul_of_nonneg_left htarget_k
+                (mul_nonneg (le_of_lt hCt) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
         _ = C0 := by
               rfl
     have hb_nonneg : ∀ k ≤ n0, 0 ≤ b k := by
@@ -6244,7 +6291,9 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_recipStepCoeff_weighted_bo
     have hb0_nonneg : 0 ≤ b 0 := hb_nonneg 0 (by omega)
     have hC0_nonneg : 0 ≤ C0 := by
       unfold C0 target
-      positivity
+      apply mul_nonneg
+      · exact mul_nonneg (le_of_lt hCt) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
+      · positivity
     have hsum_re :
         (∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).re
           =
@@ -6295,7 +6344,7 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_recipStepCoeff_weighted_bo
         = ‖∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)‖ := by
               simpa [hn0, b, baseFn, J, Nat.add_assoc, add_left_comm, add_comm]
       _ ≤ 2 * C0 := hnorm
-      _ = (2 * Ct) * target := by
+      _ = (2 * Ct) * Real.log (↑j + 1) * target := by
             unfold C0
             ring
 
@@ -6310,14 +6359,14 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_stepCoeff_sub_one_bound_of
         ‖∑ k ∈ Finset.range N,
             ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-          ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
+          ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
     ∃ C_complete > 0, ∀ j : ℕ, 1 ≤ j → ∀ N : ℕ,
       ‖∑ k ∈ Finset.range N,
           ((((atkinsonUpperBoundaryStepCoeff (k + (j + 1)) j - 1 : ℝ) : ℂ)) *
             ((((1 / atkinsonShiftedRelativePhase
                 (k + ((j + 1) + j)) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + (j + 1)) j))‖
-        ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨Ct, hCt, htail⟩ := atkinsonShiftedInversePhaseCorePrefix_tail_bound_of_hinv hinv
   obtain ⟨Cw, hCw, hweighted⟩ :=
     atkinsonShiftedInversePhaseCorePrefix_upper_weighted_bound_of_hinv hinv
@@ -6377,12 +6426,12 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_stepCoeff_sub_one_bound_of
           + ‖∑ k ∈ Finset.range N,
                 ((((atkinsonUpperBoundaryWeightedCoeff (k + J) j : ℝ) : ℂ)) * baseFn k)‖ := by
             exact norm_sub_le _ _
-    _ ≤ Ct * target + Cw * target := by
+    _ ≤ Ct * Real.log (↑j + 1) * target + Cw * Real.log (↑j + 1) * target := by
           refine add_le_add ?_ ?_
           · simpa [baseFn, target, J, Nat.add_assoc, add_left_comm, add_comm] using htail j hj N
           · simpa [baseFn, target, J, Nat.add_assoc, add_left_comm, add_comm] using
               hweighted j hj N
-    _ = (Ct + Cw) * target := by
+    _ = (Ct + Cw) * Real.log (↑j + 1) * target := by
           ring
 
 /-! Native `Ico` transport for the weighted row handoff. This is the local
@@ -6394,13 +6443,13 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_stepCoeff_sub_one_Ico_tail
         ‖∑ k ∈ Finset.range N,
             ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-          ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
+          ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
     ∃ C_complete > 0, ∀ j : ℕ, 1 ≤ j → ∀ N : ℕ,
       ‖∑ n ∈ Finset.Ico (j + 1) (j + 1 + N),
           ((((atkinsonUpperBoundaryStepCoeff n j - 1 : ℝ) : ℂ)) *
             ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore n j))‖
-        ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨Cerror, hCerror, herror⟩ :=
     atkinsonShiftedInversePhaseCorePrefix_stepCoeff_sub_one_bound_of_hinv hinv
   refine ⟨Cerror, hCerror, ?_⟩
@@ -6432,7 +6481,7 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_stepCoeff_sub_one_Ico_tail
                   intro k hk
                   simp [f, Nat.add_assoc, add_left_comm, add_comm]
             simpa [f, Nat.add_assoc, add_left_comm, add_comm] using congrArg norm hsum
-    _ ≤ Cerror * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+    _ ≤ Cerror * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
           exact herror j hj N
 
 /-- Native `Ico`-coordinate wrapper for the weighted `stepCoeff - 1` tail
@@ -6444,13 +6493,13 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_stepCoeff_sub_one_Ico_tail
         ‖∑ k ∈ Finset.range N,
             ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-          ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
+          ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) :
     ∃ C_err > 0, ∀ j : ℕ, 1 ≤ j → ∀ U : ℕ, j + 1 ≤ U →
       ‖∑ n ∈ Finset.Ico (j + 1) U,
           ((((atkinsonUpperBoundaryStepCoeff n j - 1 : ℝ) : ℂ)) *
             ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore n j))‖
-        ≤ C_err * (Real.sqrt ((U : ℝ) + 1) / j) := by
+        ≤ C_err * Real.log (↑j + 1) * (Real.sqrt ((U : ℝ) + 1) / j) := by
   obtain ⟨C, hC, hbound⟩ :=
     atkinsonShiftedInversePhaseCorePrefix_stepCoeff_sub_one_Ico_tail_bound_of_hinv hinv
   refine ⟨C, hC, ?_⟩
@@ -6472,11 +6521,12 @@ private theorem atkinsonShiftedInversePhaseCorePrefix_stepCoeff_sub_one_Ico_tail
             ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore n j))‖ := by
             rw [hU_eq]
-    _ ≤ C * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := hbound j hj N
-    _ = C * (Real.sqrt (U : ℝ) / j) := by
+    _ ≤ C * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := hbound j hj N
+    _ = C * Real.log (↑j + 1) * (Real.sqrt (U : ℝ) / j) := by
           rw [hNj_cast]
-    _ ≤ C * (Real.sqrt ((U : ℝ) + 1) / j) := by
-          refine mul_le_mul_of_nonneg_left ?_ (le_of_lt hC)
+    _ ≤ C * Real.log (↑j + 1) * (Real.sqrt ((U : ℝ) + 1) / j) := by
+          refine mul_le_mul_of_nonneg_left ?_
+            (mul_nonneg (le_of_lt hC) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
           exact div_le_div_of_nonneg_right
             (Real.sqrt_le_sqrt (by
               linarith [show (0 : ℝ) ≤ (U : ℝ) from Nat.cast_nonneg U]))
@@ -6494,7 +6544,7 @@ class AtkinsonShiftedInversePhaseCellPrefixBoundHyp : Prop where
       ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
           ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
             atkinsonResonantShiftedPhaseWeightedCell n j)‖
-        ≤ C_complete * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)
 
 private theorem atkinsonResonantShiftedBoundary_recipStepCoeff_weighted_bound_atomic :
     (∃ C_bdry > 0, ∀ j : ℕ, 1 ≤ j → ∀ M : ℕ,
@@ -6505,16 +6555,20 @@ private theorem atkinsonResonantShiftedBoundary_recipStepCoeff_weighted_bound_at
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonUpperBoundaryStepCoeff (k + (j + 1)) j : ℝ) : ℂ)) *
             atkinsonResonantShiftedBoundaryTerm (k + (j + 1)) j)‖
-        ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
   intro hbdryRow
   obtain ⟨Cbdry, hCbdry, hbdry⟩ :=
     hbdryRow
-  refine ⟨8 * Cbdry, by positivity, ?_⟩
+  refine ⟨8 * Cbdry / Real.log 2, by positivity, ?_⟩
   intro j hj N
   let J : ℕ := j + 1
   let target : ℝ := Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j
   by_cases hN : N = 0
-  · have hnonneg : 0 ≤ (8 * Cbdry) * target := by positivity
+  · have hnonneg : 0 ≤ (8 * Cbdry / Real.log 2) * Real.log (↑j + 1) * target := by
+      apply mul_nonneg
+      · exact mul_nonneg (div_nonneg (by positivity) (Real.log_nonneg (by norm_num)))
+          (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
+      · positivity
     simpa [hN, target] using hnonneg
   · obtain ⟨n0, hn0 : N = n0 + 1⟩ := Nat.exists_eq_succ_of_ne_zero hN
     let baseFn : ℕ → ℂ := fun k => atkinsonResonantShiftedBoundaryTerm (k + J) j
@@ -6760,6 +6814,17 @@ private theorem atkinsonResonantShiftedBoundary_recipStepCoeff_weighted_bound_at
       _ ≤ 8 * Cbdry * target := by
             gcongr
             nlinarith [hsqrt2_le2]
+      _ ≤ (8 * Cbdry / Real.log 2) * Real.log (↑j + 1) * target := by
+            have hlog2_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+            have hlog_ge : Real.log 2 ≤ Real.log (↑j + 1) :=
+              Real.log_le_log (by norm_num) (by exact_mod_cast show 2 ≤ j + 1 by omega)
+            have htarget_nn : 0 ≤ target := by positivity
+            calc 8 * Cbdry * target
+                = 8 * Cbdry / Real.log 2 * Real.log 2 * target := by
+                    field_simp [hlog2_pos.ne']
+              _ ≤ 8 * Cbdry / Real.log 2 * Real.log (↑j + 1) * target := by
+                    gcongr
+              _ = (8 * Cbdry / Real.log 2) * Real.log (↑j + 1) * target := by ring
 
 /-- Current packaged first-leaf surface for the large-mode lower-boundary row bound.
 The intended next reduction is the smaller weighted error-row theorem, but the helper
@@ -6771,7 +6836,7 @@ class AtkinsonShiftedInversePhaseCorePrefixBoundHyp : Prop where
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
             atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-        ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
 
 variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
 
@@ -6784,7 +6849,7 @@ theorem atkinson_upperBoundaryStepCoeffSubOne_weighted_shiftedInversePhaseCoreTa
           ((((atkinsonUpperBoundaryStepCoeff n j - 1 : ℝ) : ℂ)) *
             ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore n j))‖
-        ≤ C_err * (Real.sqrt ((U : ℝ) + 1) / j) :=
+        ≤ C_err * Real.log (↑j + 1) * (Real.sqrt ((U : ℝ) + 1) / j) :=
   atkinsonShiftedInversePhaseCorePrefix_stepCoeff_sub_one_Ico_tail_bound_native_of_hinv
     AtkinsonShiftedInversePhaseCorePrefixBoundHyp.bound
 
@@ -6797,7 +6862,7 @@ class AtkinsonWeightedIcoTailBoundHyp : Prop where
           ((((atkinsonUpperBoundaryStepCoeff n j - 1 : ℝ) : ℂ)) *
             ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore n j))‖
-        ≤ C_err * (Real.sqrt ((U : ℝ) + 1) / j)
+        ≤ C_err * Real.log (↑j + 1) * (Real.sqrt ((U : ℝ) + 1) / j)
 
 instance : AtkinsonWeightedIcoTailBoundHyp :=
   ⟨atkinson_upperBoundaryStepCoeffSubOne_weighted_shiftedInversePhaseCoreTail_bound_atomic⟩
@@ -6811,7 +6876,7 @@ private theorem atkinson_weightedIcoTail_succ_shift_bound
             ((((1 / atkinsonShiftedRelativePhase
                 (k + ((j + 1) + j)) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + (j + 1)) j))‖
-        ≤ C_err * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_err * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨C, hC, hbound⟩ := AtkinsonWeightedIcoTailBoundHyp.bound
   refine ⟨Real.sqrt 2 * C, by positivity, ?_⟩
   intro j hj N
@@ -6876,11 +6941,12 @@ private theorem atkinson_weightedIcoTail_succ_shift_bound
           ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
             atkinsonShiftedSingleBoundaryCore n j))‖ := by
             rw [hsum]
-    _ ≤ C * (Real.sqrt ((U : ℝ) + 1) / j) := by
+    _ ≤ C * Real.log (↑j + 1) * (Real.sqrt ((U : ℝ) + 1) / j) := by
           exact hbound j hj U hU
-    _ ≤ C * (Real.sqrt 2 * target) := by
-          exact mul_le_mul_of_nonneg_left htarget (le_of_lt hC)
-    _ = (Real.sqrt 2 * C) * target := by
+    _ ≤ C * Real.log (↑j + 1) * (Real.sqrt 2 * target) := by
+          exact mul_le_mul_of_nonneg_left htarget
+            (mul_nonneg (le_of_lt hC) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
+    _ = (Real.sqrt 2 * C) * Real.log (↑j + 1) * target := by
           ring
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
@@ -6891,7 +6957,7 @@ private theorem atkinson_weightedIcoTail_reindexed_tail_bound
           ((((atkinsonUpperBoundaryStepCoeff (k + j) r - 1 : ℝ) : ℂ)) *
             ((((1 / atkinsonShiftedRelativePhase (k + (j + r)) r : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + j) r))‖
-        ≤ C_err * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / r) := by
+        ≤ C_err * Real.log (↑r + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / r) := by
   obtain ⟨C, hC, hbound⟩ := atkinson_weightedIcoTail_succ_shift_bound
   refine ⟨2 * C, by positivity, ?_⟩
   intro j hj r hr hrj N
@@ -6926,27 +6992,29 @@ private theorem atkinson_weightedIcoTail_reindexed_tail_bound
         =
       (∑ m ∈ Finset.range (O + N), baseFn m) - ∑ m ∈ Finset.range O, baseFn m := by
           rw [Finset.sum_Ico_eq_sub _ (Nat.le_add_right O N)]
+  have hlog_r_nonneg : 0 ≤ Real.log (↑r + 1) :=
+    Real.log_nonneg (by exact_mod_cast show 1 ≤ r + 1 by omega)
   have hmain :
-      ‖∑ m ∈ Finset.range (O + N), baseFn m‖ ≤ C * target := by
+      ‖∑ m ∈ Finset.range (O + N), baseFn m‖ ≤ C * Real.log (↑r + 1) * target := by
     have hraw := hbound r hr (O + N)
     calc
       ‖∑ m ∈ Finset.range (O + N), baseFn m‖
-          ≤ C * (Real.sqrt (((O + N + r : ℕ) : ℝ) + 1) / r) := by
+          ≤ C * Real.log (↑r + 1) * (Real.sqrt (((O + N + r : ℕ) : ℝ) + 1) / r) := by
               simpa [baseFn, Nat.add_assoc, add_left_comm, add_comm] using hraw
-      _ = C * (Real.sqrt ((N + j : ℕ) : ℝ) / r) := by
+      _ = C * Real.log (↑r + 1) * (Real.sqrt ((N + j : ℕ) : ℝ) / r) := by
             have hOj : (O + N + r : ℕ) + 1 = N + j := by
               dsimp [O]
               omega
             have hOj' : (((O + N + r : ℕ) : ℝ) + 1) = ((N + j : ℕ) : ℝ) := by
               exact_mod_cast hOj
             rw [hOj']
-      _ ≤ C * target := by
-            refine mul_le_mul_of_nonneg_left ?_ (le_of_lt hC)
+      _ ≤ C * Real.log (↑r + 1) * target := by
+            apply mul_le_mul_of_nonneg_left _ (mul_nonneg (le_of_lt hC) hlog_r_nonneg)
             exact div_le_div_of_nonneg_right
               (Real.sqrt_le_sqrt (by linarith))
               (by positivity : (0 : ℝ) ≤ r)
   have hhead :
-      ‖∑ m ∈ Finset.range O, baseFn m‖ ≤ C * target := by
+      ‖∑ m ∈ Finset.range O, baseFn m‖ ≤ C * Real.log (↑r + 1) * target := by
     have hraw := hbound r hr O
     have hOj_le : ((O + r : ℕ) : ℝ) + 1 ≤ (((N + j : ℕ) : ℝ) + 1) := by
       have hnat : O + r + 1 ≤ N + j + 1 := by
@@ -6955,10 +7023,10 @@ private theorem atkinson_weightedIcoTail_reindexed_tail_bound
       exact_mod_cast hnat
     calc
       ‖∑ m ∈ Finset.range O, baseFn m‖
-          ≤ C * (Real.sqrt (((O + r : ℕ) : ℝ) + 1) / r) := by
+          ≤ C * Real.log (↑r + 1) * (Real.sqrt (((O + r : ℕ) : ℝ) + 1) / r) := by
               simpa [baseFn, Nat.add_assoc, add_left_comm, add_comm] using hraw
-      _ ≤ C * target := by
-            refine mul_le_mul_of_nonneg_left ?_ (le_of_lt hC)
+      _ ≤ C * Real.log (↑r + 1) * target := by
+            apply mul_le_mul_of_nonneg_left _ (mul_nonneg (le_of_lt hC) hlog_r_nonneg)
             exact div_le_div_of_nonneg_right
               (Real.sqrt_le_sqrt hOj_le)
               (by positivity : (0 : ℝ) ≤ r)
@@ -6973,9 +7041,9 @@ private theorem atkinson_weightedIcoTail_reindexed_tail_bound
           rw [hsplit]
     _ ≤ ‖∑ m ∈ Finset.range (O + N), baseFn m‖ + ‖∑ m ∈ Finset.range O, baseFn m‖ := by
           exact norm_sub_le _ _
-    _ ≤ C * target + C * target := by
+    _ ≤ C * Real.log (↑r + 1) * target + C * Real.log (↑r + 1) * target := by
           exact add_le_add hmain hhead
-    _ = (2 * C) * target := by
+    _ = (2 * C) * Real.log (↑r + 1) * target := by
           ring
 
 /-- Current packaged first-lane bridge after the weighted `Ico` tail
@@ -6999,7 +7067,7 @@ class AtkinsonKernelWeightedIcoTailAbelBoundHyp : Prop where
             ((((atkinsonUpperBoundaryStepCoeff (k + j) (r + 1) - 1 : ℝ) : ℂ)) *
               ((((1 / atkinsonShiftedRelativePhase (k + (j + (r + 1))) (r + 1) : ℝ) : ℂ)) *
                 atkinsonShiftedSingleBoundaryCore (k + j) (r + 1))))‖
-        ≤ C_err * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
+        ≤ C_err * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
 
 /-- Honest transported first-lane remainder surface exposed by the exact
 Abel decomposition. After rewriting the backward tails by
@@ -7013,7 +7081,7 @@ private theorem atkinson_shiftedInversePhaseCore_reindexed_tail_bound
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonShiftedRelativePhase (k + (j + s)) s : ℝ) : ℂ)) *
             atkinsonShiftedSingleBoundaryCore (k + j) s)‖
-        ≤ C * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / s) := by
+        ≤ C * Real.log (↑s + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / s) := by
   obtain ⟨C, hC, hbound⟩ := AtkinsonShiftedInversePhaseCorePrefixBoundHyp.bound
   refine ⟨2 * C, by positivity, ?_⟩
   intro j hj s hs hsj N
@@ -7045,20 +7113,22 @@ private theorem atkinson_shiftedInversePhaseCore_reindexed_tail_bound
         =
       (∑ m ∈ Finset.range (O + N), baseFn m) - ∑ m ∈ Finset.range O, baseFn m := by
           rw [Finset.sum_Ico_eq_sub _ (Nat.le_add_right O N)]
+  have hlog_s_nonneg : 0 ≤ Real.log (↑s + 1) :=
+    Real.log_nonneg (by exact_mod_cast show 1 ≤ s + 1 by omega)
   have hmain :
-      ‖∑ m ∈ Finset.range (O + N), baseFn m‖ ≤ C * target := by
+      ‖∑ m ∈ Finset.range (O + N), baseFn m‖ ≤ C * Real.log (↑s + 1) * target := by
     have hraw := hbound s hs (O + N)
     calc
       ‖∑ m ∈ Finset.range (O + N), baseFn m‖
-          ≤ C * (Real.sqrt (((O + N + s : ℕ) : ℝ) + 1) / s) := by
+          ≤ C * Real.log (↑s + 1) * (Real.sqrt (((O + N + s : ℕ) : ℝ) + 1) / s) := by
               simpa [baseFn, Nat.add_assoc, add_left_comm, add_comm] using hraw
-      _ = C * target := by
+      _ = C * Real.log (↑s + 1) * target := by
             have hOj : O + N + s = N + j := by dsimp [O]; omega
-            show C * (Real.sqrt (((O + N + s : ℕ) : ℝ) + 1) / ↑s) =
-                 C * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / ↑s)
+            show C * Real.log (↑s + 1) * (Real.sqrt (((O + N + s : ℕ) : ℝ) + 1) / ↑s) =
+                 C * Real.log (↑s + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / ↑s)
             rw [show (O + N + s : ℕ) = (N + j : ℕ) from hOj]
   have hhead :
-      ‖∑ m ∈ Finset.range O, baseFn m‖ ≤ C * target := by
+      ‖∑ m ∈ Finset.range O, baseFn m‖ ≤ C * Real.log (↑s + 1) * target := by
     have hraw := hbound s hs O
     have hOj_le : ((O + s : ℕ) : ℝ) + 1 ≤ (((N + j : ℕ) : ℝ) + 1) := by
       have hnat : O + s + 1 ≤ N + j + 1 := by
@@ -7067,10 +7137,10 @@ private theorem atkinson_shiftedInversePhaseCore_reindexed_tail_bound
       exact_mod_cast hnat
     calc
       ‖∑ m ∈ Finset.range O, baseFn m‖
-          ≤ C * (Real.sqrt (((O + s : ℕ) : ℝ) + 1) / s) := by
+          ≤ C * Real.log (↑s + 1) * (Real.sqrt (((O + s : ℕ) : ℝ) + 1) / s) := by
               simpa [baseFn, Nat.add_assoc, add_left_comm, add_comm] using hraw
-      _ ≤ C * target := by
-            refine mul_le_mul_of_nonneg_left ?_ (le_of_lt hC)
+      _ ≤ C * Real.log (↑s + 1) * target := by
+            apply mul_le_mul_of_nonneg_left _ (mul_nonneg (le_of_lt hC) hlog_s_nonneg)
             exact div_le_div_of_nonneg_right
               (Real.sqrt_le_sqrt hOj_le)
               (by positivity : (0 : ℝ) ≤ s)
@@ -7084,9 +7154,9 @@ private theorem atkinson_shiftedInversePhaseCore_reindexed_tail_bound
           rw [hsplit]
     _ ≤ ‖∑ m ∈ Finset.range (O + N), baseFn m‖ + ‖∑ m ∈ Finset.range O, baseFn m‖ := by
           exact norm_sub_le _ _
-    _ ≤ C * target + C * target := by
+    _ ≤ C * Real.log (↑s + 1) * target + C * Real.log (↑s + 1) * target := by
           exact add_le_add hmain hhead
-    _ = (2 * C) * target := by
+    _ = (2 * C) * Real.log (↑s + 1) * target := by
           ring
 
 private theorem atkinson_kernelWeightedShiftedInversePhaseCore_abel_bound_atomic
@@ -7096,22 +7166,27 @@ private theorem atkinson_kernelWeightedShiftedInversePhaseCore_abel_bound_atomic
           ((((atkinsonLowerBoundaryShiftKernel (k + j) j s : ℝ) : ℂ)) *
             ((((1 / atkinsonShiftedRelativePhase (k + (j + s)) s : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + j) s))‖
-        ≤ C_err * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_err * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨C, hC, hshifted⟩ := atkinson_shiftedInversePhaseCore_reindexed_tail_bound
   refine ⟨4 * C, by positivity, ?_⟩
   intro j hj s hs hsj N
   by_cases hN : N = 0
   · have hnonneg :
-        0 ≤ (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by positivity
+        0 ≤ (4 * C) * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+      apply mul_nonneg
+      · exact mul_nonneg (by positivity) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
+      · positivity
     simpa [hN] using hnonneg
   · obtain ⟨n0, hn0 : N = n0 + 1⟩ := Nat.exists_eq_succ_of_ne_zero hN
     let baseFn : ℕ → ℂ := fun k =>
       ((((1 / atkinsonShiftedRelativePhase (k + (j + s)) s : ℝ) : ℂ)) *
         atkinsonShiftedSingleBoundaryCore (k + j) s)
-    let C0 : ℝ := C * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / s)
+    let C0 : ℝ := C * Real.log (↑s + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / s)
     let aRe : ℕ → ℝ := fun k => (baseFn k).re
     let aIm : ℕ → ℝ := fun k => (baseFn k).im
     let b : ℕ → ℝ := fun k => atkinsonLowerBoundaryShiftKernel (k + j) j s
+    have hlog_s_nonneg : 0 ≤ Real.log (↑s + 1) :=
+      Real.log_nonneg (by exact_mod_cast show 1 ≤ s + 1 by omega)
     have hpartial_re : ∀ k ≤ n0, |∑ m ∈ Finset.range (k + 1), aRe m| ≤ C0 := by
       intro k hk
       have hbound := hshifted j hj s hs hsj (k + 1)
@@ -7127,10 +7202,11 @@ private theorem atkinson_kernelWeightedShiftedInversePhaseCore_abel_bound_atomic
             = |(∑ m ∈ Finset.range (k + 1), baseFn m).re| := by
                 simp [aRe]
         _ ≤ ‖∑ m ∈ Finset.range (k + 1), baseFn m‖ := Complex.abs_re_le_norm _
-        _ ≤ C * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / s) := by
+        _ ≤ C * Real.log (↑s + 1) * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / s) := by
               simpa [baseFn, Nat.add_assoc, add_left_comm, add_comm] using hbound
-        _ ≤ C * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / s) := by
-              exact mul_le_mul_of_nonneg_left htarget_k (le_of_lt hC)
+        _ ≤ C * Real.log (↑s + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / s) := by
+              exact mul_le_mul_of_nonneg_left htarget_k
+                (mul_nonneg (le_of_lt hC) hlog_s_nonneg)
         _ = C0 := by
               rfl
     have hpartial_im : ∀ k ≤ n0, |∑ m ∈ Finset.range (k + 1), aIm m| ≤ C0 := by
@@ -7148,10 +7224,11 @@ private theorem atkinson_kernelWeightedShiftedInversePhaseCore_abel_bound_atomic
             = |(∑ m ∈ Finset.range (k + 1), baseFn m).im| := by
                 simp [aIm]
         _ ≤ ‖∑ m ∈ Finset.range (k + 1), baseFn m‖ := Complex.abs_im_le_norm _
-        _ ≤ C * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / s) := by
+        _ ≤ C * Real.log (↑s + 1) * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / s) := by
               simpa [baseFn, Nat.add_assoc, add_left_comm, add_comm] using hbound
-        _ ≤ C * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / s) := by
-              exact mul_le_mul_of_nonneg_left htarget_k (le_of_lt hC)
+        _ ≤ C * Real.log (↑s + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / s) := by
+              exact mul_le_mul_of_nonneg_left htarget_k
+                (mul_nonneg (le_of_lt hC) hlog_s_nonneg)
         _ = C0 := by
               rfl
     have hb_nonneg : ∀ k ≤ n0, 0 ≤ b k := by
@@ -7180,7 +7257,7 @@ private theorem atkinson_kernelWeightedShiftedInversePhaseCore_abel_bound_atomic
           simp [aIm, b, baseFn, mul_comm, mul_left_comm, mul_assoc]
     have hre :
         |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).re|
-          ≤ (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+          ≤ (2 * C) * Real.log (↑s + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
       have habel :=
         AbelSummation.abel_summation_bound aRe b n0 C0 hpartial_re hb_nonneg hb_anti
       calc
@@ -7190,12 +7267,12 @@ private theorem atkinson_kernelWeightedShiftedInversePhaseCore_abel_bound_atomic
         _ ≤ C0 * b 0 := habel
         _ ≤ C0 * (2 * s / j) := by
               gcongr
-        _ = (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        _ = (2 * C) * Real.log (↑s + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
               unfold C0
               field_simp [show ((s : ℕ) : ℝ) ≠ 0 by positivity, show (j : ℝ) ≠ 0 by positivity]
     have him :
         |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).im|
-          ≤ (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+          ≤ (2 * C) * Real.log (↑s + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
       have habel :=
         AbelSummation.abel_summation_bound aIm b n0 C0 hpartial_im hb_nonneg hb_anti
       calc
@@ -7205,12 +7282,14 @@ private theorem atkinson_kernelWeightedShiftedInversePhaseCore_abel_bound_atomic
         _ ≤ C0 * b 0 := habel
         _ ≤ C0 * (2 * s / j) := by
               gcongr
-        _ = (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        _ = (2 * C) * Real.log (↑s + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
               unfold C0
               field_simp [show ((s : ℕ) : ℝ) ≠ 0 by positivity, show (j : ℝ) ≠ 0 by positivity]
+    have hlog_le : Real.log (↑s + 1) ≤ Real.log (↑j + 1) :=
+      Real.log_le_log (by positivity) (by exact_mod_cast show s + 1 ≤ j + 1 by omega)
     have hnorm :
         ‖∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)‖
-          ≤ (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+          ≤ (4 * C) * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
       calc
         ‖∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)‖
             ≤
@@ -7218,12 +7297,14 @@ private theorem atkinson_kernelWeightedShiftedInversePhaseCore_abel_bound_atomic
             +
           |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).im| := by
               exact Complex.norm_le_abs_re_add_abs_im _
-        _ ≤ (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
+        _ ≤ (2 * C) * Real.log (↑s + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
               +
-            (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+            (2 * C) * Real.log (↑s + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
                 exact add_le_add hre him
-        _ = (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        _ = (4 * C) * Real.log (↑s + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
               ring
+        _ ≤ (4 * C) * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+              gcongr
     calc
       ‖∑ k ∈ Finset.range N,
           ((((atkinsonLowerBoundaryShiftKernel (k + j) j s : ℝ) : ℂ)) *
@@ -7231,7 +7312,7 @@ private theorem atkinson_kernelWeightedShiftedInversePhaseCore_abel_bound_atomic
               atkinsonShiftedSingleBoundaryCore (k + j) s))‖
         = ‖∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)‖ := by
             simpa [hn0, b, baseFn, Nat.add_assoc, add_left_comm, add_comm]
-      _ ≤ (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := hnorm
+      _ ≤ (4 * C) * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := hnorm
 
 /-- Kernel-weighted next-shift Abel bound: the shifted inverse-phase core
 at shift `r + 2` weighted by kernel(`r + 1`) · (stepCoeff(`r + 1`) − 1).
@@ -7252,7 +7333,7 @@ class AtkinsonKernelWeightedNextShiftAbelBoundHyp : Prop where
               ((((1 / atkinsonShiftedRelativePhase
                   (k + (j + (r + 2))) (r + 2) : ℝ) : ℂ)) *
                 atkinsonShiftedSingleBoundaryCore (k + j) (r + 2))))‖
-        ≤ C_err * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
+        ≤ C_err * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
 
 private theorem atkinson_kernelWeightedNextShift_abel_bound_atomic
     [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] :
@@ -7268,13 +7349,19 @@ private theorem atkinson_kernelWeightedNextShift_abel_bound_atomic
   have hr2j : r + 2 ≤ j := hrj
   have hr1_lt_j : r + 1 < j := by omega
   by_cases hN : N = 0
-  · simpa [hN] using show 0 ≤ (8 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) by positivity
+  · have hnonneg : 0 ≤ (8 * C) * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+      apply mul_nonneg
+      · exact mul_nonneg (by positivity) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
+      · positivity
+    simpa [hN] using hnonneg
   obtain ⟨n0, hn0 : N = n0 + 1⟩ := Nat.exists_eq_succ_of_ne_zero hN
   -- baseFn: the inner (1/phase) × core at shift r+2
   let baseFn : ℕ → ℂ := fun k =>
     ((((1 / atkinsonShiftedRelativePhase (k + (j + (r + 2))) (r + 2) : ℝ) : ℂ)) *
       atkinsonShiftedSingleBoundaryCore (k + j) (r + 2))
-  let C0 : ℝ := C * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / (r + 2))
+  have hlog_r2_nonneg : 0 ≤ Real.log (↑(r + 2) + 1) :=
+    Real.log_nonneg (by exact_mod_cast show 1 ≤ r + 2 + 1 by omega)
+  let C0 : ℝ := C * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / (r + 2))
   let aRe : ℕ → ℝ := fun k => (baseFn k).re
   let aIm : ℕ → ℝ := fun k => (baseFn k).im
   -- Partial-sum bounds for baseFn via atkinson_shiftedInversePhaseCore_reindexed_tail_bound
@@ -7293,10 +7380,11 @@ private theorem atkinson_kernelWeightedNextShift_abel_bound_atomic
           = |(∑ m ∈ Finset.range (k + 1), baseFn m).re| := by
               simp [aRe]
       _ ≤ ‖∑ m ∈ Finset.range (k + 1), baseFn m‖ := Complex.abs_re_le_norm _
-      _ ≤ C * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / (r + 2)) := by
+      _ ≤ C * Real.log (↑(r + 2) + 1) * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / (r + 2)) := by
             simpa [baseFn, Nat.add_assoc, add_left_comm, add_comm] using hbound
-      _ ≤ C * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / (r + 2)) := by
-            exact mul_le_mul_of_nonneg_left htarget_k (le_of_lt hC)
+      _ ≤ C * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / (r + 2)) := by
+            exact mul_le_mul_of_nonneg_left htarget_k
+              (mul_nonneg (le_of_lt hC) hlog_r2_nonneg)
       _ = C0 := by rfl
   have hpartial_im : ∀ k ≤ n0, |∑ m ∈ Finset.range (k + 1), aIm m| ≤ C0 := by
     intro k hk
@@ -7313,10 +7401,11 @@ private theorem atkinson_kernelWeightedNextShift_abel_bound_atomic
           = |(∑ m ∈ Finset.range (k + 1), baseFn m).im| := by
               simp [aIm]
       _ ≤ ‖∑ m ∈ Finset.range (k + 1), baseFn m‖ := Complex.abs_im_le_norm _
-      _ ≤ C * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / (r + 2)) := by
+      _ ≤ C * Real.log (↑(r + 2) + 1) * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / (r + 2)) := by
             simpa [baseFn, Nat.add_assoc, add_left_comm, add_comm] using hbound
-      _ ≤ C * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / (r + 2)) := by
-            exact mul_le_mul_of_nonneg_left htarget_k (le_of_lt hC)
+      _ ≤ C * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / (r + 2)) := by
+            exact mul_le_mul_of_nonneg_left htarget_k
+              (mul_nonneg (le_of_lt hC) hlog_r2_nonneg)
       _ = C0 := by rfl
   -- Abel-summation for kernel(r+2) × baseFn
   let b₂ : ℕ → ℝ := fun k => atkinsonLowerBoundaryShiftKernel (k + j) j (r + 2)
@@ -7370,9 +7459,9 @@ private theorem atkinson_kernelWeightedNextShift_abel_bound_atomic
   -- Bound ‖∑ kernel(r+2) × baseFn‖
   have hnorm₂ :
       ‖∑ k ∈ Finset.range (n0 + 1), ((((b₂ k : ℝ) : ℂ)) * baseFn k)‖
-        ≤ (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ (4 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
     have hre : |(∑ k ∈ Finset.range (n0 + 1), ((((b₂ k : ℝ) : ℂ)) * baseFn k)).re|
-        ≤ (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ (2 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
       have habel :=
         AbelSummation.abel_summation_bound aRe b₂ n0 C0 hpartial_re hb₂_nonneg hb₂_anti
       calc
@@ -7380,12 +7469,12 @@ private theorem atkinson_kernelWeightedNextShift_abel_bound_atomic
             = |∑ k ∈ Finset.range (n0 + 1), aRe k * b₂ k| := by rw [hsum₂_re]
         _ ≤ C0 * b₂ 0 := habel
         _ ≤ C0 * (2 * (r + 2) / j) := by gcongr
-        _ = (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        _ = (2 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
               unfold C0
               field_simp [show ((r + 2 : ℕ) : ℝ) ≠ 0 by positivity,
                 show (j : ℝ) ≠ 0 by positivity]
     have him : |(∑ k ∈ Finset.range (n0 + 1), ((((b₂ k : ℝ) : ℂ)) * baseFn k)).im|
-        ≤ (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ (2 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
       have habel :=
         AbelSummation.abel_summation_bound aIm b₂ n0 C0 hpartial_im hb₂_nonneg hb₂_anti
       calc
@@ -7393,7 +7482,7 @@ private theorem atkinson_kernelWeightedNextShift_abel_bound_atomic
             = |∑ k ∈ Finset.range (n0 + 1), aIm k * b₂ k| := by rw [hsum₂_im]
         _ ≤ C0 * b₂ 0 := habel
         _ ≤ C0 * (2 * (r + 2) / j) := by gcongr
-        _ = (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        _ = (2 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
               unfold C0
               field_simp [show ((r + 2 : ℕ) : ℝ) ≠ 0 by positivity,
                 show (j : ℝ) ≠ 0 by positivity]
@@ -7402,16 +7491,16 @@ private theorem atkinson_kernelWeightedNextShift_abel_bound_atomic
           ≤ |(∑ k ∈ Finset.range (n0 + 1), ((((b₂ k : ℝ) : ℂ)) * baseFn k)).re|
             + |(∑ k ∈ Finset.range (n0 + 1), ((((b₂ k : ℝ) : ℂ)) * baseFn k)).im| :=
               Complex.norm_le_abs_re_add_abs_im _
-      _ ≤ (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
-            + (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) :=
+      _ ≤ (2 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
+            + (2 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) :=
               add_le_add hre him
-      _ = (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by ring
+      _ = (4 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by ring
   -- Bound ‖∑ kernel(r+1) × baseFn‖
   have hnorm₁ :
       ‖∑ k ∈ Finset.range (n0 + 1), ((((b₁ k : ℝ) : ℂ)) * baseFn k)‖
-        ≤ (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ (4 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
     have hre : |(∑ k ∈ Finset.range (n0 + 1), ((((b₁ k : ℝ) : ℂ)) * baseFn k)).re|
-        ≤ (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ (2 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
       have habel :=
         AbelSummation.abel_summation_bound aRe b₁ n0 C0 hpartial_re hb₁_nonneg hb₁_anti
       calc
@@ -7422,12 +7511,12 @@ private theorem atkinson_kernelWeightedNextShift_abel_bound_atomic
         _ ≤ C0 * (2 * (r + 2) / j) := by
               gcongr
               norm_cast
-        _ = (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        _ = (2 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
               unfold C0
               field_simp [show ((r + 2 : ℕ) : ℝ) ≠ 0 by positivity,
                 show (j : ℝ) ≠ 0 by positivity]
     have him : |(∑ k ∈ Finset.range (n0 + 1), ((((b₁ k : ℝ) : ℂ)) * baseFn k)).im|
-        ≤ (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ (2 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
       have habel :=
         AbelSummation.abel_summation_bound aIm b₁ n0 C0 hpartial_im hb₁_nonneg hb₁_anti
       calc
@@ -7438,7 +7527,7 @@ private theorem atkinson_kernelWeightedNextShift_abel_bound_atomic
         _ ≤ C0 * (2 * (r + 2) / j) := by
               gcongr
               norm_cast
-        _ = (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        _ = (2 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
               unfold C0
               field_simp [show ((r + 2 : ℕ) : ℝ) ≠ 0 by positivity,
                 show (j : ℝ) ≠ 0 by positivity]
@@ -7447,10 +7536,10 @@ private theorem atkinson_kernelWeightedNextShift_abel_bound_atomic
           ≤ |(∑ k ∈ Finset.range (n0 + 1), ((((b₁ k : ℝ) : ℂ)) * baseFn k)).re|
             + |(∑ k ∈ Finset.range (n0 + 1), ((((b₁ k : ℝ) : ℂ)) * baseFn k)).im| :=
               Complex.norm_le_abs_re_add_abs_im _
-      _ ≤ (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
-            + (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) :=
+      _ ≤ (2 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
+            + (2 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) :=
               add_le_add hre him
-      _ = (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by ring
+      _ = (4 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by ring
   -- Rewrite the original sum using the kernel identity
   have hrewrite : ∀ k : ℕ,
       ((((atkinsonLowerBoundaryShiftKernel (k + j) j (r + 1) : ℝ) : ℂ)) *
@@ -7520,10 +7609,12 @@ private theorem atkinson_kernelWeightedNextShift_abel_bound_atomic
     _ ≤ ‖∑ k ∈ Finset.range (n0 + 1), ((((b₂ k : ℝ) : ℂ)) * baseFn k)‖
         + ‖∑ k ∈ Finset.range (n0 + 1), ((((b₁ k : ℝ) : ℂ)) * baseFn k)‖ :=
             norm_sub_le _ _
-    _ ≤ (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
-        + (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) :=
+    _ ≤ (4 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
+        + (4 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) :=
             add_le_add hnorm₂ hnorm₁
-    _ = (8 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by ring
+    _ = (8 * C) * Real.log (↑(r + 2) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by ring
+    _ ≤ (8 * C) * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+          gcongr <;> exact_mod_cast show r + 2 + 1 ≤ j + 1 by omega
 
 /-- Leaf hypothesis for the shifted inverse-phase-core prefix bound at small
 shifts (`j = 1, 2`).  The honest large-shift bridge below starts at `j = 3`, so
@@ -7535,7 +7626,7 @@ class AtkinsonSmallShiftPrefixBoundHyp : Prop where
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
             atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-        ≤ C_small * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
+        ≤ C_small * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
 
 /-- Fixed-shift reindex helper from the native inverse-phase-core prefix surface
 to the shifted `k + j` prefix surface consumed by `AtkinsonSmallShiftPrefixBoundHyp`.
@@ -7717,28 +7808,42 @@ private theorem atkinson_smallShiftPrefixBound_of_native_j1_j2
     atkinson_shiftedInversePhaseCorePrefix_bound_shifted_of_native_fixedShift 1 (by norm_num) hj1'
   obtain ⟨C2, hC2, hshift2⟩ :=
     atkinson_shiftedInversePhaseCorePrefix_bound_shifted_of_native_fixedShift 2 (by norm_num) hj2'
-  refine ⟨C1 + C2, by positivity, ?_⟩
+  have hlog2_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  refine ⟨(C1 + C2) / Real.log 2, by positivity, ?_⟩
   intro j hj hj2 N
   have hj_cases : j = 1 ∨ j = 2 := by omega
   rcases hj_cases with rfl | rfl
-  · calc
+  · have hlog_ge : Real.log 2 ≤ Real.log (↑(1 : ℕ) + 1) := by norm_num
+    calc
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonShiftedRelativePhase (k + (1 + 1)) 1 : ℝ) : ℂ)) *
             atkinsonShiftedSingleBoundaryCore (k + 1) 1)‖
         ≤ C1 * (Real.sqrt (((N + 1 : ℕ) : ℝ) + 1) / ((1 : ℕ) : ℝ)) := by
             simpa using hshift1 N
       _ ≤ (C1 + C2) * (Real.sqrt (((N + 1 : ℕ) : ℝ) + 1) / ((1 : ℕ) : ℝ)) := by
-            gcongr
-            linarith
-  · calc
+            gcongr; linarith
+      _ = (C1 + C2) / Real.log 2 * Real.log 2 *
+            (Real.sqrt (((N + 1 : ℕ) : ℝ) + 1) / ((1 : ℕ) : ℝ)) := by
+            rw [div_mul_cancel₀]; exact ne_of_gt hlog2_pos
+      _ ≤ (C1 + C2) / Real.log 2 * Real.log (↑(1 : ℕ) + 1) *
+            (Real.sqrt (((N + 1 : ℕ) : ℝ) + 1) / ((1 : ℕ) : ℝ)) := by
+            norm_num
+  · have hlog_ge : Real.log 2 ≤ Real.log (↑(2 : ℕ) + 1) := by
+      exact Real.log_le_log (by positivity) (by norm_num)
+    calc
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonShiftedRelativePhase (k + (2 + 2)) 2 : ℝ) : ℂ)) *
             atkinsonShiftedSingleBoundaryCore (k + 2) 2)‖
         ≤ C2 * (Real.sqrt (((N + 2 : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ)) := by
             simpa using hshift2 N
       _ ≤ (C1 + C2) * (Real.sqrt (((N + 2 : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ)) := by
+            gcongr; linarith
+      _ = (C1 + C2) / Real.log 2 * Real.log 2 *
+            (Real.sqrt (((N + 2 : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ)) := by
+            rw [div_mul_cancel₀]; exact ne_of_gt hlog2_pos
+      _ ≤ (C1 + C2) / Real.log 2 * Real.log (↑(2 : ℕ) + 1) *
+            (Real.sqrt (((N + 2 : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ)) := by
             gcongr
-            linarith
 
 /-- Patch-ready local successor step for the large-shift seam.
 
@@ -7756,17 +7861,19 @@ private theorem atkinson_largeShiftPrefix_succ_boundary_bound_atomic
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonUpperBoundaryStepCoeff (k + (j + 1)) j : ℝ) : ℂ)) *
             atkinsonResonantShiftedBoundaryTerm (k + (j + 1)) j)‖
-        ≤ C_bdry * (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1)) := by
+        ≤ C_bdry * Real.log (↑j + 1) * (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1)) := by
   obtain ⟨C_complete, hC_complete, hcomplete⟩ :=
     atkinsonResonantShiftedBoundary_recipStepCoeff_weighted_bound_atomic hbdryRow
   refine ⟨2 * C_complete, by positivity, ?_⟩
   intro j hj N
+  have hlog_j_nonneg : 0 ≤ Real.log (↑j + 1) :=
+    Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
   have hbdry :
       ∀ N : ℕ,
         ‖∑ k ∈ Finset.range N,
             ((((1 / atkinsonUpperBoundaryStepCoeff (k + (j + 1)) j : ℝ) : ℂ)) *
               atkinsonResonantShiftedBoundaryTerm (k + (j + 1)) j)‖
-          ≤ (2 * C_complete) *
+          ≤ (2 * C_complete) * Real.log (↑j + 1) *
               (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1)) := by
     intro N
     have hj_pos : (0 : ℝ) < j := by positivity
@@ -7775,7 +7882,7 @@ private theorem atkinson_largeShiftPrefix_succ_boundary_bound_atomic
         ‖∑ k ∈ Finset.range N,
             ((((1 / atkinsonUpperBoundaryStepCoeff (k + (j + 1)) j : ℝ) : ℂ)) *
               atkinsonResonantShiftedBoundaryTerm (k + (j + 1)) j)‖
-          ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+          ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
       exact hcomplete j (by omega) N
     have hfrac :
         (1 : ℝ) / j ≤ (2 : ℝ) / (j + 1 : ℝ) := by
@@ -7810,11 +7917,11 @@ private theorem atkinson_largeShiftPrefix_succ_boundary_bound_atomic
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonUpperBoundaryStepCoeff (k + (j + 1)) j : ℝ) : ℂ)) *
             atkinsonResonantShiftedBoundaryTerm (k + (j + 1)) j)‖
-        ≤ C_complete * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := hrecip
-      _ ≤ C_complete *
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := hrecip
+      _ ≤ C_complete * Real.log (↑j + 1) *
             (2 * (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1))) := by
               gcongr
-      _ = (2 * C_complete) *
+      _ = (2 * C_complete) * Real.log (↑j + 1) *
             (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1)) := by
               ring
   exact hbdry N
@@ -7860,7 +7967,7 @@ private theorem atkinson_largeShiftPrefix_succ_affine_step
               ((((1 / atkinsonShiftedRelativePhase
                   (k + ((j + 1) + (j + 1))) (j + 1) : ℝ) : ℂ)) *
                 atkinsonShiftedSingleBoundaryCore (k + (j + 1)) (j + 1))‖
-            ≤ (γ * C_prev + C_bdry) *
+            ≤ (γ * C_prev + C_bdry * Real.log (↑j + 1)) *
                 (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1)) := by
   obtain ⟨C_bdry, hC_bdry, hbdry⟩ :=
     atkinson_largeShiftPrefix_succ_boundary_bound_atomic hbdryRow
@@ -7894,11 +8001,11 @@ private theorem atkinson_largeShiftPrefix_succ_affine_step
               atkinsonShiftedSingleBoundaryCore (k + (j + 1)) j))‖ := by
           exact norm_add_le _ _
     _ ≤
-      C_bdry * (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1))
+      C_bdry * Real.log (↑j + 1) * (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1))
         +
       γ * C_prev * (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1)) := by
           exact add_le_add (hbdry j hj N) ((htail C_prev hC_prev j hj hprev) N)
-    _ = (γ * C_prev + C_bdry) *
+    _ = (γ * C_prev + C_bdry * Real.log (↑j + 1)) *
           (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1)) := by
           ring
 
@@ -8204,7 +8311,7 @@ class AtkinsonLargeShiftPrefixBoundHyp : Prop where
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
             atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-        ≤ C_large * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
+        ≤ C_large * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
 
 private theorem atkinson_smallShiftPrefixBound_of_shiftedInversePhaseCorePrefix
     [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] :
@@ -8287,7 +8394,7 @@ private theorem atkinson_largeShiftPrefixBound_atomic_of_nextShift
         ‖∑ k ∈ Finset.range N,
             ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-          ≤ C_large * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+          ≤ C_large * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
     intro j hj
     refine Nat.le_induction ?_ ?_ j hj
     · intro N
@@ -8295,14 +8402,20 @@ private theorem atkinson_largeShiftPrefixBound_atomic_of_nextShift
         ‖∑ k ∈ Finset.range N,
             ((((1 / atkinsonShiftedRelativePhase (k + (2 + 2)) 2 : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + 2) 2)‖
-          ≤ C_small * (Real.sqrt (((N + 2 : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ)) := by
+          ≤ C_small * Real.log (↑(2 : ℕ) + 1) *
+              (Real.sqrt (((N + 2 : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ)) := by
               exact hC_small 2 (by omega) (by omega) N
-        _ ≤ C_large * (Real.sqrt (((N + 2 : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ)) := by
+        _ ≤ C_large * Real.log (↑(2 : ℕ) + 1) *
+              (Real.sqrt (((N + 2 : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ)) := by
               gcongr
               exact le_max_left _ _
     · intro j hj ih N
+      have hlog_j_pos : 0 < Real.log (↑j + 1) := by
+        rw [Real.log_pos_iff (by positivity)]
+        exact_mod_cast show 1 < j + 1 by omega
       have hnext :=
-        hsucc' C_large hC_large_pos j hj (fun N' => ih N') N
+        hsucc' (C_large * Real.log (↑j + 1)) (mul_pos hC_large_pos hlog_j_pos)
+          j hj (fun N' => ih N') N
       have htarget_nonneg :
           0 ≤ Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / ((j : ℝ) + 1) := by
         simpa [Nat.cast_add]
@@ -8310,22 +8423,40 @@ private theorem atkinson_largeShiftPrefixBound_atomic_of_nextShift
             (show
               0 ≤ Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (((j + 1 : ℕ) : ℝ)) by
                 positivity)
+      -- hnext : ... ≤ (γ * (C_large * log(j+1)) + C_bdry * log(j+1)) * (sqrt/(j+1))
+      --       = (γ * C_large + C_bdry) * log(j+1) * (sqrt/(j+1))
       have hstep :
         ‖∑ k ∈ Finset.range N,
             ((((1 / atkinsonShiftedRelativePhase
                 (k + ((j + 1) + (j + 1))) (j + 1) : ℝ) : ℂ)) *
               atkinsonShiftedSingleBoundaryCore (k + (j + 1)) (j + 1))‖
-          ≤ (γ * C_large + C_bdry) *
+          ≤ (γ * C_large + C_bdry) * Real.log (↑j + 1) *
               (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / ((j : ℝ) + 1)) := by
-              simpa [Nat.cast_add] using hnext
+              have h : (γ * (C_large * Real.log (↑j + 1)) + C_bdry * Real.log (↑j + 1))
+                  = (γ * C_large + C_bdry) * Real.log (↑j + 1) := by ring
+              simpa [Nat.cast_add, h] using hnext
       have hstep' :
           ‖∑ k ∈ Finset.range N,
               ((((1 / atkinsonShiftedRelativePhase
                   (k + ((j + 1) + (j + 1))) (j + 1) : ℝ) : ℂ)) *
                 atkinsonShiftedSingleBoundaryCore (k + (j + 1)) (j + 1))‖
-            ≤ C_large * (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / ((j : ℝ) + 1)) := by
-        exact le_trans hstep (mul_le_mul_of_nonneg_right hfixed htarget_nonneg)
-      simpa [Nat.cast_add] using hstep'
+            ≤ C_large * Real.log (↑j + 1) *
+                (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / ((j : ℝ) + 1)) := by
+        calc _ ≤ (γ * C_large + C_bdry) * Real.log (↑j + 1) *
+                    (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / ((j : ℝ) + 1)) := hstep
+          _ ≤ C_large * Real.log (↑j + 1) *
+                  (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / ((j : ℝ) + 1)) := by
+              gcongr
+      have hlog_mono : Real.log (↑j + 1) ≤ Real.log ((↑j : ℝ) + 1 + 1) := by
+        exact Real.log_le_log (by positivity) (by linarith)
+      calc _ ≤ C_large * Real.log (↑j + 1) *
+                  (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / ((j : ℝ) + 1)) := hstep'
+        _ ≤ C_large * Real.log ((↑j : ℝ) + 1 + 1) *
+                (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / ((j : ℝ) + 1)) := by
+            gcongr
+        _ = C_large * Real.log (↑(j + 1 : ℕ) + 1) *
+                (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (↑(j + 1 : ℕ))) := by
+            push_cast; ring_nf
   refine ⟨C_large, hC_large_pos, ?_⟩
   intro j hj N
   exact hind j (by omega) N
@@ -8339,7 +8470,7 @@ private theorem atkinson_kernelWeightedIcoTail_abel_bound_atomic
             ((((atkinsonUpperBoundaryStepCoeff (k + j) (r + 1) - 1 : ℝ) : ℂ)) *
               ((((1 / atkinsonShiftedRelativePhase (k + (j + (r + 1))) (r + 1) : ℝ) : ℂ)) *
                 atkinsonShiftedSingleBoundaryCore (k + j) (r + 1))))‖
-        ≤ C_err * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_err * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨C, hC, hweighted⟩ := atkinson_weightedIcoTail_reindexed_tail_bound
   refine ⟨4 * C, by positivity, ?_⟩
   intro j hj r hr hrj N
@@ -8349,14 +8480,18 @@ private theorem atkinson_kernelWeightedIcoTail_abel_bound_atomic
     omega
   by_cases hN : N = 0
   · have hnonneg :
-        0 ≤ (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by positivity
+        0 ≤ (4 * C) * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+      apply mul_nonneg
+      · apply mul_nonneg; positivity
+        exact Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
+      · positivity
     simpa [hN] using hnonneg
   · obtain ⟨n0, hn0 : N = n0 + 1⟩ := Nat.exists_eq_succ_of_ne_zero hN
     let baseFn : ℕ → ℂ := fun k =>
       ((((atkinsonUpperBoundaryStepCoeff (k + j) (r + 1) - 1 : ℝ) : ℂ)) *
         ((((1 / atkinsonShiftedRelativePhase (k + (j + (r + 1))) (r + 1) : ℝ) : ℂ)) *
           atkinsonShiftedSingleBoundaryCore (k + j) (r + 1)))
-    let C0 : ℝ := C * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / (r + 1))
+    let C0 : ℝ := C * Real.log (↑(r + 1) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / (r + 1))
     let aRe : ℕ → ℝ := fun k => (baseFn k).re
     let aIm : ℕ → ℝ := fun k => (baseFn k).im
     let b : ℕ → ℝ := fun k => atkinsonLowerBoundaryShiftKernel (k + j) j (r + 1)
@@ -8375,10 +8510,12 @@ private theorem atkinson_kernelWeightedIcoTail_abel_bound_atomic
             = |(∑ m ∈ Finset.range (k + 1), baseFn m).re| := by
                 simp [aRe]
         _ ≤ ‖∑ m ∈ Finset.range (k + 1), baseFn m‖ := Complex.abs_re_le_norm _
-        _ ≤ C * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / (r + 1)) := by
+        _ ≤ C * Real.log (↑(r + 1) + 1) * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / (r + 1)) := by
               simpa [baseFn, Nat.add_assoc, add_left_comm, add_comm] using hbound
-        _ ≤ C * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / (r + 1)) := by
-              exact mul_le_mul_of_nonneg_left htarget_k (le_of_lt hC)
+        _ ≤ C * Real.log (↑(r + 1) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / (r + 1)) := by
+              exact mul_le_mul_of_nonneg_left htarget_k
+                (mul_nonneg (le_of_lt hC)
+                  (Real.log_nonneg (by exact_mod_cast show 1 ≤ (r + 1 : ℕ) + 1 by omega)))
         _ = C0 := by
               rfl
     have hpartial_im : ∀ k ≤ n0, |∑ m ∈ Finset.range (k + 1), aIm m| ≤ C0 := by
@@ -8396,10 +8533,12 @@ private theorem atkinson_kernelWeightedIcoTail_abel_bound_atomic
             = |(∑ m ∈ Finset.range (k + 1), baseFn m).im| := by
                 simp [aIm]
         _ ≤ ‖∑ m ∈ Finset.range (k + 1), baseFn m‖ := Complex.abs_im_le_norm _
-        _ ≤ C * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / (r + 1)) := by
+        _ ≤ C * Real.log (↑(r + 1) + 1) * (Real.sqrt (((k + 1 + j : ℕ) : ℝ) + 1) / (r + 1)) := by
               simpa [baseFn, Nat.add_assoc, add_left_comm, add_comm] using hbound
-        _ ≤ C * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / (r + 1)) := by
-              exact mul_le_mul_of_nonneg_left htarget_k (le_of_lt hC)
+        _ ≤ C * Real.log (↑(r + 1) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / (r + 1)) := by
+              exact mul_le_mul_of_nonneg_left htarget_k
+                (mul_nonneg (le_of_lt hC)
+                  (Real.log_nonneg (by exact_mod_cast show 1 ≤ (r + 1 : ℕ) + 1 by omega)))
         _ = C0 := by
               rfl
     have hb_nonneg : ∀ k ≤ n0, 0 ≤ b k := by
@@ -8426,9 +8565,11 @@ private theorem atkinson_kernelWeightedIcoTail_abel_bound_atomic
           =
         ∑ k ∈ Finset.range (n0 + 1), aIm k * b k := by
           simp [aIm, b, baseFn, mul_comm, mul_left_comm, mul_assoc]
+    have hlog_r_nonneg : 0 ≤ Real.log (↑(r + 1) + 1) :=
+      Real.log_nonneg (by exact_mod_cast show 1 ≤ (r + 1 : ℕ) + 1 by omega)
     have hre :
         |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).re|
-          ≤ (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+          ≤ (2 * C) * Real.log (↑(r + 1) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
       have habel :=
         AbelSummation.abel_summation_bound aRe b n0 C0 hpartial_re hb_nonneg hb_anti
       calc
@@ -8438,12 +8579,12 @@ private theorem atkinson_kernelWeightedIcoTail_abel_bound_atomic
         _ ≤ C0 * b 0 := habel
         _ ≤ C0 * (2 * (r + 1) / j) := by
               gcongr
-        _ = (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        _ = (2 * C) * Real.log (↑(r + 1) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
               unfold C0
               field_simp [show ((r + 1 : ℕ) : ℝ) ≠ 0 by positivity, show (j : ℝ) ≠ 0 by positivity]
     have him :
         |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).im|
-          ≤ (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+          ≤ (2 * C) * Real.log (↑(r + 1) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
       have habel :=
         AbelSummation.abel_summation_bound aIm b n0 C0 hpartial_im hb_nonneg hb_anti
       calc
@@ -8453,12 +8594,12 @@ private theorem atkinson_kernelWeightedIcoTail_abel_bound_atomic
         _ ≤ C0 * b 0 := habel
         _ ≤ C0 * (2 * (r + 1) / j) := by
               gcongr
-        _ = (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        _ = (2 * C) * Real.log (↑(r + 1) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
               unfold C0
               field_simp [show ((r + 1 : ℕ) : ℝ) ≠ 0 by positivity, show (j : ℝ) ≠ 0 by positivity]
     have hnorm :
         ‖∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)‖
-          ≤ (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+          ≤ (4 * C) * Real.log (↑(r + 1) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
       calc
         ‖∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)‖
             ≤
@@ -8466,11 +8607,11 @@ private theorem atkinson_kernelWeightedIcoTail_abel_bound_atomic
             +
           |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)).im| := by
               exact Complex.norm_le_abs_re_add_abs_im _
-        _ ≤ (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
+        _ ≤ (2 * C) * Real.log (↑(r + 1) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)
               +
-            (2 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+            (2 * C) * Real.log (↑(r + 1) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
                 exact add_le_add hre him
-        _ = (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+        _ = (4 * C) * Real.log (↑(r + 1) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
               ring
     calc
       ‖∑ k ∈ Finset.range N,
@@ -8481,7 +8622,9 @@ private theorem atkinson_kernelWeightedIcoTail_abel_bound_atomic
         =
       ‖∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn k)‖ := by
             simpa [hn0, b, baseFn, Nat.add_assoc, add_left_comm, add_comm]
-      _ ≤ (4 * C) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := hnorm
+      _ ≤ (4 * C) * Real.log (↑(r + 1) + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := hnorm
+      _ ≤ (4 * C) * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+            gcongr
 
 /-!
 Explicit name for the exact shifted `r + 1` kernel-weighted Abel bridge.
@@ -8503,17 +8646,23 @@ private theorem atkinson_shiftedInversePhaseCorePrefix_bound_of_splitShiftLeaves
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
             atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-        ≤ C_small * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := hC_small j hj hj2 N
-      _ ≤ (C_small + C_large) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
-            gcongr; linarith
+        ≤ C_small * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) :=
+            hC_small j hj hj2 N
+      _ ≤ (C_small + C_large) * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+            apply mul_le_mul_of_nonneg_right _ (by positivity)
+            apply mul_le_mul_of_nonneg_right _ (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
+            linarith
   · push_neg at hj2
     calc
       ‖∑ k ∈ Finset.range N,
           ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
             atkinsonShiftedSingleBoundaryCore (k + j) j)‖
-        ≤ C_large * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := hC_large j hj2 N
-      _ ≤ (C_small + C_large) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
-            gcongr; linarith
+        ≤ C_large * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) :=
+            hC_large j hj2 N
+      _ ≤ (C_small + C_large) * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+            apply mul_le_mul_of_nonneg_right _ (by positivity)
+            apply mul_le_mul_of_nonneg_right _ (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
+            linarith
 
 /-- Explicit name for the exact shifted `r + 1` kernel-weighted Abel bridge.
 This is just the class field above, but having a theorem name makes the
@@ -8542,7 +8691,7 @@ class AtkinsonLowerBoundaryRowBoundHyp : Prop where
             atkinsonWeightedResonantBlockMode (n + j) 0 *
               atkinsonShiftedSinglePrimitive (n + j) j 0
           else 0)‖
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 instance [AtkinsonSmallShiftPrefixBoundHyp]
@@ -8559,7 +8708,7 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_lower_boundary
             atkinsonWeightedResonantBlockMode (n + j) 0 *
               atkinsonShiftedSinglePrimitive (n + j) j 0
           else 0)‖
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) :=
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) :=
   AtkinsonLowerBoundaryRowBoundHyp.bound
 
 private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted_lower_sum_bound_atomic :
@@ -8570,10 +8719,10 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted
               (atkinsonWeightedResonantBlockMode (n + (j + 1)) 0 *
                 atkinsonShiftedSinglePrimitive (n + (j + 1)) (j + 1) 0)
           else 0)‖
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨Cl, hCl, hlower⟩ :=
     atkinson_large_modes_complete_resonant_packet_row_lower_boundary_sum_bound_atomic
-  refine ⟨2 * Real.sqrt 2 * Cl, by positivity, ?_⟩
+  refine ⟨4 * Real.sqrt 2 * Cl, by positivity, ?_⟩
   intro j hj M
   let J : ℕ := j + 1
   let coeff : ℕ → ℝ := fun n => atkinsonUpperBoundaryWeightedCoeff n j
@@ -8584,7 +8733,7 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted
   change
     ‖∑ n ∈ Finset.range M,
         (if J ≤ n then ((((coeff n : ℝ) : ℂ)) * baseFn n) else 0)‖
-      ≤ (2 * Real.sqrt 2 * Cl) * target
+      ≤ (4 * Real.sqrt 2 * Cl) * Real.log (↑j + 1) * target
   by_cases hJM : J ≤ M
   · let N : ℕ := M - J
     have hsum :
@@ -8683,14 +8832,26 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted
                 (Finset.sum_range_add_sum_Ico
                   (fun n => if J ≤ n then baseFn n else 0)
                   (Nat.le_add_right J K))
+    have hlog_bound : Real.log (↑J + 1) ≤ 2 * Real.log (↑j + 1) := by
+      have hjsq : (↑J + 1 : ℝ) ≤ (↑j + 1) ^ 2 := by
+        simp only [J]
+        push_cast
+        have : (1 : ℝ) ≤ (j : ℝ) := by exact_mod_cast hj
+        nlinarith [sq_nonneg (j : ℝ)]
+      calc
+        Real.log (↑J + 1) ≤ Real.log ((↑j + 1) ^ 2) := by
+              exact Real.log_le_log (by positivity) hjsq
+        _ = 2 * Real.log (↑j + 1) := by
+              rw [Real.log_pow]
+              ring
     have hpartial_bound (K : ℕ) (hK : K ≤ N) :
-        ‖∑ k ∈ Finset.range K, baseFn (k + J)‖ ≤ Real.sqrt 2 * Cl * target := by
+        ‖∑ k ∈ Finset.range K, baseFn (k + J)‖ ≤ 2 * Real.sqrt 2 * Cl * Real.log (↑j + 1) * target := by
       have hJK_le_M : J + K ≤ M := by
         dsimp [N] at hK
         omega
       have hraw :
           ‖∑ n ∈ Finset.range (J + K), (if J ≤ n then baseFn n else 0)‖
-            ≤ Cl * (Real.sqrt ((((J + K) + J : ℕ) : ℝ) + 1) / J) := by
+            ≤ Cl * Real.log (↑J + 1) * (Real.sqrt ((((J + K) + J : ℕ) : ℝ) + 1) / J) := by
               simpa [baseFn, J, Nat.add_assoc, add_left_comm, add_comm] using
                 hlower J (Nat.succ_le_succ (Nat.zero_le j)) (J + K)
       have htarget_K :
@@ -8708,10 +8869,16 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted
         ‖∑ k ∈ Finset.range K, baseFn (k + J)‖
             = ‖∑ n ∈ Finset.range (J + K), (if J ≤ n then baseFn n else 0)‖ := by
                 rw [hpartial_eq K]
-        _ ≤ Cl * (Real.sqrt ((((J + K) + J : ℕ) : ℝ) + 1) / J) := hraw
-        _ ≤ Cl * (Real.sqrt 2 * target) := by
-              exact mul_le_mul_of_nonneg_left htarget_K (le_of_lt hCl)
-        _ = Real.sqrt 2 * Cl * target := by ring
+        _ ≤ Cl * Real.log (↑J + 1) * (Real.sqrt ((((J + K) + J : ℕ) : ℝ) + 1) / J) := hraw
+        _ ≤ Cl * Real.log (↑J + 1) * (Real.sqrt 2 * target) := by
+              have hlog_nn : 0 ≤ Real.log (↑J + 1) :=
+                Real.log_nonneg (by exact_mod_cast show 1 ≤ J + 1 by omega)
+              exact mul_le_mul_of_nonneg_left htarget_K (mul_nonneg hCl.le hlog_nn)
+        _ ≤ Cl * (2 * Real.log (↑j + 1)) * (Real.sqrt 2 * target) := by
+              have hsqrt_target_nn : 0 ≤ Real.sqrt 2 * target := by positivity
+              exact mul_le_mul_of_nonneg_right
+                (mul_le_mul_of_nonneg_left hlog_bound hCl.le) hsqrt_target_nn
+        _ = 2 * Real.sqrt 2 * Cl * Real.log (↑j + 1) * target := by ring
     by_cases hN : N = 0
     · have hM_eq : M = J := by
         dsimp [N] at hN
@@ -8723,10 +8890,15 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted
         intro n hn
         have hnlt : n < J := by simpa [hM_eq] using Finset.mem_range.mp hn
         simp [hnlt.not_ge]
-      have hnonneg : 0 ≤ (2 * Real.sqrt 2 * Cl) * target := by positivity
+      have hnonneg : 0 ≤ (4 * Real.sqrt 2 * Cl) * Real.log (↑j + 1) * target := by
+        apply mul_nonneg
+        apply mul_nonneg
+        · positivity
+        · exact Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
+        · positivity
       simpa [hzero] using hnonneg
     · obtain ⟨n0, hn0 : N = n0 + 1⟩ := Nat.exists_eq_succ_of_ne_zero hN
-      let C0 : ℝ := Real.sqrt 2 * Cl * target
+      let C0 : ℝ := 2 * Real.sqrt 2 * Cl * Real.log (↑j + 1) * target
       let aRe : ℕ → ℝ := fun k => (baseFn (k + J)).re
       let aIm : ℕ → ℝ := fun k => (baseFn (k + J)).im
       let b : ℕ → ℝ := fun k => coeff (k + J)
@@ -8770,6 +8942,12 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted
             =
           ∑ k ∈ Finset.range (n0 + 1), aIm k * b k := by
         simp [aIm, b, mul_comm, mul_left_comm, mul_assoc]
+      have hC0_nonneg : 0 ≤ C0 := by
+        apply mul_nonneg
+        apply mul_nonneg
+        · positivity
+        · exact Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
+        · positivity
       have hre :
           |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn (k + J))).re| ≤ C0 := by
         have habel :=
@@ -8779,7 +8957,7 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted
               = |∑ k ∈ Finset.range (n0 + 1), aRe k * b k| := by rw [hsum_re]
           _ ≤ C0 * b 0 := habel
           _ ≤ C0 * 1 := by
-                gcongr
+                exact mul_le_mul_of_nonneg_left hb_one hC0_nonneg
           _ = C0 := by ring
       have him :
           |(∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn (k + J))).im| ≤ C0 := by
@@ -8790,7 +8968,7 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted
               = |∑ k ∈ Finset.range (n0 + 1), aIm k * b k| := by rw [hsum_im]
           _ ≤ C0 * b 0 := habel
           _ ≤ C0 * 1 := by
-                gcongr
+                exact mul_le_mul_of_nonneg_left hb_one hC0_nonneg
           _ = C0 := by ring
       have hnorm :
           ‖∑ k ∈ Finset.range (n0 + 1), ((((b k : ℝ) : ℂ)) * baseFn (k + J))‖ ≤ 2 * C0 := by
@@ -8817,7 +8995,7 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted
         ‖∑ n ∈ Finset.range M,
             (if J ≤ n then ((((coeff n : ℝ) : ℂ)) * baseFn n) else 0)‖
             ≤ 2 * C0 := hmain
-        _ = (2 * Real.sqrt 2 * Cl) * target := by
+        _ = (4 * Real.sqrt 2 * Cl) * Real.log (↑j + 1) * target := by
               unfold C0
               ring
   ·
@@ -8828,7 +9006,12 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted
       intro n hn
       have hnlt : n < J := lt_of_lt_of_le (Finset.mem_range.mp hn) (Nat.not_le.mp hJM).le
       simp [hnlt.not_ge]
-    have hnonneg : 0 ≤ (2 * Real.sqrt 2 * Cl) * target := by positivity
+    have hnonneg : 0 ≤ (4 * Real.sqrt 2 * Cl) * Real.log (↑j + 1) * target := by
+        apply mul_nonneg
+        apply mul_nonneg
+        · positivity
+        · exact Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
+        · positivity
     simpa [hzero] using hnonneg
 
 private theorem atkinson_large_modes_complete_resonant_packet_row_upper_boundary_sum_bound_atomic :
@@ -8838,12 +9021,13 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_boundary
             atkinsonWeightedResonantBlockMode (n + j) 1 *
               atkinsonShiftedSinglePrimitive (n + j) j 1
           else 0)‖
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨Cl, hCl, hlower⟩ :=
     atkinson_large_modes_complete_resonant_packet_row_lower_boundary_sum_bound_atomic
   obtain ⟨Cw, hCw, hweighted⟩ :=
     atkinson_large_modes_complete_resonant_packet_row_upper_weighted_lower_sum_bound_atomic
-  refine ⟨2 * Real.sqrt 2 * Cl + Cw + 4, by positivity, ?_⟩
+  refine ⟨4 * Real.sqrt 2 * Cl + Cw + 4 / Real.log 2,
+    by positivity, ?_⟩
   intro j hj M
   let J : ℕ := j + 1
   let upperFn : ℕ → ℂ := fun n =>
@@ -8968,24 +9152,42 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_boundary
         _ = Real.sqrt 2 * target := by
               dsimp [target]
               ring
+    have hlog_bound : Real.log (↑J + 1) ≤ 2 * Real.log (↑j + 1) := by
+      have hjsq : (↑J + 1 : ℝ) ≤ (↑j + 1) ^ 2 := by
+        simp only [J]
+        push_cast
+        have : (1 : ℝ) ≤ (j : ℝ) := by exact_mod_cast hj
+        nlinarith [sq_nonneg (j : ℝ)]
+      calc
+        Real.log (↑J + 1) ≤ Real.log ((↑j + 1) ^ 2) := by
+              exact Real.log_le_log (by positivity) hjsq
+        _ = 2 * Real.log (↑j + 1) := by
+              rw [Real.log_pow]
+              ring
     have hlower_bound :
-        ‖∑ n ∈ Finset.range M, lowerFn n‖ ≤ Real.sqrt 2 * Cl * target := by
+        ‖∑ n ∈ Finset.range M, lowerFn n‖ ≤ 2 * Real.sqrt 2 * Cl * Real.log (↑j + 1) * target := by
       have hraw :
           ‖∑ n ∈ Finset.range M, lowerFn n‖
-            ≤ Cl * (Real.sqrt (((M + J : ℕ) : ℝ) + 1) / J) := by
+            ≤ Cl * Real.log (↑J + 1) * (Real.sqrt (((M + J : ℕ) : ℝ) + 1) / J) := by
               simpa [lowerFn, J] using
                 hlower J (Nat.succ_le_succ (Nat.zero_le j)) M
       calc
         ‖∑ n ∈ Finset.range M, lowerFn n‖
-            ≤ Cl * (Real.sqrt (((M + J : ℕ) : ℝ) + 1) / J) := hraw
-        _ ≤ Cl * (Real.sqrt 2 * target) := by
-              exact mul_le_mul_of_nonneg_left htarget_J (le_of_lt hCl)
-        _ = Real.sqrt 2 * Cl * target := by ring
+            ≤ Cl * Real.log (↑J + 1) * (Real.sqrt (((M + J : ℕ) : ℝ) + 1) / J) := hraw
+        _ ≤ Cl * Real.log (↑J + 1) * (Real.sqrt 2 * target) := by
+              have hlog_nn : 0 ≤ Real.log (↑J + 1) :=
+                Real.log_nonneg (by exact_mod_cast show 1 ≤ J + 1 by omega)
+              exact mul_le_mul_of_nonneg_left htarget_J (mul_nonneg hCl.le hlog_nn)
+        _ ≤ Cl * (2 * Real.log (↑j + 1)) * (Real.sqrt 2 * target) := by
+              have hsqrt_target_nn : 0 ≤ Real.sqrt 2 * target := by positivity
+              exact mul_le_mul_of_nonneg_right
+                (mul_le_mul_of_nonneg_left hlog_bound hCl.le) hsqrt_target_nn
+        _ = 2 * Real.sqrt 2 * Cl * Real.log (↑j + 1) * target := by ring
     have hweighted_bound :
-        ‖∑ n ∈ Finset.range M, weightedFn n‖ ≤ Cw * target := by
+        ‖∑ n ∈ Finset.range M, weightedFn n‖ ≤ Cw * Real.log (↑j + 1) * target := by
       simpa [weightedFn, J, target] using hweighted j hj M
     have htail_bound :
-        ‖∑ n ∈ Finset.Ico J M, upperFn n‖ ≤ (2 * Real.sqrt 2 * Cl + Cw) * target := by
+        ‖∑ n ∈ Finset.Ico J M, upperFn n‖ ≤ (4 * Real.sqrt 2 * Cl + Cw) * Real.log (↑j + 1) * target := by
       calc
         ‖∑ n ∈ Finset.Ico J M, upperFn n‖
             = ‖(((2 : ℝ) : ℂ)) * (∑ n ∈ Finset.range M, lowerFn n)
@@ -8996,9 +9198,9 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_boundary
         _ = 2 * ‖∑ n ∈ Finset.range M, lowerFn n‖
               + ‖∑ n ∈ Finset.range M, weightedFn n‖ := by
                 rw [norm_mul, Complex.norm_real, Real.norm_of_nonneg (by norm_num)]
-        _ ≤ 2 * (Real.sqrt 2 * Cl * target) + Cw * target := by
+        _ ≤ 2 * (2 * Real.sqrt 2 * Cl * Real.log (↑j + 1) * target) + Cw * Real.log (↑j + 1) * target := by
               nlinarith [hlower_bound, hweighted_bound]
-        _ = (2 * Real.sqrt 2 * Cl + Cw) * target := by ring
+        _ = (4 * Real.sqrt 2 * Cl + Cw) * Real.log (↑j + 1) * target := by ring
     have hphase_inv :
         1 / atkinsonShiftedRelativePhase (j + J) J ≤ 2 := by
       calc
@@ -9074,13 +9276,29 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_boundary
         _ = 4 * atkinsonModeWeight j := by ring
         _ ≤ 4 * target := by
               gcongr
+    have hexc_log_bound : 4 * target ≤ (4 / Real.log 2) * Real.log (↑j + 1) * target := by
+      have hlog2_pos : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+      have hlog_ge : Real.log 2 ≤ Real.log (↑j + 1) := by
+        exact Real.log_le_log (by norm_num) (by exact_mod_cast show 2 ≤ j + 1 by omega)
+      have htarget_nn : 0 ≤ target := by positivity
+      have h1_le : (1 : ℝ) ≤ Real.log (↑j + 1) / Real.log 2 := by
+        rw [le_div_iff₀ hlog2_pos]
+        linarith [hlog_ge]
+      calc 4 * target
+          = 4 * (1 * target) := by ring
+        _ ≤ 4 * (Real.log (↑j + 1) / Real.log 2 * target) := by
+              gcongr
+        _ = (4 / Real.log 2) * Real.log (↑j + 1) * target := by ring
     calc
       ‖∑ n ∈ Finset.range M, upperFn n‖ = ‖exc + ∑ n ∈ Finset.Ico J M, upperFn n‖ := by
             rw [hsplit_total]
       _ ≤ ‖exc‖ + ‖∑ n ∈ Finset.Ico J M, upperFn n‖ := norm_add_le _ _
-      _ ≤ 4 * target + (2 * Real.sqrt 2 * Cl + Cw) * target := by
+      _ ≤ 4 * target + (4 * Real.sqrt 2 * Cl + Cw) * Real.log (↑j + 1) * target := by
             exact add_le_add hexc_bound htail_bound
-      _ = (2 * Real.sqrt 2 * Cl + Cw + 4) * target := by ring
+      _ ≤ (4 / Real.log 2) * Real.log (↑j + 1) * target
+              + (4 * Real.sqrt 2 * Cl + Cw) * Real.log (↑j + 1) * target := by
+            exact add_le_add hexc_log_bound le_rfl
+      _ = (4 * Real.sqrt 2 * Cl + Cw + 4 / Real.log 2) * Real.log (↑j + 1) * target := by ring
   · have hMle : M ≤ j := by
       dsimp [J] at hJM
       omega
@@ -9089,8 +9307,16 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_boundary
       intro n hn
       have hnlt : n < j := lt_of_lt_of_le (Finset.mem_range.mp hn) hMle
       simp [upperFn, hnlt.not_ge]
-    have hnonneg : 0 ≤ (2 * Real.sqrt 2 * Cl + Cw + 4) * target := by
-      positivity
+    have hnonneg : 0 ≤ (4 * Real.sqrt 2 * Cl + Cw + 4 / Real.log 2) * Real.log (↑j + 1) * target := by
+      apply mul_nonneg
+      apply mul_nonneg
+      · apply add_nonneg
+        apply add_nonneg
+        · positivity
+        · exact hCw.le
+        · exact div_nonneg (by norm_num) (Real.log_pos (by norm_num)).le
+      · exact Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
+      · positivity
     rw [hzero]
     simpa [target] using hnonneg
 
@@ -9098,7 +9324,7 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_boundary_sum_b
     ∃ C_complete > 0, ∀ j : ℕ, 1 ≤ j → ∀ M : ℕ,
       ‖∑ n ∈ Finset.range M,
           (if j ≤ n then atkinsonResonantShiftedBoundaryTerm n j else 0)‖
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨Cu, hCu, hupper⟩ :=
     atkinson_large_modes_complete_resonant_packet_row_upper_boundary_sum_bound_atomic
   obtain ⟨Cl, hCl, hlower⟩ :=
@@ -9142,17 +9368,18 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_boundary_sum_b
       _ = su - sl := by
             unfold su sl
             rw [Finset.sum_sub_distrib]
+  have htarget_nonneg : 0 ≤ Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j := by positivity
   calc
     ‖∑ n ∈ Finset.range M,
         (if j ≤ n then atkinsonResonantShiftedBoundaryTerm n j else 0)‖
       = ‖su - sl‖ := by rw [hsplit]
     _ ≤ ‖su‖ + ‖sl‖ := norm_sub_le _ _
-    _ ≤ Cu * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)
-          + Cl * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+    _ ≤ Cu * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)
+          + Cl * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
             gcongr
             · exact hupper j hj M
             · exact hlower j hj M
-    _ = (Cu + Cl) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by ring
+    _ = (Cu + Cl) * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by ring
 
 /-- Direct `Ico`-form remainder estimate for the aggregated Abel-contraction
 block. This is the same bound as the preceding theorem, but stated in the tail
@@ -9164,7 +9391,7 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted
           ((((2 - atkinsonUpperBoundaryStepCoeff n j) : ℝ) : ℂ)) *
             (atkinsonWeightedResonantBlockMode (n + (j + 1)) 0 *
               atkinsonShiftedSinglePrimitive (n + (j + 1)) (j + 1) 0)‖
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨C_complete, hC_complete, hbound⟩ :=
     atkinson_large_modes_complete_resonant_packet_row_upper_weighted_lower_sum_bound_atomic
   refine ⟨C_complete, hC_complete, ?_⟩
@@ -9250,7 +9477,7 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_upper_weighted
               atkinsonShiftedSinglePrimitive (n + (j + 1)) (j + 1) 0)
          else 0)‖ := by
           rw [hsum]
-    _ ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := hbound j hj M
+    _ ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := hbound j hj M
 
 
 
@@ -9571,11 +9798,15 @@ private theorem atkinson_shift1_boundaryPrefix_bound_atomic :
             constructor <;> intro hx <;>
               simp [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico] at hx ⊢ <;> omega
   have hsu :
-      ‖su‖ ≤ C_up * Real.sqrt (((K + 3 : ℕ) : ℝ) + 1) := by
+      ‖su‖ ≤ C_up * Real.log 2 * Real.sqrt (((K + 3 : ℕ) : ℝ) + 1) := by
     rw [hconv_up]
-    simpa [Nat.add_assoc, add_left_comm, add_comm] using hupper 1 (by norm_num) (K + 2)
+    have hraw := hupper 1 (by norm_num) (K + 2)
+    simp only [Nat.cast_one, show (1 : ℝ) + 1 = 2 from by norm_num,
+      show ((K + 2 + 1 : ℕ) : ℝ) = ((K + 3 : ℕ) : ℝ) from by push_cast; ring,
+      div_one] at hraw
+    simpa [Nat.add_assoc, add_left_comm, add_comm] using hraw
   have hsl :
-      ‖sl‖ ≤ C_low * Real.sqrt (((K + 3 : ℕ) : ℝ) + 1) := by
+      ‖sl‖ ≤ C_low * Real.log 2 * Real.sqrt (((K + 3 : ℕ) : ℝ) + 1) := by
     have hconv_low :
         sl =
         ∑ n ∈ Finset.range (K + 2),
@@ -9606,7 +9837,11 @@ private theorem atkinson_shift1_boundaryPrefix_bound_atomic :
               constructor <;> intro hx <;>
                 simp [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico] at hx ⊢ <;> omega
     rw [hconv_low]
-    simpa [Nat.add_assoc, add_left_comm, add_comm] using hlower 1 (by norm_num) (K + 2)
+    have hraw := hlower 1 (by norm_num) (K + 2)
+    simp only [Nat.cast_one, show (1 : ℝ) + 1 = 2 from by norm_num,
+      show ((K + 2 + 1 : ℕ) : ℝ) = ((K + 3 : ℕ) : ℝ) from by push_cast; ring,
+      div_one] at hraw
+    simpa [Nat.add_assoc, add_left_comm, add_comm] using hraw
   have hsplit :
       ∑ k ∈ Finset.range (K + 1), atkinsonResonantShiftedBoundaryTerm (k + 1) 1
         = su - sl := by
@@ -9629,11 +9864,18 @@ private theorem atkinson_shift1_boundaryPrefix_bound_atomic :
           rw [hsplit]
     _ ≤ ‖su‖ + ‖sl‖ := by
           exact norm_sub_le _ _
-    _ ≤ C_up * Real.sqrt (((K + 3 : ℕ) : ℝ) + 1)
-        + C_low * Real.sqrt (((K + 3 : ℕ) : ℝ) + 1) := by
+    _ ≤ C_up * Real.log 2 * Real.sqrt (((K + 3 : ℕ) : ℝ) + 1)
+        + C_low * Real.log 2 * Real.sqrt (((K + 3 : ℕ) : ℝ) + 1) := by
           exact add_le_add hsu hsl
-    _ = (C_up + C_low) * Real.sqrt (((K + 3 : ℕ) : ℝ) + 1) := by
+    _ = (C_up + C_low) * Real.log 2 * Real.sqrt (((K + 3 : ℕ) : ℝ) + 1) := by
           ring
+    _ ≤ (C_up + C_low) * Real.sqrt (((K + 3 : ℕ) : ℝ) + 1) := by
+          have hlog2 : Real.log 2 ≤ 1 := by
+            have h2le : (2 : ℝ) ≤ Real.exp 1 := by linarith [Real.add_one_le_exp (1 : ℝ)]
+            exact (Real.log_le_iff_le_exp (by norm_num : (0 : ℝ) < 2)).mpr h2le
+          have hsqrt := Real.sqrt_nonneg (((K + 3 : ℕ) : ℝ) + 1)
+          have hCpos : 0 < C_up + C_low := by linarith
+          nlinarith [mul_nonneg (mul_nonneg (le_of_lt hCpos) hsqrt) (sub_nonneg.mpr hlog2)]
 
 private theorem atkinson_j2_kernelWeighted_boundaryGap_bound :
     ∃ C_gap > 0, ∀ M : ℕ,
@@ -11563,7 +11805,7 @@ class AtkinsonShiftedCorrectionPrefixBoundHyp : Prop where
     ∃ C > 0, ∀ j : ℕ, 1 ≤ j → ∀ m : ℕ,
       ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
           atkinsonResonantShiftedCorrectionTerm n j‖
-        ≤ C * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)
+        ≤ C * Real.log (↑j + 1) * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
@@ -11572,7 +11814,7 @@ private theorem
     ∃ C_complete > 0, ∀ j : ℕ, 1 ≤ j → ∀ M : ℕ,
       ‖∑ n ∈ Finset.range M,
           (if j ≤ n then atkinsonResonantShiftedCorrectionTerm n j else 0)‖
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨C_corr, hC_corr, hcorr⟩ := AtkinsonShiftedCorrectionPrefixBoundHyp.bound
   refine ⟨2 * C_corr, by positivity, ?_⟩
   intro j hj M
@@ -11585,8 +11827,11 @@ private theorem
       have hnlt : n < j := lt_of_lt_of_le (Finset.mem_range.mp hn) hMj
       simp [hnlt.not_ge]
     have hnonneg :
-        0 ≤ (2 * C_corr) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
-      positivity
+        0 ≤ (2 * C_corr) * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+      apply mul_nonneg
+      · apply mul_nonneg; positivity
+        exact Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
+      · positivity
     simpa [hzero] using hnonneg
   · have hJltM : j < M := lt_of_not_ge hMj
     have hMpos : 0 < M := by omega
@@ -11651,37 +11896,40 @@ private theorem
               rw [← Finset.sum_Ico_eq_sub _ (by omega : j - 1 ≤ j)]
     have hprefix_raw :
         ‖∑ n ∈ Finset.Ico (j - 1) M, atkinsonResonantShiftedCorrectionTerm n j‖
-          ≤ C_corr * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+          ≤ C_corr * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
       have hraw :
           ‖∑ n ∈ Finset.Ico (j - 1) M, atkinsonResonantShiftedCorrectionTerm n j‖
-            ≤ C_corr * (Real.sqrt ((((M - 1 + j : ℕ) : ℝ) + 1)) / j) := by
+            ≤ C_corr * Real.log (↑j + 1) * (Real.sqrt ((((M - 1 + j : ℕ) : ℝ) + 1)) / j) := by
         have hMend : (1 + (M - 1) : ℕ) = M := by omega
         simpa [hMend, Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using
           (hcorr j hj (M - 1))
       calc
         ‖∑ n ∈ Finset.Ico (j - 1) M, atkinsonResonantShiftedCorrectionTerm n j‖
-            ≤ C_corr * (Real.sqrt ((((M - 1 + j : ℕ) : ℝ) + 1)) / j) := hraw
-        _ ≤ C_corr * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
-              refine mul_le_mul_of_nonneg_left ?_ (le_of_lt hC_corr)
+            ≤ C_corr * Real.log (↑j + 1) * (Real.sqrt ((((M - 1 + j : ℕ) : ℝ) + 1)) / j) := hraw
+        _ ≤ C_corr * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+              refine mul_le_mul_of_nonneg_left ?_
+                (mul_nonneg (le_of_lt hC_corr)
+                  (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
               exact div_le_div_of_nonneg_right
                 (Real.sqrt_le_sqrt (by
                   exact_mod_cast (by omega : (M - 1 + j : ℕ) + 1 ≤ M + j + 1)))
                 (by positivity : (0 : ℝ) ≤ j)
     have hhead_raw :
         ‖∑ n ∈ Finset.Ico (j - 1) j, atkinsonResonantShiftedCorrectionTerm n j‖
-          ≤ C_corr * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+          ≤ C_corr * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
       have hraw := hcorr j hj (j - 1)
       have hle : (((j - 1 + j : ℕ) : ℝ) + 1) ≤ (((M + j : ℕ) : ℝ) + 1) := by
         exact_mod_cast (by omega : (j - 1 + j) + 1 ≤ M + j + 1)
       calc
         ‖∑ n ∈ Finset.Ico (j - 1) j, atkinsonResonantShiftedCorrectionTerm n j‖
-            ≤ C_corr * (Real.sqrt (((j - 1 + j : ℕ) : ℝ) + 1) / j) := by
+            ≤ C_corr * Real.log (↑j + 1) * (Real.sqrt (((j - 1 + j : ℕ) : ℝ) + 1) / j) := by
               simpa [show j - 1 + 1 = j by omega, Nat.add_assoc, add_left_comm, add_comm] using hraw
-        _ ≤ C_corr * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        _ ≤ C_corr * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
               refine mul_le_mul_of_nonneg_left
                 (div_le_div_of_nonneg_right (Real.sqrt_le_sqrt hle)
                   (by positivity : (0 : ℝ) ≤ j))
-                (le_of_lt hC_corr)
+                (mul_nonneg (le_of_lt hC_corr)
+                  (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
     calc
       ‖∑ n ∈ Finset.range M,
           (if j ≤ n then atkinsonResonantShiftedCorrectionTerm n j else 0)‖
@@ -11695,10 +11943,10 @@ private theorem
       _ ≤ ‖∑ n ∈ Finset.Ico (j - 1) M, atkinsonResonantShiftedCorrectionTerm n j‖
             + ‖∑ n ∈ Finset.Ico (j - 1) j, atkinsonResonantShiftedCorrectionTerm n j‖ := by
             exact norm_sub_le _ _
-      _ ≤ C_corr * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)
-            + C_corr * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+      _ ≤ C_corr * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)
+            + C_corr * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
             exact add_le_add hprefix_raw hhead_raw
-      _ = (2 * C_corr) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+      _ = (2 * C_corr) * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
             ring
 
 private theorem
@@ -11709,7 +11957,7 @@ private theorem
       ‖∫ u in Ioc (0 : ℝ) 1,
           ∑ n ∈ Finset.range M,
             (if j ≤ n then atkinsonResonantShiftedRowSummand n j u else 0)‖
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨C_corr, hC_corr, hcorr⟩ :=
     atkinson_large_modes_complete_resonant_packet_row_correction_sum_bound_atomic_of_shifted_correction_prefix
   obtain ⟨C_bdry, hC_bdry, hbdry⟩ :=
@@ -11776,12 +12024,12 @@ private theorem
       ‖∑ n ∈ Finset.range M,
           (if j ≤ n then atkinsonResonantShiftedCorrectionTerm n j else 0)‖ := by
             exact norm_sub_le _ _
-    _ ≤ C_bdry * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)
-        + C_corr * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+    _ ≤ C_bdry * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)
+        + C_corr * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
             gcongr
             · exact hbdry j hj M
             · exact hcorr j hj M
-      _ = (C_bdry + C_corr) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+      _ = (C_bdry + C_corr) * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
             ring
 
 private theorem
@@ -11790,7 +12038,7 @@ private theorem
     [AtkinsonShiftedCorrectionPrefixBoundHyp] :
     ∃ C_complete > 0, ∀ j : ℕ, 1 ≤ j → ∀ M : ℕ,
       |atkinsonShiftedCompleteRow M j|
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨C_complete, hC_complete, hrow⟩ :=
     atkinson_large_modes_complete_resonant_packet_row_bound_atomic_of_shifted_correction_prefix
   refine ⟨C_complete, hC_complete, ?_⟩
@@ -11866,7 +12114,7 @@ private theorem
         = |(∫ u in Ioc (0 : ℝ) 1, f u).re| := by
             rw [hreal_eq]
     _ ≤ ‖∫ u in Ioc (0 : ℝ) 1, f u‖ := Complex.abs_re_le_norm _
-    _ ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+    _ ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
           rw [hcomplex_eq]
           exact hrow j hj M
 
@@ -11877,7 +12125,7 @@ instance [AtkinsonShiftedCorrectionPrefixBoundHyp] :
     obtain ⟨C_corr, hC_corr, hcorr⟩ := AtkinsonShiftedCorrectionPrefixBoundHyp.bound
     obtain ⟨C_bdry, hC_bdry, hbdry⟩ :=
       atkinson_large_modes_complete_resonant_packet_row_boundary_sum_bound_atomic
-    refine ⟨2 * C_bdry + C_corr + (2 / Real.log 2), by positivity, ?_⟩
+    refine ⟨2 * C_bdry + C_corr + (2 / (Real.log 2) ^ 2), by positivity, ?_⟩
     intro j hj m
     set target : ℝ := Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j
     have hpointwise :
@@ -11901,10 +12149,14 @@ instance [AtkinsonShiftedCorrectionPrefixBoundHyp] :
       refine Finset.sum_congr rfl ?_
       intro n hn
       exact hpointwise n (by omega) (by omega)
+    have hlog_j_nonneg : 0 ≤ Real.log (↑j + 1) :=
+      Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
+    have hlog2_le : Real.log 2 ≤ Real.log (↑j + 1) :=
+      Real.log_le_log (by norm_num) (by exact_mod_cast show 2 ≤ j + 1 by omega)
     have hboundaryPrefix :
         ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
             atkinsonResonantShiftedBoundaryTerm n j‖
-          ≤ (2 * C_bdry + 2 / Real.log 2) * target := by
+          ≤ (2 * C_bdry * Real.log (↑j + 1) + 2 / Real.log 2) * target := by
       by_cases hsmall : m + 1 ≤ j
       · by_cases hnonempty : j - 1 < m + 1
         · have hIco_single : Finset.Ico (j - 1) (m + 1) = {j - 1} := by
@@ -11920,7 +12172,8 @@ instance [AtkinsonShiftedCorrectionPrefixBoundHyp] :
           have hfirst := atkinsonBoundary_jMinusOne_le j hj m
           have htarget_nonneg : 0 ≤ target := by
             positivity
-          nlinarith [hfirst, hC_bdry]
+          nlinarith [hfirst, hC_bdry, hlog_j_nonneg, htarget_nonneg,
+            mul_nonneg (mul_nonneg (le_of_lt hC_bdry) hlog_j_nonneg) htarget_nonneg]
         · have hIco_empty : Finset.Ico (j - 1) (m + 1) = ∅ := by
             ext x
             constructor <;> intro hx
@@ -11974,12 +12227,12 @@ instance [AtkinsonShiftedCorrectionPrefixBoundHyp] :
             simp [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico] at hx ⊢ <;> omega
         have htail1 :
             ‖∑ n ∈ Finset.Ico j (m + 1), atkinsonResonantShiftedBoundaryTerm n j‖
-              ≤ C_bdry * (Real.sqrt (((m + 1 + j : ℕ) : ℝ) + 1) / j) := by
+              ≤ C_bdry * Real.log (↑j + 1) * (Real.sqrt (((m + 1 + j : ℕ) : ℝ) + 1) / j) := by
           rw [hconv]
           exact hbdry j hj (m + 1)
         have htail :
             ‖∑ n ∈ Finset.Ico j (m + 1), atkinsonResonantShiftedBoundaryTerm n j‖
-              ≤ 2 * C_bdry * target := by
+              ≤ 2 * C_bdry * Real.log (↑j + 1) * target := by
           let A : ℝ := (((m + j : ℕ) : ℝ) + 1)
           have hsqrt4 :
               Real.sqrt (4 * A) = 2 * Real.sqrt A := by
@@ -12006,14 +12259,17 @@ instance [AtkinsonShiftedCorrectionPrefixBoundHyp] :
               positivity
             simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using
               mul_le_mul_of_nonneg_right hsqrt_raw hinv_nonneg
+          have hlog_j_nonneg : 0 ≤ Real.log (↑j + 1) :=
+            Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
           calc
             ‖∑ n ∈ Finset.Ico j (m + 1), atkinsonResonantShiftedBoundaryTerm n j‖
-              ≤ C_bdry * (Real.sqrt (((m + 1 + j : ℕ) : ℝ) + 1) / j) := htail1
-            _ ≤ C_bdry * (Real.sqrt (4 * A) / j) := by
-              exact mul_le_mul_of_nonneg_left hsqrt_mono (le_of_lt hC_bdry)
-            _ = C_bdry * (2 * Real.sqrt A / j) := by
+              ≤ C_bdry * Real.log (↑j + 1) * (Real.sqrt (((m + 1 + j : ℕ) : ℝ) + 1) / j) := htail1
+            _ ≤ C_bdry * Real.log (↑j + 1) * (Real.sqrt (4 * A) / j) := by
+              exact mul_le_mul_of_nonneg_left hsqrt_mono
+                (mul_nonneg (le_of_lt hC_bdry) hlog_j_nonneg)
+            _ = C_bdry * Real.log (↑j + 1) * (2 * Real.sqrt A / j) := by
               rw [hsqrt4]
-            _ = 2 * C_bdry * target := by
+            _ = 2 * C_bdry * Real.log (↑j + 1) * target := by
               simp [target, A]
               ring
         rw [hsplit]
@@ -12029,7 +12285,7 @@ instance [AtkinsonShiftedCorrectionPrefixBoundHyp] :
         nlinarith [htri, hfirst, htail]
     have hcorr' :
         ‖∑ n ∈ Finset.Ico (j - 1) (m + 1), atkinsonResonantShiftedCorrectionTerm n j‖
-          ≤ C_corr * target := by
+          ≤ C_corr * Real.log (↑j + 1) * target := by
       simpa [target] using hcorr j hj m
     rw [hIco_eq, Finset.sum_sub_distrib]
     have htri :
@@ -12041,6 +12297,15 @@ instance [AtkinsonShiftedCorrectionPrefixBoundHyp] :
                 atkinsonResonantShiftedBoundaryTerm n j‖
               + ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
                 atkinsonResonantShiftedCorrectionTerm n j‖ := norm_sub_le _ _
+    have hlog2_pos : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+    have htarget_nonneg : 0 ≤ target := by positivity
+    -- hboundaryPrefix: ≤ (2*C_bdry*log(j+1) + 2/log(2)) * target
+    -- hcorr': ≤ C_corr * log(j+1) * target
+    -- Goal: ≤ (2*C_bdry + C_corr + 2/log(2)^2) * log(j+1) * target
+    -- Key: 2/log(2) ≤ (2/log(2)^2) * log(j+1) since log(j+1) ≥ log(2)
+    have habs : 2 / Real.log 2 ≤ 2 / (Real.log 2) ^ 2 * Real.log (↑j + 1) := by
+      rw [div_mul_eq_mul_div, div_le_div_iff₀ hlog2_pos (by positivity : (0 : ℝ) < (Real.log 2) ^ 2)]
+      nlinarith [hlog2_le, sq_nonneg (Real.log 2)]
     nlinarith [htri, hboundaryPrefix, hcorr']
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
@@ -12052,11 +12317,11 @@ private theorem
       ∀ j : ℕ, 1 ≤ j → ∀ m : ℕ,
         ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
             atkinsonResonantShiftedCorrectionTerm n j‖
-          ≤ C_complete * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j))
+          ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j))
     (j M : ℕ) (hj : 1 ≤ j) (hJM : j ≤ M) :
     ‖∑ n ∈ Finset.range M,
         (if j ≤ n then atkinsonResonantShiftedCorrectionTerm n j else 0)‖
-      ≤ (2 * C_complete) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+      ≤ (2 * C_complete) * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   let target : ℝ := Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j
   let corrFn : ℕ → ℂ := fun n => atkinsonResonantShiftedCorrectionTerm n j
   have hsum :
@@ -12115,36 +12380,40 @@ private theorem
                   rw [← Finset.sum_Ico_eq_sub _ (by omega : j - 1 ≤ j)]
   have hmain :
       ‖∑ n ∈ Finset.Ico (j - 1) M, corrFn n‖
-        ≤ C_complete * target := by
+        ≤ C_complete * Real.log (↑j + 1) * target := by
     have hraw := hcorr' j hj (M - 1)
     calc
       ‖∑ n ∈ Finset.Ico (j - 1) M, corrFn n‖
-          ≤ C_complete * (Real.sqrt (((M - 1 + j : ℕ) : ℝ) + 1) / j) := by
+          ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M - 1 + j : ℕ) : ℝ) + 1) / j) := by
             simpa [corrFn, show M - 1 + 1 = M by omega, Nat.add_assoc, add_left_comm, add_comm]
               using hraw
-      _ = C_complete * (Real.sqrt ((M + j : ℕ) : ℝ) / j) := by
+      _ = C_complete * Real.log (↑j + 1) * (Real.sqrt ((M + j : ℕ) : ℝ) / j) := by
             have hM : (M - 1 + j : ℕ) + 1 = M + j := by omega
             have hM' : (((M - 1 + j : ℕ) : ℝ) + 1) = ((M + j : ℕ) : ℝ) := by
               exact_mod_cast hM
             rw [hM']
-      _ ≤ C_complete * target := by
-            refine mul_le_mul_of_nonneg_left ?_ (le_of_lt hC_complete)
+      _ ≤ C_complete * Real.log (↑j + 1) * target := by
+            apply mul_le_mul_of_nonneg_left _
+              (mul_nonneg (le_of_lt hC_complete)
+                (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
             exact div_le_div_of_nonneg_right
               (Real.sqrt_le_sqrt (by linarith))
               (by positivity : (0 : ℝ) ≤ j)
   have hhead :
       ‖∑ n ∈ Finset.Ico (j - 1) j, corrFn n‖
-        ≤ C_complete * target := by
+        ≤ C_complete * Real.log (↑j + 1) * target := by
     have hraw := hcorr' j hj (j - 1)
     have hj_le : ((j - 1 + j : ℕ) : ℝ) + 1 ≤ (((M + j : ℕ) : ℝ) + 1) := by
       exact_mod_cast (by omega : (j - 1 + j) + 1 ≤ M + j + 1)
     calc
       ‖∑ n ∈ Finset.Ico (j - 1) j, corrFn n‖
-          ≤ C_complete * (Real.sqrt (((j - 1 + j : ℕ) : ℝ) + 1) / j) := by
+          ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((j - 1 + j : ℕ) : ℝ) + 1) / j) := by
             simpa [corrFn, show j - 1 + 1 = j by omega, Nat.add_assoc, add_left_comm, add_comm]
               using hraw
-      _ ≤ C_complete * target := by
-            refine mul_le_mul_of_nonneg_left ?_ (le_of_lt hC_complete)
+      _ ≤ C_complete * Real.log (↑j + 1) * target := by
+            apply mul_le_mul_of_nonneg_left _
+              (mul_nonneg (le_of_lt hC_complete)
+                (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
             exact div_le_div_of_nonneg_right
               (Real.sqrt_le_sqrt hj_le)
               (by positivity : (0 : ℝ) ≤ j)
@@ -12161,9 +12430,9 @@ private theorem
     _ ≤ ‖∑ n ∈ Finset.Ico (j - 1) M, corrFn n‖
           + ‖∑ n ∈ Finset.Ico (j - 1) j, corrFn n‖ := by
             exact norm_sub_le _ _
-    _ ≤ C_complete * target + C_complete * target := by
+    _ ≤ C_complete * Real.log (↑j + 1) * target + C_complete * Real.log (↑j + 1) * target := by
           exact add_le_add hmain hhead
-    _ = (2 * C_complete) * target := by ring
+    _ = (2 * C_complete) * Real.log (↑j + 1) * target := by ring
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem atkinson_large_modes_complete_resonant_packet_row_correction_sum_bound_atomic
@@ -12171,7 +12440,7 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_correction_sum
     ∃ C_complete > 0, ∀ j : ℕ, 1 ≤ j → ∀ M : ℕ,
       ‖∑ n ∈ Finset.range M,
           (if j ≤ n then atkinsonResonantShiftedCorrectionTerm n j else 0)‖
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨C_complete, hC_complete, hcorr'⟩ := AtkinsonShiftedCorrectionPrefixBoundHyp.bound
   refine ⟨2 * C_complete, by positivity, ?_⟩
   intro j hj M
@@ -12184,8 +12453,10 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_correction_sum
       have hnlt : n < j := lt_of_lt_of_le (Finset.mem_range.mp hn) hMj
       simp [hnlt.not_ge]
     have hnonneg :
-        0 ≤ (2 * C_complete) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
-      positivity
+        0 ≤ (2 * C_complete) * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+      apply mul_nonneg
+      · exact mul_nonneg (by positivity) (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
+      · positivity
     rw [hzero, norm_zero]
     exact hnonneg
   · exact
@@ -12198,7 +12469,7 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_bound_atomic_o
       ‖∫ u in Ioc (0 : ℝ) 1,
           ∑ n ∈ Finset.range M,
             (if j ≤ n then atkinsonResonantShiftedRowSummand n j u else 0)‖
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨C_bdry, hC_bdry, hbdry⟩ :=
     atkinson_large_modes_complete_resonant_packet_row_boundary_sum_bound_atomic
   obtain ⟨C_corr, hC_corr, hcorr⟩ :=
@@ -12253,12 +12524,12 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_bound_atomic_o
         ‖∑ n ∈ Finset.range M,
             (if j ≤ n then atkinsonResonantShiftedCorrectionTerm n j else 0)‖ := by
             exact norm_sub_le _ _
-    _ ≤ C_bdry * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)
-          + C_corr * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+    _ ≤ C_bdry * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)
+          + C_corr * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
             gcongr
             · exact hbdry j hj M
             · exact hcorr j hj M
-    _ = (C_bdry + C_corr) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+    _ = (C_bdry + C_corr) * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
           ring
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
@@ -12342,7 +12613,7 @@ private theorem atkinson_large_modes_complete_resonant_packet_row_bound_atomic
       ‖∫ u in Ioc (0 : ℝ) 1,
           ∑ n ∈ Finset.range M,
             (if j ≤ n then atkinsonResonantShiftedRowSummand n j u else 0)‖
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨C_complete, hC_complete, hrow⟩ :=
     atkinson_large_modes_complete_resonant_packet_row_bound_atomic_of_shiftedCorrectionPrefix
   refine ⟨C_complete, hC_complete, ?_⟩
@@ -12353,7 +12624,7 @@ private theorem atkinson_large_modes_complete_shifted_row_bound_atomic
     [AtkinsonShiftedCorrectionPrefixBoundHyp] :
     ∃ C_complete > 0, ∀ j : ℕ, 1 ≤ j → ∀ M : ℕ,
       |atkinsonShiftedCompleteRow M j|
-        ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
   obtain ⟨C_complete, hC_complete, hrow⟩ :=
     atkinson_large_modes_complete_resonant_packet_row_bound_atomic
   refine ⟨C_complete, hC_complete, ?_⟩
@@ -12429,7 +12700,7 @@ private theorem atkinson_large_modes_complete_shifted_row_bound_atomic
         = |(∫ u in Ioc (0 : ℝ) 1, f u).re| := by
             rw [hreal_eq]
     _ ≤ ‖∫ u in Ioc (0 : ℝ) 1, f u‖ := Complex.abs_re_le_norm _
-    _ ≤ C_complete * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+    _ ≤ C_complete * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
           rw [hcomplex_eq]
           exact hrow j hj M
 
@@ -12441,23 +12712,21 @@ private theorem atkinson_large_modes_complete_near_band_sqrtlog_bound_atomic
             atkinsonModeWeight n *
               ∫ t in Ioc (hardyStart (n + 1))
                 (hardyStart (min (2 * n + 1) (hardyN T - 1))), hardyCos n t|
-          ≤ C_complete *
-              (Real.sqrt (↑(hardyN T) : ℝ) *
-                (1 + Real.log ((↑(hardyN T) : ℝ) + 1))) := by
+          ≤ C_complete * ((↑(hardyN T) : ℝ) + 1) := by
   obtain ⟨Crow, hCrow, hrow⟩ := atkinson_large_modes_complete_shifted_row_bound_atomic
-  refine ⟨0, 2 * Crow, by positivity, ?_⟩
+  refine ⟨0, 12 * Crow, by positivity, ?_⟩
   intro M _hM T hT
   set N : ℕ := hardyN T
   by_cases hEmpty : N - 1 ≤ M
   · have hnonneg :
-        0 ≤ (2 * Crow) * (Real.sqrt (↑N : ℝ) * (1 + Real.log ((↑N : ℝ) + 1))) := by
+        0 ≤ (12 * Crow) * ((↑N : ℝ) + 1) := by
         have hlog_nonneg : 0 ≤ 1 + Real.log ((↑N : ℝ) + 1) := by
           have hlog : 0 ≤ Real.log ((↑N : ℝ) + 1) := by
             have hone : (1 : ℝ) ≤ (↑N : ℝ) + 1 := by
               exact_mod_cast Nat.succ_le_succ (Nat.zero_le N)
             exact Real.log_nonneg hone
           linarith
-        exact mul_nonneg (by positivity) (mul_nonneg (Real.sqrt_nonneg _) hlog_nonneg)
+        positivity
     have hIco : Finset.Ico M (N - 1) = ∅ := by
       ext x
       simp [Finset.mem_Ico, hEmpty]
@@ -12508,7 +12777,7 @@ private theorem atkinson_large_modes_complete_near_band_sqrtlog_bound_atomic
         ∀ j ∈ Finset.Icc 1 (N / 2),
           |∑ n ∈ Finset.Ico M (N - 1),
               if j ≤ min n (N - n - 2) then atkinsonShiftedCompleteCell n j else 0|
-            ≤ (2 * Crow) * (Real.sqrt (↑N : ℝ) / j) := by
+            ≤ (2 * Crow) * Real.log (↑j + 1) * (Real.sqrt (↑N : ℝ) / j) := by
       intro j hj
       have hj1 : 1 ≤ j := (Finset.mem_Icc.mp hj).1
       have hsum_trim₁ :
@@ -12560,9 +12829,13 @@ private theorem atkinson_large_modes_complete_near_band_sqrtlog_bound_atomic
       · have hIco : Finset.Ico M (N - j - 1) = ∅ := by
           ext n
           simp [Finset.mem_Ico, hMj]
-        have hnonneg : 0 ≤ (2 * Crow) * (Real.sqrt (↑N : ℝ) / j) := by
-          positivity
-        simpa [hIco] using hnonneg
+        have hnonneg : 0 ≤ (2 * Crow) * Real.log (↑j + 1) * (Real.sqrt (↑N : ℝ) / j) := by
+          apply mul_nonneg
+          · exact mul_nonneg (by positivity)
+              (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega))
+          · positivity
+        rw [show Finset.Ico M (N - j - 1) = ∅ from hIco, Finset.sum_empty, abs_zero]
+        exact hnonneg
       · have hMNj : M ≤ N - j - 1 := le_of_lt (lt_of_not_ge hMj)
         have hsplit :
             ∑ n ∈ Finset.Ico M (N - j - 1),
@@ -12578,15 +12851,15 @@ private theorem atkinson_large_modes_complete_near_band_sqrtlog_bound_atomic
           exact_mod_cast hNatN
         have hrow_upper :
             |atkinsonShiftedCompleteRow (N - j - 1) j|
-              ≤ Crow * (Real.sqrt (↑N : ℝ) / j) := by
+              ≤ Crow * Real.log (↑j + 1) * (Real.sqrt (↑N : ℝ) / j) := by
                 have hraw := hrow j hj1 (N - j - 1)
                 have hCastN' : (↑j : ℝ) + (↑(N - j - 1) : ℝ) + 1 = N := by
                   nlinarith [hCastN]
                 calc
                   |atkinsonShiftedCompleteRow (N - j - 1) j|
-                      ≤ Crow * (Real.sqrt ((↑j : ℝ) + (↑(N - j - 1) : ℝ) + 1) / j) := by
+                      ≤ Crow * Real.log (↑j + 1) * (Real.sqrt ((↑j : ℝ) + (↑(N - j - 1) : ℝ) + 1) / j) := by
                             simpa [Nat.cast_add, add_assoc, add_left_comm, add_comm] using hraw
-                  _ = Crow * (Real.sqrt (↑N : ℝ) / j) := by
+                  _ = Crow * Real.log (↑j + 1) * (Real.sqrt (↑N : ℝ) / j) := by
                         rw [hCastN']
         have hCastM : (((M + j : ℕ) : ℝ) + 1) ≤ N := by
           exact_mod_cast (by omega : M + j + 1 ≤ N)
@@ -12594,19 +12867,21 @@ private theorem atkinson_large_modes_complete_near_band_sqrtlog_bound_atomic
           exact Real.sqrt_le_sqrt hCastM
         have hrow_lower_raw :
             |atkinsonShiftedCompleteRow M j|
-              ≤ Crow * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+              ≤ Crow * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
                 exact hrow j hj1 M
         have hrow_lower :
             |atkinsonShiftedCompleteRow M j|
-              ≤ Crow * (Real.sqrt (↑N : ℝ) / j) := by
+              ≤ Crow * Real.log (↑j + 1) * (Real.sqrt (↑N : ℝ) / j) := by
                 have hfrac :
                     Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j ≤ Real.sqrt (↑N : ℝ) / j := by
                   exact div_le_div_of_nonneg_right hsqrtM (by positivity : (0 : ℝ) ≤ j)
                 calc
                   |atkinsonShiftedCompleteRow M j|
-                      ≤ Crow * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := hrow_lower_raw
-                  _ ≤ Crow * (Real.sqrt (↑N : ℝ) / j) := by
-                        exact mul_le_mul_of_nonneg_left hfrac (le_of_lt hCrow)
+                      ≤ Crow * Real.log (↑j + 1) * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := hrow_lower_raw
+                  _ ≤ Crow * Real.log (↑j + 1) * (Real.sqrt (↑N : ℝ) / j) := by
+                        exact mul_le_mul_of_nonneg_left hfrac
+                          (mul_nonneg (le_of_lt hCrow)
+                            (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
         calc
           |∑ n ∈ Finset.Ico M (N - j - 1),
               (if j ≤ n then atkinsonShiftedCompleteCell n j else 0)|
@@ -12618,7 +12893,7 @@ private theorem atkinson_large_modes_complete_near_band_sqrtlog_bound_atomic
                   simpa [sub_eq_add_neg] using
                     (abs_add_le (atkinsonShiftedCompleteRow (N - j - 1) j)
                       (-(atkinsonShiftedCompleteRow M j)))
-          _ ≤ (2 * Crow) * (Real.sqrt (↑N : ℝ) / j) := by
+          _ ≤ (2 * Crow) * Real.log (↑j + 1) * (Real.sqrt (↑N : ℝ) / j) := by
                 nlinarith [hrow_upper, hrow_lower]
     calc
       |∑ n ∈ Finset.Ico M (N - 1),
@@ -12636,34 +12911,56 @@ private theorem atkinson_large_modes_complete_near_band_sqrtlog_bound_atomic
               (if j ≤ min n (N - n - 2) then atkinsonShiftedCompleteCell n j else 0)| :=
           Finset.abs_sum_le_sum_abs _ _
       _ ≤
-        ∑ j ∈ Finset.Icc 1 (N / 2), (2 * Crow) * (Real.sqrt (↑N : ℝ) / j) := by
+        ∑ j ∈ Finset.Icc 1 (N / 2), (2 * Crow) * Real.log (↑j + 1) * (Real.sqrt (↑N : ℝ) / j) := by
           refine Finset.sum_le_sum ?_
           intro j hj
           exact hperj j hj
-      _ =
-        ∑ j ∈ Finset.Icc 1 (N / 2),
-          (2 * Crow * Real.sqrt (↑N : ℝ)) * ((1 : ℝ) / j) := by
+      _ ≤
+        ∑ j ∈ Finset.Icc 1 (N / 2), (2 * Crow) * (Real.sqrt (↑N : ℝ) / j) *
+          Real.log ((↑N : ℝ) + 1) := by
+          refine Finset.sum_le_sum ?_
+          intro j hj
+          have hlog_le : Real.log (↑j + 1) ≤ Real.log ((↑N : ℝ) + 1) :=
+            Real.log_le_log (by positivity)
+              (by exact_mod_cast show j + 1 ≤ N + 1 by
+                    exact Nat.succ_le_succ (le_trans (Finset.mem_Icc.mp hj).2 (Nat.div_le_self N 2)))
+          calc (2 * Crow) * Real.log (↑j + 1) * (Real.sqrt (↑N : ℝ) / ↑j)
+              = (2 * Crow) * (Real.sqrt (↑N : ℝ) / ↑j) * Real.log (↑j + 1) := by ring
+            _ ≤ (2 * Crow) * (Real.sqrt (↑N : ℝ) / ↑j) * Real.log ((↑N : ℝ) + 1) :=
+                mul_le_mul_of_nonneg_left hlog_le
+                  (mul_nonneg (by positivity) (div_nonneg (Real.sqrt_nonneg _) (by positivity)))
+      _ = (2 * Crow * Real.sqrt (↑N : ℝ) * Real.log ((↑N : ℝ) + 1)) *
+            ∑ j ∈ Finset.Icc 1 (N / 2), (1 : ℝ) / j := by
+            rw [Finset.mul_sum]
             refine Finset.sum_congr rfl ?_
             intro j hj
-            rw [div_eq_mul_inv]
             ring
-      _ = (2 * Crow * Real.sqrt (↑N : ℝ)) * ∑ j ∈ Finset.Icc 1 (N / 2), (1 : ℝ) / j := by
-            rw [Finset.mul_sum]
-      _ ≤ (2 * Crow * Real.sqrt (↑N : ℝ)) * (1 + Real.log (((N / 2 : ℕ) : ℝ))) := by
-            refine mul_le_mul_of_nonneg_left
-              (atkinson_harmonic_Icc_le_one_add_log (N / 2) hhalf_pos) ?_
-            nlinarith [hCrow, Real.sqrt_nonneg (↑N : ℝ)]
-      _ ≤ (2 * Crow * Real.sqrt (↑N : ℝ)) * (1 + Real.log ((↑N : ℝ) + 1)) := by
-            have hcast_le : (((N / 2 : ℕ) : ℝ)) ≤ (↑N : ℝ) + 1 := by
-              exact_mod_cast (le_trans (Nat.div_le_self N 2) (Nat.le_succ N))
-            have hlog :
-                Real.log (((N / 2 : ℕ) : ℝ)) ≤ Real.log ((↑N : ℝ) + 1) := by
-              exact Real.log_le_log (by positivity) hcast_le
-            have hcoeff_nonneg : 0 ≤ 2 * Crow * Real.sqrt (↑N : ℝ) := by
-              positivity
-            nlinarith
-      _ = (2 * Crow) * (Real.sqrt (↑N : ℝ) * (1 + Real.log ((↑N : ℝ) + 1))) := by
-            ring
+      _ ≤ (2 * Crow * Real.sqrt (↑N : ℝ) * Real.log ((↑N : ℝ) + 1)) *
+            (1 + Real.log ((↑N : ℝ) + 1)) := by
+            gcongr
+            · apply mul_nonneg (mul_nonneg (by positivity) (Real.sqrt_nonneg _))
+              exact Real.log_nonneg (by exact_mod_cast show 1 ≤ N + 1 by omega)
+            · calc
+                ∑ j ∈ Finset.Icc 1 (N / 2), (1 : ℝ) / j
+                    ≤ 1 + Real.log (((N / 2 : ℕ) : ℝ)) :=
+                      atkinson_harmonic_Icc_le_one_add_log (N / 2) hhalf_pos
+                _ ≤ 1 + Real.log ((↑N : ℝ) + 1) := by
+                      have : Real.log (↑(N / 2) : ℝ) ≤ Real.log ((↑N : ℝ) + 1) :=
+                        Real.log_le_log (by positivity) (by exact_mod_cast show N / 2 ≤ N + 1 by omega)
+                      linarith
+      _ ≤ (12 * Crow) * ((↑N : ℝ) + 1) := by
+            -- Use: log(x)·(1+log(x)) ≤ 6·√x (atkinson_log_mul_succ_le_sqrt)
+            -- Then: 2·Crow·√N·6·√(N+1) ≤ 12·Crow·√(N+1)·√(N+1) = 12·Crow·(N+1)
+            have hNge2 : 2 ≤ (↑N : ℝ) + 1 := by exact_mod_cast show 2 ≤ N + 1 by omega
+            have hNp : 0 ≤ (↑N : ℝ) + 1 := by positivity
+            have hkey := atkinson_log_mul_succ_le_sqrt hNge2
+            have hsqrt_le := Real.sqrt_le_sqrt (show (↑N : ℝ) ≤ (↑N : ℝ) + 1 by linarith)
+            -- 2*Crow*√N*log*(1+log) ≤ 2*Crow*√(N+1)*6*√(N+1) = 12*Crow*(N+1)
+            have h1 : Real.sqrt (↑N : ℝ) * (Real.log ((↑N : ℝ) + 1) * (1 + Real.log ((↑N : ℝ) + 1)))
+                ≤ Real.sqrt ((↑N : ℝ) + 1) * (6 * Real.sqrt ((↑N : ℝ) + 1)) :=
+              mul_le_mul hsqrt_le hkey (by nlinarith [Real.log_nonneg (show (1:ℝ) ≤ ↑N + 1 by linarith)])
+                (Real.sqrt_nonneg _)
+            nlinarith [Real.sq_sqrt hNp]
 
 private theorem atkinson_large_modes_complete_near_band_bound_atomic
     [AtkinsonShiftedCorrectionPrefixBoundHyp] :
@@ -12676,17 +12973,17 @@ private theorem atkinson_large_modes_complete_near_band_bound_atomic
           ≤ C_complete * ((↑(hardyN T) : ℝ) + 1) := by
   obtain ⟨N0s, Cs, hCs, hs⟩ := atkinson_large_modes_complete_near_band_sqrtlog_bound_atomic
   let N0 : ℕ := max N0s 1
-  refine ⟨N0, 2 * Cs, by positivity, ?_⟩
+  refine ⟨N0, Cs, hCs, ?_⟩
   intro M hM T hT
   set N : ℕ := hardyN T
   by_cases hEmpty : N - 1 ≤ M
-  · have hnonneg : 0 ≤ (2 * Cs) * ((↑N : ℝ) + 1) := by
-      have hCs_nonneg : 0 ≤ Cs := le_of_lt hCs
+  · have hnonneg : 0 ≤ Cs * ((↑N : ℝ) + 1) := by
       positivity
     have hIco : Finset.Ico M (N - 1) = ∅ := by
       ext x
       simp [Finset.mem_Ico, hEmpty]
-    simpa [N, hIco] using hnonneg
+    rw [show Finset.Ico M (N - 1) = ∅ from hIco, Finset.sum_empty, abs_zero]
+    exact hnonneg
   · have hM_s : N0s ≤ M := le_trans (le_max_left _ _) hM
     have hM_one : 1 ≤ M := le_trans (le_max_right _ _) hM
     have hs_bound :
@@ -12694,7 +12991,7 @@ private theorem atkinson_large_modes_complete_near_band_bound_atomic
             atkinsonModeWeight n *
               ∫ t in Ioc (hardyStart (n + 1))
                 (hardyStart (min (2 * n + 1) (N - 1))), hardyCos n t|
-          ≤ Cs * (Real.sqrt (↑N : ℝ) * (1 + Real.log ((↑N : ℝ) + 1))) := by
+          ≤ Cs * ((↑N : ℝ) + 1) := by
       simpa [N] using hs M hM_s T hT
     have hN_ge : M + 2 ≤ N := by
       omega
@@ -12730,15 +13027,7 @@ private theorem atkinson_large_modes_complete_near_band_bound_atomic
               rw [Real.sq_sqrt]
               · ring
               · positivity
-    calc
-      |∑ n ∈ Finset.Ico M (N - 1),
-          atkinsonModeWeight n *
-            ∫ t in Ioc (hardyStart (n + 1))
-              (hardyStart (min (2 * n + 1) (N - 1))), hardyCos n t|
-        ≤ Cs * (Real.sqrt (↑N : ℝ) * (1 + Real.log ((↑N : ℝ) + 1))) := hs_bound
-      _ ≤ (2 * Cs) * ((↑N : ℝ) + 1) := by
-            have hCs_nonneg : 0 ≤ Cs := le_of_lt hCs
-            nlinarith
+    exact hs_bound
 
 private theorem atkinson_large_modes_prefix_near_tail_bound_atomic :
     ∃ N0 : ℕ, ∃ C_prefix > 0, ∀ M : ℕ, N0 ≤ M →
@@ -13108,7 +13397,7 @@ private theorem atkinson_large_modes_near_tail_bound_atomic
       = |completeTerm + prefixTerm| := by rw [hsplit]
     _ ≤ |completeTerm| + |prefixTerm| := abs_add_le _ _
     _ ≤ Cc * ((↑N : ℝ) + 1) + Cp * ((↑N : ℝ) + 1) := by
-          nlinarith [hcomplete_bound, hprefix_bound]
+          exact add_le_add hcomplete_bound hprefix_bound
     _ = (Cc + Cp) * ((↑N : ℝ) + 1) := by ring
 
 /-! ## Section 3: Atkinson weighted sum bound
@@ -13463,6 +13752,10 @@ private theorem atkinson_weighted_tail_bound_atomic
             nlinarith [abs_add_le nearTerm farTerm]
       _ ≤ Csmall * ((↑N : ℝ) + 1) + (Cnear * ((↑N : ℝ) + 1) + Cfar * ((↑N : ℝ) + 1)) := by
             nlinarith [hsmall_bound, hnear_bound, hfar_bound]
+      _ ≤ Csmall * ((↑N : ℝ) + 1) + (Cnear * ((↑N : ℝ) + 1) + Cfar * ((↑N : ℝ) + 1)) := by
+            have hN1 : 1 ≤ (↑N : ℝ) + 1 := by exact_mod_cast show 1 ≤ N + 1 by omega
+            have hNle : (↑N : ℝ) + 1 ≤ ((↑N : ℝ) + 1) := by nlinarith
+            nlinarith
       _ = (Csmall + Cnear + Cfar) * ((↑N : ℝ) + 1) := by ring
   · have hsmall_bound :
         |∑ n ∈ Finset.range (N - 1), F n| ≤ Csmall * ((↑N : ℝ) + 1) := by
@@ -13471,9 +13764,12 @@ private theorem atkinson_weighted_tail_bound_atomic
     calc
       |∑ n ∈ Finset.range (N - 1), F n|
           ≤ Csmall * ((↑N : ℝ) + 1) := hsmall_bound
+      _ ≤ Csmall * ((↑N : ℝ) + 1) := by
+            have hN1 : 1 ≤ (↑N : ℝ) + 1 := by exact_mod_cast show 1 ≤ N + 1 by omega
+            have hNle : (↑N : ℝ) + 1 ≤ ((↑N : ℝ) + 1) := by nlinarith
+            nlinarith
       _ ≤ (Csmall + Cnear + Cfar) * ((↑N : ℝ) + 1) := by
-            have hN_nonneg : 0 ≤ ((↑N : ℝ) + 1) := by positivity
-            nlinarith [hCnear, hCfar]
+            nlinarith [hCnear, hCfar, sq_nonneg ((↑N : ℝ) + 1)]
 
 private theorem atkinson_weighted_sum_bound_atomic
     [AtkinsonShiftedCorrectionPrefixBoundHyp] :
@@ -13619,6 +13915,10 @@ private theorem atkinson_weighted_sum_bound_atomic
               nlinarith [abs_add_le completeTerm tailTerm]
         _ ≤ Cdiag * ((↑N : ℝ) + 1) + Ctail * ((↑N : ℝ) + 1) + (6 * Real.pi) * ((↑N : ℝ) + 1) := by
               nlinarith [hdiag_bound, htail_bound, hprefix_bound]
+        _ ≤ Cdiag * ((↑N : ℝ) + 1) + Ctail * ((↑N : ℝ) + 1) + (6 * Real.pi) * ((↑N : ℝ) + 1) := by
+              have hN1 : 1 ≤ (↑N : ℝ) + 1 := by exact_mod_cast show 1 ≤ N + 1 by omega
+              have hNle : (↑N : ℝ) + 1 ≤ ((↑N : ℝ) + 1) := by nlinarith
+              nlinarith [Real.pi_pos]
         _ = (Cdiag + Ctail + 6 * Real.pi) * ((↑N : ℝ) + 1) := by ring
   simpa [H, N, atkinsonModeWeight] using hbound
 
