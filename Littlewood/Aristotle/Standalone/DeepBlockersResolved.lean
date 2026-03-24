@@ -84,6 +84,20 @@ open PiLiDirectOscillationBridge
 open Aristotle.Standalone.RHPiInhomogeneousApproxObstruction
 open Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
 
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonSmallShiftPrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonLargeShiftPrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [Aristotle.Standalone.SiegelSaddleExpansionHyp.SiegelSaddleExpansionHyp]
+variable [Aristotle.Standalone.GabckePhaseCouplingHyp.GabckePhaseCouplingHyp]
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+variable [PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.PerronPiApproxCompatibilityHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.InhomogeneousPhaseFitAbovePerronThresholdHyp]
+variable [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected]
+variable [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected]
+
 /-! ## Blockers 1-3: Hardy Chain Deep Inputs
 
 Combined sorry for all three Hardy chain inputs:

@@ -32,6 +32,12 @@ open Aristotle.Standalone.ExternalPort.StrongPNTConcreteProviderAutoInstances
 open Aristotle.Standalone.ExternalPort.RHPiExternalTruncatedPiBuilder
 open Aristotle.Standalone.ExternalPort.RHPiExternalConcreteProvider
 
+variable [PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp]
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.PerronPiApproxCompatibilityHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.InhomogeneousPhaseFitAbovePerronThresholdHyp]
+
 /-- Candidate closure route for the truncated explicit-formula payload from the
 bundled RH-`pi` root payload class. -/
 theorem truncatedExplicitFormulaPi_unconditional_of_rootPayload

@@ -38,6 +38,12 @@ open Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold
 open Aristotle.Standalone.ZeroSumNegFrequently
 open ZetaZeros
 
+variable [PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp]
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.PerronPiApproxCompatibilityHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.InhomogeneousPhaseFitAbovePerronThresholdHyp]
+
 /-- **Delegated deep leaf**: consolidated π-chain exact seed obligations.
 
     Packages all π-chain obligations in a single existential:

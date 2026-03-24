@@ -96,6 +96,20 @@ namespace Aristotle.DeepSorries
 open Filter Topology MeasureTheory Asymptotics
 open ZetaZeros GrowthDomination
 
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonSmallShiftPrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonLargeShiftPrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [Aristotle.Standalone.SiegelSaddleExpansionHyp.SiegelSaddleExpansionHyp]
+variable [Aristotle.Standalone.GabckePhaseCouplingHyp.GabckePhaseCouplingHyp]
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+variable [PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.PerronPiApproxCompatibilityHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.InhomogeneousPhaseFitAbovePerronThresholdHyp]
+variable [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected]
+variable [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected]
+
 /-- Prime-counting error term. -/
 def piLiError (x : ℝ) : ℝ :=
   (Nat.primeCounting (Nat.floor x) : ℝ) - LogarithmicIntegral.logarithmicIntegral x

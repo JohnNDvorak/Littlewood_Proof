@@ -43,6 +43,12 @@ open PiLiDirectOscillationBridge
 open Aristotle.Standalone.ExplicitFormulaPsiSkeleton
 open Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
 open Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold
+
+variable [PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp]
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.PerronPiApproxCompatibilityHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.InhomogeneousPhaseFitAbovePerronThresholdHyp]
 open Aristotle.Standalone.RHPiExactSeedConstructive
 
 /-- B5a component: shifted remainder bound from Perron contour integration.

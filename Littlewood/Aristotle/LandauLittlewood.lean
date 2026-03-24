@@ -26,6 +26,20 @@ namespace Aristotle.LandauLittlewood
 variable [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
   [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
 
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonSmallShiftPrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonLargeShiftPrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [Aristotle.Standalone.SiegelSaddleExpansionHyp.SiegelSaddleExpansionHyp]
+variable [Aristotle.Standalone.GabckePhaseCouplingHyp.GabckePhaseCouplingHyp]
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+variable [PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.PerronPiApproxCompatibilityHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.InhomogeneousPhaseFitAbovePerronThresholdHyp]
+variable [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected]
+variable [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected]
+
 /-- Landau-Littlewood consequence for ψ at square-root scale. -/
 theorem psi_oscillation_sqrt_of_hardy
     [HardyCriticalLineZerosHyp] :

@@ -37,6 +37,22 @@ open Filter Topology
 open ZetaZeros
 open Aristotle.SmoothedExplicitFormula
 
+variable [Aristotle.Standalone.PsiZeroSumOscillationFromIngham.CriticalZeroSumDivergesHyp]
+variable [Aristotle.DirichletPhaseAlignment.PhaseAlignmentToTargetHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonSmallShiftPrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonLargeShiftPrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [Aristotle.Standalone.SiegelSaddleExpansionHyp.SiegelSaddleExpansionHyp]
+variable [Aristotle.Standalone.GabckePhaseCouplingHyp.GabckePhaseCouplingHyp]
+variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
+variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
+variable [PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.PerronPiApproxCompatibilityHyp]
+variable [Aristotle.Standalone.PerronExplicitFormulaProvider.InhomogeneousPhaseFitAbovePerronThresholdHyp]
+variable [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected]
+variable [Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected]
+
 /-- **Landau ψ-contradiction proof**: one-sided o₊(√x) bound on σ·(ψ-x)
 plus infinitely many critical-line zeros of ζ → False.
 
