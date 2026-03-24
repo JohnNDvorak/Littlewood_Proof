@@ -657,6 +657,14 @@ private theorem landau_psi_bounded_impossible
   set S := PositiveImZerosBelow T₀ with hS_def
   have hS_re : ∀ ρ ∈ S, ρ.re = 1 / 2 := positiveImZerosBelow_re_half T₀ hRH
   have hS_pos : ∀ ρ ∈ S, 0 < ρ.im := positiveImZerosBelow_im_pos T₀
+  have hS_zeta : ∀ ρ ∈ S, ρ ∈ ZetaZeros.zetaNontrivialZeros := by
+    intro ρ hρ
+    have hρ_zb := positiveImZerosBelow_sub T₀ hρ
+    unfold ZerosBelow at hρ_zb
+    split_ifs at hρ_zb with hfin
+    · rw [Set.Finite.mem_toFinset] at hρ_zb
+      exact hρ_zb.1
+    · simp at hρ_zb
   set D := ∑ ρ ∈ S, 1 / ‖ρ‖ with hD_def
   have hD_nn : 0 ≤ D := Finset.sum_nonneg (fun _ _ => by positivity)
   set M := ∑ ρ ∈ S, ρ.im / (1/4 + ρ.im ^ 2) with hM_def
@@ -681,7 +689,7 @@ private theorem landau_psi_bounded_impossible
   have hw_norm : ‖w‖ = 1 := by
     rcases hσ with rfl | rfl <;> simp [hw_def, norm_neg, Complex.norm_I]
   obtain ⟨x, hx_gt, hx_aligned⟩ := exists_large_x_phases_aligned_to_target
-    S hS_re hS_pos w hw_norm ε hε_pos X hRH
+    S hS_zeta hS_re hS_pos w hw_norm ε hε_pos X hRH
   -- Extract useful bounds on x
   have hx_X₀ : x ≥ X₀ := by linarith [le_max_left X₀ (max 2 (Real.exp (216 * A_log)))]
   have hx_2 : x ≥ 2 := by

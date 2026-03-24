@@ -365,11 +365,18 @@ zeta zero ordinates (superlinear growth of N(T)).
 References: Kronecker 1884, Hardy-Wright (2008) §23.8, Titchmarsh (1986) §9.4. -/
 /- Deep input: inhomogeneous phase alignment to an arbitrary target on `S¹`.
 
-This packages the Kronecker/Minkowski-style approximation that is not currently
-derived in this file. -/
+This packages the Kronecker/Minkowski-style approximation for ACTUAL zeta zeros.
+
+NOTE (2026-03-24): The original class quantified over ALL finite sets S with
+Re(ρ) = 1/2 and Im(ρ) > 0, but this is MATHEMATICALLY FALSE for rationally
+dependent frequencies (counterexample: S = {1/2+i, 1/2+2i}, w = i, ε = 1/2).
+The fix restricts S to actual nontrivial zeta zeros, where ℚ-linear independence
+of ordinates is expected (Grand Simplicity Hypothesis) and follows from N(T)
+growth rate for finite sets under RH. -/
 class PhaseAlignmentToTargetHyp : Prop where
   approx :
-    ∀ (S : Finset ℂ), (∀ ρ ∈ S, ρ.re = 1/2) →
+    ∀ (S : Finset ℂ), (∀ ρ ∈ S, ρ ∈ ZetaZeros.zetaNontrivialZeros) →
+    (∀ ρ ∈ S, ρ.re = 1/2) →
     (∀ ρ ∈ S, 0 < ρ.im) →
     ∀ (w : ℂ), ‖w‖ = 1 →
     ∀ (ε : ℝ), ε > 0 →
@@ -389,13 +396,14 @@ lemma exists_large_x_phases_aligned_to_target_of_w_eq_one
     (exists_large_x_phases_aligned_finset S hS ε hε X)
 
 lemma exists_large_x_phases_aligned_to_target
-    (S : Finset ℂ) (hS : ∀ ρ ∈ S, ρ.re = 1/2)
+    (S : Finset ℂ) (hS_zeta : ∀ ρ ∈ S, ρ ∈ ZetaZeros.zetaNontrivialZeros)
+    (hS : ∀ ρ ∈ S, ρ.re = 1/2)
     (hS_pos : ∀ ρ ∈ S, 0 < ρ.im)
     (w : ℂ) (hw : ‖w‖ = 1) (ε : ℝ) (hε : ε > 0) (X : ℝ)
     (hRH : ZetaZeros.RiemannHypothesis)
     [PhaseAlignmentToTargetHyp] :
     ∃ x > X, ∀ ρ ∈ S, ‖(x : ℂ)^(I * ρ.im) - w‖ < ε :=
-  PhaseAlignmentToTargetHyp.approx S hS hS_pos w hw ε hε X hRH
+  PhaseAlignmentToTargetHyp.approx S hS_zeta hS hS_pos w hw ε hε X hRH
 
 end Aristotle.DirichletPhaseAlignment
 
