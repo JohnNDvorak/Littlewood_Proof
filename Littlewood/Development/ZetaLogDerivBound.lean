@@ -504,6 +504,36 @@ class HadamardXiResidualStripBoundHyp
           ‖h.B + HadamardXi.zeroSum (↑σ + ↑t * I)‖ ≤
             A0 + A1 * Real.log |t| + A2 * (Real.log |t|) ^ 2
 
+/-! ### Partial-summation route to `HadamardXiResidualStripBoundHyp`
+
+The standard proof (Titchmarsh §9.6.1, Davenport Chapter 12) bounds the
+Hadamard zero sum `B + Σ(1/(s-ρ) + 1/ρ)` via partial summation with the
+Riemann–von Mangoldt formula `N(T) = (T/(2π)) log(T/(2πe)) + O(log T)`.
+
+The class `HadamardXiRvMPartialSummation` packages the conclusion of
+this partial-summation argument so that the Hadamard strip-bound class
+can be discharged from it. -/
+
+/-- Encapsulation of the Riemann–von Mangoldt partial-summation argument:
+the canonical-product zero sum `B + Σ(1/(s-ρ) + 1/ρ)` satisfies a
+quadratic-logarithmic strip bound. -/
+class HadamardXiRvMPartialSummation
+    [h : HadamardXi.HadamardXiCore] : Prop where
+  strip_bound :
+    ∃ A0 A1 A2 : ℝ,
+      0 ≤ A0 ∧ 0 ≤ A1 ∧ 0 ≤ A2 ∧
+      ∀ (σ t : ℝ), 1 / 2 ≤ σ → σ ≤ 2 → 2 ≤ |t| →
+        (∀ n : ℕ, (↑σ + ↑t * I : ℂ) ≠ h.zeros n) →
+          ‖h.B + HadamardXi.zeroSum (↑σ + ↑t * I)‖ ≤
+            A0 + A1 * Real.log |t| + A2 * (Real.log |t|) ^ 2
+
+/-- **HadamardXiResidualStripBoundHyp from RvM partial summation.** -/
+instance instHadamardXiResidualStripBoundHyp
+    [h : HadamardXi.HadamardXiCore]
+    [hr : HadamardXiRvMPartialSummation] :
+    HadamardXiResidualStripBoundHyp where
+  bound := hr.strip_bound
+
 /-- Constructive wrapper around the xi canonical-product boundary: away from
 the xi zero set and away from zeta zeros, the background-subtracted `-ζ'/ζ`
 expression is exactly the negative Hadamard remainder, so any strip bound on

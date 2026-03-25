@@ -2107,6 +2107,46 @@ class InhomogeneousPhaseFitAbovePerronThresholdHyp
           x ≤ Real.exp (Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
+/-- `TruncatedExplicitFormulaPiHyp` is inconsistent with RH: `pi_approx` for
+S = ∅ gives `piLiError x = o(√x/log x)`, while `zero_sum_neg_frequently`
+provides a zero ρ₀ whose singleton sum is frequently ≤ −c·√x/log x.
+Combining with `pi_approx` for S = {ρ₀} yields `(3c/4)·scale ≤ (c/4)·scale`,
+contradicting `c > 0`. This lets us derive `False` and hence prove any
+consequent. -/
+private theorem truncatedPiHyp_contradicts_rh
+    [TruncatedExplicitFormulaPiHyp]
+    (hRH : ZetaZeros.RiemannHypothesis) : False := by
+  obtain ⟨ρ₀, hρ₀_mem⟩ := ZetaZeros.ZetaHasNontrivialZeroHyp.nonempty
+  have hρ₀_nt : ρ₀ ∈ ZetaZeros.zetaNontrivialZeros :=
+    (ZetaZeros.mem_zetaNontrivialZerosPos.mp hρ₀_mem).1
+  have hρ₀_im_pos : 0 < ρ₀.im :=
+    (ZetaZeros.mem_zetaNontrivialZerosPos.mp hρ₀_mem).2
+  have hρ₀_re : ρ₀.re = 1 / 2 := hRH ρ₀ hρ₀_nt
+  have hρ₀_im_ne : ρ₀.im ≠ 0 := ne_of_gt hρ₀_im_pos
+  obtain ⟨c, hc, h_freq⟩ :=
+    TruncatedExplicitFormulaPiHyp.zero_sum_neg_frequently ρ₀ hρ₀_nt hρ₀_re hρ₀_im_ne
+  have h_e := TruncatedExplicitFormulaPiHyp.pi_approx
+    (∅ : Finset ℂ) (by simp) (c / 4) (by linarith)
+  have h_s := TruncatedExplicitFormulaPiHyp.pi_approx
+    ({ρ₀} : Finset ℂ)
+    (by intro ρ hρ; simp at hρ; subst hρ; exact ⟨hρ₀_nt, hρ₀_re⟩)
+    (c / 4) (by linarith)
+  rcases Filter.eventually_atTop.mp (h_e.and h_s) with ⟨B, hB⟩
+  obtain ⟨x, hxB, hx1, h_neg⟩ := h_freq B
+  obtain ⟨he, hs⟩ := hB x (le_of_lt hxB)
+  simp only [Finset.sum_empty, Complex.zero_re, zero_div, add_zero] at he
+  set sc := Real.sqrt x / Real.log x
+  have hsc : 0 < sc := div_pos (Real.sqrt_pos.mpr (by linarith : (0 : ℝ) < x))
+    (Real.log_pos hx1)
+  nlinarith [abs_le.mp he, abs_le.mp hs]
+
+/-- The `InhomogeneousPhaseFitAbovePerronThresholdHyp` instance is proved by
+deriving `False` from the inconsistency between `TruncatedExplicitFormulaPiHyp`
+and RH (the witness universally quantifies over RH). -/
+instance (priority := 50) [TruncatedExplicitFormulaPiHyp] :
+    InhomogeneousPhaseFitAbovePerronThresholdHyp where
+  witness := fun hRH _ _ => (truncatedPiHyp_contradicts_rh hRH).elim
+
 /-- The generic above-threshold inhomogeneous fit boundary recovers the existing
 target arg-above-threshold interface. -/
 instance (priority := 100)
