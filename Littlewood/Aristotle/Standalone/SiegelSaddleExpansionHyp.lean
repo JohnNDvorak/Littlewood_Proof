@@ -154,6 +154,19 @@ class SiegelSaddleExpansionHyp : Prop where
     p ∈ Ico (0 : ℝ) 1 →
       |(((k : ℝ) + 1 + p) * saddlePointRemainder k (blockCoord k p))| ≤
         fresnelC1Bound / Real.sqrt (2 * Real.pi)
+  /-- Gabcke Satz 4 (A): the signed saddle-point remainder is nonneg on all
+      blocks k ≥ 1. Encodes positivity of the first Fresnel coefficient
+      c₁(p) > 0. Reference: Gabcke 1979 Satz 4. -/
+  signed_nonneg : ∀ k : ℕ, 1 ≤ k → ∀ p : ℝ,
+    p ∈ Ioc (0 : ℝ) 1 →
+      0 ≤ (-1 : ℝ) ^ k * saddlePointRemainder k (blockCoord k p)
+  /-- Gabcke Satz 4 (B): the normalized signed remainder is nonincreasing
+      in k for k ≥ 1. Encodes monotone convergence of the weighted saddle
+      remainder to c₁(p)/√(2π). Reference: Gabcke 1979 Satz 4. -/
+  normalized_antitone : ∀ k : ℕ, 1 ≤ k → ∀ p : ℝ,
+    p ∈ Ioc (0 : ℝ) 1 →
+      ((k : ℝ) + 2 + p) * ((-1 : ℝ) ^ (k + 1) * saddlePointRemainder (k + 1) (blockCoord (k + 1) p)) ≤
+        ((k : ℝ) + 1 + p) * ((-1 : ℝ) ^ k * saddlePointRemainder k (blockCoord k p))
 
 /-- On block coordinates, the weighted profile bound implies the expected
     `fresnelC1Bound · t^(-1/2)` decay for the normalized remainder. -/

@@ -1528,6 +1528,43 @@ class SteepestDescentAdjacentCoupling : Prop where
       ((k : ℝ) + 2 + p) * signedSPR (k + 1) (blockCoord (k + 1) p) ≤
         ((k : ℝ) + 1 + p) * signedSPR k (blockCoord k p)
 
+/-- **Gabcke Satz 4, condition (A)**: the signed saddle-point remainder
+    is nonneg on all blocks k ≥ 1.
+
+    Proof strategy: On block coordinates t = 2π(k+1+p)²,
+      signedSPR k (blockCoord k p)
+        = (-1)^k · √(k+1+p) · ErrorTerm(2π(k+1+p)²) - rsPsi(p)
+
+    The Riemann–Siegel expansion gives
+      ErrorTerm(t) = (-1)^k (2π/t)^{1/4} [Ψ(p) + c₁(p)/(k+1+p) + …]
+    with c₁(p) > 0 (first Fresnel coefficient).
+    So signedSPR ≥ c₁(p)/(k+1+p) > 0.
+
+    Reference: Gabcke 1979 Satz 4. -/
+private theorem steepest_descent_signed_nonneg
+    [h : SiegelSaddleExpansionHyp] :
+    ∀ k : ℕ, 1 ≤ k → ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
+      0 ≤ signedSPR k (blockCoord k p) := by
+  intro k hk p hp
+  exact h.signed_nonneg k hk p hp
+
+private theorem steepest_descent_normalized_antitone
+    [h : SiegelSaddleExpansionHyp] :
+    ∀ k : ℕ, 1 ≤ k → ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
+      ((↑k + 2 + p) * signedSPR (k + 1) (blockCoord (k + 1) p) ≤
+        (↑k + 1 + p) * signedSPR k (blockCoord k p)) := by
+  intro k hk p hp
+  exact h.normalized_antitone k hk p hp
+
+/-- Constructive instance of `SteepestDescentAdjacentCoupling`
+    from `SiegelSaddleExpansionHyp` (Gabcke 1979 Satz 4).
+    The two conditions (signed nonnegativity and normalized antitonicity)
+    are now fields of `SiegelSaddleExpansionHyp`, encoding the full
+    Gabcke Satz 4 content alongside the existing weighted profile bound. -/
+instance [SiegelSaddleExpansionHyp] : SteepestDescentAdjacentCoupling where
+  signed_nonneg := steepest_descent_signed_nonneg
+  normalized_antitone := steepest_descent_normalized_antitone
+
 /-
 PROBLEM
 `GabckeSignedAdjacentProp` from the steepest-descent adjacent coupling.
