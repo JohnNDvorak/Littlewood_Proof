@@ -527,6 +527,62 @@ class HadamardXiRvMPartialSummation
           ‖h.B + HadamardXi.zeroSum (↑σ + ↑t * I)‖ ≤
             A0 + A1 * Real.log |t| + A2 * (Real.log |t|) ^ 2
 
+/-! ### Near/far zero contribution hypothesis classes -/
+
+/-- Near-zero contribution bound: the restricted sum of Hadamard terms from
+zeros with `|Im(ρ) - t| ≤ 1` is `O(log |t|)`. -/
+class HadamardXiNearZeroSumBound
+    [h : HadamardXi.HadamardXiCore] : Prop where
+  bound :
+    ∃ C : ℝ, 0 ≤ C ∧
+    ∀ (σ t : ℝ), 1 / 2 ≤ σ → σ ≤ 2 → 2 ≤ |t| →
+      (∀ n : ℕ, (↑σ + ↑t * I : ℂ) ≠ h.zeros n) →
+        ‖∑' (n : {n : ℕ // |(h.zeros n).im - t| ≤ 1}),
+          (1 / ((↑σ + ↑t * I : ℂ) - h.zeros ↑n) + 1 / h.zeros ↑n)‖ ≤
+            C * Real.log |t|
+
+/-- Far-zero contribution bound: the restricted sum of Hadamard terms from
+zeros with `|Im(ρ) - t| > 1` is `O((log |t|)²)`. -/
+class HadamardXiFarZeroSumBound
+    [h : HadamardXi.HadamardXiCore] : Prop where
+  bound :
+    ∃ C : ℝ, 0 ≤ C ∧
+    ∀ (σ t : ℝ), 1 / 2 ≤ σ → σ ≤ 2 → 2 ≤ |t| →
+      (∀ n : ℕ, (↑σ + ↑t * I : ℂ) ≠ h.zeros n) →
+        ‖∑' (n : {n : ℕ // ¬ (|(h.zeros n).im - t| ≤ 1)}),
+          (1 / ((↑σ + ↑t * I : ℂ) - h.zeros ↑n) + 1 / h.zeros ↑n)‖ ≤
+            C * (Real.log |t|) ^ 2
+
+/-- **HadamardXiRvMPartialSummation from near + far zero-sum bounds.** -/
+instance instHadamardXiRvMPartialSummation_of_near_far
+    [h : HadamardXi.HadamardXiCore]
+    [hn : HadamardXiNearZeroSumBound]
+    [hf : HadamardXiFarZeroSumBound] :
+    HadamardXiRvMPartialSummation where
+  strip_bound := by
+    classical
+    obtain ⟨Cn, hCn_nn, hNear⟩ := hn.bound
+    obtain ⟨Cf, hCf_nn, hFar⟩ := hf.bound
+    refine ⟨‖h.B‖, Cn, Cf, norm_nonneg _, hCn_nn, hCf_nn, ?_⟩
+    intro σ t hσlo hσhi ht hne
+    set s : ℂ := ↑σ + ↑t * I with hs_def
+    set f : ℕ → ℂ := fun n => 1 / (s - h.zeros n) + 1 / h.zeros n with hf_def
+    set p : Set ℕ := {n : ℕ | |(h.zeros n).im - t| ≤ 1} with hp_def
+    have hsumm : Summable f := HadamardXi.summable_hadamard_terms s (by simpa [s] using hne)
+    have hsplit := hsumm.tsum_subtype_add_tsum_subtype_compl p
+    have hzs : HadamardXi.zeroSum s = ∑' n, f n := rfl
+    calc ‖h.B + HadamardXi.zeroSum s‖
+        = ‖h.B + (∑' (n : ↑p), f ↑n + ∑' (n : ↑pᶜ), f ↑n)‖ := by
+            rw [hzs, ← hsplit]
+      _ ≤ ‖h.B‖ + ‖∑' (n : ↑p), f ↑n + ∑' (n : ↑pᶜ), f ↑n‖ := norm_add_le _ _
+      _ ≤ ‖h.B‖ + (‖∑' (n : ↑p), f ↑n‖ + ‖∑' (n : ↑pᶜ), f ↑n‖) := by
+            gcongr; exact norm_add_le _ _
+      _ ≤ ‖h.B‖ + (Cn * Real.log |t| + Cf * (Real.log |t|) ^ 2) := by
+            gcongr
+            · exact hNear σ t hσlo hσhi ht hne
+            · exact hFar σ t hσlo hσhi ht hne
+      _ = ‖h.B‖ + Cn * Real.log |t| + Cf * (Real.log |t|) ^ 2 := by ring
+
 /-- **HadamardXiResidualStripBoundHyp from RvM partial summation.** -/
 instance instHadamardXiResidualStripBoundHyp
     [h : HadamardXi.HadamardXiCore]
