@@ -10601,6 +10601,7 @@ private theorem atkinson_j2_kernelWeighted_j1_headCore_bound_of_j1
           unfold C0
           ring
 
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem atkinson_inversePhaseCorePrefix_bound_j1 :
     ∃ C1 > 0, ∀ M : ℕ,
       ‖∑ n ∈ Finset.range (M + 1),
@@ -11094,17 +11095,9 @@ private theorem atkinson_inversePhaseCorePrefix_bound_j1 :
       _ = (Chead + Cmain + Cerr) * (Real.sqrt (((M + 1 : ℕ) : ℝ) + 1) / (1 : ℝ)) := by
               ring
 
-/-- Head Core Bound for j ≥ 3: the kernel-weighted j=1 prefix sum
-  `∑_k kernel(k+j,j,1) · (1/phase(k+j+1,1)) · core(k+j,1)`
-is bounded by `C · log(j+1) · √(N+j+1) / j`.
-
-The proof uses Abel summation:
-- The kernel weights `kernel(k+j, j, 1)` are nonneg (atkinsonLowerBoundaryShiftKernel_nonneg),
-  antitone in k (atkinsonLowerBoundaryShiftKernel_antitone), and bounded by `2/j`
-  (atkinsonLowerBoundaryShiftKernel_le_two_mul_div with r=1, n=j).
-- Partial sums of the base function `(1/phase(·+1,1)) · core(·,1)` at shifted indices
-  `k+j` are bounded using the proved j=1 bound (`hj1`).
-- The `log(j+1)` factor is absorbed since `log(j+1) ≥ 1` for `j ≥ 3`. -/
+-- Head Core Bound for j ≥ 3: kernel-weighted j=1 prefix sum bounded by
+-- C · log(j+1) · √(N+j+1) / j via Abel summation with antitone kernel weights.
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem atkinson_general_kernelWeighted_j1_headCore_bound_of_j1
     (hj1 :
       ∃ C1 > 0, ∀ M : ℕ,
