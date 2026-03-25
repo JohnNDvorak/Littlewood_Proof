@@ -1217,16 +1217,20 @@ private theorem weightedSignedSPR_eq_linear_gap (k : ℕ) (p : ℝ) (hp : 0 ≤ 
     its magnitude is bounded by the universal next-order constant.
     The remaining leaf is therefore purely about sign, not size. -/
 private theorem gabckeSignedProfile_abs_le [SiegelSaddleExpansionHyp]
-    (p : ℝ) (hp : p ∈ Ioc (0 : ℝ) 1) :
+    (p : ℝ) (hp : p ∈ Ioo (0 : ℝ) 1) :
     |gabckeSignedProfile p| ≤ 1 / (4 * Real.sqrt (2 * Real.pi)) := by
   have hp0 : 0 ≤ p := le_of_lt hp.1
-  have hp1 : p ≤ 1 := hp.2
-  have hmem : blockCoord 1 p ∈ Icc (hardyStart 1) (hardyStart (1 + 1)) :=
-    blockCoord_mem_Icc 1 (Set.mem_Icc.mpr ⟨hp0, hp1⟩)
+  have hp1_lt : p < 1 := hp.2
+  have hmem_lo : hardyStart 1 ≤ blockCoord 1 p :=
+    (blockCoord_mem_Icc 1 (Set.mem_Icc.mpr ⟨hp0, le_of_lt hp1_lt⟩)).1
+  have hmem_hi : blockCoord 1 p < hardyStart (1 + 1) := by
+    rw [← blockCoord_one 1]
+    exact blockCoord_strictMonoOn_nonneg 1
+      (Set.mem_Ici.mpr hp0) (Set.mem_Ici.mpr (by norm_num : (0 : ℝ) ≤ 1)) hp1_lt
   have ht_pos : 0 < blockCoord 1 p := by
     rw [blockCoord_eq]
     positivity
-  have hrem := SiegelSaddleExpansionHyp.remainder_bound 1 (blockCoord 1 p) hmem.1 hmem.2 ht_pos
+  have hrem := SiegelSaddleExpansionHyp.remainder_bound 1 (blockCoord 1 p) hmem_lo hmem_hi ht_pos
   rw [← abs_signedSPR] at hrem
   have htwo_nonneg : 0 ≤ 2 + p := by linarith
   have htwo_pos : 0 < 2 + p := by linarith
@@ -1304,10 +1308,10 @@ theorem gabckeSignedAdjacentHyp_of_prop
 /-- The explicit Gabcke profile is bounded above by the universal quarter-size
     coefficient once its sign is supplied. -/
 private theorem gabckeSignedProfile_le [SiegelSaddleExpansionHyp]
-    [hprof : GabckeSignedProfileHyp] (p : ℝ) (hp : p ∈ Ioc (0 : ℝ) 1) :
+    [hprof : GabckeSignedProfileHyp] (p : ℝ) (hp : p ∈ Ioo (0 : ℝ) 1) :
     gabckeSignedProfile p ≤ 1 / (4 * Real.sqrt (2 * Real.pi)) := by
   have habs := gabckeSignedProfile_abs_le p hp
-  have hnn := hprof.profile_nonneg p hp
+  have hnn := hprof.profile_nonneg p (Ioo_subset_Ioc_self hp)
   rw [abs_of_nonneg hnn] at habs
   exact habs
 

@@ -774,11 +774,11 @@ theorem remainder_to_leading_ratio (C_R t : ℝ) (ht : 0 < t) :
 theorem errorTerm_abs_from_rs
     (C_R : ℝ) (hCR : 0 < C_R)
     (h_rs : ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4))
     (k : ℕ) (t : ℝ)
-    (ht_lo : hardyStart k ≤ t) (ht_hi : t ≤ hardyStart (k + 1)) (ht : 0 < t) :
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) (ht : 0 < t) :
     |ErrorTerm t| ≤ (2 * Real.pi / t) ^ ((1 : ℝ) / 4) + C_R * t ^ (-(3 : ℝ) / 4) := by
   have h1 := h_rs k t ht_lo ht_hi ht
   have h2 := rs_correction_abs_le k t ht
@@ -801,11 +801,11 @@ theorem errorTerm_abs_from_rs
 theorem signed_errorTerm_lower_bound
     (C_R : ℝ) (_hCR : 0 < C_R) (_hCR_le : C_R ≤ 1 / 2)
     (h_rs : ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4))
     (k : ℕ) (t : ℝ)
-    (ht_lo : hardyStart k ≤ t) (ht_hi : t ≤ hardyStart (k + 1)) (ht : 0 < t)
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) (ht : 0 < t)
     (_hp : blockParam k t ∈ Icc (0 : ℝ) 1) :
     (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t) - C_R * t ^ (-(3 : ℝ) / 4) ≤
     (-1 : ℝ) ^ k * ErrorTerm t := by
@@ -3184,12 +3184,12 @@ private theorem saddle_scale_lower_bound (k : ℕ) (t : ℝ)
     That is the genuine steepest-descent content. -/
 private theorem saddle_from_next_correction
     (h_next : ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤
         (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2))) :
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) := by
   refine ⟨1 / 2, by norm_num, le_refl _, fun k t ht_lo ht_hi ht_pos => ?_⟩
@@ -3243,7 +3243,7 @@ private theorem saddle_from_next_correction
     Reference: Siegel 1932 §3; Gabcke 1979 Satz 1, Tabelle 1. -/
 private theorem gabcke_next_order_bound :
     ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤
         (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2)) :=
@@ -3251,7 +3251,7 @@ private theorem gabcke_next_order_bound :
 
 private theorem saddle_pointwise_bound_from_cubic :
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) :=
   saddle_from_next_correction gabcke_next_order_bound
@@ -3297,7 +3297,7 @@ private theorem block_correction_antitone_from_saddle :
     Reference: Siegel 1932 §3; Gabcke 1979 Satz 1 + Satz 4. -/
 private theorem siegel_saddle_and_antitone :
     (∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4))
     ∧
@@ -3395,7 +3395,7 @@ private theorem rpow_neg_three_quarter_le_inv_sqrt_block (k : ℕ) (t : ℝ)
 /-- Pointwise bound: |ErrorTerm t| ≤ (3/2)/√(k+1) on block k.
     From saddle_pointwise_bound_from_cubic + quarter_power_le_inv_sqrt. -/
 private theorem errorTerm_abs_le_on_block (k : ℕ) (t : ℝ)
-    (ht_lo : hardyStart k ≤ t) (ht_hi : t ≤ hardyStart (k + 1)) (ht_pos : 0 < t) :
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) (ht_pos : 0 < t) :
     |ErrorTerm t| ≤ 3 / (2 * Real.sqrt ((k : ℝ) + 1)) := by
   obtain ⟨C_R, hCR_pos, hCR_le, h_rs⟩ := saddle_pointwise_bound_from_cubic
   have h_pw := errorTerm_abs_from_rs C_R hCR_pos h_rs k t ht_lo ht_hi ht_pos
@@ -3434,20 +3434,30 @@ private theorem error_block_integral_bound :
   have hk_pos : 0 < hardyStart k := hardyStart_pos' k
   -- Convert to interval integral
   rw [← intervalIntegral.integral_of_le h1T]
-  -- Bound |∫| ≤ sup · |b - a| via norm_integral_le_of_norm_le_const
-  have h_pw : ∀ t ∈ Set.uIoc (hardyStart k) (hardyStart (k + 1)),
+  -- Bound |∫| using ae version: bound holds on Ioo (t < hardyStart(k+1))
+  -- then lifted to ae on Ioc since Ioo ⊆ Ioc and they differ by a null set
+  have h_pw_ae : ∀ᵐ t ∂MeasureTheory.volume,
+      t ∈ Ioc (hardyStart k) (hardyStart (k + 1)) →
       ‖ErrorTerm t‖ ≤ 3 / (2 * Real.sqrt ((k : ℝ) + 1)) := by
-    intro t ht
-    rw [Set.uIoc_of_le h1T] at ht
+    -- Bound holds for all t ≠ hardyStart(k+1); that point is null
+    have h_ne : ∀ᵐ t ∂(MeasureTheory.volume : MeasureTheory.Measure ℝ),
+        t ≠ hardyStart (k + 1) := by
+      rw [Filter.eventually_iff]; simp only [ne_eq]
+      exact MeasureTheory.measure_mono_null (fun t ht => by simpa using ht) Real.volume_singleton
+    filter_upwards [h_ne] with t ht_ne ht
     rw [Real.norm_eq_abs]
-    exact errorTerm_abs_le_on_block k t (le_of_lt ht.1) ht.2 (lt_trans hk_pos ht.1)
+    exact errorTerm_abs_le_on_block k t (le_of_lt ht.1)
+      (lt_of_le_of_ne ht.2 ht_ne) (lt_trans hk_pos ht.1)
   calc |∫ t in hardyStart k..hardyStart (k + 1), ErrorTerm t|
       = ‖∫ t in hardyStart k..hardyStart (k + 1), ErrorTerm t‖ :=
         (Real.norm_eq_abs _).symm
-    _ ≤ 3 / (2 * Real.sqrt ((k : ℝ) + 1)) * |hardyStart (k + 1) - hardyStart k| :=
-        intervalIntegral.norm_integral_le_of_norm_le_const h_pw
+    _ ≤ ∫ t in hardyStart k..hardyStart (k + 1),
+        (fun _ => 3 / (2 * Real.sqrt ((k : ℝ) + 1))) t :=
+        intervalIntegral.norm_integral_le_of_norm_le h1T h_pw_ae
+          intervalIntegrable_const
     _ = 3 / (2 * Real.sqrt ((k : ℝ) + 1)) * (hardyStart (k + 1) - hardyStart k) := by
-        rw [abs_of_nonneg (by linarith)]
+        simp [intervalIntegral.integral_const, smul_eq_mul, mul_comm, abs_of_nonneg (sub_nonneg.mpr h1T)]
+        ring
     _ ≤ 3 / (2 * Real.sqrt ((k : ℝ) + 1)) * (6 * Real.pi * ((k : ℝ) + 1)) := by
         apply mul_le_mul_of_nonneg_left (block_length_le k)
         exact div_nonneg (by norm_num) (by positivity)
@@ -3559,7 +3569,7 @@ private theorem block_count_le_sqrt' (K : ℕ) (T : ℝ) (hK_lo : hardyStart K �
     Reference: Siegel 1932 §3; Gabcke 1979 Satz 1 (C_R ≈ 0.127). -/
 theorem saddle_point_remainder :
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) :=
   saddle_pointwise_bound_from_cubic
@@ -3580,7 +3590,7 @@ theorem saddle_point_remainder :
     Gabcke 1979 (optimal constant C_R ≈ 0.127). -/
 theorem rs_saddle_point_bound :
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) :=
   saddle_point_remainder
@@ -3593,7 +3603,7 @@ theorem rs_saddle_point_bound :
     Wired through `rs_saddle_point_bound`. -/
 theorem rs_expansion_pointwise :
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) :=
   rs_saddle_point_bound
@@ -3601,7 +3611,7 @@ theorem rs_expansion_pointwise :
 /-- The RS expansion for B1B3AnalyticDeepLeaf (with C_R ≤ 1/2). -/
 theorem rs_expansion_for_b1b3 :
     ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) :=
   rs_expansion_pointwise
@@ -3609,7 +3619,7 @@ theorem rs_expansion_for_b1b3 :
 /-- Weaker form without C_R bound. -/
 theorem rs_expansion_for_b1b3_weak :
     ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) := by
   obtain ⟨C_R, hpos, _, h⟩ := rs_expansion_pointwise
@@ -3965,15 +3975,23 @@ theorem signed_block_integral_expansion (k : ℕ) (_hk : 1 ≤ k) :
   -- Now combine: ∫ (-1)^k*ET - ∫ f = ∫ ((-1)^k*ET - f)
   rw [← intervalIntegral.integral_sub (h_ET_ii.const_mul _) h_f_ii]
   -- Goal: |∫_{a..b} g| ≤ C_R · BL · a^{-3/4}
-  -- Pointwise bound: for t ∈ [[a,b]], ‖g(t)‖ ≤ C_R · a^{-3/4}
-  have h_pw : ∀ t, t ∈ Set.uIcc a b →
+  -- Pointwise bound on open interior: for t ∈ (a,b), ‖g(t)‖ ≤ C_R · a^{-3/4}
+  -- (the bound fails at t=b=hardyStart(k+1), but that's a null set)
+  -- ae bound: for a.e. t, if t ∈ Ioc a b then the norm bound holds.
+  -- Proved by: the bound holds for all t ≠ b (hence ae, since {b} is null).
+  have h_pw_ae : ∀ᵐ t ∂MeasureTheory.volume,
+      t ∈ Ioc a b →
       ‖(-1 : ℝ) ^ k * ErrorTerm t -
         (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t)‖ ≤
       C_R * a ^ (-(3 : ℝ) / 4) := by
-    intro t ht
+    -- It suffices to show the bound for t ≠ b (ae, since {b} has measure 0)
+    have h_ne_b : ∀ᵐ t ∂(MeasureTheory.volume : MeasureTheory.Measure ℝ), t ≠ b := by
+      rw [Filter.eventually_iff]; simp only [ne_eq]
+      exact MeasureTheory.measure_mono_null (fun t ht => by simpa using ht) Real.volume_singleton
+    filter_upwards [h_ne_b] with t ht_ne ht
+    have ht_lt : t < b := lt_of_le_of_ne ht.2 ht_ne
+    have ht_lo : a ≤ t := le_of_lt ht.1
     rw [Real.norm_eq_abs]
-    -- Extract t ∈ [a, b] from uIcc (since a ≤ b)
-    have ht_Icc : t ∈ Icc a b := by rwa [uIcc_of_le h_block_le] at ht
     -- Factor: (-1)^k · ET - f = (-1)^k · (ET - (-1)^k · f)
     have h_factor : (-1 : ℝ) ^ k * ErrorTerm t -
         (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t) =
@@ -3989,21 +4007,24 @@ theorem signed_block_integral_expansion (k : ℕ) (_hk : 1 ≤ k) :
     calc |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
             rsPsi (blockParam k t)|
         ≤ C_R * t ^ (-(3 : ℝ) / 4) :=
-          h_rs k t ht_Icc.1 ht_Icc.2 (lt_of_lt_of_le hk_pos ht_Icc.1)
+          h_rs k t ht_lo ht_lt (lt_of_lt_of_le hk_pos ht_lo)
       _ ≤ C_R * a ^ (-(3 : ℝ) / 4) := by
           apply mul_le_mul_of_nonneg_left _ (le_of_lt hCR_pos)
-          exact rpow_neg_three_quarter_antitone k t ht_Icc.1
-  -- Apply norm_integral_le_of_norm_le_const and convert to abs
+          exact rpow_neg_three_quarter_antitone k t ht_lo
+  -- Apply norm_integral_le_of_norm_le (ae version) and convert to abs
   calc |∫ t in a..b, ((-1 : ℝ) ^ k * ErrorTerm t -
           (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t))|
       = ‖∫ t in a..b, ((-1 : ℝ) ^ k * ErrorTerm t -
           (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * rsPsi (blockParam k t))‖ :=
         (Real.norm_eq_abs _).symm
-    _ ≤ C_R * a ^ (-(3 : ℝ) / 4) * |b - a| :=
-        intervalIntegral.norm_integral_le_of_norm_le_const
-          (fun t ht => h_pw t (Set.uIoc_subset_uIcc ht))
-    _ = C_R * (b - a) * a ^ (-(3 : ℝ) / 4) := by
-        rw [abs_of_nonneg (by linarith : 0 ≤ b - a)]; ring
+    _ ≤ ∫ t in a..b, (fun _ => C_R * a ^ (-(3 : ℝ) / 4)) t :=
+        intervalIntegral.norm_integral_le_of_norm_le h_block_le h_pw_ae
+          intervalIntegrable_const
+    _ = C_R * a ^ (-(3 : ℝ) / 4) * (b - a) := by
+        simp [intervalIntegral.integral_const, smul_eq_mul, mul_comm,
+          abs_of_nonneg (sub_nonneg.mpr h_block_le)]
+        ring
+    _ = C_R * (b - a) * a ^ (-(3 : ℝ) / 4) := by ring
 
 /-- **Sub-lemma: c_fn expansion in terms of weighted √-increments**.
 
@@ -4279,11 +4300,11 @@ theorem rs_block_antitone :
 theorem signed_errorTerm_nonneg_on_block
     (C_R : ℝ) (hCR_pos : 0 < C_R) (hCR_le : C_R ≤ 1 / 2)
     (h_rs : ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4))
     (k : ℕ) (t : ℝ)
-    (ht_lo : hardyStart k ≤ t) (ht_hi : t ≤ hardyStart (k + 1)) (ht_pos : 0 < t) :
+    (ht_lo : hardyStart k ≤ t) (ht_hi : t < hardyStart (k + 1)) (ht_pos : 0 < t) :
     0 ≤ (-1 : ℝ) ^ k * ErrorTerm t := by
   -- Step 1: Get the pointwise RS bound
   have h_abs := h_rs k t ht_lo ht_hi ht_pos
@@ -4296,7 +4317,7 @@ theorem signed_errorTerm_nonneg_on_block
     linarith
   -- Step 3: Show the leading term dominates the remainder
   -- We need: (2π/t)^{1/4} · Ψ(p) - C_R · t^{-3/4} ≥ 0
-  have hp_mem : blockParam k t ∈ Icc (0 : ℝ) 1 := blockParam_mem_Icc k t ht_lo ht_hi
+  have hp_mem : blockParam k t ∈ Icc (0 : ℝ) 1 := blockParam_mem_Icc k t ht_lo (le_of_lt ht_hi)
   have hpsi_lb : Real.cos (Real.pi / 4) ≤ rsPsi (blockParam k t) := by
     -- From rsPsi_pos_on proof: cos(π/4) ≤ rsPsi(p) for p ∈ [0,1]
     simp only [rsPsi]
@@ -4404,38 +4425,35 @@ theorem signed_errorTerm_nonneg_on_block
     (Inlined from B3SiegelExpansionProof to avoid importing that file.) -/
 private theorem interpolation_of_nonneg_integrand {f : ℝ → ℝ} {a b : ℝ}
     (_hab : a ≤ b)
-    (hf_nn : ∀ x ∈ Icc a b, 0 ≤ f x)
+    (hf_nn_ae : ∀ᵐ x ∂(MeasureTheory.volume.restrict (Ioc a b)), 0 ≤ f x)
     (hf_int : IntegrableOn f (Icc a b))
     (T : ℝ) (_haT : a ≤ T) (hTb : T ≤ b) :
     ∃ β : ℝ, 0 ≤ β ∧ β ≤ 1 ∧
       ∫ x in Ioc a T, f x = β * ∫ x in Ioc a b, f x := by
+  -- Helper: f is ae nonneg on Ioc a T
+  have hf_nn_aT : ∀ᵐ x ∂(MeasureTheory.volume.restrict (Ioc a T)), 0 ≤ f x :=
+    ae_mono (MeasureTheory.Measure.restrict_mono (Ioc_subset_Ioc_right hTb) le_rfl) hf_nn_ae
   by_cases h_zero : ∫ x in Ioc a b, f x = 0
   · exact ⟨0, le_refl _, zero_le_one, by
       rw [zero_mul]
       have h_mono : ∫ x in Ioc a T, f x ≤ ∫ x in Ioc a b, f x := by
         apply setIntegral_mono_set
         · exact hf_int.mono_set Ioc_subset_Icc_self
-        · exact (ae_restrict_mem measurableSet_Ioc).mono fun x hx =>
-            hf_nn x (Ioc_subset_Icc_self hx)
+        · exact hf_nn_ae
         · exact (Ioc_subset_Ioc_right hTb).eventuallyLE
-      have h_nn : 0 ≤ ∫ x in Ioc a T, f x := by
-        apply setIntegral_nonneg measurableSet_Ioc
-        intro x hx
-        exact hf_nn x ⟨hx.1.le, le_trans hx.2 hTb⟩
+      have h_nn : 0 ≤ ∫ x in Ioc a T, f x :=
+        setIntegral_nonneg_of_ae_restrict hf_nn_aT
       linarith⟩
   · have h_full_pos : 0 < ∫ x in Ioc a b, f x := by
       apply lt_of_le_of_ne
-      · apply setIntegral_nonneg measurableSet_Ioc
-        intro x hx; exact hf_nn x (Ioc_subset_Icc_self hx)
+      · exact setIntegral_nonneg_of_ae_restrict hf_nn_ae
       · exact Ne.symm h_zero
-    have h_partial_nn : 0 ≤ ∫ x in Ioc a T, f x := by
-      apply setIntegral_nonneg measurableSet_Ioc
-      intro x hx; exact hf_nn x ⟨hx.1.le, le_trans hx.2 hTb⟩
+    have h_partial_nn : 0 ≤ ∫ x in Ioc a T, f x :=
+      setIntegral_nonneg_of_ae_restrict hf_nn_aT
     have h_partial_le : ∫ x in Ioc a T, f x ≤ ∫ x in Ioc a b, f x := by
       apply setIntegral_mono_set
       · exact hf_int.mono_set Ioc_subset_Icc_self
-      · exact (ae_restrict_mem measurableSet_Ioc).mono fun x hx =>
-          hf_nn x (Ioc_subset_Icc_self hx)
+      · exact hf_nn_ae
       · exact (Ioc_subset_Ioc_right hTb).eventuallyLE
     refine ⟨(∫ x in Ioc a T, f x) / (∫ x in Ioc a b, f x),
       div_nonneg h_partial_nn h_full_pos.le,
@@ -4463,11 +4481,18 @@ theorem rs_block_interpolation :
   intro k T hT_lo hT_hi
   have hhs_pos : 0 < hardyStart k := by rw [hardyStart_formula]; positivity
   -- The signed ErrorTerm (-1)^k · ErrorTerm is nonneg on block k
-  have h_signed_nn : ∀ t ∈ Icc (hardyStart k) (hardyStart (k + 1)),
+  -- The signed ErrorTerm (-1)^k · ErrorTerm is nonneg ae on the block
+  -- (the bound holds for t < hardyStart(k+1), which is ae on Ioc)
+  have h_signed_nn_ae : ∀ᵐ t ∂(MeasureTheory.volume.restrict
+      (Ioc (hardyStart k) (hardyStart (k + 1)))),
       0 ≤ (-1 : ℝ) ^ k * ErrorTerm t := by
-    intro t ht
-    exact signed_errorTerm_nonneg_on_block C_R hCR_pos hCR_le h_rs k t ht.1 ht.2
-      (lt_of_lt_of_le hhs_pos ht.1)
+    have : ∀ t ∈ Ioo (hardyStart k) (hardyStart (k + 1)),
+        0 ≤ (-1 : ℝ) ^ k * ErrorTerm t := by
+      intro t ht
+      exact signed_errorTerm_nonneg_on_block C_R hCR_pos hCR_le h_rs k t
+        (le_of_lt ht.1) ht.2 (lt_trans hhs_pos ht.1)
+    rw [← MeasureTheory.restrict_Ioo_eq_restrict_Ioc]; exact (
+      ((ae_restrict_mem measurableSet_Ioo).mono fun t ht => this t ht))
   -- The function (-1)^k · ErrorTerm is integrable on the block
   have h1_lt_hs : (1 : ℝ) < hardyStart k := by
     rw [hardyStart_formula]
@@ -4489,7 +4514,7 @@ theorem rs_block_interpolation :
     have : (0 : ℝ) < 2 * Real.pi := by positivity
     nlinarith
   have h_interp := interpolation_of_nonneg_integrand
-    h_block_le h_signed_nn hSigned_int T hT_lo hT_hi
+    h_block_le h_signed_nn_ae hSigned_int T hT_lo hT_hi
   -- h_interp: ∃ β, 0 ≤ β ∧ β ≤ 1 ∧
   --   ∫ (-1)^k·ET on [hs k, T] = β · ∫ (-1)^k·ET on [hs k, hs(k+1)]
   obtain ⟨β, hβ_lo, hβ_hi, h_eq⟩ := h_interp
@@ -4523,12 +4548,17 @@ theorem signed_block_integral_nonneg (k : ℕ) :
       ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t := by
   obtain ⟨C_R, hCR_pos, hCR_le, h_rs⟩ := rs_saddle_point_bound
   have hhs_pos : 0 < hardyStart k := by rw [hardyStart_formula]; positivity
-  -- The signed ErrorTerm (-1)^k · ErrorTerm is nonneg on block k
-  have h_signed_nn : ∀ t ∈ Icc (hardyStart k) (hardyStart (k + 1)),
+  -- The signed ErrorTerm (-1)^k · ErrorTerm is nonneg ae on the block
+  have h_signed_nn_ae : ∀ᵐ t ∂(MeasureTheory.volume.restrict
+      (Ioc (hardyStart k) (hardyStart (k + 1)))),
       0 ≤ (-1 : ℝ) ^ k * ErrorTerm t := by
-    intro t ht
-    exact signed_errorTerm_nonneg_on_block C_R hCR_pos hCR_le h_rs k t ht.1 ht.2
-      (lt_of_lt_of_le hhs_pos ht.1)
+    have : ∀ t ∈ Ioo (hardyStart k) (hardyStart (k + 1)),
+        0 ≤ (-1 : ℝ) ^ k * ErrorTerm t := by
+      intro t ht
+      exact signed_errorTerm_nonneg_on_block C_R hCR_pos hCR_le h_rs k t
+        (le_of_lt ht.1) ht.2 (lt_trans hhs_pos ht.1)
+    rw [← MeasureTheory.restrict_Ioo_eq_restrict_Ioc]; exact (
+      ((ae_restrict_mem measurableSet_Ioo).mono fun t ht => this t ht))
   -- Integrability
   have h1_lt_hs : (1 : ℝ) < hardyStart k := by
     rw [hardyStart_formula]
@@ -4548,12 +4578,10 @@ theorem signed_block_integral_nonneg (k : ℕ) :
       (-1 : ℝ) ^ k * ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ErrorTerm t := by
     simp_rw [← smul_eq_mul]
     exact integral_smul _ _
-  -- The integral of a nonneg function on Ioc is nonneg
+  -- The integral of an ae-nonneg function on Ioc is nonneg
   have h_nn : 0 ≤ ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
-      (-1 : ℝ) ^ k * ErrorTerm t := by
-    apply setIntegral_nonneg measurableSet_Ioc
-    intro t ht
-    exact h_signed_nn t (Ioc_subset_Icc_self ht)
+      (-1 : ℝ) ^ k * ErrorTerm t :=
+    setIntegral_nonneg_of_ae_restrict h_signed_nn_ae
   linarith
 
 /-- **Error term first moment O(√T)**: |∫₁ᵀ ErrorTerm| ≤ C·√T.
@@ -5104,7 +5132,7 @@ theorem errorTerm_first_moment_sqrt :
 private theorem siegel_expansion_core :
     -- (1) Pointwise saddle-point bound
     (∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4))
     ∧

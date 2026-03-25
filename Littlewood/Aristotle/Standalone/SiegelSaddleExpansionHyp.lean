@@ -14,7 +14,8 @@ normalization of the remaining steepest-descent leaf. The bridge theorem
 The saddle-point remainder is:
   R(k,t) = [ErrorTerm(t) - (-1)^k · (2π/t)^{1/4} · Ψ(blockParam k t)] / (2π/t)^{1/4}
 
-The hypothesis asserts |R(k,t)| ≤ (1/4) · t^{-1/2} for t in block k with t > 0.
+The hypothesis asserts |R(k,t)| ≤ (1/4) · t^{-1/2} for t in block k (open on
+the right: hardyStart k ≤ t < hardyStart(k+1)) with t > 0.
 This is the content of Siegel's steepest-descent expansion through the saddle
 w₀ = √(t/2π), with the bound coming from the Fresnel coefficient |c₁(p)| ≤ 1/4
 (Gabcke 1979, Tabelle 1).
@@ -37,6 +38,10 @@ main-chain statement
   |ErrorTerm(t) - (-1)^k · (2π/t)^{1/4} · Ψ(p)|
     ≤ (2π/t)^{1/4} · (1/4) · t^{-1/2}
 from that single normalized bound.
+
+The bound uses `p ∈ Ico 0 1` (half-open: the saddle expansion is only valid
+strictly inside the block, i.e. t < hardyStart(k+1)). The integral bounds
+downstream use the ae version of norm_integral_le to handle the boundary.
 
 SORRY COUNT: 0
 
@@ -116,26 +121,6 @@ the hypothesis field below.
 
 SORRY COUNT: 0. -/
 
-/-- `blockParam` lies in the closed unit interval on a closed Hardy block. -/
-private theorem blockParam_mem_Icc_closed (k : ℕ) (t : ℝ)
-    (ht_lo : hardyStart k ≤ t) (ht_hi : t ≤ hardyStart (k + 1)) :
-    blockParam k t ∈ Icc (0 : ℝ) 1 := by
-  refine ⟨blockParam_nonneg k t ht_lo, ?_⟩
-  simp only [blockParam]
-  have hpi : (0 : ℝ) < 2 * Real.pi := by positivity
-  suffices h : Real.sqrt (t / (2 * Real.pi)) ≤ (k : ℝ) + 2 by linarith
-  have h_sq : t / (2 * Real.pi) ≤ ((k : ℝ) + 2) ^ 2 := by
-    refine (div_le_iff₀ hpi).2 ?_
-    have : hardyStart (k + 1) = ((k : ℝ) + 2) ^ 2 * (2 * Real.pi) := by
-      unfold hardyStart
-      push_cast
-      ring
-    linarith
-  calc
-    Real.sqrt (t / (2 * Real.pi))
-      ≤ Real.sqrt (((k : ℝ) + 2) ^ 2) := Real.sqrt_le_sqrt h_sq
-    _ = (k : ℝ) + 2 := Real.sqrt_sq (by positivity)
-
 /-- On block coordinates, `t^(-1/2)` becomes the linear inverse scale
     `1 / (√(2π) · (k+1+p))`. -/
 private theorem blockCoord_rpow_neg_half (k : ℕ) (p : ℝ) (hp : 0 ≤ p) :
@@ -159,18 +144,21 @@ private theorem blockCoord_rpow_neg_half (k : ℕ) (p : ℝ) (hp : 0 ≤ p) :
 
     The class records the remaining steepest-descent leaf in block coordinates:
     after writing `t = blockCoord k p = 2π(k+1+p)^2`, the weighted profile
-    `(k+1+p) · R(k,t)` is bounded by `fresnelC1Bound / √(2π)` on `p ∈ [0,1]`.
-    This is equivalent to the normalized `t^(-1/2)` decay on each block. -/
+    `(k+1+p) · R(k,t)` is bounded by `fresnelC1Bound / √(2π)` on `p ∈ [0,1)`.
+
+    NOTE: The bound uses the half-open interval `Ico 0 1` (excluding p=1,
+    corresponding to t = hardyStart(k+1)), because the saddle-point expansion
+    is only valid strictly inside each block. -/
 class SiegelSaddleExpansionHyp : Prop where
   weighted_profile_bound : ∀ k : ℕ, ∀ p : ℝ,
-    p ∈ Icc (0 : ℝ) 1 →
+    p ∈ Ico (0 : ℝ) 1 →
       |(((k : ℝ) + 1 + p) * saddlePointRemainder k (blockCoord k p))| ≤
         fresnelC1Bound / Real.sqrt (2 * Real.pi)
 
 /-- On block coordinates, the weighted profile bound implies the expected
     `fresnelC1Bound · t^(-1/2)` decay for the normalized remainder. -/
 private theorem saddle_remainder_fresnel_bound_on_coords [h : SiegelSaddleExpansionHyp]
-    (k : ℕ) (p : ℝ) (hp : p ∈ Icc (0 : ℝ) 1) :
+    (k : ℕ) (p : ℝ) (hp : p ∈ Ico (0 : ℝ) 1) :
     |saddlePointRemainder k (blockCoord k p)| ≤
       fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2) := by
   let u : ℝ := (k : ℝ) + 1 + p
@@ -203,11 +191,11 @@ private theorem saddle_remainder_fresnel_bound_on_coords [h : SiegelSaddleExpans
 /-- Admissible coefficient witness recovered from the weighted block profile. -/
 private theorem saddle_remainder_admissible_constant [h : SiegelSaddleExpansionHyp]
     (k : ℕ) (t : ℝ)
-    (hlo : hardyStart k ≤ t) (hhi : t ≤ hardyStart (k + 1)) (hpos : 0 < t) :
+    (hlo : hardyStart k ≤ t) (hhi : t < hardyStart (k + 1)) (hpos : 0 < t) :
     ∃ C : ℝ, C ≤ (1 / 4 : ℝ) ∧
       |saddlePointRemainder k t| ≤ C * t ^ (-(1 : ℝ) / 2) := by
   let p : ℝ := blockParam k t
-  have hp : p ∈ Icc (0 : ℝ) 1 := blockParam_mem_Icc_closed k t hlo hhi
+  have hp : p ∈ Ico (0 : ℝ) 1 := blockParam_mem_Ico k t hlo hhi
   have hcoord : blockCoord k p = t := by
     dsimp [p]
     exact blockCoord_blockParam k t hpos.le
@@ -218,10 +206,11 @@ private theorem saddle_remainder_admissible_constant [h : SiegelSaddleExpansionH
 
     This is the irreducible steepest-descent input: on each Riemann-Siegel
     block, the normalized remainder after removing the leading correction is
-    bounded by `(1/4) * t^{-1/2}`. -/
+    bounded by `(1/4) * t^{-1/2}`. Uses strict inequality on the right:
+    `t < hardyStart(k+1)`. -/
 theorem SiegelSaddleExpansionHyp.remainder_bound [h : SiegelSaddleExpansionHyp]
     (k : ℕ) (t : ℝ)
-    (hlo : hardyStart k ≤ t) (hhi : t ≤ hardyStart (k + 1)) (hpos : 0 < t) :
+    (hlo : hardyStart k ≤ t) (hhi : t < hardyStart (k + 1)) (hpos : 0 < t) :
     |saddlePointRemainder k t| ≤ (1 / 4) * t ^ (-(1 : ℝ) / 2) := by
   rcases saddle_remainder_admissible_constant k t hlo hhi hpos with ⟨C, hC, hbound⟩
   have h_pow_nonneg : 0 ≤ t ^ (-(1 : ℝ) / 2) := Real.rpow_nonneg hpos.le _
@@ -230,7 +219,7 @@ theorem SiegelSaddleExpansionHyp.remainder_bound [h : SiegelSaddleExpansionHyp]
 /-- Private alias for the derived normalized quarter-bound. -/
 private theorem saddle_remainder_bound_atomic [SiegelSaddleExpansionHyp]
     (k : ℕ) (t : ℝ)
-    (hlo : hardyStart k ≤ t) (hhi : t ≤ hardyStart (k + 1)) (hpos : 0 < t) :
+    (hlo : hardyStart k ≤ t) (hhi : t < hardyStart (k + 1)) (hpos : 0 < t) :
     |saddlePointRemainder k t| ≤ (1 / 4) * t ^ (-(1 : ℝ) / 2) :=
   SiegelSaddleExpansionHyp.remainder_bound k t hlo hhi hpos
 
@@ -247,10 +236,12 @@ private theorem two_pi_div_t_rpow_pos (t : ℝ) (ht : 0 < t) :
     The key algebraic step is:
       |E(t) - leading(t)| = |R(k,t)| · (2π/t)^{1/4}
                            ≤ (1/4) · t^{-1/2} · (2π/t)^{1/4}
-                           = (2π/t)^{1/4} · (1/4) · t^{-1/2} -/
+                           = (2π/t)^{1/4} · (1/4) · t^{-1/2}
+
+    Uses strict inequality on the right: `t < hardyStart(k+1)`. -/
 theorem gabcke_from_hyp [SiegelSaddleExpansionHyp] :
     ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤
         (2 * Real.pi / t) ^ ((1 : ℝ) / 4) * ((1 / 4) * t ^ (-(1 : ℝ) / 2)) := by
