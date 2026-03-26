@@ -107,7 +107,7 @@ private theorem signed_pointwise_lower (k : ℕ) (t : ℝ)
 private theorem signed_integral_lower_bound
     (C_R : ℝ) (_hCR_pos : 0 < C_R)
     (h_rs : ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4))
     (k : ℕ) :
@@ -157,11 +157,15 @@ private theorem signed_integral_lower_bound
       exact continuousOn_const.mul
         (continuousOn_id.rpow_const (fun t ht => Or.inl (ne_of_gt (lt_of_lt_of_le hhs_pos ht.1))))
   -- Step 3: The signed pointwise lower bound holds on the block
-  have h_ptwise : ∀ t ∈ Ioc (hardyStart k) (hardyStart (k + 1)),
-      lb t ≤ (-1 : ℝ) ^ k * ErrorTerm t := by
-    intro t ht
+  have h_ptwise_ae : lb ≤ᵐ[volume.restrict (Ioc (hardyStart k) (hardyStart (k + 1)))] fun t => (-1 : ℝ) ^ k * ErrorTerm t := by
+    have h_ne : ∀ᵐ t ∂(volume : Measure ℝ),
+        t ≠ hardyStart (k + 1) := by
+      rw [Filter.eventually_iff]; simp only [ne_eq]
+      exact measure_mono_null (fun t ht => by simpa using ht) Real.volume_singleton
+    rw [Filter.EventuallyLE, ae_restrict_iff' measurableSet_Ioc]
+    filter_upwards [h_ne] with t ht_ne ht
     exact signed_pointwise_lower k t C_R
-      (h_rs k t (le_of_lt ht.1) ht.2 (lt_trans hhs_pos ht.1))
+      (h_rs k t (le_of_lt ht.1) (lt_of_le_of_ne ht.2 ht_ne) (lt_trans hhs_pos ht.1))
   -- Step 4: Integrability of lb on Ioc
   have hlb_int : IntegrableOn lb (Ioc (hardyStart k) (hardyStart (k + 1))) :=
     hlb_cont.integrableOn_Icc.mono_set Ioc_subset_Icc_self
@@ -182,7 +186,7 @@ private theorem signed_integral_lower_bound
   have h_int_mono : ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), lb t
       ≤ ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
           (-1 : ℝ) ^ k * ErrorTerm t := by
-    exact setIntegral_mono_on hlb_int hET_int measurableSet_Ioc (fun t ht => h_ptwise t ht)
+    exact setIntegral_mono_ae_restrict hlb_int hET_int h_ptwise_ae
   -- Step 7: ∫ (-1)^k · ET = (-1)^k · ∫ ET
   have h_factor : ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
       (-1 : ℝ) ^ k * ErrorTerm t =
@@ -532,7 +536,7 @@ private theorem signed_pointwise_upper (k : ℕ) (t : ℝ)
 private theorem signed_integral_upper_bound
     (C_R : ℝ) (_hCR_pos : 0 < C_R)
     (h_rs : ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4))
     (k : ℕ) :
@@ -577,11 +581,15 @@ private theorem signed_integral_upper_bound
     · exact continuousOn_const.mul
         (continuousOn_id.rpow_const (fun t ht => Or.inl (ne_of_gt (lt_of_lt_of_le hhs_pos ht.1))))
   -- Step 3: The signed pointwise upper bound holds on the block
-  have h_ptwise : ∀ t ∈ Ioc (hardyStart k) (hardyStart (k + 1)),
-      (-1 : ℝ) ^ k * ErrorTerm t ≤ ub t := by
-    intro t ht
+  have h_ptwise_ae : (fun t => (-1 : ℝ) ^ k * ErrorTerm t) ≤ᵐ[volume.restrict (Ioc (hardyStart k) (hardyStart (k + 1)))] ub := by
+    have h_ne : ∀ᵐ t ∂(volume : Measure ℝ),
+        t ≠ hardyStart (k + 1) := by
+      rw [Filter.eventually_iff]; simp only [ne_eq]
+      exact measure_mono_null (fun t ht => by simpa using ht) Real.volume_singleton
+    rw [Filter.EventuallyLE, ae_restrict_iff' measurableSet_Ioc]
+    filter_upwards [h_ne] with t ht_ne ht
     exact signed_pointwise_upper k t C_R
-      (h_rs k t (le_of_lt ht.1) ht.2 (lt_trans hhs_pos ht.1))
+      (h_rs k t (le_of_lt ht.1) (lt_of_le_of_ne ht.2 ht_ne) (lt_trans hhs_pos ht.1))
   -- Step 4: Integrability
   have hub_int : IntegrableOn ub (Ioc (hardyStart k) (hardyStart (k + 1))) :=
     hub_cont.integrableOn_Icc.mono_set Ioc_subset_Icc_self
@@ -601,7 +609,7 @@ private theorem signed_integral_upper_bound
   have h_int_mono : ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
       (-1 : ℝ) ^ k * ErrorTerm t
       ≤ ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)), ub t := by
-    exact setIntegral_mono_on hET_int hub_int measurableSet_Ioc (fun t ht => h_ptwise t ht)
+    exact setIntegral_mono_ae_restrict hET_int hub_int h_ptwise_ae
   -- Step 6: Factor (-1)^k
   have h_factor : ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
       (-1 : ℝ) ^ k * ErrorTerm t =
@@ -734,7 +742,7 @@ private theorem signed_integral_upper_bound
     Gabcke 1979 Satz 4. -/
 theorem b3_block_structure_core
     (h_exp : ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4))
     (h_antitone :

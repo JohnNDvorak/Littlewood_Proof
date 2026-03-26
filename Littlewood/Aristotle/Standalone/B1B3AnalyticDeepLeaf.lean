@@ -59,6 +59,7 @@ import Littlewood.Aristotle.Standalone.OscPieceBigOAssembly
 import Littlewood.Aristotle.Standalone.B3BlockStructureFromExpansion
 import Littlewood.Aristotle.Standalone.B2FirstMomentFromExpansion
 import Littlewood.Aristotle.Standalone.RSExpansionProof
+import Littlewood.Aristotle.Standalone.AnalyticAxioms
 
 set_option maxHeartbeats 800000
 set_option relaxedAutoImplicit false
@@ -184,7 +185,7 @@ private theorem continuous_hardyZ_real : Continuous hardyZ := by
     - For t in [1, hardyStart 0]: ErrorTerm = hardyZ, bounded by compactness -/
 theorem rs_pointwise_bound_of_expansion
     (h_exp : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4)) :
     ∃ C_rs > (0 : ℝ), ∀ t : ℝ, t ≥ 1 →
@@ -199,7 +200,13 @@ theorem rs_pointwise_bound_of_expansion
   refine ⟨max C_block C_compact + 1, by positivity, fun t ht => ?_⟩
   by_cases h_large : hardyStart 0 ≤ t
   · -- Case: t >= hardyStart 0. Use the block expansion.
-    obtain ⟨k, hk_lo, hk_hi⟩ := exists_block_of_ge_hardyStart0 t h_large
+    obtain ⟨K, hK_lo, hK_hi⟩ := exists_block_of_ge_hardyStart0 t h_large
+    -- Promote ≤ to < via case split (Icc→Ico): at boundary use next block
+    obtain ⟨k, hk_lo, hk_hi⟩ : ∃ k, hardyStart k ≤ t ∧ t < hardyStart (k + 1) := by
+      rcases lt_or_eq_of_le hK_hi with h_lt | h_eq
+      · exact ⟨K, hK_lo, h_lt⟩
+      · exact ⟨K + 1, h_eq ▸ le_refl _,
+              h_eq ▸ Aristotle.Standalone.RSExpansionProof.hardyStart_lt_succ _⟩
     have ht_pos : (0 : ℝ) < t := by linarith
     have h_exp_k := h_expansion k t hk_lo hk_hi ht_pos
     -- |ErrorTerm(t)| <= |leading| + |remainder|
@@ -337,13 +344,13 @@ theorem b1_b3_analytic_deep_leaf :
   -- ═══════════════════════════════════════════════════════
   -- Strong form with C_R bound (for B3 block structure)
   have h_expansion_strong : ∃ C_R : ℝ, 0 < C_R ∧ C_R ≤ 1 / 2 ∧ ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) :=
     Aristotle.Standalone.RSExpansionProof.rs_expansion_for_b1b3
   -- Weak form without C_R bound (for pointwise bound derivation)
   have h_expansion : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4) := by
     obtain ⟨C_R, hpos, _, h⟩ := h_expansion_strong; exact ⟨C_R, hpos, h⟩

@@ -48,7 +48,7 @@ variable [GabckePhaseCouplingHyp]
 
 private theorem errorTerm_pointwise_of_expansion
     (h_exp : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4)) :
     ∃ C_et > (0 : ℝ), ∀ t : ℝ, t ≥ 1 →
@@ -64,8 +64,14 @@ private theorem errorTerm_pointwise_of_expansion
   set C_compact := M₀ * (hardyStart 0) ^ ((1 : ℝ)/4)
   refine ⟨max C_block C_compact + 1, by positivity, fun t ht => ?_⟩
   by_cases h_large : hardyStart 0 ≤ t
-  · obtain ⟨k, hk_lo, hk_hi⟩ :=
+  · obtain ⟨K, hK_lo, hK_hi⟩ :=
       Aristotle.Standalone.OscPieceBigOAssembly.exists_block_of_ge_hardyStart0 t h_large
+    -- Promote ≤ to < via case split (Icc→Ico): at boundary use next block
+    obtain ⟨k, hk_lo, hk_hi⟩ : ∃ k, hardyStart k ≤ t ∧ t < hardyStart (k + 1) := by
+      rcases lt_or_eq_of_le hK_hi with h_lt | h_eq
+      · exact ⟨K, hK_lo, h_lt⟩
+      · exact ⟨K + 1, h_eq ▸ le_refl _,
+              h_eq ▸ Aristotle.Standalone.RSExpansionProof.hardyStart_lt_succ _⟩
     have ht_pos : (0 : ℝ) < t := by linarith
     have h_exp_k := h_expansion k t hk_lo hk_hi ht_pos
     have h_tri : |ErrorTerm t| ≤
@@ -320,7 +326,7 @@ private theorem block_remainder_uniform_bound (k : ℕ) :
       b(K-1) ≤ C·BL(K) = O(K) = O(√T). Then √T ≤ T^{1/2+ε}. -/
 private theorem errorTerm_signed_integral_sublinear
     (h_exp : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4)) :
     ∀ ε : ℝ, ε > 0 →
@@ -400,7 +406,7 @@ private theorem errorTerm_signed_integral_sublinear
       rw [← Real.sqrt_one]; exact Real.sqrt_le_sqrt (by linarith)
     by_cases hT_ge_hs0 : hardyStart 0 ≤ T
     · -- T ≥ hardyStart 0: use block decomposition + alternating cancellation
-      obtain ⟨K, hK_le, hK_le'⟩ :=
+      obtain ⟨K, hK_le, _hK_le'⟩ :=
         Aristotle.Standalone.OscPieceBigOAssembly.exists_block_of_ge_hardyStart0 T hT_ge_hs0
       -- (K+1)² ≤ T/(2π) ≤ T, so K+1 ≤ √T
       have hK1_le_sqrtT : (K : ℝ) + 1 ≤ Real.sqrt T := by
@@ -713,7 +719,7 @@ private theorem errorTerm_signed_integral_sublinear
 
 theorem b2_first_moment_core
     (h_exp : ∃ C_R > (0 : ℝ), ∀ k : ℕ, ∀ t : ℝ,
-      hardyStart k ≤ t → t ≤ hardyStart (k + 1) → t > 0 →
+      hardyStart k ≤ t → t < hardyStart (k + 1) → t > 0 →
         |ErrorTerm t - (-1 : ℝ) ^ k * (2 * Real.pi / t) ^ ((1 : ℝ) / 4) *
           rsPsi (blockParam k t)| ≤ C_R * t ^ (-(3 : ℝ) / 4)) :
     ∀ ε : ℝ, ε > 0 →
