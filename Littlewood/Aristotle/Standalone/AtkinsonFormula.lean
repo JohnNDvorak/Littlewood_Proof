@@ -4620,7 +4620,7 @@ private lemma atkinsonLowerBoundaryShiftKernel_eq_profile
     field_simp [hn_ne]
   rw [hnum, hden]
 
-private lemma atkinsonLowerBoundaryShiftKernel_nonneg
+lemma atkinsonLowerBoundaryShiftKernel_nonneg
     (n j r : ℕ) (hr : 1 ≤ r) (hrj : r ≤ j) :
     0 ≤ atkinsonLowerBoundaryShiftKernel n j r := by
   unfold atkinsonLowerBoundaryShiftKernel
@@ -4628,7 +4628,7 @@ private lemma atkinsonLowerBoundaryShiftKernel_nonneg
     (le_of_lt (atkinsonShiftedRelativePhase_pos (n + r) r hr (by omega)))
     (le_of_lt (atkinsonShiftedRelativePhase_pos (n + j) j (le_trans hr hrj) (by omega)))
 
-private lemma atkinsonLowerBoundaryShiftKernel_self
+lemma atkinsonLowerBoundaryShiftKernel_self
     (n j : ℕ) (hj : 1 ≤ j) :
     atkinsonLowerBoundaryShiftKernel n j j = 1 := by
   unfold atkinsonLowerBoundaryShiftKernel
@@ -4637,7 +4637,7 @@ private lemma atkinsonLowerBoundaryShiftKernel_self
     atkinsonShiftedRelativePhase_pos (n + j) j hj (by omega)
   field_simp [ne_of_gt hphase_pos]
 
-private lemma atkinsonLowerBoundaryShiftKernel_antitone
+lemma atkinsonLowerBoundaryShiftKernel_antitone
     (j r : ℕ) (hr : 1 ≤ r) (hrj : r ≤ j) :
     Antitone (fun n => atkinsonLowerBoundaryShiftKernel n j r) := by
   intro m n hmn
@@ -4647,7 +4647,7 @@ private lemma atkinsonLowerBoundaryShiftKernel_antitone
       (by positivity : 0 < ((n : ℕ) : ℝ) + 1)
       (by exact_mod_cast Nat.succ_le_succ hmn))
 
-private lemma atkinsonLowerBoundaryShiftKernel_le_two_mul_div
+lemma atkinsonLowerBoundaryShiftKernel_le_two_mul_div
     (n j r : ℕ) (hr : 1 ≤ r) (hrj : r ≤ j) (hjn : j ≤ n) :
     atkinsonLowerBoundaryShiftKernel n j r ≤ 2 * r / j := by
   unfold atkinsonLowerBoundaryShiftKernel
@@ -5318,7 +5318,7 @@ private lemma atkinsonShiftBoundary_remainder_abel_reorder
           ∑ k ∈ Finset.range N, incTail k r := by
                     rw [Finset.sum_comm]
 
-private theorem atkinsonShiftedInversePhaseCorePrefix_eq_shiftBoundaryAbelDecomposition
+theorem atkinsonShiftedInversePhaseCorePrefix_eq_shiftBoundaryAbelDecomposition
     (N j : ℕ) (hj : 1 ≤ j) :
     let headCore : ℕ → ℂ := fun k =>
       ((((atkinsonLowerBoundaryShiftKernel (k + j) j 1 : ℝ) : ℂ)) *
@@ -5751,7 +5751,7 @@ private lemma atkinsonResonantBoundaryCorrection_le_sqrt
 
     Uses the telescoping identity to decompose into two endpoints plus a correction.
     Each endpoint has norm ≤ √(n+j) and the correction sum is ≤ 2·√(n+j). -/
-private theorem atkinsonResonantShiftedBoundaryTail_bound :
+theorem atkinsonResonantShiftedBoundaryTail_bound :
     ∃ C_res > 0, ∀ j : ℕ, 3 ≤ j → ∀ n : ℕ, j ≤ n + 1 → ∀ r : ℕ, r + 2 ≤ j →
       ‖∑ s ∈ Finset.Ico (r + 1) (j - 1),
           atkinsonResonantShiftedBoundaryTerm n (s + 1)‖
@@ -10601,8 +10601,9 @@ private theorem atkinson_j2_kernelWeighted_j1_headCore_bound_of_j1
           unfold C0
           ring
 
-omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
-private theorem atkinson_inversePhaseCorePrefix_bound_j1 :
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+  [AtkinsonSmallShiftPrefixBoundHyp] [AtkinsonLargeShiftPrefixBoundHyp] in
+theorem atkinson_inversePhaseCorePrefix_bound_j1 :
     ∃ C1 > 0, ∀ M : ℕ,
       ‖∑ n ∈ Finset.range (M + 1),
           ((((1 / atkinsonShiftedRelativePhase (n + 1) 1 : ℝ) : ℂ)) *
@@ -11097,8 +11098,9 @@ private theorem atkinson_inversePhaseCorePrefix_bound_j1 :
 
 -- Head Core Bound for j ≥ 3: kernel-weighted j=1 prefix sum bounded by
 -- C · log(j+1) · √(N+j+1) / j via Abel summation with antitone kernel weights.
-omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
-private theorem atkinson_general_kernelWeighted_j1_headCore_bound_of_j1
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+  [AtkinsonSmallShiftPrefixBoundHyp] [AtkinsonLargeShiftPrefixBoundHyp] in
+theorem atkinson_general_kernelWeighted_j1_headCore_bound_of_j1
     (hj1 :
       ∃ C1 > 0, ∀ M : ℕ,
         ‖∑ n ∈ Finset.range (M + 1),
