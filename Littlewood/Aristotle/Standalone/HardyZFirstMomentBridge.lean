@@ -5,7 +5,8 @@ PROOF STRUCTURE:
   Z(t) = MainTerm(t) + ErrorTerm(t).
 
   (A) |∫ ErrorTerm| ≤ C_E·√T: from RSExpansionProof.errorTerm_first_moment_sqrt.
-  (B) |∫ MainTerm| ≤ C_M·√T: from AtkinsonFormula.mainTerm_first_moment_sqrt.
+  (B) |∫ MainTerm| ≤ C_M·√T: from
+      AtkinsonFormula.mainTerm_first_moment_sqrt_of_inversePhaseCellPrefix.
 
 The MainTerm bound uses the Atkinson formula (1949): per-mode integration by parts
 on the Dirichlet polynomial, with the boundary sum controlled by the kernel sum
@@ -23,6 +24,7 @@ import Littlewood.Aristotle.HardyZMeasurability
 import Littlewood.Aristotle.HardyNProperties
 import Littlewood.Aristotle.Standalone.RSExpansionProof
 import Littlewood.Aristotle.Standalone.AtkinsonFormula
+import Littlewood.Aristotle.Standalone.CorePrefixDirect
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -39,10 +41,7 @@ open Aristotle.Standalone.AtkinsonFormula
 open Aristotle.Standalone.SiegelSaddleExpansionHyp
 open Aristotle.Standalone.GabckePhaseCouplingHyp
 
-variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
-variable [AtkinsonSmallShiftPrefixBoundHyp]
-variable [AtkinsonLargeShiftPrefixBoundHyp]
-variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [AtkinsonShiftedInversePhaseCellPrefixBoundHyp]
 variable [SiegelSaddleExpansionHyp]
 variable [GabckePhaseCouplingHyp]
 
@@ -57,7 +56,7 @@ variable [GabckePhaseCouplingHyp]
 private theorem mainTerm_first_moment_sqrt :
     ∃ C_M > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Ioc 1 T, MainTerm t| ≤ C_M * T ^ ((1 : ℝ) / 2) :=
-  Aristotle.Standalone.AtkinsonFormula.mainTerm_first_moment_sqrt
+  Aristotle.Standalone.AtkinsonFormula.mainTerm_first_moment_sqrt_of_inversePhaseCellPrefix
 
 /-- **Hardy Z first moment O(√T) bridge**.
     |∫₁ᵀ Z(t) dt| ≤ C·T^{1/2} for all T ≥ 2.

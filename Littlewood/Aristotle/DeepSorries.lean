@@ -84,6 +84,7 @@ import Littlewood.Aristotle.RiemannSiegelFirstMoment
 import Littlewood.Aristotle.Standalone.RHZeroSumAlignmentBridge
 import Littlewood.Aristotle.Standalone.LandauPiCorrectedExtensionChain
 import Littlewood.Aristotle.Standalone.DeepBlockersResolved
+import Littlewood.Aristotle.Standalone.CorePrefixDirect
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -96,10 +97,7 @@ namespace Aristotle.DeepSorries
 open Filter Topology MeasureTheory Asymptotics
 open ZetaZeros GrowthDomination
 
-variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
-variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonSmallShiftPrefixBoundHyp]
-variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonLargeShiftPrefixBoundHyp]
-variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [Aristotle.Standalone.AtkinsonFormula.AtkinsonShiftedInversePhaseCellPrefixBoundHyp]
 variable [Aristotle.Standalone.SiegelSaddleExpansionHyp.SiegelSaddleExpansionHyp]
 variable [Aristotle.Standalone.GabckePhaseCouplingHyp.GabckePhaseCouplingHyp]
 variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
@@ -263,6 +261,9 @@ private theorem combined_atoms
   -- All sorry warnings are localized in DeepBlockersResolved.lean and its transitive
   -- standalone dependencies. See DeepBlockersResolved.combined_atoms_resolved_unconditional
   -- for the full assembly wiring.
+  letI :
+      Aristotle.Standalone.AtkinsonFormula.AtkinsonShiftedCorrectionPrefixBoundHyp :=
+    Aristotle.Standalone.AtkinsonFormula.atkinson_shiftedCorrectionPrefixBound_of_inversePhaseCellPrefix
   Aristotle.Standalone.DeepBlockersResolved.combined_atoms_resolved_unconditional
 
 /-- **ALL deep mathematical content** for Littlewood's theorem.

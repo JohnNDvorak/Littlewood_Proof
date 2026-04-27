@@ -30,10 +30,7 @@ open Aristotle.Standalone.AtkinsonFormula
 open Aristotle.Standalone.SiegelSaddleExpansionHyp
 open Aristotle.Standalone.GabckePhaseCouplingHyp
 
-variable [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
-variable [AtkinsonSmallShiftPrefixBoundHyp]
-variable [AtkinsonLargeShiftPrefixBoundHyp]
-variable [AtkinsonShiftedCorrectionPrefixBoundHyp]
+variable [AtkinsonShiftedInversePhaseCellPrefixBoundHyp]
 variable [SiegelSaddleExpansionHyp]
 variable [GabckePhaseCouplingHyp]
 

@@ -20,3 +20,13 @@ import_graph.dot
 .tmp_*
 ralph_*.log
 .claude/
+
+# Quarantined recovery artifacts
+.recovery_artifacts/
+
+# Generated self-drive runtime artifacts
+Littlewood/Documentation/Recovery/2026-04-21/self_drive/*
+!Littlewood/Documentation/Recovery/2026-04-21/self_drive/tools/
+Littlewood/Documentation/Recovery/2026-04-21/self_drive/tools/*
+!Littlewood/Documentation/Recovery/2026-04-21/self_drive/tools/run_overnight.sh
+!Littlewood/Documentation/Recovery/2026-04-21/self_drive/tools/self_drive_status.sh

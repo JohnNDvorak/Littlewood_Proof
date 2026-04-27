@@ -34,8 +34,9 @@ import Littlewood.ExplicitFormulas.ConversionFormulas
 import Littlewood.Bridge.HardyChainHyp
 
 -- Bridge files (provide auto-wired instances)
-import Littlewood.Bridge.HardyCriticalLineZerosDirect
--- import Littlewood.Bridge.HardyCriticalLineWiring  -- MERGED: bypassed by HardyCriticalLineZerosDirect
+import Littlewood.Bridge.HardyCriticalLineZerosFromStandalone
+import Littlewood.Aristotle.Standalone.CorePrefixDirect
+import Littlewood.Aristotle.Standalone.CriticalZeroSumDiverges
 import Littlewood.Bridge.ExplicitFormulaOscillation
 import Littlewood.Bridge.PsiOscillationWiring
 import Littlewood.Bridge.ThetaExplicitFormulaOscillation
