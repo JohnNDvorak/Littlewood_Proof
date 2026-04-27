@@ -32,6 +32,10 @@ baseline commit is the commit that first contains this file.
   documented as mathematically false.
 - Do not route `SmallTPerronBoundHyp` through a theorem that already depends on
   `SmallTPerronBoundHyp`.
+- Full project builds are coordinator-only. No agent may run bare `lake build`.
+- While worktrees are cold, all Lake commands are coordinator-scheduled. Agents
+  should record requested validation commands in their lane ledgers instead of
+  starting builds themselves.
 
 ## Lanes
 
@@ -84,7 +88,8 @@ not edit them directly.
 At the end of each work session, each agent appends to its own ledger:
 
 - current theorem or file attacked
-- exact command results
+- exact command results, or requested validation commands if the build mutex is
+  active
 - proof facts banked
 - failed routes that should not be retried
 - smallest next theorem or diagnostic
