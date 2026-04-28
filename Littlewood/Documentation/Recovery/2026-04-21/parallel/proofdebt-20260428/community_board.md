@@ -70,7 +70,7 @@ Agents request validation in their lane ledger. The coordinator serializes:
 
 | Order | Branch | Status | Required before merge |
 | --- | --- | --- | --- |
-| 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `5e12977` | public import probes after provider closure |
+| 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `1d6314a` | public import probes after provider closure |
 | 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `72d85d5` | public import probes after provider closure |
 | 3 | `proofdebt/20260428-pi-phase` | active, pushed through `6a9ca1d` | public import probes after provider closure |
 | 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `908144b` | public import probes after provider closure |
@@ -112,6 +112,8 @@ Each agent report must state:
   - Atkinson `5e12977`: same focused build passed after coordinator removed a
     redundant finishing tactic and normalized indentation; closed the kernel
     weight-scale atom and reduced the integral bound to mass and moment atoms.
+  - Atkinson `1d6314a`: same focused build passed; reduced the weighted moment
+    atom to an exact quadratic-kernel boundary identity.
   - Perron/B5a `040f565`: `lake build Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aShiftedBoundDeepLeaf`
     passed; reduced shifted leaf to direct large/small Perron payloads.
   - Perron/B5a `b1f2641`: `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
@@ -144,8 +146,8 @@ Each agent report must state:
   Atkinson worktree and re-issued the hard rule: agents must not run `lake`,
   `lake env lean`, `lean`, or any focused build/check themselves.
 - Current live atoms:
-  - Atkinson: shifted quadratic mass bound, weighted moment bound, and target
-    matching for the large-j no-log theorem.
+  - Atkinson: shifted quadratic mass bound, exact weighted-moment boundary
+    identity, and target matching for the large-j no-log theorem.
   - Perron/B5a: uniform boundary kernel supremum, corrected boundary
     von-Mangoldt window-weight estimate, off-boundary estimate, and
     bounded-height residue extraction.
