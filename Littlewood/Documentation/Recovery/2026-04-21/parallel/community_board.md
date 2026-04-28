@@ -52,8 +52,9 @@ baseline commit is the commit that first contains this file.
   starting builds themselves.
 - Exactly one Lean/Lake validation job may run at a time across the whole
   machine.
-- Green lane work may be committed and pushed for durability, but no lane branch
-  is auto-merged into the recovery branch overnight.
+- Green lane work may be committed and pushed for durability. Lane branches are
+  merged into the recovery branch only by the coordinator after serialized
+  validation.
 
 ## Lanes
 
@@ -80,65 +81,75 @@ not edit them directly.
 
 1. `AtkinsonShiftedInversePhaseCellPrefixBoundHyp`
    - Active public Atkinson provider gap.
-   - First attack: no-log inverse-phase cell-prefix estimate for large `j`,
-     then finite `j = 1, 2` patch.
+   - Current reduction: prove the mode-eventual shifted-interval native
+     `StationaryPhaseMainMode.blockMode` estimate:
+     `∃ C_err > 0, ∃ N_err, ∀ n ≥ N_err, ∀ j ≥ 3, j ≤ n → ... ≤
+     C_err * (atkinsonModeWeight (n + j) / j)`.
+   - The older large-shift direct-Abel debt remains isolated and should be
+     cleaned up after the public leaf is closed.
 2. `SmallTPerronBoundHyp`
    - Must be proved without circular dependence on the full contour remainder
      provider that consumes it.
-3. `TruncatedExplicitFormulaPiHyp`
-   - The `pi_approx` field is false as stated. Treat this as an interface
-     repair or bypass problem, not a theorem-proving target.
+   - Current reduction: prove the finite weighted Perron-kernel cutoff estimate
+     `perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x)^2` for
+     `x ≥ 2`, `2 ≤ T ≤ 16`.
+3. Perron-only pi phase boundary
+   - The false `TruncatedExplicitFormulaPiHyp.pi_approx` route is bypassed in
+     the new Perron-only path.
+   - Current remaining leaves:
+     `PerronThresholdTowerDominationHyp` and
+     `FiniteZeroInhomogeneousPhaseWindowHyp`.
 4. RS/Gabcke coupling
-   - Keep separate from Atkinson so both lanes can progress without file
-     conflicts.
+   - Current reduction: define the explicit signed first Gabcke coefficient
+     formula `C k p` and prove the identity, nonnegativity, and adjacent
+     antitonicity atoms for `normalizedSignedSPR`.
 
 ## Merge Queue
 
 | Order | Branch | Status | Required checks |
 | --- | --- | --- | --- |
-| 1 | `overnight/20260428-atkinson` | round 4 committed: `3396863` | focused Atkinson build passed; public `Psi`/`Pi` import probes passed |
-| 2 | `overnight/20260428-perron-hadamard` | round 4 committed: `f6ced10` | focused PerronTruncationInfra build passed; public `Psi`/`Pi` import probes passed |
-| 3 | `overnight/20260428-pi-phase` | round 3 committed: `79aa2a3` | focused PerronExplicitFormulaProvider build passed; public `Pi` import probe passed |
-| 4 | `overnight/20260428-rs-gabcke` | round 3 committed: `acf3068` | focused RS/Gabcke/Hardy builds passed; public `Psi`/`Pi` import probes passed |
+| 1 | `overnight/20260428-atkinson` | merged: `d506491` from `f393526` | focused Atkinson build passed; public `Psi`/`Pi` import probes passed |
+| 2 | `overnight/20260428-perron-hadamard` | merged: `1d7f253` from `20b39f2` | focused PerronTruncationInfra build passed; public `Psi`/`Pi` import probes passed |
+| 3 | `overnight/20260428-pi-phase` | merged: `6b6f567` from `881d196` | focused PerronExplicitFormulaProvider build passed; public `Psi`/`Pi` import probes passed |
+| 4 | `overnight/20260428-rs-gabcke` | merged: `d70d921` from `887db7a` | focused RS/Gabcke/Hardy builds passed; public `Psi`/`Pi` import probes passed |
 
 ## Coordinator Status
 
 - Main recovery branch is ahead of `origin/recovery/provider-forensics-2026-04-21`
-  by coordination/checkpoint commits.
+  by validated coordination/checkpoint/integration commits.
 - Strict public import probes on the main recovery branch passed:
   - `import Littlewood.Main.LittlewoodPsi`
   - `import Littlewood.Main.LittlewoodPi`
 - All fresh overnight worktrees reuse the main `.lake` cache through local
   symlinks; `.lake` is excluded locally and must remain untracked.
 - No full `lake build` has been run in this overnight coordinator pass.
-- Current round 5 work is delegated to the four lane agents with static-only
-  permissions. Coordinator remains the sole Lean/Lake validator, with exactly
-  one Lean/Lake validation job allowed at a time.
+- Integrated head after lane merges: `d70d921`.
+- Current next pass should continue from the integrated heads. Coordinator
+  remains the sole Lean/Lake validator, with exactly one Lean/Lake validation
+  job allowed at a time.
 
 ## Current Lane Heads
 
-- Atkinson: `3396863 Reduce Atkinson remainder to blockMode estimate`
+- Atkinson: `f393526 Reduce Atkinson blockMode estimate to mode form`
 - Perron/Hadamard:
-  `f6ced10 Reduce Perron truncation to kernel cutoff`
+  `20b39f2 Reduce Perron kernel cutoff to weighted error`
 - Pi/Phase:
-  `79aa2a3 Split pi phase fit into honest window leaves`
+  `881d196 Reduce pi phase window to tower domination`
 - RS/Gabcke:
-  `acf3068 Reduce Gabcke coupling to coefficient formula`
+  `887db7a Atomize Gabcke coefficient boundary`
 
 ## Newly Exposed Debt
 
-- `PerronTruncationInfra.perron_vertical_eq_tsum` is now an explicit private
-  `sorry` leaf. The prior proof skeleton failed elaboration before the concrete
-  small-`T` handoff could be validated.
-- Perron/Hadamard still needs the non-circular concrete bounded-height
-  truncation and residue estimates for `perronVerticalIntegral`.
-- Atkinson's public leaf is now reduced to a native `blockMode`
-  stationary-phase estimate on the shifted interval.
-- Pi/Phase's Perron-only exact-seed path is now split into same-height
-  tower/window growth and bounded-window finite inhomogeneous phase
-  approximation.
-- RS/Gabcke signed coupling is now reduced to an explicit normalized Gabcke
-  coefficient formula plus two elementary inequalities.
+- `PerronTruncationInfra.perron_vertical_eq_tsum` remains an explicit private
+  `sorry` leaf, separate from the newly reduced finite weighted cutoff atom.
+- Perron/Hadamard still needs the finite weighted cutoff proof near the sharp
+  `n = x` boundary, then the small-`T` provider can be packaged honestly.
+- Atkinson's public leaf is reduced to a native mode-eventual shifted-interval
+  `blockMode` stationary-phase estimate.
+- Pi/Phase's Perron-only path needs same-height tower domination plus a
+  bounded-window finite inhomogeneous phase theorem.
+- RS/Gabcke signed coupling is reduced to an explicit normalized Gabcke
+  coefficient identity plus nonnegativity and adjacent antitonicity.
 
 ## Update Protocol
 
