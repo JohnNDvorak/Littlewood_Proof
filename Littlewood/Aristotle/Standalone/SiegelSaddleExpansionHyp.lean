@@ -168,6 +168,20 @@ class SiegelSaddleExpansionHyp : Prop where
       ((k : ℝ) + 2 + p) * ((-1 : ℝ) ^ (k + 1) * saddlePointRemainder (k + 1) (blockCoord (k + 1) p)) ≤
         ((k : ℝ) + 1 + p) * ((-1 : ℝ) ^ k * saddlePointRemainder k (blockCoord k p))
 
+/-- The Gabcke Satz 1 weighted-profile component of
+`SiegelSaddleExpansionHyp`, separated from the signed adjacent Satz 4 fields.
+This is the absolute first-coefficient bound on block coordinates. -/
+def SiegelWeightedProfileBoundProp : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    |(((k : ℝ) + 1 + p) * saddlePointRemainder k (blockCoord k p))| ≤
+      fresnelC1Bound / Real.sqrt (2 * Real.pi)
+
+/-- Project the weighted-profile atom from the current Siegel/Gabcke class. -/
+theorem siegelWeightedProfileBoundProp_of_siegelSaddleExpansionHyp
+    [h : SiegelSaddleExpansionHyp] :
+    SiegelWeightedProfileBoundProp :=
+  h.weighted_profile_bound
+
 /-- On block coordinates, the weighted profile bound implies the expected
     `fresnelC1Bound · t^(-1/2)` decay for the normalized remainder. -/
 private theorem saddle_remainder_fresnel_bound_on_coords [h : SiegelSaddleExpansionHyp]

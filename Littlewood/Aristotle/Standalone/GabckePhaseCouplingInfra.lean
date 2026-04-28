@@ -1720,6 +1720,43 @@ theorem gabckeNormalizedCoefficientProp_of_siegelSaddleExpansionHyp
     rw [hleft]
     simpa [normalizedSignedSPR] using h
 
+/-- Rebuild the full `SiegelSaddleExpansionHyp` from its absolute weighted
+profile atom and the smaller normalized adjacent coefficient atom.
+
+This is a theorem-shaped reduction of the primary RS/Gabcke class: Satz 1 is
+now represented by `SiegelWeightedProfileBoundProp`, while the signed Satz 4
+content is represented by `GabckeNormalizedCoefficientProp`. -/
+theorem siegelSaddleExpansionHyp_of_weightedProfile_and_normalizedCoefficient
+    (h_weighted : SiegelWeightedProfileBoundProp)
+    (h_coeff : GabckeNormalizedCoefficientProp) :
+    SiegelSaddleExpansionHyp where
+  weighted_profile_bound := h_weighted
+  signed_nonneg := by
+    intro k hk p hp
+    have hsigned : 0 ≤ signedSPR k (blockCoord k p) :=
+      signedSPR_nonneg_of_normalizedSignedSPR_nonneg hp (h_coeff.1 k hk p hp)
+    simpa [signedSPR] using hsigned
+  normalized_antitone := by
+    intro k hk p hp
+    have hnorm :
+        ((k : ℝ) + 2 + p) * signedSPR (k + 1) (blockCoord (k + 1) p) ≤
+          ((k : ℝ) + 1 + p) * signedSPR k (blockCoord k p) :=
+      normalized_signedSPR_antitone_of_normalizedSignedSPR_adjacent (h_coeff.2 k hk p hp)
+    simpa [signedSPR] using hnorm
+
+/-- Exact reduction of `SiegelSaddleExpansionHyp` to the weighted-profile
+Satz 1 atom plus the normalized adjacent Gabcke coefficient atom. -/
+theorem siegelSaddleExpansionHyp_iff_weightedProfile_and_normalizedCoefficient :
+    SiegelSaddleExpansionHyp ↔
+      SiegelWeightedProfileBoundProp ∧ GabckeNormalizedCoefficientProp := by
+  constructor
+  · intro h
+    letI : SiegelSaddleExpansionHyp := h
+    exact ⟨siegelWeightedProfileBoundProp_of_siegelSaddleExpansionHyp,
+      gabckeNormalizedCoefficientProp_of_siegelSaddleExpansionHyp⟩
+  · intro h
+    exact siegelSaddleExpansionHyp_of_weightedProfile_and_normalizedCoefficient h.1 h.2
+
 /-- **Gabcke Satz 4, condition (A)**: the signed saddle-point remainder
     is nonneg on all blocks k ≥ 1.
 
