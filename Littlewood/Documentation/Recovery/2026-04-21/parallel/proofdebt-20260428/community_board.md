@@ -70,10 +70,10 @@ Agents request validation in their lane ledger. The coordinator serializes:
 
 | Order | Branch | Status | Required before merge |
 | --- | --- | --- | --- |
-| 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `da6efa1` | public import probes after provider closure |
-| 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `43aa10d` | public import probes after provider closure |
-| 3 | `proofdebt/20260428-pi-phase` | active, pushed through `bb027c8` | public import probes after provider closure |
-| 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `9564c41` | public import probes after provider closure |
+| 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `5e12977` | public import probes after provider closure |
+| 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `72d85d5` | public import probes after provider closure |
+| 3 | `proofdebt/20260428-pi-phase` | active, pushed through `6a9ca1d` | public import probes after provider closure |
+| 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `908144b` | public import probes after provider closure |
 
 ## Agent Report Contract
 
@@ -109,12 +109,19 @@ Each agent report must state:
   - Atkinson `da6efa1`: same focused build passed after coordinator removed two
     redundant finishing tactics; split the shifted quadratic kernel bound into
     mass, moment, and weight-scale atoms.
+  - Atkinson `5e12977`: same focused build passed after coordinator removed a
+    redundant finishing tactic and normalized indentation; closed the kernel
+    weight-scale atom and reduced the integral bound to mass and moment atoms.
   - Perron/B5a `040f565`: `lake build Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aShiftedBoundDeepLeaf`
     passed; reduced shifted leaf to direct large/small Perron payloads.
   - Perron/B5a `b1f2641`: `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
     passed; reduced small-T payload to weighted kernel and residue atoms.
   - Perron/B5a `43aa10d`: same focused build passed after coordinator coercion
     fix; split weighted cutoff into boundary-window and off-boundary atoms.
+  - Perron/B5a `d186f57`: same focused build passed; reduced the boundary
+    window estimate to a kernel supremum and von Mangoldt window-weight atom.
+  - Perron/B5a `72d85d5`: same focused build passed after coordinator removed a
+    redundant finishing tactic; corrected the boundary window weight scale.
   - Pi/Phase `847fa92`: `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
     passed; added Perron-only corrected phase endpoints.
   - Pi/Phase `bbedbc3`: `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
@@ -124,22 +131,27 @@ Each agent report must state:
     and `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
     passed after coordinator fixed local-definition unfolding; reduced the wide
     tower window to `PerronThresholdTowerWideDominationHyp`.
+  - Pi/Phase `6a9ca1d`: same two focused builds passed; reduced the finite-zero
+    inhomogeneous phase fit provider to a finite-set Kronecker atom.
   - RS/Gabcke `fa96728`: `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
     passed; split Siegel/Gabcke into profile and coefficient atoms.
   - RS/Gabcke `9564c41`: same focused build set passed; reduced weighted profile
     to a coordinate remainder atom.
+  - RS/Gabcke `908144b`: same focused build set passed after coordinator fixed
+    `blockCoord` positivity; reduced the coordinate remainder to the raw
+    stationary-phase error atom.
 - Coordinator stopped one non-coordinator `lake env lean` process in the
   Atkinson worktree and re-issued the hard rule: agents must not run `lake`,
   `lake env lean`, `lean`, or any focused build/check themselves.
 - Current live atoms:
-  - Atkinson: shifted quadratic zero-model approximation, shifted quadratic
-    mass bound, weighted moment bound, weight-scale comparison, and target
-    matching.
-  - Perron/B5a: boundary-window estimate for the finite weighted Perron kernel,
-    off-boundary estimate, and bounded-height residue extraction.
+  - Atkinson: shifted quadratic mass bound, weighted moment bound, and target
+    matching for the large-j no-log theorem.
+  - Perron/B5a: uniform boundary kernel supremum, corrected boundary
+    von-Mangoldt window-weight estimate, off-boundary estimate, and
+    bounded-height residue extraction.
   - Pi/Phase: Perron tower wide-domination and finite-zero relative-density
-    phase fit.
-  - RS/Gabcke: Siegel coordinate pointwise remainder and Gabcke normalized
+    phase fit via the finite-set Kronecker atom.
+  - RS/Gabcke: `SiegelCoordinateStationaryPhaseErrorProp` and Gabcke normalized
     coefficient content.
 - Next coordinator action: harvest Aristotle results when authenticated, then
   keep validating returning lane commits serially. Public import probes for
