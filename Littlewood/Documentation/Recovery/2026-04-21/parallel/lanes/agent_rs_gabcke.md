@@ -100,3 +100,59 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   the legacy `GabckePhaseCouplingHyp` wrapper.
 - Coordinator action requested: run the exact validation commands above under
   the serialized validation policy.
+
+### 2026-04-28 Overnight Round 1: adjacent Gabcke atom surfacing
+
+- Status: PROVED, pending coordinator validation.
+- Current theorem/file attacked:
+  `Littlewood/Aristotle/Standalone/GabckePhaseCouplingInfra.lean`.
+- Static validation of existing reduction surface:
+  `SiegelSaddleExpansionHyp` already contains the two Gabcke Satz 4 adjacent
+  atoms:
+  - `signed_nonneg`, giving nonnegativity of `signedSPR k (blockCoord k p)` on
+    all blocks `k ≥ 1`;
+  - `normalized_antitone`, giving adjacent antitonicity of the normalized
+    signed remainder.
+  `GabckePhaseCouplingInfra` converts those atoms through
+  `SteepestDescentAdjacentCoupling` to `GabckeSignedAdjacentProp`, and
+  `GabckePhaseCouplingHyp` then packages that smaller adjacent surface as the
+  legacy `GabckePhaseCouplingHyp` wrapper.
+- Proof facts banked:
+  - Added theorem-shaped projection
+    `signedSPR_nonneg_of_siegelSaddleExpansionHyp`.
+  - Added theorem-shaped projection
+    `normalized_signedSPR_antitone_of_siegelSaddleExpansionHyp`.
+  - Added direct adjacent provider
+    `gabckeSignedAdjacentProp_of_siegelSaddleExpansionHyp`.
+  - Added direct remainder-antitonicity provider
+    `remainder_antitone_for_ge_one_of_siegelSaddleExpansionHyp`.
+  - Rewired the private `steepest_descent_*` helpers to use the public
+    theorem-shaped projections.
+- Failed routes that should not be retried:
+  none in this round; no Lean/Lake commands were run under the hard validation
+  mutex.
+- Smallest next theorem or diagnostic:
+  the remaining analytic atom is no longer the legacy
+  `GabckePhaseCouplingHyp` class. It is the pair of exact theorem-shaped
+  Gabcke adjacent inputs now surfaced as
+  `signedSPR_nonneg_of_siegelSaddleExpansionHyp` and
+  `normalized_signedSPR_antitone_of_siegelSaddleExpansionHyp`. Any future
+  analytic work should refine/prove those two fields from explicit Gabcke
+  coefficient formulae rather than adding another wrapper class.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`
+  - `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+  - minimal import probe for `Littlewood.Main.LittlewoodPsi`
+  - minimal import probe for `Littlewood.Main.LittlewoodPi`
+- Coordinator action requested: run the exact validation commands above under
+  serialized validation.
+
+### 2026-04-28 Coordinator Validation
+
+- `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`:
+  passed.
+- `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`: passed.
+- `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`: passed.
+- Residual risk: public import probes remain queued; the analytic content is
+  still the two `SiegelSaddleExpansionHyp` fields surfaced by this round.

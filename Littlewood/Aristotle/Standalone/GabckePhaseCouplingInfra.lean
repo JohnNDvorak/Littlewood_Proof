@@ -1528,6 +1528,27 @@ class SteepestDescentAdjacentCoupling : Prop where
       ((k : ℝ) + 2 + p) * signedSPR (k + 1) (blockCoord (k + 1) p) ≤
         ((k : ℝ) + 1 + p) * signedSPR k (blockCoord k p)
 
+/-- The first actual Gabcke adjacent atom exposed theorem-first from
+`SiegelSaddleExpansionHyp`: signed saddle-point remainders are nonnegative on
+all blocks `k ≥ 1`. -/
+theorem signedSPR_nonneg_of_siegelSaddleExpansionHyp
+    [h : SiegelSaddleExpansionHyp] :
+    ∀ k : ℕ, 1 ≤ k → ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
+      0 ≤ signedSPR k (blockCoord k p) := by
+  intro k hk p hp
+  exact h.signed_nonneg k hk p hp
+
+/-- The second actual Gabcke adjacent atom exposed theorem-first from
+`SiegelSaddleExpansionHyp`: the normalized signed saddle-point remainder is
+nonincreasing on adjacent blocks. -/
+theorem normalized_signedSPR_antitone_of_siegelSaddleExpansionHyp
+    [h : SiegelSaddleExpansionHyp] :
+    ∀ k : ℕ, 1 ≤ k → ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
+      ((↑k + 2 + p) * signedSPR (k + 1) (blockCoord (k + 1) p) ≤
+        (↑k + 1 + p) * signedSPR k (blockCoord k p)) := by
+  intro k hk p hp
+  exact h.normalized_antitone k hk p hp
+
 /-- **Gabcke Satz 4, condition (A)**: the signed saddle-point remainder
     is nonneg on all blocks k ≥ 1.
 
@@ -1545,16 +1566,14 @@ private theorem steepest_descent_signed_nonneg
     [h : SiegelSaddleExpansionHyp] :
     ∀ k : ℕ, 1 ≤ k → ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
       0 ≤ signedSPR k (blockCoord k p) := by
-  intro k hk p hp
-  exact h.signed_nonneg k hk p hp
+  exact signedSPR_nonneg_of_siegelSaddleExpansionHyp
 
 private theorem steepest_descent_normalized_antitone
     [h : SiegelSaddleExpansionHyp] :
     ∀ k : ℕ, 1 ≤ k → ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
       ((↑k + 2 + p) * signedSPR (k + 1) (blockCoord (k + 1) p) ≤
         (↑k + 1 + p) * signedSPR k (blockCoord k p)) := by
-  intro k hk p hp
-  exact h.normalized_antitone k hk p hp
+  exact normalized_signedSPR_antitone_of_siegelSaddleExpansionHyp
 
 /-- Constructive instance of `SteepestDescentAdjacentCoupling`
     from `SiegelSaddleExpansionHyp` (Gabcke 1979 Satz 4).
@@ -1621,6 +1640,14 @@ theorem gabckeSignedAdjacentProp_of_coupling
   · unfold weightedSignedSPR; rw [ eq_div_iff ( ne_of_gt <| Real.sqrt_pos.mpr <| by linarith [ hp.1 ] ) ] ; ring;
     rw [ Real.sq_sqrt ] <;> linarith [ hp.1 ]
 
+/-- Direct theorem-first adjacent Gabcke surface from the two
+`SiegelSaddleExpansionHyp` adjacent atoms. This is the smaller provider
+boundary consumed before packaging into the legacy phase-coupling class. -/
+theorem gabckeSignedAdjacentProp_of_siegelSaddleExpansionHyp
+    [SiegelSaddleExpansionHyp] :
+    GabckeSignedAdjacentProp :=
+  gabckeSignedAdjacentProp_of_coupling
+
 /-- Instance: steepest-descent adjacent coupling provides `GabckeSignedAdjacentHyp`. -/
 instance [SteepestDescentAdjacentCoupling] : GabckeSignedAdjacentHyp :=
   gabckeSignedAdjacentHyp_of_prop gabckeSignedAdjacentProp_of_coupling
@@ -1633,5 +1660,15 @@ theorem remainder_antitone_for_ge_one_of_coupling
     blockRemainder (k + 1) ≤ blockRemainder k :=
   remainder_antitone_for_ge_one_of_adjacent_prop
     gabckeSignedAdjacentProp_of_coupling k hk
+
+/-- Direct theorem-first remainder antitonicity from
+`SiegelSaddleExpansionHyp`, bypassing the legacy `GabckePhaseCouplingHyp`
+wrapper and naming the adjacent-atom route explicitly. -/
+theorem remainder_antitone_for_ge_one_of_siegelSaddleExpansionHyp
+    [SiegelSaddleExpansionHyp]
+    (k : ℕ) (hk : 1 ≤ k) :
+    blockRemainder (k + 1) ≤ blockRemainder k :=
+  remainder_antitone_for_ge_one_of_adjacent_prop
+    gabckeSignedAdjacentProp_of_siegelSaddleExpansionHyp k hk
 
 end Aristotle.Standalone.GabckePhaseCouplingInfra
