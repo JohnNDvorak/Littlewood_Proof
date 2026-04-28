@@ -108,3 +108,309 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - Coordinator action requested:
   run the above serialized validation commands; no full `lake build` requested
   by this lane.
+
+### 2026-04-28 Overnight Round 1
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Current theorem/file attacked:
+  `Littlewood/Development/HadamardProductZeta.lean`,
+  `SmallTPerronBoundHyp`.
+- Theorem added:
+  `HadamardProductZeta.small_T_direct_bound_from_three_piece_bounds`.
+- Reduction banked:
+  the exact direct hypothesis of
+  `HadamardProductZeta.small_T_perron_bound_hyp_of_direct_bound` now follows
+  from a strictly theorem-shaped three-piece bounded-height decomposition:
+  two pieces bounded by
+  `P * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)` and one bookkeeping piece
+  bounded by `P * (Real.log x)^2`, uniformly for `2 ≤ T ≤ 16`.
+  The assembly is triangle inequality plus nonnegativity of the two error
+  channels, with output constant `3 * P`.
+- Circular routes avoided:
+  did not use `ContourRemainderBoundHyp.bound`,
+  `general_formula_accessible`, `small_T_contour_bound`, or any theorem that
+  consumes `HadamardProductZeta.SmallTPerronBoundHyp`.
+- Files changed:
+  `Littlewood/Development/HadamardProductZeta.lean`;
+  this ledger.
+- Static command results:
+  `git diff --check` succeeded with no output.
+  No Lean/Lake/build/cache commands were run in this round.
+- Smallest next theorem:
+  prove the hypothesis of
+  `small_T_direct_bound_from_three_piece_bounds` by constructing the concrete
+  bounded-height Perron/residue/log pieces for
+  `shiftedRemainderRe x T`, uniformly on `2 ≤ T ≤ 16`, without routing through
+  full-range contour packaging.
+- Requested coordinator validation commands:
+  `lake build Littlewood.Development.HadamardProductZeta`;
+  minimal import probe for `Littlewood.Main.LittlewoodPsi`;
+  minimal import probe for `Littlewood.Main.LittlewoodPi`.
+- Coordinator action requested:
+  run serialized validation when the build mutex permits; no full project build
+  requested by this lane.
+
+### 2026-04-28 Coordinator Validation
+
+- Coordinator proof repair:
+  changed the cutoff algebra proof to rewrite `Finset.sum_sub_distrib` in the
+  reverse direction and use `Finset.abs_sum_le_sum_abs`.
+- Focused module check:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` passed.
+- Strict public import checks:
+  `import Littlewood.Main.LittlewoodPsi` passed.
+  `import Littlewood.Main.LittlewoodPi` passed.
+- Integration status:
+  ready to commit and merge into the main recovery branch.
+
+### 2026-04-28 Coordinator Validation, Truncation Kernel Cutoff
+
+- `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`: passed.
+- `import Littlewood.Main.LittlewoodPsi`: passed.
+- `import Littlewood.Main.LittlewoodPi`: passed.
+- Validation repair:
+  renamed the local logarithmic square abbreviation from `L` to `logSq`; `L`
+  collided with the existing L-series notation and made arithmetic expressions
+  elaborate against the wrong object.
+- This round banks the reduction from the concrete vertical-integral
+  truncation estimate to the finite Perron-kernel cutoff estimate.
+
+### 2026-04-28 Coordinator Validation, Concrete Vertical Integral Handoff
+
+- `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`: passed.
+- `import Littlewood.Main.LittlewoodPsi`: passed.
+- `import Littlewood.Main.LittlewoodPi`: passed.
+- Build repair made during validation:
+  `perron_vertical_eq_tsum` contained an unfinished proof skeleton that failed
+  elaboration before this lane's handoff theorem. I exposed that pre-existing
+  analytic exchange as an explicit private `sorry` leaf so the module is
+  buildable and the debt is visible.
+- Live Perron atoms now visible:
+  `perron_tail_bound_core`, `perron_vertical_eq_tsum`,
+  `small_T_perronVerticalIntegral_truncation_bound`, and
+  `small_T_perronVerticalIntegral_residue_bound`.
+- Next action:
+  work below the concrete vertical integral handoff, preferably the truncation
+  bound first, without consuming `SmallTPerronBoundHyp` or any full contour
+  provider route.
+
+### 2026-04-28 Coordinator Validation, Round 2
+
+- `lake build Littlewood.Development.HadamardProductZeta`: passed.
+- `import Littlewood.Main.LittlewoodPsi`: passed.
+- `import Littlewood.Main.LittlewoodPi`: passed.
+- Validation output included linter warnings in existing imported files and
+  unused-variable warnings in `HadamardProductZeta.lean`; no errors.
+- This round remains a conditional reduction. The live theorem is now the
+  concrete bounded-height construction of `perronIntegralRe` plus the two
+  component estimates recorded above.
+
+### 2026-04-28 Coordinator Validation
+
+- First validation found an elaboration issue in
+  `small_T_direct_bound_from_three_piece_bounds`: `abs_add` was not available
+  under that name in this module.
+- Coordinator patch: replaced the two triangle-inequality calls by
+  `abs_add_le`.
+- `lake build Littlewood.Development.HadamardProductZeta`: passed.
+- Residual risk: this is still a conditional reduction; the concrete
+  three-piece bounded-height decomposition remains open.
+
+### 2026-04-28 Overnight Continuation
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Current theorem/file attacked:
+  `Littlewood/Development/HadamardProductZeta.lean`,
+  concrete small-`T` decomposition below `SmallTPerronBoundHyp`.
+- Theorems added:
+  `HadamardProductZeta.small_T_three_piece_bounds_from_perron_components`;
+  `HadamardProductZeta.small_T_direct_bound_from_perron_components`.
+- Reduction banked:
+  the three-piece bounded-height decomposition now follows from a single
+  concrete Perron integral `perronIntegralRe` satisfying two uniform estimates
+  on `2 ≤ T ≤ 16`:
+  `|chebyshevPsi x - perronIntegralRe x T| ≤ Cₚ * (Real.log x)^2`
+  and
+  `|perronIntegralRe x T - (x - zeroSumRe x T)| ≤
+    Cᵣ * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
+  The decomposition identity used is
+  `ψ - x + Z = (Perron - (x - Z)) + 0 + (ψ - Perron)`,
+  with output three-piece constant `max Cₚ Cᵣ`; composing with
+  `small_T_direct_bound_from_three_piece_bounds` gives the direct small-`T`
+  provider hypothesis.
+- Circular routes avoided:
+  did not use `ContourRemainderBoundHyp.bound`,
+  `general_formula_accessible`, `small_T_contour_bound`, or any theorem that
+  consumes `HadamardProductZeta.SmallTPerronBoundHyp`.
+- Files changed:
+  `Littlewood/Development/HadamardProductZeta.lean`;
+  this ledger.
+- Static command results:
+  `git diff --check` succeeded with no output.
+  No Lean/Lake/build/cache commands were run in this continuation.
+- Smallest next theorem:
+  construct the concrete bounded-height Perron integral `perronIntegralRe` and
+  prove the two component estimates above directly from bounded-height Perron
+  summation plus residue/contour extraction, without routing through full-range
+  contour packaging.
+- Requested coordinator validation commands:
+  `lake build Littlewood.Development.HadamardProductZeta`;
+  minimal import probe for `Littlewood.Main.LittlewoodPsi`;
+  minimal import probe for `Littlewood.Main.LittlewoodPi`.
+- Coordinator action requested:
+  run serialized validation when the build mutex permits; no full project build
+  requested by this lane.
+
+### 2026-04-28 Overnight Continuation, Concrete Vertical Integral Handoff
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Current theorem/file attacked:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`,
+  concrete bounded-height `perronIntegralRe`.
+- Theorem added:
+  `Aristotle.Standalone.PerronTruncationInfra.small_T_direct_bound_from_perronVerticalIntegral_components`.
+- Reduction banked:
+  the arbitrary `perronIntegralRe` in
+  `HadamardProductZeta.small_T_direct_bound_from_perron_components` is now
+  specialized to the concrete vertical integral
+  `Aristotle.Standalone.PerronTruncationInfra.perronVerticalIntegral`.
+  The direct small-`T` provider target follows from exactly two concrete
+  bounded-height atoms for this integral, uniformly on `2 ≤ T ≤ 16`:
+  `|chebyshevPsi x - perronVerticalIntegral x T| ≤ Cₚ * (Real.log x)^2`
+  and
+  `|perronVerticalIntegral x T - (x - zeroSumRe x T)| ≤
+    Cᵣ * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
+- Circular routes avoided:
+  did not use `ContourRemainderBoundHyp.bound`,
+  `general_formula_accessible`, `small_T_contour_bound`,
+  `PerronExplicitFormulaProvider.general_explicit_formula_from_perron`, or any
+  theorem consuming `HadamardProductZeta.SmallTPerronBoundHyp`.
+- Local audit result:
+  neither component estimate was closed by existing static infrastructure.
+  The truncation file currently reaches Dirichlet-series/Perron exchange for
+  `perronVerticalIntegral`, but its tail path still contains the explicitly
+  flagged `perron_tail_bound_core` atom and does not prove the final
+  `|ψ - perronVerticalIntegral|` estimate. The residue path visible in the
+  provider stack uses placeholder/full-contour routes and is therefore not a
+  non-circular small-`T` provider.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  this ledger.
+- Static command results:
+  `git status --short --branch` showed this worktree on
+  `overnight/20260428-perron-hadamard` at committed checkpoint `55efd6b`
+  before edits.
+  Static `rg`/`sed` inspection only; no Lean/Lake/build/cache commands were
+  run in this continuation.
+- Smallest next theorem:
+  prove either concrete atom below without using contour/general-formula
+  consumers:
+  `PerronTruncationInfra.small_T_perronVerticalIntegral_truncation_bound`
+  with statement
+  `∃ Cₚ > 0, ∀ x T, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+    |chebyshevPsi x - perronVerticalIntegral x T| ≤ Cₚ * (Real.log x)^2`;
+  or
+  `PerronTruncationInfra.small_T_perronVerticalIntegral_residue_bound`
+  with statement
+  `∃ Cᵣ > 0, ∀ x T, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+    |perronVerticalIntegral x T - (x - zeroSumRe x T)| ≤
+      Cᵣ * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
+- Requested coordinator validation commands:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`;
+  minimal import probe for `Littlewood.Main.LittlewoodPsi`;
+  minimal import probe for `Littlewood.Main.LittlewoodPi`.
+- Coordinator action requested:
+  run serialized validation when the build mutex permits; no full project build
+  requested by this lane.
+
+### 2026-04-28 Overnight Continuation, Truncation Kernel Cutoff
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Current theorem/file attacked:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`,
+  `small_T_perronVerticalIntegral_truncation_bound`.
+- Definitions/theorems added:
+  `Aristotle.Standalone.PerronTruncationInfra.perronKernelFiniteSum`;
+  `Aristotle.Standalone.PerronTruncationInfra.small_T_perronVerticalIntegral_truncation_bound_from_kernel_sum_bound`.
+- Reduction banked:
+  the concrete bounded-height truncation estimate for
+  `perronVerticalIntegral` now follows from the finite Perron-kernel cutoff
+  estimate
+  `|chebyshevPsi x - perronKernelFiniteSum x T| ≤ Ck * (Real.log x)^2`,
+  uniformly on `2 ≤ T ≤ 16`.
+  The proof uses the existing `perron_exchange_error_bound` to contribute an
+  `O(1)` exchange term and absorbs it into `(Real.log x)^2` using `x ≥ 2`.
+- Circular routes avoided:
+  did not use `SmallTPerronBoundHyp`, `ContourRemainderBoundHyp.bound`,
+  `general_formula_accessible`, `small_T_contour_bound`, or any full
+  explicit-formula provider route.
+- Local audit result:
+  this does not close the analytic truncation atom. It isolates the next
+  theorem-shaped finite-kernel estimate below it. Coordinator validation has
+  already exposed the pre-existing private `perron_vertical_eq_tsum` Fubini
+  leaf; this round does not edit that leaf.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  this ledger.
+- Static command results:
+  `git status --short --branch` showed checkpoint `f23e897` before edits.
+  `git diff --check` succeeded with no output.
+  Static `rg`/`sed` inspection only; no Lean/Lake/build/cache commands were
+  run in this continuation.
+- Smallest next theorem:
+  `PerronTruncationInfra.small_T_perronKernelFiniteSum_cutoff_bound` with
+  statement
+  `∃ Ck > 0, ∀ x T, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+    |chebyshevPsi x - perronKernelFiniteSum x T| ≤ Ck * (Real.log x)^2`.
+- Requested coordinator validation commands:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`;
+  minimal import probe for `Littlewood.Main.LittlewoodPsi`;
+  minimal import probe for `Littlewood.Main.LittlewoodPi`.
+- Coordinator action requested:
+  run serialized validation when the build mutex permits; no full project build
+  requested by this lane.
+
+### 2026-04-28 Overnight Continuation, Weighted Kernel Error
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Current theorem/file attacked:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`,
+  `small_T_perronKernelFiniteSum_cutoff_bound`.
+- Definitions/theorems added:
+  `Aristotle.Standalone.PerronTruncationInfra.perronKernelWeightedCutoffError`;
+  `Aristotle.Standalone.PerronTruncationInfra.small_T_perronKernelFiniteSum_cutoff_bound_from_weighted_error`.
+- Reduction banked:
+  the finite Perron-kernel estimate now follows from a purely finite weighted
+  per-term cutoff-error estimate:
+  `perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x)^2`, uniformly for
+  `x ≥ 2` and `2 ≤ T ≤ 16`.
+  The algebraic reduction unfolds `chebyshevPsi` and `perronKernelFiniteSum`,
+  rewrites their difference as
+  `∑ Λ(n) * (1 - perronPerTermIntegral (x/n) c T)`, and applies the finite
+  triangle inequality plus `vonMangoldt_nonneg`.
+- Circular routes avoided:
+  did not use `SmallTPerronBoundHyp`, `ContourRemainderBoundHyp.bound`,
+  `general_formula_accessible`, `small_T_contour_bound`, or any full
+  explicit-formula provider route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  this ledger.
+- Static command results:
+  `git status --short --branch` showed checkpoint `f6ced10` before edits.
+  `git diff --check` succeeded with no output.
+  Static `rg`/`sed` inspection only; no Lean/Lake/build/cache commands were
+  run in this continuation.
+- Smallest next theorem:
+  `PerronTruncationInfra.small_T_perronKernelWeightedCutoffError_bound` with
+  statement
+  `∃ Cw > 0, ∀ x T, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+    perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x)^2`.
+  This should be proved from the existing `perron_per_term_large_bound` plus a
+  local treatment of the sharp-cutoff boundary term near `n = x`.
+- Requested coordinator validation commands:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`;
+  minimal import probe for `Littlewood.Main.LittlewoodPsi`;
+  minimal import probe for `Littlewood.Main.LittlewoodPi`.
+- Coordinator action requested:
+  run serialized validation when the build mutex permits; no full project build
+  requested by this lane.

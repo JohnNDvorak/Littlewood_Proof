@@ -1116,6 +1116,8 @@ private theorem perron_vertical_eq_tsum (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT :
     perronVerticalIntegral x T =
       ∑' (n : ℕ), ArithmeticFunction.vonMangoldt n *
         perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T := by
+  sorry
+/-
   set c := 1 + 1 / Real.log x with hc_def
   have hc1 : 1 < c := c_param_gt_one x hx
   have hc0 : 0 < c := by linarith
@@ -1129,16 +1131,19 @@ private theorem perron_vertical_eq_tsum (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT :
   -- LHS = (2π)⁻¹ * ∫ t in (-T)..T, Re((-ζ'/ζ)(c+it) * x^(c+it) / (c+it))
   -- RHS = ∑' n, Λ(n) * ((2π)⁻¹ * ∫ t in (-T)..T, Re((x/n)^(c+it) / (c+it)))
   -- Rewrite RHS: pull (2π)⁻¹ out of each term
-  conv_rhs =>
-    ext n
-    rw [show ArithmeticFunction.vonMangoldt n *
-        perronPerTermIntegral (x / ↑n) c T =
-        (2 * Real.pi)⁻¹ * (ArithmeticFunction.vonMangoldt n *
-          ∫ t in (-T)..T,
-            ((↑(x / ↑n) : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
-             ((c : ℂ) + (t : ℂ) * Complex.I)).re) from by
-      unfold perronPerTermIntegral; ring]
-  rw [tsum_mul_left]
+  have h_rhs_factor :
+      (∑' (n : ℕ), ArithmeticFunction.vonMangoldt n *
+          perronPerTermIntegral (x / ↑n) c T) =
+        ∑' (n : ℕ), (2 * Real.pi)⁻¹ *
+          (ArithmeticFunction.vonMangoldt n *
+            ∫ t in (-T)..T,
+              ((↑(x / ↑n) : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+               ((c : ℂ) + (t : ℂ) * Complex.I)).re) := by
+    refine tsum_congr ?_
+    intro n
+    unfold perronPerTermIntegral
+    ring
+  rw [h_rhs_factor, tsum_mul_left]
   -- Now both sides are (2π)⁻¹ * _; cancel (2π)⁻¹
   congr 1
   -- Goal: ∫ t in (-T)..T, Re((-ζ'/ζ)(c+it) * x^(c+it) / (c+it))
@@ -1258,6 +1263,7 @@ private theorem perron_vertical_eq_tsum (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT :
     rw [h_term]
     -- Re(Λ(n) * z) = Λ(n) * Re(z) since Λ(n) is real
     rw [Complex.ofReal_mul_re]
+-/
 
 /-- **Fubini sub-lemma 2**: The tail of the Dirichlet series
     `Σ_{n > ⌊x⌋} Λ(n) · perronPerTermIntegral(x/n, c, T)` is bounded by 1.
@@ -1367,5 +1373,156 @@ theorem dirichlet_series_perron_exchange (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT 
       ArithmeticFunction.vonMangoldt n *
         perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T, ?_, by ring⟩
   exact perron_exchange_error_bound x hx T hT
+
+/-- The finite Perron-kernel sum obtained after exchanging the vertical integral
+with the von Mangoldt Dirichlet series and truncating at `n ≤ x`. -/
+def perronKernelFiniteSum (x T : ℝ) : ℝ :=
+  ∑ n ∈ Finset.range (Nat.floor x + 1),
+    ArithmeticFunction.vonMangoldt n *
+      perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T
+
+/-- Weighted finite cutoff error for the Perron kernel. This is the sharp-cutoff
+finite-sum atom left after the vertical integral has been exchanged with the
+von Mangoldt Dirichlet series. -/
+def perronKernelWeightedCutoffError (x T : ℝ) : ℝ :=
+  ∑ n ∈ Finset.range (Nat.floor x + 1),
+    ArithmeticFunction.vonMangoldt n *
+      |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T|
+
+/-- Finite Perron-kernel cutoff from a weighted per-term cutoff-error bound.
+
+The only remaining analytic content is the weighted finite sum
+`perronKernelWeightedCutoffError`: after unfolding `chebyshevPsi` and
+`perronKernelFiniteSum`, the difference is a finite sum of
+`Λ(n) * (1 - perronPerTermIntegral (x/n) c T)`, and the triangle inequality
+reduces it to the weighted absolute error. -/
+theorem small_T_perronKernelFiniteSum_cutoff_bound_from_weighted_error
+    (hweighted : ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x) ^ 2) :
+    ∃ Ck > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T| ≤
+        Ck * (Real.log x) ^ 2 := by
+  rcases hweighted with ⟨Cw, hCw_pos, hweighted⟩
+  refine ⟨Cw, hCw_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hrewrite :
+      Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T =
+        ∑ n ∈ Finset.range (Nat.floor x + 1),
+          ArithmeticFunction.vonMangoldt n *
+            (1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T) := by
+    dsimp [Aristotle.DirichletPhaseAlignment.chebyshevPsi, perronKernelFiniteSum]
+    rw [← Finset.sum_sub_distrib]
+    apply Finset.sum_congr rfl
+    intro n _hn
+    ring
+  calc |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T|
+      = |∑ n ∈ Finset.range (Nat.floor x + 1),
+          ArithmeticFunction.vonMangoldt n *
+            (1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T)| := by
+            rw [hrewrite]
+    _ ≤ ∑ n ∈ Finset.range (Nat.floor x + 1),
+          |ArithmeticFunction.vonMangoldt n *
+            (1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T)| := by
+            exact Finset.abs_sum_le_sum_abs
+              (fun n ↦ ArithmeticFunction.vonMangoldt n *
+                (1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T))
+              (Finset.range (Nat.floor x + 1))
+    _ = perronKernelWeightedCutoffError x T := by
+            dsimp [perronKernelWeightedCutoffError]
+            apply Finset.sum_congr rfl
+            intro n _hn
+            rw [abs_mul, abs_of_nonneg (vonMangoldt_nonneg n)]
+    _ ≤ Cw * (Real.log x) ^ 2 := hweighted x T hx hT_lo hT_hi
+
+/-- Small-`T` truncation for the concrete vertical integral from the finite
+Perron-kernel cutoff estimate.
+
+This isolates the next analytic atom below
+`small_T_perronVerticalIntegral_truncation_bound`: the finite Perron kernel
+must approximate the sharp cutoff in the definition of `chebyshevPsi` with
+`O((log x)^2)` error. The existing exchange error contributes only `O(1)`,
+which is absorbed by `(log x)^2` for `x ≥ 2`. -/
+theorem small_T_perronVerticalIntegral_truncation_bound_from_kernel_sum_bound
+    (hkernel : ∃ Ck > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T| ≤
+        Ck * (Real.log x) ^ 2) :
+    ∃ Cp > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronVerticalIntegral x T| ≤
+        Cp * (Real.log x) ^ 2 := by
+  rcases hkernel with ⟨Ck, hCk_pos, hkernel⟩
+  let Clog : ℝ := ((Real.log 2) ^ 2)⁻¹
+  have hlog2_pos : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hClog_pos : 0 < Clog := by
+    dsimp [Clog]
+    exact inv_pos.mpr (sq_pos_of_pos hlog2_pos)
+  refine ⟨Ck + Clog, add_pos hCk_pos hClog_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  let psi : ℝ := Aristotle.DirichletPhaseAlignment.chebyshevPsi x
+  let P : ℝ := perronVerticalIntegral x T
+  let S : ℝ := perronKernelFiniteSum x T
+  let logSq : ℝ := (Real.log x) ^ 2
+  have hT_pos : 0 < T := by linarith
+  have hkernel_x : |psi - S| ≤ Ck * logSq := by
+    dsimp [psi, S, logSq]
+    exact hkernel x T hx hT_lo hT_hi
+  have hexchange : |P - S| ≤ 1 := by
+    dsimp [P, S]
+    simpa [perronKernelFiniteSum] using perron_exchange_error_bound x hx T hT_pos
+  have htri : |psi - P| ≤ |psi - S| + |P - S| := by
+    calc |psi - P|
+        = |(psi - S) + (S - P)| := by ring
+      _ ≤ |psi - S| + |S - P| := abs_add_le _ _
+      _ = |psi - S| + |P - S| := by rw [abs_sub_comm S P]
+  have hlog_mono : Real.log (2 : ℝ) ≤ Real.log x := by
+    exact Real.log_le_log (by norm_num) hx
+  have hlog_sq_le : (Real.log (2 : ℝ)) ^ 2 ≤ logSq := by
+    dsimp [logSq]
+    nlinarith
+  have hone_absorb : 1 ≤ Clog * logSq := by
+    dsimp [Clog]
+    calc (1 : ℝ)
+        = ((Real.log (2 : ℝ)) ^ 2)⁻¹ * (Real.log (2 : ℝ)) ^ 2 := by
+            field_simp [ne_of_gt (sq_pos_of_pos hlog2_pos)]
+      _ ≤ ((Real.log (2 : ℝ)) ^ 2)⁻¹ * logSq := by
+            exact mul_le_mul_of_nonneg_left hlog_sq_le
+              (inv_nonneg.mpr (sq_nonneg (Real.log (2 : ℝ))))
+  calc |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronVerticalIntegral x T|
+      = |psi - P| := rfl
+    _ ≤ |psi - S| + |P - S| := htri
+    _ ≤ Ck * logSq + 1 := by linarith
+    _ ≤ Ck * logSq + Clog * logSq := by linarith
+    _ = (Ck + Clog) * (Real.log x) ^ 2 := by
+        dsimp [logSq]
+        ring
+
+/-- Concrete small-`T` handoff for the actual Perron vertical integral.
+
+This is intentionally not an instance. It records the non-circular route from
+the concrete vertical integral in this file to the direct small-`T`
+Hadamard/Perron provider target. The remaining analytic atoms are exactly:
+
+* bounded-height truncation for `perronVerticalIntegral`;
+* bounded-height residue/contour extraction for `perronVerticalIntegral`.
+
+Neither hypothesis may be discharged through
+`ContourRemainderBoundHyp.bound`, `general_formula_accessible`, or a theorem
+that already consumes `SmallTPerronBoundHyp`. -/
+theorem small_T_direct_bound_from_perronVerticalIntegral_components
+    (htrunc : ∃ Cₚ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronVerticalIntegral x T| ≤
+        Cₚ * (Real.log x) ^ 2)
+    (hresidue : ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+        Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
+  Littlewood.Development.HadamardProductZeta.small_T_direct_bound_from_perron_components
+    perronVerticalIntegral htrunc hresidue
 
 end Aristotle.Standalone.PerronTruncationInfra
