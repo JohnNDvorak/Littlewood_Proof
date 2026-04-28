@@ -216,3 +216,74 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   `anti_target_exact_seed_from_perron`. The next provider move should construct
   Perron-only exact-seed payloads from an honest Perron-only inhomogeneous
   phase-fit boundary.
+
+### 2026-04-28 Provider Split Round
+
+- Classification: PROVIDER_INTERFACE_SPLIT_PENDING_VALIDATION.
+- Current theorem/file attacked:
+  - `PerronExplicitFormulaProvider.lean`
+- Changed provider interfaces:
+  - Added Perron-only phase-fit boundary
+    `InhomogeneousPhaseFitAbovePerronThresholdPerronHyp`.
+  - Added private Perron-only packaging cores:
+    `arg_above_threshold_from_perron_only_core`,
+    `arg_above_threshold_pair_from_perron_only_core`, and
+    `exact_seed_pair_from_perron_only_core`.
+  - Added public Perron-only provider theorems
+    `target_exact_seed_above_threshold_perron_from_phase_fit` and
+    `anti_target_exact_seed_above_threshold_perron_from_phase_fit`.
+  - Added provider instances routing
+    `TargetTowerExactSeedAbovePerronThresholdPerronHyp` and
+    `AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp` through those new
+    Perron-only provider theorems.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/lanes/agent_pi_phase.md`
+- False-surface audit after this split:
+  - The new Perron-only provider names require
+    `PerronSqrtErrorEventuallyAtHeightHyp` and
+    `InhomogeneousPhaseFitAbovePerronThresholdPerronHyp`; they do not require
+    `TruncatedExplicitFormulaPiHyp`, `PerronPiApproxCompatibilityHyp`, or
+    `TruncatedExplicitFormulaPiHyp.pi_approx`.
+  - Legacy compatibility names remain:
+    `InhomogeneousPhaseFitAbovePerronThresholdHyp`,
+    `arg_above_threshold_from_perron_core`,
+    `arg_above_threshold_pair_from_perron_core`,
+    `exact_seed_pair_from_perron_core`, `target_exact_seed_from_perron`, and
+    `anti_target_exact_seed_from_perron`.
+  - `truncatedPiHyp_contradicts_rh` is still the residual false bridge used only
+    for the legacy compatibility class instance.
+- Likely first compile-risk area:
+  - `PerronExplicitFormulaProvider.lean`, around the new private
+    `exact_seed_pair_from_perron_only_core`; it duplicates the legacy
+    `Real.log`/`Real.exp_log` packaging proof with a different class context.
+  - Secondary risk: the new provider instances for
+    `TargetTowerExactSeedAbovePerronThresholdPerronHyp` and
+    `AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp` may interact with
+    existing exact-seed-to-arg instances, though I avoided adding direct
+    phase-fit-to-arg instances to reduce diamonds.
+- Commands run:
+  - Static only: `git status --short --branch`, `rg`, `sed`, and `git diff`.
+  - No Lean/Lake/build commands were run.
+- Requested coordinator validation, in order:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiExactSeedConstructive`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiExactSeedDeepLeaf`
+  - minimal import probe for `Littlewood.Main.LittlewoodPi`
+- Smallest next theorem/interface:
+  - Add or identify an honest provider for
+    `InhomogeneousPhaseFitAbovePerronThresholdPerronHyp`; after that, downstream
+    Perron-only exact-seed consumers can avoid the legacy contradiction bridge
+    entirely.
+
+### 2026-04-28 Coordinator Validation, Provider Split Round
+
+- `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`: passed.
+- `lake build Littlewood.Aristotle.Standalone.RHPiExactSeedConstructive`: passed.
+- `lake build Littlewood.Aristotle.Standalone.RHPiExactSeedDeepLeaf`: passed.
+- `import Littlewood.Main.LittlewoodPi`: passed.
+- Validation output included existing linter warnings in imported files; no
+  errors.
+- The repaired Perron-only exact-seed provider path is now build-validated.
+  The remaining proof target is the honest source for
+  `InhomogeneousPhaseFitAbovePerronThresholdPerronHyp`.
