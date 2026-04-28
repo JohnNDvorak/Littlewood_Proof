@@ -76,6 +76,30 @@ theorem coeffControlClasses_of_exactSeedAboveThresholdHyp
     ⟨target_height_coeff_control_of_exactSeedAboveThresholdHyp,
       antitarget_height_coeff_control_of_exactSeedAboveThresholdHyp⟩
 
+/-- Positive B7 coeff-control payload from Perron-only exact-seed classes. -/
+theorem target_height_coeff_control_of_exactSeedAboveThresholdPerronHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetTowerExactSeedAbovePerronThresholdPerronHyp] :
+    RhPiTargetHeightCoeffControlHyp := by
+  infer_instance
+
+/-- Negative B7 coeff-control payload from Perron-only exact-seed classes. -/
+theorem antitarget_height_coeff_control_of_exactSeedAboveThresholdPerronHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp] :
+    RhPiAntiTargetHeightCoeffControlHyp := by
+  infer_instance
+
+/-- Bundled Blocker-7 pair from Perron-only exact-seed classes. -/
+theorem coeffControlClasses_of_exactSeedAboveThresholdPerronHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetTowerExactSeedAbovePerronThresholdPerronHyp]
+    [AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp] :
+    RhPiTargetHeightCoeffControlHyp ∧ RhPiAntiTargetHeightCoeffControlHyp := by
+  exact
+    ⟨target_height_coeff_control_of_exactSeedAboveThresholdPerronHyp,
+      antitarget_height_coeff_control_of_exactSeedAboveThresholdPerronHyp⟩
+
 /-- Positive B7 coeff-control payload from explicit deep witness terms. -/
 theorem target_height_coeff_control_of_exactSeedAboveThreshold
     (hTruncated : TruncatedExplicitFormulaPiHyp)
@@ -103,6 +127,36 @@ theorem coeffControlClasses_of_exactSeedAboveThreshold
   exact
     ⟨target_height_coeff_control_of_exactSeedAboveThreshold hTruncated hTarget,
       antitarget_height_coeff_control_of_exactSeedAboveThreshold hTruncated hAntiTarget⟩
+
+/-- Positive B7 coeff-control payload from an explicit Perron-only exact-seed
+term. -/
+theorem target_height_coeff_control_of_exactSeedAboveThresholdPerron
+    (hPerron : PerronSqrtErrorEventuallyAtHeightHyp)
+    (hTarget : @TargetTowerExactSeedAbovePerronThresholdPerron hPerron) :
+    RhPiTargetHeightCoeffControlHyp := by
+  letI : PerronSqrtErrorEventuallyAtHeightHyp := hPerron
+  letI : TargetTowerExactSeedAbovePerronThresholdPerronHyp := ⟨hTarget⟩
+  exact target_height_coeff_control_of_exactSeedAboveThresholdPerronHyp
+
+/-- Negative B7 coeff-control payload from an explicit Perron-only exact-seed
+term. -/
+theorem antitarget_height_coeff_control_of_exactSeedAboveThresholdPerron
+    (hPerron : PerronSqrtErrorEventuallyAtHeightHyp)
+    (hAntiTarget : @AntiTargetTowerExactSeedAbovePerronThresholdPerron hPerron) :
+    RhPiAntiTargetHeightCoeffControlHyp := by
+  letI : PerronSqrtErrorEventuallyAtHeightHyp := hPerron
+  letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := ⟨hAntiTarget⟩
+  exact antitarget_height_coeff_control_of_exactSeedAboveThresholdPerronHyp
+
+/-- Bundled Blocker-7 pair from explicit Perron-only exact-seed terms. -/
+theorem coeffControlClasses_of_exactSeedAboveThresholdPerron
+    (hPerron : PerronSqrtErrorEventuallyAtHeightHyp)
+    (hTarget : @TargetTowerExactSeedAbovePerronThresholdPerron hPerron)
+    (hAntiTarget : @AntiTargetTowerExactSeedAbovePerronThresholdPerron hPerron) :
+    RhPiTargetHeightCoeffControlHyp ∧ RhPiAntiTargetHeightCoeffControlHyp := by
+  exact
+    ⟨target_height_coeff_control_of_exactSeedAboveThresholdPerron hPerron hTarget,
+      antitarget_height_coeff_control_of_exactSeedAboveThresholdPerron hPerron hAntiTarget⟩
 
 /-- Positive B7 coeff-control payload from an explicit phase-above-threshold
 deep witness term. -/
@@ -157,5 +211,17 @@ theorem coeffControlClasses_of_exactSeedBoundaryHyp
       Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp := by
   exact
     coeffControlClasses_of_exactSeedAboveThresholdHyp
+
+/-- Bundled B7 coefficient-control payload from the Perron-only exact-seed
+boundary classes. This is a conditional endpoint, not a provider for those
+classes. -/
+theorem coeffControlClasses_of_exactSeedBoundaryPerronHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetTowerExactSeedAbovePerronThresholdPerronHyp]
+    [AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp] :
+    Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp ∧
+      Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp := by
+  exact
+    coeffControlClasses_of_exactSeedAboveThresholdPerronHyp
 
 end Aristotle.Standalone.RHPiDeepCoeffControlWitnesses

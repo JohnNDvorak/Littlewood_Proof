@@ -14,6 +14,7 @@ open GrowthDomination
 open PiLiDirectOscillationBridge
 open Aristotle.Standalone.CombinedAtomsFromDeepBlockers
 open Aristotle.Standalone.RHPiArgApproxFromPerronThreshold
+open Aristotle.Standalone.RHPiPerronFromTruncatedPiBridge
 open Aristotle.Standalone.RHPiPhaseCouplingConstructiveFamilies
 open Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold
 
@@ -48,6 +49,36 @@ abbrev TargetTowerExactSeedAbovePerronThreshold
 /-- Anti-target approximate-seed payload at Perron-threshold/tower-cap level. -/
 abbrev AntiTargetTowerExactSeedAbovePerronThreshold
     [TruncatedExplicitFormulaPiHyp] : Prop :=
+  ∀ _hRH : ZetaZeros.RiemannHypothesis, ∀ X : ℝ, ∃ t0 T ε : ℝ,
+    4 ≤ T ∧
+    0 < ε ∧ ε < 1 ∧
+    X < Real.exp t0 ∧
+    perronThreshold _hRH T ≤ Real.exp t0 ∧
+    (∀ ρ ∈ (finite_zeros_le T).toFinset,
+      ∃ m : ℤ, ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε) ∧
+    Real.exp t0 ≤ Real.exp (Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Perron-only positive approximate-seed payload at threshold/tower-cap level.
+
+This is the honest replacement surface for downstream exact-seed consumers:
+it depends only on fixed-height Perron error through
+`PerronSqrtErrorEventuallyAtHeightHyp`, not on the false arbitrary-finite-set
+`TruncatedExplicitFormulaPiHyp.pi_approx` field. -/
+abbrev TargetTowerExactSeedAbovePerronThresholdPerron
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ _hRH : ZetaZeros.RiemannHypothesis, ∀ X : ℝ, ∃ t0 T ε : ℝ,
+    4 ≤ T ∧
+    0 < ε ∧ ε < 1 ∧
+    X < Real.exp t0 ∧
+    perronThreshold _hRH T ≤ Real.exp t0 ∧
+    (∀ ρ ∈ (finite_zeros_le T).toFinset,
+      ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
+    Real.exp t0 ≤ Real.exp (Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Perron-only anti-target approximate-seed payload at threshold/tower-cap
+level. -/
+abbrev AntiTargetTowerExactSeedAbovePerronThresholdPerron
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
   ∀ _hRH : ZetaZeros.RiemannHypothesis, ∀ X : ℝ, ∃ t0 T ε : ℝ,
     4 ≤ T ∧
     0 < ε ∧ ε < 1 ∧
@@ -96,6 +127,42 @@ theorem antiTarget_argAboveThreshold_of_exactSeedFamily
     exact ⟨m, by rwa [show Real.log x = t0 from by simp [x]]⟩
   · simpa [x] using hUpper
 
+/-- Perron-only approximate seeds induce the positive
+arg-above-threshold payload. -/
+theorem target_argAboveThreshold_of_exactSeedFamily_perron
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hSeed : TargetTowerExactSeedAbovePerronThresholdPerron) :
+    TargetTowerArgApproxAbovePerronThreshold := by
+  intro hRH X
+  rcases hSeed hRH X with
+    ⟨t0, T, ε, hT4, hεpos, hεlt, hX, hThreshold, hseed, hUpper⟩
+  let x : ℝ := Real.exp t0
+  refine ⟨x, ?_, T, hT4, ?_, ε, hεpos, hεlt, ?_, ?_⟩
+  · simpa [x] using hX
+  · simpa [x] using hThreshold
+  · intro ρ hρ
+    rcases hseed ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by rwa [show Real.log x = t0 from by simp [x]]⟩
+  · simpa [x] using hUpper
+
+/-- Perron-only anti-target approximate seeds induce the anti-target
+arg-above-threshold payload. -/
+theorem antiTarget_argAboveThreshold_of_exactSeedFamily_perron
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hSeed : AntiTargetTowerExactSeedAbovePerronThresholdPerron) :
+    AntiTargetTowerArgApproxAbovePerronThreshold := by
+  intro hRH X
+  rcases hSeed hRH X with
+    ⟨t0, T, ε, hT4, hεpos, hεlt, hX, hThreshold, hseed, hUpper⟩
+  let x : ℝ := Real.exp t0
+  refine ⟨x, ?_, T, hT4, ?_, ε, hεpos, hεlt, ?_, ?_⟩
+  · simpa [x] using hX
+  · simpa [x] using hThreshold
+  · intro ρ hρ
+    rcases hseed ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by rwa [show Real.log x = t0 from by simp [x]]⟩
+  · simpa [x] using hUpper
+
 /-- Typeclass wrapper for positive approximate-seed families. -/
 class TargetTowerExactSeedAbovePerronThresholdHyp
     [TruncatedExplicitFormulaPiHyp] : Prop where
@@ -105,6 +172,16 @@ class TargetTowerExactSeedAbovePerronThresholdHyp
 class AntiTargetTowerExactSeedAbovePerronThresholdHyp
     [TruncatedExplicitFormulaPiHyp] : Prop where
   witness : AntiTargetTowerExactSeedAbovePerronThreshold
+
+/-- Typeclass wrapper for Perron-only positive approximate-seed families. -/
+class TargetTowerExactSeedAbovePerronThresholdPerronHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness : TargetTowerExactSeedAbovePerronThresholdPerron
+
+/-- Typeclass wrapper for Perron-only anti-target approximate-seed families. -/
+class AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness : AntiTargetTowerExactSeedAbovePerronThresholdPerron
 
 /-- Positive instance bridge into the existing arg-above-threshold class. -/
 instance
@@ -124,12 +201,39 @@ instance
     antiTarget_argAboveThreshold_of_exactSeedFamily
       AntiTargetTowerExactSeedAbovePerronThresholdHyp.witness
 
+/-- Positive Perron-only instance bridge into the arg-above-threshold class. -/
+instance
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetTowerExactSeedAbovePerronThresholdPerronHyp] :
+    TargetTowerArgApproxAbovePerronThresholdHyp where
+  witness :=
+    target_argAboveThreshold_of_exactSeedFamily_perron
+      TargetTowerExactSeedAbovePerronThresholdPerronHyp.witness
+
+/-- Anti-target Perron-only instance bridge into the arg-above-threshold class. -/
+instance
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp] :
+    AntiTargetTowerArgApproxAbovePerronThresholdHyp where
+  witness :=
+    antiTarget_argAboveThreshold_of_exactSeedFamily_perron
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp.witness
+
 /-- Endpoint: approximate-seed payload classes imply `RhPiWitnessData` through the
 existing Perron-threshold arg/phase chain. -/
 theorem rhPiWitnessData_of_exact_seed_above_threshold_hyp
     [TruncatedExplicitFormulaPiHyp]
     [TargetTowerExactSeedAbovePerronThresholdHyp]
     [AntiTargetTowerExactSeedAbovePerronThresholdHyp] :
+    RhPiWitnessData := by
+  exact rhPiWitnessData_of_arg_above_threshold_hyp
+
+/-- Endpoint: Perron-only approximate-seed payload classes imply
+`RhPiWitnessData` through the Perron-threshold arg/phase chain. -/
+theorem rhPiWitnessData_of_exact_seed_above_threshold_perron_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetTowerExactSeedAbovePerronThresholdPerronHyp]
+    [AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp] :
     RhPiWitnessData := by
   exact rhPiWitnessData_of_arg_above_threshold_hyp
 
@@ -155,5 +259,29 @@ theorem rh_pi_7a_7c_pair_of_exact_seed_above_threshold_hyp
         ((Nat.primeCounting (Nat.floor x) : ℝ) -
           LogarithmicIntegral.logarithmicIntegral x))) := by
   exact rh_pi_7a_7c_pair_of_thresholdPhaseHyp hRH
+
+/-- 7a/7c endpoint from Perron-only approximate-seed payload classes. -/
+theorem rh_pi_7a_7c_pair_of_exact_seed_above_threshold_perron_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetTowerExactSeedAbovePerronThresholdPerronHyp]
+    [AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp]
+    (hRH : ZetaZeros.RiemannHypothesis) :
+    (∃ piMain : ℝ → ℝ,
+      (∀ᶠ x in atTop,
+        |((Nat.primeCounting (Nat.floor x) : ℝ) -
+            LogarithmicIntegral.logarithmicIntegral x) + piMain x|
+          ≤ Real.sqrt x / Real.log x * lll x))
+    ∧
+    ((∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      ((Nat.primeCounting (Nat.floor x) : ℝ) -
+          LogarithmicIntegral.logarithmicIntegral x)
+        ≤ -(3 * (Real.sqrt x / Real.log x * lll x)))
+    ∧
+    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      3 * (Real.sqrt x / Real.log x * lll x) ≤
+        ((Nat.primeCounting (Nat.floor x) : ℝ) -
+          LogarithmicIntegral.logarithmicIntegral x))) := by
+  exact
+    Aristotle.Standalone.RHPiPhaseCouplingFromThresholdBridge.rh_pi_7a_7c_pair_from_threshold_hyp hRH
 
 end Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox

@@ -30,10 +30,11 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 
 ## Required Checks
 
-- focused build of the touched pi/phase module
+- Validation is coordinator-owned while cold worktrees are memory constrained.
+  Lane agents must not run Lean/Lake/build commands locally.
+- focused build of the touched pi/phase module, when coordinator serializes it
 - minimal import check for `Littlewood.Main.LittlewoodPi`
 - minimal import check for `Littlewood.Main.LittlewoodPsi`
-- `lake build` before requesting merge
 
 ## Session Log
 
@@ -131,3 +132,87 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   - Validate the listed focused modules under serialized Lake policy.
   - If accepted, plan a coordinated provider edit to remove the remaining
     exact-seed dependence on `TruncatedExplicitFormulaPiHyp`.
+
+### 2026-04-28 First Overnight Round
+
+- Classification: LOCAL_INTERFACE_SPLIT_PENDING_VALIDATION.
+- Current theorem/file attacked:
+  - `RHPiExactSeedToPerronThresholdArgApprox.lean`
+  - `RHPiPhaseCouplingFromExactSeedBridge.lean`
+  - `RHPiCoeffControlClassInstances.lean`
+  - `RHPiDeepCoeffControlWitnesses.lean`
+- Changed interfaces:
+  - Added Perron-only exact-seed payload aliases
+    `TargetTowerExactSeedAbovePerronThresholdPerron` and
+    `AntiTargetTowerExactSeedAbovePerronThresholdPerron`.
+  - Added class wrappers
+    `TargetTowerExactSeedAbovePerronThresholdPerronHyp` and
+    `AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp`.
+  - Added Perron-only bridges from exact-seed payloads to
+    `TargetTowerArgApproxAbovePerronThresholdHyp`,
+    `AntiTargetTowerArgApproxAbovePerronThresholdHyp`,
+    phase-coupling classes, RH-`pi` witness data, 7a/7c endpoints, and B7
+    coefficient-control endpoints.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/RHPiExactSeedToPerronThresholdArgApprox.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiPhaseCouplingFromExactSeedBridge.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCoeffControlClassInstances.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiDeepCoeffControlWitnesses.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/lanes/agent_pi_phase.md`
+- False-surface audit after this split:
+  - New Perron-only exact-seed interfaces do not require
+    `TruncatedExplicitFormulaPiHyp`.
+  - Legacy exact-seed names remain in place for compatibility and still require
+    `TruncatedExplicitFormulaPiHyp`.
+  - Provider declarations still consuming the false surface:
+    `PerronExplicitFormulaProvider.truncatedPiHyp_contradicts_rh` calls
+    `TruncatedExplicitFormulaPiHyp.pi_approx`; the local instance
+    `InhomogeneousPhaseFitAbovePerronThresholdHyp` is synthesized from that
+    contradiction; `arg_above_threshold_from_perron_core`,
+    `arg_above_threshold_pair_from_perron_core`,
+    `exact_seed_pair_from_perron_core`, `target_exact_seed_from_perron`, and
+    `anti_target_exact_seed_from_perron` still flow through the legacy
+    provider/class shape.
+  - `RHPiPerronFromTruncatedPiBridge.perron_sqrt_error_eventually_at_height_of_truncatedPiBridge`
+    remains the compatibility bridge from the false legacy field to the honest
+    fixed-height Perron surface.
+- Likely first compile-risk area:
+  - `RHPiDeepCoeffControlWitnesses.lean`, explicit arguments of the new
+    abbrev forms
+    `@TargetTowerExactSeedAbovePerronThresholdPerron hPerron` and
+    `@AntiTargetTowerExactSeedAbovePerronThresholdPerron hPerron`, matching the
+    existing legacy style but unvalidated.
+  - Secondary risk: instance search diamonds where both legacy exact-seed
+    classes and Perron-only exact-seed classes are present.
+- Commands run:
+  - Static only: `git status --short --branch`, `rg`, `sed`, and `git diff`.
+  - No Lean/Lake/build commands were run.
+- Requested coordinator validation, in order:
+  - `lake build Littlewood.Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiCoeffControlClassInstances`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiDeepCoeffControlWitnesses`
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - minimal import probe for `Littlewood.Main.LittlewoodPi`
+  - minimal import probe for `Littlewood.Main.LittlewoodPsi`
+- Smallest next theorem/interface:
+  - Provider-owned: add an honest provider theorem producing
+    `TargetTowerExactSeedAbovePerronThresholdPerron` and
+    `AntiTargetTowerExactSeedAbovePerronThresholdPerron` directly from a
+    Perron-only inhomogeneous phase-fit boundary, then leave legacy
+    `target_exact_seed_from_perron` and `anti_target_exact_seed_from_perron` as
+    compatibility wrappers only.
+
+### 2026-04-28 Coordinator Validation
+
+- `lake build Littlewood.Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox`: passed.
+- `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`: passed.
+- `lake build Littlewood.Aristotle.Standalone.RHPiCoeffControlClassInstances`: passed.
+- `lake build Littlewood.Aristotle.Standalone.RHPiDeepCoeffControlWitnesses`: passed.
+- `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`: passed.
+- Residual risk: the provider still consumes the false legacy surface through
+  `truncatedPiHyp_contradicts_rh`, `InhomogeneousPhaseFitAbovePerronThresholdHyp`,
+  `exact_seed_pair_from_perron_core`, `target_exact_seed_from_perron`, and
+  `anti_target_exact_seed_from_perron`. The next provider move should construct
+  Perron-only exact-seed payloads from an honest Perron-only inhomogeneous
+  phase-fit boundary.
