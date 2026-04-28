@@ -12404,6 +12404,40 @@ private theorem
     atkinson_shiftedInversePhaseCellPrefix_no_log_eventual_j3_of_kTarget_and_modeWeight_remainder
       atkinsonCompleteBlockTargetK atkinsonCompleteBlockTargetK_prefix_bound herr
 
+/-- Public-class bypass for the large-`j` no-log leaf. A complete-block-target
+remainder bound gives the eventual estimate, and a separate finite patch for
+shifts below the eventual cutoff packages the public provider without using the
+large-shift core-prefix contraction route. -/
+private theorem
+    atkinson_shiftedInversePhaseCellPrefixBound_of_completeBlockTargetK_remainder_and_finite_patch
+    (herr :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+                HardyCosSmooth.hardyCosExp (k - j) t) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hpatch :
+      ∀ J0 : ℕ, ∀ j : ℕ, 1 ≤ j → j < J0 →
+        ∃ Cj > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+                atkinsonResonantShiftedPhaseWeightedCell n j)‖
+            ≤ Cj * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  obtain ⟨Cevent, hCevent, J0, hevent⟩ :=
+    atkinson_shiftedInversePhaseCellPrefix_no_log_eventual_j3_of_completeBlockTargetK_remainder
+      herr
+  let J : ℕ := max 3 J0
+  refine
+    atkinson_shiftedInversePhaseCellPrefixBound_of_eventual_and_finite_patch
+      (J0 := J) ?_ ?_
+  · refine ⟨Cevent, hCevent, ?_⟩
+    intro j hJ hj1 m
+    exact hevent j (le_trans (Nat.le_max_right _ _) hJ)
+      (le_trans (Nat.le_max_left _ _) hJ) hj1 m
+  · intro j hj hjlt
+    exact hpatch J j hj hjlt
+
 /-- Equivalent concrete public-leaf reduction in the common block-parameter
 coordinates `u ∈ Ioc 0 1` of the `k`-th Hardy block.
 

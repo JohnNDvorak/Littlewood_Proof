@@ -114,9 +114,47 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - Requested coordinator validation:
   `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
 
+### 2026-04-28 Coordinator Validation, Round 2
+
+- `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`: passed.
+- `import Littlewood.Main.LittlewoodPsi`: passed.
+- `import Littlewood.Main.LittlewoodPi`: passed.
+- Validation output included existing Atkinson linter warnings and the live
+  `sorry` at `atkinson_inversePhaseCorePrefix_bound_large_j`; no errors.
+- This round banks a public-class bypass, but does not close the public/deep
+  Atkinson provider. The next theorem remains the complete-block-target
+  remainder hypothesis plus the finite fixed-shift no-log patch family.
+
 ### 2026-04-28 Coordinator Validation
 
 - `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`: passed.
 - Residual risk: the live `sorry` remains in
   `atkinson_inversePhaseCorePrefix_bound_large_j`; this round only banks the
   coefficient-`8` predecessor-tail reduction.
+
+### 2026-04-28 Overnight Round 2 No-Log Bypass
+
+- Classification: `CONDITIONAL_REDUCTION`, not closed.
+- Current theorem attacked: the large-`j` no-log inverse-phase cell-prefix leaf
+  below `AtkinsonShiftedInversePhaseCellPrefixBoundHyp`.
+- Code fact banked:
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_completeBlockTargetK_remainder_and_finite_patch`
+  packages the existing complete-block-target remainder reduction together with
+  finite fixed-shift patches into `AtkinsonShiftedInversePhaseCellPrefixBoundHyp`.
+  This bypasses
+  `atkinson_inversePhaseCorePrefix_bound_large_j_of_contracting_nextShift` and
+  does not consume `AtkinsonLargeShiftPrefixBoundHyp`.
+- Failed route / guardrail:
+  do not reuse
+  `atkinson_largeShiftPrefix_succ_htail_hypothesis_gamma_eight` as a strict
+  contraction input. It gives coefficient `8`, while the contraction wrapper
+  requires `γ < 1`.
+- Smallest next theorem:
+  prove the complete-block-target pointwise remainder hypothesis `herr` of
+  `atkinson_shiftedInversePhaseCellPrefix_no_log_eventual_j3_of_completeBlockTargetK_remainder`,
+  then supply the finite no-log cell-prefix patch family for shifts below the
+  resulting cutoff.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
