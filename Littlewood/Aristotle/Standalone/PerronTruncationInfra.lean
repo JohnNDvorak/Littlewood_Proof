@@ -1374,6 +1374,75 @@ theorem dirichlet_series_perron_exchange (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT 
         perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T, ?_, by ring⟩
   exact perron_exchange_error_bound x hx T hT
 
+/-- The finite Perron-kernel sum obtained after exchanging the vertical integral
+with the von Mangoldt Dirichlet series and truncating at `n ≤ x`. -/
+def perronKernelFiniteSum (x T : ℝ) : ℝ :=
+  ∑ n ∈ Finset.range (Nat.floor x + 1),
+    ArithmeticFunction.vonMangoldt n *
+      perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T
+
+/-- Small-`T` truncation for the concrete vertical integral from the finite
+Perron-kernel cutoff estimate.
+
+This isolates the next analytic atom below
+`small_T_perronVerticalIntegral_truncation_bound`: the finite Perron kernel
+must approximate the sharp cutoff in the definition of `chebyshevPsi` with
+`O((log x)^2)` error. The existing exchange error contributes only `O(1)`,
+which is absorbed by `(log x)^2` for `x ≥ 2`. -/
+theorem small_T_perronVerticalIntegral_truncation_bound_from_kernel_sum_bound
+    (hkernel : ∃ Ck > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T| ≤
+        Ck * (Real.log x) ^ 2) :
+    ∃ Cp > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronVerticalIntegral x T| ≤
+        Cp * (Real.log x) ^ 2 := by
+  rcases hkernel with ⟨Ck, hCk_pos, hkernel⟩
+  let Clog : ℝ := ((Real.log 2) ^ 2)⁻¹
+  have hlog2_pos : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hClog_pos : 0 < Clog := by
+    dsimp [Clog]
+    exact inv_pos.mpr (sq_pos_of_pos hlog2_pos)
+  refine ⟨Ck + Clog, add_pos hCk_pos hClog_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  let psi : ℝ := Aristotle.DirichletPhaseAlignment.chebyshevPsi x
+  let P : ℝ := perronVerticalIntegral x T
+  let S : ℝ := perronKernelFiniteSum x T
+  let logSq : ℝ := (Real.log x) ^ 2
+  have hT_pos : 0 < T := by linarith
+  have hkernel_x : |psi - S| ≤ Ck * logSq := by
+    dsimp [psi, S, logSq]
+    exact hkernel x T hx hT_lo hT_hi
+  have hexchange : |P - S| ≤ 1 := by
+    dsimp [P, S]
+    simpa [perronKernelFiniteSum] using perron_exchange_error_bound x hx T hT_pos
+  have htri : |psi - P| ≤ |psi - S| + |P - S| := by
+    calc |psi - P|
+        = |(psi - S) + (S - P)| := by ring
+      _ ≤ |psi - S| + |S - P| := abs_add_le _ _
+      _ = |psi - S| + |P - S| := by rw [abs_sub_comm S P]
+  have hlog_mono : Real.log (2 : ℝ) ≤ Real.log x := by
+    exact Real.log_le_log (by norm_num) hx
+  have hlog_sq_le : (Real.log (2 : ℝ)) ^ 2 ≤ logSq := by
+    dsimp [logSq]
+    nlinarith
+  have hone_absorb : 1 ≤ Clog * logSq := by
+    dsimp [Clog]
+    calc (1 : ℝ)
+        = ((Real.log (2 : ℝ)) ^ 2)⁻¹ * (Real.log (2 : ℝ)) ^ 2 := by
+            field_simp [ne_of_gt (sq_pos_of_pos hlog2_pos)]
+      _ ≤ ((Real.log (2 : ℝ)) ^ 2)⁻¹ * logSq := by
+            exact mul_le_mul_of_nonneg_left hlog_sq_le
+              (inv_nonneg.mpr (sq_nonneg (Real.log (2 : ℝ))))
+  calc |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronVerticalIntegral x T|
+      = |psi - P| := rfl
+    _ ≤ |psi - S| + |P - S| := htri
+    _ ≤ Ck * logSq + 1 := by linarith
+    _ ≤ Ck * logSq + Clog * logSq := by linarith
+    _ = (Ck + Clog) * (Real.log x) ^ 2 := by
+        dsimp [logSq]
+        ring
+
 /-- Concrete small-`T` handoff for the actual Perron vertical integral.
 
 This is intentionally not an instance. It records the non-circular route from

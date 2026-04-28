@@ -150,6 +150,18 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   run serialized validation when the build mutex permits; no full project build
   requested by this lane.
 
+### 2026-04-28 Coordinator Validation, Truncation Kernel Cutoff
+
+- `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`: passed.
+- `import Littlewood.Main.LittlewoodPsi`: passed.
+- `import Littlewood.Main.LittlewoodPi`: passed.
+- Validation repair:
+  renamed the local logarithmic square abbreviation from `L` to `logSq`; `L`
+  collided with the existing L-series notation and made arithmetic expressions
+  elaborate against the wrong object.
+- This round banks the reduction from the concrete vertical-integral
+  truncation estimate to the finite Perron-kernel cutoff estimate.
+
 ### 2026-04-28 Coordinator Validation, Concrete Vertical Integral Handoff
 
 - `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`: passed.
@@ -290,6 +302,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   `∃ Cᵣ > 0, ∀ x T, x ≥ 2 → 2 ≤ T → T ≤ 16 →
     |perronVerticalIntegral x T - (x - zeroSumRe x T)| ≤
       Cᵣ * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
+- Requested coordinator validation commands:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`;
+  minimal import probe for `Littlewood.Main.LittlewoodPsi`;
+  minimal import probe for `Littlewood.Main.LittlewoodPi`.
+- Coordinator action requested:
+  run serialized validation when the build mutex permits; no full project build
+  requested by this lane.
+
+### 2026-04-28 Overnight Continuation, Truncation Kernel Cutoff
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Current theorem/file attacked:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`,
+  `small_T_perronVerticalIntegral_truncation_bound`.
+- Definitions/theorems added:
+  `Aristotle.Standalone.PerronTruncationInfra.perronKernelFiniteSum`;
+  `Aristotle.Standalone.PerronTruncationInfra.small_T_perronVerticalIntegral_truncation_bound_from_kernel_sum_bound`.
+- Reduction banked:
+  the concrete bounded-height truncation estimate for
+  `perronVerticalIntegral` now follows from the finite Perron-kernel cutoff
+  estimate
+  `|chebyshevPsi x - perronKernelFiniteSum x T| ≤ Ck * (Real.log x)^2`,
+  uniformly on `2 ≤ T ≤ 16`.
+  The proof uses the existing `perron_exchange_error_bound` to contribute an
+  `O(1)` exchange term and absorbs it into `(Real.log x)^2` using `x ≥ 2`.
+- Circular routes avoided:
+  did not use `SmallTPerronBoundHyp`, `ContourRemainderBoundHyp.bound`,
+  `general_formula_accessible`, `small_T_contour_bound`, or any full
+  explicit-formula provider route.
+- Local audit result:
+  this does not close the analytic truncation atom. It isolates the next
+  theorem-shaped finite-kernel estimate below it. Coordinator validation has
+  already exposed the pre-existing private `perron_vertical_eq_tsum` Fubini
+  leaf; this round does not edit that leaf.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  this ledger.
+- Static command results:
+  `git status --short --branch` showed checkpoint `f23e897` before edits.
+  `git diff --check` succeeded with no output.
+  Static `rg`/`sed` inspection only; no Lean/Lake/build/cache commands were
+  run in this continuation.
+- Smallest next theorem:
+  `PerronTruncationInfra.small_T_perronKernelFiniteSum_cutoff_bound` with
+  statement
+  `∃ Ck > 0, ∀ x T, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+    |chebyshevPsi x - perronKernelFiniteSum x T| ≤ Ck * (Real.log x)^2`.
 - Requested coordinator validation commands:
   `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`;
   minimal import probe for `Littlewood.Main.LittlewoodPsi`;
