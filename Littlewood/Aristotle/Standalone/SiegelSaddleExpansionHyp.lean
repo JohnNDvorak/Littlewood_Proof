@@ -197,11 +197,68 @@ def SiegelCoordinateStationaryPhaseErrorProp : Prop :=
       (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
         (fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2))
 
+/-- Exact coefficient identity below the coordinate stationary-phase error
+bound.
+
+For a future explicit local Taylor coefficient `C`, this says the raw
+stationary-phase defect is the saddle amplitude times `C k p` at the natural
+`t^(-1/2)` scale. The analytic source should be Siegel/Gabcke's local
+steepest-descent expansion in the exact coordinates `t = blockCoord k p`. -/
+def SiegelStationaryPhaseCoefficientIdentityProp (C : ℕ → ℝ → ℝ) : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    ErrorTerm (blockCoord k p)
+      - (-1 : ℝ) ^ k * (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) * rsPsi p =
+      (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
+        (C k p * (blockCoord k p) ^ (-(1 : ℝ) / 2))
+
+/-- Uniform coefficient bound for the local stationary-phase Taylor remainder. -/
+def SiegelStationaryPhaseCoefficientBoundProp (C : ℕ → ℝ → ℝ) : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    |C k p| ≤ fresnelC1Bound
+
 /-- Project the weighted-profile atom from the current Siegel/Gabcke class. -/
 theorem siegelWeightedProfileBoundProp_of_siegelSaddleExpansionHyp
     [h : SiegelSaddleExpansionHyp] :
     SiegelWeightedProfileBoundProp :=
   h.weighted_profile_bound
+
+/-- An exact local Taylor coefficient identity plus the `fresnelC1Bound`
+coefficient estimate imply the coordinate stationary-phase error bound. -/
+theorem siegelCoordinateStationaryPhaseErrorProp_of_coefficientAtoms
+    {C : ℕ → ℝ → ℝ}
+    (h_id : SiegelStationaryPhaseCoefficientIdentityProp C)
+    (h_bound : SiegelStationaryPhaseCoefficientBoundProp C) :
+    SiegelCoordinateStationaryPhaseErrorProp := by
+  intro k p hp
+  let t : ℝ := blockCoord k p
+  let amp : ℝ := (2 * Real.pi / t) ^ ((1 : ℝ) / 4)
+  let scale : ℝ := t ^ (-(1 : ℝ) / 2)
+  have ht_pos : 0 < t := by
+    dsimp [t]
+    have hbase : 0 < (k : ℝ) + 1 + p := by
+      have hk : 0 ≤ (k : ℝ) := Nat.cast_nonneg k
+      linarith [hp.1, hk]
+    have hcoord : blockCoord k p = 2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 := by
+      unfold blockCoord
+      ring
+    rw [hcoord]
+    exact mul_pos (by positivity) (sq_pos_of_pos hbase)
+  have hamp_pos : 0 < amp := by
+    dsimp [amp]
+    exact Real.rpow_pos_of_pos (div_pos (by positivity) ht_pos) _
+  have hscale_nonneg : 0 ≤ scale := by
+    dsimp [scale]
+    exact Real.rpow_nonneg (le_of_lt ht_pos) _
+  have hid := h_id k p hp
+  have hcoef := h_bound k p hp
+  rw [hid]
+  change |amp * (C k p * scale)| ≤ amp * (fresnelC1Bound * scale)
+  calc
+    |amp * (C k p * scale)| = amp * (|C k p| * scale) := by
+      rw [abs_mul, abs_of_pos hamp_pos, abs_mul, abs_of_nonneg hscale_nonneg]
+    _ ≤ amp * (fresnelC1Bound * scale) := by
+      exact mul_le_mul_of_nonneg_left
+        (mul_le_mul_of_nonneg_right hcoef hscale_nonneg) (le_of_lt hamp_pos)
 
 /-- The exact block-coordinate stationary-phase error estimate implies the
 coordinate normalized saddle-remainder bound. -/

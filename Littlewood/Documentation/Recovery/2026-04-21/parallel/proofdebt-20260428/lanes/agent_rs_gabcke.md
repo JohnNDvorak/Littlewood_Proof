@@ -173,3 +173,49 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   coefficient.
 - Coordinator action requested:
   run the requested serialized validation commands.
+
+### 2026-04-28 Round 4: stationary-phase error to coefficient atoms
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Theorem/file attacked:
+  `SiegelCoordinateStationaryPhaseErrorProp` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Proof facts banked:
+  - Added `SiegelStationaryPhaseCoefficientIdentityProp C`, the exact local
+    Taylor identity in block coordinates:
+    the raw defect
+    `ErrorTerm (blockCoord k p) -
+      (-1)^k * (2*pi / blockCoord k p)^(1/4) * rsPsi p`
+    is the saddle amplitude times `C k p * (blockCoord k p)^(-(1:Real)/2)`.
+  - Added `SiegelStationaryPhaseCoefficientBoundProp C`, the uniform
+    coefficient estimate `|C k p| <= fresnelC1Bound` on `p in Ico 0 1`.
+  - Added
+    `siegelCoordinateStationaryPhaseErrorProp_of_coefficientAtoms`, proving
+    that the identity atom plus the coefficient-bound atom imply
+    `SiegelCoordinateStationaryPhaseErrorProp`.
+  - This reduces the live Satz 1 source from one opaque error inequality to
+    two local Taylor/coefficient facts with exact coordinates and scale.
+- Failed routes that should not be retried:
+  none in this round. I did not define `C` as the defect quotient, so this is
+  not a circular reformulation; the remaining identity must come from the
+  actual Siegel/Gabcke steepest-descent expansion.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - `git diff --check`: passed.
+  - No Lean/Lake/full-build commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`
+  - `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+  - `printf 'import Littlewood.Main.LittlewoodPsi\n' | lake env lean --stdin`
+  - `printf 'import Littlewood.Main.LittlewoodPi\n' | lake env lean --stdin`
+- Smallest next theorem:
+  instantiate a concrete `C` from Gabcke's local Taylor coefficient formula,
+  then prove `SiegelStationaryPhaseCoefficientIdentityProp C` from the contour
+  expansion and `SiegelStationaryPhaseCoefficientBoundProp C` from the
+  first-remainder coefficient bound.
+- Coordinator action requested:
+  run the requested serialized validation commands.
