@@ -70,9 +70,9 @@ Agents request validation in their lane ledger. The coordinator serializes:
 
 | Order | Branch | Status | Required before merge |
 | --- | --- | --- | --- |
-| 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `16f1fd7` | public import probes after provider closure |
+| 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `da6efa1` | public import probes after provider closure |
 | 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `43aa10d` | public import probes after provider closure |
-| 3 | `proofdebt/20260428-pi-phase` | active, pushed through `bbedbc3` | public import probes after provider closure |
+| 3 | `proofdebt/20260428-pi-phase` | active, pushed through `bb027c8` | public import probes after provider closure |
 | 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `9564c41` | public import probes after provider closure |
 
 ## Agent Report Contract
@@ -106,6 +106,9 @@ Each agent report must state:
   - Atkinson `16f1fd7`: same focused build passed after coordinator alias/nonneg
     proof fix; reduced quadratic-anchor approximation to zero-model and kernel
     atoms.
+  - Atkinson `da6efa1`: same focused build passed after coordinator removed two
+    redundant finishing tactics; split the shifted quadratic kernel bound into
+    mass, moment, and weight-scale atoms.
   - Perron/B5a `040f565`: `lake build Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aShiftedBoundDeepLeaf`
     passed; reduced shifted leaf to direct large/small Perron payloads.
   - Perron/B5a `b1f2641`: `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
@@ -117,6 +120,10 @@ Each agent report must state:
   - Pi/Phase `bbedbc3`: `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
     passed after coordinator alias proof fix; added relative-density phase-fit
     adapter.
+  - Pi/Phase `bb027c8`: `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+    and `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+    passed after coordinator fixed local-definition unfolding; reduced the wide
+    tower window to `PerronThresholdTowerWideDominationHyp`.
   - RS/Gabcke `fa96728`: `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
     passed; split Siegel/Gabcke into profile and coefficient atoms.
   - RS/Gabcke `9564c41`: same focused build set passed; reduced weighted profile
@@ -126,11 +133,12 @@ Each agent report must state:
   `lake env lean`, `lean`, or any focused build/check themselves.
 - Current live atoms:
   - Atkinson: shifted quadratic zero-model approximation, shifted quadratic
-    kernel integral bound, and target matching.
+    mass bound, weighted moment bound, weight-scale comparison, and target
+    matching.
   - Perron/B5a: boundary-window estimate for the finite weighted Perron kernel,
     off-boundary estimate, and bounded-height residue extraction.
-  - Pi/Phase: wide Perron tower window and finite-zero relative-density phase
-    fit.
+  - Pi/Phase: Perron tower wide-domination and finite-zero relative-density
+    phase fit.
   - RS/Gabcke: Siegel coordinate pointwise remainder and Gabcke normalized
     coefficient content.
 - Next coordinator action: harvest Aristotle results when authenticated, then
