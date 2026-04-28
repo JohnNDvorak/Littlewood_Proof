@@ -1489,6 +1489,76 @@ theorem perronKernelWeightedBoundaryWindowError_le_kernelSup_mul_vonMangoldtWeig
         dsimp [perronKernelBoundaryWindowVonMangoldtWeight, s]
         rw [Finset.mul_sum]
 
+/-- The concrete `DirichletPhaseAlignment.chebyshevPsi` finite-range
+definition agrees with Mathlib's Chebyshev `psi`. -/
+theorem dirichletPhase_chebyshevPsi_eq_chebyshev_psi (x : ℝ) :
+    Aristotle.DirichletPhaseAlignment.chebyshevPsi x = Chebyshev.psi x := by
+  have hsets :
+      Finset.range (Nat.floor x + 1) = Finset.Icc 0 (Nat.floor x) := by
+    ext n
+    simp [Nat.lt_succ_iff]
+  unfold Aristotle.DirichletPhaseAlignment.chebyshevPsi
+  rw [Chebyshev.psi_eq_sum_Icc, hsets]
+
+/-- Global Chebyshev linear bound for the local
+`DirichletPhaseAlignment.chebyshevPsi` definition. -/
+theorem dirichletPhase_chebyshevPsi_le_const_mul_self
+    (x : ℝ) (hx : 0 ≤ x) :
+    Aristotle.DirichletPhaseAlignment.chebyshevPsi x ≤ (Real.log 4 + 4) * x := by
+  rw [dirichletPhase_chebyshevPsi_eq_chebyshev_psi]
+  exact Chebyshev.psi_le_const_mul_self hx
+
+/-- The boundary window's pure von Mangoldt weight is bounded by the full
+Chebyshev psi sum at height `x`. -/
+theorem perronKernelBoundaryWindowVonMangoldtWeight_le_chebyshevPsi
+    (x T : ℝ) :
+    perronKernelBoundaryWindowVonMangoldtWeight x T ≤
+      Aristotle.DirichletPhaseAlignment.chebyshevPsi x := by
+  classical
+  dsimp [perronKernelBoundaryWindowVonMangoldtWeight,
+    Aristotle.DirichletPhaseAlignment.chebyshevPsi]
+  exact
+    Finset.sum_le_sum_of_subset_of_nonneg
+      (by
+        intro n hn
+        exact (Finset.mem_filter.mp hn).1)
+      (by
+        intro n _hn_range _hn_not_window
+        exact vonMangoldt_nonneg n)
+
+/-- Scale-correct linear bound for the boundary-window von Mangoldt weight.
+
+Since `T <= 16`, the global Chebyshev bound `psi(x) = O(x)` implies the weaker
+but correctly scaled `O(x / T)` bound needed by the small-`T` boundary-window
+route. -/
+theorem small_T_boundary_window_vonMangoldt_weight_linear_bound :
+    ∃ Cv > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelBoundaryWindowVonMangoldtWeight x T ≤ Cv * (x / T) := by
+  let Cv : ℝ := 16 * (Real.log 4 + 4)
+  have hlog4_nonneg : 0 ≤ Real.log (4 : ℝ) := Real.log_nonneg (by norm_num)
+  have hconst_nonneg : 0 ≤ Real.log (4 : ℝ) + 4 := by linarith
+  have hconst_pos : 0 < Real.log (4 : ℝ) + 4 := by linarith
+  refine ⟨Cv, mul_pos (by norm_num) hconst_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hT_pos : 0 < T := by linarith
+  have hx_over_T_nonneg : 0 ≤ x / T := div_nonneg hx_nonneg hT_pos.le
+  have hx_le_scaled : x ≤ 16 * (x / T) := by
+    calc x = T * (x / T) := by
+          rw [← mul_div_assoc, mul_div_cancel_left₀ x (ne_of_gt hT_pos)]
+      _ ≤ 16 * (x / T) :=
+          mul_le_mul_of_nonneg_right hT_hi hx_over_T_nonneg
+  calc perronKernelBoundaryWindowVonMangoldtWeight x T
+      ≤ Aristotle.DirichletPhaseAlignment.chebyshevPsi x :=
+        perronKernelBoundaryWindowVonMangoldtWeight_le_chebyshevPsi x T
+    _ ≤ (Real.log 4 + 4) * x :=
+        dirichletPhase_chebyshevPsi_le_const_mul_self x hx_nonneg
+    _ ≤ (Real.log 4 + 4) * (16 * (x / T)) :=
+        mul_le_mul_of_nonneg_left hx_le_scaled hconst_nonneg
+    _ = Cv * (x / T) := by
+        dsimp [Cv]
+        ring
+
 /-- Diagnostic small-`T` boundary-window atom from a uniform kernel-error bound
 and an `O((log x)^2)` von Mangoldt weight estimate for the boundary window.
 

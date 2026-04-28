@@ -276,3 +276,46 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
       <= K * (T * (Real.log x)^2 / x)`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-28 Round 6 - Boundary Window Weight Closure
+
+- Classification: `ATOM_CLOSED_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  scale-correct linear boundary-window von Mangoldt weight estimate in
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Code facts banked:
+  added `dirichletPhase_chebyshevPsi_eq_chebyshev_psi`, identifying the
+  local finite-range `DirichletPhaseAlignment.chebyshevPsi` with Mathlib's
+  `Chebyshev.psi`.
+  Added `dirichletPhase_chebyshevPsi_le_const_mul_self`, importing Mathlib's
+  global Chebyshev linear bound onto the local definition.
+  Added `perronKernelBoundaryWindowVonMangoldtWeight_le_chebyshevPsi`, bounding
+  the boundary-window sum by the full Chebyshev sum at height `x`.
+  Proved `small_T_boundary_window_vonMangoldt_weight_linear_bound`:
+  `∃ Cv > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelBoundaryWindowVonMangoldtWeight x T <= Cv * (x / T)`.
+- Scale check:
+  the theorem uses the correct `x / T` window scale.  The constant is enlarged
+  by `T <= 16`, so no false logarithmic-square interval-weight assertion is
+  used.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports, or any
+  theorem consuming `SmallTPerronBoundHyp`.  Did not use or modify
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
+  followed by strict public import probes for `Littlewood.Main.LittlewoodPsi`
+  and `Littlewood.Main.LittlewoodPi` if the focused build passes.
+- Smallest next theorem:
+  prove the decaying boundary-kernel estimate
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈ boundary(x,T),
+    |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T|
+      <= K * (T * (Real.log x)^2 / x)`.
+  If this estimate is too strong at exact or near-integer `x`, refine the
+  boundary decomposition further before attempting the off-boundary estimate.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
