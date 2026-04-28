@@ -2325,6 +2325,43 @@ class FiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
             ∀ ρ ∈ (finite_zeros_le T).toFinset,
               ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
 
+/-- Concrete finite-set inhomogeneous Kronecker relative-density boundary.
+
+This removes zeta-specific bookkeeping from
+`FiniteZeroInhomogeneousPhaseRelativelyDenseHyp`: for any finite set of complex
+frequencies, arbitrary target phases, and positive tolerance, the one-parameter
+orbit in the corresponding finite torus hits the target box within a bounded
+search radius from every starting point. -/
+class FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp : Prop where
+  witness :
+    ∀ (S : Finset ℂ) (ε : ℝ) (targetPhase : ℂ → ℝ),
+      0 < ε →
+      ∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ S,
+              ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
+
+/-- The concrete finite-set Kronecker relative-density boundary supplies the
+project finite-zero relative-density leaf. -/
+theorem finiteZeroInhomogeneousPhaseRelativelyDense_of_finiteSetKronecker_hyp
+    [FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp] :
+    FiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε targetPhase _hT4 hε
+    exact FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp.witness
+      (finite_zeros_le T).toFinset ε targetPhase hε
+
+/-- Instance form of
+`finiteZeroInhomogeneousPhaseRelativelyDense_of_finiteSetKronecker_hyp`. -/
+instance (priority := 100)
+    [FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp] :
+    FiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  finiteZeroInhomogeneousPhaseRelativelyDense_of_finiteSetKronecker_hyp
+
 /-- The two lower-level honest boundaries imply the Perron-only phase-fit
 provider boundary. -/
 theorem inhomogeneousPhaseFitAbovePerronThresholdPerron_of_window_hyp

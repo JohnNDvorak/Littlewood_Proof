@@ -216,3 +216,60 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Run the requested validation commands and report any elaboration repair
     needed around the local `L`/`U` aliases in
     `perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp`.
+
+### 2026-04-28 Round 4: Finite-Zero Phase Leaf to Concrete Kronecker
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - Leaf below `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp`.
+- Target choice:
+  - Chose `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp` for this round.
+    `PerronThresholdTowerWideDominationHyp` remains a true same-height growth
+    theorem involving an arbitrary positive radius family; existing
+    `tower_cap_unbounded_with_eps` is not enough without a growth bound on
+    that radius.
+- Facts banked:
+  - Added `FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp`, a concrete
+    finite-set Kronecker relative-density interface with no zeta-specific
+    Perron/tower data.
+  - Added
+    `finiteZeroInhomogeneousPhaseRelativelyDense_of_finiteSetKronecker_hyp`,
+    deriving the project finite-zero leaf by applying the concrete finite-set
+    theorem to `(finite_zeros_le T).toFinset`.
+  - Added the instance form routing
+    `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp` through the concrete
+    finite-set Kronecker boundary.
+- False-surface audit:
+  - The new reduction does not mention `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, or `truncatedPiHyp_contradicts_rh`.
+- Failed routes that must not be retried:
+  - Do not try to prove relative density from the existing homogeneous
+    `exists_large_x_aligned_at_height` lemma; that only targets phase `1` and
+    does not support arbitrary target-phase functions.
+  - Do not use `FiniteZeroInhomogeneousPhaseWindowHyp` as the source theorem;
+    it remains a stronger arbitrary-short-window surface, not standard
+    relative-density Kronecker.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane check; no `lean`, `lake`, or focused build was run.
+  - `git diff --check` passed.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+  - `printf 'import Littlewood.Main.LittlewoodPsi\n' | lake env lean --stdin`
+  - `printf 'import Littlewood.Main.LittlewoodPi\n' | lake env lean --stdin`
+- Smallest next theorem/interface:
+  - Prove/source `FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp`,
+    likely from the finite-dimensional inhomogeneous Kronecker theorem on the
+    torus plus the needed rational-independence condition for the chosen
+    finite frequency set.
+  - Separately prove/source `PerronThresholdTowerWideDominationHyp` with a
+    usable growth bound for the relative-density radius and the Perron
+    threshold.
+- Coordinator action requested:
+  - Run the requested validation commands and report whether the new finite-set
+    interface elaborates cleanly.
