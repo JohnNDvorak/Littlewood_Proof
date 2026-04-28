@@ -107,6 +107,15 @@ theorem coeffControlClasses_of_exactSeedAboveThresholdHyp
     RhPiTargetHeightCoeffControlHyp ∧ RhPiAntiTargetHeightCoeffControlHyp := by
   exact ⟨inferInstance, inferInstance⟩
 
+/-- Endpoint from Perron-only exact-seed-above-threshold payload classes to both
+requested coefficient-control classes. -/
+theorem coeffControlClasses_of_exactSeedAboveThresholdPerronHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetTowerExactSeedAbovePerronThresholdPerronHyp]
+    [AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp] :
+    RhPiTargetHeightCoeffControlHyp ∧ RhPiAntiTargetHeightCoeffControlHyp := by
+  exact ⟨inferInstance, inferInstance⟩
+
 /-- Endpoint from corrected canonical phase-coupling classes to both requested
 coefficient-control classes. -/
 theorem coeffControlClasses_of_correctedPhaseCouplingHyp
