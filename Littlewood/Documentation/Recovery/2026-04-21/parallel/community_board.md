@@ -96,10 +96,10 @@ not edit them directly.
 
 | Order | Branch | Status | Required checks |
 | --- | --- | --- | --- |
-| 1 | `overnight/20260428-atkinson` | round 3 committed: `377fc58` | focused Atkinson build passed; public `Psi`/`Pi` import probes passed |
-| 2 | `overnight/20260428-perron-hadamard` | round 3 committed: `f23e897` | focused PerronTruncationInfra build passed; public `Psi`/`Pi` import probes passed |
-| 3 | `overnight/20260428-pi-phase` | round 2 committed: `57d3499` | focused pi/phase/provider/deep builds passed; public `Pi` import probe passed |
-| 4 | `overnight/20260428-rs-gabcke` | round 2 committed: `ecd3a1e` | focused RS/Gabcke/Hardy builds passed; public `Psi`/`Pi` import probes passed |
+| 1 | `overnight/20260428-atkinson` | round 4 committed: `3396863` | focused Atkinson build passed; public `Psi`/`Pi` import probes passed |
+| 2 | `overnight/20260428-perron-hadamard` | round 4 committed: `f6ced10` | focused PerronTruncationInfra build passed; public `Psi`/`Pi` import probes passed |
+| 3 | `overnight/20260428-pi-phase` | round 3 committed: `79aa2a3` | focused PerronExplicitFormulaProvider build passed; public `Pi` import probe passed |
+| 4 | `overnight/20260428-rs-gabcke` | round 3 committed: `acf3068` | focused RS/Gabcke/Hardy builds passed; public `Psi`/`Pi` import probes passed |
 
 ## Coordinator Status
 
@@ -111,19 +111,19 @@ not edit them directly.
 - All fresh overnight worktrees reuse the main `.lake` cache through local
   symlinks; `.lake` is excluded locally and must remain untracked.
 - No full `lake build` has been run in this overnight coordinator pass.
-- Current round 4 work is delegated to the four lane agents with static-only
+- Current round 5 work is delegated to the four lane agents with static-only
   permissions. Coordinator remains the sole Lean/Lake validator, with exactly
   one Lean/Lake validation job allowed at a time.
 
 ## Current Lane Heads
 
-- Atkinson: `377fc58 Reduce Atkinson remainder to shifted block parameter`
+- Atkinson: `3396863 Reduce Atkinson remainder to blockMode estimate`
 - Perron/Hadamard:
-  `f23e897 Specialize small-T Perron reduction to vertical integral`
+  `f6ced10 Reduce Perron truncation to kernel cutoff`
 - Pi/Phase:
-  `57d3499 Split pi exact seeds onto Perron-only phase fit`
+  `79aa2a3 Split pi phase fit into honest window leaves`
 - RS/Gabcke:
-  `ecd3a1e Isolate Gabcke normalized coefficient boundary`
+  `acf3068 Reduce Gabcke coupling to coefficient formula`
 
 ## Newly Exposed Debt
 
@@ -132,6 +132,13 @@ not edit them directly.
   small-`T` handoff could be validated.
 - Perron/Hadamard still needs the non-circular concrete bounded-height
   truncation and residue estimates for `perronVerticalIntegral`.
+- Atkinson's public leaf is now reduced to a native `blockMode`
+  stationary-phase estimate on the shifted interval.
+- Pi/Phase's Perron-only exact-seed path is now split into same-height
+  tower/window growth and bounded-window finite inhomogeneous phase
+  approximation.
+- RS/Gabcke signed coupling is now reduced to an explicit normalized Gabcke
+  coefficient formula plus two elementary inequalities.
 
 ## Update Protocol
 
