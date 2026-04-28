@@ -280,3 +280,55 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-28 Coordinator Validation, Round 5
+
+- Commit `1d6314a` (`Reduce Atkinson quadratic moment to boundary identity`)
+  passed the serialized focused check
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` and was pushed
+  to `origin/proofdebt/20260428-atkinson-large-j`.
+- Hard rule remains:
+  no local `lake`, `lake env lean`, `lean`, focused builds, public import
+  probes, or compilation checks by this lane agent.
+
+### 2026-04-28 Round 6 Weighted-Moment FTC Attempt
+
+- Classification: `PROVED_HELPER_INTENDED`, pending coordinator validation.
+- Theorem/file attacked:
+  the exact weighted-moment boundary identity via FTC for
+  `Aristotle.StationaryPhaseMainMode.quadraticKernel`.
+- Facts banked:
+  `atkinson_quadraticKernel_phase_hasDerivAt` proves the real derivative of
+  `2 * Real.pi * p ^ 2`.
+  `atkinson_quadraticKernel_hasDerivAt` packages the complex derivative
+  `quadraticKernel' p = Complex.I * (((4 * Real.pi * p : ℝ) : ℂ)) *
+  quadraticKernel p`.
+  `atkinson_shifted_quadratic_weighted_moment_boundary_identity` applies FTC
+  on `(j : ℝ)..((j : ℝ) + 1)`, converts the oriented interval integral back to
+  the `Ioc` set integral, and multiplies by `-Complex.I`.
+  `atkinson_shifted_quadratic_weighted_moment_bound` closes the uniform
+  weighted-moment atom, and
+  `atkinson_shifted_quadratic_kernel_integral_bound_of_mass` reduces the
+  shifted quadratic kernel leaf to the single remaining shifted mass
+  `O(1 / j)` atom.
+- Failed routes / validation risks:
+  no crude weighted-moment norm route was used. The likely first validation
+  failure, if any, is Lean syntax/API drift around `harg.cexp`, the
+  `IntervalIntegrable` instance from `Continuous.intervalIntegrable`, or the
+  final `Ioc`/interval-integral conversion with
+  `intervalIntegral.integral_of_le`; these are local proof-engineering issues,
+  not a mathematical obstruction.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  Strict public import probes for `Littlewood.Main.LittlewoodPsi` and
+  `Littlewood.Main.LittlewoodPi` if the focused module passes.
+- Next smallest theorem:
+  prove the shifted quadratic mass bound
+  `∃ C_mass > 0, ∀ j : ℕ, 1 ≤ j →`
+  `‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `Aristotle.StationaryPhaseMainMode.quadraticKernel p‖ ≤ C_mass / j`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

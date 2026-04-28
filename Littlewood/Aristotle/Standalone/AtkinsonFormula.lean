@@ -12912,6 +12912,100 @@ private theorem atkinson_shifted_quadratic_kernel_weight_scale :
           (atkinsonModeWeight (n + j) / j)) := by
           simp [A, w0, w1, base]
 
+/-- Derivative of the shifted quadratic kernel phase `2πp²`. -/
+private lemma atkinson_quadraticKernel_phase_hasDerivAt (p : ℝ) :
+    HasDerivAt (fun x : ℝ => 2 * Real.pi * x ^ 2) (4 * Real.pi * p) p := by
+  have hpow : HasDerivAt (fun x : ℝ => x ^ 2) (2 * p) p := by
+    simpa [pow_two] using ((hasDerivAt_id p).pow 2)
+  have hmul : HasDerivAt (fun x : ℝ => 2 * Real.pi * x ^ 2)
+      ((2 * Real.pi) * (2 * p)) p := by
+    simpa [pow_two, mul_assoc] using (HasDerivAt.const_mul (2 * Real.pi) hpow)
+  convert hmul using 1 <;> ring
+
+/-- The exact derivative identity behind the shifted weighted quadratic
+moment: `quadraticKernel' p = i * (4πp) * quadraticKernel p`. -/
+private lemma atkinson_quadraticKernel_hasDerivAt (p : ℝ) :
+    HasDerivAt Aristotle.StationaryPhaseMainMode.quadraticKernel
+      (Complex.I * (((4 * Real.pi * p : ℝ) : ℂ)) *
+        Aristotle.StationaryPhaseMainMode.quadraticKernel p) p := by
+  have hphaseC :
+      HasDerivAt (fun x : ℝ => ((2 * Real.pi * x ^ 2 : ℝ) : ℂ))
+        (((4 * Real.pi * p : ℝ) : ℂ)) p := by
+    exact HasDerivAt.ofReal_comp (atkinson_quadraticKernel_phase_hasDerivAt p)
+  have harg :
+      HasDerivAt
+        (fun x : ℝ => Complex.I * (((2 * Real.pi * x ^ 2 : ℝ) : ℂ)))
+        (Complex.I * (((4 * Real.pi * p : ℝ) : ℂ))) p := by
+    simpa [mul_assoc] using hphaseC.const_mul Complex.I
+  change
+    HasDerivAt
+      (fun x : ℝ => Complex.exp (Complex.I * (((2 * Real.pi * x ^ 2 : ℝ) : ℂ))))
+      (Complex.I * (((4 * Real.pi * p : ℝ) : ℂ)) *
+        Aristotle.StationaryPhaseMainMode.quadraticKernel p) p
+  simpa [Aristotle.StationaryPhaseMainMode.quadraticKernel, mul_assoc, mul_left_comm, mul_comm]
+    using harg.cexp
+
+/-- Exact FTC boundary identity for the `4πp`-weighted shifted quadratic
+moment. This closes the uniform weighted moment atom; the only remaining
+oscillatory input for the shifted quadratic kernel is the unweighted mass
+`O(1 / j)` estimate. -/
+private theorem atkinson_shifted_quadratic_weighted_moment_boundary_identity :
+    ∀ j : ℕ, 1 ≤ j →
+      (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          (((4 * Real.pi * p : ℝ) : ℂ) *
+            Aristotle.StationaryPhaseMainMode.quadraticKernel p))
+        =
+      (-Complex.I) *
+        (Aristotle.StationaryPhaseMainMode.quadraticKernel ((j : ℝ) + 1) -
+          Aristotle.StationaryPhaseMainMode.quadraticKernel (j : ℝ)) := by
+  intro j _hj
+  let a : ℝ := j
+  let b : ℝ := (j : ℝ) + 1
+  let q : ℝ → ℂ := Aristotle.StationaryPhaseMainMode.quadraticKernel
+  let g : ℝ → ℂ := fun p => (((4 * Real.pi * p : ℝ) : ℂ) * q p)
+  have hab : a ≤ b := by
+    dsimp [a, b]
+    linarith
+  have hderiv : ∀ x ∈ uIcc a b, HasDerivAt q (Complex.I * g x) x := by
+    intro x _hx
+    dsimp [q, g]
+    simpa [mul_assoc] using atkinson_quadraticKernel_hasDerivAt x
+  have hcont_q : Continuous q := by
+    dsimp [q]
+    unfold Aristotle.StationaryPhaseMainMode.quadraticKernel
+    continuity
+  have hcont_g : Continuous g := by
+    dsimp [g]
+    exact (Complex.continuous_ofReal.comp
+      (((continuous_const.mul continuous_const).mul continuous_id))).mul hcont_q
+  have hint : IntervalIntegrable (fun p : ℝ => Complex.I * g p) volume a b := by
+    simpa using (((continuous_const : Continuous fun _ : ℝ => Complex.I).mul hcont_g).intervalIntegrable a b)
+  have hFTC : ∫ p in a..b, Complex.I * g p = q b - q a :=
+    intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
+  have hundo (z : ℂ) : z = (-Complex.I) * (Complex.I * z) := by
+    have hI : (-Complex.I) * Complex.I = 1 := by norm_num
+    calc
+      z = 1 * z := by simp
+      _ = ((-Complex.I) * Complex.I) * z := by rw [hI]
+      _ = (-Complex.I) * (Complex.I * z) := by ring
+  calc
+    ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+        (((4 * Real.pi * p : ℝ) : ℂ) *
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p)
+        = ∫ p in a..b, g p := by
+            change ∫ p in Ioc a b, g p = ∫ p in a..b, g p
+            rw [← intervalIntegral.integral_of_le hab]
+    _ = (-Complex.I) * (∫ p in a..b, Complex.I * g p) := by
+          rw [intervalIntegral.integral_const_mul]
+          exact hundo (∫ p in a..b, g p)
+    _ = (-Complex.I) * (q b - q a) := by
+          rw [hFTC]
+    _ =
+      (-Complex.I) *
+        (Aristotle.StationaryPhaseMainMode.quadraticKernel ((j : ℝ) + 1) -
+          Aristotle.StationaryPhaseMainMode.quadraticKernel (j : ℝ)) := by
+          rfl
+
 /-- The weighted shifted quadratic moment is uniformly bounded once the exact
 FTC boundary identity for the quadratic kernel is available. This isolates the
 remaining analytic step to proving that
@@ -12957,6 +13051,17 @@ private theorem atkinson_shifted_quadratic_weighted_moment_bound_of_boundary_ide
     _ = 2 := by
           rw [hnorm_kernel, hnorm_kernel]
           norm_num
+
+/-- The weighted shifted quadratic moment is uniformly bounded by the exact
+quadratic-kernel boundary identity. -/
+private theorem atkinson_shifted_quadratic_weighted_moment_bound :
+    ∃ C_moment > 0, ∀ j : ℕ, 1 ≤ j →
+      ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          (((4 * Real.pi * p : ℝ) : ℂ) *
+            Aristotle.StationaryPhaseMainMode.quadraticKernel p)‖ ≤ C_moment := by
+  exact
+    atkinson_shifted_quadratic_weighted_moment_bound_of_boundary_identity
+      atkinson_shifted_quadratic_weighted_moment_boundary_identity
 
 /-- Kernel bound with the elementary weight scale discharged; the remaining
 inputs are exactly the two shifted Fresnel estimates. -/
@@ -13004,6 +13109,23 @@ private theorem atkinson_shifted_quadratic_kernel_integral_bound_of_mass_boundar
   exact
     atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment hmass
       (atkinson_shifted_quadratic_weighted_moment_bound_of_boundary_identity hboundary)
+
+/-- Kernel bound with the weighted moment discharged by FTC. The shifted mass
+`O(1 / j)` estimate is now the only remaining Fresnel atom for this kernel
+leaf. -/
+private theorem atkinson_shifted_quadratic_kernel_integral_bound_of_mass
+    (hmass :
+      ∃ C_mass > 0, ∀ j : ℕ, 1 ≤ j →
+        ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+            Aristotle.StationaryPhaseMainMode.quadraticKernel p‖ ≤ C_mass / j) :
+    ∃ C_kernel > 0, ∀ n j : ℕ, 3 ≤ j → 1 ≤ j → j ≤ n →
+      ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p‖
+        ≤ C_kernel * ((((n : ℝ) + 1) / atkinsonModeWeight n) *
+            (atkinsonModeWeight (n + j) / j)) := by
+  exact
+    atkinson_shifted_quadratic_kernel_integral_bound_of_mass_boundary hmass
+      atkinson_shifted_quadratic_weighted_moment_boundary_identity
 
 /-- The mode-eventual shifted-interval `blockMode` remainder follows once the
 native integral is close to the quadratic-anchor model and that model matches
