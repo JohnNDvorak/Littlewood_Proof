@@ -91,5 +91,20 @@ Each agent report must state:
 
 - Setup completed from `acdc136`.
 - Fresh worktrees created and stale worktrees preserved.
-- Initial Aristotle sidecars are planned for all four lanes.
-- Initial lane agents are being dispatched.
+- Initial lane agents dispatched.
+- Initial Aristotle sidecars submitted:
+  - Atkinson: `b895c2cb-ccbc-4edc-b13a-8076b5be5eb6`
+  - Perron/B5a: `43160ae0-78e7-4d7e-b8af-76332fd6c59f`
+  - Pi/Phase: `32a1df6a-be94-4cc2-81c3-05623533b222`
+  - RS/Gabcke: `381b8764-543a-4024-a84f-9a9f91be9eba`
+- Atkinson lane produced local commit `4e2e825`
+  (`Reduce Atkinson shifted blockMode leaf`), a conditional reduction from
+  the native shifted `blockMode` remainder to two quadratic-anchor atoms.
+- Coordinator validation completed for Atkinson:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` passed in the
+  Atkinson worktree on 2026-04-28.
+- Next coordinator action: harvest Aristotle results as they complete, then
+  validate and integrate lane commits in merge-queue order. Keep public import
+  probes for `Littlewood.Main.LittlewoodPsi` and `Littlewood.Main.LittlewoodPi`
+  queued until a lane closes a public-path provider rather than just a
+  conditional reduction.
