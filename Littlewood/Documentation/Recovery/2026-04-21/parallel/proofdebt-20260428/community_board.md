@@ -70,9 +70,9 @@ Agents request validation in their lane ledger. The coordinator serializes:
 
 | Order | Branch | Status | Required before merge |
 | --- | --- | --- | --- |
-| 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `1d6314a` | public import probes after provider closure |
-| 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `72d85d5` | public import probes after provider closure |
-| 3 | `proofdebt/20260428-pi-phase` | active, pushed through `5c2066e` | public import probes after provider closure |
+| 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `cce6705` | public import probes after provider closure |
+| 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `1da652d` | public import probes after provider closure |
+| 3 | `proofdebt/20260428-pi-phase` | active, pushed through `73831f2` | public import probes after provider closure |
 | 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `ad5064f` | public import probes after provider closure |
 
 ## Agent Report Contract
@@ -114,6 +114,9 @@ Each agent report must state:
     weight-scale atom and reduced the integral bound to mass and moment atoms.
   - Atkinson `1d6314a`: same focused build passed; reduced the weighted moment
     atom to an exact quadratic-kernel boundary identity.
+  - Atkinson `cce6705`: same focused build passed after coordinator specified
+    the complex interval-integrability proof; closed the exact quadratic-kernel
+    boundary identity and the weighted moment atom.
   - Perron/B5a `040f565`: `lake build Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aShiftedBoundDeepLeaf`
     passed; reduced shifted leaf to direct large/small Perron payloads.
   - Perron/B5a `b1f2641`: `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
@@ -124,6 +127,8 @@ Each agent report must state:
     window estimate to a kernel supremum and von Mangoldt window-weight atom.
   - Perron/B5a `72d85d5`: same focused build passed after coordinator removed a
     redundant finishing tactic; corrected the boundary window weight scale.
+  - Perron/B5a `1da652d`: same focused build passed; closed the corrected
+    boundary-window von Mangoldt weight estimate at the linear `x / T` scale.
   - Pi/Phase `847fa92`: `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
     passed; added Perron-only corrected phase endpoints.
   - Pi/Phase `bbedbc3`: `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
@@ -138,6 +143,9 @@ Each agent report must state:
   - Pi/Phase `5c2066e`: same two focused builds passed; refined the finite
     Kronecker source to a relation-compatible finite-set formulation plus the
     zeta-specific compatibility leaf.
+  - Pi/Phase `73831f2`: same two focused builds passed; split phase fit into
+    target-specific and anti-target-specific leaves and added exact-seed routes
+    from the Perron-only phase-fit classes.
   - RS/Gabcke `fa96728`: `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
     passed; split Siegel/Gabcke into profile and coefficient atoms.
   - RS/Gabcke `9564c41`: same focused build set passed; reduced weighted profile
@@ -152,13 +160,12 @@ Each agent report must state:
   Atkinson worktree and re-issued the hard rule: agents must not run `lake`,
   `lake env lean`, `lean`, or any focused build/check themselves.
 - Current live atoms:
-  - Atkinson: shifted quadratic mass bound, exact weighted-moment boundary
-    identity, and target matching for the large-j no-log theorem.
-  - Perron/B5a: uniform boundary kernel supremum, corrected boundary
-    von-Mangoldt window-weight estimate, off-boundary estimate, and
+  - Atkinson: shifted quadratic mass bound and target matching for the large-j
+    no-log theorem.
+  - Perron/B5a: decaying boundary-kernel estimate, off-boundary estimate, and
     bounded-height residue extraction.
-  - Pi/Phase: Perron tower wide-domination, relation-compatible finite-set
-    Kronecker, and zeta finite-zero compatibility.
+  - Pi/Phase: Perron tower wide-domination and zeta finite-zero compatibility
+    for the target/anti-target leaves.
   - RS/Gabcke: instantiate the concrete coefficient `C` from the Gabcke local
     Taylor expansion, then prove `SiegelStationaryPhaseCoefficientIdentityProp C`
     and `SiegelStationaryPhaseCoefficientBoundProp C`.
