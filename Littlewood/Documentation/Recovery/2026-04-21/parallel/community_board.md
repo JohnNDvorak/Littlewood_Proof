@@ -1,6 +1,6 @@
 # Parallel Recovery Community Board
 
-Date: 2026-04-27 CDT
+Date: 2026-04-28 CDT
 
 Launch ID: `overnight-20260428`
 
@@ -96,22 +96,42 @@ not edit them directly.
 
 | Order | Branch | Status | Required checks |
 | --- | --- | --- | --- |
-| 1 | `overnight/20260428-atkinson` | round 1 committed: `6f1425a` | focused Atkinson build passed; public import checks still required after merge |
-| 2 | `overnight/20260428-perron-hadamard` | round 1 committed: `c2448df` | focused Hadamard build passed; public import checks still required after merge |
-| 3 | `overnight/20260428-pi-phase` | round 1 committed: `967ee53` | focused pi/phase/provider builds passed; public import checks still required after merge |
-| 4 | `overnight/20260428-rs-gabcke` | round 1 committed: `bcf6c70` | focused RS/Gabcke/Hardy builds passed; public import checks still required after merge |
+| 1 | `overnight/20260428-atkinson` | round 3 committed: `377fc58` | focused Atkinson build passed; public `Psi`/`Pi` import probes passed |
+| 2 | `overnight/20260428-perron-hadamard` | round 3 committed: `f23e897` | focused PerronTruncationInfra build passed; public `Psi`/`Pi` import probes passed |
+| 3 | `overnight/20260428-pi-phase` | round 2 committed: `57d3499` | focused pi/phase/provider/deep builds passed; public `Pi` import probe passed |
+| 4 | `overnight/20260428-rs-gabcke` | round 2 committed: `ecd3a1e` | focused RS/Gabcke/Hardy builds passed; public `Psi`/`Pi` import probes passed |
 
 ## Coordinator Status
 
 - Main recovery branch is ahead of `origin/recovery/provider-forensics-2026-04-21`
-  by the coordination commit `4a204b7`.
+  by coordination/checkpoint commits.
 - Strict public import probes on the main recovery branch passed:
   - `import Littlewood.Main.LittlewoodPsi`
   - `import Littlewood.Main.LittlewoodPi`
 - All fresh overnight worktrees reuse the main `.lake` cache through local
   symlinks; `.lake` is excluded locally and must remain untracked.
-- Current round 2 work is delegated to the four lane agents with static-only
-  permissions. Coordinator remains the sole Lean/Lake validator.
+- No full `lake build` has been run in this overnight coordinator pass.
+- Current round 4 work is delegated to the four lane agents with static-only
+  permissions. Coordinator remains the sole Lean/Lake validator, with exactly
+  one Lean/Lake validation job allowed at a time.
+
+## Current Lane Heads
+
+- Atkinson: `377fc58 Reduce Atkinson remainder to shifted block parameter`
+- Perron/Hadamard:
+  `f23e897 Specialize small-T Perron reduction to vertical integral`
+- Pi/Phase:
+  `57d3499 Split pi exact seeds onto Perron-only phase fit`
+- RS/Gabcke:
+  `ecd3a1e Isolate Gabcke normalized coefficient boundary`
+
+## Newly Exposed Debt
+
+- `PerronTruncationInfra.perron_vertical_eq_tsum` is now an explicit private
+  `sorry` leaf. The prior proof skeleton failed elaboration before the concrete
+  small-`T` handoff could be validated.
+- Perron/Hadamard still needs the non-circular concrete bounded-height
+  truncation and residue estimates for `perronVerticalIntegral`.
 
 ## Update Protocol
 
