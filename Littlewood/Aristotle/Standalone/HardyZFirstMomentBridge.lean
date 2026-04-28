@@ -43,7 +43,6 @@ open Aristotle.Standalone.GabckePhaseCouplingHyp
 
 variable [AtkinsonShiftedInversePhaseCellPrefixBoundHyp]
 variable [SiegelSaddleExpansionHyp]
-variable [GabckePhaseCouplingHyp]
 
 /-- **Main term first moment O(√T) bound**.
     |∫₁ᵀ MainTerm(t) dt| ≤ C_M·T^{1/2}.
@@ -64,6 +63,7 @@ private theorem mainTerm_first_moment_sqrt :
 theorem hardyZ_first_moment_sqrt :
     ∃ C > 0, ∀ T : ℝ, T ≥ 2 →
       |∫ t in Ioc 1 T, hardyZ t| ≤ C * T ^ ((1 : ℝ) / 2) := by
+  let _ : GabckePhaseCouplingHyp := gabckePhaseCouplingHyp_of_siegelSaddleExpansionHyp
   obtain ⟨C_E, hCE, h_error⟩ :=
     Aristotle.Standalone.RSExpansionProof.errorTerm_first_moment_sqrt
   obtain ⟨C_M, hCM, h_main⟩ := mainTerm_first_moment_sqrt

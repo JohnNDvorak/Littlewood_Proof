@@ -47,6 +47,7 @@ namespace Aristotle.Standalone.GabckePhaseCouplingHyp
 
 open MeasureTheory Set Real Filter Topology HardyEstimatesPartial
 open Aristotle.RSBlockParam Aristotle.ErrorTermExpansion
+open Aristotle.Standalone.SiegelSaddleExpansionHyp
 
 /-! ## Definitions: signed block correction -/
 
@@ -192,6 +193,22 @@ theorem gabckePhaseCouplingHyp_of_adjacent
 instance [GabckePhaseCouplingInfra.GabckeSignedAdjacentHyp] :
     GabckePhaseCouplingHyp :=
   gabckePhaseCouplingHyp_of_adjacent
+
+/-- Conditional reduction for the public Hardy bridge: the current
+`SiegelSaddleExpansionHyp` fields include the two adjacent Gabcke Satz 4 atoms
+needed by `GabckeSignedAdjacentHyp`, hence they supply the legacy
+`GabckePhaseCouplingHyp` wrapper without an additional public assumption. -/
+theorem gabckePhaseCouplingHyp_of_siegelSaddleExpansionHyp
+    [SiegelSaddleExpansionHyp] :
+    GabckePhaseCouplingHyp :=
+  gabckePhaseCouplingHyp_of_adjacent
+
+/-- The theorem-shaped block-correction consequence of the Siegel/Gabcke
+adjacent atoms. -/
+theorem block_correction_antitone_of_siegelSaddleExpansionHyp
+    [SiegelSaddleExpansionHyp] :
+    AntitoneOn signedBlockCorrection (Ici (1 : ℕ)) :=
+  gabckePhaseCouplingHyp_of_siegelSaddleExpansionHyp.block_correction_antitone
 
 /-! ## Bridge theorem -/
 

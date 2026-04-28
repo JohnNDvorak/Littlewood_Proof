@@ -50,7 +50,6 @@ open Aristotle.Standalone.GabckePhaseCouplingHyp
 
 variable [AtkinsonShiftedInversePhaseCellPrefixBoundHyp]
 variable [SiegelSaddleExpansionHyp]
-variable [GabckePhaseCouplingHyp]
 
 /-- Exact formula: ∫₁ᵀ log t = T·log T − T + 1 (integration by parts / FTC). -/
 private lemma integral_log_exact (T : ℝ) (_hT : 1 ≤ T) :
@@ -214,6 +213,7 @@ This is the single analytic blocker for the AFE mean-square bridge
 private lemma afe_signed_integral_gap_bound :
     (fun T => ∫ t in (1:ℝ)..T, afeGapIntegrand t)
     =O[atTop] (fun T => T) := by
+  let _ : GabckePhaseCouplingHyp := gabckePhaseCouplingHyp_of_siegelSaddleExpansionHyp
   simpa using Aristotle.Standalone.HardyAfeSignedGapAtomic.afe_signed_integral_gap_bound_atomic
 
 /-- Cycle-breaking extraction point: any signed AFE gap `O(T)` theorem yields
