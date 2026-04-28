@@ -176,3 +176,51 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   bounds should be applicable away from `log (x / n) = 0`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-28 Round 4 - Boundary Window Weight Reduction
+
+- Classification: `BOUNDARY_WEIGHT_REDUCTION`.
+- Theorem/file attacked:
+  `perronKernelWeightedBoundaryWindowError` bound in
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Code facts banked:
+  added `perronKernelBoundaryWindowVonMangoldtWeight`, the exact pure
+  von Mangoldt weight of the boundary set
+  `{n ∈ range (floor x + 1) | |x - n| <= x / T}`.
+  Proved
+  `perronKernelWeightedBoundaryWindowError_le_kernelSup_mul_vonMangoldtWeight`,
+  controlling the boundary weighted error by a uniform kernel-error supremum
+  times that pure arithmetic weight.  Added
+  `small_T_boundary_window_bound_from_kernel_sup_and_vonMangoldt_weight`,
+  reducing the boundary-window atom to:
+  1. a uniform bounded-height kernel-error supremum on the boundary window;
+  2. the exact arithmetic weight estimate
+     `perronKernelBoundaryWindowVonMangoldtWeight x T <= Cv * (Real.log x)^2`.
+- Local assessment:
+  a direct proof of the boundary-window atom remains too broad.  The current
+  split exposes the true arithmetic obstruction: for `2 <= T <= 16`, the
+  window `|x - n| <= x / T` is macroscopic unless a sharper kernel cancellation
+  or a stronger arithmetic interval-weight statement is supplied.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports, or any
+  theorem consuming `SmallTPerronBoundHyp`.  Did not use or modify
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
+  followed by strict public import probes for `Littlewood.Main.LittlewoodPsi`
+  and `Littlewood.Main.LittlewoodPi` if the focused build passes.
+- Smallest next theorem:
+  first prove the uniform boundary kernel supremum if it is locally reachable:
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈ boundary(x,T),
+    |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| <= K`.
+  The arithmetic theorem then needed is the exact boundary weight estimate
+  `∃ Cv > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelBoundaryWindowVonMangoldtWeight x T <= Cv * (Real.log x)^2`;
+  this may be false for the current macroscopic window and should be checked
+  before attempting a long proof.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
