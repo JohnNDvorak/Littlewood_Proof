@@ -1,6 +1,7 @@
 import Littlewood.Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
 import Littlewood.Aristotle.Standalone.RHPi7a7cFromPerronPhase
 import Littlewood.Aristotle.Standalone.RHPiPhaseCouplingConstructiveFamilies
+import Littlewood.Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -18,6 +19,7 @@ open Aristotle.Standalone.RHPiPerronFromTruncatedPiBridge
 open Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
 open Aristotle.Standalone.RHPi7a7cFromPerronPhase
 open Aristotle.Standalone.RHPiPhaseCouplingConstructiveFamilies
+open Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses
 
 /-!
 Direct bridge from exact-seed-above-threshold payload classes to the final
@@ -59,6 +61,35 @@ instance (priority := 100)
     AntiTargetTowerPhaseCouplingFamilyHyp := by
   infer_instance
 
+/-- Corrected-canonical positive phase-coupling payload is available directly
+from the Perron-only positive exact-seed-above-threshold class.  This is the
+provider endpoint intended for public Pi routes that must avoid the false
+`TruncatedExplicitFormulaPiHyp.pi_approx` surface. -/
+instance (priority := 100)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetTowerExactSeedAbovePerronThresholdPerronHyp] :
+    TargetTowerPhaseCouplingFamilyHyp_corrected := by
+  infer_instance
+
+/-- Corrected-canonical negative phase-coupling payload is available directly
+from the Perron-only anti-target exact-seed-above-threshold class. -/
+instance (priority := 100)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp] :
+    AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  infer_instance
+
+/-- Convenience endpoint: Perron-only exact-seed-above-threshold classes imply
+both corrected-canonical phase-coupling payload classes, without introducing a
+`TruncatedExplicitFormulaPiHyp` instance. -/
+theorem correctedPhaseCoupling_of_exactSeedAboveThreshold_perron_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetTowerExactSeedAbovePerronThresholdPerronHyp]
+    [AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp] :
+    TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  exact ⟨inferInstance, inferInstance⟩
+
 /-- Convenience endpoint: exact-seed-above-threshold classes imply full RH-`pi`
 witness data through the phase-coupling endpoint. -/
 theorem rhPiWitnessData_of_exactSeedAboveThreshold_hyp
@@ -76,6 +107,17 @@ theorem rhPiWitnessData_of_exactSeedAboveThreshold_perron_hyp
     [AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp] :
     RhPiWitnessData := by
   exact rhPiWitnessData_of_phaseCouplingHyp
+
+/-- Convenience endpoint: Perron-only exact-seed-above-threshold classes imply
+full RH-`pi` witness data through the corrected-canonical phase-coupling
+endpoint.  This is the public-handoff theorem for removing reliance on the
+legacy false `pi_approx` provider route. -/
+theorem rhPiWitnessData_of_exactSeedAboveThreshold_perron_corrected_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetTowerExactSeedAbovePerronThresholdPerronHyp]
+    [AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp] :
+    RhPiWitnessData := by
+  exact Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.rhPiWitnessData_of_correctedHyp
 
 /-- Convenience endpoint: exact-seed-above-threshold classes imply the RH 7a/7c
 pair through the phase-coupling endpoint. -/
