@@ -1489,8 +1489,13 @@ theorem perronKernelWeightedBoundaryWindowError_le_kernelSup_mul_vonMangoldtWeig
         dsimp [perronKernelBoundaryWindowVonMangoldtWeight, s]
         rw [Finset.mul_sum]
 
-/-- Small-`T` boundary-window atom from a uniform kernel-error bound and the
-exact von Mangoldt weight estimate for the boundary window. -/
+/-- Diagnostic small-`T` boundary-window atom from a uniform kernel-error bound
+and an `O((log x)^2)` von Mangoldt weight estimate for the boundary window.
+
+This is retained as a formal conditional, but the pure weight estimate is not
+scale-correct for the current macroscopic window `|x - n| <= x / T` when
+`2 <= T <= 16`.  The scale-correct replacement below pairs a linear-window
+weight bound with a decaying kernel estimate. -/
 theorem small_T_boundary_window_bound_from_kernel_sup_and_vonMangoldt_weight
     (hkernel : ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
       ∀ n : ℕ,
@@ -1514,6 +1519,47 @@ theorem small_T_boundary_window_bound_from_kernel_sup_and_vonMangoldt_weight
     _ ≤ K * (Cv * (Real.log x) ^ 2) :=
         mul_le_mul_of_nonneg_left hweight_x hK_pos.le
     _ = K * Cv * (Real.log x) ^ 2 := by ring
+
+/-- Scale-correct boundary-window reduction.
+
+For the present bounded-height range `2 <= T <= 16`, the boundary window has
+linear size `x / T`, not logarithmic size.  Thus the usable route is:
+
+* prove the kernel error is `O(T * (log x)^2 / x)` on the boundary window;
+* prove the pure von Mangoldt window weight is `O(x / T)`.
+
+Their product has the desired `O((log x)^2)` scale. -/
+theorem small_T_boundary_window_bound_from_scaled_kernel_and_linear_weight
+    (hkernel : ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ (Finset.range (Nat.floor x + 1)).filter
+            (fun n : ℕ => |x - (n : ℝ)| ≤ x / T) →
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤
+            K * (T * (Real.log x) ^ 2 / x))
+    (hweight : ∃ Cv > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelBoundaryWindowVonMangoldtWeight x T ≤ Cv * (x / T)) :
+    ∃ Cb > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedBoundaryWindowError x T ≤ Cb * (Real.log x) ^ 2 := by
+  rcases hkernel with ⟨K, hK_pos, hkernel⟩
+  rcases hweight with ⟨Cv, hCv_pos, hweight⟩
+  refine ⟨K * Cv, mul_pos hK_pos hCv_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hx_pos : 0 < x := by linarith
+  have hT_pos : 0 < T := by linarith
+  have hkernel_x := hkernel x T hx hT_lo hT_hi
+  have hweight_x := hweight x T hx hT_lo hT_hi
+  have hfactor_nonneg : 0 ≤ K * (T * (Real.log x) ^ 2 / x) :=
+    mul_nonneg hK_pos.le
+      (div_nonneg (mul_nonneg hT_pos.le (sq_nonneg (Real.log x))) hx_pos.le)
+  calc perronKernelWeightedBoundaryWindowError x T
+      ≤ K * (T * (Real.log x) ^ 2 / x) *
+          perronKernelBoundaryWindowVonMangoldtWeight x T :=
+        perronKernelWeightedBoundaryWindowError_le_kernelSup_mul_vonMangoldtWeight
+          x T (K * (T * (Real.log x) ^ 2 / x)) hkernel_x
+    _ ≤ K * (T * (Real.log x) ^ 2 / x) * (Cv * (x / T)) :=
+        mul_le_mul_of_nonneg_left hweight_x hfactor_nonneg
+    _ = K * Cv * (Real.log x) ^ 2 := by
+        field_simp [ne_of_gt hx_pos, ne_of_gt hT_pos]
 
 /-- Finite Perron-kernel cutoff from a weighted per-term cutoff-error bound.
 

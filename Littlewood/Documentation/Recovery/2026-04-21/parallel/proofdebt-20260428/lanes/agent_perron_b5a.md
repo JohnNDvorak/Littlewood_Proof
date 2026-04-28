@@ -224,3 +224,55 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   before attempting a long proof.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-28 Round 5 - Boundary Weight Scale Correction
+
+- Classification: `FALSE_SCALE_OBSTRUCTION`.
+- Theorem/file attacked:
+  scale-check for
+  `perronKernelBoundaryWindowVonMangoldtWeight x T <= Cv * (Real.log x)^2`
+  in `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Finding:
+  the pure von Mangoldt boundary-window estimate with right side
+  `O((log x)^2)` is scale-incorrect for the current window.  For fixed
+  `2 <= T <= 16`, the set
+  `{n <= floor x | |x - n| <= x / T}` has macroscopic length comparable to
+  `x / T`; by the usual Chebyshev/PNT scale its Λ-weight is linear-window
+  scale, not logarithmic-square scale.  Therefore a uniform kernel supremum
+  times this pure weight cannot close the boundary-window atom unless the
+  kernel supremum itself decays like `T * (log x)^2 / x`.
+- Code facts banked:
+  updated the old
+  `small_T_boundary_window_bound_from_kernel_sup_and_vonMangoldt_weight`
+  docstring to mark it diagnostic rather than the live scale-correct route.
+  Added
+  `small_T_boundary_window_bound_from_scaled_kernel_and_linear_weight`, which
+  replaces the false pure-weight path with the correct product scale:
+  1. boundary-window kernel error
+     `<= K * (T * (Real.log x)^2 / x)`;
+  2. boundary-window von Mangoldt weight
+     `<= Cv * (x / T)`;
+  together imply
+  `perronKernelWeightedBoundaryWindowError x T <= Cb * (Real.log x)^2`.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports, or any
+  theorem consuming `SmallTPerronBoundHyp`.  Did not use or modify
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
+  followed by strict public import probes for `Littlewood.Main.LittlewoodPsi`
+  and `Littlewood.Main.LittlewoodPi` if the focused build passes.
+- Smallest next theorem:
+  prove the scale-correct linear window estimate
+  `∃ Cv > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelBoundaryWindowVonMangoldtWeight x T <= Cv * (x / T)`.
+  After that, prove the decaying boundary-kernel estimate
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈ boundary(x,T),
+    |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T|
+      <= K * (T * (Real.log x)^2 / x)`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
