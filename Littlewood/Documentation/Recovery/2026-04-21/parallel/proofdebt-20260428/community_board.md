@@ -73,7 +73,7 @@ Agents request validation in their lane ledger. The coordinator serializes:
 | 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `1d6314a` | public import probes after provider closure |
 | 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `72d85d5` | public import probes after provider closure |
 | 3 | `proofdebt/20260428-pi-phase` | active, pushed through `5c2066e` | public import probes after provider closure |
-| 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `908144b` | public import probes after provider closure |
+| 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `ad5064f` | public import probes after provider closure |
 
 ## Agent Report Contract
 
@@ -145,6 +145,9 @@ Each agent report must state:
   - RS/Gabcke `908144b`: same focused build set passed after coordinator fixed
     `blockCoord` positivity; reduced the coordinate remainder to the raw
     stationary-phase error atom.
+  - RS/Gabcke `ad5064f`: same focused build set passed after coordinator
+    removed one redundant finishing tactic; split the stationary-phase error
+    into a concrete coefficient identity atom and a coefficient bound atom.
 - Coordinator stopped one non-coordinator `lake env lean` process in the
   Atkinson worktree and re-issued the hard rule: agents must not run `lake`,
   `lake env lean`, `lean`, or any focused build/check themselves.
@@ -156,8 +159,9 @@ Each agent report must state:
     bounded-height residue extraction.
   - Pi/Phase: Perron tower wide-domination, relation-compatible finite-set
     Kronecker, and zeta finite-zero compatibility.
-  - RS/Gabcke: `SiegelCoordinateStationaryPhaseErrorProp` and Gabcke normalized
-    coefficient content.
+  - RS/Gabcke: instantiate the concrete coefficient `C` from the Gabcke local
+    Taylor expansion, then prove `SiegelStationaryPhaseCoefficientIdentityProp C`
+    and `SiegelStationaryPhaseCoefficientBoundProp C`.
 - Next coordinator action: harvest Aristotle results when authenticated, then
   keep validating returning lane commits serially. Public import probes for
   `Littlewood.Main.LittlewoodPsi` and `Littlewood.Main.LittlewoodPi` stay
