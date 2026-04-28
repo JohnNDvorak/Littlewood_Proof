@@ -70,10 +70,10 @@ Agents request validation in their lane ledger. The coordinator serializes:
 
 | Order | Branch | Status | Required before merge |
 | --- | --- | --- | --- |
-| 1 | `proofdebt/20260428-atkinson-large-j` | active | focused Atkinson build + public import probes |
-| 2 | `proofdebt/20260428-perron-b5a` | active | focused Perron/B5a builds + public import probes |
-| 3 | `proofdebt/20260428-pi-phase` | active | focused Pi/Phase builds + public import probes |
-| 4 | `proofdebt/20260428-rs-gabcke` | active | focused RS/Gabcke builds + public import probes |
+| 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `16f1fd7` | public import probes after provider closure |
+| 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `43aa10d` | public import probes after provider closure |
+| 3 | `proofdebt/20260428-pi-phase` | active, pushed through `bbedbc3` | public import probes after provider closure |
+| 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `9564c41` | public import probes after provider closure |
 
 ## Agent Report Contract
 
@@ -97,14 +97,44 @@ Each agent report must state:
   - Perron/B5a: `43160ae0-78e7-4d7e-b8af-76332fd6c59f`
   - Pi/Phase: `32a1df6a-be94-4cc2-81c3-05623533b222`
   - RS/Gabcke: `381b8764-543a-4024-a84f-9a9f91be9eba`
-- Atkinson lane produced local commit `4e2e825`
-  (`Reduce Atkinson shifted blockMode leaf`), a conditional reduction from
-  the native shifted `blockMode` remainder to two quadratic-anchor atoms.
-- Coordinator validation completed for Atkinson:
-  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` passed in the
-  Atkinson worktree on 2026-04-28.
-- Next coordinator action: harvest Aristotle results as they complete, then
-  validate and integrate lane commits in merge-queue order. Keep public import
-  probes for `Littlewood.Main.LittlewoodPsi` and `Littlewood.Main.LittlewoodPi`
+- Aristotle CLI auth is not cached in the coordinator shell. Job IDs remain in
+  ignored self-drive logs; polling should be done only with the key supplied
+  through an environment variable outside repo files and commit history.
+- Validation completed and pushed:
+  - Atkinson `4e2e825`: `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`
+    passed; reduced shifted `blockMode` remainder to two quadratic-anchor atoms.
+  - Atkinson `16f1fd7`: same focused build passed after coordinator alias/nonneg
+    proof fix; reduced quadratic-anchor approximation to zero-model and kernel
+    atoms.
+  - Perron/B5a `040f565`: `lake build Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aShiftedBoundDeepLeaf`
+    passed; reduced shifted leaf to direct large/small Perron payloads.
+  - Perron/B5a `b1f2641`: `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
+    passed; reduced small-T payload to weighted kernel and residue atoms.
+  - Perron/B5a `43aa10d`: same focused build passed after coordinator coercion
+    fix; split weighted cutoff into boundary-window and off-boundary atoms.
+  - Pi/Phase `847fa92`: `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+    passed; added Perron-only corrected phase endpoints.
+  - Pi/Phase `bbedbc3`: `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+    passed after coordinator alias proof fix; added relative-density phase-fit
+    adapter.
+  - RS/Gabcke `fa96728`: `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+    passed; split Siegel/Gabcke into profile and coefficient atoms.
+  - RS/Gabcke `9564c41`: same focused build set passed; reduced weighted profile
+    to a coordinate remainder atom.
+- Coordinator stopped one non-coordinator `lake env lean` process in the
+  Atkinson worktree and re-issued the hard rule: agents must not run `lake`,
+  `lake env lean`, `lean`, or any focused build/check themselves.
+- Current live atoms:
+  - Atkinson: shifted quadratic zero-model approximation, shifted quadratic
+    kernel integral bound, and target matching.
+  - Perron/B5a: boundary-window estimate for the finite weighted Perron kernel,
+    off-boundary estimate, and bounded-height residue extraction.
+  - Pi/Phase: wide Perron tower window and finite-zero relative-density phase
+    fit.
+  - RS/Gabcke: Siegel coordinate pointwise remainder and Gabcke normalized
+    coefficient content.
+- Next coordinator action: harvest Aristotle results when authenticated, then
+  keep validating returning lane commits serially. Public import probes for
+  `Littlewood.Main.LittlewoodPsi` and `Littlewood.Main.LittlewoodPi` stay
   queued until a lane closes a public-path provider rather than just a
   conditional reduction.
