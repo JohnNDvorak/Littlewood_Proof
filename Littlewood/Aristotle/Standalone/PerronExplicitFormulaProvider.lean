@@ -2393,6 +2393,61 @@ class FiniteZeroInhomogeneousPhaseRelationCompatibleHyp : Prop where
       finiteSetInhomogeneousPhaseRelationCompatible
         (finite_zeros_le T).toFinset ε targetPhase
 
+/-- Target-specific zeta finite-zero relation-compatibility leaf.
+
+This is the honest compatibility atom needed for the positive `pi` phase
+target `ρ ↦ arg ρ`; unlike `FiniteZeroInhomogeneousPhaseRelationCompatibleHyp`,
+it does not assert compatibility for arbitrary target functions. -/
+class TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε Complex.arg
+
+/-- Anti-target zeta finite-zero relation-compatibility leaf for
+`ρ ↦ arg ρ + π`. -/
+class AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε (fun ρ => Complex.arg ρ + Real.pi)
+
+/-- Target-specific finite-zero relative-density phase approximation. -/
+class TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε
+
+/-- Anti-target finite-zero relative-density phase approximation. -/
+class AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
+                    m • (2 * Real.pi)‖ ≤ ε
+
 /-- The concrete finite-set Kronecker relative-density boundary supplies the
 project finite-zero relative-density leaf. -/
 theorem finiteZeroInhomogeneousPhaseRelativelyDense_of_finiteSetKronecker_hyp
@@ -2432,6 +2487,53 @@ instance (priority := 90)
     [FiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
     FiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
   finiteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+
+/-- The relation-compatible finite-set Kronecker source plus target-specific
+compatibility supplies positive target finite-zero relative density. -/
+theorem targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hε
+    exact
+      FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp.witness
+        (finite_zeros_le T).toFinset ε Complex.arg hε
+        (TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+          T ε hT4 hε)
+
+/-- Instance form of
+`targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp`.
+-/
+instance (priority := 90)
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+
+/-- The relation-compatible finite-set Kronecker source plus anti-target
+compatibility supplies negative target finite-zero relative density. -/
+theorem antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hε
+    exact
+      FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp.witness
+        (finite_zeros_le T).toFinset ε
+        (fun ρ => Complex.arg ρ + Real.pi) hε
+        (AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+          T ε hT4 hε)
+
+/-- Instance form of
+`antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp`.
+-/
+instance (priority := 90)
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
 
 /-- The two lower-level honest boundaries imply the Perron-only phase-fit
 provider boundary. -/
@@ -2532,6 +2634,180 @@ instance (priority := 90)
     [FiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
     InhomogeneousPhaseFitAbovePerronThresholdPerronHyp :=
   inhomogeneousPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+
+/-- Target-only Perron phase-fit boundary for `ρ ↦ arg ρ`.
+
+This is the narrower surface actually needed for the positive exact-seed
+provider. It avoids the arbitrary-target quantifier in
+`InhomogeneousPhaseFitAbovePerronThresholdPerronHyp`. -/
+class TargetPhaseFitAbovePerronThresholdPerronHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        perronThreshold _hRH T ≤ x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - Complex.arg ρ -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Anti-target-only Perron phase-fit boundary for `ρ ↦ arg ρ + π`. -/
+class AntiTargetPhaseFitAbovePerronThresholdPerronHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        perronThreshold _hRH T ≤ x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - (Complex.arg ρ + Real.pi) -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+private theorem phaseFitAbovePerronThresholdPerron_of_relative_dense_witness
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    (targetPhase : ℂ → ℝ)
+    (hDense :
+      ∀ (T ε : ℝ),
+        4 ≤ T →
+        0 < ε →
+        ∃ R : ℝ,
+          0 < R ∧
+          ∀ L : ℝ,
+            ∃ t0 : ℝ,
+              L < t0 ∧
+              t0 < L + R ∧
+              ∀ ρ ∈ (finite_zeros_le T).toFinset,
+                ∃ m : ℤ,
+                  ‖t0 * ρ.im - targetPhase ρ -
+                      m • (2 * Real.pi)‖ ≤ ε) :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        perronThreshold _hRH T ≤ x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - targetPhase ρ -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
+  intro hRH X
+  let radius : ℝ → ℝ → ℝ := fun T ε =>
+    if h : 4 ≤ T ∧ 0 < ε then
+      Classical.choose (hDense T ε h.1 h.2)
+    else 1
+  have hRadius : ∀ T ε : ℝ, 0 < radius T ε := by
+    intro T ε
+    by_cases h : 4 ≤ T ∧ 0 < ε
+    · dsimp [radius]
+      rw [dif_pos h]
+      exact (Classical.choose_spec (hDense T ε h.1 h.2)).1
+    · dsimp [radius]
+      rw [dif_neg h]
+      norm_num
+  rcases PerronThresholdTowerPhaseWideWindowHyp.witness
+      hRH X radius hRadius with
+    ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, hThreshold, hWide, hUcap⟩
+  let hRel := hDense T ε hT4 hεpos
+  let R : ℝ := Classical.choose hRel
+  have hRspec := Classical.choose_spec hRel
+  have hRadius_eq : radius T ε = R := by
+    dsimp [radius, R]
+    rw [dif_pos ⟨hT4, hεpos⟩]
+  rcases hRspec with ⟨_hRpos, hHit⟩
+  rcases hHit L with ⟨t0, hLt, htR, hPhase⟩
+  have htU : t0 < U := by
+    have htRadius : t0 < L + radius T ε := by
+      simpa [hRadius_eq, R] using htR
+    exact lt_trans htRadius hWide
+  have hExpLle : Real.exp L ≤ Real.exp t0 :=
+    le_of_lt (Real.exp_strictMono hLt)
+  have hExpU : Real.exp t0 ≤ Real.exp U :=
+    Real.exp_le_exp.mpr (le_of_lt htU)
+  refine ⟨Real.exp t0, ?_, T, hT4, ?_, ε, hεpos, hεlt, ?_, ?_⟩
+  · exact lt_of_lt_of_le hX hExpLle
+  · exact le_trans hThreshold hExpLle
+  · intro ρ hρ
+    rcases hPhase ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa [Real.log_exp] using hm⟩
+  · exact le_trans hExpU hUcap
+
+/-- Target-specific relative density plus a wide Perron/tower window gives the
+positive target-only Perron phase-fit boundary. -/
+theorem targetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    TargetPhaseFitAbovePerronThresholdPerronHyp where
+  witness :=
+    phaseFitAbovePerronThresholdPerron_of_relative_dense_witness
+      Complex.arg TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+
+/-- Instance form of
+`targetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp`. -/
+instance (priority := 90)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    TargetPhaseFitAbovePerronThresholdPerronHyp :=
+  targetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+
+/-- Anti-target-specific relative density plus a wide Perron/tower window gives
+the negative target-only Perron phase-fit boundary. -/
+theorem antiTargetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    AntiTargetPhaseFitAbovePerronThresholdPerronHyp where
+  witness :=
+    phaseFitAbovePerronThresholdPerron_of_relative_dense_witness
+      (fun ρ => Complex.arg ρ + Real.pi)
+      AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+
+/-- Instance form of
+`antiTargetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp`. -/
+instance (priority := 90)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    AntiTargetPhaseFitAbovePerronThresholdPerronHyp :=
+  antiTargetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+
+/-- Compatibility adapter from the broader arbitrary-target Perron phase-fit
+boundary to the positive target-only boundary. -/
+instance (priority := 80)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdPerronHyp] :
+    TargetPhaseFitAbovePerronThresholdPerronHyp where
+  witness := by
+    intro hRH X
+    simpa using
+      (InhomogeneousPhaseFitAbovePerronThresholdPerronHyp.witness
+        hRH X Complex.arg)
+
+/-- Compatibility adapter from the broader arbitrary-target Perron phase-fit
+boundary to the anti-target-only boundary. -/
+instance (priority := 80)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdPerronHyp] :
+    AntiTargetPhaseFitAbovePerronThresholdPerronHyp where
+  witness := by
+    intro hRH X
+    simpa using
+      (InhomogeneousPhaseFitAbovePerronThresholdPerronHyp.witness
+        hRH X (fun ρ => Complex.arg ρ + Real.pi))
 
 variable [TruncatedExplicitFormulaPiHyp]
 
@@ -2831,6 +3107,44 @@ theorem anti_target_exact_seed_above_threshold_perron_from_phase_fit
   intro hRH X
   exact (exact_seed_pair_from_perron_only_core hRH X).2
 
+/-- Perron-only target exact seed from the narrower target-only phase-fit
+boundary. -/
+theorem target_exact_seed_above_threshold_perron_from_target_phase_fit
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetPhaseFitAbovePerronThresholdPerronHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerron := by
+  intro hRH X
+  rcases TargetPhaseFitAbovePerronThresholdPerronHyp.witness hRH X with
+    ⟨x, hXx, T, hT4, hThreshold, ε, hεpos, hεlt, harg, hxUpper⟩
+  have hperron := perronThreshold_spec hRH T x hThreshold
+  have hx_pos : 0 < x := lt_trans zero_lt_one hperron.1
+  refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_⟩
+  · rwa [Real.exp_log hx_pos]
+  · rwa [Real.exp_log hx_pos]
+  · intro ρ hρ
+    rcases harg ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa using hm⟩
+  · rwa [Real.exp_log hx_pos]
+
+/-- Perron-only anti-target exact seed from the narrower anti-target-only
+phase-fit boundary. -/
+theorem anti_target_exact_seed_above_threshold_perron_from_target_phase_fit
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetPhaseFitAbovePerronThresholdPerronHyp] :
+    AntiTargetTowerExactSeedAbovePerronThresholdPerron := by
+  intro hRH X
+  rcases AntiTargetPhaseFitAbovePerronThresholdPerronHyp.witness hRH X with
+    ⟨x, hXx, T, hT4, hThreshold, ε, hεpos, hεlt, harg, hxUpper⟩
+  have hperron := perronThreshold_spec hRH T x hThreshold
+  have hx_pos : 0 < x := lt_trans zero_lt_one hperron.1
+  refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_⟩
+  · rwa [Real.exp_log hx_pos]
+  · rwa [Real.exp_log hx_pos]
+  · intro ρ hρ
+    rcases harg ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa using hm⟩
+  · rwa [Real.exp_log hx_pos]
+
 /-- Route the repaired positive exact-seed interface through the Perron-only
 provider theorem. -/
 instance (priority := 100)
@@ -2846,6 +3160,22 @@ instance (priority := 100)
     [InhomogeneousPhaseFitAbovePerronThresholdPerronHyp] :
     AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp where
   witness := anti_target_exact_seed_above_threshold_perron_from_phase_fit
+
+/-- Route the repaired positive exact-seed interface through the target-only
+Perron phase-fit provider. -/
+instance (priority := 90)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetPhaseFitAbovePerronThresholdPerronHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp where
+  witness := target_exact_seed_above_threshold_perron_from_target_phase_fit
+
+/-- Route the repaired anti-target exact-seed interface through the
+anti-target-only Perron phase-fit provider. -/
+instance (priority := 90)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetPhaseFitAbovePerronThresholdPerronHyp] :
+    AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp where
+  witness := anti_target_exact_seed_above_threshold_perron_from_target_phase_fit
 
 /-- Target approximate-seed phase alignment above the Perron threshold.
 

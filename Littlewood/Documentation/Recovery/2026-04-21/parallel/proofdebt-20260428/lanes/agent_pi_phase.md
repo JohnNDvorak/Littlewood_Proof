@@ -339,3 +339,83 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Run the requested validation commands and report the first compile risk,
     likely around subtype finite sums in
     `finiteSetInhomogeneousPhaseRelationCompatible`.
+
+### 2026-04-28 Round 6: Target-Specific Relation-Compatible Phase Route
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - Atoms below `FiniteZeroInhomogeneousPhaseRelationCompatibleHyp` and the
+    Perron-only exact-seed providers.
+- Target choice:
+  - Focused on `FiniteZeroInhomogeneousPhaseRelationCompatibleHyp`. Static
+    audit showed it is still too broad as stated because it quantifies over
+    arbitrary target phase functions. The real public Pi route only needs
+    `Complex.arg` and `fun ρ => Complex.arg ρ + Real.pi`.
+- Facts banked:
+  - Added `TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp` and
+    `AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`, the
+    target/anti-target relation-compatibility leaves.
+  - Added `TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp` and
+    `AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp`.
+  - Added
+    `targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp`
+    and
+    `antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp`,
+    deriving the target-specific relative-density leaves from
+    `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`
+    plus the matching target/anti-target compatibility leaf.
+  - Added `TargetPhaseFitAbovePerronThresholdPerronHyp` and
+    `AntiTargetPhaseFitAbovePerronThresholdPerronHyp`.
+  - Added
+    `targetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp` and
+    `antiTargetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp`,
+    deriving the target-specific Perron phase-fit surfaces from the wide
+    tower window plus target-specific relative density.
+  - Added
+    `target_exact_seed_above_threshold_perron_from_target_phase_fit` and
+    `anti_target_exact_seed_above_threshold_perron_from_target_phase_fit`,
+    then routed the repaired Perron-only exact-seed classes through these
+    narrower phase-fit providers at lower priority.
+- False-surface audit:
+  - No new declaration uses `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - Existing broad compatibility wrappers remain intact for validated
+    compatibility, but the new target/anti-target route no longer needs the
+    arbitrary-target finite-zero compatibility leaf.
+- Failed routes that must not be retried:
+  - Do not prove `FiniteZeroInhomogeneousPhaseRelationCompatibleHyp` as a
+    theorem for arbitrary `targetPhase`; integer-relation congruence can fail
+    for arbitrary target functions.
+  - Do not prove the arbitrary-target
+    `FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp` directly without
+    relation compatibility.
+  - Do not derive target/anti-target phase fit from homogeneous phase
+    alignment; it does not carry the needed phase targets.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, or static check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem/interface:
+  - Prove/source
+    `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`
+    from finite-dimensional Kronecker on the relation-compatible torus orbit.
+  - Prove/source
+    `TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp` and
+    `AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp` for the
+    actual zeta target phases, or carry relation compatibility directly in the
+    phase payload.
+  - `PerronThresholdTowerWideDominationHyp` remains the independent tower-side
+    growth atom.
+- Coordinator action requested:
+  - Run the requested validation commands and report the first compile risk,
+    likely around exact unification of target-specific relative-density
+    witnesses with the shared helper
+    `phaseFitAbovePerronThresholdPerron_of_relative_dense_witness`.
