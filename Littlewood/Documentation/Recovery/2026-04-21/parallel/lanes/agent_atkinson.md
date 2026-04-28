@@ -114,6 +114,16 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - Requested coordinator validation:
   `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
 
+### 2026-04-28 Coordinator Validation, Round 4
+
+- `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`: passed.
+- `import Littlewood.Main.LittlewoodPsi`: passed.
+- `import Littlewood.Main.LittlewoodPi`: passed.
+- Validation output included existing warnings only; no errors.
+- This round banks the `blockMode` handoff. The next Atkinson theorem is the
+  native `blockMode` pointwise stationary-phase remainder on
+  `p ∈ Ioc j (j + 1)`.
+
 ### 2026-04-28 Coordinator Validation, Round 3
 
 - `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`: passed.
@@ -194,6 +204,33 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - Guardrail:
   this round does not use the coefficient-`8` predecessor-tail route; that
   route remains insufficient for any `γ < 1` contraction argument.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+
+### 2026-04-28 Overnight Round 4 BlockMode Handoff
+
+- Classification: `CONDITIONAL_REDUCTION`, not closed.
+- Coordinator baseline: round 3 passed validation and was committed as
+  `377fc58`.
+- Current theorem attacked: the shifted block-parameter pointwise
+  stationary-phase remainder below
+  `atkinson_completeBlockTargetK_remainder_of_shiftedBlockParamTargetK_remainder`.
+- Code facts banked:
+  `atkinson_shiftedBlockParamTargetK_remainder_of_blockMode_stationaryPhase`
+  converts the native `StationaryPhaseMainMode.blockMode` remainder statement
+  into the Hardy exponential shifted-parameter statement, and
+  `atkinson_completeBlockTargetK_remainder_of_blockMode_stationaryPhase`
+  composes that with the existing complete-block-target reduction.
+- Remaining obstruction / next theorem:
+  prove the native `blockMode` pointwise stationary-phase remainder:
+  `∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →`
+  `‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) * ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `Aristotle.StationaryPhaseMainMode.blockMode (k - j) p * blockJacobian (k - j) p)`
+  `- atkinsonCompleteBlockTargetK k j)‖ ≤ C_err * (atkinsonModeWeight k / j)`.
+- Guardrail:
+  no coefficient-`8` predecessor-tail or `γ < 1` contraction route was used.
 - Files changed:
   `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
 - Requested coordinator validation:

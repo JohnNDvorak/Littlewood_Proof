@@ -12514,6 +12514,48 @@ private theorem atkinson_completeBlockTargetK_remainder_of_shiftedBlockParamTarg
         (k - j) k (by omega)
   simpa [hblock] using herr' j hJ_err hj3 hj1 k hjk
 
+/-- Native stationary-phase handoff for the shifted block remainder. The
+imported stationary-phase API is phrased with `blockMode`; this wrapper unfolds
+that notation to the Hardy exponential form consumed by the Atkinson reduction. -/
+private theorem atkinson_shiftedBlockParamTargetK_remainder_of_blockMode_stationaryPhase
+    (herr :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j)) :
+    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+            ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+              HardyCosSmooth.hardyCosExp (k - j) (blockCoord (k - j) p) *
+                blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+        ≤ C_err * (atkinsonModeWeight k / j) := by
+  obtain ⟨C_err, hC_err, J_err, herr'⟩ := herr
+  refine ⟨C_err, hC_err, J_err, ?_⟩
+  intro j hJ_err hj3 hj1 k hjk
+  simpa [Aristotle.StationaryPhaseMainMode.blockMode] using
+    herr' j hJ_err hj3 hj1 k hjk
+
+/-- Complete-block-target remainder reduced to the native `blockMode`
+stationary-phase statement on the shifted interval `p ∈ Ioc j (j + 1)`. -/
+private theorem atkinson_completeBlockTargetK_remainder_of_blockMode_stationaryPhase
+    (herr :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j)) :
+    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+            ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+              HardyCosSmooth.hardyCosExp (k - j) t) - atkinsonCompleteBlockTargetK k j)‖
+        ≤ C_err * (atkinsonModeWeight k / j) := by
+  exact
+    atkinson_completeBlockTargetK_remainder_of_shiftedBlockParamTargetK_remainder
+      (atkinson_shiftedBlockParamTargetK_remainder_of_blockMode_stationaryPhase herr)
+
 /-- Equivalent concrete public-leaf reduction in the shifted block-parameter
 coordinates of the mode `k - j`.
 
