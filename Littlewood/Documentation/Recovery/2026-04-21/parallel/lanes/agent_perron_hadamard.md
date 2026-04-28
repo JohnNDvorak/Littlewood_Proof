@@ -1,6 +1,8 @@
 # Agent Perron/Hadamard Ledger
 
-Branch: `codex/perron-hadamard`
+Branch: `overnight/20260428-perron-hadamard`
+
+Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20260428/perron-hadamard`
 
 ## Ownership
 
@@ -34,6 +36,16 @@ Branch: `codex/perron-hadamard`
 - `lake build` before requesting merge
 
 ## Session Log
+
+### 2026-04-27 Overnight Launch
+
+- Status: lane relaunched from recovery commit
+  `d2a6f8555c3ff8107a3559eeb6d3a774eef5f30b`.
+- Build policy: request coordinator validation; do not run full `lake build`.
+- Aristotle policy: targeted theorem-shaped sidecar only; no credentials or raw
+  runtime logs in tracked files.
+- Current smallest target remains a direct non-circular proof input for
+  `HadamardProductZeta.small_T_perron_bound_hyp_of_direct_bound`.
 
 ### 2026-04-27 Baseline
 

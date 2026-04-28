@@ -1,6 +1,8 @@
 # Parallel Recovery Community Board
 
-Date: 2026-04-27
+Date: 2026-04-27 CDT
+
+Launch ID: `overnight-20260428`
 
 This is the tracked coordination board for the four-agent recovery run. The
 baseline commit is the commit that first contains this file.
@@ -9,12 +11,20 @@ baseline commit is the commit that first contains this file.
 
 - Repository: `JohnNDvorak/Littlewood_Proof`
 - Baseline branch: `recovery/provider-forensics-2026-04-21`
+- Baseline commit: `d2a6f8555c3ff8107a3559eeb6d3a774eef5f30b`
 - Draft PR: pending until the baseline branch is pushed
 - Certification required before launch:
   - `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`
   - `lake build`
   - minimal public imports for `Littlewood.Main.LittlewoodPsi`
   - minimal public imports for `Littlewood.Main.LittlewoodPi`
+
+## Overnight Worktrees
+
+- Coordinator tree: `/Users/john.n.dvorak/Projects/Littlewood_Proof`
+- Worktree root: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20260428`
+- Old `codex/*` worktrees are stale at commit `0993b9d58ab47dd7cbfa8875b1a14b6e1765bae9`
+  and are read-only for this run.
 
 ## Coordination Rules
 
@@ -28,6 +38,9 @@ baseline commit is the commit that first contains this file.
   coordinator merge.
 - Do not commit API keys, Aristotle keys, or generated self-drive runtime logs.
   Use environment variables for credentials.
+- Aristotle may be used only as a targeted sidecar for narrowed
+  theorem-shaped subgoals. Raw prompts/results stay untracked; durable findings
+  go in the lane ledger.
 - Do not try to prove `TruncatedExplicitFormulaPiHyp.pi_approx` as stated; it is
   documented as mathematically false.
 - Do not route `SmallTPerronBoundHyp` through a theorem that already depends on
@@ -36,15 +49,19 @@ baseline commit is the commit that first contains this file.
 - While worktrees are cold, all Lake commands are coordinator-scheduled. Agents
   should record requested validation commands in their lane ledgers instead of
   starting builds themselves.
+- Exactly one Lean/Lake validation job may run at a time across the whole
+  machine.
+- Green lane work may be committed and pushed for durability, but no lane branch
+  is auto-merged into the recovery branch overnight.
 
 ## Lanes
 
 | Lane | Branch | Writable ledger | Owned code surface | Primary target |
 | --- | --- | --- | --- | --- |
-| Atkinson | `codex/atkinson-large-j` | `lanes/agent_atkinson.md` | `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` | Close the large-`j` no-log public Atkinson leaf and the direct-Abel cleanup leaf. |
-| Perron/Hadamard | `codex/perron-hadamard` | `lanes/agent_perron_hadamard.md` | Perron, Hadamard, and small-`T` provider files | Produce a non-circular provider path for the small-`T` Perron surface. |
-| Pi/Phase | `codex/pi-phase` | `lanes/agent_pi_phase.md` | Pi oscillation, phase, exact-seed, and compatibility files | Repair or bypass false `pi_approx` usage and keep the public pi path honest. |
-| RS/Gabcke | `codex/rs-gabcke` | `lanes/agent_rs_gabcke.md` | RS, Siegel, Gabcke, and Hardy first-moment bridge files | Close or sharply reduce the RS/Gabcke coupling surfaces without touching Atkinson. |
+| Atkinson | `overnight/20260428-atkinson` | `lanes/agent_atkinson.md` | `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` | Close the large-`j` no-log public Atkinson leaf and the direct-Abel cleanup leaf. |
+| Perron/Hadamard | `overnight/20260428-perron-hadamard` | `lanes/agent_perron_hadamard.md` | Perron, Hadamard, and small-`T` provider files | Produce a non-circular provider path for the small-`T` Perron surface. |
+| Pi/Phase | `overnight/20260428-pi-phase` | `lanes/agent_pi_phase.md` | Pi oscillation, phase, exact-seed, and compatibility files | Repair or bypass false `pi_approx` usage and keep the public pi path honest. |
+| RS/Gabcke | `overnight/20260428-rs-gabcke` | `lanes/agent_rs_gabcke.md` | RS, Siegel, Gabcke, and Hardy first-moment bridge files | Close or sharply reduce the RS/Gabcke coupling surfaces without touching Atkinson. |
 
 ## Coordinator-Owned Shared Files
 
@@ -78,10 +95,10 @@ not edit them directly.
 
 | Order | Branch | Status | Required checks |
 | --- | --- | --- | --- |
-| 1 | `codex/atkinson-large-j` | not started | focused Atkinson build, public import checks |
-| 2 | `codex/perron-hadamard` | not started | focused provider build, public import checks |
-| 3 | `codex/pi-phase` | not started | focused pi/phase build, public import checks |
-| 4 | `codex/rs-gabcke` | not started | focused RS/Gabcke build, public import checks |
+| 1 | `overnight/20260428-atkinson` | launched | focused Atkinson build, public import checks |
+| 2 | `overnight/20260428-perron-hadamard` | launched | focused provider build, public import checks |
+| 3 | `overnight/20260428-pi-phase` | launched | focused pi/phase build, public import checks |
+| 4 | `overnight/20260428-rs-gabcke` | launched | focused RS/Gabcke build, public import checks |
 
 ## Update Protocol
 
