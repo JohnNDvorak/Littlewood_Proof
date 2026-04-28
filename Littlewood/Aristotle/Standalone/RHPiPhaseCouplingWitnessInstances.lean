@@ -11,6 +11,7 @@ namespace Aristotle.Standalone.RHPiPhaseCouplingWitnessInstances
 open Complex ZetaZeros
 open GrowthDomination
 open PiLiDirectOscillationBridge
+open Aristotle.Standalone.RHPiPerronFromTruncatedPiBridge
 open Aristotle.Standalone.RHPiTargetPhaseArgReduction
 open Aristotle.Standalone.RHPiArgApproxFromPerronThreshold
 open Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase
@@ -49,9 +50,9 @@ theorem phaseCouplingHyps_of_argApproxFamilies
   · exact antiTargetTowerPhaseCouplingFamilyHyp_of_argApprox hAntiTargetArg
 
 /-- Build the requested phase-coupling payload classes from above-threshold
-arg-approximation witness families (with truncated explicit formula available). -/
+arg-approximation witness families (with fixed-height Perron error available). -/
 theorem phaseCouplingHyps_of_argAboveThresholdFamilies
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     (hTargetAbove : TargetTowerArgApproxAbovePerronThreshold)
     (hAntiTargetAbove : AntiTargetTowerArgApproxAbovePerronThreshold) :
     TargetTowerPhaseCouplingFamilyHyp ∧ AntiTargetTowerPhaseCouplingFamilyHyp := by
@@ -78,7 +79,7 @@ instance (priority := 100)
 /-- Positive direct instance from a `Fact` witness of the above-threshold
 arg-approximation family. -/
 instance (priority := 100)
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [Fact TargetTowerArgApproxAbovePerronThreshold] :
     TargetTowerPhaseCouplingFamilyHyp :=
   targetPhaseCouplingHyp_of_witness
@@ -88,7 +89,7 @@ instance (priority := 100)
 /-- Negative direct instance from a `Fact` witness of the above-threshold
 arg-approximation family. -/
 instance (priority := 100)
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [Fact AntiTargetTowerArgApproxAbovePerronThreshold] :
     AntiTargetTowerPhaseCouplingFamilyHyp :=
   antiTargetPhaseCouplingHyp_of_witness

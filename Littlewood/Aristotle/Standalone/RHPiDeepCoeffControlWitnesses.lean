@@ -12,6 +12,7 @@ namespace Aristotle.Standalone.RHPiDeepCoeffControlWitnesses
 open Aristotle.Standalone.RHPiWitnessFromExplicitFormula
 open Aristotle.Standalone.RHPiCoeffControlClassInstances
 open Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
+open Aristotle.Standalone.RHPiPerronFromTruncatedPiBridge
 open PiLiDirectOscillationBridge
 
 /-!
@@ -20,7 +21,7 @@ Deep constructive closure targets for Blocker-7 coefficient-control payloads.
 This file is intentionally conditional: it exposes B7a/B7b from the three deep
 upstream payloads
 
-* truncated explicit formula for `pi`
+* fixed-height Perron error control for `pi`
 * positive/negative phase-above-Perron-threshold families
 * positive exact-seed-above-threshold family
 * negative exact-seed-above-threshold family
@@ -30,21 +31,21 @@ without introducing any new axioms.
 
 /-- Positive B7 coeff-control payload from phase-above-threshold classes. -/
 theorem target_height_coeff_control_of_phaseAboveThresholdHyp
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.TargetTowerPhaseAbovePerronThresholdHyp] :
     RhPiTargetHeightCoeffControlHyp := by
   infer_instance
 
 /-- Negative B7 coeff-control payload from phase-above-threshold classes. -/
 theorem antitarget_height_coeff_control_of_phaseAboveThresholdHyp
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.AntiTargetTowerPhaseAbovePerronThresholdHyp] :
     RhPiAntiTargetHeightCoeffControlHyp := by
   infer_instance
 
 /-- Bundled Blocker-7 pair from phase-above-threshold classes. -/
 theorem coeffControlClasses_of_phaseAboveThresholdHyp
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.TargetTowerPhaseAbovePerronThresholdHyp]
     [Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.AntiTargetTowerPhaseAbovePerronThresholdHyp] :
     RhPiTargetHeightCoeffControlHyp ∧ RhPiAntiTargetHeightCoeffControlHyp := by
@@ -79,7 +80,7 @@ theorem coeffControlClasses_of_exactSeedAboveThresholdHyp
 /-- Positive B7 coeff-control payload from explicit deep witness terms. -/
 theorem target_height_coeff_control_of_exactSeedAboveThreshold
     (hTruncated : TruncatedExplicitFormulaPiHyp)
-    (hTarget : TargetTowerExactSeedAbovePerronThreshold) :
+    (hTarget : @TargetTowerExactSeedAbovePerronThreshold hTruncated) :
     RhPiTargetHeightCoeffControlHyp := by
   letI : TruncatedExplicitFormulaPiHyp := hTruncated
   letI : TargetTowerExactSeedAbovePerronThresholdHyp := ⟨hTarget⟩
@@ -88,7 +89,7 @@ theorem target_height_coeff_control_of_exactSeedAboveThreshold
 /-- Negative B7 coeff-control payload from explicit deep witness terms. -/
 theorem antitarget_height_coeff_control_of_exactSeedAboveThreshold
     (hTruncated : TruncatedExplicitFormulaPiHyp)
-    (hAntiTarget : AntiTargetTowerExactSeedAbovePerronThreshold) :
+    (hAntiTarget : @AntiTargetTowerExactSeedAbovePerronThreshold hTruncated) :
     RhPiAntiTargetHeightCoeffControlHyp := by
   letI : TruncatedExplicitFormulaPiHyp := hTruncated
   letI : AntiTargetTowerExactSeedAbovePerronThresholdHyp := ⟨hAntiTarget⟩
@@ -97,8 +98,8 @@ theorem antitarget_height_coeff_control_of_exactSeedAboveThreshold
 /-- Bundled Blocker-7 pair from explicit deep witness terms. -/
 theorem coeffControlClasses_of_exactSeedAboveThreshold
     (hTruncated : TruncatedExplicitFormulaPiHyp)
-    (hTarget : TargetTowerExactSeedAbovePerronThreshold)
-    (hAntiTarget : AntiTargetTowerExactSeedAbovePerronThreshold) :
+    (hTarget : @TargetTowerExactSeedAbovePerronThreshold hTruncated)
+    (hAntiTarget : @AntiTargetTowerExactSeedAbovePerronThreshold hTruncated) :
     RhPiTargetHeightCoeffControlHyp ∧ RhPiAntiTargetHeightCoeffControlHyp := by
   exact
     ⟨target_height_coeff_control_of_exactSeedAboveThreshold hTruncated hTarget,
@@ -107,11 +108,12 @@ theorem coeffControlClasses_of_exactSeedAboveThreshold
 /-- Positive B7 coeff-control payload from an explicit phase-above-threshold
 deep witness term. -/
 theorem target_height_coeff_control_of_phaseAboveThreshold
-    (hTruncated : TruncatedExplicitFormulaPiHyp)
+    (hPerron : PerronSqrtErrorEventuallyAtHeightHyp)
     (hTarget :
-      Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.TargetTowerPhaseAbovePerronThreshold) :
+      @Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.TargetTowerPhaseAbovePerronThreshold
+        hPerron) :
     RhPiTargetHeightCoeffControlHyp := by
-  letI : TruncatedExplicitFormulaPiHyp := hTruncated
+  letI : PerronSqrtErrorEventuallyAtHeightHyp := hPerron
   letI :
       Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.TargetTowerPhaseAbovePerronThresholdHyp :=
     ⟨hTarget⟩
@@ -120,11 +122,12 @@ theorem target_height_coeff_control_of_phaseAboveThreshold
 /-- Negative B7 coeff-control payload from an explicit anti-phase-above-threshold
 deep witness term. -/
 theorem antitarget_height_coeff_control_of_phaseAboveThreshold
-    (hTruncated : TruncatedExplicitFormulaPiHyp)
+    (hPerron : PerronSqrtErrorEventuallyAtHeightHyp)
     (hAntiTarget :
-      Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.AntiTargetTowerPhaseAbovePerronThreshold) :
+      @Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.AntiTargetTowerPhaseAbovePerronThreshold
+        hPerron) :
     RhPiAntiTargetHeightCoeffControlHyp := by
-  letI : TruncatedExplicitFormulaPiHyp := hTruncated
+  letI : PerronSqrtErrorEventuallyAtHeightHyp := hPerron
   letI :
       Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.AntiTargetTowerPhaseAbovePerronThresholdHyp :=
     ⟨hAntiTarget⟩
@@ -133,15 +136,17 @@ theorem antitarget_height_coeff_control_of_phaseAboveThreshold
 /-- Bundled Blocker-7 pair from explicit phase-above-threshold deep witness
 terms. -/
 theorem coeffControlClasses_of_phaseAboveThreshold
-    (hTruncated : TruncatedExplicitFormulaPiHyp)
+    (hPerron : PerronSqrtErrorEventuallyAtHeightHyp)
     (hTarget :
-      Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.TargetTowerPhaseAbovePerronThreshold)
+      @Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.TargetTowerPhaseAbovePerronThreshold
+        hPerron)
     (hAntiTarget :
-      Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.AntiTargetTowerPhaseAbovePerronThreshold) :
+      @Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold.AntiTargetTowerPhaseAbovePerronThreshold
+        hPerron) :
     RhPiTargetHeightCoeffControlHyp ∧ RhPiAntiTargetHeightCoeffControlHyp := by
   exact
-    ⟨target_height_coeff_control_of_phaseAboveThreshold hTruncated hTarget,
-      antitarget_height_coeff_control_of_phaseAboveThreshold hTruncated hAntiTarget⟩
+    ⟨target_height_coeff_control_of_phaseAboveThreshold hPerron hTarget,
+      antitarget_height_coeff_control_of_phaseAboveThreshold hPerron hAntiTarget⟩
 
 /-- Unconditional bundled B7 coefficient-control payload from the hard exact-seed
 boundary assumptions. -/

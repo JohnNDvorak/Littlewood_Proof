@@ -20,7 +20,7 @@ open Aristotle.Standalone.RHPiSimultaneousPhaseApprox
 
 This gives a single `x` carrying both payloads simultaneously. -/
 theorem exists_large_x_perron_error_and_alignment_at_height
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     (hRH : ZetaZeros.RiemannHypothesis)
     (T ε X : ℝ) (hε : 0 < ε) :
     ∃ x : ℝ, X < x ∧
@@ -30,7 +30,7 @@ theorem exists_large_x_perron_error_and_alignment_at_height
       (∀ ρ ∈ (finite_zeros_le T).toFinset,
         ‖(x : ℂ) ^ (Complex.I * ρ.im) - 1‖ < ε) := by
   obtain ⟨Berr, hBerr⟩ := Filter.eventually_atTop.1
-    (perron_sqrt_error_eventually_at_height_of_truncatedPiBridge hRH T)
+    (PerronSqrtErrorEventuallyAtHeightHyp.witness hRH T)
   rcases exists_large_x_aligned_at_height hRH T ε (max X Berr) hε with
     ⟨x, hx, hphase⟩
   have hXx : X < x := lt_of_le_of_lt (le_max_left _ _) hx
@@ -43,7 +43,7 @@ theorem exists_large_x_perron_error_and_alignment_at_height
 /-- Frequently many `x` (at fixed height `T`) satisfy both the Perron
 `sqrt/log` error bound and target phase alignment. -/
 theorem frequently_perron_error_and_alignment_at_height
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     (hRH : ZetaZeros.RiemannHypothesis)
     (T ε : ℝ) (hε : 0 < ε) :
     ∃ᶠ x in atTop,
@@ -59,4 +59,3 @@ theorem frequently_perron_error_and_alignment_at_height
   exact ⟨x, le_of_lt hXx, hx1, herr, hphase⟩
 
 end Aristotle.Standalone.RHPiPhasePerronSynthesis
-

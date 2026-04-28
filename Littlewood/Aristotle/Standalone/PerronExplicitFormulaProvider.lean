@@ -54,6 +54,7 @@ open Aristotle.Standalone.ExplicitFormulaPsiSkeleton
 open Aristotle.Standalone.ExplicitFormulaPsiB5aRootInfra
 open Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
 open Aristotle.Standalone.ExternalPort.RHPiExternalTruncatedPiBuilder
+open Aristotle.Standalone.RHPiPerronFromTruncatedPiBridge
 
 variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
 variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
@@ -1792,6 +1793,13 @@ theorem pi_explicit_formula_from_perron
     PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp :=
   truncatedExplicitFormulaPiHyp_of_bundle pi_explicit_formula_from_perron_bundle
 
+private instance perronSqrtErrorEventuallyAtHeightHyp_from_perron
+    [PerronPiApproxCompatibilityHyp] :
+    PerronSqrtErrorEventuallyAtHeightHyp := by
+  letI : PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp :=
+    pi_explicit_formula_from_perron
+  infer_instance
+
 /-! ## Component 5: Exact seed phase alignment
 
 The exact seed obligations combine the π-level explicit formula with
@@ -1880,13 +1888,13 @@ private lemma assemble_target_seed
     {T ε : ℝ} (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1)
     (hN : N T = 0) (t0 : ℝ) (X : ℝ)
     (ht0_large : X < Real.exp t0)
-    (ht0_threshold : @perronThreshold pi_explicit_formula_from_perron hRH T ≤ Real.exp t0)
+    (ht0_threshold : perronThreshold hRH T ≤ Real.exp t0)
     (ht0_cap : Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
         (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))) :
     ∃ t₀ T' ε' : ℝ,
       4 ≤ T' ∧ 0 < ε' ∧ ε' < 1 ∧
       X < Real.exp t₀ ∧
-      @perronThreshold pi_explicit_formula_from_perron hRH T' ≤ Real.exp t₀ ∧
+      perronThreshold hRH T' ≤ Real.exp t₀ ∧
       (∀ ρ ∈ (finite_zeros_le T').toFinset,
         ∃ m : ℤ, ‖t₀ * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε') ∧
       Real.exp t₀ ≤ Real.exp (Real.exp (Real.exp
@@ -1901,13 +1909,13 @@ private lemma assemble_anti_target_seed
     {T ε : ℝ} (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1)
     (hN : N T = 0) (t0 : ℝ) (X : ℝ)
     (ht0_large : X < Real.exp t0)
-    (ht0_threshold : @perronThreshold pi_explicit_formula_from_perron hRH T ≤ Real.exp t0)
+    (ht0_threshold : perronThreshold hRH T ≤ Real.exp t0)
     (ht0_cap : Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
         (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))) :
     ∃ t₀ T' ε' : ℝ,
       4 ≤ T' ∧ 0 < ε' ∧ ε' < 1 ∧
       X < Real.exp t₀ ∧
-      @perronThreshold pi_explicit_formula_from_perron hRH T' ≤ Real.exp t₀ ∧
+      perronThreshold hRH T' ≤ Real.exp t₀ ∧
       (∀ ρ ∈ (finite_zeros_le T').toFinset,
         ∃ m : ℤ, ‖t₀ * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε') ∧
       Real.exp t₀ ≤ Real.exp (Real.exp (Real.exp
@@ -1954,10 +1962,10 @@ private lemma perron_error_cofinal_at_fixed_height
     (hRH : ZetaZeros.RiemannHypothesis)
     (T X : ℝ) :
     ∃ x : ℝ, X < x ∧
-      @perronThreshold pi_explicit_formula_from_perron hRH T ≤ x := by
-  exact ⟨max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1,
-    by linarith [le_max_left X (@perronThreshold pi_explicit_formula_from_perron hRH T)],
-    by linarith [le_max_right X (@perronThreshold pi_explicit_formula_from_perron hRH T)]⟩
+      perronThreshold hRH T ≤ x := by
+  exact ⟨max X (perronThreshold hRH T) + 1,
+    by linarith [le_max_left X (perronThreshold hRH T)],
+    by linarith [le_max_right X (perronThreshold hRH T)]⟩
 
 /-- For any hRH and T, perronThreshold(hRH, T) is a nonneg real.
     PROVED: perronThreshold_spec gives 1 < x for x ≥ perronThreshold, so
@@ -1966,8 +1974,8 @@ private lemma perron_error_cofinal_at_fixed_height
 private lemma perronThreshold_finite
     [PerronPiApproxCompatibilityHyp]
     (hRH : ZetaZeros.RiemannHypothesis) (T : ℝ) :
-    @perronThreshold pi_explicit_formula_from_perron hRH T <
-      @perronThreshold pi_explicit_formula_from_perron hRH T + 1 := by
+    perronThreshold hRH T <
+      perronThreshold hRH T + 1 := by
   linarith
 
 /-- perronThreshold(hRH, T) > 1 for all hRH, T.
@@ -1976,9 +1984,9 @@ private lemma perronThreshold_finite
 private lemma perronThreshold_gt_one
     [PerronPiApproxCompatibilityHyp]
     (hRH : ZetaZeros.RiemannHypothesis) (T : ℝ) :
-    1 < @perronThreshold pi_explicit_formula_from_perron hRH T := by
-  exact (@perronThreshold_spec pi_explicit_formula_from_perron hRH T
-    (@perronThreshold pi_explicit_formula_from_perron hRH T) le_rfl).1
+    1 < perronThreshold hRH T := by
+  exact (perronThreshold_spec hRH T
+    (perronThreshold hRH T) le_rfl).1
 
 /-! ### Tower-cap + congruence witness construction (C48)
 
@@ -2020,28 +2028,28 @@ private lemma target_witness_of_domination
     [PerronPiApproxCompatibilityHyp]
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
     {T : ℝ} (hT4 : 4 ≤ T) (hN : N T = 0)
-    (hdom : max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 ≤
+    (hdom : max X (perronThreshold hRH T) + 1 ≤
       Real.exp (Real.exp (Real.exp
         (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2)))) :
     ∃ t0 T' ε : ℝ,
       4 ≤ T' ∧
       0 < ε ∧ ε < 1 ∧
       X < Real.exp t0 ∧
-      @perronThreshold pi_explicit_formula_from_perron hRH T' ≤ Real.exp t0 ∧
+      perronThreshold hRH T' ≤ Real.exp t0 ∧
       (∀ ρ ∈ (finite_zeros_le T').toFinset,
         ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
         (((1 - ε) * ((N T' : ℝ) / (T' + 1))) / 2))) := by
   have hPgt1 := perronThreshold_gt_one hRH T
-  have hBpos : (0 : ℝ) < max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 :=
-    by linarith [le_max_right X (@perronThreshold pi_explicit_formula_from_perron hRH T)]
-  refine ⟨Real.log (max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1),
+  have hBpos : (0 : ℝ) < max X (perronThreshold hRH T) + 1 :=
+    by linarith [le_max_right X (perronThreshold hRH T)]
+  refine ⟨Real.log (max X (perronThreshold hRH T) + 1),
     T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_,
     vacuous_congruences_target hN _ _, ?_⟩
   · rw [Real.exp_log hBpos]
-    linarith [le_max_left X (@perronThreshold pi_explicit_formula_from_perron hRH T)]
+    linarith [le_max_left X (perronThreshold hRH T)]
   · rw [Real.exp_log hBpos]
-    linarith [le_max_right X (@perronThreshold pi_explicit_formula_from_perron hRH T)]
+    linarith [le_max_right X (perronThreshold hRH T)]
   · rw [Real.exp_log hBpos]
     exact hdom
 
@@ -2051,28 +2059,28 @@ private lemma anti_target_witness_of_domination
     [PerronPiApproxCompatibilityHyp]
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
     {T : ℝ} (hT4 : 4 ≤ T) (hN : N T = 0)
-    (hdom : max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 ≤
+    (hdom : max X (perronThreshold hRH T) + 1 ≤
       Real.exp (Real.exp (Real.exp
         (((1 - 1 / 2) * ((N T : ℝ) / (T + 1))) / 2)))) :
     ∃ t0 T' ε : ℝ,
       4 ≤ T' ∧
       0 < ε ∧ ε < 1 ∧
       X < Real.exp t0 ∧
-      @perronThreshold pi_explicit_formula_from_perron hRH T' ≤ Real.exp t0 ∧
+      perronThreshold hRH T' ≤ Real.exp t0 ∧
       (∀ ρ ∈ (finite_zeros_le T').toFinset,
         ∃ m : ℤ, ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
         (((1 - ε) * ((N T' : ℝ) / (T' + 1))) / 2))) := by
   have hPgt1 := perronThreshold_gt_one hRH T
-  have hBpos : (0 : ℝ) < max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1 :=
-    by linarith [le_max_right X (@perronThreshold pi_explicit_formula_from_perron hRH T)]
-  refine ⟨Real.log (max X (@perronThreshold pi_explicit_formula_from_perron hRH T) + 1),
+  have hBpos : (0 : ℝ) < max X (perronThreshold hRH T) + 1 :=
+    by linarith [le_max_right X (perronThreshold hRH T)]
+  refine ⟨Real.log (max X (perronThreshold hRH T) + 1),
     T, 1 / 2, hT4, by norm_num, by norm_num, ?_, ?_,
     vacuous_congruences_anti_target hN _ _, ?_⟩
   · rw [Real.exp_log hBpos]
-    linarith [le_max_left X (@perronThreshold pi_explicit_formula_from_perron hRH T)]
+    linarith [le_max_left X (perronThreshold hRH T)]
   · rw [Real.exp_log hBpos]
-    linarith [le_max_right X (@perronThreshold pi_explicit_formula_from_perron hRH T)]
+    linarith [le_max_right X (perronThreshold hRH T)]
   · rw [Real.exp_log hBpos]
     exact hdom
 
@@ -2175,7 +2183,7 @@ private theorem arg_above_threshold_from_perron_core
     (hRH : ZetaZeros.RiemannHypothesis) (X phaseShift : ℝ) :
     ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
       4 ≤ T ∧
-      @perronThreshold pi_explicit_formula_from_perron hRH T ≤ x ∧
+      perronThreshold hRH T ≤ x ∧
       ∃ ε : ℝ,
         0 < ε ∧ ε < 1 ∧
         (∀ ρ ∈ (finite_zeros_le T).toFinset,
@@ -2193,7 +2201,7 @@ private theorem arg_above_threshold_pair_from_perron_core
     (hRH : ZetaZeros.RiemannHypothesis) (X : ℝ) :
     (∃ x : ℝ, X < x ∧ ∃ T : ℝ,
       4 ≤ T ∧
-      @perronThreshold pi_explicit_formula_from_perron hRH T ≤ x ∧
+      perronThreshold hRH T ≤ x ∧
       ∃ ε : ℝ,
         0 < ε ∧ ε < 1 ∧
         (∀ ρ ∈ (finite_zeros_le T).toFinset,
@@ -2203,7 +2211,7 @@ private theorem arg_above_threshold_pair_from_perron_core
     ∧
     (∃ x : ℝ, X < x ∧ ∃ T : ℝ,
       4 ≤ T ∧
-      @perronThreshold pi_explicit_formula_from_perron hRH T ≤ x ∧
+      perronThreshold hRH T ≤ x ∧
       ∃ ε : ℝ,
         0 < ε ∧ ε < 1 ∧
         (∀ ρ ∈ (finite_zeros_le T).toFinset,
@@ -2223,7 +2231,7 @@ private theorem exact_seed_pair_from_perron_core
       4 ≤ T ∧
       0 < ε ∧ ε < 1 ∧
       X < Real.exp t0 ∧
-      @perronThreshold pi_explicit_formula_from_perron hRH T ≤ Real.exp t0 ∧
+      perronThreshold hRH T ≤ Real.exp t0 ∧
       (∀ ρ ∈ (finite_zeros_le T).toFinset,
         ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
@@ -2233,7 +2241,7 @@ private theorem exact_seed_pair_from_perron_core
       4 ≤ T ∧
       0 < ε ∧ ε < 1 ∧
       X < Real.exp t0 ∧
-      @perronThreshold pi_explicit_formula_from_perron hRH T ≤ Real.exp t0 ∧
+      perronThreshold hRH T ≤ Real.exp t0 ∧
       (∀ ρ ∈ (finite_zeros_le T).toFinset,
         ∃ m : ℤ, ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε) ∧
       Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
@@ -2242,7 +2250,7 @@ private theorem exact_seed_pair_from_perron_core
     ⟨hTarget, hAntiTarget⟩
   constructor
   · rcases hTarget with ⟨x, hXx, T, hT4, hThreshold, ε, hεpos, hεlt, harg, hxUpper⟩
-    have hperron := @perronThreshold_spec pi_explicit_formula_from_perron hRH T x hThreshold
+    have hperron := perronThreshold_spec hRH T x hThreshold
     have hx_pos : 0 < x := lt_trans zero_lt_one hperron.1
     refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_⟩
     · rwa [Real.exp_log hx_pos]
@@ -2253,7 +2261,7 @@ private theorem exact_seed_pair_from_perron_core
     · rwa [Real.exp_log hx_pos]
   · rcases hAntiTarget with
       ⟨x, hXx, T, hT4, hThreshold, ε, hεpos, hεlt, harg, hxUpper⟩
-    have hperron := @perronThreshold_spec pi_explicit_formula_from_perron hRH T x hThreshold
+    have hperron := perronThreshold_spec hRH T x hThreshold
     have hx_pos : 0 < x := lt_trans zero_lt_one hperron.1
     refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_⟩
     · rwa [Real.exp_log hx_pos]

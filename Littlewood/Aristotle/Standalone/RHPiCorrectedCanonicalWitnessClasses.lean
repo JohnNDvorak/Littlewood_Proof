@@ -12,6 +12,7 @@ namespace Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses
 open Filter Complex ZetaZeros
 open GrowthDomination
 open Aristotle.Standalone.RHPiPerronTruncatedWitness
+open Aristotle.Standalone.RHPiPerronFromTruncatedPiBridge
 open Aristotle.Standalone.RHPiPerronTowerWitness
 open Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase
 open Aristotle.Standalone.RHPiTargetPhaseArgReduction
@@ -69,10 +70,10 @@ instance
       AntiTargetTowerArgApproxFamilyHyp.witness
 
 /-- Compatibility bridge: above-threshold positive arg-approximation payloads
-plus truncated explicit-formula input instantiate the corrected canonical
+plus fixed-height Perron error input instantiate the corrected canonical
 positive phase-coupling payload. -/
 instance
-    [PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [TargetTowerArgApproxAbovePerronThresholdHyp] :
     TargetTowerPhaseCouplingFamilyHyp_corrected where
   witness :=
@@ -80,10 +81,10 @@ instance
       TargetTowerArgApproxFamilyHyp.witness
 
 /-- Compatibility bridge: above-threshold negative arg-approximation payloads
-plus truncated explicit-formula input instantiate the corrected canonical
+plus fixed-height Perron error input instantiate the corrected canonical
 negative phase-coupling payload. -/
 instance
-    [PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [AntiTargetTowerArgApproxAbovePerronThresholdHyp] :
     AntiTargetTowerPhaseCouplingFamilyHyp_corrected where
   witness :=

@@ -13,13 +13,14 @@ open GrowthDomination
 open PiLiDirectOscillationBridge
 open Aristotle.Standalone.RHPiPerronTowerWitness
 open Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase
+open Aristotle.Standalone.RHPiPerronFromTruncatedPiBridge
 open Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold
 open Aristotle.Standalone.RHPi7a7cFromPerronPhase
 
 /-- Positive above-threshold payload implies the positive phase-coupling payload
 used by the RH-π 7a/7c endpoint. -/
 instance
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [TargetTowerPhaseAbovePerronThresholdHyp] :
     TargetTowerPhaseCouplingFamilyHyp where
   witness :=
@@ -29,17 +30,17 @@ instance
 /-- Negative above-threshold payload implies the negative phase-coupling payload
 used by the RH-π 7a/7c endpoint. -/
 instance
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [AntiTargetTowerPhaseAbovePerronThresholdHyp] :
     AntiTargetTowerPhaseCouplingFamilyHyp where
   witness :=
     antitarget_tower_sqrt_witness_of_phase_above_threshold
       AntiTargetTowerPhaseAbovePerronThresholdHyp.witness
 
-/-- 7a/7c endpoint from truncated explicit formula + above-threshold phase/tower
+/-- 7a/7c endpoint from fixed-height Perron error + above-threshold phase/tower
 payload classes. -/
 theorem rh_pi_7a_7c_pair_from_threshold_hyp
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [TargetTowerPhaseAbovePerronThresholdHyp]
     [AntiTargetTowerPhaseAbovePerronThresholdHyp]
     (hRH : ZetaZeros.RiemannHypothesis) :

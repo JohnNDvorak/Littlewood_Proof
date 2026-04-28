@@ -19,6 +19,7 @@ open GrowthDomination
 open Aristotle.Standalone.RHPiWitnessFromExplicitFormula
 open Aristotle.Standalone.RHPiCoeffControlFromTargetTowerSqrt
 open Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase
+open Aristotle.Standalone.RHPiPerronFromTruncatedPiBridge
 open Aristotle.Standalone.RHPiTargetPhaseArgReduction
 open Aristotle.Standalone.RHPiArgApproxFromPerronThreshold
 open Aristotle.Standalone.RHPiExactSeedToPerronThresholdArgApprox
@@ -63,7 +64,7 @@ theorem coeffControlClasses_of_argApproxHyp
 /-- Endpoint from above-threshold argument-approximation payload classes to
 both requested coefficient-control classes. -/
 theorem coeffControlClasses_of_argApproxAboveThresholdHyp
-    [PiLiDirectOscillationBridge.TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [TargetTowerArgApproxAbovePerronThresholdHyp]
     [AntiTargetTowerArgApproxAbovePerronThresholdHyp] :
     RhPiTargetHeightCoeffControlHyp ∧ RhPiAntiTargetHeightCoeffControlHyp := by

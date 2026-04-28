@@ -11,6 +11,7 @@ namespace Aristotle.Standalone.RHPiArgApproxFromPerronThreshold
 open Complex ZetaZeros
 open GrowthDomination
 open PiLiDirectOscillationBridge
+open Aristotle.Standalone.RHPiPerronFromTruncatedPiBridge
 open Aristotle.Standalone.RHPiTargetPhaseArgReduction
 open Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold
 
@@ -18,7 +19,7 @@ open Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold
 threshold. The explicit-formula error and `1 < x` side conditions are recovered
 from `perronThreshold_spec`. -/
 abbrev TargetTowerArgApproxAbovePerronThreshold
-    [TruncatedExplicitFormulaPiHyp] : Prop :=
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
   ∀ _hRH : ZetaZeros.RiemannHypothesis, ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
     4 ≤ T ∧
     perronThreshold _hRH T ≤ x ∧
@@ -32,7 +33,7 @@ abbrev TargetTowerArgApproxAbovePerronThreshold
 /-- Negative arg-approx payload reduced to anti-phase/height data above
 Perron's threshold. -/
 abbrev AntiTargetTowerArgApproxAbovePerronThreshold
-    [TruncatedExplicitFormulaPiHyp] : Prop :=
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
   ∀ _hRH : ZetaZeros.RiemannHypothesis, ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
     4 ≤ T ∧
     perronThreshold _hRH T ≤ x ∧
@@ -46,7 +47,7 @@ abbrev AntiTargetTowerArgApproxAbovePerronThreshold
 /-- Build the full positive arg-approx family from the above-threshold payload.
 All missing side conditions are supplied by `perronThreshold_spec`. -/
 theorem targetTowerArgApproxFamily_of_above_threshold
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     (hTarget : TargetTowerArgApproxAbovePerronThreshold) :
     TargetTowerArgApproxFamily := by
   intro hRH X
@@ -58,7 +59,7 @@ theorem targetTowerArgApproxFamily_of_above_threshold
 /-- Build the full negative arg-approx family from the above-threshold
 payload. -/
 theorem antiTargetTowerArgApproxFamily_of_above_threshold
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     (hAntiTarget : AntiTargetTowerArgApproxAbovePerronThreshold) :
     AntiTargetTowerArgApproxFamily := by
   intro hRH X
@@ -70,7 +71,7 @@ theorem antiTargetTowerArgApproxFamily_of_above_threshold
 /-- Build the positive phase-above-threshold payload from the positive
 arg-above-threshold payload. -/
 theorem targetTowerPhaseAbovePerronThreshold_of_argAbove
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     (hTarget : TargetTowerArgApproxAbovePerronThreshold) :
     TargetTowerPhaseAbovePerronThreshold := by
   intro hRH X
@@ -96,7 +97,7 @@ theorem targetTowerPhaseAbovePerronThreshold_of_argAbove
 /-- Build the negative phase-above-threshold payload from the negative
 arg-above-threshold payload. -/
 theorem antiTargetTowerPhaseAbovePerronThreshold_of_argAbove
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     (hAntiTarget : AntiTargetTowerArgApproxAbovePerronThreshold) :
     AntiTargetTowerPhaseAbovePerronThreshold := by
   intro hRH X
@@ -121,18 +122,18 @@ theorem antiTargetTowerPhaseAbovePerronThreshold_of_argAbove
 
 /-- Positive payload class at the above-threshold interface. -/
 class TargetTowerArgApproxAbovePerronThresholdHyp
-    [TruncatedExplicitFormulaPiHyp] : Prop where
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
   witness : TargetTowerArgApproxAbovePerronThreshold
 
 /-- Negative payload class at the above-threshold interface. -/
 class AntiTargetTowerArgApproxAbovePerronThresholdHyp
-    [TruncatedExplicitFormulaPiHyp] : Prop where
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
   witness : AntiTargetTowerArgApproxAbovePerronThreshold
 
 /-- Instance bridge: positive above-threshold arg payload gives the full
 positive arg-approximation family. -/
 instance
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [TargetTowerArgApproxAbovePerronThresholdHyp] :
     TargetTowerArgApproxFamilyHyp where
   witness :=
@@ -142,7 +143,7 @@ instance
 /-- Instance bridge: negative above-threshold arg payload gives the full
 negative arg-approximation family. -/
 instance
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [AntiTargetTowerArgApproxAbovePerronThresholdHyp] :
     AntiTargetTowerArgApproxFamilyHyp where
   witness :=
@@ -152,7 +153,7 @@ instance
 /-- Positive arg-above-threshold payload also supplies the positive
 phase-above-threshold payload. -/
 instance
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [TargetTowerArgApproxAbovePerronThresholdHyp] :
     TargetTowerPhaseAbovePerronThresholdHyp where
   witness :=
@@ -162,7 +163,7 @@ instance
 /-- Negative arg-above-threshold payload also supplies the negative
 phase-above-threshold payload. -/
 instance
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [AntiTargetTowerArgApproxAbovePerronThresholdHyp] :
     AntiTargetTowerPhaseAbovePerronThresholdHyp where
   witness :=
@@ -171,23 +172,23 @@ instance
 
 /-- Fact-level endpoint for the positive family. -/
 instance (priority := 100)
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [TargetTowerArgApproxAbovePerronThresholdHyp] :
     Fact TargetTowerArgApproxFamily :=
   ⟨TargetTowerArgApproxFamilyHyp.witness⟩
 
 /-- Fact-level endpoint for the negative family. -/
 instance (priority := 100)
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [AntiTargetTowerArgApproxAbovePerronThresholdHyp] :
     Fact AntiTargetTowerArgApproxFamily :=
   ⟨AntiTargetTowerArgApproxFamilyHyp.witness⟩
 
 /-- End-to-end RH-`pi` witness endpoint:
-above-threshold arg payload classes + truncated explicit formula imply
+above-threshold arg payload classes + fixed-height Perron error imply
 `RhPiWitnessData`. -/
 theorem rhPiWitnessData_of_arg_above_threshold_hyp
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [TargetTowerArgApproxAbovePerronThresholdHyp]
     [AntiTargetTowerArgApproxAbovePerronThresholdHyp] :
     Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData := by

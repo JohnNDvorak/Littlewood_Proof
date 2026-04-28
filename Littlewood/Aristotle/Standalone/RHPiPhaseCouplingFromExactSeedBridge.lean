@@ -27,7 +27,7 @@ provides deterministic class-level wiring and import-friendly endpoints.
 -/
 
 /-- Positive phase-coupling payload is available directly from the positive
-exact-seed-above-threshold class (with truncated explicit formula input). -/
+exact-seed-above-threshold class with the legacy truncated-π input. -/
 instance (priority := 100)
     [TruncatedExplicitFormulaPiHyp]
     [TargetTowerExactSeedAbovePerronThresholdHyp] :
@@ -35,7 +35,7 @@ instance (priority := 100)
   infer_instance
 
 /-- Negative phase-coupling payload is available directly from the negative
-exact-seed-above-threshold class (with truncated explicit formula input). -/
+exact-seed-above-threshold class with the legacy truncated-π input. -/
 instance (priority := 100)
     [TruncatedExplicitFormulaPiHyp]
     [AntiTargetTowerExactSeedAbovePerronThresholdHyp] :

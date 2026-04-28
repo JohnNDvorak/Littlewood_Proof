@@ -17,6 +17,19 @@ open Aristotle.Standalone.RHPiPerronTruncatedWitness
 open Aristotle.Standalone.RHPiTowerWitnessFromPerronAndPhase
 open PiLiDirectOscillationBridge
 
+/-- Honest replacement surface for the Perron-threshold phase/seed chain.
+
+It is exactly the fixed-height eventual `sqrt/log` error bound consumed by
+`perronThreshold`; unlike `TruncatedExplicitFormulaPiHyp`, it does not expose
+the false arbitrary-finite-set `pi_approx` field. -/
+class PerronSqrtErrorEventuallyAtHeightHyp : Prop where
+  witness :
+    ∀ (hRH : ZetaZeros.RiemannHypothesis) (T : ℝ),
+      ∀ᶠ x in atTop,
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x|
+          ≤ Real.sqrt x / Real.log x
+
 private lemma mem_zero_finset_nontrivial
     {T : ℝ} {ρ : ℂ}
     (hρ : ρ ∈ (finite_zeros_le T).toFinset) :
@@ -305,6 +318,13 @@ theorem perron_sqrt_error_eventually_at_height_of_truncatedPiBridge
 
   refine ⟨hx1, ?_⟩
   simpa [piMainFromZeros, Spos, mul_assoc, mul_comm, mul_left_comm] using h_err_pos
+
+/-- Compatibility instance for legacy consumers: the old truncated-π bridge
+implies the honest fixed-height Perron error interface. This is the only local
+bridge from the false `pi_approx` field to the repaired threshold surface. -/
+instance perronSqrtErrorEventuallyAtHeightHyp_of_truncatedPiBridge
+    [TruncatedExplicitFormulaPiHyp] : PerronSqrtErrorEventuallyAtHeightHyp where
+  witness := perron_sqrt_error_eventually_at_height_of_truncatedPiBridge
 
 /--
 Eventual fixed-height Perron witness at Littlewood's `piScale`.

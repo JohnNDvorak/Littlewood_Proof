@@ -24,15 +24,15 @@ For each `hRH` and fixed zero cutoff `T`, this is a concrete `B` such that every
 `x ≥ B` satisfies the `sqrt/log` explicit-formula error bound.
 -/
 noncomputable def perronThreshold
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     (hRH : ZetaZeros.RiemannHypothesis)
     (T : ℝ) : ℝ :=
   Classical.choose <| Filter.eventually_atTop.1
-    (perron_sqrt_error_eventually_at_height_of_truncatedPiBridge hRH T)
+    (PerronSqrtErrorEventuallyAtHeightHyp.witness hRH T)
 
 /-- Specification of `perronThreshold`. -/
 theorem perronThreshold_spec
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     (hRH : ZetaZeros.RiemannHypothesis)
     (T : ℝ) :
     ∀ x : ℝ, perronThreshold hRH T ≤ x →
@@ -44,7 +44,7 @@ theorem perronThreshold_spec
         1 < x ∧
         |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x|
           ≤ Real.sqrt x / Real.log x :=
-    perron_sqrt_error_eventually_at_height_of_truncatedPiBridge hRH T
+    PerronSqrtErrorEventuallyAtHeightHyp.witness hRH T
   have hChosen :
       ∀ x : ℝ, Classical.choose (Filter.eventually_atTop.1 hEvent) ≤ x →
         1 < x ∧
@@ -58,7 +58,7 @@ Positive RH payload reduced to phase+tower data above the Perron threshold.
 
 The Perron error term is recovered deterministically from `perronThreshold_spec`.
 -/
-abbrev TargetTowerPhaseAbovePerronThreshold [TruncatedExplicitFormulaPiHyp] : Prop :=
+abbrev TargetTowerPhaseAbovePerronThreshold [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
   ∀ _hRH : ZetaZeros.RiemannHypothesis, ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
     4 ≤ T ∧
     perronThreshold _hRH T ≤ x ∧
@@ -73,7 +73,7 @@ Negative RH payload reduced to anti-phase+tower data above the Perron threshold.
 
 The Perron error term is recovered deterministically from `perronThreshold_spec`.
 -/
-abbrev AntiTargetTowerPhaseAbovePerronThreshold [TruncatedExplicitFormulaPiHyp] : Prop :=
+abbrev AntiTargetTowerPhaseAbovePerronThreshold [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
   ∀ _hRH : ZetaZeros.RiemannHypothesis, ∀ X : ℝ, ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
     4 ≤ T ∧
     perronThreshold _hRH T ≤ x ∧
@@ -86,7 +86,7 @@ abbrev AntiTargetTowerPhaseAbovePerronThreshold [TruncatedExplicitFormulaPiHyp] 
 /-- Construct the positive target tower witness from phase+tower data above the
 Perron threshold. -/
 theorem target_tower_sqrt_witness_of_phase_above_threshold
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     (hTarget : TargetTowerPhaseAbovePerronThreshold) :
     ∀ _hRH : ZetaZeros.RiemannHypothesis, TargetHeightTowerSqrtWitness := by
   intro hRH X
@@ -98,7 +98,7 @@ theorem target_tower_sqrt_witness_of_phase_above_threshold
 /-- Construct the negative anti-target tower witness from anti-phase+tower data
 above the Perron threshold. -/
 theorem antitarget_tower_sqrt_witness_of_phase_above_threshold
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     (hAntiTarget : AntiTargetTowerPhaseAbovePerronThreshold) :
     ∀ _hRH : ZetaZeros.RiemannHypothesis, AntiTargetHeightTowerSqrtWitness := by
   intro hRH X
@@ -109,17 +109,17 @@ theorem antitarget_tower_sqrt_witness_of_phase_above_threshold
 
 /-- Typeclass wrapper for positive phase+tower-above-threshold payload. -/
 class TargetTowerPhaseAbovePerronThresholdHyp
-    [TruncatedExplicitFormulaPiHyp] : Prop where
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
   witness : TargetTowerPhaseAbovePerronThreshold
 
 /-- Typeclass wrapper for negative anti-phase+tower-above-threshold payload. -/
 class AntiTargetTowerPhaseAbovePerronThresholdHyp
-    [TruncatedExplicitFormulaPiHyp] : Prop where
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
   witness : AntiTargetTowerPhaseAbovePerronThreshold
 
 /-- Positive bridge instance to the existing RH-π tower witness class. -/
 instance
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [TargetTowerPhaseAbovePerronThresholdHyp] :
     RhPiTargetTowerSqrtWitnessHyp where
   witness := target_tower_sqrt_witness_of_phase_above_threshold
@@ -127,17 +127,17 @@ instance
 
 /-- Negative bridge instance to the existing RH-π tower witness class. -/
 instance
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [AntiTargetTowerPhaseAbovePerronThresholdHyp] :
     RhPiAntiTargetTowerSqrtWitnessHyp where
   witness := antitarget_tower_sqrt_witness_of_phase_above_threshold
     AntiTargetTowerPhaseAbovePerronThresholdHyp.witness
 
 /-- Endpoint: once the two above-threshold phase payload classes are provided
-and truncated π explicit formula is available, Blocker 7 follows via the
+and fixed-height Perron error control is available, Blocker 7 follows via the
 existing tower-to-coefficient chain. -/
 theorem rhPiWitness_proved_of_phase_above_threshold_hyp
-    [TruncatedExplicitFormulaPiHyp]
+    [PerronSqrtErrorEventuallyAtHeightHyp]
     [TargetTowerPhaseAbovePerronThresholdHyp]
     [AntiTargetTowerPhaseAbovePerronThresholdHyp] :
     Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData := by
