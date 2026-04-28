@@ -348,6 +348,56 @@ theorem small_T_from_general
     _ = C₂ * (1 + 64 / (Real.log 2) ^ 2) *
         (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by ring
 
+/-- Three-piece small-`T` reduction for the direct provider target.
+
+It is enough to decompose the shifted remainder into two bounded-height Perron
+pieces of size `sqrt x * (log T)^2 / sqrt T` and one bookkeeping piece of size
+`(log x)^2`. This is intentionally a theorem-shaped reduction, not an instance,
+so it cannot close `SmallTPerronBoundHyp` through typeclass search. -/
+theorem small_T_direct_bound_from_three_piece_bounds
+    (hpieces : ∃ P > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∃ perronRe residueRe logRe : ℝ,
+        shiftedRemainderRe x T = perronRe + residueRe + logRe ∧
+        |perronRe| ≤ P * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ∧
+        |residueRe| ≤ P * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ∧
+        |logRe| ≤ P * (Real.log x) ^ 2) :
+    ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+  obtain ⟨P, hP, hpieces⟩ := hpieces
+  refine ⟨3 * P, by positivity, ?_⟩
+  intro x T hx hT_lo hT_hi
+  obtain ⟨perronRe, residueRe, logRe, hdecomp, hperron, hresidue, hlog⟩ :=
+    hpieces x T hx hT_lo hT_hi
+  let E : ℝ := Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T
+  let L : ℝ := (Real.log x) ^ 2
+  have hE_nonneg : 0 ≤ E := by
+    dsimp [E]
+    exact error_shape_nonneg x T
+  have hL_nonneg : 0 ≤ L := by
+    dsimp [L]
+    exact sq_nonneg (Real.log x)
+  have htri :
+      |perronRe + residueRe + logRe| ≤ |perronRe| + |residueRe| + |logRe| := by
+    have h₁ := abs_add_le (perronRe + residueRe) logRe
+    have h₂ := abs_add_le perronRe residueRe
+    linarith
+  calc |shiftedRemainderRe x T|
+      = |perronRe + residueRe + logRe| := by rw [hdecomp]
+    _ ≤ |perronRe| + |residueRe| + |logRe| := htri
+    _ ≤ P * E + P * E + P * L := by
+        dsimp [E, L] at hperron hresidue hlog ⊢
+        linarith
+    _ ≤ 3 * P * (E + L) := by
+        have hextra : 0 ≤ P * E + 2 * P * L := by
+          exact add_nonneg (mul_nonneg hP.le hE_nonneg)
+            (mul_nonneg (by positivity : 0 ≤ 2 * P) hL_nonneg)
+        calc P * E + P * E + P * L
+            ≤ P * E + P * E + P * L + (P * E + 2 * P * L) := by linarith
+          _ = 3 * P * (E + L) := by ring
+    _ = 3 * P * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+        rfl
+
 /-! ## Section 6: Contour Integration via CIF
 
 The Cauchy Integral Formula for rectangles (CauchyRectangleFormula.lean, now 0 sorrys)

@@ -108,3 +108,55 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - Coordinator action requested:
   run the above serialized validation commands; no full `lake build` requested
   by this lane.
+
+### 2026-04-28 Overnight Round 1
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Current theorem/file attacked:
+  `Littlewood/Development/HadamardProductZeta.lean`,
+  `SmallTPerronBoundHyp`.
+- Theorem added:
+  `HadamardProductZeta.small_T_direct_bound_from_three_piece_bounds`.
+- Reduction banked:
+  the exact direct hypothesis of
+  `HadamardProductZeta.small_T_perron_bound_hyp_of_direct_bound` now follows
+  from a strictly theorem-shaped three-piece bounded-height decomposition:
+  two pieces bounded by
+  `P * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)` and one bookkeeping piece
+  bounded by `P * (Real.log x)^2`, uniformly for `2 ≤ T ≤ 16`.
+  The assembly is triangle inequality plus nonnegativity of the two error
+  channels, with output constant `3 * P`.
+- Circular routes avoided:
+  did not use `ContourRemainderBoundHyp.bound`,
+  `general_formula_accessible`, `small_T_contour_bound`, or any theorem that
+  consumes `HadamardProductZeta.SmallTPerronBoundHyp`.
+- Files changed:
+  `Littlewood/Development/HadamardProductZeta.lean`;
+  this ledger.
+- Static command results:
+  `git diff --check` succeeded with no output.
+  No Lean/Lake/build/cache commands were run in this round.
+- Smallest next theorem:
+  prove the hypothesis of
+  `small_T_direct_bound_from_three_piece_bounds` by constructing the concrete
+  bounded-height Perron/residue/log pieces for
+  `shiftedRemainderRe x T`, uniformly on `2 ≤ T ≤ 16`, without routing through
+  full-range contour packaging.
+- Requested coordinator validation commands:
+  `lake build Littlewood.Development.HadamardProductZeta`;
+  minimal import probe for `Littlewood.Main.LittlewoodPsi`;
+  minimal import probe for `Littlewood.Main.LittlewoodPi`.
+- Coordinator action requested:
+  run serialized validation when the build mutex permits; no full project build
+  requested by this lane.
+
+### 2026-04-28 Coordinator Validation
+
+- First validation found an elaboration issue in
+  `small_T_direct_bound_from_three_piece_bounds`: `abs_add` was not available
+  under that name in this module.
+- Coordinator patch: replaced the two triangle-inequality calls by
+  `abs_add_le`.
+- `lake build Littlewood.Development.HadamardProductZeta`: passed.
+- Residual risk: this is still a conditional reduction; the concrete
+  three-piece bounded-height decomposition remains open.
