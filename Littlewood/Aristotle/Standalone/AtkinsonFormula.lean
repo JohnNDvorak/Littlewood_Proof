@@ -12584,6 +12584,73 @@ private theorem atkinson_blockMode_stationaryPhase_of_mode_eventual_shifted_inte
     omega
   simpa [hkj] using hmode' (k - j) hn_large j hj3 hj1 hkn
 
+/-- The direct quadratic-anchor model for the shifted interval
+`p ∈ Ioc j (j + 1)`: freeze `blockMode n p` at its stationary anchor and keep
+the full shifted quadratic kernel integral. -/
+private noncomputable def atkinsonShiftedQuadraticAnchorModel (n j : ℕ) : ℂ :=
+  (((atkinsonModeWeight n : ℝ) : ℂ) *
+    (((((-1 : ℝ) ^ (n + 1) : ℝ) : ℂ) *
+      Aristotle.StationaryPhaseStartValue.hardyStationaryAnchor)) *
+    ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+      Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p)
+
+/-- The mode-eventual shifted-interval `blockMode` remainder follows once the
+native integral is close to the quadratic-anchor model and that model matches
+the explicit Atkinson complete-block target. -/
+private theorem atkinson_mode_eventual_shifted_interval_remainder_of_quadratic_anchor_model
+    (hquad :
+      ∃ C_quad > 0, ∃ N_quad : ℕ, ∀ n : ℕ, N_quad ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticAnchorModel n j)‖
+            ≤ C_quad * (atkinsonModeWeight (n + j) / j))
+    (htarget :
+      ∃ C_target > 0, ∃ N_target : ℕ, ∀ n : ℕ, N_target ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖(atkinsonShiftedQuadraticAnchorModel n j - atkinsonCompleteBlockTargetK (n + j) j)‖
+            ≤ C_target * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_err > 0, ∃ N_err : ℕ, ∀ n : ℕ, N_err ≤ n → ∀ j : ℕ,
+      3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode n p *
+                  blockJacobian n p) - atkinsonCompleteBlockTargetK (n + j) j)‖
+          ≤ (C_err * (atkinsonModeWeight (n + j) / j)) := by
+  obtain ⟨C_quad, hC_quad, N_quad, hquad'⟩ := hquad
+  obtain ⟨C_target, hC_target, N_target, htarget'⟩ := htarget
+  refine ⟨C_quad + C_target, add_pos hC_quad hC_target, max N_quad N_target, ?_⟩
+  intro n hn j hj3 hj1 hjn
+  have hn_quad : N_quad ≤ n := le_trans (Nat.le_max_left N_quad N_target) hn
+  have hn_target : N_target ≤ n := le_trans (Nat.le_max_right N_quad N_target) hn
+  let actual : ℂ :=
+    (((atkinsonModeWeight n : ℝ) : ℂ) *
+      ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+        Aristotle.StationaryPhaseMainMode.blockMode n p * blockJacobian n p)
+  let model : ℂ := atkinsonShiftedQuadraticAnchorModel n j
+  let target : ℂ := atkinsonCompleteBlockTargetK (n + j) j
+  let scale : ℝ := atkinsonModeWeight (n + j) / j
+  have hquad_bound : ‖actual - model‖ ≤ C_quad * scale := by
+    simpa [actual, model, scale] using hquad' n hn_quad j hj3 hj1 hjn
+  have htarget_bound : ‖model - target‖ ≤ C_target * scale := by
+    simpa [model, target, scale] using htarget' n hn_target j hj3 hj1 hjn
+  have hsplit : actual - target = (actual - model) + (model - target) := by
+    ring
+  calc
+    ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+          ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+            Aristotle.StationaryPhaseMainMode.blockMode n p *
+              blockJacobian n p) - atkinsonCompleteBlockTargetK (n + j) j)‖
+        = ‖actual - target‖ := by
+            simp [actual, target]
+    _ = ‖(actual - model) + (model - target)‖ := by
+          rw [hsplit]
+    _ ≤ ‖actual - model‖ + ‖model - target‖ := norm_add_le _ _
+    _ ≤ C_quad * scale + C_target * scale := add_le_add hquad_bound htarget_bound
+    _ = (C_quad + C_target) * scale := by
+          ring
+
 /-- Equivalent concrete public-leaf reduction in the shifted block-parameter
 coordinates of the mode `k - j`.
 
