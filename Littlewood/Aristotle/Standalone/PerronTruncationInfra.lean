@@ -1525,4 +1525,42 @@ theorem small_T_direct_bound_from_perronVerticalIntegral_components
   Littlewood.Development.HadamardProductZeta.small_T_direct_bound_from_perron_components
     perronVerticalIntegral htrunc hresidue
 
+/-- Concrete small-`T` provider target from the finite weighted Perron-kernel
+cutoff atom plus the bounded-height residue extraction atom.
+
+This is a stricter handoff than `small_T_direct_bound_from_perronVerticalIntegral_components`:
+the truncation input has been reduced to the finite weighted cutoff error for
+`perronKernelWeightedCutoffError`.  It does not use `SmallTPerronBoundHyp`,
+`ContourRemainderBoundHyp.bound`, `general_formula_accessible`, or the false
+`perron_tail_bound_core` statement. -/
+theorem small_T_direct_bound_from_weighted_kernel_and_residue
+    (hweighted : ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x) ^ 2)
+    (hresidue : ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+        Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+  exact
+    small_T_direct_bound_from_perronVerticalIntegral_components
+      (small_T_perronVerticalIntegral_truncation_bound_from_kernel_sum_bound
+        (small_T_perronKernelFiniteSum_cutoff_bound_from_weighted_error hweighted))
+      hresidue
+
+/-- Honest non-instance provider constructor for the public small-`T` Perron
+hypothesis from the finite weighted Perron-kernel cutoff atom and the
+bounded-height residue extraction atom. -/
+theorem small_T_perron_bound_hyp_from_weighted_kernel_and_residue
+    (hweighted : ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x) ^ 2)
+    (hresidue : ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+        Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp :=
+  Littlewood.Development.HadamardProductZeta.small_T_perron_bound_hyp_of_direct_bound
+    (small_T_direct_bound_from_weighted_kernel_and_residue hweighted hresidue)
+
 end Aristotle.Standalone.PerronTruncationInfra
