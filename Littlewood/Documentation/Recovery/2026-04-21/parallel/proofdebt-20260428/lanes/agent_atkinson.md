@@ -227,3 +227,56 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-28 Coordinator Validation, Round 4
+
+- Commit amended/pushed by coordinator as `5e12977`
+  (`Close Atkinson kernel weight scale`) passed after removing an overrun
+  `ring` and fixing indentation.
+- Hard rule remains:
+  no local `lake`, `lake env lean`, `lean`, focused builds, or compilation
+  checks by this lane agent.
+
+### 2026-04-28 Round 5 Weighted-Moment Boundary Reduction
+
+- Classification: `CONDITIONAL_REDUCTION`, not a closed Fresnel atom.
+- Theorem/file attacked:
+  the uniformly bounded shifted weighted moment atom consumed by
+  `atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment`.
+- Facts banked:
+  `atkinson_shifted_quadratic_weighted_moment_bound_of_boundary_identity`
+  proves the weighted moment bound with constant `2` from the exact endpoint
+  identity
+  `∫ p in Ioc (j : ℝ) ((j : ℝ) + 1), (((4 * Real.pi * p : ℝ) : ℂ) *`
+  `Aristotle.StationaryPhaseMainMode.quadraticKernel p)`
+  `= (-Complex.I) * (Aristotle.StationaryPhaseMainMode.quadraticKernel ((j : ℝ) + 1) -`
+  `Aristotle.StationaryPhaseMainMode.quadraticKernel (j : ℝ))`.
+  `atkinson_shifted_quadratic_kernel_integral_bound_of_mass_boundary` wires
+  this reduction into the kernel bound, so the kernel leaf can now be supplied
+  by the shifted mass `O(1 / j)` estimate plus that boundary identity.
+- Failed routes:
+  a crude norm estimate on the weighted moment was not used; it gives a
+  shifted interval contribution of size `O(j)`, while the kernel split needs a
+  uniform bound. The remaining proof should use FTC for
+  `d/dp quadraticKernel p = Complex.I * ((4 * Real.pi * p : ℝ) : ℂ) *`
+  `quadraticKernel p`, not another no-cancellation estimate.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  Strict public import probes for `Littlewood.Main.LittlewoodPsi` and
+  `Littlewood.Main.LittlewoodPi` if the focused module passes.
+- Next smallest theorem:
+  prove the exact weighted-moment boundary identity
+  `∀ j : ℕ, 1 ≤ j →`
+  `(∫ p in Ioc (j : ℝ) ((j : ℝ) + 1), (((4 * Real.pi * p : ℝ) : ℂ) *`
+  `Aristotle.StationaryPhaseMainMode.quadraticKernel p))`
+  `= (-Complex.I) * (Aristotle.StationaryPhaseMainMode.quadraticKernel ((j : ℝ) + 1) -`
+  `Aristotle.StationaryPhaseMainMode.quadraticKernel (j : ℝ))`, or prove the
+  independent shifted mass bound
+  `∃ C_mass > 0, ∀ j : ℕ, 1 ≤ j →`
+  `‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `Aristotle.StationaryPhaseMainMode.quadraticKernel p‖ ≤ C_mass / j`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

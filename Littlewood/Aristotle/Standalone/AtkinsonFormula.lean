@@ -12912,6 +12912,52 @@ private theorem atkinson_shifted_quadratic_kernel_weight_scale :
           (atkinsonModeWeight (n + j) / j)) := by
           simp [A, w0, w1, base]
 
+/-- The weighted shifted quadratic moment is uniformly bounded once the exact
+FTC boundary identity for the quadratic kernel is available. This isolates the
+remaining analytic step to proving that
+`d/dp quadraticKernel p = i * (4πp) * quadraticKernel p` on each shifted
+cell and converting the interval integral to the `Ioc` form. -/
+private theorem atkinson_shifted_quadratic_weighted_moment_bound_of_boundary_identity
+    (hboundary :
+      ∀ j : ℕ, 1 ≤ j →
+        (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+            (((4 * Real.pi * p : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseMainMode.quadraticKernel p))
+          =
+        (-Complex.I) *
+          (Aristotle.StationaryPhaseMainMode.quadraticKernel ((j : ℝ) + 1) -
+            Aristotle.StationaryPhaseMainMode.quadraticKernel (j : ℝ))) :
+    ∃ C_moment > 0, ∀ j : ℕ, 1 ≤ j →
+      ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          (((4 * Real.pi * p : ℝ) : ℂ) *
+            Aristotle.StationaryPhaseMainMode.quadraticKernel p)‖ ≤ C_moment := by
+  refine ⟨2, by norm_num, ?_⟩
+  intro j hj
+  have hnorm_kernel (x : ℝ) :
+      ‖Aristotle.StationaryPhaseMainMode.quadraticKernel x‖ = 1 := by
+    unfold Aristotle.StationaryPhaseMainMode.quadraticKernel
+    exact Complex.norm_exp_I_mul_ofReal (2 * Real.pi * x ^ 2)
+  calc
+    ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+        (((4 * Real.pi * p : ℝ) : ℂ) *
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p)‖
+        =
+      ‖(-Complex.I) *
+        (Aristotle.StationaryPhaseMainMode.quadraticKernel ((j : ℝ) + 1) -
+          Aristotle.StationaryPhaseMainMode.quadraticKernel (j : ℝ))‖ := by
+          rw [hboundary j hj]
+    _ =
+      ‖Aristotle.StationaryPhaseMainMode.quadraticKernel ((j : ℝ) + 1) -
+        Aristotle.StationaryPhaseMainMode.quadraticKernel (j : ℝ)‖ := by
+          rw [norm_mul, norm_neg, Complex.norm_I, one_mul]
+    _ ≤
+      ‖Aristotle.StationaryPhaseMainMode.quadraticKernel ((j : ℝ) + 1)‖ +
+        ‖Aristotle.StationaryPhaseMainMode.quadraticKernel (j : ℝ)‖ :=
+          norm_sub_le _ _
+    _ = 2 := by
+          rw [hnorm_kernel, hnorm_kernel]
+          norm_num
+
 /-- Kernel bound with the elementary weight scale discharged; the remaining
 inputs are exactly the two shifted Fresnel estimates. -/
 private theorem atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment
@@ -12932,6 +12978,32 @@ private theorem atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment
   exact
     atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment_scale
       hmass hmoment atkinson_shifted_quadratic_kernel_weight_scale
+
+/-- Kernel bound after replacing the weighted moment atom by its exact
+quadratic-kernel boundary identity. The only remaining independent Fresnel
+input is the shifted mass `O(1 / j)` estimate. -/
+private theorem atkinson_shifted_quadratic_kernel_integral_bound_of_mass_boundary
+    (hmass :
+      ∃ C_mass > 0, ∀ j : ℕ, 1 ≤ j →
+        ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+            Aristotle.StationaryPhaseMainMode.quadraticKernel p‖ ≤ C_mass / j)
+    (hboundary :
+      ∀ j : ℕ, 1 ≤ j →
+        (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+            (((4 * Real.pi * p : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseMainMode.quadraticKernel p))
+          =
+        (-Complex.I) *
+          (Aristotle.StationaryPhaseMainMode.quadraticKernel ((j : ℝ) + 1) -
+            Aristotle.StationaryPhaseMainMode.quadraticKernel (j : ℝ))) :
+    ∃ C_kernel > 0, ∀ n j : ℕ, 3 ≤ j → 1 ≤ j → j ≤ n →
+      ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p‖
+        ≤ C_kernel * ((((n : ℝ) + 1) / atkinsonModeWeight n) *
+            (atkinsonModeWeight (n + j) / j)) := by
+  exact
+    atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment hmass
+      (atkinson_shifted_quadratic_weighted_moment_bound_of_boundary_identity hboundary)
 
 /-- The mode-eventual shifted-interval `blockMode` remainder follows once the
 native integral is close to the quadratic-anchor model and that model matches
