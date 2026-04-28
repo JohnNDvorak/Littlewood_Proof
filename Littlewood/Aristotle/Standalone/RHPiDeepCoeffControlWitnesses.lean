@@ -1,6 +1,5 @@
 import Littlewood.Aristotle.Standalone.RHPiCoeffControlClassInstances
 import Littlewood.Aristotle.Standalone.RHPiTargetTowerFromPerronThreshold
-import Littlewood.Aristotle.Standalone.RHPiUnconditionalExactSeedExistence
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -148,12 +147,14 @@ theorem coeffControlClasses_of_phaseAboveThreshold
     ⟨target_height_coeff_control_of_phaseAboveThreshold hPerron hTarget,
       antitarget_height_coeff_control_of_phaseAboveThreshold hPerron hAntiTarget⟩
 
-/-- Unconditional bundled B7 coefficient-control payload from the hard exact-seed
-boundary assumptions. -/
-theorem coeffControlClasses_unconditional :
+/-- Bundled B7 coefficient-control payload from the hard exact-seed boundary
+classes. This is a conditional endpoint, not a provider for those classes. -/
+theorem coeffControlClasses_of_exactSeedBoundaryHyp
+    [TruncatedExplicitFormulaPiHyp]
+    [TargetTowerExactSeedAbovePerronThresholdHyp]
+    [AntiTargetTowerExactSeedAbovePerronThresholdHyp] :
     Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiTargetHeightCoeffControlHyp ∧
       Aristotle.Standalone.RHPiWitnessFromExplicitFormula.RhPiAntiTargetHeightCoeffControlHyp := by
-  -- Instances auto-resolved from RHPiUnconditionalExactSeedExistence
   exact
     coeffControlClasses_of_exactSeedAboveThresholdHyp
 
