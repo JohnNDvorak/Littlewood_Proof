@@ -72,7 +72,7 @@ Agents request validation in their lane ledger. The coordinator serializes:
 | --- | --- | --- | --- |
 | 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `1d6314a` | public import probes after provider closure |
 | 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `72d85d5` | public import probes after provider closure |
-| 3 | `proofdebt/20260428-pi-phase` | active, pushed through `6a9ca1d` | public import probes after provider closure |
+| 3 | `proofdebt/20260428-pi-phase` | active, pushed through `5c2066e` | public import probes after provider closure |
 | 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `908144b` | public import probes after provider closure |
 
 ## Agent Report Contract
@@ -135,6 +135,9 @@ Each agent report must state:
     tower window to `PerronThresholdTowerWideDominationHyp`.
   - Pi/Phase `6a9ca1d`: same two focused builds passed; reduced the finite-zero
     inhomogeneous phase fit provider to a finite-set Kronecker atom.
+  - Pi/Phase `5c2066e`: same two focused builds passed; refined the finite
+    Kronecker source to a relation-compatible finite-set formulation plus the
+    zeta-specific compatibility leaf.
   - RS/Gabcke `fa96728`: `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
     passed; split Siegel/Gabcke into profile and coefficient atoms.
   - RS/Gabcke `9564c41`: same focused build set passed; reduced weighted profile
@@ -151,8 +154,8 @@ Each agent report must state:
   - Perron/B5a: uniform boundary kernel supremum, corrected boundary
     von-Mangoldt window-weight estimate, off-boundary estimate, and
     bounded-height residue extraction.
-  - Pi/Phase: Perron tower wide-domination and finite-zero relative-density
-    phase fit via the finite-set Kronecker atom.
+  - Pi/Phase: Perron tower wide-domination, relation-compatible finite-set
+    Kronecker, and zeta finite-zero compatibility.
   - RS/Gabcke: `SiegelCoordinateStationaryPhaseErrorProp` and Gabcke normalized
     coefficient content.
 - Next coordinator action: harvest Aristotle results when authenticated, then
