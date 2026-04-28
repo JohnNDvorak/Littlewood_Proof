@@ -176,18 +176,26 @@ def SiegelWeightedProfileBoundProp : Prop :=
     |(((k : ℝ) + 1 + p) * saddlePointRemainder k (blockCoord k p))| ≤
       fresnelC1Bound / Real.sqrt (2 * Real.pi)
 
+/-- Coordinate pointwise form of the same Gabcke Satz 1 absolute atom. This
+removes the profile factor `(k+1+p)` and asks directly for the normalized
+saddle remainder decay on block coordinates. -/
+def SiegelCoordinateRemainderBoundProp : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    |saddlePointRemainder k (blockCoord k p)| ≤
+      fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2)
+
 /-- Project the weighted-profile atom from the current Siegel/Gabcke class. -/
 theorem siegelWeightedProfileBoundProp_of_siegelSaddleExpansionHyp
     [h : SiegelSaddleExpansionHyp] :
     SiegelWeightedProfileBoundProp :=
   h.weighted_profile_bound
 
-/-- On block coordinates, the weighted profile bound implies the expected
-    `fresnelC1Bound · t^(-1/2)` decay for the normalized remainder. -/
-private theorem saddle_remainder_fresnel_bound_on_coords [h : SiegelSaddleExpansionHyp]
-    (k : ℕ) (p : ℝ) (hp : p ∈ Ico (0 : ℝ) 1) :
-    |saddlePointRemainder k (blockCoord k p)| ≤
-      fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2) := by
+/-- On block coordinates, the weighted profile bound is equivalent to the
+expected `fresnelC1Bound · t^(-1/2)` decay for the normalized remainder. -/
+theorem siegelCoordinateRemainderBoundProp_of_weightedProfile
+    (h : SiegelWeightedProfileBoundProp) :
+    SiegelCoordinateRemainderBoundProp := by
+  intro k p hp
   let u : ℝ := (k : ℝ) + 1 + p
   have hu_nonneg : 0 ≤ u := by
     dsimp [u]
@@ -196,7 +204,7 @@ private theorem saddle_remainder_fresnel_bound_on_coords [h : SiegelSaddleExpans
     have hk1_pos : 0 < (k : ℝ) + 1 := by positivity
     dsimp [u]
     linarith [hp.1, hk1_pos]
-  have hprof := h.weighted_profile_bound k p hp
+  have hprof := h k p hp
   have hprof' : u * |saddlePointRemainder k (blockCoord k p)| ≤
       fresnelC1Bound / Real.sqrt (2 * Real.pi) := by
     simpa [u, abs_mul, abs_of_nonneg hu_nonneg, mul_comm, mul_left_comm, mul_assoc] using hprof
@@ -214,6 +222,55 @@ private theorem saddle_remainder_fresnel_bound_on_coords [h : SiegelSaddleExpans
           rw [div_eq_mul_inv, one_div]
     _ = fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2) := by
           rw [blockCoord_rpow_neg_half k p hp.1]
+
+/-- The coordinate pointwise remainder bound implies the weighted profile
+bound by multiplying through by the positive block-coordinate factor. -/
+theorem siegelWeightedProfileBoundProp_of_coordinateRemainder
+    (h : SiegelCoordinateRemainderBoundProp) :
+    SiegelWeightedProfileBoundProp := by
+  intro k p hp
+  let u : ℝ := (k : ℝ) + 1 + p
+  have hu_nonneg : 0 ≤ u := by
+    dsimp [u]
+    linarith [hp.1]
+  have hu_pos : 0 < u := by
+    have hk1_pos : 0 < (k : ℝ) + 1 := by positivity
+    dsimp [u]
+    linarith [hp.1, hk1_pos]
+  have hcoord := h k p hp
+  rw [blockCoord_rpow_neg_half k p hp.1] at hcoord
+  have hmul :
+      u * |saddlePointRemainder k (blockCoord k p)| ≤
+        u * (fresnelC1Bound * (1 / (Real.sqrt (2 * Real.pi) * u))) :=
+    mul_le_mul_of_nonneg_left hcoord hu_nonneg
+  have hsqrt_ne : Real.sqrt (2 * Real.pi) ≠ 0 := Real.sqrt_ne_zero'.mpr (by positivity)
+  have hscaled :
+      u * |saddlePointRemainder k (blockCoord k p)| ≤
+        fresnelC1Bound / Real.sqrt (2 * Real.pi) := by
+    calc
+      u * |saddlePointRemainder k (blockCoord k p)|
+          ≤ u * (fresnelC1Bound * (1 / (Real.sqrt (2 * Real.pi) * u))) := hmul
+      _ = fresnelC1Bound / Real.sqrt (2 * Real.pi) := by
+            field_simp [hu_pos.ne', hsqrt_ne]
+  simpa [u, abs_mul, abs_of_nonneg hu_nonneg, mul_comm, mul_left_comm, mul_assoc] using hscaled
+
+/-- The weighted-profile and coordinate pointwise forms of the Gabcke Satz 1
+absolute atom are exactly equivalent. -/
+theorem siegelWeightedProfileBoundProp_iff_coordinateRemainder :
+    SiegelWeightedProfileBoundProp ↔ SiegelCoordinateRemainderBoundProp :=
+  ⟨siegelCoordinateRemainderBoundProp_of_weightedProfile,
+    siegelWeightedProfileBoundProp_of_coordinateRemainder⟩
+
+/-- On block coordinates, the weighted profile bound implies the expected
+    `fresnelC1Bound · t^(-1/2)` decay for the normalized remainder. -/
+private theorem saddle_remainder_fresnel_bound_on_coords [h : SiegelSaddleExpansionHyp]
+    (k : ℕ) (p : ℝ) (hp : p ∈ Ico (0 : ℝ) 1) :
+    |saddlePointRemainder k (blockCoord k p)| ≤
+      fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2) := by
+  have hcoord : SiegelCoordinateRemainderBoundProp :=
+    siegelCoordinateRemainderBoundProp_of_weightedProfile
+      siegelWeightedProfileBoundProp_of_siegelSaddleExpansionHyp
+  exact hcoord k p hp
 
 /-- Admissible coefficient witness recovered from the weighted block profile. -/
 private theorem saddle_remainder_admissible_constant [h : SiegelSaddleExpansionHyp]

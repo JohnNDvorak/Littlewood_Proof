@@ -86,3 +86,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   coefficient identity/nonnegativity/antitonicity atoms.
 - Coordinator action requested:
   run the requested serialized validation commands.
+
+### 2026-04-28 Round 2: weighted profile to coordinate remainder
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Theorem/file attacked:
+  `SiegelWeightedProfileBoundProp` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Proof facts banked:
+  - Added `SiegelCoordinateRemainderBoundProp`, the coordinate pointwise form
+    of the Gabcke Satz 1 absolute atom:
+    `|saddlePointRemainder k (blockCoord k p)| <=
+      fresnelC1Bound * (blockCoord k p)^(-(1:Real)/2)`.
+  - Added
+    `siegelCoordinateRemainderBoundProp_of_weightedProfile`.
+  - Added
+    `siegelWeightedProfileBoundProp_of_coordinateRemainder`.
+  - Added
+    `siegelWeightedProfileBoundProp_iff_coordinateRemainder`.
+  - Reused this public equivalence in the existing private
+    `saddle_remainder_fresnel_bound_on_coords` helper.
+- Failed routes that should not be retried:
+  none in this round. I did not use the signed coefficient surface or the
+  legacy block-independence/profile route.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - `git diff --check`: passed.
+  - No Lean/Lake/full-build commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`
+  - `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+  - `printf 'import Littlewood.Main.LittlewoodPsi\n' | lake env lean --stdin`
+  - `printf 'import Littlewood.Main.LittlewoodPi\n' | lake env lean --stdin`
+- Smallest next theorem:
+  prove `SiegelCoordinateRemainderBoundProp` from the actual steepest-descent
+  coefficient calculation. This is now the absolute Satz 1 target without the
+  extra weighted-profile algebra.
+- Coordinator action requested:
+  run the requested serialized validation commands.
