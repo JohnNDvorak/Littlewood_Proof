@@ -150,6 +150,19 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   run serialized validation when the build mutex permits; no full project build
   requested by this lane.
 
+### 2026-04-28 Coordinator Validation
+
+- Coordinator proof repair:
+  changed the cutoff algebra proof to rewrite `Finset.sum_sub_distrib` in the
+  reverse direction and use `Finset.abs_sum_le_sum_abs`.
+- Focused module check:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` passed.
+- Strict public import checks:
+  `import Littlewood.Main.LittlewoodPsi` passed.
+  `import Littlewood.Main.LittlewoodPi` passed.
+- Integration status:
+  ready to commit and merge into the main recovery branch.
+
 ### 2026-04-28 Coordinator Validation, Truncation Kernel Cutoff
 
 - `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`: passed.
@@ -349,6 +362,51 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   statement
   `∃ Ck > 0, ∀ x T, x ≥ 2 → 2 ≤ T → T ≤ 16 →
     |chebyshevPsi x - perronKernelFiniteSum x T| ≤ Ck * (Real.log x)^2`.
+- Requested coordinator validation commands:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`;
+  minimal import probe for `Littlewood.Main.LittlewoodPsi`;
+  minimal import probe for `Littlewood.Main.LittlewoodPi`.
+- Coordinator action requested:
+  run serialized validation when the build mutex permits; no full project build
+  requested by this lane.
+
+### 2026-04-28 Overnight Continuation, Weighted Kernel Error
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Current theorem/file attacked:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`,
+  `small_T_perronKernelFiniteSum_cutoff_bound`.
+- Definitions/theorems added:
+  `Aristotle.Standalone.PerronTruncationInfra.perronKernelWeightedCutoffError`;
+  `Aristotle.Standalone.PerronTruncationInfra.small_T_perronKernelFiniteSum_cutoff_bound_from_weighted_error`.
+- Reduction banked:
+  the finite Perron-kernel estimate now follows from a purely finite weighted
+  per-term cutoff-error estimate:
+  `perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x)^2`, uniformly for
+  `x ≥ 2` and `2 ≤ T ≤ 16`.
+  The algebraic reduction unfolds `chebyshevPsi` and `perronKernelFiniteSum`,
+  rewrites their difference as
+  `∑ Λ(n) * (1 - perronPerTermIntegral (x/n) c T)`, and applies the finite
+  triangle inequality plus `vonMangoldt_nonneg`.
+- Circular routes avoided:
+  did not use `SmallTPerronBoundHyp`, `ContourRemainderBoundHyp.bound`,
+  `general_formula_accessible`, `small_T_contour_bound`, or any full
+  explicit-formula provider route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  this ledger.
+- Static command results:
+  `git status --short --branch` showed checkpoint `f6ced10` before edits.
+  `git diff --check` succeeded with no output.
+  Static `rg`/`sed` inspection only; no Lean/Lake/build/cache commands were
+  run in this continuation.
+- Smallest next theorem:
+  `PerronTruncationInfra.small_T_perronKernelWeightedCutoffError_bound` with
+  statement
+  `∃ Cw > 0, ∀ x T, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+    perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x)^2`.
+  This should be proved from the existing `perron_per_term_large_bound` plus a
+  local treatment of the sharp-cutoff boundary term near `n = x`.
 - Requested coordinator validation commands:
   `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`;
   minimal import probe for `Littlewood.Main.LittlewoodPsi`;

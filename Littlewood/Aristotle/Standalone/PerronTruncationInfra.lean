@@ -1381,6 +1381,62 @@ def perronKernelFiniteSum (x T : ℝ) : ℝ :=
     ArithmeticFunction.vonMangoldt n *
       perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T
 
+/-- Weighted finite cutoff error for the Perron kernel. This is the sharp-cutoff
+finite-sum atom left after the vertical integral has been exchanged with the
+von Mangoldt Dirichlet series. -/
+def perronKernelWeightedCutoffError (x T : ℝ) : ℝ :=
+  ∑ n ∈ Finset.range (Nat.floor x + 1),
+    ArithmeticFunction.vonMangoldt n *
+      |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T|
+
+/-- Finite Perron-kernel cutoff from a weighted per-term cutoff-error bound.
+
+The only remaining analytic content is the weighted finite sum
+`perronKernelWeightedCutoffError`: after unfolding `chebyshevPsi` and
+`perronKernelFiniteSum`, the difference is a finite sum of
+`Λ(n) * (1 - perronPerTermIntegral (x/n) c T)`, and the triangle inequality
+reduces it to the weighted absolute error. -/
+theorem small_T_perronKernelFiniteSum_cutoff_bound_from_weighted_error
+    (hweighted : ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x) ^ 2) :
+    ∃ Ck > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T| ≤
+        Ck * (Real.log x) ^ 2 := by
+  rcases hweighted with ⟨Cw, hCw_pos, hweighted⟩
+  refine ⟨Cw, hCw_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hrewrite :
+      Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T =
+        ∑ n ∈ Finset.range (Nat.floor x + 1),
+          ArithmeticFunction.vonMangoldt n *
+            (1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T) := by
+    dsimp [Aristotle.DirichletPhaseAlignment.chebyshevPsi, perronKernelFiniteSum]
+    rw [← Finset.sum_sub_distrib]
+    apply Finset.sum_congr rfl
+    intro n _hn
+    ring
+  calc |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T|
+      = |∑ n ∈ Finset.range (Nat.floor x + 1),
+          ArithmeticFunction.vonMangoldt n *
+            (1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T)| := by
+            rw [hrewrite]
+    _ ≤ ∑ n ∈ Finset.range (Nat.floor x + 1),
+          |ArithmeticFunction.vonMangoldt n *
+            (1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T)| := by
+            exact Finset.abs_sum_le_sum_abs
+              (fun n ↦ ArithmeticFunction.vonMangoldt n *
+                (1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T))
+              (Finset.range (Nat.floor x + 1))
+    _ = perronKernelWeightedCutoffError x T := by
+            dsimp [perronKernelWeightedCutoffError]
+            apply Finset.sum_congr rfl
+            intro n _hn
+            rw [abs_mul, abs_of_nonneg (vonMangoldt_nonneg n)]
+    _ ≤ Cw * (Real.log x) ^ 2 := hweighted x T hx hT_lo hT_hi
+
 /-- Small-`T` truncation for the concrete vertical integral from the finite
 Perron-kernel cutoff estimate.
 
