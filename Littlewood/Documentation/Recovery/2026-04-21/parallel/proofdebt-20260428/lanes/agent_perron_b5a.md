@@ -319,3 +319,62 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   boundary decomposition further before attempting the off-boundary estimate.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-28 Round 7 - Boundary Kernel Diagonal Split
+
+- Classification: `TARGET_FALSE_AS_STATED_REDUCED_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  decaying boundary-kernel estimate for `perronPerTermIntegral` on the full
+  boundary window in
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Scale obstruction:
+  the requested full-window per-term estimate
+  `|1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T|
+    <= K * (T * (Real.log x)^2 / x)`
+  is false when `x` is an integer and `n = x`.  Then `x / n = 1`, and the
+  truncated Perron kernel has a jump-size error bounded away from zero for
+  fixed `2 <= T <= 16`, while `T * (log x)^2 / x -> 0`.
+- Code facts banked:
+  added `perronKernelWeightedExactHitBoundaryError` for the exact integer
+  diagonal `n = x`.
+  Added `perronKernelWeightedPuncturedBoundaryWindowError` for the boundary
+  window with `n = x` removed.
+  Proved
+  `perronKernelWeightedBoundaryWindowError_eq_exactHit_add_punctured`, an exact
+  finite-sum split of the boundary window into these two pieces.
+  Added
+  `perronKernelWeightedPuncturedBoundaryWindowError_le_kernelSup_mul_vonMangoldtWeight`,
+  bounding the punctured weighted error by a punctured kernel supremum times the
+  full boundary-window von Mangoldt weight.
+  Added
+  `small_T_boundary_window_bound_from_punctured_scaled_kernel_linear_weight_and_exactHit`,
+  reducing the boundary-window atom to:
+  1. an exact-hit weighted error bound
+     `perronKernelWeightedExactHitBoundaryError x T <= Ce * (Real.log x)^2`;
+  2. a punctured-window decaying kernel bound at scale
+     `K * (T * (Real.log x)^2 / x)`;
+  3. the already validated linear boundary-window weight bound
+     `perronKernelBoundaryWindowVonMangoldtWeight x T <= Cv * (x / T)`.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports, or any
+  theorem consuming `SmallTPerronBoundHyp`.  Did not use or modify
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
+  followed by strict public import probes for `Littlewood.Main.LittlewoodPsi`
+  and `Littlewood.Main.LittlewoodPi` if the focused build passes.
+- Smallest next theorem:
+  first close the exact-hit bound
+  `∃ Ce > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelWeightedExactHitBoundaryError x T
+      <= Ce * (Real.log x)^2`.
+  Then attack the punctured kernel estimate, with `n = x` excluded:
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈ puncturedBoundary(x,T),
+    |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T|
+      <= K * (T * (Real.log x)^2 / x)`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

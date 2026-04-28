@@ -1399,6 +1399,25 @@ def perronKernelWeightedBoundaryWindowError (x T : ℝ) : ℝ :=
     ArithmeticFunction.vonMangoldt n *
       |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
 
+/-- Exact-hit part of the boundary-window weighted error.  This isolates the
+integer discontinuity `n = x`, where the Perron kernel has a jump-size error and
+the decaying boundary-kernel estimate is not scale-correct. -/
+def perronKernelWeightedExactHitBoundaryError (x T : ℝ) : ℝ :=
+  ∑ n ∈ ((Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => |x - (n : ℝ)| ≤ x / T)).filter
+        (fun n : ℕ => (n : ℝ) = x),
+    ArithmeticFunction.vonMangoldt n *
+      |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+
+/-- Punctured boundary-window weighted error, with the exact integer hit
+removed.  This is the scale-correct location for the decaying kernel estimate. -/
+def perronKernelWeightedPuncturedBoundaryWindowError (x T : ℝ) : ℝ :=
+  ∑ n ∈ ((Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => |x - (n : ℝ)| ≤ x / T)).filter
+        (fun n : ℕ => (n : ℝ) ≠ x),
+    ArithmeticFunction.vonMangoldt n *
+      |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+
 /-- Pure von Mangoldt weight of the boundary window. This is the exact
 arithmetic count/log-weight atom left after separating the uniformly bounded
 kernel factor. -/
@@ -1428,6 +1447,26 @@ theorem perronKernelWeightedCutoffError_eq_boundary_add_offBoundary
     (Finset.sum_filter_add_sum_filter_not
       (Finset.range (Nat.floor x + 1))
       (fun n : ℕ => |x - (n : ℝ)| ≤ x / T)
+      (fun n =>
+        ArithmeticFunction.vonMangoldt n *
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|)).symm
+
+/-- Boundary-window split into the exact integer hit and the punctured boundary
+window. -/
+theorem perronKernelWeightedBoundaryWindowError_eq_exactHit_add_punctured
+    (x T : ℝ) :
+    perronKernelWeightedBoundaryWindowError x T =
+      perronKernelWeightedExactHitBoundaryError x T +
+        perronKernelWeightedPuncturedBoundaryWindowError x T := by
+  classical
+  dsimp [perronKernelWeightedBoundaryWindowError,
+    perronKernelWeightedExactHitBoundaryError,
+    perronKernelWeightedPuncturedBoundaryWindowError]
+  exact
+    (Finset.sum_filter_add_sum_filter_not
+      ((Finset.range (Nat.floor x + 1)).filter
+        (fun n : ℕ => |x - (n : ℝ)| ≤ x / T))
+      (fun n : ℕ => (n : ℝ) = x)
       (fun n =>
         ArithmeticFunction.vonMangoldt n *
           |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|)).symm
@@ -1488,6 +1527,45 @@ theorem perronKernelWeightedBoundaryWindowError_le_kernelSup_mul_vonMangoldtWeig
     _ = K * perronKernelBoundaryWindowVonMangoldtWeight x T := by
         dsimp [perronKernelBoundaryWindowVonMangoldtWeight, s]
         rw [Finset.mul_sum]
+
+/-- Punctured boundary-window weighted error is controlled by a punctured
+kernel supremum times the full boundary-window von Mangoldt weight. -/
+theorem perronKernelWeightedPuncturedBoundaryWindowError_le_kernelSup_mul_vonMangoldtWeight
+    (x T K : ℝ) (hK_nonneg : 0 ≤ K)
+    (hkernel : ∀ n : ℕ,
+      n ∈ ((Finset.range (Nat.floor x + 1)).filter
+          (fun n : ℕ => |x - (n : ℝ)| ≤ x / T)).filter
+            (fun n : ℕ => (n : ℝ) ≠ x) →
+        |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤ K) :
+    perronKernelWeightedPuncturedBoundaryWindowError x T ≤
+      K * perronKernelBoundaryWindowVonMangoldtWeight x T := by
+  classical
+  let s := (Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => |x - (n : ℝ)| ≤ x / T)
+  let sp := s.filter (fun n : ℕ => (n : ℝ) ≠ x)
+  calc perronKernelWeightedPuncturedBoundaryWindowError x T
+      = ∑ n ∈ sp,
+          ArithmeticFunction.vonMangoldt n *
+            |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| := by
+        rfl
+    _ ≤ ∑ n ∈ sp, ArithmeticFunction.vonMangoldt n * K := by
+        apply Finset.sum_le_sum
+        intro n hn
+        exact mul_le_mul_of_nonneg_left (hkernel n hn) (vonMangoldt_nonneg n)
+    _ = K * ∑ n ∈ sp, ArithmeticFunction.vonMangoldt n := by
+        rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl
+        intro n _hn
+        ring
+    _ ≤ K * perronKernelBoundaryWindowVonMangoldtWeight x T := by
+        apply mul_le_mul_of_nonneg_left _ hK_nonneg
+        dsimp [perronKernelBoundaryWindowVonMangoldtWeight, s, sp]
+        exact
+          Finset.sum_le_sum_of_subset_of_nonneg
+            (Finset.filter_subset _ _)
+            (by
+              intro n _hn_s _hn_not_sp
+              exact vonMangoldt_nonneg n)
 
 /-- The concrete `DirichletPhaseAlignment.chebyshevPsi` finite-range
 definition agrees with Mathlib's Chebyshev `psi`. -/
@@ -1630,6 +1708,58 @@ theorem small_T_boundary_window_bound_from_scaled_kernel_and_linear_weight
         mul_le_mul_of_nonneg_left hweight_x hfactor_nonneg
     _ = K * Cv * (Real.log x) ^ 2 := by
         field_simp [ne_of_gt hx_pos, ne_of_gt hT_pos]
+
+/-- Scale-correct boundary-window reduction with the exact integer hit removed.
+
+The full decaying per-term kernel estimate is false at `n = x`.  This theorem
+therefore separates the jump atom from the punctured boundary window, where the
+decaying kernel estimate is the remaining analytic task. -/
+theorem small_T_boundary_window_bound_from_punctured_scaled_kernel_linear_weight_and_exactHit
+    (hexact : ∃ Ce > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedExactHitBoundaryError x T ≤ Ce * (Real.log x) ^ 2)
+    (hkernel : ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ ((Finset.range (Nat.floor x + 1)).filter
+            (fun n : ℕ => |x - (n : ℝ)| ≤ x / T)).filter
+              (fun n : ℕ => (n : ℝ) ≠ x) →
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤
+            K * (T * (Real.log x) ^ 2 / x))
+    (hweight : ∃ Cv > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelBoundaryWindowVonMangoldtWeight x T ≤ Cv * (x / T)) :
+    ∃ Cb > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedBoundaryWindowError x T ≤ Cb * (Real.log x) ^ 2 := by
+  rcases hexact with ⟨Ce, hCe_pos, hexact⟩
+  rcases hkernel with ⟨K, hK_pos, hkernel⟩
+  rcases hweight with ⟨Cv, hCv_pos, hweight⟩
+  refine ⟨Ce + K * Cv, add_pos hCe_pos (mul_pos hK_pos hCv_pos), ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hx_pos : 0 < x := by linarith
+  have hT_pos : 0 < T := by linarith
+  have hexact_x := hexact x T hx hT_lo hT_hi
+  have hkernel_x := hkernel x T hx hT_lo hT_hi
+  have hweight_x := hweight x T hx hT_lo hT_hi
+  have hfactor_nonneg : 0 ≤ K * (T * (Real.log x) ^ 2 / x) :=
+    mul_nonneg hK_pos.le
+      (div_nonneg (mul_nonneg hT_pos.le (sq_nonneg (Real.log x))) hx_pos.le)
+  have hpunctured :
+      perronKernelWeightedPuncturedBoundaryWindowError x T ≤
+        K * Cv * (Real.log x) ^ 2 := by
+    calc perronKernelWeightedPuncturedBoundaryWindowError x T
+        ≤ K * (T * (Real.log x) ^ 2 / x) *
+            perronKernelBoundaryWindowVonMangoldtWeight x T :=
+          perronKernelWeightedPuncturedBoundaryWindowError_le_kernelSup_mul_vonMangoldtWeight
+            x T (K * (T * (Real.log x) ^ 2 / x)) hfactor_nonneg hkernel_x
+      _ ≤ K * (T * (Real.log x) ^ 2 / x) * (Cv * (x / T)) :=
+          mul_le_mul_of_nonneg_left hweight_x hfactor_nonneg
+      _ = K * Cv * (Real.log x) ^ 2 := by
+          field_simp [ne_of_gt hx_pos, ne_of_gt hT_pos]
+  calc perronKernelWeightedBoundaryWindowError x T
+      = perronKernelWeightedExactHitBoundaryError x T +
+          perronKernelWeightedPuncturedBoundaryWindowError x T :=
+        perronKernelWeightedBoundaryWindowError_eq_exactHit_add_punctured x T
+    _ ≤ Ce * (Real.log x) ^ 2 + K * Cv * (Real.log x) ^ 2 :=
+        add_le_add hexact_x hpunctured
+    _ = (Ce + K * Cv) * (Real.log x) ^ 2 := by ring
 
 /-- Finite Perron-kernel cutoff from a weighted per-term cutoff-error bound.
 
