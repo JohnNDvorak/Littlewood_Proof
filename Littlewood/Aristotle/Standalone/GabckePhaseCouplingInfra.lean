@@ -1519,6 +1519,38 @@ def GabckeNormalizedCoefficientProp : Prop :=
   (∀ k : ℕ, 1 ≤ k → ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
     normalizedSignedSPR (k + 1) p ≤ normalizedSignedSPR k p)
 
+/-- Formula-level input below `GabckeNormalizedCoefficientProp`.
+
+For a candidate explicit Gabcke coefficient formula `C k p`, this asks for:
+1. exact identification of the normalized signed saddle coefficient with `C`;
+2. nonnegativity of that formula on the Gabcke range;
+3. adjacent antitonicity of that formula.
+
+The missing analytic step is to instantiate `C` with Gabcke's explicit
+Tabelle-1 signed coefficient expression and prove the last two elementary
+inequalities from that formula. -/
+def GabckeNormalizedCoefficientFormulaProp (C : ℕ → ℝ → ℝ) : Prop :=
+  (∀ k : ℕ, ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
+    normalizedSignedSPR k p = C k p) ∧
+  (∀ k : ℕ, 1 ≤ k → ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
+    0 ≤ C k p) ∧
+  (∀ k : ℕ, 1 ≤ k → ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
+    C (k + 1) p ≤ C k p)
+
+/-- A verified explicit coefficient formula immediately supplies the normalized
+coefficient target. -/
+theorem gabckeNormalizedCoefficientProp_of_coefficientFormula
+    {C : ℕ → ℝ → ℝ}
+    (h : GabckeNormalizedCoefficientFormulaProp C) :
+    GabckeNormalizedCoefficientProp := by
+  constructor
+  · intro k hk p hp
+    rw [h.1 k p hp]
+    exact h.2.1 k hk p hp
+  · intro k hk p hp
+    rw [h.1 (k + 1) p hp, h.1 k p hp]
+    exact h.2.2 k hk p hp
+
 /-- Nonnegativity of the normalized coefficient implies nonnegativity of the
 signed saddle-point remainder because `k+1+p > 0` on the block parameter
 range. -/
@@ -1748,6 +1780,14 @@ theorem gabckeSignedAdjacentProp_of_normalizedCoefficient
     steepestDescentAdjacentCoupling_of_normalizedCoefficient h
   exact gabckeSignedAdjacentProp_of_coupling
 
+/-- Direct adjacent Gabcke surface from an explicit coefficient formula. -/
+theorem gabckeSignedAdjacentProp_of_coefficientFormula
+    {C : ℕ → ℝ → ℝ}
+    (h : GabckeNormalizedCoefficientFormulaProp C) :
+    GabckeSignedAdjacentProp :=
+  gabckeSignedAdjacentProp_of_normalizedCoefficient
+    (gabckeNormalizedCoefficientProp_of_coefficientFormula h)
+
 /-- Direct theorem-first adjacent Gabcke surface from the two
 `SiegelSaddleExpansionHyp` adjacent atoms. This is the smaller provider
 boundary consumed before packaging into the legacy phase-coupling class. -/
@@ -1776,6 +1816,15 @@ theorem remainder_antitone_for_ge_one_of_normalizedCoefficient
     blockRemainder (k + 1) ≤ blockRemainder k :=
   remainder_antitone_for_ge_one_of_adjacent_prop
     (gabckeSignedAdjacentProp_of_normalizedCoefficient h) k hk
+
+/-- Direct remainder antitonicity from an explicit coefficient formula. -/
+theorem remainder_antitone_for_ge_one_of_coefficientFormula
+    {C : ℕ → ℝ → ℝ}
+    (h : GabckeNormalizedCoefficientFormulaProp C)
+    (k : ℕ) (hk : 1 ≤ k) :
+    blockRemainder (k + 1) ≤ blockRemainder k :=
+  remainder_antitone_for_ge_one_of_normalizedCoefficient
+    (gabckeNormalizedCoefficientProp_of_coefficientFormula h) k hk
 
 /-- Direct theorem-first remainder antitonicity from
 `SiegelSaddleExpansionHyp`, bypassing the legacy `GabckePhaseCouplingHyp`

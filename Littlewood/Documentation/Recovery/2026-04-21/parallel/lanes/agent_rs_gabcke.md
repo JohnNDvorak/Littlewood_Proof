@@ -148,6 +148,20 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - Coordinator action requested: run the exact validation commands above under
   serialized validation.
 
+### 2026-04-28 Coordinator Validation, Formula Boundary Round
+
+- `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`:
+  passed.
+- `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`: passed.
+- `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`: passed.
+- `import Littlewood.Main.LittlewoodPsi`: passed.
+- `import Littlewood.Main.LittlewoodPi`: passed.
+- Validation output included existing warnings only; no errors.
+- This round banks the formula-level route:
+  `GabckeNormalizedCoefficientFormulaProp C` implies
+  `GabckeNormalizedCoefficientProp`, `GabckeSignedAdjacentProp`, and the
+  needed remainder antitonicity.
+
 ### 2026-04-28 Coordinator Validation, Round 2
 
 - Initial `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`
@@ -167,6 +181,46 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   - `import Littlewood.Main.LittlewoodPi`: passed.
 - Validation output included existing linter warnings in imported files; no
   errors after the repair.
+
+### 2026-04-28 Overnight Round 3: explicit formula interface
+
+- Status: CONDITIONAL_REDUCTION, pending coordinator validation.
+- Current theorem/file attacked:
+  `Littlewood/Aristotle/Standalone/GabckePhaseCouplingInfra.lean`.
+- Static inspection:
+  no formal explicit Gabcke first signed coefficient formula exists in the
+  current RS/Gabcke files. Existing files contain prose references to
+  Gabcke's Tabelle-1 coefficient and numerical absolute bounds, but no
+  function that states the exact signed coefficient expression whose sign and
+  adjacent monotonicity can be checked directly.
+- Proof facts banked:
+  - Added `GabckeNormalizedCoefficientFormulaProp (C : Nat -> Real -> Real)`.
+    This is the theorem-shaped formula interface below
+    `GabckeNormalizedCoefficientProp`: it asks for exact equality
+    `normalizedSignedSPR k p = C k p`, nonnegativity of `C`, and adjacent
+    antitonicity of `C`.
+  - Added `gabckeNormalizedCoefficientProp_of_coefficientFormula`.
+  - Added `gabckeSignedAdjacentProp_of_coefficientFormula`.
+  - Added `remainder_antitone_for_ge_one_of_coefficientFormula`.
+- Exact formula input still missing:
+  instantiate `C k p` with Gabcke's explicit signed first-coefficient formula
+  after normalization by `k+1+p`, then prove
+  `0 <= C k p` and `C (k + 1) p <= C k p` for `1 <= k`,
+  `p in Ioc 0 1`.
+- Why this is smaller than the current class gap:
+  it no longer mentions `SiegelSaddleExpansionHyp` or its absolute
+  `weighted_profile_bound`; it is only the exact coefficient identity plus the
+  two elementary inequalities needed for signed adjacent coupling.
+- Failed routes that should not be retried:
+  none in this round; no Lean/Lake/build commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`
+  - `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+  - minimal import probe for `Littlewood.Main.LittlewoodPsi`
+  - minimal import probe for `Littlewood.Main.LittlewoodPi`
+- Coordinator action requested: run the exact validation commands above under
+  serialized validation.
 
 ### 2026-04-28 Coordinator Validation
 
