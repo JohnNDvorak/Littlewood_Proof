@@ -45,6 +45,19 @@ theorem lll_eventually_ge_one : ∀ᶠ x in atTop, 1 ≤ lll x := by
   rwa [← Real.log_exp 1, Real.log_le_log_iff (Real.exp_pos _)
     (lt_of_lt_of_le (Real.exp_pos _) hlog2)]
 
+/-- log(log(log x)) eventually dominates every fixed real constant. -/
+theorem eventually_ge_lll_const (A : ℝ) : ∀ᶠ x in atTop, A ≤ lll x := by
+  filter_upwards [eventually_ge_atTop (Real.exp (Real.exp (Real.exp A)))] with x hx
+  unfold lll
+  have hlog1 : Real.exp (Real.exp A) ≤ Real.log x := by
+    rwa [← Real.log_exp (Real.exp (Real.exp A)), Real.log_le_log_iff (Real.exp_pos _)
+      (lt_of_lt_of_le (Real.exp_pos _) hx)]
+  have hlog2 : Real.exp A ≤ Real.log (Real.log x) := by
+    rwa [← Real.log_exp (Real.exp A), Real.log_le_log_iff (Real.exp_pos _)
+      (lt_of_lt_of_le (Real.exp_pos _) hlog1)]
+  rwa [← Real.log_exp A, Real.log_le_log_iff (Real.exp_pos _)
+    (lt_of_lt_of_le (Real.exp_pos _) hlog2)]
+
 /-- √x · log(log(log x)) ≥ 0 eventually. -/
 theorem sqrt_mul_lll_eventually_nonneg :
     ∀ᶠ x in atTop, 0 ≤ Real.sqrt x * lll x := by

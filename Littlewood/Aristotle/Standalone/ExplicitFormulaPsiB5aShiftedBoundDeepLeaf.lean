@@ -7,7 +7,7 @@ This file carries the analytic Perron/residue/contour payload:
 The main-chain atomic theorem in `ExplicitFormulaPsiB5aShiftedBoundAtomic.lean`
 is now a sorry-free wrapper that references this leaf theorem.
 
-SORRY COUNT: 0 (closed via cross-module reference to CombinedB5aRHPiDeepLeaf.lean)
+SORRY COUNT: 1 (explicit B5a analytic frontier)
 -/
 
 import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aDefs
@@ -20,7 +20,6 @@ import Littlewood.Aristotle.Standalone.ExternalPort.StrongPNTGlobalPayloadAutoIn
 import Littlewood.Aristotle.Standalone.ExternalPort.StrongPNTGlobalRootConstructors
 import Littlewood.Aristotle.Standalone.ExternalPort.StrongPNTConcreteProviderAutoInstances
 import Littlewood.Aristotle.Standalone.ExternalPort.B5aExternalConcreteProvider
-import Littlewood.Aristotle.Standalone.CombinedB5aRHPiDeepLeaf
 
 set_option maxHeartbeats 800000
 set_option relaxedAutoImplicit false
@@ -70,8 +69,12 @@ Use `shifted_remainder_bound_candidate_of_concrete_external_components` with:
 theorem shifted_remainder_bound_leaf :
     ∃ C₂ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
       |shiftedRemainderRe x T| ≤
-        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
-  Aristotle.Standalone.CombinedB5aRHPiDeepLeaf.combined_b5a_rhpi_leaf.1
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+  -- The conditional Perron provider currently requires
+  -- `ShiftedRemainderSegmentBoundLargeTHyp`; keep this as the explicit B5a
+  -- analytic frontier instead of hiding that dependency behind a failed
+  -- cross-module reference.
+  sorry
 
 /-- Candidate closure route for this deep leaf from the standalone
 general truncated explicit-formula class. -/

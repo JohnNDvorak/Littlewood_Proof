@@ -15,6 +15,7 @@ import Littlewood.ZetaZeros.RvMFormulaProof          -- |ζ-1|<1, ζ∈slitPlane
 import Littlewood.Aristotle.XiLogDerivDecomposition  -- logDeriv(ξ) product decomposition (0 sorries) ✓
 import Littlewood.ZetaZeros.RvMZetaFTC              -- FTC for logDeriv(ζ) on σ=2 line (0 sorries) ✓
 import Littlewood.ZetaZeros.RvMContourLinearity     -- Contour integral linearity for RvM (0 sorries) ✓
+import Littlewood.Aristotle.Standalone.AnalyticOrderAtConj -- analytic order of ζ is conjugation-invariant (0 sorries) ✓
 
 -- Explicit formulas
 import Littlewood.ExplicitFormulas.ExplicitFormulaPsi
@@ -67,6 +68,7 @@ import Littlewood.Aristotle.ZetaMeanSquare         -- Mean square estimates (0 s
 import Littlewood.Aristotle.PartialZetaNormSq      -- |partial zeta|² expansion (0 sorries) ✓
 import Littlewood.Aristotle.PartialZetaNormSqV2    -- General |partial zeta|² (0 sorries) ✓
 import Littlewood.Aristotle.IntegralArctanFormula  -- ∫Re(1/(c+ti)) = 2arctan (0 sorries) ✓
+import Littlewood.Aristotle.Standalone.JensenZeroCounting -- recovered Jensen zero-counting infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.CriticalZeros          -- Critical zeros (0 sorries) ✓
 import Littlewood.Aristotle.ZetaZerosFiniteBelow   -- Finitely many zeros below T (0 sorries) ✓
 import Littlewood.Aristotle.ZetaZerosFiniteBelowV2 -- Finite zeros via isolated zeros principle (0 sorries) ✓
@@ -82,6 +84,8 @@ import Littlewood.Aristotle.HarmonicSumIntegral    -- ∫H_{N(t)} = Θ(T log T) 
 import Littlewood.Aristotle.HorizontalSegmentBounds -- Horizontal segment bounds (0 sorries) ✓
 import Littlewood.Aristotle.PerronContourIntegrals -- Perron contour integrals (0 sorries) ✓
 import Littlewood.Aristotle.PerronContourIntegralsV2 -- Perron contour integrals v2 (1 sorry)
+import Littlewood.Aristotle.Standalone.PerronKernelTruncation -- recovered Perron kernel truncation infrastructure (0 sorries) ✓
+import Littlewood.Aristotle.Standalone.PerronTruncationAtomics -- recovered Perron truncation atomics (0 sorries) ✓
 -- import Littlewood.Bridge.HardyAssemblyAttempt    -- DEPRECATED: V1 exploration file, superseded by V2 chain
 import Littlewood.Aristotle.StirlingGammaBounds  -- Stirling/Gamma bounds (0 sorries) ✓
 import Littlewood.Aristotle.StirlingBernoulli    -- Bernoulli B1/B2, continuity, ∫B1=B2/2-1/12 (0 sorries) ✓
@@ -89,6 +93,7 @@ import Littlewood.Aristotle.StirlingBernoulli    -- Bernoulli B1/B2, continuity,
 -- Analysis infrastructure (no conflicts)
 import Littlewood.Aristotle.PhragmenLindelofStrip  -- Phragmén-Lindelöf strip bounds (0 sorries) ✓
 import Littlewood.Aristotle.PhragmenLindelofV2     -- Phragmén-Lindelöf v2 (0 sorries) ✓
+import Littlewood.Aristotle.HarmonicMaxPrinciple   -- harmonic maximum principle on rectangles (0 sorries) ✓
 import Littlewood.Aristotle.ThreeFourOneV2         -- 3-4-1 v2 (0 sorries) ✓
 import Littlewood.Aristotle.ThreeFourOne           -- 3-4-1 original (0 sorries) ✓
 import Littlewood.Aristotle.DirichletApprox        -- Dirichlet approx (0 sorries) ✓
@@ -153,7 +158,10 @@ import Littlewood.Aristotle.FresnelBound                 -- Fresnel cosine/sine 
 import Littlewood.Aristotle.AbelSummation                -- Abel summation + alternating series bound (0 sorries) ✓
 import Littlewood.Aristotle.Standalone.ZeroTailAbelSummation  -- Zero tail Abel summation for Hadamard route (0 sorries) ✓
 import Littlewood.Aristotle.Standalone.AbelSummationPsiPi    -- ψ→π Abel summation asymptotics for pi_approx (0 sorries) ✓
-import Littlewood.Aristotle.Standalone.LeibnizAlternatingSeries  -- Leibniz paired-sum bound (0 sorries)import Littlewood.Aristotle.CosPiSqSign                  -- cos(πn²) = (-1)^n + alternating sqrt sum bound (0 sorries) ✓
+import Littlewood.Aristotle.Standalone.AbelMultiplicityCorrectionProof -- multiplicity correction bridge (0 sorries) ✓
+import Littlewood.Aristotle.Standalone.SmallTPerronSqrtBridge -- recovered bounded-height Perron sqrt bridge (0 sorries) ✓
+import Littlewood.Aristotle.Standalone.LeibnizAlternatingSeries  -- Leibniz paired-sum bound (0 sorries)
+import Littlewood.Aristotle.CosPiSqSign                  -- cos(πn²) = (-1)^n + alternating sqrt sum bound (0 sorries) ✓
 import Littlewood.Aristotle.DirichletPhaseAlignment     -- Simultaneous Dirichlet phase-alignment infrastructure (0 sorries) ✓
 import Littlewood.Aristotle.Standalone.KroneckerEquidistribution  -- Kronecker 1D density + phase alignment (0 sorries) ✓
 import Littlewood.Aristotle.Standalone.UniformRiemannVonMangoldt  -- N(T) = T/(2π)log(T/(2πe)) + O(log T) (0 sorries) ✓
@@ -166,6 +174,7 @@ import Littlewood.Aristotle.HardyThetaSmooth           -- Smooth theta via integ
 -- import Littlewood.Aristotle.RSBlockDecomposition       -- MERGED into HardyFirstMomentDirect (was 1 sorry)
 import Littlewood.Aristotle.RSBlockAmplitude           -- Crude RS block amplitude / O(T^(3/4)) infrastructure
 import Littlewood.Aristotle.RSBlockWiring             -- Wiring RSBoundProp + bridge hypothesis to crude ErrorTerm first moment
+import Littlewood.Aristotle.Standalone.SteepestDescentExpansion -- recovered FE-side steepest descent expansion bridge (0 sorries) ✓
 -- import Littlewood.Aristotle.RSSignStructure           -- MERGED into HardyFirstMomentDirect
 -- import Littlewood.Aristotle.RSRemainderAlternating    -- MERGED into HardyFirstMomentDirect
 -- import Littlewood.Aristotle.RiemannSiegelFirstMoment  -- MERGED into HardyFirstMomentDirect (was 1 sorry via chain)

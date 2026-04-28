@@ -8,12 +8,12 @@ import Littlewood.Basic.ChebyshevFunctions
 /-!
 # Quarantined PNT Asymptotics
 
-These axioms were previously derived from the PrimeNumberTheoremAnd package.
+These theorem statements were previously derived from the PrimeNumberTheoremAnd package.
 They are mathematically correct consequences of the Prime Number Theorem,
-but are currently axiomatized rather than proved from Mathlib.
+but are currently sorry-backed rather than proved from Mathlib.
 
 **STATUS**: QUARANTINED — not imported by any build file.
-These do not affect the project's sorry count or soundness.
+These do not affect the main build, and they are not axioms.
 
 **FUTURE**: Once Mathlib has a complete PNT proof with these consequences,
 these axioms should be replaced with actual proofs and contributed upstream.
@@ -30,14 +30,17 @@ namespace ChebyshevExt.Quarantine
 
 /-- θ(x)/x → 1 as x → ∞ (PNT for θ).
 Previously derived from PrimeNumberTheoremAnd.chebyshev_asymptotic. -/
-axiom chebyshevTheta_asymptotic : Tendsto (fun x => θ x / x) atTop (nhds 1)
+theorem chebyshevTheta_asymptotic : Tendsto (fun x => θ x / x) atTop (nhds 1) := by
+  sorry
 
 /-- ψ(x)/x → 1 as x → ∞ (PNT for ψ).
 Previously derived from PrimeNumberTheoremAnd.WeakPNT''. -/
-axiom chebyshevPsi_asymptotic : Tendsto (fun x => ψ x / x) atTop (nhds 1)
+theorem chebyshevPsi_asymptotic : Tendsto (fun x => ψ x / x) atTop (nhds 1) := by
+  sorry
 
 /-- x/2 ≤ θ(x) eventually, consequence of PNT.
 Previously derived from PrimeNumberTheoremAnd.chebyshev_asymptotic. -/
-axiom chebyshevTheta_eventually_ge : ∀ᶠ x in atTop, x / 2 ≤ θ x
+theorem chebyshevTheta_eventually_ge : ∀ᶠ x in atTop, x / 2 ≤ θ x := by
+  sorry
 
 end ChebyshevExt.Quarantine

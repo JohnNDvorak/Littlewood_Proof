@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: [Your Name]
 -/
 import Littlewood.ZetaZeros.ZeroCountingFunction
+import Littlewood.Aristotle.ZetaRealNonvanishing
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Analysis.Normed.Field.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
@@ -33,6 +34,21 @@ zeta function. These are essential for the explicit formula and Littlewood's the
 open Complex Real Filter Topology Set BigOperators ZetaZeros
 
 namespace ZetaZeros.Density
+
+/-- Nontrivial zeta zeros in the critical strip are not real. -/
+theorem zetaNontrivialZero_im_ne_zero {ρ : ℂ}
+    (hρ : ρ ∈ zetaNontrivialZeros) : ρ.im ≠ 0 := by
+  intro him
+  rcases mem_zetaNontrivialZeros.mp hρ with ⟨hzero, hre_pos, hre_lt⟩
+  have hρ_eq : ρ = (ρ.re : ℂ) := by
+    apply Complex.ext
+    · simp
+    · simpa using him
+  have hne :=
+    Aristotle.ZetaRealNonvanishing.riemannZeta_ne_zero_of_real_mem_Ioo
+      ρ.re hre_pos hre_lt
+  rw [hρ_eq] at hzero
+  exact hne hzero
 
 /-! ## Type of Zero Ordinates -/
 
