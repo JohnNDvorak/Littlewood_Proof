@@ -73,7 +73,7 @@ Agents request validation in their lane ledger. The coordinator serializes:
 | 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `cce6705` | public import probes after provider closure |
 | 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `1da652d` | public import probes after provider closure |
 | 3 | `proofdebt/20260428-pi-phase` | active, pushed through `73831f2` | public import probes after provider closure |
-| 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `ad5064f` | public import probes after provider closure |
+| 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `449d4e8` | public import probes after provider closure |
 
 ## Agent Report Contract
 
@@ -166,6 +166,9 @@ Each agent report must state:
   - RS/Gabcke `ad5064f`: same focused build set passed after coordinator
     removed one redundant finishing tactic; split the stationary-phase error
     into a concrete coefficient identity atom and a coefficient bound atom.
+  - RS/Gabcke `449d4e8`: ledger-only obstruction note, no validation needed;
+    the missing prerequisite is a formal bridge from the repo-local `rsPsi`
+    normalization to the standard Gabcke/Riemann-Siegel coefficient formula.
 - Coordinator stopped one non-coordinator `lake env lean` process in the
   Atkinson worktree and re-issued the hard rule: agents must not run `lake`,
   `lake env lean`, `lean`, or any focused build/check themselves.
@@ -177,8 +180,10 @@ Each agent report must state:
   - Pi/Phase: Perron tower wide-domination and zeta finite-zero compatibility
     for the target/anti-target leaves.
   - RS/Gabcke: instantiate the concrete coefficient `C` from the Gabcke local
-    Taylor expansion, then prove `SiegelStationaryPhaseCoefficientIdentityProp C`
-    and `SiegelStationaryPhaseCoefficientBoundProp C`.
+    Taylor expansion by first bridging the local `rsPsi` normalization to the
+    standard coefficient formula, then prove
+    `SiegelStationaryPhaseCoefficientIdentityProp C` and
+    `SiegelStationaryPhaseCoefficientBoundProp C`.
 - Next coordinator action: harvest Aristotle results when authenticated, then
   keep validating returning lane commits serially. Public import probes for
   `Littlewood.Main.LittlewoodPsi` and `Littlewood.Main.LittlewoodPi` stay
