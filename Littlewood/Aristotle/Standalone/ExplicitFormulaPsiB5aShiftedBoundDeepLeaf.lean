@@ -76,6 +76,38 @@ theorem shifted_remainder_bound_leaf :
   -- cross-module reference.
   sorry
 
+/-- Non-circular B5a closure route from the two explicit Perron/Hadamard
+support payloads.
+
+This theorem deliberately takes both payloads as ordinary hypotheses and
+creates only local instances needed to reuse the existing case-split algebra in
+`HadamardProductZeta.full_contour_bound`.  In particular, it does not obtain
+the small-`T` input from `ContourRemainderBoundHyp.bound`,
+`general_formula_accessible`, or any provider route that already consumes the
+full shifted-remainder bound. -/
+theorem shifted_remainder_bound_candidate_of_large_small_direct
+    (hLarge :
+      ∃ P > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 16 →
+        |Littlewood.Development.ShiftedRemainderInterface.shiftedRemainderRe x T| ≤
+          P * (Real.sqrt x * (Real.log T) ^ 3 / T) +
+            2 * P * (Real.sqrt x * (Real.log T) ^ 2 / T))
+    (hSmall :
+      ∃ C₂ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+        |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+          C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)) :
+    ∃ C₂ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+  letI : Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp :=
+    ⟨hLarge⟩
+  letI : Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp :=
+    ⟨hSmall⟩
+  simpa [shiftedRemainderRe, Littlewood.Development.HadamardProductZeta.shiftedRemainderRe] using
+    (Littlewood.Development.HadamardProductZeta.full_contour_bound :
+      ∃ C₂ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+        |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+          C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2))
+
 /-- Candidate closure route for this deep leaf from the standalone
 general truncated explicit-formula class. -/
 theorem shifted_remainder_bound_candidate_of_general_hyp
