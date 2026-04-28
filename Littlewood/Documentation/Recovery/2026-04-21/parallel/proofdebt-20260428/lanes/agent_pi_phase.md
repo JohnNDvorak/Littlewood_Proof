@@ -419,3 +419,76 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
     likely around exact unification of target-specific relative-density
     witnesses with the shared helper
     `phaseFitAbovePerronThresholdPerron_of_relative_dense_witness`.
+
+### 2026-04-28 Round 7: Realized-Radius Tower Domination Leaves
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - Tower-side atom below target/anti-target Perron-only phase fit.
+- Target choice:
+  - Focused on `PerronThresholdTowerWideDominationHyp`. Static audit showed
+    the generic leaf is stronger than the target/anti route needs because it
+    requires the tower cap to dominate every positive radius function. The
+    phase route only needs domination of the actual relative-density radius
+    supplied by the target or anti-target finite-zero phase payload.
+- Facts banked:
+  - Added
+    `TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp` and
+    `AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp`.
+    These leaves package one height, tolerance, realized relative-density
+    radius, the corresponding finite-zero phase hit family, and the same-height
+    Perron/tower domination inequality.
+  - Added
+    `targetPerronThresholdTowerWideDominationWithPhaseRadius_of_wideDomination_hyp`
+    and
+    `antiTargetPerronThresholdTowerWideDominationWithPhaseRadius_of_wideDomination_hyp`,
+    proving the realized-radius leaves from the older arbitrary-radius
+    `PerronThresholdTowerWideDominationHyp` plus the matching target/anti
+    relative-density payload.
+  - Added
+    `targetPhaseFitAbovePerronThresholdPerron_of_realizedRadiusDomination_hyp`
+    and
+    `antiTargetPhaseFitAbovePerronThresholdPerron_of_realizedRadiusDomination_hyp`,
+    deriving the target/anti Perron-only phase-fit boundaries directly from
+    realized-radius tower domination.
+- False-surface audit:
+  - No new declaration uses `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No new declaration revives arbitrary-target Kronecker as a theorem to be
+    proved. Existing compatibility wrappers remain for already validated
+    routes only.
+  - The round does not use the structurally too-strong constant-1
+    `PerronSqrtErrorEventuallyAtHeightHyp` route flagged by the Aristotle
+    harvest.
+- Failed routes that must not be retried:
+  - Do not attempt to close `PerronThresholdTowerWideDominationHyp` for every
+    positive radius function as the main Pi route; the realized phase-radius
+    theorem is the smaller target.
+  - Do not use `TruncatedExplicitFormulaPiHyp` or arbitrary-target finite-set
+    Kronecker to package target/anti phase coupling.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, or check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem/interface:
+  - Prove/source
+    `TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp` and
+    `AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp` directly,
+    using a growth bound for the actual Kronecker relative-density radius and
+    the Perron threshold at the same height.
+  - Prove/source
+    `TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp` and
+    `AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`, or refine
+    the phase payload so relation compatibility is carried with each target.
+- Coordinator action requested:
+  - Run the requested validation commands and report the first compile risk,
+    likely around the two realized-radius phase-fit proofs and the
+    `Real.exp_log` rewrites for the lower endpoint.
