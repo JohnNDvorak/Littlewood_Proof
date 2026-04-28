@@ -12478,6 +12478,42 @@ private theorem
         k j hj1 hjk'
   simpa [hblock] using herr' j hJ_err hj3 hj1 k hjk
 
+/-- The shifted block-parameter remainder is the natural Hardy tail leaf behind
+the complete-block-target pointwise remainder hypothesis. This isolates the
+coordinate-change step before the public cell-prefix summation argument. -/
+private theorem atkinson_completeBlockTargetK_remainder_of_shiftedBlockParamTargetK_remainder
+    (herr :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                HardyCosSmooth.hardyCosExp (k - j) (blockCoord (k - j) p) *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j)) :
+    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+            ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+              HardyCosSmooth.hardyCosExp (k - j) t) - atkinsonCompleteBlockTargetK k j)‖
+        ≤ C_err * (atkinsonModeWeight k / j) := by
+  obtain ⟨C_err, hC_err, J_err, herr'⟩ := herr
+  refine ⟨C_err, hC_err, J_err, ?_⟩
+  intro j hJ_err hj3 hj1 k hjk
+  have hblock :
+      ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+          HardyCosSmooth.hardyCosExp (k - j) t
+        =
+      ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          HardyCosSmooth.hardyCosExp (k - j) (blockCoord (k - j) p) *
+            blockJacobian (k - j) p := by
+    have hjk' : j ≤ k := by
+      omega
+    have hcast : ((k : ℝ) - ((k - j : ℕ) : ℝ)) = (j : ℝ) := by
+      rw [Nat.cast_sub hjk']
+      ring
+    simpa [hcast, Nat.add_assoc, add_left_comm, add_comm] using
+      Aristotle.StationaryPhaseMainMode.hardyCosExp_completeBlock_eq_shifted_blockParamIntegral
+        (k - j) k (by omega)
+  simpa [hblock] using herr' j hJ_err hj3 hj1 k hjk
+
 /-- Equivalent concrete public-leaf reduction in the shifted block-parameter
 coordinates of the mode `k - j`.
 
@@ -12500,27 +12536,9 @@ private theorem
           ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
             atkinsonResonantShiftedPhaseWeightedCell n j)‖
         ≤ Cevent * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
-  obtain ⟨C_err, hC_err, J_err, herr'⟩ := herr
-  refine
+  exact
     atkinson_shiftedInversePhaseCellPrefix_no_log_eventual_j3_of_completeBlockTargetK_remainder
-      ⟨C_err, hC_err, J_err, ?_⟩
-  intro j hJ_err hj3 hj1 k hjk
-  have hblock :
-      ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
-          HardyCosSmooth.hardyCosExp (k - j) t
-        =
-      ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
-          HardyCosSmooth.hardyCosExp (k - j) (blockCoord (k - j) p) *
-            blockJacobian (k - j) p := by
-    have hjk' : j ≤ k := by
-      omega
-    have hcast : ((k : ℝ) - ((k - j : ℕ) : ℝ)) = (j : ℝ) := by
-      rw [Nat.cast_sub hjk']
-      ring
-    simpa [hcast, Nat.add_assoc, add_left_comm, add_comm] using
-      Aristotle.StationaryPhaseMainMode.hardyCosExp_completeBlock_eq_shifted_blockParamIntegral
-        (k - j) k (by omega)
-  simpa [hblock] using herr' j hJ_err hj3 hj1 k hjk
+      (atkinson_completeBlockTargetK_remainder_of_shiftedBlockParamTargetK_remainder herr)
 
 /-- On the genuine near-band `n ≥ j - 1`, the phase-weighted fixed-shift block
 prefix is already `O(√(m+j))`. The phase factor converts the cellwise

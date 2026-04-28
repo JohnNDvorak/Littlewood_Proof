@@ -114,6 +114,17 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - Requested coordinator validation:
   `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
 
+### 2026-04-28 Coordinator Validation, Round 3
+
+- `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`: passed.
+- `import Littlewood.Main.LittlewoodPsi`: passed.
+- `import Littlewood.Main.LittlewoodPi`: passed.
+- Validation output included existing warnings only; no errors.
+- This round banks the exact reduction from the complete-block-target
+  remainder hypothesis to the shifted block-parameter pointwise remainder.
+  The next proof target is the shifted block-parameter stationary-phase
+  remainder over `p ∈ Ioc j (j + 1)`.
+
 ### 2026-04-28 Coordinator Validation, Round 2
 
 - `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`: passed.
@@ -154,6 +165,35 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   `atkinson_shiftedInversePhaseCellPrefix_no_log_eventual_j3_of_completeBlockTargetK_remainder`,
   then supply the finite no-log cell-prefix patch family for shifts below the
   resulting cutoff.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+
+### 2026-04-28 Overnight Round 3 Shifted Remainder Leaf
+
+- Classification: `CONDITIONAL_REDUCTION`, not closed.
+- Coordinator baseline: round 2 passed validation and was committed as
+  `2300240`.
+- Current theorem attacked: the `herr` complete-block-target pointwise
+  remainder hypothesis consumed by
+  `atkinson_shiftedInversePhaseCellPrefix_no_log_eventual_j3_of_completeBlockTargetK_remainder`.
+- Code fact banked:
+  `atkinson_completeBlockTargetK_remainder_of_shiftedBlockParamTargetK_remainder`
+  proves the exact `herr` hypothesis from the shifted block-parameter target
+  remainder over `p ∈ Ioc j (j + 1)`. The existing
+  `atkinson_shiftedInversePhaseCellPrefix_no_log_eventual_j3_of_shiftedBlockParamTargetK_remainder`
+  wrapper now factors through this smaller theorem.
+- Remaining obstruction / next theorem:
+  prove the shifted block-parameter pointwise stationary-phase remainder
+  hypothesis:
+  `∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →`
+  `‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) * ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `HardyCosSmooth.hardyCosExp (k - j) (blockCoord (k - j) p) * blockJacobian (k - j) p)`
+  `- atkinsonCompleteBlockTargetK k j)‖ ≤ C_err * (atkinsonModeWeight k / j)`.
+- Guardrail:
+  this round does not use the coefficient-`8` predecessor-tail route; that
+  route remains insufficient for any `γ < 1` contraction argument.
 - Files changed:
   `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
 - Requested coordinator validation:
