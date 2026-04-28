@@ -269,3 +269,62 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
      that should `SiegelStationaryPhaseCoefficientIdentityProp C` be attacked.
 - Coordinator action requested:
   no validation needed unless a later code patch instantiates the coefficient.
+
+### 2026-04-28 Round 6: standard-to-local coefficient normalization bridge
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Theorem/file attacked:
+  the bridge below `SiegelStationaryPhaseCoefficientIdentityProp C` and
+  `SiegelStationaryPhaseCoefficientBoundProp C` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Proof facts banked:
+  - Added `standardGabckeRawPsi`, the standard quotient-normalized
+    Riemann-Siegel/Gabcke `psi` expression
+    `cos(2*pi*(p^2 - p - 1/16)) / cos(2*pi*p)`.
+  - Added `standardGabckeRawFirstCoefficient`, the source-form first
+    coefficient `-deriv (deriv (deriv standardGabckeRawPsi)) p /
+    (96*pi^2)`.
+  - Added `StandardGabckeStationaryPhaseIdentityProp stdLead stdCoeff`, the
+    standard-normalized block-coordinate stationary-phase identity before
+    translating the source leading coefficient to local `rsPsi`.
+  - Added `StandardGabckeLocalLeadingNormalizationProp stdLead`, the exact
+    missing bridge statement `stdLead p = rsPsi p` on `p in Ico 0 1`.
+  - Added `StandardGabckeCoefficientBoundProp stdCoeff`, the standard
+    source-side coefficient bound by `fresnelC1Bound`.
+  - Added
+    `siegelStationaryPhaseCoefficientIdentityProp_of_standardGabckeNormalization`,
+    proving that a standard-normalized identity plus the leading-normalization
+    bridge gives the local `SiegelStationaryPhaseCoefficientIdentityProp`.
+  - Added
+    `siegelStationaryPhaseCoefficientBoundProp_of_standardGabckeBound`,
+    carrying a standard coefficient bound to the local coefficient-bound atom.
+- Failed routes that should not be retried:
+  - Do not assert `standardGabckeRawPsi p = rsPsi p` directly. Static endpoint
+    inspection already shows the raw quotient expression and local positive
+    cosine convention do not match without an additional phase/parameter
+    normalization.
+  - Do not use block-independence; downstream RS/Gabcke wiring is already
+    proved, and the useful live content is the normalized coefficient identity
+    and coefficient bound.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`
+  - `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+  - `printf 'import Littlewood.Main.LittlewoodPsi\n' | lake env lean --stdin`
+  - `printf 'import Littlewood.Main.LittlewoodPi\n' | lake env lean --stdin`
+- Smallest next theorem:
+  define the correctly phase/parameter-normalized standard leading coefficient
+  `stdLead` from Gabcke's source convention and prove
+  `StandardGabckeLocalLeadingNormalizationProp stdLead`; then prove
+  `StandardGabckeStationaryPhaseIdentityProp stdLead
+    standardGabckeRawFirstCoefficient` from the contour expansion and
+  `StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient` from
+  the Tabelle-1 first-coefficient estimate.
+- Coordinator action requested:
+  run the requested serialized validation commands.

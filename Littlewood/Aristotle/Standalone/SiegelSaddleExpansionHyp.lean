@@ -216,6 +216,66 @@ def SiegelStationaryPhaseCoefficientBoundProp (C : ℕ → ℝ → ℝ) : Prop :
   ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
     |C k p| ≤ fresnelC1Bound
 
+/-- The quotient-normalized `psi` used in standard Riemann-Siegel coefficient
+tables. This is intentionally kept separate from the project-local `rsPsi`:
+the raw quotient normalization is not definitionally equal to the positive
+local cosine convention used by the block-integral pipeline. -/
+def standardGabckeRawPsi (p : ℝ) : ℝ :=
+  Real.cos (2 * Real.pi * (p ^ 2 - p - 1 / 16)) / Real.cos (2 * Real.pi * p)
+
+/-- The standard first Riemann-Siegel/Gabcke coefficient as it appears in
+coefficient-table form, before reconciling the source normalization with the
+project-local `rsPsi` leading term. -/
+def standardGabckeRawFirstCoefficient (p : ℝ) : ℝ :=
+  -deriv (deriv (deriv standardGabckeRawPsi)) p / (96 * Real.pi ^ 2)
+
+/-- Standard-normalized stationary-phase identity, parameterized by the
+standard leading coefficient and standard first coefficient after any necessary
+source-side phase/parameter conversion has been made explicit.
+
+This is the bridge surface immediately below the local
+`SiegelStationaryPhaseCoefficientIdentityProp`: once `stdLead` is proved to be
+the local `rsPsi` convention, this identity becomes the local coefficient
+identity. -/
+def StandardGabckeStationaryPhaseIdentityProp
+    (stdLead stdCoeff : ℝ → ℝ) : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    ErrorTerm (blockCoord k p)
+      - (-1 : ℝ) ^ k * (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
+        stdLead p =
+      (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
+        (stdCoeff p * (blockCoord k p) ^ (-(1 : ℝ) / 2))
+
+/-- The missing normalization bridge from a standard Riemann-Siegel leading
+coefficient convention to the repo-local `rsPsi` convention. -/
+def StandardGabckeLocalLeadingNormalizationProp (stdLead : ℝ → ℝ) : Prop :=
+  ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 → stdLead p = rsPsi p
+
+/-- The standard first-coefficient bound in source normalization. -/
+def StandardGabckeCoefficientBoundProp (stdCoeff : ℝ → ℝ) : Prop :=
+  ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 → |stdCoeff p| ≤ fresnelC1Bound
+
+/-- A standard-normalized stationary-phase identity becomes the local
+coefficient identity once the leading coefficient normalization has been
+bridged to `rsPsi`. -/
+theorem siegelStationaryPhaseCoefficientIdentityProp_of_standardGabckeNormalization
+    {stdLead stdCoeff : ℝ → ℝ}
+    (h_standard : StandardGabckeStationaryPhaseIdentityProp stdLead stdCoeff)
+    (h_leading : StandardGabckeLocalLeadingNormalizationProp stdLead) :
+    SiegelStationaryPhaseCoefficientIdentityProp (fun _ p => stdCoeff p) := by
+  intro k p hp
+  rw [← h_leading p hp]
+  exact h_standard k p hp
+
+/-- A standard source-side coefficient bound supplies the local coefficient
+bound for the corresponding block-independent coefficient candidate. -/
+theorem siegelStationaryPhaseCoefficientBoundProp_of_standardGabckeBound
+    {stdCoeff : ℝ → ℝ}
+    (h_bound : StandardGabckeCoefficientBoundProp stdCoeff) :
+    SiegelStationaryPhaseCoefficientBoundProp (fun _ p => stdCoeff p) := by
+  intro _ p hp
+  exact h_bound p hp
+
 /-- Project the weighted-profile atom from the current Siegel/Gabcke class. -/
 theorem siegelWeightedProfileBoundProp_of_siegelSaddleExpansionHyp
     [h : SiegelSaddleExpansionHyp] :
