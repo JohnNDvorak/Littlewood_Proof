@@ -148,6 +148,21 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - Coordinator action requested: run the exact validation commands above under
   serialized validation.
 
+### 2026-04-28 Coordinator Validation, Atomized Coefficient Boundary
+
+- Focused module checks:
+  `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`
+  passed.
+  `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`
+  passed.
+  `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+  passed.
+- Strict public import checks:
+  `import Littlewood.Main.LittlewoodPsi` passed.
+  `import Littlewood.Main.LittlewoodPi` passed.
+- Integration status:
+  ready to commit and merge into the main recovery branch.
+
 ### 2026-04-28 Coordinator Validation, Formula Boundary Round
 
 - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`:
@@ -275,5 +290,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   - `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
   - minimal import probe for `Littlewood.Main.LittlewoodPsi`
   - minimal import probe for `Littlewood.Main.LittlewoodPi`
+- Coordinator action requested: run the exact validation commands above under
+  serialized validation.
+
+### 2026-04-28 Overnight Round 4: atomized coefficient formula boundary
+
+- Status: CONDITIONAL_REDUCTION; no Lean/Lake/build commands were run.
+- Current theorem/file attacked:
+  `Littlewood/Aristotle/Standalone/GabckePhaseCouplingInfra.lean`.
+- Static inspection:
+  searched the owned RS/Gabcke files for formal Gabcke/Siegel
+  first-coefficient material (`c₁`, `c1`, `Hermite`, `Tabelle`,
+  coefficient formula, and `normalizedSignedSPR`). No explicit formal
+  Tabelle-1 signed coefficient expression is present. The only formal
+  coefficient facts found are absolute coefficient bounds and the existing
+  normalized coefficient boundary.
+- Proof/interface facts banked:
+  - Added `GabckeNormalizedCoefficientIdentityProp`.
+  - Added `GabckeNormalizedCoefficientNonnegProp`.
+  - Added `GabckeNormalizedCoefficientAntitoneProp`.
+  - Added `gabckeNormalizedCoefficientFormulaProp_of_atoms`.
+  - Added `gabckeNormalizedCoefficientProp_of_coefficientAtoms`.
+- Exact formula input still missing:
+  instantiate a concrete candidate `C k p` from Gabcke's signed Tabelle-1
+  coefficient formula and prove the three atoms
+  `normalizedSignedSPR k p = C k p`, `0 <= C k p`, and
+  `C (k + 1) p <= C k p` for `1 <= k`, `p in Ioc 0 1`.
+- Why this is smaller than the previous class gap:
+  the new boundary separates the coefficient identity from the two elementary
+  formula inequalities and no longer asks for any legacy wrapper or absolute
+  `weighted_profile_bound`.
+- Smallest next theorem:
+  define the explicit Gabcke signed first-coefficient candidate `C k p` in an
+  owned Gabcke/Siegel file, then prove
+  `GabckeNormalizedCoefficientIdentityProp C`.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`
+  - `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+  - `printf 'import Littlewood.Main.LittlewoodPsi\n' | lake env lean --stdin`
+  - `printf 'import Littlewood.Main.LittlewoodPi\n' | lake env lean --stdin`
 - Coordinator action requested: run the exact validation commands above under
   serialized validation.

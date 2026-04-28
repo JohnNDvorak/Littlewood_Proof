@@ -1537,6 +1537,36 @@ def GabckeNormalizedCoefficientFormulaProp (C : ℕ → ℝ → ℝ) : Prop :=
   (∀ k : ℕ, 1 ≤ k → ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
     C (k + 1) p ≤ C k p)
 
+/-- Formula identity atom below `GabckeNormalizedCoefficientFormulaProp`.
+For the eventual Tabelle-1 expression `C`, this is the exact identification
+of the normalized signed saddle coefficient with that expression. -/
+def GabckeNormalizedCoefficientIdentityProp (C : ℕ → ℝ → ℝ) : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
+    normalizedSignedSPR k p = C k p
+
+/-- First elementary inequality atom for an explicit normalized Gabcke
+coefficient formula. -/
+def GabckeNormalizedCoefficientNonnegProp (C : ℕ → ℝ → ℝ) : Prop :=
+  ∀ k : ℕ, 1 ≤ k → ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
+    0 ≤ C k p
+
+/-- Second elementary inequality atom for an explicit normalized Gabcke
+coefficient formula. -/
+def GabckeNormalizedCoefficientAntitoneProp (C : ℕ → ℝ → ℝ) : Prop :=
+  ∀ k : ℕ, 1 ≤ k → ∀ p : ℝ, p ∈ Ioc (0 : ℝ) 1 →
+    C (k + 1) p ≤ C k p
+
+/-- The combined formula input follows from the exact coefficient identity and
+the two elementary formula inequalities. This is the smallest honest interface
+for a future explicit Tabelle-1 candidate `C`. -/
+theorem gabckeNormalizedCoefficientFormulaProp_of_atoms
+    {C : ℕ → ℝ → ℝ}
+    (h_id : GabckeNormalizedCoefficientIdentityProp C)
+    (h_nonneg : GabckeNormalizedCoefficientNonnegProp C)
+    (h_antitone : GabckeNormalizedCoefficientAntitoneProp C) :
+    GabckeNormalizedCoefficientFormulaProp C :=
+  ⟨h_id, h_nonneg, h_antitone⟩
+
 /-- A verified explicit coefficient formula immediately supplies the normalized
 coefficient target. -/
 theorem gabckeNormalizedCoefficientProp_of_coefficientFormula
@@ -1550,6 +1580,16 @@ theorem gabckeNormalizedCoefficientProp_of_coefficientFormula
   · intro k hk p hp
     rw [h.1 (k + 1) p hp, h.1 k p hp]
     exact h.2.2 k hk p hp
+
+/-- Atomized coefficient formula route to the normalized coefficient target. -/
+theorem gabckeNormalizedCoefficientProp_of_coefficientAtoms
+    {C : ℕ → ℝ → ℝ}
+    (h_id : GabckeNormalizedCoefficientIdentityProp C)
+    (h_nonneg : GabckeNormalizedCoefficientNonnegProp C)
+    (h_antitone : GabckeNormalizedCoefficientAntitoneProp C) :
+    GabckeNormalizedCoefficientProp :=
+  gabckeNormalizedCoefficientProp_of_coefficientFormula
+    (gabckeNormalizedCoefficientFormulaProp_of_atoms h_id h_nonneg h_antitone)
 
 /-- Nonnegativity of the normalized coefficient implies nonnegativity of the
 signed saddle-point remainder because `k+1+p > 0` on the block parameter
