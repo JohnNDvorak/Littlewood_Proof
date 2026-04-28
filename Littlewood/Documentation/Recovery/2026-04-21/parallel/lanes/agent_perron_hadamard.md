@@ -150,6 +150,17 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   run serialized validation when the build mutex permits; no full project build
   requested by this lane.
 
+### 2026-04-28 Coordinator Validation, Round 2
+
+- `lake build Littlewood.Development.HadamardProductZeta`: passed.
+- `import Littlewood.Main.LittlewoodPsi`: passed.
+- `import Littlewood.Main.LittlewoodPi`: passed.
+- Validation output included linter warnings in existing imported files and
+  unused-variable warnings in `HadamardProductZeta.lean`; no errors.
+- This round remains a conditional reduction. The live theorem is now the
+  concrete bounded-height construction of `perronIntegralRe` plus the two
+  component estimates recorded above.
+
 ### 2026-04-28 Coordinator Validation
 
 - First validation found an elaboration issue in
@@ -160,3 +171,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - `lake build Littlewood.Development.HadamardProductZeta`: passed.
 - Residual risk: this is still a conditional reduction; the concrete
   three-piece bounded-height decomposition remains open.
+
+### 2026-04-28 Overnight Continuation
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Current theorem/file attacked:
+  `Littlewood/Development/HadamardProductZeta.lean`,
+  concrete small-`T` decomposition below `SmallTPerronBoundHyp`.
+- Theorems added:
+  `HadamardProductZeta.small_T_three_piece_bounds_from_perron_components`;
+  `HadamardProductZeta.small_T_direct_bound_from_perron_components`.
+- Reduction banked:
+  the three-piece bounded-height decomposition now follows from a single
+  concrete Perron integral `perronIntegralRe` satisfying two uniform estimates
+  on `2 ≤ T ≤ 16`:
+  `|chebyshevPsi x - perronIntegralRe x T| ≤ Cₚ * (Real.log x)^2`
+  and
+  `|perronIntegralRe x T - (x - zeroSumRe x T)| ≤
+    Cᵣ * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
+  The decomposition identity used is
+  `ψ - x + Z = (Perron - (x - Z)) + 0 + (ψ - Perron)`,
+  with output three-piece constant `max Cₚ Cᵣ`; composing with
+  `small_T_direct_bound_from_three_piece_bounds` gives the direct small-`T`
+  provider hypothesis.
+- Circular routes avoided:
+  did not use `ContourRemainderBoundHyp.bound`,
+  `general_formula_accessible`, `small_T_contour_bound`, or any theorem that
+  consumes `HadamardProductZeta.SmallTPerronBoundHyp`.
+- Files changed:
+  `Littlewood/Development/HadamardProductZeta.lean`;
+  this ledger.
+- Static command results:
+  `git diff --check` succeeded with no output.
+  No Lean/Lake/build/cache commands were run in this continuation.
+- Smallest next theorem:
+  construct the concrete bounded-height Perron integral `perronIntegralRe` and
+  prove the two component estimates above directly from bounded-height Perron
+  summation plus residue/contour extraction, without routing through full-range
+  contour packaging.
+- Requested coordinator validation commands:
+  `lake build Littlewood.Development.HadamardProductZeta`;
+  minimal import probe for `Littlewood.Main.LittlewoodPsi`;
+  minimal import probe for `Littlewood.Main.LittlewoodPi`.
+- Coordinator action requested:
+  run serialized validation when the build mutex permits; no full project build
+  requested by this lane.

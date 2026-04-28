@@ -398,6 +398,81 @@ theorem small_T_direct_bound_from_three_piece_bounds
     _ = 3 * P * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
         rfl
 
+/-- Concrete Perron-component route to the three-piece small-`T` reduction.
+
+The only analytic data here are a bounded-height Perron truncation estimate and
+a bounded-height residue/contour estimate for a chosen `perronIntegralRe`.
+The decomposition itself is just the identity
+`ψ - x + Z = (Perron - (x - Z)) + (ψ - Perron)`. -/
+theorem small_T_three_piece_bounds_from_perron_components
+    (perronIntegralRe : ℝ → ℝ → ℝ)
+    (htrunc : ∃ Cₚ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T| ≤
+        Cₚ * (Real.log x) ^ 2)
+    (hresidue : ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronIntegralRe x T - (x - zeroSumRe x T)| ≤
+        Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ P > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∃ perronRe residueRe logRe : ℝ,
+        shiftedRemainderRe x T = perronRe + residueRe + logRe ∧
+        |perronRe| ≤ P * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ∧
+        |residueRe| ≤ P * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ∧
+        |logRe| ≤ P * (Real.log x) ^ 2 := by
+  obtain ⟨Cₚ, hCₚ, htrunc⟩ := htrunc
+  obtain ⟨Cᵣ, hCᵣ, hresidue⟩ := hresidue
+  refine ⟨max Cₚ Cᵣ, lt_max_of_lt_left hCₚ, ?_⟩
+  intro x T hx hT_lo hT_hi
+  let E : ℝ := Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T
+  let L : ℝ := (Real.log x) ^ 2
+  have hE_nonneg : 0 ≤ E := by
+    dsimp [E]
+    exact error_shape_nonneg x T
+  have hP_nonneg : 0 ≤ max Cₚ Cᵣ := le_of_lt (lt_max_of_lt_left hCₚ)
+  have hdecomp :
+      shiftedRemainderRe x T =
+        (perronIntegralRe x T - (x - zeroSumRe x T)) + 0 +
+          (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T) := by
+    change Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x + zeroSumRe x T =
+      (perronIntegralRe x T - (x - zeroSumRe x T)) + 0 +
+        (Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T)
+    ring
+  refine ⟨perronIntegralRe x T - (x - zeroSumRe x T), 0,
+    Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T,
+    hdecomp, ?_, ?_, ?_⟩
+  · calc |perronIntegralRe x T - (x - zeroSumRe x T)|
+        ≤ Cᵣ * E := by
+          dsimp [E]
+          exact hresidue x T hx hT_lo hT_hi
+      _ ≤ max Cₚ Cᵣ * E :=
+          mul_le_mul_of_nonneg_right (le_max_right _ _) hE_nonneg
+  · calc |(0 : ℝ)|
+        = 0 := abs_zero
+      _ ≤ max Cₚ Cᵣ * E := mul_nonneg hP_nonneg hE_nonneg
+  · calc |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T|
+        ≤ Cₚ * L := by
+          dsimp [L]
+          exact htrunc x T hx hT_lo hT_hi
+      _ ≤ max Cₚ Cᵣ * L :=
+          mul_le_mul_of_nonneg_right (le_max_left _ _) (sq_nonneg (Real.log x))
+
+/-- Direct small-`T` provider target from concrete bounded-height Perron
+components. This is the current smallest non-circular route to the hypothesis
+accepted by `small_T_perron_bound_hyp_of_direct_bound`. -/
+theorem small_T_direct_bound_from_perron_components
+    (perronIntegralRe : ℝ → ℝ → ℝ)
+    (htrunc : ∃ Cₚ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronIntegralRe x T| ≤
+        Cₚ * (Real.log x) ^ 2)
+    (hresidue : ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronIntegralRe x T - (x - zeroSumRe x T)| ≤
+        Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
+  small_T_direct_bound_from_three_piece_bounds
+    (small_T_three_piece_bounds_from_perron_components
+      perronIntegralRe htrunc hresidue)
+
 /-! ## Section 6: Contour Integration via CIF
 
 The Cauchy Integral Formula for rectangles (CauchyRectangleFormula.lean, now 0 sorrys)
