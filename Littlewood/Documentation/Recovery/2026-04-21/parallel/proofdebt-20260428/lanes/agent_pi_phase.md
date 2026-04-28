@@ -96,3 +96,67 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action requested:
   - Run the validation commands above and, if they pass, perform the
     coordinator-owned public API cleanup to drop the false-surface variables.
+
+### 2026-04-28 Round 2: Relative-Density Perron Phase-Fit Adapter
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - Remaining provider cone below
+    `TargetTowerExactSeedAbovePerronThresholdPerronHyp` /
+    `AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp`.
+- Target choice:
+  - Chose the Perron-only phase-fit provider cone over
+    `PerronSqrtErrorEventuallyAtHeightHyp`. The current fixed-height Perron
+    error route still has only the legacy `TruncatedExplicitFormulaPiHyp`
+    bridge in this baseline, while the phase-fit cone already has a clean
+    Perron-only interface that can be reduced further without touching public
+    files.
+- Facts banked:
+  - Added `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp`, the standard
+    finite-dimensional inhomogeneous Kronecker shape: for each fixed cutoff,
+    tolerance, and target phase function, every logarithmic starting point has
+    a hit within some bounded search radius.
+  - Added `PerronThresholdTowerPhaseWideWindowHyp`, the tower-side companion
+    requiring the same-height Perron/tower logarithmic window to be wider than
+    an externally supplied search radius.
+  - Added
+    `inhomogeneousPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp`
+    and a lower-priority instance deriving
+    `InhomogeneousPhaseFitAbovePerronThresholdPerronHyp` from those two honest
+    leaves.
+- False-surface audit:
+  - The new route does not mention `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, or `truncatedPiHyp_contradicts_rh`.
+  - Existing legacy wrappers and contradiction quarantine remain unchanged.
+- Failed routes that must not be retried:
+  - Do not treat `FiniteZeroInhomogeneousPhaseWindowHyp` as ordinary
+    Kronecker. As stated, it demands a target hit inside every arbitrary
+    nonempty interval `(L, U)`, which is stronger than the relative-density
+    theorem normally obtained from compact torus dynamics.
+  - Do not attempt the fixed-height Perron error class via the false
+    `pi_approx` field.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane check; no full or bare `lake build` was run.
+  - `git diff --check` passed.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+  - `printf 'import Littlewood.Main.LittlewoodPsi\n' | lake env lean --stdin`
+  - `printf 'import Littlewood.Main.LittlewoodPi\n' | lake env lean --stdin`
+- Smallest next theorem/interface:
+  - Prove/source `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp` from the
+    finite-dimensional inhomogeneous Kronecker theorem plus the needed
+    rational-independence facts for ordinates in `(finite_zeros_le T)`.
+  - Prove/source `PerronThresholdTowerPhaseWideWindowHyp`, i.e. same-height
+    tower growth strong enough to leave a logarithmic interval wider than the
+    relative-density radius while staying above `X` and
+    `perronThreshold hRH T`.
+- Coordinator action requested:
+  - Run the requested validation commands and report the first elaboration
+    risk, likely around the local `radius`/`Classical.choose` packaging in
+    `inhomogeneousPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp`.

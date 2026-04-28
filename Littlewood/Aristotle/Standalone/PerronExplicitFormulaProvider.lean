@@ -2225,6 +2225,46 @@ class FiniteZeroInhomogeneousPhaseWindowHyp : Prop where
         ∀ ρ ∈ (finite_zeros_le T).toFinset,
           ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
 
+/-- Wide same-height Perron-threshold/tower window boundary.
+
+This is the tower-side companion to relative-density Kronecker input. It asks
+for a logarithmic interval whose length dominates an externally supplied
+search radius for the same chosen height and tolerance. -/
+class PerronThresholdTowerPhaseWideWindowHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
+      (radius : ℝ → ℝ → ℝ),
+      (∀ T ε : ℝ, 0 < radius T ε) →
+      ∃ T ε L U : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        X < Real.exp L ∧
+        perronThreshold _hRH T ≤ Real.exp L ∧
+        L + radius T ε < U ∧
+        Real.exp U ≤ Real.exp (Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Relative-density finite inhomogeneous phase approximation boundary.
+
+For each fixed finite zero cutoff and tolerance, the orbit hits the requested
+phase box within a bounded logarithmic search radius from every starting point.
+This is the honest Kronecker/Dirichlet replacement for demanding a hit inside
+an arbitrary preselected nonempty interval. -/
+class FiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ) (targetPhase : ℂ → ℝ),
+      4 ≤ T →
+      0 < ε →
+      ∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
+
 /-- The two lower-level honest boundaries imply the Perron-only phase-fit
 provider boundary. -/
 theorem inhomogeneousPhaseFitAbovePerronThresholdPerron_of_window_hyp
@@ -2259,6 +2299,71 @@ instance (priority := 100)
     [FiniteZeroInhomogeneousPhaseWindowHyp] :
     InhomogeneousPhaseFitAbovePerronThresholdPerronHyp :=
   inhomogeneousPhaseFitAbovePerronThresholdPerron_of_window_hyp
+
+/-- Relative-density Kronecker plus a sufficiently wide tower window imply the
+Perron-only phase-fit provider boundary without using the arbitrary-window
+finite phase leaf. -/
+theorem inhomogeneousPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    [FiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    InhomogeneousPhaseFitAbovePerronThresholdPerronHyp where
+  witness := by
+    intro hRH X targetPhase
+    let radius : ℝ → ℝ → ℝ := fun T ε =>
+      if h : 4 ≤ T ∧ 0 < ε then
+        Classical.choose
+          (FiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+            T ε targetPhase h.1 h.2)
+      else 1
+    have hRadius : ∀ T ε : ℝ, 0 < radius T ε := by
+      intro T ε
+      by_cases h : 4 ≤ T ∧ 0 < ε
+      · dsimp [radius]
+        rw [dif_pos h]
+        exact (Classical.choose_spec
+          (FiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+            T ε targetPhase h.1 h.2)).1
+      · dsimp [radius]
+        rw [dif_neg h]
+        norm_num
+    rcases PerronThresholdTowerPhaseWideWindowHyp.witness
+        hRH X radius hRadius with
+      ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, hThreshold, hWide, hUcap⟩
+    let hRel :=
+      FiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+        T ε targetPhase hT4 hεpos
+    let R : ℝ := Classical.choose hRel
+    have hRspec := Classical.choose_spec hRel
+    have hRadius_eq : radius T ε = R := by
+      dsimp [radius, R]
+      rw [dif_pos ⟨hT4, hεpos⟩]
+    rcases hRspec with ⟨_hRpos, hHit⟩
+    rcases hHit L with ⟨t0, hLt, htR, hPhase⟩
+    have htU : t0 < U := by
+      have htRadius : t0 < L + radius T ε := by
+        simpa [hRadius_eq, R] using htR
+      exact lt_trans htRadius hWide
+    have hExpLle : Real.exp L ≤ Real.exp t0 :=
+      le_of_lt (Real.exp_strictMono hLt)
+    have hExpU : Real.exp t0 ≤ Real.exp U :=
+      Real.exp_le_exp.mpr (le_of_lt htU)
+    refine ⟨Real.exp t0, ?_, T, hT4, ?_, ε, hεpos, hεlt, ?_, ?_⟩
+    · exact lt_of_lt_of_le hX hExpLle
+    · exact le_trans hThreshold hExpLle
+    · intro ρ hρ
+      rcases hPhase ρ hρ with ⟨m, hm⟩
+      exact ⟨m, by simpa [Real.log_exp] using hm⟩
+    · exact le_trans hExpU hUcap
+
+/-- Instance form of
+`inhomogeneousPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp`. -/
+instance (priority := 90)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    [FiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    InhomogeneousPhaseFitAbovePerronThresholdPerronHyp :=
+  inhomogeneousPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
 
 variable [TruncatedExplicitFormulaPiHyp]
 
