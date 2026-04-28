@@ -128,3 +128,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   extra weighted-profile algebra.
 - Coordinator action requested:
   run the requested serialized validation commands.
+
+### 2026-04-28 Round 3: coordinate remainder to stationary-phase error
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Theorem/file attacked:
+  `SiegelCoordinateRemainderBoundProp` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Proof facts banked:
+  - Added `SiegelCoordinateStationaryPhaseErrorProp`, the exact block-coordinate
+    stationary-phase error estimate before dividing by the saddle amplitude:
+    at `t = blockCoord k p`, the raw `ErrorTerm` error after subtracting
+    `(-1)^k * (2*pi/t)^(1/4) * rsPsi p` is bounded by the same amplitude times
+    `fresnelC1Bound * t^(-(1:Real)/2)`.
+  - Added
+    `siegelCoordinateRemainderBoundProp_of_stationaryPhaseError`, using
+    `blockParam_blockCoord` and positivity of the saddle amplitude to divide
+    the raw stationary-phase error estimate and recover
+    `SiegelCoordinateRemainderBoundProp`.
+  - This places the remaining analytic content at the local Taylor/remainder
+    estimate for `ErrorTerm (blockCoord k p)`, with no weighted-profile or
+    signed-adjacent coefficient wrapper.
+- Failed routes that should not be retried:
+  none in this round. I did not route through `GabckePhaseCouplingHyp`, did not
+  strengthen `GabckeNormalizedCoefficientProp`, and did not introduce a broad
+  analytic axiom.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - `git diff --check`: passed.
+  - No Lean/Lake/full-build commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`
+  - `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+  - `printf 'import Littlewood.Main.LittlewoodPsi\n' | lake env lean --stdin`
+  - `printf 'import Littlewood.Main.LittlewoodPi\n' | lake env lean --stdin`
+- Smallest next theorem:
+  prove `SiegelCoordinateStationaryPhaseErrorProp` from the actual local
+  stationary-phase Taylor expansion for `ErrorTerm` in block coordinates,
+  including the exact leading term and the `fresnelC1Bound` first-remainder
+  coefficient.
+- Coordinator action requested:
+  run the requested serialized validation commands.

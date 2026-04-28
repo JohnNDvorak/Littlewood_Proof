@@ -184,11 +184,58 @@ def SiegelCoordinateRemainderBoundProp : Prop :=
     |saddlePointRemainder k (blockCoord k p)| ≤
       fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2)
 
+/-- Exact block-coordinate stationary-phase error estimate below
+`SiegelCoordinateRemainderBoundProp`.
+
+This is the local Taylor/remainder atom before normalizing by the saddle
+amplitude. The left side is the raw `ErrorTerm` error after extracting the
+leading Riemann-Siegel correction at `t = blockCoord k p`. -/
+def SiegelCoordinateStationaryPhaseErrorProp : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    |ErrorTerm (blockCoord k p)
+      - (-1 : ℝ) ^ k * (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) * rsPsi p| ≤
+      (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
+        (fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2))
+
 /-- Project the weighted-profile atom from the current Siegel/Gabcke class. -/
 theorem siegelWeightedProfileBoundProp_of_siegelSaddleExpansionHyp
     [h : SiegelSaddleExpansionHyp] :
     SiegelWeightedProfileBoundProp :=
   h.weighted_profile_bound
+
+/-- The exact block-coordinate stationary-phase error estimate implies the
+coordinate normalized saddle-remainder bound. -/
+theorem siegelCoordinateRemainderBoundProp_of_stationaryPhaseError
+    (h : SiegelCoordinateStationaryPhaseErrorProp) :
+    SiegelCoordinateRemainderBoundProp := by
+  intro k p hp
+  let t : ℝ := blockCoord k p
+  let amp : ℝ := (2 * Real.pi / t) ^ ((1 : ℝ) / 4)
+  have ht_pos : 0 < t := by
+    dsimp [t]
+    have hbase : 0 < (k : ℝ) + 1 + p := by
+      have hk : 0 ≤ (k : ℝ) := Nat.cast_nonneg k
+      linarith [hp.1, hk]
+    have hcoord : blockCoord k p = 2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 := by
+      unfold blockCoord
+      ring
+    rw [hcoord]
+    exact mul_pos (by positivity) (sq_pos_of_pos hbase)
+  have hamp_pos : 0 < amp := by
+    dsimp [amp]
+    exact Real.rpow_pos_of_pos (div_pos (by positivity) ht_pos) _
+  have hparam : blockParam k t = p := by
+    dsimp [t]
+    exact blockParam_blockCoord k p hp.1
+  have hstat := h k p hp
+  change |saddlePointRemainder k t| ≤ fresnelC1Bound * t ^ (-(1 : ℝ) / 2)
+  unfold saddlePointRemainder
+  change
+    |(ErrorTerm t - (-1 : ℝ) ^ k * amp * rsPsi (blockParam k t)) / amp| ≤
+      fresnelC1Bound * t ^ (-(1 : ℝ) / 2)
+  rw [hparam, abs_div, abs_of_pos hamp_pos]
+  rw [div_le_iff₀ hamp_pos]
+  simpa [t, amp, mul_comm, mul_left_comm, mul_assoc] using hstat
 
 /-- On block coordinates, the weighted profile bound is equivalent to the
 expected `fresnelC1Bound · t^(-1/2)` decay for the normalized remainder. -/
