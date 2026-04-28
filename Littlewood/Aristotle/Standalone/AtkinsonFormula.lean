@@ -9108,6 +9108,7 @@ private theorem atkinson_smallShiftPrefixBound_of_native_j1_j2_clean
             (Real.sqrt (((N + 2 : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ)) := by
             gcongr
 
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Patch-ready local successor step for the large-shift seam.
 
 This thin wrapper fills the `hbdry` slot from the live reciprocal-step
@@ -9189,6 +9190,7 @@ private theorem atkinson_largeShiftPrefix_succ_boundary_bound_atomic
               ring
   exact hbdry N
 
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Patch-ready local successor step for the large-shift seam.
 
 This thin wrapper fills the `hbdry` slot from the live reciprocal-step
@@ -9602,13 +9604,14 @@ instance [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] :
     AtkinsonLargeShiftPrefixBoundHyp :=
   atkinson_largeShiftPrefixBound_of_shiftedInversePhaseCorePrefix
 
-/-- Uniform induction package from the honest next-shift error surface plus the
+/- Uniform induction package from the honest next-shift error surface plus the
 small-shift leaf package.
 
 This theorem isolates the exact induction wrapper we need once the local
 one-step theorem is available: if a single constant `C` propagates from shift
 `j` to shift `j + 1` for every `j ≥ 2`, then the `j = 2` small-shift leaf
 closes all large shifts `j ≥ 3`. -/
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem atkinson_largeShiftPrefixBound_atomic_of_nextShift
     [AtkinsonSmallShiftPrefixBoundHyp]
     (γ : ℝ)
@@ -9723,6 +9726,38 @@ private theorem atkinson_largeShiftPrefixBound_atomic_of_nextShift
   refine ⟨C_large, hC_large_pos, ?_⟩
   intro j hj N
   exact hind j (by omega) N
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+private theorem atkinson_inversePhaseCorePrefix_bound_large_j_of_contracting_nextShift
+    [AtkinsonSmallShiftPrefixBoundHyp]
+    (γ : ℝ) (hγ_lt_one : γ < 1)
+    (hbdryRow :
+      ∃ C_bdry > 0, ∀ j : ℕ, 1 ≤ j → ∀ M : ℕ,
+        ‖∑ n ∈ Finset.range M,
+            (if j ≤ n then atkinsonResonantShiftedBoundaryTerm n j else 0)‖
+          ≤ C_bdry * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j))
+    (htail :
+      ∀ C_prev : ℝ, 0 < C_prev →
+      ∀ j : ℕ, 2 ≤ j →
+        (∀ N : ℕ,
+          ‖∑ k ∈ Finset.range N,
+              ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
+                atkinsonShiftedSingleBoundaryCore (k + j) j)‖
+            ≤ C_prev * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) →
+        ∀ N : ℕ,
+          ‖∑ k ∈ Finset.range N,
+              ((((1 / atkinsonUpperBoundaryStepCoeff (k + (j + 1)) j : ℝ) : ℂ)) *
+                ((((1 / atkinsonShiftedRelativePhase
+                    (k + ((j + 1) + j)) j : ℝ) : ℂ)) *
+                  atkinsonShiftedSingleBoundaryCore (k + (j + 1)) j))‖
+            ≤ γ * C_prev *
+                (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1))) :
+    ∃ C > 0, ∀ j : ℕ, 3 ≤ j → ∀ N : ℕ,
+      ‖∑ k ∈ Finset.range N,
+          ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
+            atkinsonShiftedSingleBoundaryCore (k + j) j)‖
+        ≤ C * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) :=
+  (atkinson_largeShiftPrefixBound_atomic_of_nextShift γ hγ_lt_one hbdryRow htail).bound
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem atkinson_kernelWeightedIcoTail_abel_bound_atomic
@@ -14336,6 +14371,51 @@ private theorem atkinson_largeShiftBoundaryAbelRemainder_bound_of_largeShiftPref
               exact add_le_add hlarge' hhead'
       _ = (C_head + C_large) * target := by ring
   simpa [target, headTail, incTail, mul_assoc] using hbound
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+private theorem atkinson_largeShiftBoundaryAbelRemainder_bound_of_contracting_nextShift
+    [AtkinsonSmallShiftPrefixBoundHyp]
+    (γ : ℝ) (hγ_lt_one : γ < 1)
+    (hbdryRow :
+      ∃ C_bdry > 0, ∀ j : ℕ, 1 ≤ j → ∀ M : ℕ,
+        ‖∑ n ∈ Finset.range M,
+            (if j ≤ n then atkinsonResonantShiftedBoundaryTerm n j else 0)‖
+          ≤ C_bdry * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j))
+    (htail :
+      ∀ C_prev : ℝ, 0 < C_prev →
+      ∀ j : ℕ, 2 ≤ j →
+        (∀ N : ℕ,
+          ‖∑ k ∈ Finset.range N,
+              ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
+                atkinsonShiftedSingleBoundaryCore (k + j) j)‖
+            ≤ C_prev * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) →
+        ∀ N : ℕ,
+          ‖∑ k ∈ Finset.range N,
+              ((((1 / atkinsonUpperBoundaryStepCoeff (k + (j + 1)) j : ℝ) : ℂ)) *
+                ((((1 / atkinsonShiftedRelativePhase
+                    (k + ((j + 1) + j)) j : ℝ) : ℂ)) *
+                  atkinsonShiftedSingleBoundaryCore (k + (j + 1)) j))‖
+            ≤ γ * C_prev *
+                (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1))) :
+    ∃ C_rem > 0, ∀ j : ℕ, 3 ≤ j → ∀ N : ℕ,
+      let headTail : ℕ → ℂ := fun k =>
+        ((((atkinsonLowerBoundaryShiftKernel (k + j) j 1 : ℝ) : ℂ)) *
+          ∑ s ∈ Finset.range (j - 1),
+            atkinsonResonantShiftedBoundaryTerm (k + j) (s + 1))
+      let incTail : ℕ → ℕ → ℂ := fun k r =>
+        (((((atkinsonLowerBoundaryShiftKernel (k + j) j (r + 2)
+              - atkinsonLowerBoundaryShiftKernel (k + j) j (r + 1) : ℝ) : ℂ)) *
+            ∑ s ∈ Finset.Ico (r + 1) (j - 1),
+              atkinsonResonantShiftedBoundaryTerm (k + j) (s + 1)))
+      ‖(∑ k ∈ Finset.range N, headTail k)
+          +
+        ∑ r ∈ Finset.range (j - 1),
+          ∑ k ∈ Finset.range N, incTail k r‖
+        ≤ C_rem * Real.log (↑j + 1) * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j) := by
+  letI : AtkinsonLargeShiftPrefixBoundHyp :=
+    atkinson_largeShiftPrefixBound_atomic_of_nextShift γ hγ_lt_one hbdryRow htail
+  exact atkinson_largeShiftBoundaryAbelRemainder_bound_of_largeShiftPrefix
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp]
   [AtkinsonSmallShiftPrefixBoundHyp] [AtkinsonLargeShiftPrefixBoundHyp] in
