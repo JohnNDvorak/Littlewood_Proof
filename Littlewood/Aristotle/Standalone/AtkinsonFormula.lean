@@ -12708,6 +12708,136 @@ private theorem atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model_
     _ = (C_model + C_zero * C_kernel) * scale := by
           ring
 
+/-- The shifted quadratic-kernel integral bound follows from the two natural
+oscillatory pieces: `∫ exp(i2πp²)` has size `O(1 / j)`, while the
+`4πp`-weighted piece is uniformly bounded by the exact derivative boundary
+term. The remaining comparison is the elementary Atkinson weight scale. -/
+private theorem atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment_scale
+    (hmass :
+      ∃ C_mass > 0, ∀ j : ℕ, 1 ≤ j →
+        ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+            Aristotle.StationaryPhaseMainMode.quadraticKernel p‖ ≤ C_mass / j)
+    (hmoment :
+      ∃ C_moment > 0, ∀ j : ℕ, 1 ≤ j →
+        ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+            (((4 * Real.pi * p : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseMainMode.quadraticKernel p)‖ ≤ C_moment)
+    (hscale :
+      ∃ C_scale > 0, ∀ n j : ℕ, 3 ≤ j → 1 ≤ j → j ≤ n →
+        (((n : ℝ) + 1) / j + 1)
+          ≤ C_scale * ((((n : ℝ) + 1) / atkinsonModeWeight n) *
+              (atkinsonModeWeight (n + j) / j))) :
+    ∃ C_kernel > 0, ∀ n j : ℕ, 3 ≤ j → 1 ≤ j → j ≤ n →
+      ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p‖
+        ≤ C_kernel * ((((n : ℝ) + 1) / atkinsonModeWeight n) *
+            (atkinsonModeWeight (n + j) / j)) := by
+  obtain ⟨C_mass, hC_mass, hmass'⟩ := hmass
+  obtain ⟨C_moment, hC_moment, hmoment'⟩ := hmoment
+  obtain ⟨C_scale, hC_scale, hscale'⟩ := hscale
+  refine ⟨(4 * Real.pi * C_mass + C_moment) * C_scale, by positivity, ?_⟩
+  intro n j hj3 hj1 hjn
+  let mass : ℂ :=
+    ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+      Aristotle.StationaryPhaseMainMode.quadraticKernel p
+  let moment : ℂ :=
+    ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+      (((4 * Real.pi * p : ℝ) : ℂ) *
+        Aristotle.StationaryPhaseMainMode.quadraticKernel p)
+  let scale : ℝ :=
+    (((n : ℝ) + 1) / atkinsonModeWeight n) * (atkinsonModeWeight (n + j) / j)
+  have hcont_kernel :
+      Continuous Aristotle.StationaryPhaseMainMode.quadraticKernel := by
+    unfold Aristotle.StationaryPhaseMainMode.quadraticKernel
+    continuity
+  have hIntMass :
+      IntegrableOn Aristotle.StationaryPhaseMainMode.quadraticKernel
+        (Ioc (j : ℝ) ((j : ℝ) + 1)) := by
+    exact hcont_kernel.integrableOn_Ioc
+  have hIntMoment :
+      IntegrableOn
+        (fun p : ℝ =>
+          (((4 * Real.pi * p : ℝ) : ℂ) *
+            Aristotle.StationaryPhaseMainMode.quadraticKernel p))
+        (Ioc (j : ℝ) ((j : ℝ) + 1)) := by
+    have hcont :
+        Continuous
+          (fun p : ℝ =>
+            (((4 * Real.pi * p : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseMainMode.quadraticKernel p)) := by
+      exact (Complex.continuous_ofReal.comp
+        (((continuous_const.mul continuous_const).mul continuous_id))).mul hcont_kernel
+    exact hcont.integrableOn_Ioc
+  have hrepr :
+      (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p)
+        =
+      ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) * mass) + moment) := by
+    calc
+      ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p
+          =
+        ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseMainMode.quadraticKernel p)
+            +
+            (((4 * Real.pi * p : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseMainMode.quadraticKernel p)) := by
+            refine MeasureTheory.integral_congr_ae ?_
+            filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioc] with p hp
+            rw [Aristotle.StationaryPhaseMainMode.blockJacobian_eq_affine]
+            push_cast
+            ring
+      _ =
+        ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) * mass) + moment) := by
+          rw [MeasureTheory.integral_add (hIntMass.const_mul _) hIntMoment,
+            MeasureTheory.integral_const_mul]
+  have hmass_bound : ‖mass‖ ≤ C_mass / j := by
+    simpa [mass] using hmass' j hj1
+  have hmoment_bound : ‖moment‖ ≤ C_moment := by
+    simpa [moment] using hmoment' j hj1
+  let x : ℝ := ((n : ℝ) + 1) / j
+  have hx_nonneg : 0 ≤ x := by
+    dsimp [x]
+    positivity
+  have hraw :
+      ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p‖
+        ≤ (4 * Real.pi * C_mass + C_moment) * (x + 1) := by
+    have hcoef_nonneg : 0 ≤ 4 * Real.pi * ((n : ℝ) + 1) := by
+      positivity
+    have hA_nonneg : 0 ≤ 4 * Real.pi * C_mass := by
+      positivity
+    have hB_nonneg : 0 ≤ C_moment := le_of_lt hC_moment
+    calc
+      ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p‖
+          =
+        ‖((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) * mass) + moment)‖ := by
+          rw [hrepr]
+      _ ≤ ‖(((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) * mass)‖ + ‖moment‖ :=
+          norm_add_le _ _
+      _ =
+        (4 * Real.pi * ((n : ℝ) + 1)) * ‖mass‖ + ‖moment‖ := by
+          rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hcoef_nonneg]
+      _ ≤ (4 * Real.pi * ((n : ℝ) + 1)) * (C_mass / j) + C_moment := by
+          gcongr
+      _ = (4 * Real.pi * C_mass) * x + C_moment := by
+          dsimp [x]
+          ring
+      _ ≤ (4 * Real.pi * C_mass + C_moment) * (x + 1) := by
+          nlinarith [mul_nonneg hA_nonneg hx_nonneg, mul_nonneg hB_nonneg hx_nonneg]
+  have hscale_bound : x + 1 ≤ C_scale * scale := by
+    simpa [x, scale] using hscale' n j hj3 hj1 hjn
+  calc
+    ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+        Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p‖
+        ≤ (4 * Real.pi * C_mass + C_moment) * (x + 1) := hraw
+    _ ≤ (4 * Real.pi * C_mass + C_moment) * (C_scale * scale) := by
+          gcongr
+    _ = ((4 * Real.pi * C_mass + C_moment) * C_scale) * scale := by
+          ring
+
 /-- The mode-eventual shifted-interval `blockMode` remainder follows once the
 native integral is close to the quadratic-anchor model and that model matches
 the explicit Atkinson complete-block target. -/

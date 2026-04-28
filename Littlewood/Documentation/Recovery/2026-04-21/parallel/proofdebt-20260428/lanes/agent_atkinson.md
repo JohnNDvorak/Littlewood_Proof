@@ -129,3 +129,56 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/full-build
   validation was run in this round.
+
+### 2026-04-28 Coordinator Validation, Round 2
+
+- Commit amended/pushed by coordinator as `16f1fd7`
+  (`Reduce Atkinson anchor approximation to zero model`) passed:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Hard rule update after coordinator intervention:
+  do not run `lake`, `lake env lean`, `lean`, focused builds, or any
+  compilation/check commands locally. All Lean/Lake validation is coordinator
+  serialized.
+- Note:
+  a local `lake env lean Littlewood/Aristotle/Standalone/AtkinsonFormula.lean`
+  diagnostic was started before this rule was clarified and was stopped by the
+  coordinator; no usable diagnostic output was produced.
+
+### 2026-04-28 Round 3 Kernel Integral Split
+
+- Classification: `CONDITIONAL_REDUCTION`, not closed.
+- Theorem/file attacked:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean`, the shifted
+  quadratic-kernel integral bound introduced in Round 2.
+- Facts banked:
+  `atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment_scale`
+  decomposes
+  `∫ p in Ioc j (j + 1), quadraticKernel p * blockJacobian n p`
+  using `blockJacobian_eq_affine`. The full kernel bound now follows from
+  three smaller atoms: a shifted quadratic mass bound `O(1 / j)`, a uniformly
+  bounded `4πp`-weighted shifted quadratic moment, and an elementary Atkinson
+  weight-scale comparison.
+- Failed routes:
+  a crude norm bound on the kernel integral loses the oscillatory cancellation
+  and leaves a term of size `n`, too large for the anchor-replacement step.
+  The required input is the shifted Fresnel cancellation, not another
+  no-cancellation integral estimate.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  Strict public import probes for `Littlewood.Main.LittlewoodPsi` and
+  `Littlewood.Main.LittlewoodPi` if the focused module passes.
+- Next smallest theorem:
+  prove the shifted quadratic mass bound
+  `∃ C_mass > 0, ∀ j : ℕ, 1 ≤ j →`
+  `‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `Aristotle.StationaryPhaseMainMode.quadraticKernel p‖ ≤ C_mass / j`,
+  and the weighted moment companion
+  `∃ C_moment > 0, ∀ j : ℕ, 1 ≤ j →`
+  `‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `(((4 * Real.pi * p : ℝ) : ℂ) * Aristotle.StationaryPhaseMainMode.quadraticKernel p)‖`
+  `≤ C_moment`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation should be run by this lane agent.
