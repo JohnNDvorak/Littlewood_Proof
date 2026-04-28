@@ -160,3 +160,59 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Run the requested validation commands and report the first elaboration
     risk, likely around the local `radius`/`Classical.choose` packaging in
     `inhomogeneousPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp`.
+
+### 2026-04-28 Round 3: Wide Tower Window Reduction
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - Leaf below `PerronThresholdTowerPhaseWideWindowHyp`.
+- Target choice:
+  - Chose `PerronThresholdTowerPhaseWideWindowHyp` over
+    `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp`. The finite-zero leaf
+    still needs a general finite-dimensional inhomogeneous Kronecker theorem
+    plus zeta-zero ordinate independence. The tower leaf can be reduced
+    locally to a same-height growth inequality.
+- Facts banked:
+  - Added `PerronThresholdTowerWideDominationHyp`.
+  - Added
+    `perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp`, deriving the
+    wide logarithmic window by taking
+    `L = log (max X (perronThreshold hRH T) + 1)` and
+    `U = L + radius T ε + 1`.
+  - Added the instance form routing
+    `PerronThresholdTowerPhaseWideWindowHyp` through the new wide-domination
+    leaf.
+- False-surface audit:
+  - The new reduction depends only on
+    `PerronSqrtErrorEventuallyAtHeightHyp` and the new
+    `PerronThresholdTowerWideDominationHyp`.
+  - It does not use `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, or `truncatedPiHyp_contradicts_rh`.
+- Failed routes that must not be retried:
+  - Do not use ordinary `tower_cap_unbounded_with_eps` alone for the wide
+    window. It gives a large cap for a prescribed constant, but not at a height
+    where the opaque `perronThreshold hRH T` and the relative-density radius
+    are simultaneously controlled.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane check; no full or bare `lake build` was run.
+  - `git diff --check` passed.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+  - `printf 'import Littlewood.Main.LittlewoodPsi\n' | lake env lean --stdin`
+  - `printf 'import Littlewood.Main.LittlewoodPi\n' | lake env lean --stdin`
+- Smallest next theorem/interface:
+  - Prove/source `PerronThresholdTowerWideDominationHyp`: for every positive
+    radius family, find one height/tolerance where the tower cap beats
+    `exp (log (max X (perronThreshold hRH T) + 1) + radius T ε + 1)`.
+  - In parallel, the remaining phase-side leaf is
+    `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp`.
+- Coordinator action requested:
+  - Run the requested validation commands and report any elaboration repair
+    needed around the local `L`/`U` aliases in
+    `perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp`.

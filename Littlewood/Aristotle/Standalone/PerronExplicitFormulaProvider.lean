@@ -2245,6 +2245,66 @@ class PerronThresholdTowerPhaseWideWindowHyp
         Real.exp U ≤ Real.exp (Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
+/-- Same-height wide Perron-threshold/tower domination boundary.
+
+This is the exact tower-growth leaf below
+`PerronThresholdTowerPhaseWideWindowHyp`: the tower cap must dominate the
+logged lower endpoint together with the externally supplied relative-density
+search radius at the same height. -/
+class PerronThresholdTowerWideDominationHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
+      (radius : ℝ → ℝ → ℝ),
+      (∀ T ε : ℝ, 0 < radius T ε) →
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.exp
+          (Real.log (max X (perronThreshold _hRH T) + 1) + radius T ε + 1)
+          ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- The wide domination boundary implies the wide logarithmic phase-window
+boundary. -/
+theorem perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerWideDominationHyp] :
+    PerronThresholdTowerPhaseWideWindowHyp where
+  witness := by
+    intro hRH X radius hRadius
+    rcases PerronThresholdTowerWideDominationHyp.witness
+        hRH X radius hRadius with
+      ⟨T, ε, hT4, hεpos, hεlt, hdom⟩
+    let B : ℝ := max X (perronThreshold hRH T) + 1
+    let L : ℝ := Real.log B
+    let U : ℝ := L + radius T ε + 1
+    have hPgt1 : 1 < perronThreshold hRH T :=
+      perronThreshold_gt_one_perron hRH T
+    have hBpos : 0 < B := by
+      dsimp [B]
+      linarith [le_max_right X (perronThreshold hRH T)]
+    refine ⟨T, ε, L, U, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_⟩
+    · dsimp [L]
+      rw [Real.exp_log hBpos]
+      dsimp [B]
+      linarith [le_max_left X (perronThreshold hRH T)]
+    · dsimp [L]
+      rw [Real.exp_log hBpos]
+      dsimp [B]
+      linarith [le_max_right X (perronThreshold hRH T)]
+    · dsimp [U]
+      linarith
+    · simpa [U, L, B] using hdom
+
+/-- Instance form of
+`perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp`. -/
+instance (priority := 100)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerWideDominationHyp] :
+    PerronThresholdTowerPhaseWideWindowHyp :=
+  perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp
+
 /-- Relative-density finite inhomogeneous phase approximation boundary.
 
 For each fixed finite zero cutoff and tolerance, the orbit hits the requested
