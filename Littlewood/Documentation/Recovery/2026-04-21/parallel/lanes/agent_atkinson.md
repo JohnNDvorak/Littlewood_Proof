@@ -114,6 +114,16 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - Requested coordinator validation:
   `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
 
+### 2026-04-28 Coordinator Validation
+
+- Focused module check:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` passed.
+- Strict public import checks:
+  `import Littlewood.Main.LittlewoodPsi` passed.
+  `import Littlewood.Main.LittlewoodPi` passed.
+- Integration status:
+  ready to commit and merge into the main recovery branch.
+
 ### 2026-04-28 Coordinator Validation, Round 4
 
 - `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`: passed.
@@ -229,6 +239,34 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   `‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) * ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
   `Aristotle.StationaryPhaseMainMode.blockMode (k - j) p * blockJacobian (k - j) p)`
   `- atkinsonCompleteBlockTargetK k j)‖ ≤ C_err * (atkinsonModeWeight k / j)`.
+- Guardrail:
+  no coefficient-`8` predecessor-tail or `γ < 1` contraction route was used.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+
+### 2026-04-28 Overnight Round 5 Mode-Indexed Shifted Interval
+
+- Classification: `CONDITIONAL_REDUCTION`, not closed.
+- Coordinator baseline: round 4 passed validation and was committed as
+  `3396863`.
+- Current theorem attacked: the native `blockMode` pointwise stationary-phase
+  remainder consumed by
+  `atkinson_completeBlockTargetK_remainder_of_blockMode_stationaryPhase`.
+- Code fact banked:
+  `atkinson_blockMode_stationaryPhase_of_mode_eventual_shifted_interval_remainder`
+  reduces the `k, j` remainder surface to the mode-indexed statement with
+  mode `n`, shift `j`, and hypothesis `j ≤ n`. This matches the
+  `StationaryPhaseMainMode` APIs, which are eventual in the mode variable.
+- Remaining obstruction / next theorem:
+  prove the mode-eventual shifted-interval remainder:
+  `∃ C_err > 0, ∃ N_err : ℕ, ∀ n : ℕ, N_err ≤ n → ∀ j : ℕ,`
+  `3 ≤ j → 1 ≤ j → j ≤ n →`
+  `‖((((atkinsonModeWeight n : ℝ) : ℂ) * ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `Aristotle.StationaryPhaseMainMode.blockMode n p * blockJacobian n p)`
+  `- atkinsonCompleteBlockTargetK (n + j) j)‖`
+  `≤ C_err * (atkinsonModeWeight (n + j) / j)`.
 - Guardrail:
   no coefficient-`8` predecessor-tail or `γ < 1` contraction route was used.
 - Files changed:

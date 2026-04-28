@@ -12556,6 +12556,34 @@ private theorem atkinson_completeBlockTargetK_remainder_of_blockMode_stationaryP
     atkinson_completeBlockTargetK_remainder_of_shiftedBlockParamTargetK_remainder
       (atkinson_shiftedBlockParamTargetK_remainder_of_blockMode_stationaryPhase herr)
 
+/-- Mode-indexed form of the native shifted-block stationary-phase remainder.
+Stationary-phase estimates are naturally eventual in the Hardy mode `n`; this
+wrapper removes the `k = n + j` arithmetic layer from the Atkinson target. -/
+private theorem atkinson_blockMode_stationaryPhase_of_mode_eventual_shifted_interval_remainder
+    (hmode :
+      ∃ C_err > 0, ∃ N_err : ℕ, ∀ n : ℕ, N_err ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonCompleteBlockTargetK (n + j) j)‖
+            ≤ C_err * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+            ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+              Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+        ≤ C_err * (atkinsonModeWeight k / j) := by
+  obtain ⟨C_err, hC_err, N_err, hmode'⟩ := hmode
+  refine ⟨C_err, hC_err, N_err, ?_⟩
+  intro j hJ hj3 hj1 k hjk
+  have hkn : j ≤ k - j := by
+    omega
+  have hn_large : N_err ≤ k - j := le_trans hJ hkn
+  have hkj : (k - j) + j = k := by
+    omega
+  simpa [hkj] using hmode' (k - j) hn_large j hj3 hj1 hkn
+
 /-- Equivalent concrete public-leaf reduction in the shifted block-parameter
 coordinates of the mode `k - j`.
 
