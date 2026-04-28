@@ -87,6 +87,28 @@ Latest branch-health certification:
   `AtkinsonFormula.lean` is back to theorem content rather than elaboration
   noise.
 
+Latest analytic-axiom checkpoint:
+
+- On 2026-04-28, baseline `bd6c8f3`, the recovery branch removed the active
+  analytic provider shim from the public path.
+- `B1B3AnalyticDeepLeaf.lean` no longer imports `AnalyticAxioms.lean`.
+- `AnalyticAxioms.lean` remains only as a no-provider compatibility stub:
+  no `axiom`, no `private axiom`, and no global analytic class instances.
+- Static audit after the change finds only the accepted first-zero pair plus
+  the unimported Chebyshev quarantine axioms.
+- Focused validation passed for:
+  - `lake env lean Littlewood/Aristotle/Standalone/B1B3AnalyticDeepLeaf.lean`
+  - `lake env lean Littlewood/Aristotle/Standalone/DeepBlockersResolved.lean`
+  - `import Littlewood.Main.LittlewoodPsi`
+  - `import Littlewood.Main.LittlewoodPi`
+- Additional focused Lake module builds passed serially:
+  - `lake build Littlewood.Aristotle.Standalone.AnalyticAxioms`
+  - `lake build Littlewood.Aristotle.Standalone.B1B3AnalyticDeepLeaf`
+  - `lake build Littlewood.Aristotle.Standalone.DeepBlockersResolved`
+  - `lake build Littlewood.Main.LittlewoodPsi`
+  - `lake build Littlewood.Main.LittlewoodPi`
+- No bare `lake build` was run for this checkpoint.
+
 ## Matrix
 
 | Class | Active public path | Current tracked status | Reachability from minimal imports | Evidence |
@@ -98,8 +120,8 @@ Latest branch-health certification:
 | `AtkinsonLargeShiftPrefixBoundHyp` | yes | tracked provider now reachable on the active recovery path, but still sorry-backed | reachable, but supplied only through the direct-Abel wrapper | the active trace now uses `Aristotle.Standalone.CorePrefixDirect.instAtkinsonLargeShiftPrefixBoundHyp`; [`CorePrefixDirect.lean`](../../Aristotle/Standalone/CorePrefixDirect.lean) is now only a wrapper around `atkinson_largeShiftPrefixBound_of_direct_abel`, the subordinate remainder helper at lines 12375-12460 now compiles cleanly, and the live literal tracked `sorry` has now been moved onto the sharper theorem `atkinson_largeShiftWeightedBoundarySum_bound` in [`AtkinsonFormula.lean`](../../Aristotle/Standalone/AtkinsonFormula.lean), while `atkinson_largeShiftBoundaryAbelRemainder_bound` has been reduced to that weighted-boundary statement. The recovery branch also exposes the direct structural reductions `atkinson_largeShiftBoundaryAbelRemainder_eq_weightedBoundarySum` and `atkinson_largeShiftWeightedBoundarySum_eq_prefix_sub_headCore`, so the wrapper debt is now pinned exactly to the weighted boundary sum while making explicit that this sum is the same object as `large-shift prefix - j1 headcore`. A fresh source audit also shows that the generic induction route `atkinson_largeShiftPrefixBound_atomic_of_nextShift` is not currently instantiable from tracked inputs: its successor hypothesis requires a contraction `γ < 1`, while the only available tracked predecessor-tail theorem `atkinson_largeShiftPrefix_succ_htail_of_nextShift_and_smallShift` still carries factor `8`, so the direct-Abel wrapper remains real debt rather than stale packaging |
 | `AtkinsonShiftedInversePhaseCellPrefixBoundHyp` | yes | still no base tracked provider found | first honest missing class on the active public path | class declared in [`AtkinsonFormula.lean`](../../Aristotle/Standalone/AtkinsonFormula.lean) around line 7106; after removing the global correction→cell instance, `trace.Meta.synthInstance` now stops here rather than silently routing through correction, and a focused scratch probe importing `AtkinsonFormula` plus `CorePrefixDirect` still fails to synthesize this class even though small-shift, large-shift, and inverse-core all synthesize. The recovery branch now also contains the explicit reduction theorems `atkinson_shiftedInversePhaseCellPrefix_no_log_of_eventual_and_finite_patch`, `atkinson_shiftedInversePhaseCellPrefixBound_of_eventual_and_finite_patch`, and the concrete `J0 = 3` specialization `atkinson_shiftedInversePhaseCellPrefixBound_of_eventual_j3_and_j1_j2`. The newest direct attack tightens that again: `atkinson_shiftedInversePhaseCellPrefix_no_log_j3_of_rowIntegral_and_head`, `atkinson_shiftedInversePhaseCell_head_no_log_eventually`, and `atkinson_shiftedInversePhaseCellPrefix_no_log_eventual_j3_of_rowIntegral` now reduce the large-`j` side of the public leaf to a single eventual no-log row-tail theorem plus the already-explicit finite small-shift patch. |
 | `AtkinsonShiftedCorrectionPrefixBoundHyp` | no longer required by the public boundary | still no concrete tracked source found | still needed internally by the older resolved layer, but now supplied only locally in `DeepSorries` | class declared in [`AtkinsonFormula.lean`](../../Aristotle/Standalone/AtkinsonFormula.lean) around line 14395; `DeepSorries.combined_atoms` now creates a local `letI` via `atkinson_shiftedCorrectionPrefixBound_of_inversePhaseCellPrefix` before calling `DeepBlockersResolved.combined_atoms_resolved_unconditional` |
-| `SiegelSaddleExpansionHyp` | yes | tracked provider exists, axiom-backed | reachable if imported, but mathematically not closed | [`AnalyticAxioms.lean`](../../Aristotle/Standalone/AnalyticAxioms.lean) provides the instance at line 51; `#print axioms` on the inferred instance shows the private axiom `_private.Littlewood.Aristotle.Standalone.AnalyticAxioms.0.Aristotle.Standalone.AnalyticAxioms.siegelSaddleExpansion_axiom` |
-| `GabckePhaseCouplingHyp` | yes | tracked provider chain exists | off-path / not on minimal public imports | direct synthesis succeeds after importing [`AnalyticAxioms.lean`](../../Aristotle/Standalone/AnalyticAxioms.lean) and [`GabckePhaseCouplingHyp.lean`](../../Aristotle/Standalone/GabckePhaseCouplingHyp.lean), yielding `instGabckePhaseCouplingHypOfGabckeSignedAdjacentHyp`; the active public path simply does not reach that chain |
+| `SiegelSaddleExpansionHyp` | yes | no accepted global provider; explicit theorem/class debt | carried as a class requirement, not supplied by `AnalyticAxioms` | [`AnalyticAxioms.lean`](../../Aristotle/Standalone/AnalyticAxioms.lean) is now a no-provider stub. The old private axiom provider was removed from the public path on 2026-04-28. |
+| `GabckePhaseCouplingHyp` | yes | conditional tracked theorem layer remains; no axiom-backed shortcut | depends on real upstream Siegel/Gabcke atoms | [`GabckePhaseCouplingHyp.lean`](../../Aristotle/Standalone/GabckePhaseCouplingHyp.lean) still contains the conditional bridge structure, but the old direct synthesis route through `AnalyticAxioms.lean` is no longer available. |
 | `ShiftedRemainderSegmentBoundLargeTHyp` | yes | tracked providers exist | probably reachable only through lower-layer imports | [`ShiftedRemainderInterface.lean`](../../Development/ShiftedRemainderInterface.lean) defines the class; [`ZetaLogDerivBound.lean`](../../Aristotle/Standalone/ZetaLogDerivBound.lean) has concrete instances at lines 87 and 97 |
 | `Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp` | yes | no global instance visible from its defining module | namespace/provider mismatch | the active class is defined in [`HadamardProductZeta.lean`](../../Development/HadamardProductZeta.lean) line 616; direct `inferInstance` after importing that module fails. A different namespaced class/provider exists in [`ExplicitFormulaPsiB5aDefs.lean`](../../Aristotle/Standalone/ExplicitFormulaPsiB5aDefs.lean) lines 344 and 349 |
 | `TruncatedExplicitFormulaPiHyp` | yes | tracked candidate instance exists | off-path or import-chain broken | [`RHPiUnconditionalExactSeedExistence.lean`](../../Aristotle/Standalone/RHPiUnconditionalExactSeedExistence.lean) defines an instance at line 328, but direct `inferInstance` after importing that file still fails in the targeted audit |
@@ -161,15 +183,13 @@ Latest branch-health certification:
    still cannot synthesize `ZetaMeanSquareHalfBound` on the active path.
    So the first failure is not just "missing imports"; the non-circular B1 lane
    still lacks upstream provider supply.
-9. The current tracked-main evidence points to the upstream analytic supply gap,
-   not the public theorem constants, as the next real blocker. Direct synthesis
-   checks now show that `GabckePhaseCouplingHyp` is available on tracked main
-   through the analytic-axiom chain, while the genuinely missing tracked
-   providers are now concentrated in:
-   `AtkinsonLargeShiftPrefixBoundHyp` and
-   `AtkinsonShiftedCorrectionPrefixBoundHyp`.
-10. `SiegelSaddleExpansionHyp` is already available but axiom-backed, so it is
-    not the current wiring blocker even though it remains mathematically open.
+9. After the 2026-04-28 de-axiom checkpoint, the upstream analytic supply gap is
+   explicit theorem debt again. `SiegelSaddleExpansionHyp`, Hadamard zero-sum
+   bounds, and the Perron contour decomposition are no longer supplied by
+   `AnalyticAxioms.lean`.
+10. `GabckePhaseCouplingHyp` remains a real conditional theorem layer fed by
+    Siegel/Gabcke atoms; it is no longer considered closed by the removed
+    analytic-axiom chain.
 11. The public API still *reports* failure at `CriticalZeroSumDivergesHyp`, but
     that is now only the outer class. A direct synthesis trace shows the live
     path is:

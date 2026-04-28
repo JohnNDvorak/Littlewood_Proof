@@ -120,9 +120,19 @@ not edit them directly.
 - Strict public import probes on the main recovery branch passed:
   - `import Littlewood.Main.LittlewoodPsi`
   - `import Littlewood.Main.LittlewoodPi`
+- 2026-04-28 de-axiom checkpoint:
+  - `AnalyticAxioms.lean` is now a no-provider stub.
+  - `B1B3AnalyticDeepLeaf.lean` no longer imports the analytic shim.
+  - Static axiom scan finds only the accepted first-zero pair plus the
+    unimported Chebyshev quarantine.
+  - Focused validation passed for `B1B3AnalyticDeepLeaf`,
+    `DeepBlockersResolved`, and the two strict public import probes.
+  - Focused Lake module builds passed serially for `AnalyticAxioms`,
+    `B1B3AnalyticDeepLeaf`, `DeepBlockersResolved`, `LittlewoodPsi`, and
+    `LittlewoodPi`.
 - All fresh overnight worktrees reuse the main `.lake` cache through local
   symlinks; `.lake` is excluded locally and must remain untracked.
-- No full `lake build` has been run in this overnight coordinator pass.
+- No bare `lake build` has been run in this overnight coordinator pass.
 - Integrated head after lane merges: `d70d921`.
 - Current next pass should continue from the integrated heads. Coordinator
   remains the sole Lean/Lake validator, with exactly one Lean/Lake validation
@@ -150,6 +160,10 @@ not edit them directly.
   bounded-window finite inhomogeneous phase theorem.
 - RS/Gabcke signed coupling is reduced to an explicit normalized Gabcke
   coefficient identity plus nonnegativity and adjacent antitonicity.
+- The removed analytic shim exposes the Hardy/Hadamard/Perron analytic atoms as
+  ordinary proof debt again: `SiegelSaddleExpansionHyp`, Hadamard zero-sum
+  bounds, and Perron contour decomposition must not be counted as closed by
+  `AnalyticAxioms.lean`.
 
 ## Update Protocol
 

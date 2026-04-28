@@ -74,6 +74,15 @@ Interpretation:
 - For the files above, `HEAD` matches the `d2778c4` architectural shape.
 - The current green build therefore reflects boundary propagation, not closure.
 
+### `bd6c8f3` plus 2026-04-28 de-axiom checkpoint
+
+- The recovery branch removes the active `AnalyticAxioms.lean` provider shim
+  from the public path.
+- This restores the old frontier style: analytic content is visible as
+  theorem/class debt and temporary `sorry`, not as private global axioms.
+- The only accepted non-Lean mathematical input remains the first-zero /
+  zero-free-below-14.13 pair in `ZeroCountingAssumptions.lean`.
+
 ## Current class families mapped back to older blocker families
 
 | Current family | Older blocker / leaf family | Interpretation |
@@ -90,3 +99,5 @@ Interpretation:
    - interface-boundary propagation second
 2. The current 15-class surface is not "the old blockers plus names"; it is a wrapper layer around the old blocker graph.
 3. Any recovery that skips this map and jumps straight to CloudDocs file porting is likely to bless the wrong files.
+4. Any future provider claim must pass the axiom audit: no analytic class may be
+   treated as closed merely because `AnalyticAxioms.lean` exists.

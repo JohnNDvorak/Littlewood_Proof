@@ -59,7 +59,6 @@ import Littlewood.Aristotle.Standalone.OscPieceBigOAssembly
 import Littlewood.Aristotle.Standalone.B3BlockStructureFromExpansion
 import Littlewood.Aristotle.Standalone.B2FirstMomentFromExpansion
 import Littlewood.Aristotle.Standalone.RSExpansionProof
-import Littlewood.Aristotle.Standalone.AnalyticAxioms
 
 set_option maxHeartbeats 800000
 set_option relaxedAutoImplicit false
