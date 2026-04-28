@@ -148,6 +148,26 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - Coordinator action requested: run the exact validation commands above under
   serialized validation.
 
+### 2026-04-28 Coordinator Validation, Round 2
+
+- Initial `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`
+  failed on normalization arithmetic:
+  Lean did not identify `((k + 1 : Nat) : Real) + 1 + p` with
+  `(k : Real) + 2 + p` inside the adjacent normalized coefficient proofs.
+- Coordinator repair:
+  `normalized_signedSPR_antitone_of_normalizedSignedSPR_adjacent` and
+  `gabckeNormalizedCoefficientProp_of_siegelSaddleExpansionHyp` now rewrite
+  through an explicit coefficient equality before applying the normalized
+  inequality.
+- Validation after repair:
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`: passed.
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`: passed.
+  - `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`: passed.
+  - `import Littlewood.Main.LittlewoodPsi`: passed.
+  - `import Littlewood.Main.LittlewoodPi`: passed.
+- Validation output included existing linter warnings in imported files; no
+  errors after the repair.
+
 ### 2026-04-28 Coordinator Validation
 
 - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`:
@@ -156,3 +176,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`: passed.
 - Residual risk: public import probes remain queued; the analytic content is
   still the two `SiegelSaddleExpansionHyp` fields surfaced by this round.
+
+### 2026-04-28 Overnight Round 2: normalized coefficient boundary
+
+- Status: PROVED helper reductions, CONDITIONAL_REDUCTION analytic atom.
+- Current theorem/file attacked:
+  `Littlewood/Aristotle/Standalone/GabckePhaseCouplingInfra.lean`.
+- Static inspection:
+  there is no explicit formal Gabcke coefficient `c₁(p)` in the current
+  RS/Gabcke files. The formal object closest to that coefficient is the
+  normalized signed product
+  `((k : Real) + 1 + p) * signedSPR k (blockCoord k p)`, which removes the
+  universal `1 / (k+1+p)` scale from Gabcke Satz 4.
+- Proof facts banked:
+  - Added `normalizedSignedSPR`.
+  - Added exact coefficient-level target `GabckeNormalizedCoefficientProp`:
+    nonnegativity and adjacent antitonicity of `normalizedSignedSPR` for
+    `k ≥ 1`, `0 < p ≤ 1`.
+  - Added
+    `signedSPR_nonneg_of_normalizedSignedSPR_nonneg`.
+  - Added
+    `normalized_signedSPR_antitone_of_normalizedSignedSPR_adjacent`.
+  - Added
+    `steepestDescentAdjacentCoupling_of_normalizedCoefficient`.
+  - Added
+    `gabckeNormalizedCoefficientProp_of_siegelSaddleExpansionHyp`, recording
+    that the current Siegel wrapper implies the smaller normalized coefficient
+    target.
+  - Added
+    `gabckeSignedAdjacentProp_of_normalizedCoefficient`.
+  - Added
+    `remainder_antitone_for_ge_one_of_normalizedCoefficient`.
+- Failed routes that should not be retried:
+  none in this round; no Lean/Lake/build commands were run.
+- Smallest next theorem or diagnostic:
+  prove `GabckeNormalizedCoefficientProp` from an explicit formal formula for
+  the first signed Gabcke coefficient. This is smaller than the current
+  `SiegelSaddleExpansionHyp` class gap because it drops the absolute
+  `weighted_profile_bound` field and targets only the signed adjacent content
+  needed for Gabcke phase coupling.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`
+  - `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+  - minimal import probe for `Littlewood.Main.LittlewoodPsi`
+  - minimal import probe for `Littlewood.Main.LittlewoodPi`
+- Coordinator action requested: run the exact validation commands above under
+  serialized validation.
