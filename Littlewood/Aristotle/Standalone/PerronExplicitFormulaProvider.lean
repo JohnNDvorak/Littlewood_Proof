@@ -2139,6 +2139,70 @@ class PerronThresholdTowerPhaseWindowHyp
         Real.exp U ≤ Real.exp (Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
+/-- Same-height Perron-threshold/tower domination boundary.
+
+This is the exact analytic growth lemma missing below
+`PerronThresholdTowerPhaseWindowHyp`: at some height `T`, the tower cap must
+strictly dominate both the requested lower bound and the opaque Perron threshold
+at that same height. It is intentionally smaller than the logarithmic-window
+interface; the log window is recovered deterministically below. -/
+class PerronThresholdTowerDominationHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        max X (perronThreshold _hRH T) + 1 <
+          Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+private lemma perronThreshold_gt_one_perron
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hRH : ZetaZeros.RiemannHypothesis) (T : ℝ) :
+    1 < perronThreshold hRH T := by
+  exact (perronThreshold_spec hRH T
+    (perronThreshold hRH T) le_rfl).1
+
+/-- The same-height domination boundary implies the logarithmic phase-window
+boundary. -/
+theorem perronThresholdTowerPhaseWindow_of_domination_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerDominationHyp] :
+    PerronThresholdTowerPhaseWindowHyp where
+  witness := by
+    intro hRH X
+    rcases PerronThresholdTowerDominationHyp.witness hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hdom⟩
+    let B : ℝ := max X (perronThreshold hRH T) + 1
+    let C : ℝ :=
+      Real.exp (Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+    have hPgt1 : 1 < perronThreshold hRH T :=
+      perronThreshold_gt_one_perron hRH T
+    have hBpos : 0 < B := by
+      dsimp [B]
+      linarith [le_max_right X (perronThreshold hRH T)]
+    have hBltC : B < C := by
+      simpa [B, C] using hdom
+    have hCpos : 0 < C := lt_trans hBpos hBltC
+    refine ⟨T, ε, Real.log B, Real.log C, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_⟩
+    · rw [Real.exp_log hBpos]
+      dsimp [B]
+      linarith [le_max_left X (perronThreshold hRH T)]
+    · rw [Real.exp_log hBpos]
+      dsimp [B]
+      linarith [le_max_right X (perronThreshold hRH T)]
+    · exact Real.log_lt_log hBpos hBltC
+    · rw [Real.exp_log hCpos]
+
+/-- Instance form of `perronThresholdTowerPhaseWindow_of_domination_hyp`. -/
+instance (priority := 100)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerDominationHyp] :
+    PerronThresholdTowerPhaseWindowHyp :=
+  perronThresholdTowerPhaseWindow_of_domination_hyp
+
 /-- Bounded-window finite inhomogeneous phase approximation boundary.
 
 Given the finite zero set below a fixed height `T`, an arbitrary target phase

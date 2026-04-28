@@ -350,6 +350,70 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
     `FiniteZeroInhomogeneousPhaseWindowHyp`; these are now the two honest leaves
     below `InhomogeneousPhaseFitAbovePerronThresholdPerronHyp`.
 
+### 2026-04-28 Tower Window Leaf Reduction
+
+- Classification: TOWER_WINDOW_LEAF_REDUCED_PENDING_VALIDATION.
+- Current theorem/file attacked:
+  - `PerronExplicitFormulaProvider.lean`
+- Changed provider interfaces:
+  - Added `PerronThresholdTowerDominationHyp`, the exact same-height growth
+    leaf below `PerronThresholdTowerPhaseWindowHyp`.
+  - Added `perronThreshold_gt_one_perron`, the Perron-only replacement for the
+    old helper that had required `PerronPiApproxCompatibilityHyp`.
+  - Added `perronThresholdTowerPhaseWindow_of_domination_hyp`, deriving the
+    logarithmic window leaf from strict same-height tower domination by taking
+    `L = log (max X (perronThreshold hRH T) + 1)` and
+    `U = log towerCap(T, ε)`.
+  - Added the instance form routing `PerronThresholdTowerPhaseWindowHyp` through
+    `PerronThresholdTowerDominationHyp`.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/lanes/agent_pi_phase.md`
+- False-surface audit after this split:
+  - New tower-window reduction uses only
+    `PerronSqrtErrorEventuallyAtHeightHyp`, `perronThreshold_spec`, and the new
+    `PerronThresholdTowerDominationHyp`.
+  - It does not use `TruncatedExplicitFormulaPiHyp`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+- Why existing tower facts were insufficient:
+  - `tower_cap_unbounded_with_eps` can choose a height with large cap for a
+    prescribed numeric bound, but it does not simultaneously bound the opaque
+    `perronThreshold hRH T` at that same chosen height.
+  - The new remaining tower leaf is exactly:
+    `∀ hRH X, ∃ T ε, 4 ≤ T ∧ 0 < ε ∧ ε < 1 ∧
+      max X (perronThreshold hRH T) + 1 < towerCap(T, ε)`.
+- Likely first compile-risk area:
+  - `PerronExplicitFormulaProvider.lean`,
+    `perronThresholdTowerPhaseWindow_of_domination_hyp`, specifically the
+    `Real.log_lt_log` lemma name/signature and the final definitional reduction
+    after `Real.exp_log`.
+- Commands run:
+  - Static only: `git status --short --branch`, `rg`, `sed`, and `git diff`.
+  - No Lean/Lake/build/cache commands were run.
+- Requested coordinator validation, in order:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - minimal import probe for `Littlewood.Main.LittlewoodPi`
+- Smallest next theorem/interface:
+  - Prove or externally source `PerronThresholdTowerDominationHyp`; after that,
+    the tower/window leaf is closed and only
+    `FiniteZeroInhomogeneousPhaseWindowHyp` remains below the Perron-only
+    phase-fit provider boundary.
+
+### 2026-04-28 Coordinator Validation, Tower Window Reduction
+
+- Coordinator proof repair:
+  removed the redundant `exact le_rfl` after `rw [Real.exp_log hCpos]`; that
+  rewrite already closes the final tower-cap inequality.
+- Focused module check:
+  `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  passed.
+- Strict public import checks:
+  `import Littlewood.Main.LittlewoodPsi` passed.
+  `import Littlewood.Main.LittlewoodPi` passed.
+- Integration status:
+  ready to commit and merge into the main recovery branch.
+
 ### 2026-04-28 Coordinator Validation, Phase-Fit Boundary Decomposition
 
 - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`: passed.
