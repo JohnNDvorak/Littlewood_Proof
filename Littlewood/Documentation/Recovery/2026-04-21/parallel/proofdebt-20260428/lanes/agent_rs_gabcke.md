@@ -219,3 +219,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   first-remainder coefficient bound.
 - Coordinator action requested:
   run the requested serialized validation commands.
+
+### 2026-04-28 Round 5: concrete stationary coefficient source obstruction
+
+- Classification: `FAILED_ROUTE`.
+- Theorem/file attacked:
+  `SiegelStationaryPhaseCoefficientIdentityProp C` and
+  `SiegelStationaryPhaseCoefficientBoundProp C` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Static facts banked:
+  - The current owned Lean files contain the block-coordinate contour
+    normalizations `siegelTau`, `gabckeZ`, `gabckeQ`, `siegelU`, the shifted
+    contour factor, and several coefficient-scale inequalities, but no formal
+    Tabelle-1/local Taylor coefficient expression that can be used as a
+    concrete `C`.
+  - The standard Riemann-Siegel coefficient source gives coefficients by a
+    generating/coefficient-extraction formula with
+    `c_1(p) = -psi'''(p)/(96*pi^2)` for the standard Riemann-Siegel
+    `psi(p) = cos(2*pi*(p^2-p-1/16))/cos(2*pi*p)`. That source formula is not
+    present in the current Lean files and is not definitionally the same as
+    the local `rsPsi p = cos(pi*(2*p^2 - 2*p + 1/4))`.
+  - Because of that normalization mismatch, directly declaring a concrete
+    coefficient in terms of the standard formula would leave an unproven
+    normalization theorem before it can imply
+    `SiegelStationaryPhaseCoefficientIdentityProp C`.
+- Failed routes that should not be retried:
+  - Do not define `C` as the raw defect quotient; that would be a circular
+    reformulation of `SiegelCoordinateStationaryPhaseErrorProp`.
+  - Do not instantiate `C` as a constant or a bound-only proxy such as
+    `1/(6*pi)`; the current files support such bounds only as scale estimates,
+    not as the exact local Taylor coefficient identity for `ErrorTerm`.
+  - Do not port the standard `c_1` formula until the local `rsPsi`
+    normalization has been related to the standard Riemann-Siegel `psi`.
+- Files changed:
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - `git diff --check`: passed.
+  - No Lean/Lake/full-build commands were run.
+- Requested coordinator validation:
+  - none for this ledger-only source-obstruction commit.
+- Smallest next theorem:
+  add, in an owned RS/Siegel/Gabcke coefficient file, a standard-coefficient
+  normalization layer:
+  1. define the standard Riemann-Siegel `psi` used by the coefficient source;
+  2. define the first coefficient `c_1(p) = -psi'''(p)/(96*pi^2)` or the
+     equivalent coefficient-extraction object;
+  3. prove the normalization theorem relating that standard `psi`/`c_1` to the
+     project-local `rsPsi` and the block-coordinate leading term. Only after
+     that should `SiegelStationaryPhaseCoefficientIdentityProp C` be attacked.
+- Coordinator action requested:
+  no validation needed unless a later code patch instantiates the coefficient.
