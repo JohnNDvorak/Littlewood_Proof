@@ -100,6 +100,16 @@ Each agent report must state:
 - Aristotle CLI auth is not cached in the coordinator shell. Job IDs remain in
   ignored self-drive logs; polling should be done only with the key supplied
   through an environment variable outside repo files and commit history.
+- Aristotle results harvested on 2026-04-28:
+  - Atkinson: audit-only; direct contraction still needs a log-free boundary row
+    bound and a true successor contraction with factor `< 1`; unchanged Abel
+    decomposition remains too lossy.
+  - Perron/B5a: audit/reduction only; keep small-T provision independent and
+    non-circular, and do not use the false `perron_tail_bound_core` route.
+  - Pi/Phase: audit/reduction only; avoid the constant-1 Perron-sqrt route and
+    the false `TruncatedExplicitFormulaPiHyp` path.
+  - RS/Gabcke: audit-only; downstream wiring is proved, so the live content is
+    the normalized coefficient identity/bound/adjacent monotonicity.
 - Validation completed and pushed:
   - Atkinson `4e2e825`: `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`
     passed; reduced shifted `blockMode` remainder to two quadratic-anchor atoms.
