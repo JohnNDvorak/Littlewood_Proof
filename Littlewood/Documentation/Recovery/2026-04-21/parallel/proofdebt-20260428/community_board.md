@@ -71,8 +71,8 @@ Agents request validation in their lane ledger. The coordinator serializes:
 | Order | Branch | Status | Required before merge |
 | --- | --- | --- | --- |
 | 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `cce6705` | public import probes after provider closure |
-| 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `1da652d` | public import probes after provider closure |
-| 3 | `proofdebt/20260428-pi-phase` | active, pushed through `73831f2` | public import probes after provider closure |
+| 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `23e1a81` | public import probes after provider closure |
+| 3 | `proofdebt/20260428-pi-phase` | active, pushed through `c94204b` | public import probes after provider closure |
 | 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `449d4e8` | public import probes after provider closure |
 
 ## Agent Report Contract
@@ -139,6 +139,9 @@ Each agent report must state:
     redundant finishing tactic; corrected the boundary window weight scale.
   - Perron/B5a `1da652d`: same focused build passed; closed the corrected
     boundary-window von Mangoldt weight estimate at the linear `x / T` scale.
+  - Perron/B5a `23e1a81`: same focused build passed; showed the naive
+    decaying boundary-kernel estimate fails at the exact integer hit and split
+    the route into exact-hit and punctured-window atoms.
   - Pi/Phase `847fa92`: `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
     passed; added Perron-only corrected phase endpoints.
   - Pi/Phase `bbedbc3`: `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
@@ -156,6 +159,9 @@ Each agent report must state:
   - Pi/Phase `73831f2`: same two focused builds passed; split phase fit into
     target-specific and anti-target-specific leaves and added exact-seed routes
     from the Perron-only phase-fit classes.
+  - Pi/Phase `c94204b`: same two focused builds passed; reduced tower
+    domination to target/anti-target realized phase radii instead of generic
+    all-radius domination.
   - RS/Gabcke `fa96728`: `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
     passed; split Siegel/Gabcke into profile and coefficient atoms.
   - RS/Gabcke `9564c41`: same focused build set passed; reduced weighted profile
@@ -175,10 +181,11 @@ Each agent report must state:
 - Current live atoms:
   - Atkinson: shifted quadratic mass bound and target matching for the large-j
     no-log theorem.
-  - Perron/B5a: decaying boundary-kernel estimate, off-boundary estimate, and
-    bounded-height residue extraction.
-  - Pi/Phase: Perron tower wide-domination and zeta finite-zero compatibility
-    for the target/anti-target leaves.
+  - Perron/B5a: exact-hit weighted error bound, punctured-window decaying
+    kernel estimate, off-boundary estimate, and bounded-height residue
+    extraction.
+  - Pi/Phase: realized phase-radius tower domination and zeta finite-zero
+    compatibility for the target/anti-target leaves.
   - RS/Gabcke: instantiate the concrete coefficient `C` from the Gabcke local
     Taylor expansion by first bridging the local `rsPsi` normalization to the
     standard coefficient formula, then prove
