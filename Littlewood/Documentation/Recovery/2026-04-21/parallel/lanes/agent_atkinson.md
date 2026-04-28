@@ -90,3 +90,33 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
   `atkinson_inversePhaseCorePrefix_bound_large_j_of_contracting_nextShift`.
 - Coordinator action requested: run the focused Atkinson module build when
   validation is serialized again.
+
+### 2026-04-28 Overnight Round 1 Htail
+
+- Classification: `CONDITIONAL_REDUCTION`, not closed.
+- Current theorem attacked: the `htail` predecessor-tail hypothesis feeding
+  `atkinson_inversePhaseCorePrefix_bound_large_j_of_contracting_nextShift`.
+- Code fact banked:
+  `atkinson_largeShiftPrefix_succ_htail_hypothesis_gamma_eight` packages the
+  existing Abel predecessor-tail theorem in exactly the `htail` hypothesis
+  shape, but with coefficient `8`.
+- Failed route / guardrail:
+  the direct reciprocal-step Abel route through
+  `atkinson_largeShiftPrefix_succ_htail_of_nextShift_and_smallShift` cannot feed
+  the strict-contraction wrapper as-is, because it gives `γ = 8`, while
+  `atkinson_largeShiftPrefixBound_atomic_of_nextShift` requires `γ < 1`.
+- Smallest next theorem:
+  replace the direct Abel `8` by a genuine strict contraction, or prove a
+  strengthened predecessor-tail input that supplies
+  `∀ C_prev > 0, ... ≤ γ * C_prev * target` for some explicit `γ < 1`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+
+### 2026-04-28 Coordinator Validation
+
+- `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`: passed.
+- Residual risk: the live `sorry` remains in
+  `atkinson_inversePhaseCorePrefix_bound_large_j`; this round only banks the
+  coefficient-`8` predecessor-tail reduction.

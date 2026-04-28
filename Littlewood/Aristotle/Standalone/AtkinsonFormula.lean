@@ -9559,6 +9559,27 @@ private theorem atkinson_largeShiftPrefix_succ_htail_of_nextShift_and_smallShift
               unfold C0; ring
       _ ≤ 8 * C_prev * (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1)) := hscale
 
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+private theorem atkinson_largeShiftPrefix_succ_htail_hypothesis_gamma_eight :
+    ∀ C_prev : ℝ, 0 < C_prev →
+    ∀ j : ℕ, 2 ≤ j →
+      (∀ N : ℕ,
+        ‖∑ k ∈ Finset.range N,
+            ((((1 / atkinsonShiftedRelativePhase (k + (j + j)) j : ℝ) : ℂ)) *
+              atkinsonShiftedSingleBoundaryCore (k + j) j)‖
+          ≤ C_prev * (Real.sqrt (((N + j : ℕ) : ℝ) + 1) / j)) →
+      ∀ N : ℕ,
+        ‖∑ k ∈ Finset.range N,
+            ((((1 / atkinsonUpperBoundaryStepCoeff (k + (j + 1)) j : ℝ) : ℂ)) *
+              ((((1 / atkinsonShiftedRelativePhase
+                  (k + ((j + 1) + j)) j : ℝ) : ℂ)) *
+                atkinsonShiftedSingleBoundaryCore (k + (j + 1)) j))‖
+          ≤ 8 * C_prev *
+              (Real.sqrt (((N + (j + 1) : ℕ) : ℝ) + 1) / (j + 1)) := by
+  intro C_prev hC_prev j hj hprev N
+  exact atkinson_largeShiftPrefix_succ_htail_of_nextShift_and_smallShift
+    C_prev hC_prev j hj hprev N
+
 /-- Leaf hypothesis for the shifted inverse-phase-core prefix bound at large
 shifts (`j ≥ 3`).  This is NOT the same as the old stronger class
 `AtkinsonShiftedInversePhaseCorePrefixBoundHyp` (which covered all `j ≥ 1`) —
