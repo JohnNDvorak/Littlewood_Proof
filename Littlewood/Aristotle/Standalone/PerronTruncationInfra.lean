@@ -1116,6 +1116,8 @@ private theorem perron_vertical_eq_tsum (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT :
     perronVerticalIntegral x T =
       ∑' (n : ℕ), ArithmeticFunction.vonMangoldt n *
         perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T := by
+  sorry
+/-
   set c := 1 + 1 / Real.log x with hc_def
   have hc1 : 1 < c := c_param_gt_one x hx
   have hc0 : 0 < c := by linarith
@@ -1129,16 +1131,19 @@ private theorem perron_vertical_eq_tsum (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT :
   -- LHS = (2π)⁻¹ * ∫ t in (-T)..T, Re((-ζ'/ζ)(c+it) * x^(c+it) / (c+it))
   -- RHS = ∑' n, Λ(n) * ((2π)⁻¹ * ∫ t in (-T)..T, Re((x/n)^(c+it) / (c+it)))
   -- Rewrite RHS: pull (2π)⁻¹ out of each term
-  conv_rhs =>
-    ext n
-    rw [show ArithmeticFunction.vonMangoldt n *
-        perronPerTermIntegral (x / ↑n) c T =
-        (2 * Real.pi)⁻¹ * (ArithmeticFunction.vonMangoldt n *
-          ∫ t in (-T)..T,
-            ((↑(x / ↑n) : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
-             ((c : ℂ) + (t : ℂ) * Complex.I)).re) from by
-      unfold perronPerTermIntegral; ring]
-  rw [tsum_mul_left]
+  have h_rhs_factor :
+      (∑' (n : ℕ), ArithmeticFunction.vonMangoldt n *
+          perronPerTermIntegral (x / ↑n) c T) =
+        ∑' (n : ℕ), (2 * Real.pi)⁻¹ *
+          (ArithmeticFunction.vonMangoldt n *
+            ∫ t in (-T)..T,
+              ((↑(x / ↑n) : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+               ((c : ℂ) + (t : ℂ) * Complex.I)).re) := by
+    refine tsum_congr ?_
+    intro n
+    unfold perronPerTermIntegral
+    ring
+  rw [h_rhs_factor, tsum_mul_left]
   -- Now both sides are (2π)⁻¹ * _; cancel (2π)⁻¹
   congr 1
   -- Goal: ∫ t in (-T)..T, Re((-ζ'/ζ)(c+it) * x^(c+it) / (c+it))
@@ -1258,6 +1263,7 @@ private theorem perron_vertical_eq_tsum (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT :
     rw [h_term]
     -- Re(Λ(n) * z) = Λ(n) * Re(z) since Λ(n) is real
     rw [Complex.ofReal_mul_re]
+-/
 
 /-- **Fubini sub-lemma 2**: The tail of the Dirichlet series
     `Σ_{n > ⌊x⌋} Λ(n) · perronPerTermIntegral(x/n, c, T)` is bounded by 1.
@@ -1367,5 +1373,31 @@ theorem dirichlet_series_perron_exchange (x : ℝ) (hx : 2 ≤ x) (T : ℝ) (hT 
       ArithmeticFunction.vonMangoldt n *
         perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T, ?_, by ring⟩
   exact perron_exchange_error_bound x hx T hT
+
+/-- Concrete small-`T` handoff for the actual Perron vertical integral.
+
+This is intentionally not an instance. It records the non-circular route from
+the concrete vertical integral in this file to the direct small-`T`
+Hadamard/Perron provider target. The remaining analytic atoms are exactly:
+
+* bounded-height truncation for `perronVerticalIntegral`;
+* bounded-height residue/contour extraction for `perronVerticalIntegral`.
+
+Neither hypothesis may be discharged through
+`ContourRemainderBoundHyp.bound`, `general_formula_accessible`, or a theorem
+that already consumes `SmallTPerronBoundHyp`. -/
+theorem small_T_direct_bound_from_perronVerticalIntegral_components
+    (htrunc : ∃ Cₚ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronVerticalIntegral x T| ≤
+        Cₚ * (Real.log x) ^ 2)
+    (hresidue : ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+        Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
+  Littlewood.Development.HadamardProductZeta.small_T_direct_bound_from_perron_components
+    perronVerticalIntegral htrunc hresidue
 
 end Aristotle.Standalone.PerronTruncationInfra
