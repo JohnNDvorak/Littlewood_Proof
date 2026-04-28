@@ -2325,13 +2325,16 @@ class FiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
             ∀ ρ ∈ (finite_zeros_le T).toFinset,
               ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
 
-/-- Concrete finite-set inhomogeneous Kronecker relative-density boundary.
+/-- Ideal finite-set inhomogeneous Kronecker relative-density boundary.
 
 This removes zeta-specific bookkeeping from
 `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp`: for any finite set of complex
 frequencies, arbitrary target phases, and positive tolerance, the one-parameter
 orbit in the corresponding finite torus hits the target box within a bounded
-search radius from every starting point. -/
+search radius from every starting point.
+
+This is retained as a compatibility wrapper. The honest theorem-shaped source
+below includes the necessary integer-relation compatibility condition. -/
 class FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp : Prop where
   witness :
     ∀ (S : Finset ℂ) (ε : ℝ) (targetPhase : ℂ → ℝ),
@@ -2344,6 +2347,51 @@ class FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp : Prop where
             t0 < L + R ∧
             ∀ ρ ∈ S,
               ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
+
+/-- Relation-compatibility predicate for one-parameter inhomogeneous phase
+approximation on a finite frequency set.
+
+Every integer relation among the selected ordinates must impose the matching
+target-phase congruence modulo `2π`. This is the standard obstruction missing
+from the ideal arbitrary-target finite-set boundary. -/
+def finiteSetInhomogeneousPhaseRelationCompatible
+    (S : Finset ℂ) (ε : ℝ) (targetPhase : ℂ → ℝ) : Prop :=
+  ∀ m : {ρ // ρ ∈ S} → ℤ,
+    (∑ i, (m i : ℝ) * i.1.im = 0) →
+      ∃ k : ℤ,
+        ‖(∑ i, (m i : ℝ) * targetPhase i.1) +
+            (k : ℝ) * (2 * Real.pi)‖
+          ≤ (ε / 2) * (∑ i, |(m i : ℝ)|)
+
+/-- Honest finite-set inhomogeneous Kronecker relative-density boundary.
+
+This is the theorem shape expected from finite-dimensional Kronecker on the
+closure of a one-parameter torus orbit: arbitrary targets are allowed only after
+supplying the necessary integer-relation compatibility condition. -/
+class FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp :
+    Prop where
+  witness :
+    ∀ (S : Finset ℂ) (ε : ℝ) (targetPhase : ℂ → ℝ),
+      0 < ε →
+      finiteSetInhomogeneousPhaseRelationCompatible S ε targetPhase →
+      ∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ S,
+              ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
+
+/-- Zeta finite-zero relation-compatibility leaf for the target phase function
+used by the Perron-only phase-fit boundary. -/
+class FiniteZeroInhomogeneousPhaseRelationCompatibleHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ) (targetPhase : ℂ → ℝ),
+      4 ≤ T →
+      0 < ε →
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε targetPhase
 
 /-- The concrete finite-set Kronecker relative-density boundary supplies the
 project finite-zero relative-density leaf. -/
@@ -2361,6 +2409,29 @@ instance (priority := 100)
     [FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp] :
     FiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
   finiteZeroInhomogeneousPhaseRelativelyDense_of_finiteSetKronecker_hyp
+
+/-- A relation-compatible finite-set Kronecker theorem plus the zeta finite-zero
+compatibility leaf supplies the project finite-zero relative-density leaf. -/
+theorem finiteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [FiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    FiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε targetPhase hT4 hε
+    exact
+      FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp.witness
+        (finite_zeros_le T).toFinset ε targetPhase hε
+        (FiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+          T ε targetPhase hT4 hε)
+
+/-- Instance form of
+`finiteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp`.
+-/
+instance (priority := 90)
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [FiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    FiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  finiteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
 
 /-- The two lower-level honest boundaries imply the Perron-only phase-fit
 provider boundary. -/

@@ -273,3 +273,69 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action requested:
   - Run the requested validation commands and report whether the new finite-set
     interface elaborates cleanly.
+
+### 2026-04-28 Round 5: Relation-Compatible Finite Kronecker Source
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - Source theorem shape below
+    `FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp` and
+    `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp`.
+- Target choice:
+  - Focused on `FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp`.
+    The broad arbitrary-target finite-set class is not a safe theorem shape
+    without integer-relation compatibility among the selected ordinates.
+- Facts banked:
+  - Added `finiteSetInhomogeneousPhaseRelationCompatible`, the explicit
+    integer-relation compatibility predicate for one-parameter inhomogeneous
+    phase fitting.
+  - Added
+    `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`,
+    the honest finite-dimensional Kronecker source interface requiring that
+    compatibility predicate.
+  - Added `FiniteZeroInhomogeneousPhaseRelationCompatibleHyp`, the remaining
+    zeta finite-zero compatibility leaf for the target phase function.
+  - Added
+    `finiteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp`
+    and a lower-priority instance deriving
+    `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp` from the compatible
+    finite-set Kronecker source plus the zeta compatibility leaf.
+- False-surface audit:
+  - No new declaration mentions `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+- Failed routes that must not be retried:
+  - Do not try to prove the arbitrary-target
+    `FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp` directly as a
+    general theorem. Equal or rationally related ordinates impose congruence
+    conditions on the target phases.
+  - Do not infer inhomogeneous relative density from homogeneous phase
+    alignment lemmas; they do not supply arbitrary target phases.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane check; no `lean`, `lake`, `lake env lean`, focused build,
+    or public import probe was run.
+  - `git diff --check` passed.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+  - `printf 'import Littlewood.Main.LittlewoodPsi\n' | lake env lean --stdin`
+  - `printf 'import Littlewood.Main.LittlewoodPi\n' | lake env lean --stdin`
+- Smallest next theorem/interface:
+  - Prove/source
+    `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`
+    from finite-dimensional Kronecker on the closure of the one-parameter
+    torus orbit.
+  - Prove/source `FiniteZeroInhomogeneousPhaseRelationCompatibleHyp` for the
+    target phases used by the Perron-only phase-fit boundary, or narrow the
+    target-phase interface so compatibility is carried with the payload.
+  - Separately, `PerronThresholdTowerWideDominationHyp` remains the tower-side
+    growth leaf.
+- Coordinator action requested:
+  - Run the requested validation commands and report the first compile risk,
+    likely around subtype finite sums in
+    `finiteSetInhomogeneousPhaseRelationCompatible`.
