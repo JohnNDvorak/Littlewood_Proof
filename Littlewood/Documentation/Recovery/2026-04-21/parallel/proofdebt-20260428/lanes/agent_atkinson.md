@@ -182,3 +182,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation should be run by this lane agent.
+
+### 2026-04-28 Coordinator Validation, Round 3
+
+- Commit amended/pushed by coordinator as `da6efa1`
+  (`Split Atkinson shifted quadratic kernel bound`) passed:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+
+### 2026-04-28 Round 4 Weight-Scale Closure
+
+- Classification: `PROVED_HELPER`, with the kernel leaf reduced further.
+- Theorem/file attacked:
+  the weight-scale comparison atom used by
+  `atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment_scale`.
+- Facts banked:
+  `atkinson_shifted_quadratic_kernel_weight_scale` proves the elementary scale
+  comparison with constant `4`, using the existing
+  `atkinsonShiftedRelativeWeight_le_sqrt_two` ratio estimate on `j ≤ n`.
+  `atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment` composes
+  this scale closure with the previous kernel split, so the shifted
+  quadratic-kernel integral bound now depends only on the two Fresnel atoms:
+  shifted mass `O(1 / j)` and uniformly bounded `4πp` moment.
+- Failed routes:
+  direct expansion through `atkinsonModeWeight = (n+1)^(-1/2)` was avoided;
+  the already-local relative-weight lemma gives a cleaner and more stable
+  proof path. The two Fresnel estimates are still not supplied by existing
+  public stationary-phase APIs.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  Strict public import probes for `Littlewood.Main.LittlewoodPsi` and
+  `Littlewood.Main.LittlewoodPi` if the focused module passes.
+- Next smallest theorem:
+  prove the shifted quadratic mass bound
+  `∃ C_mass > 0, ∀ j : ℕ, 1 ≤ j →`
+  `‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `Aristotle.StationaryPhaseMainMode.quadraticKernel p‖ ≤ C_mass / j`,
+  or the companion uniformly bounded weighted moment
+  `∃ C_moment > 0, ∀ j : ℕ, 1 ≤ j →`
+  `‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `(((4 * Real.pi * p : ℝ) : ℂ) * Aristotle.StationaryPhaseMainMode.quadraticKernel p)‖`
+  `≤ C_moment`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

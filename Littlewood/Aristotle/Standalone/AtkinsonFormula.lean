@@ -12838,6 +12838,101 @@ private theorem atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment_
     _ = ((4 * Real.pi * C_mass + C_moment) * C_scale) * scale := by
           ring
 
+/-- Elementary Atkinson weight-scale comparison for the shifted quadratic
+kernel bound. The only input is that, on `j ≤ n`, the weights
+`atkinsonModeWeight n` and `atkinsonModeWeight (n + j)` differ by at most a
+fixed factor. -/
+private theorem atkinson_shifted_quadratic_kernel_weight_scale :
+    ∃ C_scale > 0, ∀ n j : ℕ, 3 ≤ j → 1 ≤ j → j ≤ n →
+      (((n : ℝ) + 1) / j + 1)
+        ≤ C_scale * ((((n : ℝ) + 1) / atkinsonModeWeight n) *
+            (atkinsonModeWeight (n + j) / j)) := by
+  refine ⟨4, by norm_num, ?_⟩
+  intro n j hj3 hj1 hjn
+  let A : ℝ := (n : ℝ) + 1
+  let w0 : ℝ := atkinsonModeWeight n
+  let w1 : ℝ := atkinsonModeWeight (n + j)
+  let base : ℝ := (A / w0) * (w1 / j)
+  have hj_pos : (0 : ℝ) < j := by positivity
+  have hA_pos : 0 < A := by
+    dsimp [A]
+    positivity
+  have hw0_pos : 0 < w0 := by
+    dsimp [w0]
+    exact atkinsonModeWeight_pos n
+  have hw1_pos : 0 < w1 := by
+    dsimp [w1]
+    exact atkinsonModeWeight_pos (n + j)
+  have hrel_le_sqrt_two :
+      atkinsonShiftedRelativeWeight (n + j) j ≤ Real.sqrt 2 := by
+    exact atkinsonShiftedRelativeWeight_le_sqrt_two (n + j) j (by omega)
+  have hsqrt_two_le_two : Real.sqrt 2 ≤ (2 : ℝ) := by
+    nlinarith [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2), Real.sqrt_nonneg 2]
+  have hrel_le_two :
+      atkinsonShiftedRelativeWeight (n + j) j ≤ (2 : ℝ) :=
+    le_trans hrel_le_sqrt_two hsqrt_two_le_two
+  have hrel_eq :
+      atkinsonShiftedRelativeWeight (n + j) j = w0 / w1 := by
+    dsimp [w0, w1]
+    unfold atkinsonShiftedRelativeWeight
+    have hsub : n + j - j = n := by omega
+    rw [hsub]
+  have hw0_le_two_w1 : w0 ≤ 2 * w1 := by
+    have hdiv : w0 / w1 ≤ (2 : ℝ) := by
+      simpa [hrel_eq] using hrel_le_two
+    exact (div_le_iff₀ hw1_pos).1 hdiv
+  have hw0_half_le_w1 : w0 / 2 ≤ w1 := by
+    nlinarith
+  have hone_le_A_div_j : (1 : ℝ) ≤ A / j := by
+    have hj_le_A : (j : ℝ) ≤ A := by
+      dsimp [A]
+      exact_mod_cast (by omega : j ≤ n + 1)
+    exact (le_div_iff₀ hj_pos).2 (by simpa using hj_le_A)
+  have hlhs_le : A / j + 1 ≤ 2 * (A / j) := by
+    nlinarith
+  have hbase_lower : A / (2 * (j : ℝ)) ≤ base := by
+    calc
+      A / (2 * (j : ℝ)) = (A / w0) * ((w0 / 2) / j) := by
+        field_simp [hw0_pos.ne', hj_pos.ne']
+      _ ≤ (A / w0) * (w1 / j) := by
+        have hleft_nonneg : 0 ≤ A / w0 := div_nonneg hA_pos.le hw0_pos.le
+        have hright : (w0 / 2) / j ≤ w1 / j :=
+          div_le_div_of_nonneg_right hw0_half_le_w1 hj_pos.le
+        exact mul_le_mul_of_nonneg_left hright hleft_nonneg
+  calc
+    ((n : ℝ) + 1) / j + 1
+        = A / j + 1 := by
+          simp [A]
+    _ ≤ 2 * (A / j) := hlhs_le
+    _ = 4 * (A / (2 * (j : ℝ))) := by
+          ring
+    _ ≤ 4 * base := by
+          exact mul_le_mul_of_nonneg_left hbase_lower (by norm_num : (0 : ℝ) ≤ 4)
+    _ = 4 * ((((n : ℝ) + 1) / atkinsonModeWeight n) *
+          (atkinsonModeWeight (n + j) / j)) := by
+          simp [A, w0, w1, base]
+
+/-- Kernel bound with the elementary weight scale discharged; the remaining
+inputs are exactly the two shifted Fresnel estimates. -/
+private theorem atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment
+    (hmass :
+      ∃ C_mass > 0, ∀ j : ℕ, 1 ≤ j →
+        ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+            Aristotle.StationaryPhaseMainMode.quadraticKernel p‖ ≤ C_mass / j)
+    (hmoment :
+      ∃ C_moment > 0, ∀ j : ℕ, 1 ≤ j →
+        ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+            (((4 * Real.pi * p : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseMainMode.quadraticKernel p)‖ ≤ C_moment) :
+    ∃ C_kernel > 0, ∀ n j : ℕ, 3 ≤ j → 1 ≤ j → j ≤ n →
+      ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p‖
+        ≤ C_kernel * ((((n : ℝ) + 1) / atkinsonModeWeight n) *
+            (atkinsonModeWeight (n + j) / j)) := by
+  exact
+    atkinson_shifted_quadratic_kernel_integral_bound_of_mass_moment_scale
+      hmass hmoment atkinson_shifted_quadratic_kernel_weight_scale
+
 /-- The mode-eventual shifted-interval `blockMode` remainder follows once the
 native integral is close to the quadratic-anchor model and that model matches
 the explicit Atkinson complete-block target. -/
