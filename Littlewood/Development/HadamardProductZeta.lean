@@ -618,6 +618,33 @@ class SmallTPerronBoundHyp : Prop where
     |shiftedRemainderRe x T| ≤
       C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)
 
+/-- Provider adapter for the exact non-circular small-`T` target.
+
+This deliberately takes the small-`T` bound as data instead of deriving it
+from any full-range contour provider. Supplying this theorem's hypothesis is
+the smallest remaining theorem needed to instantiate `SmallTPerronBoundHyp`. -/
+theorem small_T_perron_bound_hyp_of_direct_bound
+    (h_small : ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)) :
+    SmallTPerronBoundHyp :=
+  ⟨h_small⟩
+
+/-- Restrict an independently supplied full-range shifted-remainder bound to
+the small-`T` provider surface.
+
+This is cycle-free only when `h_global` is supplied independently of
+`ContourRemainderBoundHyp.bound`/`general_formula_accessible`. It is not an
+instance, so it cannot hide the unresolved provider gap. -/
+theorem small_T_perron_bound_hyp_of_global_bound
+    (h_global : ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → T ≥ 2 →
+      |shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2)) :
+    SmallTPerronBoundHyp := by
+  obtain ⟨C₂, hC₂, h_bound⟩ := h_global
+  exact small_T_perron_bound_hyp_of_direct_bound
+    ⟨C₂, hC₂, fun x T hx hT_lo _hT_hi => h_bound x T hx hT_lo⟩
+
 /-- **Small-T contour bound** (T ∈ [2, 16]): explicit wrapper around the
 small-`T` hypothesis boundary. -/
 theorem perron_small_T_bound [SmallTPerronBoundHyp] :
