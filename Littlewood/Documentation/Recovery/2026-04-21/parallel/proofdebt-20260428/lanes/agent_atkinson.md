@@ -332,3 +332,70 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-28 Coordinator Validation, Round 6
+
+- Commit validated and pushed by coordinator as `cce6705`
+  (`Close Atkinson quadratic moment boundary identity`).
+- The weighted-moment boundary identity is closed.
+- Hard rule remains:
+  no local `lake`, `lake env lean`, `lean`, focused builds, public import
+  probes, or compilation checks by this lane agent.
+- Coordinator guardrail:
+  direct contracting induction still needs both a log-free boundary row bound
+  and a genuine successor tail contraction with `gamma < 1`; the Abel route
+  that only gives `gamma = 8` remains forbidden unless the object changes.
+
+### 2026-04-28 Round 7 Shifted Quadratic Mass Closure
+
+- Classification: `PROVED_HELPER_INTENDED`, pending coordinator validation.
+- Theorem/file attacked:
+  the shifted quadratic mass atom and the kernel-bound handoff below the
+  large-`j` no-log Atkinson leaf.
+- Facts banked:
+  `atkinson_quadraticKernel_omega_hasDerivAt`,
+  `atkinson_quadraticKernel_omega_differentiable`,
+  `atkinson_quadraticKernel_omega_deriv`, and
+  `atkinson_quadraticKernel_omega_deriv_continuous` package the linear angular
+  velocity `4 * Real.pi * p`.
+  `atkinson_shifted_quadratic_mass_bound` applies
+  `Aristotle.ComplexVdC.complex_vdc_angular` to
+  `Aristotle.StationaryPhaseMainMode.quadraticKernel` on
+  `p ∈ Ioc j (j + 1)`, giving the shifted mass bound with constant `3`.
+  `atkinson_shifted_quadratic_kernel_integral_bound` now discharges both
+  shifted Fresnel atoms: weighted moment by FTC and mass by complex VdC.
+  `atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model`,
+  `atkinson_mode_eventual_shifted_interval_remainder_of_zero_model_and_target`,
+  and `atkinson_blockMode_stationaryPhase_of_zero_model_and_target` narrow the
+  native stationary-phase interface to two remaining atoms: zero-model
+  approximation and explicit target matching.
+- Failed routes / validation risks:
+  did not hand-roll the integration-by-parts mass proof; the existing complex
+  VdC API is the cleaner local route. No direct-contracting or gamma-8 Abel
+  route was used. Likely first validation failures, if any, are local
+  proof-engineering issues around the simple linear
+  differentiability/derivative-continuity witnesses for `fun p => 4πp`, or
+  coercion in the final comparison `3 / (4πj) ≤ 3 / j`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  Strict public import probes for `Littlewood.Main.LittlewoodPsi` and
+  `Littlewood.Main.LittlewoodPi` if the focused module passes.
+- Next smallest theorem:
+  prove either the zero-model approximation
+  `∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,`
+  `3 ≤ j → 1 ≤ j → j ≤ n →`
+  `‖((((atkinsonModeWeight n : ℝ) : ℂ) *`
+  `∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `Aristotle.StationaryPhaseMainMode.blockMode n p * blockJacobian n p) -`
+  `atkinsonShiftedQuadraticBlockModeZeroModel n j)‖`
+  `≤ C_model * (atkinsonModeWeight (n + j) / j)`,
+  or the target-matching atom
+  `∃ C_target > 0, ∃ N_target : ℕ, ∀ n : ℕ, N_target ≤ n → ∀ j : ℕ,`
+  `3 ≤ j → 1 ≤ j → j ≤ n →`
+  `‖(atkinsonShiftedQuadraticAnchorModel n j - atkinsonCompleteBlockTargetK (n + j) j)‖`
+  `≤ C_target * (atkinsonModeWeight (n + j) / j)`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

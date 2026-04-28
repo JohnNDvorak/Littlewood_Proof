@@ -13127,6 +13127,127 @@ private theorem atkinson_shifted_quadratic_kernel_integral_bound_of_mass
     atkinson_shifted_quadratic_kernel_integral_bound_of_mass_boundary hmass
       atkinson_shifted_quadratic_weighted_moment_boundary_identity
 
+/-- The angular velocity of `quadraticKernel` is the linear function `4πp`. -/
+private lemma atkinson_quadraticKernel_omega_hasDerivAt (p : ℝ) :
+    HasDerivAt (fun x : ℝ => 4 * Real.pi * x) (4 * Real.pi) p := by
+  simpa using (hasDerivAt_id p).const_mul (4 * Real.pi)
+
+private lemma atkinson_quadraticKernel_omega_differentiable :
+    Differentiable ℝ (fun x : ℝ => 4 * Real.pi * x) := by
+  intro p
+  exact (atkinson_quadraticKernel_omega_hasDerivAt p).differentiableAt
+
+private lemma atkinson_quadraticKernel_omega_deriv (p : ℝ) :
+    deriv (fun x : ℝ => 4 * Real.pi * x) p = 4 * Real.pi := by
+  exact (atkinson_quadraticKernel_omega_hasDerivAt p).deriv
+
+private lemma atkinson_quadraticKernel_omega_deriv_continuous :
+    Continuous (deriv (fun x : ℝ => 4 * Real.pi * x)) := by
+  have hderiv :
+      deriv (fun x : ℝ => 4 * Real.pi * x) = fun _ : ℝ => 4 * Real.pi := by
+    funext p
+    exact atkinson_quadraticKernel_omega_deriv p
+  rw [hderiv]
+  continuity
+
+/-- Shifted quadratic Fresnel mass bound on each cell. This is the complex VdC
+first-derivative test applied to `quadraticKernel`, whose angular velocity
+`4πp` is bounded below by `4πj` on `p ∈ [j, j + 1]`. -/
+private theorem atkinson_shifted_quadratic_mass_bound :
+    ∃ C_mass > 0, ∀ j : ℕ, 1 ≤ j →
+      ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p‖ ≤ C_mass / j := by
+  refine ⟨3, by norm_num, ?_⟩
+  intro j hj
+  let a : ℝ := j
+  let b : ℝ := (j : ℝ) + 1
+  let q : ℝ → ℂ := Aristotle.StationaryPhaseMainMode.quadraticKernel
+  let omega : ℝ → ℝ := fun p => 4 * Real.pi * p
+  let m : ℝ := 4 * Real.pi * (j : ℝ)
+  have hj_nat_pos : 0 < j := lt_of_lt_of_le (by norm_num) hj
+  have hj_pos : (0 : ℝ) < j := by exact_mod_cast hj_nat_pos
+  have hab : a ≤ b := by
+    dsimp [a, b]
+    linarith
+  have hm_pos : 0 < m := by
+    dsimp [m]
+    positivity
+  have hbound_interval : ‖∫ p in a..b, q p‖ ≤ 3 / m := by
+    refine
+      Aristotle.ComplexVdC.complex_vdc_angular q omega a b m hab hm_pos ?_ ?_ ?_ ?_ ?_ ?_
+    · intro p hp
+      dsimp [q, omega]
+      simpa [mul_assoc] using atkinson_quadraticKernel_hasDerivAt p
+    · intro p hp
+      have hnorm : ‖q p‖ = 1 := by
+        dsimp [q]
+        unfold Aristotle.StationaryPhaseMainMode.quadraticKernel
+        exact Complex.norm_exp_I_mul_ofReal (2 * Real.pi * p ^ 2)
+      rw [hnorm]
+    · dsimp [omega]
+      exact atkinson_quadraticKernel_omega_differentiable
+    · dsimp [omega]
+      exact atkinson_quadraticKernel_omega_deriv_continuous
+    · intro p hp
+      have hp_ge : (j : ℝ) ≤ p := by
+        have hp' : p ∈ Icc a b := hp
+        simpa [a] using hp'.1
+      dsimp [omega, m]
+      nlinarith [Real.pi_pos, hp_ge]
+    · intro p hp
+      dsimp [omega]
+      rw [atkinson_quadraticKernel_omega_deriv]
+      positivity
+  calc
+    ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+        Aristotle.StationaryPhaseMainMode.quadraticKernel p‖
+        = ‖∫ p in a..b, q p‖ := by
+            congr 1
+            change
+              ∫ p in Ioc a b, q p = ∫ p in a..b, q p
+            rw [← intervalIntegral.integral_of_le hab]
+    _ ≤ 3 / m := hbound_interval
+    _ ≤ 3 / j := by
+          have hden_le : (j : ℝ) ≤ m := by
+            dsimp [m]
+            nlinarith [Real.pi_gt_three, hj_pos]
+          exact div_le_div_of_nonneg_left (by norm_num : (0 : ℝ) ≤ 3) hj_pos hden_le
+
+/-- Shifted quadratic-kernel integral bound with both Fresnel atoms discharged:
+the weighted moment by FTC and the mass by complex VdC. -/
+private theorem atkinson_shifted_quadratic_kernel_integral_bound :
+    ∃ C_kernel > 0, ∀ n j : ℕ, 3 ≤ j → 1 ≤ j → j ≤ n →
+      ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p‖
+        ≤ C_kernel * ((((n : ℝ) + 1) / atkinsonModeWeight n) *
+            (atkinsonModeWeight (n + j) / j)) := by
+  exact
+    atkinson_shifted_quadratic_kernel_integral_bound_of_mass
+      atkinson_shifted_quadratic_mass_bound
+
+/-- Native shifted-interval quadratic-anchor approximation with the shifted
+quadratic-kernel bound discharged. The only remaining input is the local
+zero-model approximation for `blockMode n p` on `p ∈ Ioc j (j + 1)`. -/
+private theorem atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_quad > 0, ∃ N_quad : ℕ, ∀ n : ℕ, N_quad ≤ n → ∀ j : ℕ,
+      3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode n p *
+                  blockJacobian n p) - atkinsonShiftedQuadraticAnchorModel n j)‖
+          ≤ C_quad * (atkinsonModeWeight (n + j) / j) := by
+  exact
+    atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model_and_kernel_bound
+      hzeroModel atkinson_shifted_quadratic_kernel_integral_bound
+
 /-- The mode-eventual shifted-interval `blockMode` remainder follows once the
 native integral is close to the quadratic-anchor model and that model matches
 the explicit Atkinson complete-block target. -/
@@ -13183,6 +13304,63 @@ private theorem atkinson_mode_eventual_shifted_interval_remainder_of_quadratic_a
     _ ≤ C_quad * scale + C_target * scale := add_le_add hquad_bound htarget_bound
     _ = (C_quad + C_target) * scale := by
           ring
+
+/-- Mode-eventual shifted-interval remainder with the shifted quadratic kernel
+fully discharged. The surviving proof obligations are the zero-model
+approximation and the explicit target-matching estimate. -/
+private theorem atkinson_mode_eventual_shifted_interval_remainder_of_zero_model_and_target
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j))
+    (htarget :
+      ∃ C_target > 0, ∃ N_target : ℕ, ∀ n : ℕ, N_target ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖(atkinsonShiftedQuadraticAnchorModel n j - atkinsonCompleteBlockTargetK (n + j) j)‖
+            ≤ C_target * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_err > 0, ∃ N_err : ℕ, ∀ n : ℕ, N_err ≤ n → ∀ j : ℕ,
+      3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode n p *
+                  blockJacobian n p) - atkinsonCompleteBlockTargetK (n + j) j)‖
+          ≤ (C_err * (atkinsonModeWeight (n + j) / j)) := by
+  exact
+    atkinson_mode_eventual_shifted_interval_remainder_of_quadratic_anchor_model
+      (atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model hzeroModel)
+      htarget
+
+/-- Complete-block-target stationary-phase handoff after discharging the
+shifted quadratic-kernel estimates. This is the narrowed interface directly
+below the public Atkinson leaf. -/
+private theorem atkinson_blockMode_stationaryPhase_of_zero_model_and_target
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j))
+    (htarget :
+      ∃ C_target > 0, ∃ N_target : ℕ, ∀ n : ℕ, N_target ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖(atkinsonShiftedQuadraticAnchorModel n j - atkinsonCompleteBlockTargetK (n + j) j)‖
+            ≤ C_target * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+            ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+              Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+        ≤ C_err * (atkinsonModeWeight k / j) := by
+  exact
+    atkinson_blockMode_stationaryPhase_of_mode_eventual_shifted_interval_remainder
+      (atkinson_mode_eventual_shifted_interval_remainder_of_zero_model_and_target
+        hzeroModel htarget)
 
 /-- Equivalent concrete public-leaf reduction in the shifted block-parameter
 coordinates of the mode `k - j`.
