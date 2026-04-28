@@ -12594,6 +12594,120 @@ private noncomputable def atkinsonShiftedQuadraticAnchorModel (n j : ℕ) : ℂ 
     ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
       Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p)
 
+/-- The same shifted quadratic model before replacing `blockMode n 0` by the
+stationary anchor. -/
+private noncomputable def atkinsonShiftedQuadraticBlockModeZeroModel (n j : ℕ) : ℂ :=
+  (((atkinsonModeWeight n : ℝ) : ℂ) *
+    Aristotle.StationaryPhaseMainMode.blockMode n 0 *
+    ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+      Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p)
+
+/-- The native shifted-interval quadratic-anchor approximation follows from a
+zero-model approximation plus the oscillatory bound for the shifted quadratic
+kernel integral. The latter is the exact place where the missing `1 / j`
+cancellation must enter. -/
+private theorem atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model_and_kernel_bound
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j))
+    (hkernel :
+      ∃ C_kernel > 0, ∀ n j : ℕ, 3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+            Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p‖
+          ≤ C_kernel * ((((n : ℝ) + 1) / atkinsonModeWeight n) *
+              (atkinsonModeWeight (n + j) / j))) :
+    ∃ C_quad > 0, ∃ N_quad : ℕ, ∀ n : ℕ, N_quad ≤ n → ∀ j : ℕ,
+      3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode n p *
+                  blockJacobian n p) - atkinsonShiftedQuadraticAnchorModel n j)‖
+          ≤ C_quad * (atkinsonModeWeight (n + j) / j) := by
+  obtain ⟨C_model, hC_model, N_model, hzeroModel'⟩ := hzeroModel
+  obtain ⟨C_kernel, hC_kernel, hkernel'⟩ := hkernel
+  obtain ⟨C_zero, hC_zero, hzero⟩ :=
+    Aristotle.StationaryPhaseMainMode.blockMode_zero_asymptotic
+  refine ⟨C_model + C_zero * C_kernel, by positivity, N_model, ?_⟩
+  intro n hn j hj3 hj1 hjn
+  let actual : ℂ :=
+    (((atkinsonModeWeight n : ℝ) : ℂ) *
+      ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+        Aristotle.StationaryPhaseMainMode.blockMode n p * blockJacobian n p)
+  let zeroModel : ℂ := atkinsonShiftedQuadraticBlockModeZeroModel n j
+  let anchorModel : ℂ := atkinsonShiftedQuadraticAnchorModel n j
+  let kernelInt : ℂ :=
+    ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+      Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p
+  let anchor : ℂ :=
+    ((((-1 : ℝ) ^ (n + 1) : ℝ) : ℂ) *
+      Aristotle.StationaryPhaseStartValue.hardyStationaryAnchor)
+  let scale : ℝ := atkinsonModeWeight (n + j) / j
+  have hactual_zero : ‖actual - zeroModel‖ ≤ C_model * scale := by
+    simpa [actual, zeroModel, scale] using hzeroModel' n hn j hj3 hj1 hjn
+  have hkernel_bound :
+      ‖kernelInt‖
+        ≤ C_kernel * ((((n : ℝ) + 1) / atkinsonModeWeight n) * scale) := by
+    simpa [kernelInt, scale] using hkernel' n j hj3 hj1 hjn
+  have hzero_bound :
+      ‖Aristotle.StationaryPhaseMainMode.blockMode n 0 - anchor‖
+        ≤ C_zero / ((n : ℝ) + 1) := by
+    simpa [anchor] using hzero n
+  have hweight_norm :
+      ‖(((atkinsonModeWeight n : ℝ) : ℂ))‖ = atkinsonModeWeight n := by
+    rw [Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (atkinsonModeWeight_nonneg n)]
+  have hzero_anchor_eq :
+      zeroModel - anchorModel =
+        (((atkinsonModeWeight n : ℝ) : ℂ) *
+          (Aristotle.StationaryPhaseMainMode.blockMode n 0 - anchor) *
+          kernelInt) := by
+    simp [zeroModel, anchorModel, atkinsonShiftedQuadraticBlockModeZeroModel,
+      atkinsonShiftedQuadraticAnchorModel, kernelInt, anchor]
+    ring
+  have hzero_anchor : ‖zeroModel - anchorModel‖ ≤ (C_zero * C_kernel) * scale := by
+    calc
+      ‖zeroModel - anchorModel‖
+          =
+        ‖(((atkinsonModeWeight n : ℝ) : ℂ) *
+            (Aristotle.StationaryPhaseMainMode.blockMode n 0 - anchor) *
+            kernelInt)‖ := by
+            rw [hzero_anchor_eq]
+      _ =
+        atkinsonModeWeight n *
+          ‖Aristotle.StationaryPhaseMainMode.blockMode n 0 - anchor‖ *
+          ‖kernelInt‖ := by
+            rw [norm_mul, norm_mul, hweight_norm]
+      _ ≤ atkinsonModeWeight n * (C_zero / ((n : ℝ) + 1)) *
+          (C_kernel * ((((n : ℝ) + 1) / atkinsonModeWeight n) * scale)) := by
+            gcongr
+            exact mul_nonneg (atkinsonModeWeight_nonneg n)
+              (div_nonneg hC_zero.le (by positivity))
+            exact atkinsonModeWeight_nonneg n
+      _ = (C_zero * C_kernel) * scale := by
+            have hn_pos : 0 < ((n : ℝ) + 1) := by positivity
+            have hw_pos : 0 < atkinsonModeWeight n := atkinsonModeWeight_pos n
+            field_simp [hn_pos.ne', hw_pos.ne']
+  have hsplit : actual - anchorModel = (actual - zeroModel) + (zeroModel - anchorModel) := by
+    ring
+  calc
+    ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+          ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+            Aristotle.StationaryPhaseMainMode.blockMode n p *
+              blockJacobian n p) - atkinsonShiftedQuadraticAnchorModel n j)‖
+        = ‖actual - anchorModel‖ := by
+            simp [actual, anchorModel]
+    _ = ‖(actual - zeroModel) + (zeroModel - anchorModel)‖ := by
+          rw [hsplit]
+    _ ≤ ‖actual - zeroModel‖ + ‖zeroModel - anchorModel‖ := norm_add_le _ _
+    _ ≤ C_model * scale + (C_zero * C_kernel) * scale :=
+          add_le_add hactual_zero hzero_anchor
+    _ = (C_model + C_zero * C_kernel) * scale := by
+          ring
+
 /-- The mode-eventual shifted-interval `blockMode` remainder follows once the
 native integral is close to the quadratic-anchor model and that model matches
 the explicit Atkinson complete-block target. -/
