@@ -2116,6 +2116,86 @@ class InhomogeneousPhaseFitAbovePerronThresholdPerronHyp
           x ≤ Real.exp (Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
+/-- Same-height Perron-threshold/tower window boundary.
+
+For each RH branch and lower bound `X`, this provides one zero cutoff `T`, one
+tolerance `ε`, and a nonempty logarithmic interval `(L, U)` such that every
+`t ∈ (L, U)` gives `x = exp t` above both `X` and the Perron threshold at the
+same height `T`, while the upper endpoint remains below the tower cap.
+
+This isolates the analytic growth input missing from
+`tower_cap_unbounded_with_eps`: the tower cap must dominate the opaque
+`perronThreshold hRH T` at the same `T`. -/
+class PerronThresholdTowerPhaseWindowHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε L U : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        X < Real.exp L ∧
+        perronThreshold _hRH T ≤ Real.exp L ∧
+        L < U ∧
+        Real.exp U ≤ Real.exp (Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Bounded-window finite inhomogeneous phase approximation boundary.
+
+Given the finite zero set below a fixed height `T`, an arbitrary target phase
+function, and a logarithmic interval `(L, U)`, this supplies a seed time inside
+that interval whose one-parameter orbit approximates every target phase modulo
+`2π`.
+
+The existing `KroneckerEquidistribution` tools prove single-frequency and some
+two-frequency variants, but the finite-set bounded-window version is the
+remaining Dirichlet/Kronecker input for the repaired `pi` exact-seed path. -/
+class FiniteZeroInhomogeneousPhaseWindowHyp : Prop where
+  witness :
+    ∀ (T ε L U : ℝ) (targetPhase : ℂ → ℝ),
+      4 ≤ T →
+      0 < ε →
+      L < U →
+      ∃ t0 : ℝ,
+        L < t0 ∧
+        t0 < U ∧
+        ∀ ρ ∈ (finite_zeros_le T).toFinset,
+          ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
+
+/-- The two lower-level honest boundaries imply the Perron-only phase-fit
+provider boundary. -/
+theorem inhomogeneousPhaseFitAbovePerronThresholdPerron_of_window_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWindowHyp]
+    [FiniteZeroInhomogeneousPhaseWindowHyp] :
+    InhomogeneousPhaseFitAbovePerronThresholdPerronHyp where
+  witness := by
+    intro hRH X targetPhase
+    rcases PerronThresholdTowerPhaseWindowHyp.witness hRH X with
+      ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, hThreshold, hLU, hUcap⟩
+    rcases FiniteZeroInhomogeneousPhaseWindowHyp.witness
+        T ε L U targetPhase hT4 hεpos hLU with
+      ⟨t0, hLt, htU, hPhase⟩
+    have hExpLle : Real.exp L ≤ Real.exp t0 :=
+      le_of_lt (Real.exp_strictMono hLt)
+    have hExpU : Real.exp t0 ≤ Real.exp U :=
+      Real.exp_le_exp.mpr (le_of_lt htU)
+    refine ⟨Real.exp t0, ?_, T, hT4, ?_, ε, hεpos, hεlt, ?_, ?_⟩
+    · exact lt_of_lt_of_le hX hExpLle
+    · exact le_trans hThreshold hExpLle
+    · intro ρ hρ
+      rcases hPhase ρ hρ with ⟨m, hm⟩
+      exact ⟨m, by simpa [Real.log_exp] using hm⟩
+    · exact le_trans hExpU hUcap
+
+/-- Instance form of
+`inhomogeneousPhaseFitAbovePerronThresholdPerron_of_window_hyp`. -/
+instance (priority := 100)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWindowHyp]
+    [FiniteZeroInhomogeneousPhaseWindowHyp] :
+    InhomogeneousPhaseFitAbovePerronThresholdPerronHyp :=
+  inhomogeneousPhaseFitAbovePerronThresholdPerron_of_window_hyp
+
 variable [TruncatedExplicitFormulaPiHyp]
 
 /-- Legacy boundary for the remaining above-threshold inhomogeneous phase-fit

@@ -287,3 +287,76 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/overnight-20
 - The repaired Perron-only exact-seed provider path is now build-validated.
   The remaining proof target is the honest source for
   `InhomogeneousPhaseFitAbovePerronThresholdPerronHyp`.
+
+### 2026-04-28 Phase-Fit Boundary Decomposition
+
+- Classification: LOWER_BOUNDARY_SPLIT_PENDING_VALIDATION.
+- Current theorem/file attacked:
+  - `PerronExplicitFormulaProvider.lean`
+- Changed provider interfaces:
+  - Added `PerronThresholdTowerPhaseWindowHyp`, the same-height analytic window
+    boundary. It asks for `T, ε, L, U` so that `exp L` is above both the input
+    lower bound and `perronThreshold hRH T`, `L < U`, and `exp U` is still below
+    the tower cap at the same `T`.
+  - Added `FiniteZeroInhomogeneousPhaseWindowHyp`, the bounded-window finite
+    inhomogeneous phase approximation boundary for
+    `(finite_zeros_le T).toFinset` and arbitrary target phases.
+  - Added
+    `inhomogeneousPhaseFitAbovePerronThresholdPerron_of_window_hyp`, deriving
+    `InhomogeneousPhaseFitAbovePerronThresholdPerronHyp` from those two honest
+    lower boundaries and `PerronSqrtErrorEventuallyAtHeightHyp`.
+  - Added the instance form of that theorem so the existing Perron-only
+    exact-seed provider path can use the lower boundaries automatically.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/lanes/agent_pi_phase.md`
+- False-surface audit after this split:
+  - The new lower boundaries do not mention
+    `TruncatedExplicitFormulaPiHyp`, `PerronPiApproxCompatibilityHyp`,
+    `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - Legacy false-surface use remains isolated to the compatibility class
+    `InhomogeneousPhaseFitAbovePerronThresholdHyp` and the legacy exact-seed
+    wrappers `target_exact_seed_from_perron` /
+    `anti_target_exact_seed_from_perron`.
+- Missing honest inputs, exactly:
+  - For `PerronThresholdTowerPhaseWindowHyp`: a growth/control theorem for
+    `perronThreshold hRH T` strong enough to open a nonempty logarithmic window
+    below the same-height tower cap. Existing `tower_cap_unbounded_with_eps`
+    gives large caps for some `T`, but does not control the opaque
+    `perronThreshold hRH T` at that same `T`.
+  - For `FiniteZeroInhomogeneousPhaseWindowHyp`: a bounded-window finite-set
+    inhomogeneous Kronecker/Dirichlet theorem for the orbit
+    `t ↦ (t * ρ.im)ρ∈(finite_zeros_le T).toFinset`, with arbitrary target
+    phases and a hit inside `(L, U)`.
+  - The existing `KroneckerEquidistribution` file has complete single-frequency
+    tools and some two-frequency tools, but not the general finite-set
+    bounded-window target theorem. The general route likely needs the
+    n-dimensional torus Kronecker theorem plus the relevant rational
+    independence/compatibility facts for zeta-zero ordinates, or a small-`N(T)`
+    strategy plus a tower-window theorem strong enough at that small height.
+- Likely first compile-risk area:
+  - `PerronExplicitFormulaProvider.lean`, theorem
+    `inhomogeneousPhaseFitAbovePerronThresholdPerron_of_window_hyp`, specifically
+    the `simpa` step rewriting `Real.log (Real.exp t0)` in the transferred
+    congruence.
+- Commands run:
+  - Static only: `git status --short --branch`, `rg`, `sed`, and `git diff`.
+  - No Lean/Lake/build commands were run.
+- Requested coordinator validation, in order:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - minimal import probe for `Littlewood.Main.LittlewoodPi`
+- Smallest next theorem/interface:
+  - Prove or externally source `PerronThresholdTowerPhaseWindowHyp` and
+    `FiniteZeroInhomogeneousPhaseWindowHyp`; these are now the two honest leaves
+    below `InhomogeneousPhaseFitAbovePerronThresholdPerronHyp`.
+
+### 2026-04-28 Coordinator Validation, Phase-Fit Boundary Decomposition
+
+- `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`: passed.
+- `import Littlewood.Main.LittlewoodPi`: passed.
+- Validation output included existing linter warnings only; no errors.
+- The `Real.log (Real.exp t0)` transfer compiled as written.
+- This round banks the split of the Perron-only pi phase-fit provider into two
+  honest leaves:
+  `PerronThresholdTowerPhaseWindowHyp` and
+  `FiniteZeroInhomogeneousPhaseWindowHyp`.
