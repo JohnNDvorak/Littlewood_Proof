@@ -1389,6 +1389,68 @@ def perronKernelWeightedCutoffError (x T : ℝ) : ℝ :=
     ArithmeticFunction.vonMangoldt n *
       |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T|
 
+/-- Boundary-window portion of the finite weighted Perron-kernel cutoff error.
+
+The window `|x - n| <= x / T` is the sharp-cutoff transition region where the
+standard per-term bounds involving `log (x / n)` are least useful. -/
+def perronKernelWeightedBoundaryWindowError (x T : ℝ) : ℝ :=
+  ∑ n ∈ (Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => |x - (n : ℝ)| ≤ x / T),
+    ArithmeticFunction.vonMangoldt n *
+      |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+
+/-- Off-boundary portion of the finite weighted Perron-kernel cutoff error. -/
+def perronKernelWeightedOffBoundaryWindowError (x T : ℝ) : ℝ :=
+  ∑ n ∈ (Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T),
+    ArithmeticFunction.vonMangoldt n *
+      |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+
+/-- Exact finite-sum split of the weighted cutoff error into the sharp boundary
+window and its complement. -/
+theorem perronKernelWeightedCutoffError_eq_boundary_add_offBoundary
+    (x T : ℝ) :
+    perronKernelWeightedCutoffError x T =
+      perronKernelWeightedBoundaryWindowError x T +
+        perronKernelWeightedOffBoundaryWindowError x T := by
+  classical
+  dsimp [perronKernelWeightedCutoffError, perronKernelWeightedBoundaryWindowError,
+    perronKernelWeightedOffBoundaryWindowError]
+  exact
+    (Finset.sum_filter_add_sum_filter_not
+      (Finset.range (Nat.floor x + 1))
+      (fun n : ℕ => |x - (n : ℝ)| ≤ x / T)
+      (fun n =>
+        ArithmeticFunction.vonMangoldt n *
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|)).symm
+
+/-- The small-`T` weighted cutoff atom follows from separate estimates on the
+sharp boundary window and the off-boundary range.
+
+This isolates the currently dangerous part of the finite Perron-kernel problem:
+near `n = x`, the denominator `log (x / n)` degenerates, so direct use of the
+standard per-term kernel bounds is not scale-safe. -/
+theorem small_T_weighted_kernel_cutoff_bound_from_boundary_split
+    (hboundary : ∃ Cb > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedBoundaryWindowError x T ≤ Cb * (Real.log x) ^ 2)
+    (hoffBoundary : ∃ Co > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedOffBoundaryWindowError x T ≤ Co * (Real.log x) ^ 2) :
+    ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x) ^ 2 := by
+  rcases hboundary with ⟨Cb, hCb_pos, hboundary⟩
+  rcases hoffBoundary with ⟨Co, hCo_pos, hoffBoundary⟩
+  refine ⟨Cb + Co, add_pos hCb_pos hCo_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hboundary_x := hboundary x T hx hT_lo hT_hi
+  have hoffBoundary_x := hoffBoundary x T hx hT_lo hT_hi
+  calc perronKernelWeightedCutoffError x T
+      = perronKernelWeightedBoundaryWindowError x T +
+          perronKernelWeightedOffBoundaryWindowError x T :=
+        perronKernelWeightedCutoffError_eq_boundary_add_offBoundary x T
+    _ ≤ Cb * (Real.log x) ^ 2 + Co * (Real.log x) ^ 2 := by
+        exact add_le_add hboundary_x hoffBoundary_x
+    _ = (Cb + Co) * (Real.log x) ^ 2 := by ring
+
 /-- Finite Perron-kernel cutoff from a weighted per-term cutoff-error bound.
 
 The only remaining analytic content is the weighted finite sum

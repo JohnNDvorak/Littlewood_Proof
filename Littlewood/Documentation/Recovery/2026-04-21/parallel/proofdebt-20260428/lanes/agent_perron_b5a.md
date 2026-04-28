@@ -131,3 +131,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   stalls or validates as harder.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-28 Round 3 - Weighted Kernel Boundary Split
+
+- Classification: `BOUNDARY_ATOM_ISOLATION`.
+- Theorem/file attacked:
+  finite weighted cutoff atom below
+  `small_T_direct_bound_from_weighted_kernel_and_residue`, in
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Code facts banked:
+  `perronKernelWeightedBoundaryWindowError` and
+  `perronKernelWeightedOffBoundaryWindowError`, splitting the finite
+  `perronKernelWeightedCutoffError` at the sharp transition window
+  `|x - n| <= x / T`.
+  Proved
+  `perronKernelWeightedCutoffError_eq_boundary_add_offBoundary`, the exact
+  finite-sum partition, and
+  `small_T_weighted_kernel_cutoff_bound_from_boundary_split`, which reduces
+  the global weighted cutoff atom to separate `O((log x)^2)` estimates for the
+  boundary window and its complement.
+- Local assessment:
+  the weighted cutoff target is not safely reachable by applying the existing
+  per-term bounds uniformly, because those bounds contain `log (x / n)` and
+  degenerate at the sharp cutoff near `n = x`.  The new boundary-window atom is
+  the explicit obstruction to any direct per-term route.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports, or any
+  theorem consuming `SmallTPerronBoundHyp`.  Did not attempt
+  `perron_tail_bound_core` as stated.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
+  followed by strict public import probes for `Littlewood.Main.LittlewoodPsi`
+  and `Littlewood.Main.LittlewoodPi` if the focused build passes.
+- Smallest next theorem:
+  prove or refute the boundary-window atom
+  `∃ Cb > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelWeightedBoundaryWindowError x T <= Cb * (Real.log x)^2`.
+  If this stalls, the next off-boundary theorem is the complement estimate for
+  `perronKernelWeightedOffBoundaryWindowError`, where existing per-term Perron
+  bounds should be applicable away from `log (x / n) = 0`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
