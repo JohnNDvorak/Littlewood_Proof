@@ -12,6 +12,7 @@ baseline commit is the commit that first contains this file.
 - Repository: `JohnNDvorak/Littlewood_Proof`
 - Baseline branch: `recovery/provider-forensics-2026-04-21`
 - Baseline commit: `d2a6f8555c3ff8107a3559eeb6d3a774eef5f30b`
+- Coordination commit: `4a204b7`
 - Draft PR: pending until the baseline branch is pushed
 - Certification required before launch:
   - `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`
@@ -95,10 +96,22 @@ not edit them directly.
 
 | Order | Branch | Status | Required checks |
 | --- | --- | --- | --- |
-| 1 | `overnight/20260428-atkinson` | launched | focused Atkinson build, public import checks |
-| 2 | `overnight/20260428-perron-hadamard` | launched | focused provider build, public import checks |
-| 3 | `overnight/20260428-pi-phase` | launched | focused pi/phase build, public import checks |
-| 4 | `overnight/20260428-rs-gabcke` | launched | focused RS/Gabcke build, public import checks |
+| 1 | `overnight/20260428-atkinson` | round 1 committed: `6f1425a` | focused Atkinson build passed; public import checks still required after merge |
+| 2 | `overnight/20260428-perron-hadamard` | round 1 committed: `c2448df` | focused Hadamard build passed; public import checks still required after merge |
+| 3 | `overnight/20260428-pi-phase` | round 1 committed: `967ee53` | focused pi/phase/provider builds passed; public import checks still required after merge |
+| 4 | `overnight/20260428-rs-gabcke` | round 1 committed: `bcf6c70` | focused RS/Gabcke/Hardy builds passed; public import checks still required after merge |
+
+## Coordinator Status
+
+- Main recovery branch is ahead of `origin/recovery/provider-forensics-2026-04-21`
+  by the coordination commit `4a204b7`.
+- Strict public import probes on the main recovery branch passed:
+  - `import Littlewood.Main.LittlewoodPsi`
+  - `import Littlewood.Main.LittlewoodPi`
+- All fresh overnight worktrees reuse the main `.lake` cache through local
+  symlinks; `.lake` is excluded locally and must remain untracked.
+- Current round 2 work is delegated to the four lane agents with static-only
+  permissions. Coordinator remains the sole Lean/Lake validator.
 
 ## Update Protocol
 
