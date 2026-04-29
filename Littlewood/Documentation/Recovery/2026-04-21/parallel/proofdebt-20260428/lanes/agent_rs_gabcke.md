@@ -1611,3 +1611,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   punctured-neighborhood scalar series expansion of
   `sin(pi*w - 2*pi*w^2) / sin(2*pi*w)` at `w = 0`, with coefficients
   `a 0 = 1/2` and `a 3 = -pi^2 / 6`.
+
+### 2026-04-29 Round 33: punctured quotient reduced to removable power series
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalPuncturedSineQuotientExpansionProp`.
+- Banked inputs:
+  - Round 32 reduced the filled local quotient to the punctured explicit sine
+    quotient near `w = 0`.
+  - Mathlib's `hasFPowerSeriesAt_iff` converts a one-variable
+    `HasFPowerSeriesAt` witness into the corresponding local scalar `HasSum`
+    expansion.
+- Proof facts banked:
+  - Added `standardGabckeQuarterLocalRemovableSineQuotient`, the explicit sine
+    quotient with only the `w = 0` removable value filled by `1/2`.
+  - Added `StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp`,
+    the exact source theorem in `HasFPowerSeriesAt` form, with coefficient
+    requirements `a 0 = 1 / 2` and `a 3 = -Real.pi ^ 2 / 6`.
+  - Proved
+    `standardGabckeQuarterLocalPuncturedSineQuotientExpansionProp_of_removablePowerSeries`,
+    unfolding `HasFPowerSeriesAt` and using the punctured-neighborhood
+    hypothesis to ignore the filled value away from `w = 0`.
+- Failed routes:
+  - I did not define the removable derivative candidate by the raw third
+    derivative.
+  - I did not assume global regularity of the raw quotient at denominator-zero
+    points.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, provider shortcuts, or weaken the live
+    coefficient target.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded the branch to local recovery head `f09e18c` before editing.
+  - `git diff --check`: passed.
+  - First validation attempt with the corrected guard returned `LEAN_BUSY` and
+    did not run Lake.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock`.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp`, the
+  local power-series expansion at `0` for the removable sine quotient
+  `if w = 0 then 1/2 else sin(pi*w - 2*pi*w^2) / sin(2*pi*w)`, with
+  coefficients `a 0 = 1/2` and `a 3 = -pi^2 / 6`.

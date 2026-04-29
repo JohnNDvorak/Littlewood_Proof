@@ -868,6 +868,42 @@ def StandardGabckeQuarterLocalPuncturedSineQuotientExpansionProp : Prop :=
           (Real.sin (Real.pi * w - 2 * Real.pi * w ^ 2) /
             Real.sin (2 * Real.pi * w))
 
+/-- The sine quotient with only the `w = 0` removable value filled. This is
+the local analytic object below `standardGabckeQuarterLocalPsi`; the later
+`x = 1/2` fill is irrelevant near `0`. -/
+def standardGabckeQuarterLocalRemovableSineQuotient (w : ℝ) : ℝ :=
+  if w = 0 then
+    1 / 2
+  else
+    Real.sin (Real.pi * w - 2 * Real.pi * w ^ 2) /
+      Real.sin (2 * Real.pi * w)
+
+/-- Exact local power-series source for the removable sine quotient at `0`.
+This is the remaining analytic expansion theorem in standard `HasFPowerSeriesAt`
+form, with the two coefficients needed downstream named explicitly. -/
+def StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp : Prop :=
+  ∃ a : ℕ → ℝ,
+    HasFPowerSeriesAt standardGabckeQuarterLocalRemovableSineQuotient
+      (FormalMultilinearSeries.ofScalars ℝ a) 0 ∧
+      a 0 = 1 / 2 ∧
+      a 3 = -Real.pi ^ 2 / 6
+
+/-- A local power series for the removable sine quotient gives the punctured
+quotient expansion by unfolding `HasFPowerSeriesAt` and ignoring the filled
+value away from `w = 0`. -/
+theorem standardGabckeQuarterLocalPuncturedSineQuotientExpansionProp_of_removablePowerSeries
+    (h_series : StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp) :
+    StandardGabckeQuarterLocalPuncturedSineQuotientExpansionProp := by
+  rcases h_series with ⟨a, hseries, ha0, ha3⟩
+  refine ⟨a, ha0, ha3, ?_⟩
+  rw [hasFPowerSeriesAt_iff] at hseries
+  rw [eventually_nhdsWithin_iff]
+  filter_upwards [hseries] with w hw hw0
+  have hw0_ne : w ≠ 0 := by
+    simpa using hw0
+  simpa [standardGabckeQuarterLocalRemovableSineQuotient,
+    FormalMultilinearSeries.coeff_ofScalars, smul_eq_mul, hw0_ne] using hw
+
 /-- The punctured sine-quotient expansion plus the removable value at `0`
 gives the filled local scalar expansion. The second filled point `1/2` is
 outside a sufficiently small neighborhood of `0`. -/
