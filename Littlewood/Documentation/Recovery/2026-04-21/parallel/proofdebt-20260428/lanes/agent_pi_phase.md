@@ -1885,3 +1885,37 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
 - Smallest next theorem:
   - Prove or further reduce `PerronThresholdTowerPhaseWideWindowHyp`, preferably through the existing same-height `PerronThresholdTowerWideDominationHyp`/log-budget leaves without cross-height threshold monotonicity.
+
+### 2026-04-29 Round 33: Wide-Domination Residual Exposure
+
+- Classification: `CONDITIONAL_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronThresholdTowerPhaseWideWindowHyp`.
+- Facts banked:
+  - Added `fixedHeightPerronErrorPhaseWideWindow_of_perronThresholdWideDomination_hyp`.
+  - The theorem chains the existing same-height `PerronThresholdTowerWideDominationHyp → PerronThresholdTowerPhaseWideWindowHyp` adapter with the fixed-height Perron-error adapter from Round 32.
+  - Added route endpoints `correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideDominationRoute` and `rhPiWitnessData_of_correctedPerronOnlyTargetAntiWideDominationRoute`.
+- What changed:
+  - The target/anti-specific fixed-height corrected route can now be validated from relation-compatible finite-zero data plus the exact arbitrary-radius same-height domination leaf `PerronThresholdTowerWideDominationHyp`.
+  - `PerronThresholdTowerPhaseWideWindowHyp` is no longer the exposed route blocker for this endpoint; the exposed blocker is its smaller domination source.
+- Remaining goal shape:
+  - Prove or further reduce `PerronThresholdTowerWideDominationHyp`: for every positive radius function, choose the same `T, ε` so that `Real.exp (Real.log (max X (perronThreshold hRH T) + 1) + radius T ε + 1)` is below the same-height tower cap.
+  - This is still stronger than target/anti realized-radius geometry; it is the arbitrary-radius window source. The target/anti route also has narrower realized-radius budget routes already available, but this round preserves the supplied-radius fixed-height window surface exactly.
+- Failed/circular route:
+  - Did not prove tower cofinality for a radius depending on the selected height.
+  - Did not use cross-height `perronThreshold` monotonicity or compare `Classical.choose` thresholds across heights.
+  - Did not add global provider instances for the new fixed-height/wide-domination adapter.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh` in the new route.
+  - No axioms/sorries, statement weakening, independent target/anti heights, reverse-comparison instance, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build, public import probe, or other validation command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Either prove/reduce `PerronThresholdTowerWideDominationHyp` directly, or keep the public target/anti endpoint on the narrower realized-radius/log-budget route and continue the canonical Perron and chosen-radius residuals there.

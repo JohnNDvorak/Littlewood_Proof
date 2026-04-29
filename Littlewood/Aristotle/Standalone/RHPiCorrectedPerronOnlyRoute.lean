@@ -201,6 +201,19 @@ theorem correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiThresholdWindowRo
     fixedHeightPerronErrorPhaseWideWindow_of_perronThresholdWideWindow_hyp
   exact correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiFixedHeightErrorRoute
 
+/-- Target/anti fixed-height route with the residual reduced to same-height
+arbitrary-radius tower domination. -/
+theorem correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideDominationRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerWideDominationHyp] :
+    TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  letI : FixedHeightPerronErrorPhaseWideWindowHyp :=
+    fixedHeightPerronErrorPhaseWideWindow_of_perronThresholdWideDomination_hyp
+  exact correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiFixedHeightErrorRoute
+
 /-- Corrected Perron-only route to the RH-side `pi` witness data. -/
 theorem rhPiWitnessData_of_correctedPerronOnlyRoute
     [PerronSqrtErrorEventuallyAtHeightHyp]
@@ -245,6 +258,20 @@ theorem rhPiWitnessData_of_correctedPerronOnlyTargetAntiThresholdWindowRoute
     [PerronThresholdTowerPhaseWideWindowHyp] :
     RhPiWitnessData := by
   rcases correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiThresholdWindowRoute with
+    ⟨hTarget, hAntiTarget⟩
+  letI : TargetTowerPhaseCouplingFamilyHyp_corrected := hTarget
+  letI : AntiTargetTowerPhaseCouplingFamilyHyp_corrected := hAntiTarget
+  exact rhPiWitnessData_of_correctedHyp
+
+/-- Corrected RH-`pi` endpoint from relation-compatible target/anti data plus
+same-height arbitrary-radius tower domination. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyTargetAntiWideDominationRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerWideDominationHyp] :
+    RhPiWitnessData := by
+  rcases correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideDominationRoute with
     ⟨hTarget, hAntiTarget⟩
   letI : TargetTowerPhaseCouplingFamilyHyp_corrected := hTarget
   letI : AntiTargetTowerPhaseCouplingFamilyHyp_corrected := hAntiTarget
