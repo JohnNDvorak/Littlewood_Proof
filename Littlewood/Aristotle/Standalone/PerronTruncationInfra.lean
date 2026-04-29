@@ -1438,16 +1438,39 @@ def perronKernelWeightedNearDiagonalPuncturedBoundaryError (x T : ℝ) : ℝ :=
     ArithmeticFunction.vonMangoldt n *
       |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
 
-/-- Separated part of the punctured boundary-window weighted error.  This is
-the first place where a decaying pointwise kernel estimate can be stated
-without the exact-hit or near-integer obstruction. -/
-def perronKernelWeightedSeparatedPuncturedBoundaryError (x T : ℝ) : ℝ :=
-  ∑ n ∈ (((Finset.range (Nat.floor x + 1)).filter
+/-- The separated punctured boundary set: the macroscopic boundary window with
+the exact integer hit and the unit near-diagonal band removed. -/
+def perronKernelSeparatedPuncturedBoundarySet (x T : ℝ) : Finset ℕ :=
+  (((Finset.range (Nat.floor x + 1)).filter
       (fun n : ℕ => |x - (n : ℝ)| ≤ x / T)).filter
         (fun n : ℕ => (n : ℝ) ≠ x)).filter
-          (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ 1),
+          (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ 1)
+
+/-- Separated part of the punctured boundary-window weighted error.  This
+keeps the macroscopic boundary-window terms that remain after the exact-hit and
+unit near-diagonal obstructions have been removed. -/
+def perronKernelWeightedSeparatedPuncturedBoundaryError (x T : ℝ) : ℝ :=
+  ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
     ArithmeticFunction.vonMangoldt n *
       |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+
+/-- Davenport-style pointwise envelope for separated boundary-window terms.
+
+The factor `1 / log (x / n)` preserves the distance-from-cutoff singularity;
+this is the scale-safe replacement for the demoted constant-supremum route on
+the macroscopic boundary window. -/
+def perronKernelSeparatedDavenportEnvelopeTerm (x T : ℝ) (n : ℕ) : ℝ :=
+  let y : ℝ := x / (n : ℝ)
+  (y ^ (1 + 1 / Real.log x) + 1) / (T * Real.log y) +
+    2 * y ^ (1 + 1 / Real.log x) / ((1 + 1 / Real.log x) * T)
+
+/-- Weighted Davenport envelope over the separated punctured boundary window.
+The remaining analytic summation atom is to show this harmonic-distance sum is
+`O((log x)^2)` uniformly for `2 <= T <= 16`. -/
+def perronKernelSeparatedDavenportEnvelope (x T : ℝ) : ℝ :=
+  ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
+    ArithmeticFunction.vonMangoldt n *
+      perronKernelSeparatedDavenportEnvelopeTerm x T n
 
 /-- Pure von Mangoldt weight of the near-diagonal punctured boundary set. -/
 def perronKernelNearDiagonalPuncturedVonMangoldtWeight (x T : ℝ) : ℝ :=
@@ -1666,6 +1689,33 @@ theorem perronKernelWeightedSeparatedPuncturedBoundaryError_le_kernelSup_mul_von
             (by
               intro n _hn_s _hn_not_ss
               exact vonMangoldt_nonneg n)
+
+/-- Separated weighted error from a pointwise Davenport envelope.  This exact
+finite-sum reduction keeps the distance singularity inside the remaining
+arithmetic summation atom instead of replacing the separated window by a false
+pure `O((log x)^2)` weight estimate. -/
+theorem perronKernelWeightedSeparatedPuncturedBoundaryError_le_davenportEnvelope
+    (x T : ℝ)
+    (hkernel : ∀ n : ℕ,
+      n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+        |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤
+          perronKernelSeparatedDavenportEnvelopeTerm x T n) :
+    perronKernelWeightedSeparatedPuncturedBoundaryError x T ≤
+      perronKernelSeparatedDavenportEnvelope x T := by
+  classical
+  calc perronKernelWeightedSeparatedPuncturedBoundaryError x T
+      = ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
+          ArithmeticFunction.vonMangoldt n *
+            |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| := by
+        rfl
+    _ ≤ ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
+          ArithmeticFunction.vonMangoldt n *
+            perronKernelSeparatedDavenportEnvelopeTerm x T n := by
+        apply Finset.sum_le_sum
+        intro n hn
+        exact mul_le_mul_of_nonneg_left (hkernel n hn) (vonMangoldt_nonneg n)
+    _ = perronKernelSeparatedDavenportEnvelope x T := by
+        rfl
 
 /-- Near-diagonal punctured boundary weighted error is controlled by a uniform
 kernel bound times the pure near-diagonal von Mangoldt weight. -/
@@ -2441,6 +2491,45 @@ theorem small_T_weighted_kernel_cutoff_bound_from_separated_boundary_and_offBoun
       perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x) ^ 2 :=
   small_T_weighted_kernel_cutoff_bound_from_boundary_split
     (small_T_boundary_window_bound_from_separated_weighted hseparated)
+    hoffBoundary
+
+/-- Direct separated weighted atom from a pointwise Davenport kernel envelope
+and the corresponding weighted envelope summation bound. -/
+theorem small_T_separated_weighted_bound_from_davenport_envelope
+    (hkernel : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤
+            perronKernelSeparatedDavenportEnvelopeTerm x T n)
+    (henvelope : ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedDavenportEnvelope x T ≤ Cd * (Real.log x) ^ 2) :
+    ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedSeparatedPuncturedBoundaryError x T ≤ Cs * (Real.log x) ^ 2 := by
+  rcases henvelope with ⟨Cd, hCd_pos, henvelope⟩
+  refine ⟨Cd, hCd_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  calc perronKernelWeightedSeparatedPuncturedBoundaryError x T
+      ≤ perronKernelSeparatedDavenportEnvelope x T :=
+        perronKernelWeightedSeparatedPuncturedBoundaryError_le_davenportEnvelope
+          x T (hkernel x T hx hT_lo hT_hi)
+    _ ≤ Cd * (Real.log x) ^ 2 := henvelope x T hx hT_lo hT_hi
+
+/-- Weighted finite cutoff from the Davenport separated-bound route and the
+off-boundary weighted atom. -/
+theorem small_T_weighted_kernel_cutoff_bound_from_davenport_separated_and_offBoundary
+    (hkernel : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤
+            perronKernelSeparatedDavenportEnvelopeTerm x T n)
+    (henvelope : ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedDavenportEnvelope x T ≤ Cd * (Real.log x) ^ 2)
+    (hoffBoundary : ∃ Co > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedOffBoundaryWindowError x T ≤ Co * (Real.log x) ^ 2) :
+    ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x) ^ 2 :=
+  small_T_weighted_kernel_cutoff_bound_from_separated_boundary_and_offBoundary
+    (small_T_separated_weighted_bound_from_davenport_envelope hkernel henvelope)
     hoffBoundary
 
 /-- Finite Perron-kernel cutoff from a weighted per-term cutoff-error bound.
