@@ -847,3 +847,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 16 Row Prefix to Complete-Block Tail Plus Head
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  the raw row-integral prefix atom feeding
+  `atkinson_largeShiftCorrectionPrefix_bound_of_rowIntegralPrefix` and
+  `atkinson_shiftedCorrectionPrefixBound_of_rowIntegralPrefix_and_correction_j1_j2`.
+- Facts banked:
+  `atkinson_largeShiftRowIntegralPrefix_bound_of_range_and_head` splits the
+  `Ico (j - 1) (m + 1)` row-integral prefix into the isolated `j - 1` head
+  row cell and the range-form tail
+  `∫ ∑ n in range M, if j <= n then atkinsonResonantShiftedRowSummand n j`.
+  `atkinson_largeShiftRowIntegralRange_bound_of_completeBlockPrefix` converts
+  that range-form row tail exactly into the weighted shifted complete-block
+  prefix using `atkinsonWeightedShiftedCompleteBlockComplex_eq_rowIntegral`.
+  `atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefix_and_head`
+  packages the two leaves as the next provider surface for the raw row-prefix
+  atom.
+- Failed routes / guardrails:
+  no zero-model, mass-coefficient, Fourier-corrected target, compensated
+  carrier route, circular provider, or diffuse deweighting route was used.
+  The reduction preserves the `sqrt(m+j) / j` scale and keeps the logarithm
+  only as already present in the correction-prefix route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local proof engineering in
+  `atkinson_largeShiftRowIntegralPrefix_bound_of_range_and_head`, especially
+  the `sum_filter`/`integral_finset_sum` conversion for the tail range. The
+  complete-block conversion follows an already-used pattern from nearby
+  row-integral wrappers.
+- Smallest next theorem:
+  prove the weighted complete-block tail prefix
+  `∃ C_block > 0, ∀ j : ℕ, 3 ≤ j -> 1 ≤ j -> ∀ M : ℕ,`
+  `‖∑ n ∈ Finset.range M, if j ≤ n then`
+  `(((atkinsonModeWeight n : ℝ) : ℂ) *`
+  `∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),`
+  `HardyCosSmooth.hardyCosExp n t) else 0‖`
+  `≤ C_block * Real.log (↑j + 1) *`
+  `(Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)`,
+  plus the isolated head row-cell bound
+  `‖∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand (j - 1) j u‖`
+  at the same log-weighted `sqrt(m+j) / j` scale.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

@@ -18651,6 +18651,288 @@ private theorem atkinson_shiftedCorrectionPrefixBound_of_rowIntegralPrefix_and_c
       hcorr1 hcorr2
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- The raw row-integral prefix splits into the isolated `j - 1` cell and the
+range-form row tail. This is the non-circular row analogue of the earlier
+inverse-phase head/tail split. -/
+private theorem atkinson_largeShiftRowIntegralPrefix_bound_of_range_and_head
+    (hrange :
+      ∃ C_range > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ M : ℕ,
+        ‖∫ u in Ioc (0 : ℝ) 1,
+            ∑ n ∈ Finset.range M,
+              (if j ≤ n then atkinsonResonantShiftedRowSummand n j u else 0)‖
+          ≤ C_range * Real.log (↑j + 1) *
+              (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j))
+    (hhead :
+      ∃ C_head > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ, j - 1 ≤ m →
+        ‖∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand (j - 1) j u‖
+          ≤ C_head * Real.log (↑j + 1) *
+              (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    ∃ C_row > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ,
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+        ≤ C_row * Real.log (↑j + 1) *
+            (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  obtain ⟨C_range, hC_range, hrange'⟩ := hrange
+  obtain ⟨C_head, hC_head, hhead'⟩ := hhead
+  refine ⟨C_head + 4 * C_range, by positivity, ?_⟩
+  intro j hj3 hj1 m
+  let target : ℝ := Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j
+  by_cases hnonempty : j - 1 ≤ m
+  · have hsplit :
+        ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u
+          =
+        (∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand (j - 1) j u)
+          +
+        ∑ n ∈ Finset.Ico j (m + 1),
+            ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u := by
+      have hset :
+          Finset.Ico (j - 1) (m + 1)
+            =
+          ({j - 1} : Finset ℕ) ∪ Finset.Ico j (m + 1) := by
+        ext x
+        constructor <;> intro hx
+        · rcases Finset.mem_Ico.mp hx with ⟨hx1, hx2⟩
+          by_cases hxj : x = j - 1
+          · exact Finset.mem_union.mpr <| Or.inl (by simpa [hxj])
+          · exact Finset.mem_union.mpr <| Or.inr <| Finset.mem_Ico.mpr (by omega)
+        · rcases Finset.mem_union.mp hx with hx | hx
+          · simp at hx
+            subst hx
+            exact Finset.mem_Ico.mpr (by omega)
+          · rcases Finset.mem_Ico.mp hx with ⟨hx1, hx2⟩
+            exact Finset.mem_Ico.mpr (by omega)
+      have hdisj :
+          Disjoint ({j - 1} : Finset ℕ) (Finset.Ico j (m + 1)) := by
+        refine Finset.disjoint_left.mpr ?_
+        intro x hx1 hx2
+        simp at hx1
+        subst hx1
+        rcases Finset.mem_Ico.mp hx2 with ⟨hx2l, hx2r⟩
+        omega
+      rw [hset, Finset.sum_union hdisj, Finset.sum_singleton]
+    have htail_eq :
+        ∑ n ∈ Finset.Ico j (m + 1),
+            ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u
+          =
+        ∫ u in Ioc (0 : ℝ) 1,
+            ∑ n ∈ Finset.range (m + 1),
+              (if j ≤ n then atkinsonResonantShiftedRowSummand n j u else 0) := by
+      calc
+        ∑ n ∈ Finset.Ico j (m + 1),
+            ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u
+            =
+          ∑ n ∈ Finset.range (m + 1),
+            (if j ≤ n then
+              ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u
+            else 0) := by
+              rw [← Finset.sum_filter]
+              congr 1
+              ext x
+              constructor <;> intro hx <;>
+                simp [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico] at hx ⊢ <;> omega
+        _ =
+          ∑ n ∈ Finset.range (m + 1),
+            ∫ u in Ioc (0 : ℝ) 1,
+              (if j ≤ n then atkinsonResonantShiftedRowSummand n j u else 0) := by
+              refine Finset.sum_congr rfl ?_
+              intro n hn
+              by_cases hjn : j ≤ n <;> simp [hjn]
+        _ =
+          ∫ u in Ioc (0 : ℝ) 1,
+            ∑ n ∈ Finset.range (m + 1),
+              (if j ≤ n then atkinsonResonantShiftedRowSummand n j u else 0) := by
+              symm
+              rw [MeasureTheory.integral_finset_sum]
+              intro n hn
+              by_cases hjn : j ≤ n
+              · simpa [hjn] using
+                  (atkinsonResonantShiftedRowSummand_continuous n j).integrableOn_Ioc
+              · simp [hjn]
+    have htail_raw :
+        ‖∑ n ∈ Finset.Ico j (m + 1),
+            ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+          ≤ C_range * Real.log (↑j + 1) *
+              (Real.sqrt (((m + 1 + j : ℕ) : ℝ) + 1) / j) := by
+      rw [htail_eq]
+      exact hrange' j hj3 hj1 (m + 1)
+    have htail :
+        ‖∑ n ∈ Finset.Ico j (m + 1),
+            ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+          ≤ 4 * C_range * Real.log (↑j + 1) * target := by
+      let A : ℝ := (((m + j : ℕ) : ℝ) + 1)
+      have hsqrt16 :
+          Real.sqrt (16 * A) = 4 * Real.sqrt A := by
+        have hA_nonneg : 0 ≤ A := by
+          dsimp [A]
+          positivity
+        have hsq : 16 * A = (4 * Real.sqrt A)^2 := by
+          calc
+            16 * A = 16 * (Real.sqrt A)^2 := by rw [Real.sq_sqrt hA_nonneg]
+            _ = (4 * Real.sqrt A)^2 := by ring
+        rw [hsq, Real.sqrt_sq_eq_abs]
+        rw [abs_of_nonneg]
+        positivity
+      have hsqrt_mono :
+          Real.sqrt (((m + 1 + j : ℕ) : ℝ) + 1) / j ≤ Real.sqrt (16 * A) / j := by
+        have hsqrt_raw :
+            Real.sqrt (((m + 1 + j : ℕ) : ℝ) + 1) ≤ Real.sqrt (16 * A) := by
+          have hraw_nat : m + 1 + j + 1 ≤ 16 * (m + j + 1) := by
+            omega
+          apply Real.sqrt_le_sqrt
+          dsimp [A]
+          exact_mod_cast hraw_nat
+        have hinv_nonneg : 0 ≤ (1 / (j : ℝ)) := by
+          positivity
+        simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using
+          mul_le_mul_of_nonneg_right hsqrt_raw hinv_nonneg
+      calc
+        ‖∑ n ∈ Finset.Ico j (m + 1),
+            ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+            ≤ C_range * Real.log (↑j + 1) *
+                (Real.sqrt (((m + 1 + j : ℕ) : ℝ) + 1) / j) := htail_raw
+        _ ≤ C_range * Real.log (↑j + 1) * (Real.sqrt (16 * A) / j) := by
+              exact mul_le_mul_of_nonneg_left hsqrt_mono
+                (mul_nonneg (le_of_lt hC_range)
+                  (Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)))
+        _ = C_range * Real.log (↑j + 1) * (4 * Real.sqrt A / j) := by
+              rw [hsqrt16]
+        _ = 4 * C_range * Real.log (↑j + 1) * target := by
+              simp [target, A]
+              ring
+    have hhead_bound :
+        ‖∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand (j - 1) j u‖
+          ≤ C_head * Real.log (↑j + 1) * target := by
+      simpa [target] using hhead' j hj3 hj1 m hnonempty
+    rw [hsplit]
+    calc
+      ‖(∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand (j - 1) j u)
+          +
+        ∑ n ∈ Finset.Ico j (m + 1),
+            ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+          ≤ ‖∫ u in Ioc (0 : ℝ) 1,
+                atkinsonResonantShiftedRowSummand (j - 1) j u‖
+              +
+              ‖∑ n ∈ Finset.Ico j (m + 1),
+                ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖ := by
+              exact norm_add_le _ _
+      _ ≤ C_head * Real.log (↑j + 1) * target +
+            4 * C_range * Real.log (↑j + 1) * target := by
+            exact add_le_add hhead_bound htail
+      _ = (C_head + 4 * C_range) * Real.log (↑j + 1) * target := by ring
+  ·
+    have hIco_empty : Finset.Ico (j - 1) (m + 1) = ∅ := by
+      apply Finset.Ico_eq_empty_of_le
+      omega
+    rw [hIco_empty, Finset.sum_empty, norm_zero]
+    have htarget_nonneg : 0 ≤ target := by
+      have hj_pos_real : 0 < (j : ℝ) := by
+        exact_mod_cast (lt_of_lt_of_le (by norm_num : 0 < (1 : ℕ)) hj1)
+      exact div_nonneg (Real.sqrt_nonneg _) (le_of_lt hj_pos_real)
+    have hlog_nonneg : 0 ≤ Real.log ((j : ℝ) + 1) :=
+      Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
+    have hcoeff_nonneg : 0 ≤ C_head + 4 * C_range := by
+      positivity
+    exact mul_nonneg (mul_nonneg hcoeff_nonneg hlog_nonneg) htarget_nonneg
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Exact conversion of the row-tail range prefix to the native weighted
+complete-block prefix. This exposes the remaining tail cancellation in the same
+coordinates as the existing complete-block estimates. -/
+private theorem atkinson_largeShiftRowIntegralRange_bound_of_completeBlockPrefix
+    (hblock :
+      ∃ C_block > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ M : ℕ,
+        ‖∑ n ∈ Finset.range M,
+            (if j ≤ n then
+              (((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                  HardyCosSmooth.hardyCosExp n t)
+            else 0)‖
+          ≤ C_block * Real.log (↑j + 1) *
+              (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)) :
+    ∃ C_range > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ M : ℕ,
+      ‖∫ u in Ioc (0 : ℝ) 1,
+          ∑ n ∈ Finset.range M,
+            (if j ≤ n then atkinsonResonantShiftedRowSummand n j u else 0)‖
+        ≤ C_range * Real.log (↑j + 1) *
+            (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+  obtain ⟨C_block, hC_block, hblock'⟩ := hblock
+  refine ⟨C_block, hC_block, ?_⟩
+  intro j hj3 hj1 M
+  calc
+    ‖∫ u in Ioc (0 : ℝ) 1,
+        ∑ n ∈ Finset.range M,
+          (if j ≤ n then atkinsonResonantShiftedRowSummand n j u else 0)‖
+      =
+    ‖∑ n ∈ Finset.range M,
+        (if j ≤ n then
+          (((atkinsonModeWeight n : ℝ) : ℂ) *
+            ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+              HardyCosSmooth.hardyCosExp n t)
+        else 0)‖ := by
+          congr 1
+          calc
+            ∫ u in Ioc (0 : ℝ) 1,
+                ∑ n ∈ Finset.range M,
+                  (if j ≤ n then atkinsonResonantShiftedRowSummand n j u else 0)
+              =
+            ∑ n ∈ Finset.range M,
+              ∫ u in Ioc (0 : ℝ) 1,
+                (if j ≤ n then atkinsonResonantShiftedRowSummand n j u else 0) := by
+                  rw [MeasureTheory.integral_finset_sum]
+                  intro n hn
+                  by_cases hjn : j ≤ n
+                  · simpa [hjn] using
+                      (atkinsonResonantShiftedRowSummand_continuous n j).integrableOn_Ioc
+                  · simp [hjn]
+            _ =
+            ∑ n ∈ Finset.range M,
+              (if j ≤ n then
+                (((atkinsonModeWeight n : ℝ) : ℂ) *
+                  ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                    HardyCosSmooth.hardyCosExp n t)
+              else 0) := by
+                refine Finset.sum_congr rfl ?_
+                intro n hn
+                by_cases hjn : j ≤ n
+                · simp [hjn]
+                  simpa using
+                    (atkinsonWeightedShiftedCompleteBlockComplex_eq_rowIntegral n j hj1).symm
+                · simp [hjn]
+    _ ≤ C_block * Real.log (↑j + 1) *
+          (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+        exact hblock' j hj3 hj1 M
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Complete-block handoff for the raw row-prefix atom: it remains to prove the
+weighted complete-block prefix and the isolated head row cell. -/
+private theorem atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefix_and_head
+    (hblock :
+      ∃ C_block > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ M : ℕ,
+        ‖∑ n ∈ Finset.range M,
+            (if j ≤ n then
+              (((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                  HardyCosSmooth.hardyCosExp n t)
+            else 0)‖
+          ≤ C_block * Real.log (↑j + 1) *
+              (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j))
+    (hhead :
+      ∃ C_head > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ, j - 1 ≤ m →
+        ‖∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand (j - 1) j u‖
+          ≤ C_head * Real.log (↑j + 1) *
+              (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    ∃ C_row > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ,
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+        ≤ C_row * Real.log (↑j + 1) *
+            (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  exact
+    atkinson_largeShiftRowIntegralPrefix_bound_of_range_and_head
+      (atkinson_largeShiftRowIntegralRange_bound_of_completeBlockPrefix hblock)
+      hhead
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
     atkinson_large_modes_complete_resonant_packet_row_correction_sum_bound_atomic_of_shifted_correction_prefix
     [AtkinsonShiftedCorrectionPrefixBoundHyp] :
