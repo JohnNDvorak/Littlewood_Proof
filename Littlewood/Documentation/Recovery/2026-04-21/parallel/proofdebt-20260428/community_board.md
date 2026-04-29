@@ -952,3 +952,35 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Pi/Phase: three named canonical-budget residuals.
   - RS/Gabcke: removable-source bridge and numeric point bounds for
     `standardGabckeRemovableSourceThirdDerivative`.
+
+## Overnight 2026-04-29 Eighteenth Pass Status
+
+- Atkinson lane is validated and pushed through `d4d5985`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Reduce Atkinson finite cell patches to native leaves`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the finite inverse-phase cell-prefix patch now reduces to native
+    finite fixed-shift boundary-prefix and correction-prefix leaves, without
+    using the global correction provider class. The public/deep path remains
+    split into native fixed-shift finite leaves plus the stationary-phase
+    complete-block target remainder.
+  - Hooke is redeployed to close one native leaf directly.
+- RS/Gabcke lane is validated and pushed through `2338200`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Reduce Gabcke quarter bound to Taylor value`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`.
+  - Result: the quarter numeric point bound is reduced to the explicit Taylor
+    value formula
+    `standardGabckeRemovableSourceThirdDerivative (1/4) = -Real.pi ^ 2`.
+    The quarter raw-removable bridge remains separate.
+  - Hume is redeployed to prove the value formula or the quarter bridge.
+- Current live atoms:
+  - Atkinson: stationary-phase complete-block target remainder, finite
+    fixed-shift boundary-prefix leaf, and finite fixed-shift correction-prefix
+    leaf.
+  - Perron/B5a: finite reindexing/injection into `harmonic (Nat.floor x)`.
+  - Pi/Phase: three named canonical-budget residuals.
+  - RS/Gabcke: quarter value formula and quarter raw-removable bridge, with
+    analogous three-quarter atoms still available if that route proves easier.
