@@ -945,6 +945,22 @@ def StandardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp : Prop :=
     iteratedDeriv 3 standardGabckeQuarterLocalSineNumerator 0 = -Real.pi ^ 3 ∧
     iteratedDeriv 4 standardGabckeQuarterLocalSineNumerator 0 = 24 * Real.pi ^ 3
 
+/-- First derivative value for the raw numerator sine at the origin. -/
+def StandardGabckeQuarterLocalNumeratorRawSineFirstDerivativeProp : Prop :=
+  iteratedDeriv 1 standardGabckeQuarterLocalSineNumerator 0 = Real.pi
+
+/-- Second derivative value for the raw numerator sine at the origin. -/
+def StandardGabckeQuarterLocalNumeratorRawSineSecondDerivativeProp : Prop :=
+  iteratedDeriv 2 standardGabckeQuarterLocalSineNumerator 0 = -4 * Real.pi
+
+/-- Third derivative value for the raw numerator sine at the origin. -/
+def StandardGabckeQuarterLocalNumeratorRawSineThirdDerivativeProp : Prop :=
+  iteratedDeriv 3 standardGabckeQuarterLocalSineNumerator 0 = -Real.pi ^ 3
+
+/-- Fourth derivative value for the raw numerator sine at the origin. -/
+def StandardGabckeQuarterLocalNumeratorRawSineFourthDerivativeProp : Prop :=
+  iteratedDeriv 4 standardGabckeQuarterLocalSineNumerator 0 = 24 * Real.pi ^ 3
+
 /-- Exact coefficient data for the denominator dslope through cubic order.
 For `sin(2*pi*w) / w`, the coefficients are
 `2*pi, 0, -4*pi^3/3, 0`. -/
@@ -1388,6 +1404,42 @@ theorem standardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp_of_lowOrde
   · dsimp [A, f]
     rw [h4]
     norm_num
+
+/-- The first raw numerator sine derivative is the already-proved numerator
+dslope value. -/
+theorem standardGabckeQuarterLocalNumeratorRawSineFirstDerivativeProp_proved :
+    StandardGabckeQuarterLocalNumeratorRawSineFirstDerivativeProp := by
+  unfold StandardGabckeQuarterLocalNumeratorRawSineFirstDerivativeProp
+  rw [iteratedDeriv_one]
+  have h := standardGabckeQuarterLocalNumeratorDslopeValueProp_proved
+  unfold StandardGabckeQuarterLocalNumeratorDslopeValueProp at h
+  rw [dslope_same] at h
+  exact h
+
+/-- The raw numerator low-order derivative bundle is reduced to its four
+point-value atoms. -/
+theorem standardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp_of_pointDerivatives
+    (h1 : StandardGabckeQuarterLocalNumeratorRawSineFirstDerivativeProp)
+    (h2 : StandardGabckeQuarterLocalNumeratorRawSineSecondDerivativeProp)
+    (h3 : StandardGabckeQuarterLocalNumeratorRawSineThirdDerivativeProp)
+    (h4 : StandardGabckeQuarterLocalNumeratorRawSineFourthDerivativeProp) :
+    StandardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp := by
+  unfold StandardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp
+  unfold StandardGabckeQuarterLocalNumeratorRawSineFirstDerivativeProp at h1
+  unfold StandardGabckeQuarterLocalNumeratorRawSineSecondDerivativeProp at h2
+  unfold StandardGabckeQuarterLocalNumeratorRawSineThirdDerivativeProp at h3
+  unfold StandardGabckeQuarterLocalNumeratorRawSineFourthDerivativeProp at h4
+  exact ⟨h1, h2, h3, h4⟩
+
+/-- With the first raw derivative closed, only the second through fourth raw
+numerator sine derivatives remain. -/
+theorem standardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp_of_higherDerivatives
+    (h2 : StandardGabckeQuarterLocalNumeratorRawSineSecondDerivativeProp)
+    (h3 : StandardGabckeQuarterLocalNumeratorRawSineThirdDerivativeProp)
+    (h4 : StandardGabckeQuarterLocalNumeratorRawSineFourthDerivativeProp) :
+    StandardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp :=
+  standardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp_of_pointDerivatives
+    standardGabckeQuarterLocalNumeratorRawSineFirstDerivativeProp_proved h2 h3 h4
 
 /-- A raw cubic coefficient for `sin (2*pi*w)` gives the quadratic coefficient
 of the removable quotient `sin (2*pi*w) / w` via the Mathlib `dslope`/`fslope`

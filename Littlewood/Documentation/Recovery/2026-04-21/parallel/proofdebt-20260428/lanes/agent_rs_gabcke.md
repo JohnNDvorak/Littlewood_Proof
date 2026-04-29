@@ -2528,3 +2528,44 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   prove `StandardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp`,
   the four explicit derivative values for
   `sin (Real.pi*w - 2*Real.pi*w^2)` at zero.
+
+### 2026-04-29 Round 54: numerator raw derivative point split
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp`.
+- Banked inputs:
+  - `standardGabckeQuarterLocalNumeratorDslopeValueProp_proved` proves the
+    numerator `dslope` value at the origin.
+  - `dslope_same` identifies that value with the ordinary derivative of
+    `standardGabckeQuarterLocalSineNumerator` at zero.
+- Proof facts banked:
+  - Added point-value source atoms:
+    `StandardGabckeQuarterLocalNumeratorRawSineFirstDerivativeProp`,
+    `StandardGabckeQuarterLocalNumeratorRawSineSecondDerivativeProp`,
+    `StandardGabckeQuarterLocalNumeratorRawSineThirdDerivativeProp`, and
+    `StandardGabckeQuarterLocalNumeratorRawSineFourthDerivativeProp`.
+  - Proved
+    `standardGabckeQuarterLocalNumeratorRawSineFirstDerivativeProp_proved`.
+  - Added
+    `standardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp_of_pointDerivatives`.
+  - Added
+    `standardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp_of_higherDerivatives`,
+    reducing the bundle to the second, third, and fourth point derivatives.
+- Failed routes:
+  - I did not introduce an all-order sine series provider or any analytic
+    shortcut.
+  - I did not use quotient regularity or a raw quotient identity; this remains
+    inside the numerator derivative calculation.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to coordinator baseline `2846f04` before editing.
+  - `git diff --check`: passed before this ledger append.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalNumeratorRawSineSecondDerivativeProp`, i.e.
+  `iteratedDeriv 2 standardGabckeQuarterLocalSineNumerator 0 = -4 * Real.pi`.
