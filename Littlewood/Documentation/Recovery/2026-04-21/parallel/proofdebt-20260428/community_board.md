@@ -1899,3 +1899,40 @@ Timestamp: 2026-04-28 22:56 CDT.
   - endpoint-gap bound at `relativePhase / relativeWeight`,
   - Jacobian-integral bound at `1 / relativeWeight`,
   - shifted stationary-phase target remainder.
+
+## Overnight 2026-04-29 Forty-Sixth Pass Status
+
+- Atkinson lane is integrated through `3beb13b`:
+  - `a0c4a85` reduced the endpoint-gap estimate to a scalar endpoint
+    phase-error.
+  - `3beb13b` corrected that residual by accounting for the native `2π` cell
+    turn; the raw endpoint phase-error route is now demoted as
+    scale-incompatible.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Current Atkinson atoms: corrected endpoint phase-residual bound at
+    `relativePhase / relativeWeight`, Jacobian-integral bound at
+    `1 / relativeWeight`, and shifted stationary-phase target remainder.
+- Perron/B5a lane is integrated through `b01c581`:
+  - The normalized concrete-defect supremum is split into a bounded slab and
+    an asymptotic tail after choosing an explicit cutoff `X0 >= 2`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron atom: prove either the bounded slab estimate on
+    `2 <= x <= X0` or the asymptotic tail estimate on `X0 <= x`.
+- Pi/Phase lane is integrated through `372e60d`:
+  - The relation-compatible budgeted Kronecker surface is reduced to
+    `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
+  - Current Pi atom: prove finite-set, same-`ε`, target/anti compatible
+    Kronecker with explicit same-budget radii.
+- RS/Gabcke lane is integrated through `5e6502c`:
+  - The punctured sine quotient expansion is reduced to the removable
+    power-series atom
+    `StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
+  - Current RS atom: prove the local `HasFPowerSeriesAt` expansion for the
+    removable sine quotient with `a 0 = 1/2` and `a 3 = -pi^2 / 6`.
