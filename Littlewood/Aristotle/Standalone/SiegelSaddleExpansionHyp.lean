@@ -1243,6 +1243,15 @@ theorem standardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp_of_sineSe
     ring
   · norm_num [standardGabckeQuarterLocalDenominatorDslopeCoeff]
 
+/-- The all-order denominator sine-series source supplies the exact quadratic
+coefficient source needed for the second-derivative value. -/
+theorem standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_of_sineSeries
+    (h_series : StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp) :
+    StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp := by
+  refine ⟨standardGabckeQuarterLocalDenominatorDslopeCoeff, h_series, ?_⟩
+  norm_num [standardGabckeQuarterLocalDenominatorDslopeCoeff]
+  ring
+
 /-- The finite denominator coefficient data follows from the low-order
 derivative values of the removable sine quotient, using Mathlib's Taylor
 coefficient power series for analytic one-variable real functions. -/

@@ -2216,3 +2216,41 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   directly from the local sine quotient expansion, or prove the stronger
   `StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp` and instantiate
   the quadratic coefficient from it.
+
+### 2026-04-29 Round 46: denominator quadratic coefficient reduced to sine series
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp`.
+- Banked inputs:
+  - The local all-order coefficient candidate
+    `standardGabckeQuarterLocalDenominatorDslopeCoeff` already states the
+    denominator dslope coefficients for `sin(2*pi*w)/w`.
+  - At index `2`, that explicit formula reduces by arithmetic to
+    `-(4 * Real.pi ^ 3 / 3)`.
+- Proof facts banked:
+  - Added
+    `standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_of_sineSeries`,
+    reducing the requested quadratic coefficient source to the exact
+    all-order sine-series source
+    `StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp`.
+- Failed routes:
+  - I did not assert the sine series itself, add an analytic provider, or use
+    global quotient regularity at the removable point.
+  - I did not define the coefficient by a defect quotient; the coefficient is
+    read from the existing explicit formula.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to coordinator baseline `1c62589` before editing.
+  - Requested local validation:
+    `git diff --check`
+  - Requested focused Lean validation under the corrected singleflight guard:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp`, the
+  exact all-order local power series for
+  `dslope standardGabckeQuarterLocalSineDenominator 0`, or split it into the
+  Mathlib sine-composition power series plus the `dslope`/`fslope` coefficient
+  transfer at index `2`.
