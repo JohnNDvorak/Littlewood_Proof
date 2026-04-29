@@ -2606,6 +2606,71 @@ class PerronThresholdTowerWideDominationHyp
           ≤ Real.exp (Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
+/-- Log-level arbitrary-radius same-height domination.
+
+This peels off the final monotone `Real.exp` from
+`PerronThresholdTowerWideDominationHyp`, leaving the exact same supplied-radius
+same-height growth obligation. -/
+class PerronThresholdTowerWideLogDominationHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
+      (radius : ℝ → ℝ → ℝ),
+      (∀ T ε : ℝ, 0 < radius T ε) →
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.log (max X (perronThreshold _hRH T) + 1) + radius T ε + 1
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))
+
+/-- Half-budget split for arbitrary-radius wide log domination.
+
+At the same selected height and tolerance, one half controls the Perron lower
+endpoint and the other controls the supplied search radius. -/
+class PerronThresholdTowerWideLogBudgetHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
+      (radius : ℝ → ℝ → ℝ),
+      (∀ T ε : ℝ, 0 < radius T ε) →
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.log (max X (perronThreshold _hRH T) + 1)
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+        radius T ε + 1
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- The log-level arbitrary-radius source implies the original wide
+domination source by monotonicity of `Real.exp`. -/
+theorem perronThresholdTowerWideDomination_of_logDomination_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerWideLogDominationHyp] :
+    PerronThresholdTowerWideDominationHyp where
+  witness := by
+    intro hRH X radius hRadius
+    rcases PerronThresholdTowerWideLogDominationHyp.witness
+        hRH X radius hRadius with
+      ⟨T, ε, hT4, hεpos, hεlt, hlog⟩
+    exact ⟨T, ε, hT4, hεpos, hεlt, Real.exp_le_exp.mpr hlog⟩
+
+/-- The arbitrary-radius half-budget source implies log-level wide
+domination. -/
+theorem perronThresholdTowerWideLogDomination_of_logBudget_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerWideLogBudgetHyp] :
+    PerronThresholdTowerWideLogDominationHyp where
+  witness := by
+    intro hRH X radius hRadius
+    rcases PerronThresholdTowerWideLogBudgetHyp.witness
+        hRH X radius hRadius with
+      ⟨T, ε, hT4, hεpos, hεlt, hLower, hRadiusBudget⟩
+    refine ⟨T, ε, hT4, hεpos, hεlt, ?_⟩
+    linarith
+
 /-- The wide domination boundary implies the wide logarithmic phase-window
 boundary. -/
 theorem perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp

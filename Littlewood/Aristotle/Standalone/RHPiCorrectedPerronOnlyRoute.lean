@@ -214,6 +214,32 @@ theorem correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideDominationRou
     fixedHeightPerronErrorPhaseWideWindow_of_perronThresholdWideDomination_hyp
   exact correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiFixedHeightErrorRoute
 
+/-- Target/anti fixed-height route from the log-level arbitrary-radius tower
+domination source. -/
+theorem correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideLogDominationRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerWideLogDominationHyp] :
+    TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  letI : PerronThresholdTowerWideDominationHyp :=
+    perronThresholdTowerWideDomination_of_logDomination_hyp
+  exact correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideDominationRoute
+
+/-- Target/anti fixed-height route from the arbitrary-radius log half-budget
+source. -/
+theorem correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideLogBudgetRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerWideLogBudgetHyp] :
+    TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  letI : PerronThresholdTowerWideLogDominationHyp :=
+    perronThresholdTowerWideLogDomination_of_logBudget_hyp
+  exact correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideLogDominationRoute
+
 /-- Corrected Perron-only route to the RH-side `pi` witness data. -/
 theorem rhPiWitnessData_of_correctedPerronOnlyRoute
     [PerronSqrtErrorEventuallyAtHeightHyp]
@@ -272,6 +298,34 @@ theorem rhPiWitnessData_of_correctedPerronOnlyTargetAntiWideDominationRoute
     [PerronThresholdTowerWideDominationHyp] :
     RhPiWitnessData := by
   rcases correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideDominationRoute with
+    ⟨hTarget, hAntiTarget⟩
+  letI : TargetTowerPhaseCouplingFamilyHyp_corrected := hTarget
+  letI : AntiTargetTowerPhaseCouplingFamilyHyp_corrected := hAntiTarget
+  exact rhPiWitnessData_of_correctedHyp
+
+/-- Corrected RH-`pi` endpoint from the log-level arbitrary-radius tower
+domination source. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyTargetAntiWideLogDominationRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerWideLogDominationHyp] :
+    RhPiWitnessData := by
+  rcases correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideLogDominationRoute with
+    ⟨hTarget, hAntiTarget⟩
+  letI : TargetTowerPhaseCouplingFamilyHyp_corrected := hTarget
+  letI : AntiTargetTowerPhaseCouplingFamilyHyp_corrected := hAntiTarget
+  exact rhPiWitnessData_of_correctedHyp
+
+/-- Corrected RH-`pi` endpoint from the arbitrary-radius log half-budget
+source. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyTargetAntiWideLogBudgetRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerWideLogBudgetHyp] :
+    RhPiWitnessData := by
+  rcases correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideLogBudgetRoute with
     ⟨hTarget, hAntiTarget⟩
   letI : TargetTowerPhaseCouplingFamilyHyp_corrected := hTarget
   letI : AntiTargetTowerPhaseCouplingFamilyHyp_corrected := hAntiTarget
