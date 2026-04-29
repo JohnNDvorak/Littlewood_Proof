@@ -1918,3 +1918,43 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `∃ Cc > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
     |perronVerticalContourRemainderRe x T| <=
       Cc * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
+
+### 2026-04-29 Round 37 - Concrete Remainder Normalized Supremum
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the bounded-height concrete defect estimate for
+  `perronVerticalContourRemainderRe`.
+- Code facts banked:
+  added `small_T_residue_error_shape_pos`, proving the denominator
+  `Real.sqrt x * (Real.log T)^2 / Real.sqrt T` is strictly positive on
+  `x >= 2`, `2 <= T`, `T <= 16`, using the closed small-`T` denominator lower
+  bound from `HadamardProductZeta`.  Added
+  `small_T_concrete_contour_remainder_bound_from_normalized_sup`, which turns
+  a normalized supremum bound for the concrete defect into the exact
+  bounded-height estimate.  Added linear-window and legacy-with-absorption
+  adapters from this normalized supremum atom.
+- Scale check:
+  a literal compact box in `(x,T)` is not available for the full target because
+  `x >= 2` is unbounded.  The new atom therefore keeps the normalization by
+  `sqrt x * (log T)^2 / sqrt T` and uses only the closed bounded `T` interval
+  for denominator positivity.
+- Failed/demoted routes:
+  did not assert an unscaled uniform bound on the concrete defect, did not
+  claim compactness in the unbounded `x` direction, and did not introduce a
+  legacy `SmallTPerronBoundHyp` instance.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  Passed under `/tmp/littlewood-lean-singleflight.lock`.
+- Smallest next theorem:
+  prove the normalized concrete-defect supremum
+  `∃ Cc > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    |perronVerticalContourRemainderRe x T| /
+      (Real.sqrt x * (Real.log T)^2 / Real.sqrt T) <= Cc`.
