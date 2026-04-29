@@ -2850,3 +2850,51 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `∃ Casymp > 0, ∀ x T, Xtail <= x -> 2 <= T -> T <= 16 ->
     |perronVerticalContourRemainderRe x T| /
       (Real.sqrt x * (Real.log T)^2 / Real.sqrt T) <= Casymp`.
+
+### 2026-04-29 Round 57 - Close Transition Slab Compactness Bridge
+
+- Classification: `PROOF_REDUCTION`.
+- Exact theorem attacked:
+  the finite transition bounded-image atom over
+  `16 <= x <= Xtail`, `2 <= T <= 16`, feeding the cutoff-`16`
+  normalized tail split.
+- Code facts banked:
+  added `small_T_concrete_contour_remainder_transition_bddAbove_image_from_continuousOn`,
+  proving the transition bounded-image atom from `ContinuousOn` of
+  `perronVerticalContourRemainderNormalized` on the closed transition
+  rectangle.  Added
+  `small_T_concrete_contour_remainder_transition_tail_from_continuousOn`
+  and
+  `small_T_concrete_contour_remainder_tail16_from_transition_continuousOn_and_asymptotic_tail`,
+  then wired the result through
+  `small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_continuousOn_and_asymptotic_tail`
+  and
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_transition_continuousOn_and_asymptotic_tail`.
+- Shape check:
+  the compactness argument is only for the bounded transition rectangle.
+  The unbounded `x >= Xtail` side remains a separate eventual asymptotic tail
+  hypothesis, and the explicit `16 <= Xtail` hypothesis is carried on the
+  transition/tail handoff surface.
+- Failed/demoted routes:
+  did not attempt compactness on the unbounded tail and did not assert the
+  legacy pure-log small-`T` absorption.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, broad providers, dummy witnesses, new axioms, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check` passed.  `lake build
+  Littlewood.Aristotle.Standalone.PerronTruncationInfra` passed under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.
+- Smallest next theorem:
+  choose an explicit `Xtail` such as `32`, then prove either transition
+  continuity of
+  `fun p => perronVerticalContourRemainderNormalized p.1 p.2` on
+  `16 <= p.1 <= Xtail`, `2 <= p.2 <= 16`, or the eventual asymptotic estimate
+  from `Xtail` onward.  With this round, the transition bounded-image atom is
+  no longer separate from the transition continuity atom.
