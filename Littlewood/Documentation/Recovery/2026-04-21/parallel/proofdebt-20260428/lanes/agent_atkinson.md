@@ -2391,3 +2391,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   complex logarithmic Stirling remainder at `O(1/t)`,
   Jacobian-integral bound at `1/relativeWeight`, and the shifted
   stationary-phase target remainder.
+
+### 2026-04-29 Round 51 Log-Gamma Remainder to Vertical-Line Stirling
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  complex log-Gamma Stirling remainder
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun t => Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2))) -`
+  `atkinsonLogGammaStirlingTerm t)`
+  `(fun t => ((1 / t : ℝ) : ℂ))`.
+- Facts banked:
+  proved `atkinson_logGammaStirlingRemainder_isBigO_of_vertical_line_stirling`,
+  reducing the Atkinson `t/2` formulation to the standard vertical-line
+  complex Stirling logarithm
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun y => Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -`
+  `((((1 / 4 : ℂ) + Complex.I * y) - 1 / 2) *`
+  `Complex.log ((1 / 4 : ℂ) + Complex.I * y) -`
+  `((1 / 4 : ℂ) + Complex.I * y) +`
+  `1 / 2 * Complex.log (2 * Real.pi)))`
+  `(fun y => ((1 / y : ℝ) : ℂ))`.
+  The proof is only the `y = t/2` specialization and `O(1/y) → O(1/t)`
+  scale bookkeeping.
+- Smallest next theorem:
+  prove the vertical-line complex Stirling logarithm above, without importing
+  generated broad Stirling files or adding a provider. The independent
+  Jacobian-integral bound at `1/relativeWeight` and shifted stationary-phase
+  target remainder remain live.
+- Failed routes / guardrails:
+  inspected existing Gamma growth/Stirling files; they contain growth and
+  bounded-ratio infrastructure, not the needed logarithmic `O(1/y)` remainder.
+  Did not add imports, analytic providers, axioms, sorries, statement
+  weakening, direct Abel shortcuts, phase-weight division, circular provider
+  assumptions, or the demoted raw endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. First focused build in this round
+  failed on the local normalization `2 / |t|` versus `2 / t`; fixed it using
+  the eventual positivity cutoff. Reran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  vertical-line complex Stirling logarithm at `O(1/y)`,
+  Jacobian-integral bound at `1/relativeWeight`, and the shifted
+  stationary-phase target remainder.
