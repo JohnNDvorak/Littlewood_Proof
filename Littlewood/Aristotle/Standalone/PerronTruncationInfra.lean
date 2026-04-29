@@ -5996,6 +5996,268 @@ theorem small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_slab16 :
     small_T_perronVerticalIntegrand_tendsto_ae_slab16
     small_T_perronVerticalFixedWindow_membership_eventually_ae_slab16
 
+/-- For fixed height, the unwindowed Perron integrand is continuous on the
+transition rectangle as a function of the `x` parameter. -/
+theorem small_T_perronVerticalIntegrand_continuousWithinAt_transition_fixed_height
+    (Xtail : ℝ) (p : ℝ × ℝ)
+    (hp : p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (t : ℝ) :
+    ContinuousWithinAt
+      (fun q : ℝ × ℝ => perronVerticalIntegrand q.1 t)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} p := by
+  let transition : Set (ℝ × ℝ) :=
+    {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}
+  let s : ℝ × ℝ → ℂ :=
+    fun q : ℝ × ℝ =>
+      ((1 + 1 / Real.log q.1 : ℝ) : ℂ) + (t : ℂ) * Complex.I
+  have hp_transition : p ∈ transition := hp
+  have hp_x_pos : 0 < p.1 := by linarith [hp.1]
+  have hp_x_ne : p.1 ≠ 0 := ne_of_gt hp_x_pos
+  have hp_log_pos : 0 < Real.log p.1 := Real.log_pos (by linarith [hp.1])
+  have hp_log_ne : Real.log p.1 ≠ 0 := ne_of_gt hp_log_pos
+  have hx_cont :
+      ContinuousWithinAt (fun q : ℝ × ℝ => q.1) transition p :=
+    continuous_fst.continuousWithinAt
+  have hlog_cont :
+      ContinuousWithinAt (fun q : ℝ × ℝ => Real.log q.1) transition p :=
+    hx_cont.log hp_x_ne
+  have hc_cont :
+      ContinuousWithinAt (fun q : ℝ × ℝ => 1 + 1 / Real.log q.1) transition p :=
+    continuousWithinAt_const.add
+      (ContinuousWithinAt.div continuousWithinAt_const hlog_cont hp_log_ne)
+  have hs_cont : ContinuousWithinAt s transition p := by
+    dsimp [s]
+    exact
+      (continuous_ofReal.continuousAt.comp_continuousWithinAt hc_cont).add
+        continuousWithinAt_const
+  have hs_re_gt_one : 1 < (s p).re := by
+    simpa [s] using c_param_re_gt_one p.1 (by linarith [hp.1]) t
+  have hzeta_ne : riemannZeta (s p) ≠ 0 :=
+    riemannZeta_ne_zero_of_one_lt_re hs_re_gt_one
+  have hs_ne : s p ≠ 0 := by
+    intro hzero
+    rw [hzero] at hs_re_gt_one
+    norm_num at hs_re_gt_one
+  have hs_ne_one : s p ≠ 1 := by
+    intro hone
+    rw [hone] at hs_re_gt_one
+    norm_num at hs_re_gt_one
+  have hderiv_at : DifferentiableAt ℂ (deriv riemannZeta) (s p) := by
+    have hdo : DifferentiableOn ℂ (deriv riemannZeta) {(1 : ℂ)}ᶜ :=
+      DifferentiableOn.deriv
+        (fun w hw => (differentiableAt_riemannZeta
+          (Set.mem_compl_singleton_iff.mp hw)).differentiableWithinAt)
+        isOpen_compl_singleton
+    exact (hdo (s p) (Set.mem_compl_singleton_iff.mpr hs_ne_one)).differentiableAt
+      (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hs_ne_one))
+  have hlogderiv :
+      ContinuousWithinAt
+        (fun q : ℝ × ℝ => -deriv riemannZeta (s q) / riemannZeta (s q))
+        transition p :=
+    (hderiv_at.neg.div (differentiableAt_riemannZeta hs_ne_one)
+      hzeta_ne).continuousAt.comp_continuousWithinAt hs_cont
+  have hbase :
+      ContinuousWithinAt (fun q : ℝ × ℝ => (q.1 : ℂ)) transition p :=
+    continuous_ofReal.continuousAt.comp_continuousWithinAt hx_cont
+  have hpow : ContinuousWithinAt (fun q : ℝ × ℝ => (q.1 : ℂ) ^ s q) transition p :=
+    hbase.cpow hs_cont (ofReal_mem_slitPlane.2 hp_x_pos)
+  have hquot :
+      ContinuousWithinAt
+        (fun q : ℝ × ℝ =>
+          (-deriv riemannZeta (s q) / riemannZeta (s q)) *
+            (q.1 : ℂ) ^ s q / s q) transition p :=
+    (hlogderiv.mul hpow).div hs_cont hs_ne
+  simpa [perronVerticalIntegrand, s, transition] using
+    Complex.continuous_re.continuousAt.comp_continuousWithinAt hquot
+
+/-- Closed unwindowed fixed-height convergence input on the transition
+rectangle. -/
+theorem small_T_perronVerticalIntegrand_tendsto_ae_transition
+    (Xtail : ℝ) :
+    ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalIntegrand q.1 t)
+          (𝓝[
+            {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalIntegrand p.1 t)) := by
+  intro p hp
+  filter_upwards with t
+  exact small_T_perronVerticalIntegrand_continuousWithinAt_transition_fixed_height Xtail p hp t
+
+/-- The transition fixed-window DCT a.e. convergence input follows from
+ordinary Perron integrand convergence and eventual stability of membership in
+the moving half-open interval. -/
+theorem small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_from_integrand_and_membership_transition
+    (Xtail : ℝ)
+    (hperron : ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalIntegrand q.1 t)
+          (𝓝[
+            {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalIntegrand p.1 t)))
+    (hmem : ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        ∀ᶠ q in 𝓝[
+          {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          (t ∈ Set.Ioc (-q.2) q.2 ↔ t ∈ Set.Ioc (-p.2) p.2)) :
+    ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (𝓝[
+            {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalFixedWindowIntegrandParam p t)) := by
+  intro p hp
+  filter_upwards [hperron p hp, hmem p hp] with t htend hstable
+  by_cases ht : t ∈ Set.Ioc (-p.2) p.2
+  · have hstable_mem : ∀ᶠ q in
+        𝓝[
+          {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        t ∈ Set.Ioc (-q.2) q.2 := by
+      filter_upwards [hstable] with q hq
+      exact hq.mpr ht
+    have hcongr :
+        (fun q : ℝ × ℝ => perronVerticalIntegrand q.1 t) =ᶠ[
+          𝓝[
+            {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p]
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t) := by
+      filter_upwards [hstable_mem] with q hq
+      simp [perronVerticalFixedWindowIntegrandParam, hq]
+    simpa [perronVerticalFixedWindowIntegrandParam, ht] using
+      htend.congr' hcongr
+  · have hstable_notMem : ∀ᶠ q in
+        𝓝[
+          {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        t ∉ Set.Ioc (-q.2) q.2 := by
+      filter_upwards [hstable] with q hq
+      exact fun hqmem => ht (hq.mp hqmem)
+    have hcongr :
+        (fun _q : ℝ × ℝ => (0 : ℝ)) =ᶠ[
+          𝓝[
+            {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p]
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t) := by
+      filter_upwards [hstable_notMem] with q hq
+      simp [perronVerticalFixedWindowIntegrandParam, hq]
+    simpa [perronVerticalFixedWindowIntegrandParam, ht] using
+      (tendsto_const_nhds : Tendsto (fun _q : ℝ × ℝ => (0 : ℝ))
+        (𝓝[
+          {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+        (𝓝 (0 : ℝ))).congr' hcongr
+
+/-- Away from the two moving endpoints, membership in `(-T,T]` is locally
+stable on the transition rectangle as the height parameter varies. -/
+theorem small_T_perronVerticalFixedWindow_membership_eventually_transition_of_ne_endpoints
+    (Xtail : ℝ) (p : ℝ × ℝ) (t : ℝ)
+    (ht_pos : t ≠ p.2) (ht_neg : t ≠ -p.2) :
+    ∀ᶠ q in 𝓝[
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+      (t ∈ Set.Ioc (-q.2) q.2 ↔ t ∈ Set.Ioc (-p.2) p.2) := by
+  have hsnd :
+      Tendsto (fun q : ℝ × ℝ => q.2)
+        (𝓝[
+          {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+        (𝓝 p.2) :=
+    continuous_snd.continuousWithinAt
+  by_cases htmem : t ∈ Set.Ioc (-p.2) p.2
+  · have ht_lt : t < p.2 := by
+      rcases htmem with ⟨_, ht_le⟩
+      exact lt_of_le_of_ne ht_le ht_pos
+    have hneg_lt : -t < p.2 := by
+      rcases htmem with ⟨hleft, _⟩
+      linarith
+    have h_event_t : ∀ᶠ q in
+        𝓝[
+          {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        t < q.2 :=
+      hsnd.eventually (Ioi_mem_nhds ht_lt)
+    have h_event_neg : ∀ᶠ q in
+        𝓝[
+          {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        -t < q.2 :=
+      hsnd.eventually (Ioi_mem_nhds hneg_lt)
+    filter_upwards [h_event_t, h_event_neg] with q hqt hqneg
+    constructor
+    · intro _
+      exact htmem
+    · intro _
+      exact ⟨by linarith, le_of_lt hqt⟩
+  · by_cases hleft : -p.2 < t
+    · have hp_lt : p.2 < t := by
+        by_contra hnot
+        have ht_le : t ≤ p.2 := le_of_not_gt hnot
+        exact htmem ⟨hleft, ht_le⟩
+      have h_event : ∀ᶠ q in
+          𝓝[
+            {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          q.2 < t :=
+        hsnd.eventually (Iio_mem_nhds hp_lt)
+      filter_upwards [h_event] with q hqt
+      constructor
+      · intro hqmem
+        exact False.elim (not_le_of_gt hqt hqmem.2)
+      · intro hpmem
+        exact False.elim (htmem hpmem)
+    · have ht_le_neg : t ≤ -p.2 := le_of_not_gt hleft
+      have ht_lt_neg : t < -p.2 := by
+        rcases lt_or_eq_of_le ht_le_neg with ht_lt | ht_eq
+        · exact ht_lt
+        · exact False.elim (ht_neg ht_eq)
+      have hp_lt_neg_t : p.2 < -t := by
+        linarith
+      have h_event : ∀ᶠ q in
+          𝓝[
+            {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          q.2 < -t :=
+        hsnd.eventually (Iio_mem_nhds hp_lt_neg_t)
+      filter_upwards [h_event] with q hq
+      constructor
+      · intro hqmem
+        exact False.elim (not_lt_of_ge (by linarith : t ≤ -q.2) hqmem.1)
+      · intro hpmem
+        exact False.elim (htmem hpmem)
+
+/-- Endpoint-exclusion moving-window stability on the transition rectangle. -/
+theorem small_T_perronVerticalFixedWindow_membership_eventually_ae_transition
+    (Xtail : ℝ) :
+    ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        ∀ᶠ q in 𝓝[
+          {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          (t ∈ Set.Ioc (-q.2) q.2 ↔ t ∈ Set.Ioc (-p.2) p.2) := by
+  intro p hp
+  have hpos : ∀ᵐ t : ℝ ∂volume, t ≠ p.2 := by
+    simp [ae_iff, measure_singleton]
+  have hneg : ∀ᵐ t : ℝ ∂volume, t ≠ -p.2 := by
+    simp [ae_iff, measure_singleton]
+  filter_upwards [ae_restrict_of_ae hpos, ae_restrict_of_ae hneg] with t ht_pos ht_neg
+  exact small_T_perronVerticalFixedWindow_membership_eventually_transition_of_ne_endpoints
+    Xtail p t ht_pos ht_neg
+
+/-- Closed fixed-window DCT a.e. convergence input on the transition
+rectangle. -/
+theorem small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_transition
+    (Xtail : ℝ) :
+    ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (𝓝[
+            {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalFixedWindowIntegrandParam p t)) :=
+  small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_from_integrand_and_membership_transition
+    Xtail
+    (small_T_perronVerticalIntegrand_tendsto_ae_transition Xtail)
+    (small_T_perronVerticalFixedWindow_membership_eventually_ae_transition Xtail)
+
 /-- Joint continuity of the unwindowed Perron integrand on the compact
 `x`/height rectangle used for the fixed-window dominated-convergence
 majorant. -/
@@ -6478,6 +6740,27 @@ theorem small_T_perronVerticalIntegral_continuousOn_transition_from_tendsto_ae
   small_T_perronVerticalIntegral_continuousOn_transition_of_fixedWindow Xtail
     (small_T_perronVerticalFixedWindowIntegral_continuousOn_transition_from_tendsto_ae
       Xtail hlim)
+
+/-- Closed fixed-window transition continuity from the local DCT inputs. -/
+theorem small_T_perronVerticalFixedWindowIntegral_continuousOn_transition
+    (Xtail : ℝ) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalFixedWindowIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_perronVerticalFixedWindowIntegral_continuousOn_transition_from_tendsto_ae
+    Xtail
+    (small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_transition Xtail)
+
+/-- Closed public vertical Perron transition continuity from the fixed-window
+DCT inputs. -/
+theorem small_T_perronVerticalIntegral_continuousOn_transition
+    (Xtail : ℝ) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_perronVerticalIntegral_continuousOn_transition_from_tendsto_ae
+    Xtail
+    (small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_transition Xtail)
 
 /-- Closed fixed-window slab continuity from the local DCT inputs. -/
 theorem small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16 :
