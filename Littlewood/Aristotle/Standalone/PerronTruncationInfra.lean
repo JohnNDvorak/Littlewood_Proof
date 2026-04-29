@@ -4882,6 +4882,35 @@ theorem small_T_concrete_contour_remainder_bound_from_normalized_sup
     small_T_residue_error_shape_pos x T hx hT_lo hT_hi
   exact (div_le_iff₀ hshape_pos).mp (hsup x T hx hT_lo hT_hi)
 
+/-- Global normalized concrete-defect bound from a bounded slab and an
+asymptotic tail.
+
+This is the scale-safe replacement for a compactness claim in `x`: the domain
+`x ≥ 2` is unbounded, so one must prove a bounded slab estimate up to an
+explicit cutoff `X0` and a separate tail estimate from `X0` onward. -/
+theorem small_T_concrete_contour_remainder_normalized_sup_from_slab_and_tail
+    (X0 : ℝ) (hX0 : 2 ≤ X0)
+    (hslab : ∃ Cslab > (0 : ℝ), ∀ x T : ℝ,
+      x ≥ 2 → x ≤ X0 → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cslab)
+    (htail : ∃ Ctail > (0 : ℝ), ∀ x T : ℝ,
+      2 ≤ X0 → X0 ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Ctail) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cc := by
+  rcases hslab with ⟨Cslab, hCslab_pos, hslab⟩
+  rcases htail with ⟨Ctail, hCtail_pos, htail⟩
+  refine ⟨max Cslab Ctail, lt_max_of_lt_left hCslab_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  rcases le_total x X0 with hx_slab | hx_tail
+  · exact le_trans (hslab x T hx hx_slab hT_lo hT_hi)
+      (le_max_left Cslab Ctail)
+  · exact le_trans (htail x T hX0 hx_tail hT_lo hT_hi)
+      (le_max_right Cslab Ctail)
+
 /-- Strengthened small-`T` surface matching the closed Perron cutoff route.
 
 This class is intentionally separate from
@@ -5043,6 +5072,23 @@ theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normaliz
     SmallTPerronLinearWindowBoundHyp :=
   small_T_linear_window_bound_hyp_from_concrete_contour_remainder
     (small_T_concrete_contour_remainder_bound_from_normalized_sup hsup)
+
+/-- Linear-window small-`T` surface from a bounded slab plus asymptotic tail
+for the normalized concrete contour-remainder defect. -/
+theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_slab_and_tail
+    (X0 : ℝ) (hX0 : 2 ≤ X0)
+    (hslab : ∃ Cslab > (0 : ℝ), ∀ x T : ℝ,
+      x ≥ 2 → x ≤ X0 → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cslab)
+    (htail : ∃ Ctail > (0 : ℝ), ∀ x T : ℝ,
+      2 ≤ X0 → X0 ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Ctail) :
+    SmallTPerronLinearWindowBoundHyp :=
+  small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
+    (small_T_concrete_contour_remainder_normalized_sup_from_slab_and_tail
+      X0 hX0 hslab htail)
 
 /-- Legacy public small-`T` provider from the smaller contour-remainder split,
 conditional on the explicit linear-window absorption atom.
