@@ -1472,6 +1472,119 @@ private lemma atkinsonEndpointGapCorrectedModelShiftLogPart_eq_phase (n j : ℕ)
   simp [hsub]
   ring
 
+private lemma atkinson_endpointLogPart_aux_bound {a : ℝ} (ha : 1 ≤ a) :
+    |(1 / 2 : ℝ) * (a + 1) ^ 2 *
+        (Real.log ((a + 1) ^ 2) - Real.log (a ^ 2)) -
+      (1 / 2 : ℝ) * ((a + 1) ^ 2 - a ^ 2) - 1| ≤ 1 / a := by
+  have ha_pos : 0 < a := lt_of_lt_of_le zero_lt_one ha
+  have hlogdiff :
+      Real.log ((a + 1) ^ 2) - Real.log (a ^ 2) =
+        2 * Real.log ((a + 1) / a) := by
+    rw [Real.log_pow, Real.log_pow, Real.log_div (by positivity) ha_pos.ne']
+    ring
+  suffices hmain :
+      |(a + 1) ^ 2 * Real.log ((a + 1) / a) - a - 3 / 2| ≤ 1 / a by
+    convert hmain using 1 <;> rw [hlogdiff] <;> ring
+  let x : ℝ := 1 / (2 * a + 1)
+  have hx_nonneg : 0 ≤ x := by
+    dsimp [x]
+    positivity
+  have hx_lt : x < 1 := by
+    dsimp [x]
+    have hden_pos : 0 < 2 * a + 1 := by nlinarith [ha]
+    rw [div_lt_iff₀ hden_pos]
+    nlinarith [ha]
+  have hratio_eq :
+      (a + 1) / a = (1 + x) / (1 - x) := by
+    dsimp [x]
+    have hden_pos : 0 < 2 * a + 1 := by nlinarith [ha]
+    have hx_ne :
+        (1 : ℝ) - 1 / (2 * a + 1) ≠ 0 := by
+      have hlt : (1 : ℝ) / (2 * a + 1) < 1 := by
+        rw [div_lt_iff₀ hden_pos]
+        nlinarith [ha]
+      linarith
+    field_simp [ha_pos.ne', hden_pos.ne', hx_ne]
+    ring
+  have hlower_half := Real.sum_range_le_log_div hx_nonneg hx_lt 1
+  have hlower :
+      2 * x ≤ Real.log ((1 + x) / (1 - x)) := by
+    norm_num at hlower_half
+    linarith
+  have hupper_half := Real.log_div_le_sum_range_add hx_nonneg hx_lt 1
+  have hupper :
+      Real.log ((1 + x) / (1 - x)) ≤
+        2 * x + 2 * x ^ 3 / (1 - x ^ 2) := by
+    norm_num at hupper_half
+    calc
+      Real.log ((1 + x) / (1 - x))
+          = 2 * (1 / 2 * Real.log ((1 + x) / (1 - x))) := by ring
+      _ ≤ 2 * (x + x ^ 3 / (1 - x ^ 2)) := by
+            exact mul_le_mul_of_nonneg_left hupper_half (by norm_num : (0 : ℝ) ≤ 2)
+      _ = 2 * x + 2 * x ^ 3 / (1 - x ^ 2) := by ring
+  have hbase_nonneg :
+      0 ≤ (a + 1) ^ 2 * (2 * x) - a - 3 / 2 := by
+    dsimp [x]
+    have hden_pos : 0 < 2 * a + 1 := by nlinarith [ha]
+    field_simp [hden_pos.ne']
+    ring_nf
+    nlinarith [ha]
+  have hendpoint_nonneg :
+      0 ≤ (a + 1) ^ 2 * Real.log ((a + 1) / a) - a - 3 / 2 := by
+    rw [hratio_eq]
+    have hmul :
+        (a + 1) ^ 2 * (2 * x) ≤
+          (a + 1) ^ 2 * Real.log ((1 + x) / (1 - x)) := by
+      exact mul_le_mul_of_nonneg_left hlower (sq_nonneg (a + 1))
+    nlinarith
+  have hupper_expr :
+      (a + 1) ^ 2 * (2 * x + 2 * x ^ 3 / (1 - x ^ 2)) - a - 3 / 2
+        ≤ 1 / a := by
+    have hx_abs_lt : |x| < 1 := by
+      rw [abs_of_nonneg hx_nonneg]
+      exact hx_lt
+    have hxden_pos : 0 < 1 - x ^ 2 := by
+      have hx_sq_lt : x ^ 2 < 1 := by
+        rwa [sq_lt_one_iff_abs_lt_one]
+      linarith
+    have hden_pos : 0 < 2 * a + 1 := by nlinarith [ha]
+    have hformula :
+        (a + 1) ^ 2 * (2 * x + 2 * x ^ 3 / (1 - x ^ 2)) - a - 3 / 2 =
+          1 / (2 * (2 * a + 1)) + (a + 1) / (2 * a * (2 * a + 1)) := by
+      have hquad_pos : 0 < a * 4 + a ^ 2 * 4 := by positivity
+      dsimp [x] at hxden_pos ⊢
+      field_simp [ha_pos.ne', hden_pos.ne', hxden_pos.ne', hquad_pos.ne']
+      have hgap_ne : (a * 2 + 1) ^ 2 - 1 ≠ 0 := by
+        have hgap_pos : 0 < (a * 2 + 1) ^ 2 - 1 := by nlinarith [ha_pos]
+        exact hgap_pos.ne'
+      field_simp [hgap_ne]
+      ring
+    have hterm1 : 1 / (2 * (2 * a + 1)) ≤ 1 / (2 * a) := by
+      have hden1 : 0 < 2 * a := by positivity
+      exact one_div_le_one_div_of_le hden1 (by nlinarith [ha])
+    have hterm2 : (a + 1) / (2 * a * (2 * a + 1)) ≤ 1 / (2 * a) := by
+      field_simp [show 2 * a * (2 * a + 1) ≠ 0 by positivity,
+        show 2 * a ≠ 0 by positivity]
+      nlinarith [ha]
+    calc
+      (a + 1) ^ 2 * (2 * x + 2 * x ^ 3 / (1 - x ^ 2)) - a - 3 / 2
+          = 1 / (2 * (2 * a + 1)) + (a + 1) / (2 * a * (2 * a + 1)) := hformula
+      _ ≤ 1 / (2 * a) + 1 / (2 * a) := add_le_add hterm1 hterm2
+      _ = 1 / a := by field_simp [ha_pos.ne']; ring
+  have hendpoint_upper :
+      (a + 1) ^ 2 * Real.log ((a + 1) / a) - a - 3 / 2 ≤ 1 / a := by
+    rw [hratio_eq]
+    have hmul :
+        (a + 1) ^ 2 * Real.log ((1 + x) / (1 - x)) ≤
+          (a + 1) ^ 2 * (2 * x + 2 * x ^ 3 / (1 - x ^ 2)) := by
+      exact mul_le_mul_of_nonneg_left hupper (sq_nonneg (a + 1))
+    nlinarith
+  rw [abs_le]
+  constructor
+  · have hinv_nonneg : 0 ≤ 1 / a := by positivity
+    nlinarith
+  · exact hendpoint_upper
+
 private lemma atkinsonHardyStartThetaModel_eq_expanded (m : ℕ) :
     atkinsonHardyStartThetaModel m =
       Real.pi * ((((m : ℕ) : ℝ) + 1) ^ 2) *
@@ -21135,6 +21248,57 @@ private theorem atkinson_shiftLogPart_bound :
     _ ≤ (j : ℝ) * (2 * (j : ℝ) + 1) / ((n : ℝ) + 1) := hraw_upper
     _ ≤ ((2 * (j : ℝ) + 1) * ((j : ℝ) + 1)) *
           ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := hscale
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+/-- The endpoint finite-difference part of the elementary log core has the same
+fixed-shift `j/(n+j+1)` scale.  The proof uses the quadratic remainder bound for
+`log(1+x)` in the symmetric variable `x = 1/(2a+1)`. -/
+private theorem atkinson_endpointLogPart_bound :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_endpoint > 0, ∃ N_endpoint : ℕ, ∀ n : ℕ, N_endpoint ≤ n →
+        |atkinsonEndpointGapCorrectedModelEndpointLogPart n j|
+          ≤ C_endpoint * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+  intro j hj
+  refine ⟨1, by norm_num, 0, ?_⟩
+  intro n _hn
+  let a : ℝ := ((n + j : ℕ) : ℝ) + 1
+  have ha : 1 ≤ a := by
+    dsimp [a]
+    have hnonneg : (0 : ℝ) ≤ ((n + j : ℕ) : ℝ) := by
+      exact_mod_cast Nat.zero_le (n + j)
+    linarith
+  have haux := atkinson_endpointLogPart_aux_bound ha
+  have hendpoint_le :
+      |atkinsonEndpointGapCorrectedModelEndpointLogPart n j| ≤ 1 / a := by
+    simpa [atkinsonEndpointGapCorrectedModelEndpointLogPart, a, Nat.cast_add,
+      add_assoc, add_left_comm, add_comm] using haux
+  have hscale :
+      1 / a ≤ (1 : ℝ) * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+    have hj_real : (1 : ℝ) ≤ (j : ℝ) := by exact_mod_cast hj
+    dsimp [a]
+    field_simp [show (((n + j : ℕ) : ℝ) + 1) ≠ 0 by positivity]
+    exact hj_real
+  exact le_trans hendpoint_le hscale
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+private theorem atkinson_logCore_bound :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_log > 0, ∃ N_log : ℕ, ∀ n : ℕ, N_log ≤ n →
+        |atkinsonEndpointGapCorrectedModelLogCore n j|
+          ≤ C_log * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) :=
+  atkinson_logCore_bound_of_shift_and_endpoint_log_bounds
+    atkinson_shiftLogPart_bound atkinson_endpointLogPart_bound
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+private theorem atkinson_modelResidual_bound :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n →
+        |atkinsonEndpointGapCorrectedModelResidual n j|
+          ≤ C_model * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) :=
+  atkinson_modelResidual_bound_of_logCore_bound atkinson_logCore_bound
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
   [AtkinsonLargeShiftPrefixBoundHyp] in
