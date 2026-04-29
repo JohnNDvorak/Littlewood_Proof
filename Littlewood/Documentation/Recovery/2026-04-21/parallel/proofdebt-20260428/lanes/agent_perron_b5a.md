@@ -3098,3 +3098,55 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   first transition fixed-height integrand convergence, then endpoint-exclusion
   membership stability for `Set.Ioc (-T) T`.  Zero-sum transition continuity
   and eventual normalized asymptotic tail remain separate open atoms.
+
+### 2026-04-29 Round 62 - Close Transition Fixed-Window Tendsto
+
+- Classification: `PROOF_CLOSED`.
+- Exact theorem attacked:
+  transition a.e. pointwise convergence/tendsto for
+  `perronVerticalFixedWindowIntegrandParam` on
+  `16 <= x <= Xtail`, `2 <= T <= 16`, with measure restricted to
+  `Set.Ioc (-16) 16`.
+- Code facts banked:
+  added
+  `small_T_perronVerticalIntegrand_continuousWithinAt_transition_fixed_height`
+  and `small_T_perronVerticalIntegrand_tendsto_ae_transition`, mirroring the
+  slab16 fixed-height Perron-integrand continuity proof on the transition
+  rectangle.  Added
+  `small_T_perronVerticalFixedWindow_membership_eventually_transition_of_ne_endpoints`
+  and `small_T_perronVerticalFixedWindow_membership_eventually_ae_transition`,
+  excluding only the two endpoint heights `t = p.2` and `t = -p.2`.  Added
+  `small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_from_integrand_and_membership_transition`
+  and the closed
+  `small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_transition`.
+  With the previously closed transition measurability and local majorant
+  inputs, this also closes
+  `small_T_perronVerticalFixedWindowIntegral_continuousOn_transition` and
+  `small_T_perronVerticalIntegral_continuousOn_transition`.
+- Shape check:
+  the moving-window discontinuities are handled by an a.e. endpoint exclusion,
+  not by an unconditional endpoint-stability claim.  The proof stays on the
+  finite transition rectangle and does not assert zero-sum continuity or the
+  eventual asymptotic tail.
+- Failed/demoted routes:
+  no fallback route was needed.  The zero-sum transition continuity and
+  eventual normalized asymptotic tail remain separate atoms for later passes.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, broad providers, dummy witnesses, new axioms, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check` passed.  `lake build
+  Littlewood.Aristotle.Standalone.PerronTruncationInfra` passed under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.
+- Smallest next theorem:
+  wire the now-closed transition `perronVerticalIntegral` continuity into the
+  transition bounded-image/normalized-defect slab route, or close the separate
+  zero-sum transition boundedness/continuity input needed by
+  `perronVerticalContourRemainderNormalized`.  The eventual normalized
+  asymptotic tail from `Xtail` remains separate.
