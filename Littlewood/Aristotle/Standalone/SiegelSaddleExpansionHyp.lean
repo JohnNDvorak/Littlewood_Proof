@@ -1489,6 +1489,136 @@ theorem standardGabckeQuarterLocalNumeratorRawSineSecondDerivativeProp_proved :
     hprod.congr_of_eventuallyEq h_eq
   exact hderiv.deriv
 
+/-- Pointwise second derivative of the raw numerator sine. This is the local
+calculus source for the third derivative at the origin. -/
+private theorem standardGabckeQuarterLocalSineNumerator_second_deriv_eq (w : ℝ) :
+    deriv (deriv standardGabckeQuarterLocalSineNumerator) w =
+      -Real.sin (Real.pi * w - 2 * Real.pi * w ^ 2) *
+          (Real.pi - 4 * Real.pi * w) ^ 2 -
+        4 * Real.pi * Real.cos (Real.pi * w - 2 * Real.pi * w ^ 2) := by
+  let phase : ℝ → ℝ := fun u : ℝ => Real.pi * u - 2 * Real.pi * u ^ 2
+  let dphase : ℝ → ℝ := fun u : ℝ => Real.pi - 4 * Real.pi * u
+  have hphase : HasDerivAt phase (dphase w) w := by
+    have hlin :
+        HasDerivAt (fun u : ℝ => Real.pi * u) Real.pi w := by
+      simpa using (hasDerivAt_const_mul (x := w) Real.pi)
+    have hquad :
+        HasDerivAt (fun u : ℝ => 2 * Real.pi * u ^ 2) (4 * Real.pi * w) w := by
+      have hquad' :
+          HasDerivAt (fun u : ℝ => (2 * Real.pi * u) * u)
+            ((2 * Real.pi) * w + (2 * Real.pi * w) * 1) w := by
+        simpa using
+          ((hasDerivAt_const_mul (x := w) (2 * Real.pi)).mul
+            (hasDerivAt_id (x := w)))
+      convert hquad' using 1 <;> ring_nf
+    simpa [phase, dphase] using hlin.sub hquad
+  have hcos :
+      HasDerivAt (fun u : ℝ => Real.cos (phase u))
+        (-Real.sin (phase w) * dphase w) w := by
+    simpa using hphase.cos
+  have hdphase : HasDerivAt dphase (-4 * Real.pi) w := by
+    simpa [dphase] using
+      (hasDerivAt_const w Real.pi).sub
+        (hasDerivAt_const_mul (x := w) (4 * Real.pi))
+  have hprod :
+      HasDerivAt (fun u : ℝ => Real.cos (phase u) * dphase u)
+        ((-Real.sin (phase w) * dphase w) * dphase w +
+          Real.cos (phase w) * (-4 * Real.pi)) w :=
+    hcos.mul hdphase
+  have h_eq :
+      (fun u : ℝ => deriv standardGabckeQuarterLocalSineNumerator u) =ᶠ[𝓝 w]
+        fun u : ℝ => Real.cos (phase u) * dphase u :=
+    Filter.Eventually.of_forall fun u => by
+      simpa [phase, dphase] using
+        standardGabckeQuarterLocalSineNumerator_deriv_eq u
+  have hderiv :
+      HasDerivAt (fun u : ℝ => deriv standardGabckeQuarterLocalSineNumerator u)
+        ((-Real.sin (phase w) * dphase w) * dphase w +
+          Real.cos (phase w) * (-4 * Real.pi)) w :=
+    hprod.congr_of_eventuallyEq h_eq
+  calc
+    deriv (deriv standardGabckeQuarterLocalSineNumerator) w =
+        (-Real.sin (phase w) * dphase w) * dphase w +
+          Real.cos (phase w) * (-4 * Real.pi) := hderiv.deriv
+    _ =
+        -Real.sin (Real.pi * w - 2 * Real.pi * w ^ 2) *
+            (Real.pi - 4 * Real.pi * w) ^ 2 -
+          4 * Real.pi * Real.cos (Real.pi * w - 2 * Real.pi * w ^ 2) := by
+      simp [phase, dphase]
+      ring
+
+/-- The third raw numerator sine derivative at the origin is `-pi^3`. -/
+theorem standardGabckeQuarterLocalNumeratorRawSineThirdDerivativeProp_proved :
+    StandardGabckeQuarterLocalNumeratorRawSineThirdDerivativeProp := by
+  unfold StandardGabckeQuarterLocalNumeratorRawSineThirdDerivativeProp
+  rw [show (3 : ℕ) = 2 + 1 by norm_num, iteratedDeriv_succ,
+    show (2 : ℕ) = 1 + 1 by norm_num, iteratedDeriv_succ,
+    show (1 : ℕ) = 0 + 1 by norm_num, iteratedDeriv_succ,
+    iteratedDeriv_zero]
+  let phase : ℝ → ℝ := fun w : ℝ => Real.pi * w - 2 * Real.pi * w ^ 2
+  let dphase : ℝ → ℝ := fun w : ℝ => Real.pi - 4 * Real.pi * w
+  let secondExpr : ℝ → ℝ := fun w : ℝ =>
+    -Real.sin (phase w) * (dphase w) ^ 2 -
+      4 * Real.pi * Real.cos (phase w)
+  have hphase0 : HasDerivAt phase Real.pi 0 := by
+    have hlin :
+        HasDerivAt (fun u : ℝ => Real.pi * u) Real.pi 0 := by
+      simpa using (hasDerivAt_const_mul (x := (0 : ℝ)) Real.pi)
+    have hquad :
+        HasDerivAt (fun u : ℝ => 2 * Real.pi * u ^ 2) 0 0 := by
+      have hquad' :
+          HasDerivAt (fun u : ℝ => (2 * Real.pi * u) * u) 0 0 := by
+        simpa using
+          ((hasDerivAt_const_mul (x := (0 : ℝ)) (2 * Real.pi)).mul
+            (hasDerivAt_id (x := (0 : ℝ))))
+      convert hquad' using 1
+      ring_nf
+    simpa [phase] using hlin.sub hquad
+  have hnegSin :
+      HasDerivAt (fun w : ℝ => -Real.sin (phase w)) (-Real.pi) 0 := by
+    simpa [phase] using hphase0.sin.neg
+  have hdphase : HasDerivAt dphase (-4 * Real.pi) 0 := by
+    simpa [dphase] using
+      (hasDerivAt_const (0 : ℝ) Real.pi).sub
+        (hasDerivAt_const_mul (x := (0 : ℝ)) (4 * Real.pi))
+  have hdphase_sq : HasDerivAt (fun w : ℝ => (dphase w) ^ 2) (-8 * Real.pi ^ 2) 0 := by
+    have hmul := hdphase.mul hdphase
+    convert hmul using 1
+    · ext w
+      simp [pow_two]
+    · simp [dphase]
+      ring
+  have hterm1 :
+      HasDerivAt (fun w : ℝ => -Real.sin (phase w) * (dphase w) ^ 2)
+        (-Real.pi ^ 3) 0 := by
+    have hprod := hnegSin.mul hdphase_sq
+    convert hprod using 1
+    · simp [phase, dphase]
+      ring_nf
+  have hcos : HasDerivAt (fun w : ℝ => Real.cos (phase w)) 0 0 := by
+    simpa [phase] using hphase0.cos
+  have hterm2 :
+      HasDerivAt (fun w : ℝ => -4 * Real.pi * Real.cos (phase w)) 0 0 := by
+    simpa using hcos.const_mul (-4 * Real.pi)
+  have hsecondExpr : HasDerivAt secondExpr (-Real.pi ^ 3) 0 := by
+    have hsum := hterm1.add hterm2
+    convert hsum using 1
+    · ext w
+      simp [secondExpr]
+      ring
+    · ring
+  have h_eq :
+      (fun w : ℝ => deriv (deriv standardGabckeQuarterLocalSineNumerator) w) =ᶠ[𝓝 0]
+        secondExpr :=
+    Filter.Eventually.of_forall fun w => by
+      simpa [secondExpr, phase, dphase] using
+        standardGabckeQuarterLocalSineNumerator_second_deriv_eq w
+  have hthird :
+      HasDerivAt (fun w : ℝ => deriv (deriv standardGabckeQuarterLocalSineNumerator) w)
+        (-Real.pi ^ 3) 0 :=
+    hsecondExpr.congr_of_eventuallyEq h_eq
+  exact hthird.deriv
+
 /-- The raw numerator low-order derivative bundle is reduced to its four
 point-value atoms. -/
 theorem standardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp_of_pointDerivatives
