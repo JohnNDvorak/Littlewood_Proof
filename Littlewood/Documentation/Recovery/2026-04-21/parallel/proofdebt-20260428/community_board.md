@@ -1076,3 +1076,28 @@ Timestamp: 2026-04-28 22:56 CDT.
     canonical majorant residual, plus target/anti chosen-radius residuals.
   - RS/Gabcke: quarter local Taylor atoms and quarter raw-removable bridge,
     with analogous three-quarter atoms available if easier.
+
+## Overnight 2026-04-29 Twenty-Second Pass Status
+
+- Atkinson lane is validated and pushed through `52831da`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Reduce Atkinson correction patch to fixed shifts`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the finite correction-patch family has been reduced to native
+    single-shift correction-prefix leaves for fixed `j >= 3`. The bookkeeping
+    cutoff is no longer the live obstruction.
+  - Guardrail recorded: do not derive the unweighted correction prefix from the
+    phase-weighted correction prefix by dividing through
+    `atkinsonShiftedRelativePhase`; this exposes endpoint growth around
+    `n / j` and is not scale-safe.
+  - Hooke is redeployed to the two remaining Atkinson public-path atoms.
+- Current live atoms:
+  - Atkinson: shifted-interval stationary-phase target remainder and native
+    fixed-shift correction-prefix leaf.
+  - Perron/B5a: inspect whether the small-`T` harmonic/log path discharges the
+    public provider; otherwise close the next explicit B5a public-path leaf.
+  - Pi/Phase: selected-threshold/cofinality bound or corrected fixed-height
+    canonical majorant residual, plus target/anti chosen-radius residuals.
+  - RS/Gabcke: quarter local Taylor atoms and quarter raw-removable bridge,
+    with analogous three-quarter atoms available if easier.
