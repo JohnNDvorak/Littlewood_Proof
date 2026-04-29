@@ -1838,3 +1838,47 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Remaining goal shape:
   endpoint-gap Taylor residual at `j/(n+j+1)`, Jacobian-integral bound at
   `1/relativeWeight`, and the shifted stationary-phase target remainder.
+
+### 2026-04-29 Round 38 Corrected Residual Model Split
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  shifted-inverse corrected endpoint residual
+  `|atkinsonEndpointGapCorrectedPhaseError n j|`
+  `≤ C_res * (j / (n+j+1))`.
+- Facts banked:
+  added the Hardy-start model
+  `atkinsonHardyStartThetaModel` and model residual
+  `atkinsonEndpointGapCorrectedModelResidual`. Proved the local scale helpers
+  `atkinson_inv_sq_le_shifted_inv_scale` and
+  `atkinson_succ_inv_sq_le_shifted_inv_scale`, then proved
+  `atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_model_residual`.
+  This reduces the corrected residual atom to a branch-sensitive
+  Hardy-start theta-model asymptotic plus an explicit logarithmic model
+  residual.
+- Smallest next theorem:
+  prove the explicit logarithmic model residual, for every fixed `j ≥ 1`,
+  `∃ C_model > 0, ∃ N_model, ∀ n ≥ N_model,`
+  `|atkinsonEndpointGapCorrectedModelResidual n j|`
+  `≤ C_model * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))`.
+  In parallel, expose the native Hardy-start theta-model bound
+  `|hardyTheta (hardyStart m) - atkinsonHardyStartThetaModel m|`
+  `≤ Cθ / (m+1)^2`; current start-value files mostly expose the complex
+  exponential form, so the real branch-sensitive theta statement remains the
+  analytic handoff.
+- Failed routes / guardrails:
+  did not revive the raw uncorrected phase-error route. Did not use direct
+  Abel, phase-weight division, circular provider assumptions, absolute
+  primitive bounds, axioms, sorries, or statement weakening.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  first retry was blocked by the singleflight guard while another focused
+  Siegel check was active. Then ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected singleflight lock; result: passed, `Build completed successfully
+  (7903 jobs)`. Also ran `git diff --check`; result: passed.
+- Remaining goal shape:
+  explicit logarithmic model residual at `j/(n+j+1)`, Hardy-start theta-model
+  asymptotic at `(m+1)^-2`, Jacobian-integral bound at `1/relativeWeight`, and
+  the shifted stationary-phase target remainder.
