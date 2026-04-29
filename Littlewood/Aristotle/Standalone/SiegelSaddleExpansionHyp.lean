@@ -57,6 +57,7 @@ import Littlewood.Aristotle.Standalone.FresnelSaddlePointInfra
 import Littlewood.Aristotle.Standalone.SaddlePointMethod
 import Littlewood.Aristotle.Standalone.SteepestDescentContour
 import Mathlib.Analysis.Analytic.IteratedFDeriv
+import Mathlib.Analysis.Analytic.OfScalars
 import Mathlib.Analysis.Calculus.Deriv.Shift
 
 set_option relaxedAutoImplicit false
@@ -834,6 +835,27 @@ def StandardGabckeQuarterLocalCubicTaylorCoefficientProp : Prop :=
   ∃ P : FormalMultilinearSeries ℝ ℝ ℝ,
     HasFPowerSeriesAt standardGabckeQuarterLocalPsi P 0 ∧
       P 3 (fun _ : Fin 3 => (1 : ℝ)) = -Real.pi ^ 2 / 6
+
+/-- Scalar Taylor-series source for the filled local quotient at `0`.
+This keeps the remaining analytic work at the one-variable coefficient level:
+exhibit scalar coefficients for the local power series and prove the cubic
+coefficient is `-pi^2 / 6`. -/
+def StandardGabckeQuarterLocalScalarTaylorSeriesProp : Prop :=
+  ∃ a : ℕ → ℝ,
+    HasFPowerSeriesAt standardGabckeQuarterLocalPsi
+      (FormalMultilinearSeries.ofScalars ℝ a) 0 ∧
+      a 3 = -Real.pi ^ 2 / 6
+
+/-- A scalar Taylor series with cubic coefficient `-pi^2 / 6` supplies the
+formal multilinear witness required by the cubic-coefficient atom. -/
+theorem standardGabckeQuarterLocalCubicTaylorCoefficientProp_of_scalarTaylorSeries
+    (h_series : StandardGabckeQuarterLocalScalarTaylorSeriesProp) :
+    StandardGabckeQuarterLocalCubicTaylorCoefficientProp := by
+  rcases h_series with ⟨a, hseries, ha3⟩
+  refine ⟨FormalMultilinearSeries.ofScalars ℝ a, hseries, ?_⟩
+  simpa [ha3] using
+    (FormalMultilinearSeries.ofScalars_apply_eq (E := ℝ) (c := a)
+      (x := (1 : ℝ)) (n := 3))
 
 /-- The exact cubic Taylor coefficient of the local quotient gives the
 third-derivative value used by the Gabcke removable-source route. -/

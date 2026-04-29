@@ -1473,3 +1473,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   and showing its cubic coefficient is `-pi^2 / 6`.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 30: cubic coefficient reduced to scalar Taylor series
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalCubicTaylorCoefficientProp`, the live cubic
+  coefficient source for the local filled quotient at `x = 0`.
+- Banked inputs:
+  - Round 29 already wires the cubic coefficient atom to
+    `StandardGabckeQuarterLocalThirdDerivativeFormulaProp`, the quarter
+    removable-source value, and the quarter numeric bound.
+  - Mathlib's `FormalMultilinearSeries.ofScalars` API is the natural shape for
+    a one-variable scalar Taylor expansion.
+- Proof facts banked:
+  - Added `StandardGabckeQuarterLocalScalarTaylorSeriesProp`, requiring scalar
+    coefficients `a : ℕ → ℝ`, a local
+    `HasFPowerSeriesAt standardGabckeQuarterLocalPsi
+      (FormalMultilinearSeries.ofScalars ℝ a) 0`, and the exact coefficient
+    equation `a 3 = -Real.pi ^ 2 / 6`.
+  - Proved
+    `standardGabckeQuarterLocalCubicTaylorCoefficientProp_of_scalarTaylorSeries`,
+    converting that scalar Taylor source into the existing formal multilinear
+    cubic-coefficient atom by evaluating the `ofScalars` series at `(1,1,1)`.
+- Failed routes:
+  - I did not define the removable derivative candidate by the raw third
+    derivative.
+  - I did not assume global regularity of the raw quotient at denominator-zero
+    points.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, provider shortcuts, or weaken the live
+    coefficient target.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+- Remaining exact atom:
+  prove `StandardGabckeQuarterLocalScalarTaylorSeriesProp` by expanding the
+  filled local quotient
+  `sin(pi*x - 2*pi*x^2) / sin(2*pi*x)` at `x = 0`, with filled value `1/2`,
+  and showing the scalar cubic coefficient is `-pi^2 / 6`.
+- Coordinator action requested:
+  run the requested serialized validation command.
