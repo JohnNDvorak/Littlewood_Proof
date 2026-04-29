@@ -546,3 +546,55 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   Gabcke's coefficient table.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 11: removable singularities reduced to two point checks
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeRawPsiRemovableThirdDerivativeBoundProp` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Banked inputs:
+  - Round 10 separated the raw third-derivative bound into a regular quotient
+    estimate and a removable-singularity estimate at
+    `standardGabckeRawPsiDenominatorZero p`.
+  - The live raw quotient denominator is exactly `cos(2*pi*p)`, and the
+    removable singularities in `Ico 0 1` should be `p = 1/4` and `p = 3/4`.
+- Proof facts banked:
+  - Added `StandardGabckeRawPsiDenominatorZeroClassifiedProp`, the exact
+    theorem that any denominator-zero `p in Ico 0 1` is `1/4` or `3/4`.
+  - Added `StandardGabckeRawPsiRemovablePointBoundsProp`, the two pointwise
+    raw third-derivative bounds at `1/4` and `3/4`.
+  - Proved
+    `standardGabckeRawPsiRemovableThirdDerivativeBoundProp_of_denominatorZeroClassified`,
+    reducing the removable-singularity atom to the classification theorem plus
+    those two point checks.
+  - Added
+    `standardGabckeRawPsiThirdDerivativeBoundProp_of_regular_classified_and_removablePoints`,
+    recombining the regular quotient estimate, classification, and point
+    checks into the global raw third-derivative bound.
+  - Added
+    `standardGabckeTargets_of_contourTaylor_regular_classified_and_removablePoints`,
+    wiring this sharper split back to the two standard Gabcke target
+    propositions.
+- Failed routes:
+  - Do not assert global regularity of the raw quotient.
+  - Do not leave the removable side as an arbitrary denominator-zero bound;
+    the exact source surface is now the two-point classification plus the
+    pointwise derivative estimates.
+  - Do not assert raw `standardGabckeRawPsi = rsPsi`.
+  - Do not use block-independence or define the coefficient as a defect
+    quotient.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+- Smallest next theorem:
+  prove `StandardGabckeRawPsiDenominatorZeroClassifiedProp` using
+  `cos(2*pi*p) = 0` on `0 <= p < 1`, then prove
+  `StandardGabckeRawPsiRemovablePointBoundsProp` by evaluating the removable
+  extension of the raw quotient's third derivative at `1/4` and `3/4`.
+- Coordinator action requested:
+  run the requested serialized validation command.

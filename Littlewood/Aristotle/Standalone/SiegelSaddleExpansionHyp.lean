@@ -339,6 +339,35 @@ def StandardGabckeRawPsiRemovableThirdDerivativeBoundProp : Prop :=
       |standardGabckeRawPsiThirdDerivative p| ≤
         fresnelC1Bound * (96 * Real.pi ^ 2)
 
+/-- Exact classification of the denominator-zero locus inside the Gabcke
+block parameter interval. For the raw quotient normalization, the only
+removable singular points in `Ico 0 1` are `1/4` and `3/4`. -/
+def StandardGabckeRawPsiDenominatorZeroClassifiedProp : Prop :=
+  ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    standardGabckeRawPsiDenominatorZero p →
+      p = (1 / 4 : ℝ) ∨ p = (3 / 4 : ℝ)
+
+/-- Pointwise removable-singularity bounds at the two denominator-zero
+parameters of the raw quotient normalization. -/
+def StandardGabckeRawPsiRemovablePointBoundsProp : Prop :=
+  |standardGabckeRawPsiThirdDerivative (1 / 4 : ℝ)| ≤
+      fresnelC1Bound * (96 * Real.pi ^ 2) ∧
+    |standardGabckeRawPsiThirdDerivative (3 / 4 : ℝ)| ≤
+      fresnelC1Bound * (96 * Real.pi ^ 2)
+
+/-- The removable-singularity derivative bound follows from classifying the
+denominator-zero locus and checking the two removable points. -/
+theorem standardGabckeRawPsiRemovableThirdDerivativeBoundProp_of_denominatorZeroClassified
+    (h_class : StandardGabckeRawPsiDenominatorZeroClassifiedProp)
+    (h_points : StandardGabckeRawPsiRemovablePointBoundsProp) :
+    StandardGabckeRawPsiRemovableThirdDerivativeBoundProp := by
+  intro p hp hzero
+  rcases h_class p hp hzero with hp_quarter | hp_threeQuarter
+  · rw [hp_quarter]
+    exact h_points.1
+  · rw [hp_threeQuarter]
+    exact h_points.2
+
 /-- The global raw third-derivative bound follows from its regular-point
 estimate plus the removable-singularity bridge. -/
 theorem standardGabckeRawPsiThirdDerivativeBoundProp_of_regular_and_removable
@@ -429,6 +458,32 @@ theorem standardGabckeTargets_of_contourTaylor_and_rawPsiThirdDerivativeSplit
   standardGabckeTargets_of_contourTaylor_and_rawPsiThirdDerivativeBound h_id
     (standardGabckeRawPsiThirdDerivativeBoundProp_of_regular_and_removable
       h_regular h_removable)
+
+/-- Global raw derivative bound from the regular quotient estimate plus the
+classified two-point removable-singularity checks. -/
+theorem standardGabckeRawPsiThirdDerivativeBoundProp_of_regular_classified_and_removablePoints
+    (h_regular : StandardGabckeRawPsiRegularThirdDerivativeBoundProp)
+    (h_class : StandardGabckeRawPsiDenominatorZeroClassifiedProp)
+    (h_points : StandardGabckeRawPsiRemovablePointBoundsProp) :
+    StandardGabckeRawPsiThirdDerivativeBoundProp :=
+  standardGabckeRawPsiThirdDerivativeBoundProp_of_regular_and_removable h_regular
+    (standardGabckeRawPsiRemovableThirdDerivativeBoundProp_of_denominatorZeroClassified
+      h_class h_points)
+
+/-- Direct route to the two standard Gabcke target propositions when the
+removable side of the raw third-derivative estimate is reduced to denominator
+classification and two pointwise bounds. -/
+theorem standardGabckeTargets_of_contourTaylor_regular_classified_and_removablePoints
+    (h_id : StandardGabckeContourTaylorFirstCoefficientIdentityProp)
+    (h_regular : StandardGabckeRawPsiRegularThirdDerivativeBoundProp)
+    (h_class : StandardGabckeRawPsiDenominatorZeroClassifiedProp)
+    (h_points : StandardGabckeRawPsiRemovablePointBoundsProp) :
+    StandardGabckeStationaryPhaseIdentityProp
+        standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient ∧
+      StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient :=
+  standardGabckeTargets_of_contourTaylor_and_rawPsiThirdDerivativeBound h_id
+    (standardGabckeRawPsiThirdDerivativeBoundProp_of_regular_classified_and_removablePoints
+      h_regular h_class h_points)
 
 /-- A standard-normalized stationary-phase identity becomes the local
 coefficient identity once the leading coefficient normalization has been
