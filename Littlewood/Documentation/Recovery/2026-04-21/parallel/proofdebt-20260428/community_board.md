@@ -2869,3 +2869,16 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Current Perron atoms: transition fixed-window DCT inputs, especially the
     integrable majorant on the compact `x`/height box; zero-sum transition
     continuity and eventual normalized asymptotic tail remain separate.
+
+## Overnight 2026-04-29 One-Hundred-Twelfth Pass Status
+
+- Coordinator recovery branch is pushed through `615d12a`.
+- Perron/B5a lane is integrated through `1bf2b17`:
+  - The transition fixed-window DCT integrable-majorant input is closed from
+    compact boundedness of `perronVerticalIntegrand` on the finite `x`/height
+    box.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron atoms: transition fixed-window measurability and a.e.
+    pointwise convergence inputs; zero-sum transition continuity and eventual
+    normalized asymptotic tail remain separate.
