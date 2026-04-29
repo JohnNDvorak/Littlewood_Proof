@@ -2898,3 +2898,57 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `16 <= p.1 <= Xtail`, `2 <= p.2 <= 16`, or the eventual asymptotic estimate
   from `Xtail` onward.  With this round, the transition bounded-image atom is
   no longer separate from the transition continuity atom.
+
+### 2026-04-29 Round 58 - Reduce Transition Continuity To Components
+
+- Classification: `PROOF_REDUCTION`.
+- Exact theorem attacked:
+  transition continuity of
+  `fun p => perronVerticalContourRemainderNormalized p.1 p.2` on the finite
+  rectangle `16 <= p.1 <= Xtail`, `2 <= p.2 <= 16`.
+- Code facts banked:
+  added `small_T_concrete_contour_remainder_continuousOn_transition_from_components`,
+  `small_T_residue_error_shape_continuousOn_transition`,
+  `small_T_residue_error_shape_ne_zero_on_transition`,
+  `small_T_concrete_contour_remainder_normalized_continuousOn_transition_from_remainder`,
+  and
+  `small_T_concrete_contour_remainder_normalized_continuousOn_transition_from_components`.
+  This proves the transition-normalized continuity bridge from explicit
+  continuity of the Perron integral and zero-sum components on the same finite
+  transition rectangle.  Added handoffs through
+  `small_T_concrete_contour_remainder_transition_tail_from_component_continuity`,
+  `small_T_concrete_contour_remainder_tail16_from_transition_component_continuity_and_asymptotic_tail`,
+  `small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_component_continuity_and_asymptotic_tail`,
+  and
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_transition_component_continuity_and_asymptotic_tail`.
+- Shape check:
+  the closed zero-sum continuity obligation is not hidden.  The bridge requires
+  it explicitly because unconditional closed-cutoff `ZerosBelow` continuity at
+  zero heights is not honest.  The unbounded `x >= Xtail` side remains the
+  separate eventual asymptotic tail atom.
+- Failed/demoted routes:
+  did not specialize to `Xtail = 32`, since the component-continuity bridge
+  works for general `Xtail`.  Did not attempt the full public small-`T` route
+  or legacy pure-log absorption.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, broad providers, dummy witnesses, new axioms, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check` passed.  `lake build
+  Littlewood.Aristotle.Standalone.PerronTruncationInfra` passed under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.
+- Smallest next theorem:
+  prove one component input on the transition rectangle, preferably
+  `ContinuousOn (fun p => perronVerticalIntegral p.1 p.2)
+    {p | 16 <= p.1 /\ p.1 <= Xtail /\ 2 <= p.2 /\ p.2 <= 16}`
+  from the existing fixed-window/DCT infrastructure generalized from slab
+  `2 <= x <= 16`, or prove a boundary-aware zero-sum bounded/continuity
+  adapter that is actually usable without claiming unconditional closed-cutoff
+  local constancy.  The other open atom is still the eventual normalized
+  asymptotic tail from `Xtail` onward.
