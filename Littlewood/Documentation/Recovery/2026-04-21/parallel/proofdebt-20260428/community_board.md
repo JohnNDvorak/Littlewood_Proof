@@ -3190,3 +3190,17 @@ Timestamp: 2026-04-28 22:56 CDT.
     (`7903 jobs`).
   - Current Atkinson atom: prove that norm-scale vertical Stirling-ratio bound,
     or supply a direct standard principal-log Gamma/Stirling theorem.
+
+## Overnight 2026-04-29 One-Hundred-Thirty-Fifth Pass Status
+
+- Coordinator recovery branch is advanced locally through `af34517`.
+- Perron/B5a lane is integrated through `b3ff553`:
+  - The bounded-height residue extraction bound is reduced to the concrete
+    contour-remainder defect estimate for
+    `perronVerticalContourRemainderRe x T`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron atom:
+    `∃ Cc > 0, ∀ x T, Xtail <= x -> 2 <= T -> T <= 16 ->
+      |perronVerticalContourRemainderRe x T| <=
+        Cc * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
