@@ -3326,3 +3326,47 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed after code and ledger updates.
 - Smallest next theorem:
   - `PerronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual`.
+
+### 2026-04-29 Round 68: Split Perron Chooser Minimality
+
+- Classification: `PARTIAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual`.
+- Facts banked:
+  - Added `PerronFixedHalfBudgetThresholdEventuallyValidResidual`.
+  - Added `PerronSqrtErrorRawChoiceEventuallyLeastValidThresholdResidual`.
+  - Proved
+    `perronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual_of_validAndLeast`.
+  - Added endpoint
+    `exactSeedAboveThreshold_perron_of_fixedHalfValid_leastValidThresholdAndBudgetedRelativelyDense_hyp`.
+- What changed:
+  - Split the old least-valid atom into the analytic half-budget-threshold
+    validity fact and the exact chooser-minimality fact.
+  - The chooser-minimality fact is now isolated as:
+    eventually, for every valid Perron threshold `B` at the same height,
+    `perronThresholdRawEventualChoice hRH T ≤ B`.
+- Failed/direct route:
+  - Could not recover leastness from `Classical.choose_spec`; it proves only
+    that the selected threshold is valid.
+  - Did not replace `Classical.choose` by a least-threshold construction or add
+    a minimization axiom.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set
+    Kronecker, provider cycles, or broad provider was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation command/result:
+  - Under the corrected singleflight lock:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+  - `git diff --check`
+  - Result: passed after code and ledger updates.
+- Smallest next theorem:
+  - `PerronSqrtErrorRawChoiceEventuallyLeastValidThresholdResidual`.
+  - Parallel analytic side atom:
+    `PerronFixedHalfBudgetThresholdEventuallyValidResidual`.

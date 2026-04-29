@@ -3651,6 +3651,54 @@ def PerronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual
             PerronSqrtErrorAtHeightValidThreshold _hRH T B →
               perronThresholdRawEventualChoice _hRH T ≤ B
 
+/-- Eventual validity of the named fixed-half budget threshold.
+
+This is the analytic half of
+`PerronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual`; it says
+the candidate budget threshold is itself a valid Perron threshold at the same
+height. -/
+def PerronFixedHalfBudgetThresholdEventuallyValidResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ (_hRH : ZetaZeros.RiemannHypothesis),
+    ∃ T0 : ℝ,
+      ∀ T : ℝ,
+        T0 ≤ T →
+        PerronSqrtErrorAtHeightValidThreshold _hRH T
+          (perronFixedHalfBudgetThreshold T)
+
+/-- Exact chooser-minimality residual for the raw Perron threshold.
+
+This is the order property not exposed by `Classical.choose_spec`: eventually,
+the raw chosen threshold is no larger than any valid Perron threshold at the
+same height. -/
+def PerronSqrtErrorRawChoiceEventuallyLeastValidThresholdResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ (_hRH : ZetaZeros.RiemannHypothesis),
+    ∃ T0 : ℝ,
+      ∀ T : ℝ,
+        T0 ≤ T →
+        ∀ B : ℝ,
+          PerronSqrtErrorAtHeightValidThreshold _hRH T B →
+            perronThresholdRawEventualChoice _hRH T ≤ B
+
+/-- The least-valid-threshold atom splits into fixed-half threshold validity
+and the exact chooser-minimality residual. -/
+theorem perronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual_of_validAndLeast
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hValid :
+      PerronFixedHalfBudgetThresholdEventuallyValidResidual)
+    (hLeast :
+      PerronSqrtErrorRawChoiceEventuallyLeastValidThresholdResidual) :
+    PerronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual := by
+  intro hRH
+  rcases hValid hRH with ⟨TValid, hFixedValid⟩
+  rcases hLeast hRH with ⟨TLeast, hLeastAt⟩
+  refine ⟨max TValid TLeast, ?_⟩
+  intro T hT
+  have hTV : TValid ≤ T := (le_max_left TValid TLeast).trans hT
+  have hTL : TLeast ≤ T := (le_max_right TValid TLeast).trans hT
+  exact ⟨hFixedValid T hTV, hLeastAt T hTL⟩
+
 /-- If the raw chooser is eventually least among valid thresholds, and the
 fixed-half budget threshold is valid, then the raw chooser is below that
 threshold. -/
@@ -7149,6 +7197,23 @@ theorem exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfLeastValidThresholdA
     exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfThresholdComparisonAndBudgetedRelativelyDense_hyp
       (perronSqrtErrorRawChoiceFixedHalfBudgetThresholdComparison_of_leastValidThresholdResidual
         hPerron)
+
+/-- Fixed-half threshold validity plus raw-chooser minimality and explicit
+budgeted finite-zero radii package both Perron-only exact-seed classes. -/
+theorem exactSeedAboveThreshold_perron_of_fixedHalfValid_leastValidThresholdAndBudgetedRelativelyDense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [ZeroCountingLowerBoundHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    (hValid :
+      PerronFixedHalfBudgetThresholdEventuallyValidResidual)
+    (hLeast :
+      PerronSqrtErrorRawChoiceEventuallyLeastValidThresholdResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact
+    exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfLeastValidThresholdAndBudgetedRelativelyDense_hyp
+      (perronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual_of_validAndLeast
+        hValid hLeast)
 
 /-- Relation-compatible budgeted finite-zero Kronecker plus the Perron log
 half-budget packages both target-specific Perron phase-fit classes through the
