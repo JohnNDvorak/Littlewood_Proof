@@ -1261,6 +1261,41 @@ theorem standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_of_s
   norm_num [standardGabckeQuarterLocalDenominatorDslopeCoeff]
   ring
 
+/-- The third derivative of the raw denominator sine at the origin. -/
+private theorem standardGabckeQuarterLocalDenominatorRawSine_thirdDerivative :
+    iteratedDeriv 3 standardGabckeQuarterLocalSineDenominator 0 =
+      -(8 * Real.pi ^ 3) := by
+  have hcomp := congrFun
+    (iteratedDeriv_comp_const_mul (𝕜 := ℝ) (n := 3) Real.contDiff_sin (2 * Real.pi)) 0
+  have hsin3 : iteratedDeriv 3 Real.sin 0 = -1 := by
+    norm_num [Real.iteratedDeriv_odd_sin]
+  have hcomp' :
+      iteratedDeriv 3 standardGabckeQuarterLocalSineDenominator 0 =
+        (2 * Real.pi) ^ 3 * iteratedDeriv 3 Real.sin ((2 * Real.pi) * 0) := by
+    simpa [standardGabckeQuarterLocalSineDenominator] using hcomp
+  have hsin3' : iteratedDeriv 3 Real.sin ((2 * Real.pi) * 0) = -1 := by
+    simp [hsin3]
+  rw [hcomp', hsin3']
+  ring
+
+/-- The raw sine Taylor series has cubic coefficient
+`-(4*pi^3/3)`. This is the local sine-composition coefficient source below
+the denominator dslope quadratic coefficient. -/
+theorem standardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp_proved :
+    StandardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp := by
+  unfold StandardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp
+  let f : ℝ → ℝ := standardGabckeQuarterLocalSineDenominator
+  let A : ℕ → ℝ := fun n => iteratedDeriv n f 0 / n.factorial
+  have h_analytic : AnalyticAt ℝ f 0 := by
+    have hlin : AnalyticAt ℝ (fun w : ℝ => (2 * Real.pi) * w) 0 :=
+      analyticAt_const.mul analyticAt_id
+    simpa [f, standardGabckeQuarterLocalSineDenominator] using
+      (Real.analyticAt_sin.comp hlin)
+  refine ⟨A, h_analytic.hasFPowerSeriesAt, ?_⟩
+  dsimp [A, f]
+  rw [standardGabckeQuarterLocalDenominatorRawSine_thirdDerivative]
+  ring
+
 /-- For one-variable scalar power series, `fslope` shifts the scalar
 coefficients down by one. This is the local coefficient-transfer step from the
 raw sine series to the denominator dslope series. -/
