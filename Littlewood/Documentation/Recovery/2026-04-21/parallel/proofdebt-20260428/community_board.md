@@ -70,10 +70,10 @@ Agents request validation in their lane ledger. The coordinator serializes:
 
 | Order | Branch | Status | Required before merge |
 | --- | --- | --- | --- |
-| 1 | `proofdebt/20260428-atkinson-large-j` | active, pushed through `70078bf` | public import probes after provider closure |
-| 2 | `proofdebt/20260428-perron-b5a` | active, pushed through `32eaeea` | public import probes after provider closure |
-| 3 | `proofdebt/20260428-pi-phase` | active, pushed through `4a89847` | public import probes after provider closure |
-| 4 | `proofdebt/20260428-rs-gabcke` | active, pushed through `d1ff2f9` | public import probes after provider closure |
+| 1 | `proofdebt/20260428-atkinson-large-j` | merged at coordinator `b5ddd64`, lane pushed through `d017308` | complete |
+| 2 | `proofdebt/20260428-perron-b5a` | merged at coordinator `0b18794`, lane pushed through `6aef964` | complete |
+| 3 | `proofdebt/20260428-pi-phase` | merged at coordinator `d20a209`, lane pushed through `162263b` | complete |
+| 4 | `proofdebt/20260428-rs-gabcke` | merged at coordinator `16865be`, lane pushed through `2b3c75b` | complete |
 
 ## Agent Report Contract
 
@@ -196,21 +196,54 @@ Each agent report must state:
   - RS/Gabcke `d1ff2f9`: same focused build set passed; added the standard
     Gabcke raw phase/coefficient interface and reduced the live bridge to a
     correctly phase/parameter-normalized `stdLead`.
+  - Atkinson `4e39e2e`: `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`
+    passed in the lane; reduced target matching to a scalar coefficient atom.
+  - Atkinson `23095f2`: same focused build passed in the lane; reduced the
+    scalar target-coefficient atom to a shifted unweighted mass-coefficient
+    matching estimate.
+  - Atkinson `d017308`: same focused build passed after coordinator replaced
+    fragile integral notation with `atkinsonShiftedQuadraticMassCoeff` and
+    fixed local unit cancellation; branch pushed and merged.
+  - Perron/B5a `6aef964`: `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
+    passed; split the punctured boundary window into near-diagonal and
+    separated pieces.
+  - Pi/Phase `b0d5f8f`: `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+    and
+    `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+    passed; paired the target/anti phase-radius geometry surface.
+  - Pi/Phase `162263b`: same two focused builds passed; paired the zeta
+    finite-zero compatibility leaves for target and anti-target phases.
+  - RS/Gabcke `2b3c75b`: focused build set
+    `SiegelSaddleExpansionHyp GabckePhaseCouplingInfra GabckePhaseCouplingHyp HardyZFirstMomentBridge`
+    passed; closed the phase-normalized leading bridge
+    `StandardGabckeLocalLeadingNormalizationProp standardGabckePhaseNormalizedLead`.
+- Integration checkpoint on 2026-04-28:
+  - All four lane branches were pushed to GitHub and merged into the coordinator
+    branch through `16865be`.
+  - Integrated focused validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula Littlewood.Aristotle.Standalone.PerronTruncationInfra Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aShiftedBoundDeepLeaf Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`.
+  - Strict public import probes passed:
+    `import Littlewood.Main.LittlewoodPsi` and
+    `import Littlewood.Main.LittlewoodPi`.
 - Coordinator stopped one non-coordinator `lake env lean` process in the
   Atkinson worktree and re-issued the hard rule: agents must not run `lake`,
   `lake env lean`, `lean`, or any focused build/check themselves.
 - Current live atoms:
-  - Atkinson: zero-model approximation and explicit target matching toward
-    `atkinson_blockMode_stationaryPhase_of_zero_model_and_target`, then
+  - Atkinson: shifted zero-model approximation and shifted unweighted
+    mass-coefficient matching toward
+    `atkinson_blockMode_stationaryPhase_of_zero_model_and_massCoeff`, then
     packaging `AtkinsonShiftedInversePhaseCellPrefixBoundHyp`.
-  - Perron/B5a: punctured-window decaying kernel estimate, off-boundary
-    estimate, and bounded-height residue extraction.
-  - Pi/Phase: realized phase-radius tower domination and zeta finite-zero
-    compatibility for the target/anti-target leaves.
-  - RS/Gabcke: define the correctly phase/parameter-normalized `stdLead`,
-    prove `StandardGabckeLocalLeadingNormalizationProp stdLead`, then prove
-    `SiegelStationaryPhaseCoefficientIdentityProp C` and
-    `SiegelStationaryPhaseCoefficientBoundProp C`.
-- Next coordinator action: wait for the redeployed lane agents, validate any
-  returning commits serially, and only run public import probes after a lane
-  closes a public-path provider rather than another conditional reduction.
+  - Perron/B5a: near-diagonal punctured weighted boundary error, separated
+    punctured pointwise kernel decay, off-boundary estimate, and bounded-height
+    residue extraction.
+  - Pi/Phase: `TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp`,
+    `TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`, and
+    `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`.
+  - RS/Gabcke: prove
+    `StandardGabckeStationaryPhaseIdentityProp standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient`
+    and `StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient`
+    from the actual contour/Taylor expansion and Tabelle-1 coefficient bound.
+- Next coordinator action: redeploy the four lanes from merged coordinator
+  `16865be`, validate returning commits serially, and only run public import
+  probes after a lane closes a public-path provider rather than another
+  conditional reduction.
