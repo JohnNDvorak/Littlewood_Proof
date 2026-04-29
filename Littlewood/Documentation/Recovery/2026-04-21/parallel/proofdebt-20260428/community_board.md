@@ -3026,3 +3026,15 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Current Perron atom: close transition `zeroSumRe` boundedness/continuity on
     `16 <= x <= Xtail`, `2 <= T <= 16`, or prove the eventual normalized
     asymptotic tail from `Xtail`.
+
+## Overnight 2026-04-29 One-Hundred-Twenty-Third Pass Status
+
+- Coordinator recovery branch is advanced locally through `6465bbf`.
+- Pi/Phase lane is integrated through `93b8835`:
+  - The fixed half-budget raw chooser residual is narrowed to the exact
+    minus-one majorization needed for the opaque Perron threshold choice.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
+  - Current Pi atom:
+    `PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetMinusOneResidual`.
