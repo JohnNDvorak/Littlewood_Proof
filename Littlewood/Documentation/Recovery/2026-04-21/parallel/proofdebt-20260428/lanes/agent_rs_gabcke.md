@@ -1992,3 +1992,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `dslope standardGabckeQuarterLocalSineNumerator 0 w /
     dslope standardGabckeQuarterLocalSineDenominator 0 w`
   with cubic coefficient `-Real.pi ^ 2 / 6`.
+
+### 2026-04-29 Round 41: dslope quotient reduced to coefficient data
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalDslopeQuotientPowerSeriesProp`.
+- Banked inputs:
+  - The quotient coefficient `-Real.pi ^ 2 / 6` follows from finite Taylor data
+    for the numerator and denominator dslopes through cubic order.
+  - The required source coefficients are:
+    numerator dslope `pi, -2*pi, -pi^3/6, pi^3`; denominator dslope
+    `2*pi, 0, -4*pi^3/3, 0`.
+- Proof facts banked:
+  - Added `StandardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp`, the
+    exact numerator dslope power-series coefficient source through order 3.
+  - Added `StandardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp`, the
+    exact denominator dslope power-series coefficient source through order 3.
+  - Added `StandardGabckeQuarterLocalDslopeQuotientDivisionCoefficientProp`,
+    the finite formal-division coefficient step from those two source series to
+    `StandardGabckeQuarterLocalDslopeQuotientPowerSeriesProp`.
+  - Added
+    `standardGabckeQuarterLocalDslopeQuotientPowerSeriesProp_of_coefficientData`,
+    reducing the quotient series target to those three exact coefficient
+    inputs.
+- Failed routes:
+  - I did not introduce a shortcut provider or analytic axiom.
+  - I did not hide the coefficient calculation behind the removable quotient or
+    the dslope bridge; the remaining work is now explicit numerator,
+    denominator, and finite quotient-division coefficient data.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to `origin/recovery/provider-forensics-2026-04-21`
+    at `f650ff6` before editing.
+  - `git diff --check`: passed.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove one exact coefficient-data source, preferably
+  `StandardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp` from the
+  series of `sin(2*pi*w) / w`, or
+  `StandardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp` from the
+  composed sine series for `sin(pi*w - 2*pi*w^2) / w`.
