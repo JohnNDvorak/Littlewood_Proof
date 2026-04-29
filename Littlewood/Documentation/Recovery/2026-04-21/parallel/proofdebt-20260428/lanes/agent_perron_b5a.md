@@ -1958,3 +1958,43 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `∃ Cc > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
     |perronVerticalContourRemainderRe x T| /
       (Real.sqrt x * (Real.log T)^2 / Real.sqrt T) <= Cc`.
+
+### 2026-04-29 Round 38 - Normalized Supremum Slab/Tail Split
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the global normalized concrete-defect supremum for
+  `perronVerticalContourRemainderRe`.
+- Code facts banked:
+  added
+  `small_T_concrete_contour_remainder_normalized_sup_from_slab_and_tail`,
+  splitting the unbounded `x >= 2` domain at an explicit cutoff `X0`.
+  The theorem combines a bounded-slab estimate on `2 <= x <= X0` with an
+  asymptotic-tail estimate on `X0 <= x` by taking the maximum of the two
+  constants.  Added
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder_slab_and_tail`,
+  wiring this split into `SmallTPerronLinearWindowBoundHyp`.
+- Scale check:
+  no compactness in `x` was claimed.  The bounded part is explicitly the slab
+  `2 <= x <= X0`; the unbounded tail remains a separate normalized analytic
+  theorem.  The legacy absorption obligation remains separate.
+- Failed/demoted routes:
+  did not assert a global compact supremum, did not use an unscaled bound, and
+  did not introduce a legacy `SmallTPerronBoundHyp` instance.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  First lock-gated attempt exited `LEAN_BUSY` while
+  `Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp` was validating.
+  Retried under `/tmp/littlewood-lean-singleflight.lock`; the focused Perron
+  build passed.
+- Smallest next theorem:
+  choose an explicit cutoff `X0 >= 2` and prove either the bounded slab
+  normalized estimate on `2 <= x <= X0`, or the asymptotic normalized tail
+  estimate on `X0 <= x`.
