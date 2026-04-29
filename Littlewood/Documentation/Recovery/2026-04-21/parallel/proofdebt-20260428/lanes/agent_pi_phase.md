@@ -2297,3 +2297,39 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp` or `AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+
+### 2026-04-29 Round 44: Target Selected Radius to Canonical Compatibility
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+- Facts banked:
+  - Added `TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual`.
+  - Added `targetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_canonicalResidual`.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyTargetCanonicalKroneckerRadiusBudgetRoute`.
+- What changed:
+  - The target-side selected-radius budget now reduces to the exact radius chosen using the canonical zeta compatibility proof supplied by `TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`.
+  - The adapter from the canonical residual back to the current one-sided class uses proof irrelevance for the arbitrary relation-compatibility proof argument.
+  - The corrected endpoint can consume this target canonical residual plus the existing anti-target one-sided selected-radius budget.
+- Remaining goal shape:
+  - Prove `TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual`, or attack the symmetric anti-target side with the same canonical-compatibility reduction.
+- Failed/circular route:
+  - Did not revive `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`, which remains false as stated.
+  - Did not claim that a separately chosen bounded witness controls the selected radius.
+  - Did not split target and anti-target into independent heights or tolerances.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-radius route, provider cycles, reverse-comparison instances, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed local focused validation under the singleflight rule.
+- Validation command/result:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only in `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`.
+- Smallest next theorem:
+  - `TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual`.
