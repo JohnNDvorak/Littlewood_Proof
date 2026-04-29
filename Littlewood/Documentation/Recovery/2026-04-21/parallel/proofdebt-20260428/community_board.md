@@ -63,6 +63,14 @@ Launch ID: `proofdebt-20260428`
 - Aristotle CLI is installed, but `ARISTOTLE_API_KEY` is not set in the
   coordinator shell at launch. Do not put keys in tracked files, shell-visible
   commands, prompts, or ledgers.
+- Aristotle sidecars submitted after key injection through a masked temporary
+  environment path:
+  - Atkinson: `57447356-4c39-4c20-8da2-6096b6243dfe`
+  - Perron/B5a: `ee5694b1-8a5d-4b26-926a-16a38549bfb4`
+  - Pi/Phase: `730f40bc-99a7-49bd-89fa-46039f150c23`
+  - RS/Gabcke: `55d45e98-54c8-435a-9dde-c7fc59926147`
+  The raw prompts, submit logs, temporary key, and later result downloads live
+  under `/tmp/littlewood_aristotle_20260429`, not in tracked source.
 
 All active worktrees symlink `.lake` to the coordinator tree cache.
 
