@@ -168,12 +168,219 @@ class SiegelSaddleExpansionHyp : Prop where
       ((k : ℝ) + 2 + p) * ((-1 : ℝ) ^ (k + 1) * saddlePointRemainder (k + 1) (blockCoord (k + 1) p)) ≤
         ((k : ℝ) + 1 + p) * ((-1 : ℝ) ^ k * saddlePointRemainder k (blockCoord k p))
 
-/-- On block coordinates, the weighted profile bound implies the expected
-    `fresnelC1Bound · t^(-1/2)` decay for the normalized remainder. -/
-private theorem saddle_remainder_fresnel_bound_on_coords [h : SiegelSaddleExpansionHyp]
-    (k : ℕ) (p : ℝ) (hp : p ∈ Ico (0 : ℝ) 1) :
+/-- The Gabcke Satz 1 weighted-profile component of
+`SiegelSaddleExpansionHyp`, separated from the signed adjacent Satz 4 fields.
+This is the absolute first-coefficient bound on block coordinates. -/
+def SiegelWeightedProfileBoundProp : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    |(((k : ℝ) + 1 + p) * saddlePointRemainder k (blockCoord k p))| ≤
+      fresnelC1Bound / Real.sqrt (2 * Real.pi)
+
+/-- Coordinate pointwise form of the same Gabcke Satz 1 absolute atom. This
+removes the profile factor `(k+1+p)` and asks directly for the normalized
+saddle remainder decay on block coordinates. -/
+def SiegelCoordinateRemainderBoundProp : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
     |saddlePointRemainder k (blockCoord k p)| ≤
-      fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2) := by
+      fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2)
+
+/-- Exact block-coordinate stationary-phase error estimate below
+`SiegelCoordinateRemainderBoundProp`.
+
+This is the local Taylor/remainder atom before normalizing by the saddle
+amplitude. The left side is the raw `ErrorTerm` error after extracting the
+leading Riemann-Siegel correction at `t = blockCoord k p`. -/
+def SiegelCoordinateStationaryPhaseErrorProp : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    |ErrorTerm (blockCoord k p)
+      - (-1 : ℝ) ^ k * (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) * rsPsi p| ≤
+      (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
+        (fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2))
+
+/-- Exact coefficient identity below the coordinate stationary-phase error
+bound.
+
+For a future explicit local Taylor coefficient `C`, this says the raw
+stationary-phase defect is the saddle amplitude times `C k p` at the natural
+`t^(-1/2)` scale. The analytic source should be Siegel/Gabcke's local
+steepest-descent expansion in the exact coordinates `t = blockCoord k p`. -/
+def SiegelStationaryPhaseCoefficientIdentityProp (C : ℕ → ℝ → ℝ) : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    ErrorTerm (blockCoord k p)
+      - (-1 : ℝ) ^ k * (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) * rsPsi p =
+      (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
+        (C k p * (blockCoord k p) ^ (-(1 : ℝ) / 2))
+
+/-- Uniform coefficient bound for the local stationary-phase Taylor remainder. -/
+def SiegelStationaryPhaseCoefficientBoundProp (C : ℕ → ℝ → ℝ) : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    |C k p| ≤ fresnelC1Bound
+
+/-- The quotient-normalized `psi` used in standard Riemann-Siegel coefficient
+tables. This is intentionally kept separate from the project-local `rsPsi`:
+the raw quotient normalization is not definitionally equal to the positive
+local cosine convention used by the block-integral pipeline. -/
+def standardGabckeRawPsi (p : ℝ) : ℝ :=
+  Real.cos (2 * Real.pi * (p ^ 2 - p - 1 / 16)) / Real.cos (2 * Real.pi * p)
+
+/-- The standard first Riemann-Siegel/Gabcke coefficient as it appears in
+coefficient-table form, before reconciling the source normalization with the
+project-local `rsPsi` leading term. -/
+def standardGabckeRawFirstCoefficient (p : ℝ) : ℝ :=
+  -deriv (deriv (deriv standardGabckeRawPsi)) p / (96 * Real.pi ^ 2)
+
+/-- The phase/parameter-normalized standard leading coefficient in the local
+block convention. This is the standard leading phase after translating into
+the project-local `p` and absorbing the phase convention used by `rsPsi`. -/
+def standardGabckePhaseNormalizedLead (p : ℝ) : ℝ :=
+  Real.cos (2 * Real.pi * (p ^ 2 - p + 1 / 8))
+
+/-- The phase-normalized standard leading coefficient is exactly the local
+`rsPsi` convention. -/
+theorem standardGabckePhaseNormalizedLead_eq_rsPsi (p : ℝ) :
+    standardGabckePhaseNormalizedLead p = rsPsi p := by
+  unfold standardGabckePhaseNormalizedLead rsPsi
+  congr 1
+  ring
+
+/-- The missing normalization bridge from a standard Riemann-Siegel leading
+coefficient convention to the repo-local `rsPsi` convention. -/
+def StandardGabckeLocalLeadingNormalizationProp (stdLead : ℝ → ℝ) : Prop :=
+  ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 → stdLead p = rsPsi p
+
+/-- The correctly phase/parameter-normalized standard leading coefficient
+satisfies the local leading-normalization bridge. -/
+theorem standardGabckeLocalLeadingNormalization_phaseNormalized :
+    StandardGabckeLocalLeadingNormalizationProp standardGabckePhaseNormalizedLead := by
+  intro p _hp
+  exact standardGabckePhaseNormalizedLead_eq_rsPsi p
+
+/-- Standard-normalized stationary-phase identity, parameterized by the
+standard leading coefficient and standard first coefficient after any necessary
+source-side phase/parameter conversion has been made explicit.
+
+This is the bridge surface immediately below the local
+`SiegelStationaryPhaseCoefficientIdentityProp`: once `stdLead` is proved to be
+the local `rsPsi` convention, this identity becomes the local coefficient
+identity. -/
+def StandardGabckeStationaryPhaseIdentityProp
+    (stdLead stdCoeff : ℝ → ℝ) : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    ErrorTerm (blockCoord k p)
+      - (-1 : ℝ) ^ k * (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
+        stdLead p =
+      (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
+        (stdCoeff p * (blockCoord k p) ^ (-(1 : ℝ) / 2))
+
+/-- The standard first-coefficient bound in source normalization. -/
+def StandardGabckeCoefficientBoundProp (stdCoeff : ℝ → ℝ) : Prop :=
+  ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 → |stdCoeff p| ≤ fresnelC1Bound
+
+/-- A standard-normalized stationary-phase identity becomes the local
+coefficient identity once the leading coefficient normalization has been
+bridged to `rsPsi`. -/
+theorem siegelStationaryPhaseCoefficientIdentityProp_of_standardGabckeNormalization
+    {stdLead stdCoeff : ℝ → ℝ}
+    (h_standard : StandardGabckeStationaryPhaseIdentityProp stdLead stdCoeff)
+    (h_leading : StandardGabckeLocalLeadingNormalizationProp stdLead) :
+    SiegelStationaryPhaseCoefficientIdentityProp (fun _ p => stdCoeff p) := by
+  intro k p hp
+  rw [← h_leading p hp]
+  exact h_standard k p hp
+
+/-- A standard source-side coefficient bound supplies the local coefficient
+bound for the corresponding block-independent coefficient candidate. -/
+theorem siegelStationaryPhaseCoefficientBoundProp_of_standardGabckeBound
+    {stdCoeff : ℝ → ℝ}
+    (h_bound : StandardGabckeCoefficientBoundProp stdCoeff) :
+    SiegelStationaryPhaseCoefficientBoundProp (fun _ p => stdCoeff p) := by
+  intro _ p hp
+  exact h_bound p hp
+
+/-- Project the weighted-profile atom from the current Siegel/Gabcke class. -/
+theorem siegelWeightedProfileBoundProp_of_siegelSaddleExpansionHyp
+    [h : SiegelSaddleExpansionHyp] :
+    SiegelWeightedProfileBoundProp :=
+  h.weighted_profile_bound
+
+/-- An exact local Taylor coefficient identity plus the `fresnelC1Bound`
+coefficient estimate imply the coordinate stationary-phase error bound. -/
+theorem siegelCoordinateStationaryPhaseErrorProp_of_coefficientAtoms
+    {C : ℕ → ℝ → ℝ}
+    (h_id : SiegelStationaryPhaseCoefficientIdentityProp C)
+    (h_bound : SiegelStationaryPhaseCoefficientBoundProp C) :
+    SiegelCoordinateStationaryPhaseErrorProp := by
+  intro k p hp
+  let t : ℝ := blockCoord k p
+  let amp : ℝ := (2 * Real.pi / t) ^ ((1 : ℝ) / 4)
+  let scale : ℝ := t ^ (-(1 : ℝ) / 2)
+  have ht_pos : 0 < t := by
+    dsimp [t]
+    have hbase : 0 < (k : ℝ) + 1 + p := by
+      have hk : 0 ≤ (k : ℝ) := Nat.cast_nonneg k
+      linarith [hp.1, hk]
+    have hcoord : blockCoord k p = 2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 := by
+      unfold blockCoord
+      ring
+    rw [hcoord]
+    exact mul_pos (by positivity) (sq_pos_of_pos hbase)
+  have hamp_pos : 0 < amp := by
+    dsimp [amp]
+    exact Real.rpow_pos_of_pos (div_pos (by positivity) ht_pos) _
+  have hscale_nonneg : 0 ≤ scale := by
+    dsimp [scale]
+    exact Real.rpow_nonneg (le_of_lt ht_pos) _
+  have hid := h_id k p hp
+  have hcoef := h_bound k p hp
+  rw [hid]
+  change |amp * (C k p * scale)| ≤ amp * (fresnelC1Bound * scale)
+  calc
+    |amp * (C k p * scale)| = amp * (|C k p| * scale) := by
+      rw [abs_mul, abs_of_pos hamp_pos, abs_mul, abs_of_nonneg hscale_nonneg]
+    _ ≤ amp * (fresnelC1Bound * scale) := by
+      exact mul_le_mul_of_nonneg_left
+        (mul_le_mul_of_nonneg_right hcoef hscale_nonneg) (le_of_lt hamp_pos)
+
+/-- The exact block-coordinate stationary-phase error estimate implies the
+coordinate normalized saddle-remainder bound. -/
+theorem siegelCoordinateRemainderBoundProp_of_stationaryPhaseError
+    (h : SiegelCoordinateStationaryPhaseErrorProp) :
+    SiegelCoordinateRemainderBoundProp := by
+  intro k p hp
+  let t : ℝ := blockCoord k p
+  let amp : ℝ := (2 * Real.pi / t) ^ ((1 : ℝ) / 4)
+  have ht_pos : 0 < t := by
+    dsimp [t]
+    have hbase : 0 < (k : ℝ) + 1 + p := by
+      have hk : 0 ≤ (k : ℝ) := Nat.cast_nonneg k
+      linarith [hp.1, hk]
+    have hcoord : blockCoord k p = 2 * Real.pi * ((k : ℝ) + 1 + p) ^ 2 := by
+      unfold blockCoord
+      ring
+    rw [hcoord]
+    exact mul_pos (by positivity) (sq_pos_of_pos hbase)
+  have hamp_pos : 0 < amp := by
+    dsimp [amp]
+    exact Real.rpow_pos_of_pos (div_pos (by positivity) ht_pos) _
+  have hparam : blockParam k t = p := by
+    dsimp [t]
+    exact blockParam_blockCoord k p hp.1
+  have hstat := h k p hp
+  change |saddlePointRemainder k t| ≤ fresnelC1Bound * t ^ (-(1 : ℝ) / 2)
+  unfold saddlePointRemainder
+  change
+    |(ErrorTerm t - (-1 : ℝ) ^ k * amp * rsPsi (blockParam k t)) / amp| ≤
+      fresnelC1Bound * t ^ (-(1 : ℝ) / 2)
+  rw [hparam, abs_div, abs_of_pos hamp_pos]
+  rw [div_le_iff₀ hamp_pos]
+  simpa [t, amp, mul_comm, mul_left_comm, mul_assoc] using hstat
+
+/-- On block coordinates, the weighted profile bound is equivalent to the
+expected `fresnelC1Bound · t^(-1/2)` decay for the normalized remainder. -/
+theorem siegelCoordinateRemainderBoundProp_of_weightedProfile
+    (h : SiegelWeightedProfileBoundProp) :
+    SiegelCoordinateRemainderBoundProp := by
+  intro k p hp
   let u : ℝ := (k : ℝ) + 1 + p
   have hu_nonneg : 0 ≤ u := by
     dsimp [u]
@@ -182,7 +389,7 @@ private theorem saddle_remainder_fresnel_bound_on_coords [h : SiegelSaddleExpans
     have hk1_pos : 0 < (k : ℝ) + 1 := by positivity
     dsimp [u]
     linarith [hp.1, hk1_pos]
-  have hprof := h.weighted_profile_bound k p hp
+  have hprof := h k p hp
   have hprof' : u * |saddlePointRemainder k (blockCoord k p)| ≤
       fresnelC1Bound / Real.sqrt (2 * Real.pi) := by
     simpa [u, abs_mul, abs_of_nonneg hu_nonneg, mul_comm, mul_left_comm, mul_assoc] using hprof
@@ -200,6 +407,55 @@ private theorem saddle_remainder_fresnel_bound_on_coords [h : SiegelSaddleExpans
           rw [div_eq_mul_inv, one_div]
     _ = fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2) := by
           rw [blockCoord_rpow_neg_half k p hp.1]
+
+/-- The coordinate pointwise remainder bound implies the weighted profile
+bound by multiplying through by the positive block-coordinate factor. -/
+theorem siegelWeightedProfileBoundProp_of_coordinateRemainder
+    (h : SiegelCoordinateRemainderBoundProp) :
+    SiegelWeightedProfileBoundProp := by
+  intro k p hp
+  let u : ℝ := (k : ℝ) + 1 + p
+  have hu_nonneg : 0 ≤ u := by
+    dsimp [u]
+    linarith [hp.1]
+  have hu_pos : 0 < u := by
+    have hk1_pos : 0 < (k : ℝ) + 1 := by positivity
+    dsimp [u]
+    linarith [hp.1, hk1_pos]
+  have hcoord := h k p hp
+  rw [blockCoord_rpow_neg_half k p hp.1] at hcoord
+  have hmul :
+      u * |saddlePointRemainder k (blockCoord k p)| ≤
+        u * (fresnelC1Bound * (1 / (Real.sqrt (2 * Real.pi) * u))) :=
+    mul_le_mul_of_nonneg_left hcoord hu_nonneg
+  have hsqrt_ne : Real.sqrt (2 * Real.pi) ≠ 0 := Real.sqrt_ne_zero'.mpr (by positivity)
+  have hscaled :
+      u * |saddlePointRemainder k (blockCoord k p)| ≤
+        fresnelC1Bound / Real.sqrt (2 * Real.pi) := by
+    calc
+      u * |saddlePointRemainder k (blockCoord k p)|
+          ≤ u * (fresnelC1Bound * (1 / (Real.sqrt (2 * Real.pi) * u))) := hmul
+      _ = fresnelC1Bound / Real.sqrt (2 * Real.pi) := by
+            field_simp [hu_pos.ne', hsqrt_ne]
+  simpa [u, abs_mul, abs_of_nonneg hu_nonneg, mul_comm, mul_left_comm, mul_assoc] using hscaled
+
+/-- The weighted-profile and coordinate pointwise forms of the Gabcke Satz 1
+absolute atom are exactly equivalent. -/
+theorem siegelWeightedProfileBoundProp_iff_coordinateRemainder :
+    SiegelWeightedProfileBoundProp ↔ SiegelCoordinateRemainderBoundProp :=
+  ⟨siegelCoordinateRemainderBoundProp_of_weightedProfile,
+    siegelWeightedProfileBoundProp_of_coordinateRemainder⟩
+
+/-- On block coordinates, the weighted profile bound implies the expected
+    `fresnelC1Bound · t^(-1/2)` decay for the normalized remainder. -/
+private theorem saddle_remainder_fresnel_bound_on_coords [h : SiegelSaddleExpansionHyp]
+    (k : ℕ) (p : ℝ) (hp : p ∈ Ico (0 : ℝ) 1) :
+    |saddlePointRemainder k (blockCoord k p)| ≤
+      fresnelC1Bound * (blockCoord k p) ^ (-(1 : ℝ) / 2) := by
+  have hcoord : SiegelCoordinateRemainderBoundProp :=
+    siegelCoordinateRemainderBoundProp_of_weightedProfile
+      siegelWeightedProfileBoundProp_of_siegelSaddleExpansionHyp
+  exact hcoord k p hp
 
 /-- Admissible coefficient witness recovered from the weighted block profile. -/
 private theorem saddle_remainder_admissible_constant [h : SiegelSaddleExpansionHyp]
