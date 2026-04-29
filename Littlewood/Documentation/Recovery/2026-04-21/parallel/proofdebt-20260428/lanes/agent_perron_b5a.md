@@ -1998,3 +1998,43 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   choose an explicit cutoff `X0 >= 2` and prove either the bounded slab
   normalized estimate on `2 <= x <= X0`, or the asymptotic normalized tail
   estimate on `X0 <= x`.
+
+### 2026-04-29 Round 39 - Explicit Cutoff 16 Slab/Tail
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  choose an explicit cutoff for the normalized concrete-defect slab/tail split.
+- Code facts banked:
+  chose `X0 = 16` and added
+  `small_T_concrete_contour_remainder_normalized_sup_from_slab16_and_tail16`.
+  This specializes the generic slab/tail theorem to a genuine compact slab
+  `2 <= x <= 16`, `2 <= T <= 16`, plus the asymptotic tail `16 <= x`.
+  Added
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder_slab16_and_tail16`,
+  wiring the explicit-cutoff split into `SmallTPerronLinearWindowBoundHyp`.
+- Scale check:
+  no compactness is claimed outside the slab.  The tail still carries the
+  normalized denominator and remains an unbounded analytic estimate.
+- Failed/demoted routes:
+  did not use an unscaled bound, did not claim global compactness in `x`, and
+  did not introduce a legacy `SmallTPerronBoundHyp` instance.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  Passed under `/tmp/littlewood-lean-singleflight.lock` with the corrected
+  non-self-matching guard.
+- Smallest next theorem:
+  prove either the compact slab atom
+  `∃ Cslab > 0, ∀ x T, x >= 2 -> x <= 16 -> 2 <= T -> T <= 16 ->
+    |perronVerticalContourRemainderRe x T| /
+      (Real.sqrt x * (Real.log T)^2 / Real.sqrt T) <= Cslab`,
+  or the asymptotic tail atom
+  `∃ Ctail > 0, ∀ x T, 16 <= x -> 2 <= T -> T <= 16 ->
+    |perronVerticalContourRemainderRe x T| /
+      (Real.sqrt x * (Real.log T)^2 / Real.sqrt T) <= Ctail`.

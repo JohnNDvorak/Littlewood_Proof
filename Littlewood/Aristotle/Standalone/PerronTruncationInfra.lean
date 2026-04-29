@@ -4911,6 +4911,32 @@ theorem small_T_concrete_contour_remainder_normalized_sup_from_slab_and_tail
   · exact le_trans (htail x T hX0 hx_tail hT_lo hT_hi)
       (le_max_right Cslab Ctail)
 
+/-- Explicit `X0 = 16` version of the slab/tail split for the normalized
+concrete contour-remainder defect.
+
+The bounded slab is now the genuine compact rectangle
+`2 ≤ x ≤ 16`, `2 ≤ T ≤ 16`; the unbounded work is isolated in the separate
+tail atom `16 ≤ x`. -/
+theorem small_T_concrete_contour_remainder_normalized_sup_from_slab16_and_tail16
+    (hslab16 : ∃ Cslab > (0 : ℝ), ∀ x T : ℝ,
+      x ≥ 2 → x ≤ 16 → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cslab)
+    (htail16 : ∃ Ctail > (0 : ℝ), ∀ x T : ℝ,
+      16 ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Ctail) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cc := by
+  refine
+    small_T_concrete_contour_remainder_normalized_sup_from_slab_and_tail
+      (16 : ℝ) (by norm_num) hslab16 ?_
+  rcases htail16 with ⟨Ctail, hCtail_pos, htail16⟩
+  refine ⟨Ctail, hCtail_pos, ?_⟩
+  intro x T _hX0 hx_tail hT_lo hT_hi
+  exact htail16 x T hx_tail hT_lo hT_hi
+
 /-- Strengthened small-`T` surface matching the closed Perron cutoff route.
 
 This class is intentionally separate from
@@ -5089,6 +5115,22 @@ theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_slab_and
   small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
     (small_T_concrete_contour_remainder_normalized_sup_from_slab_and_tail
       X0 hX0 hslab htail)
+
+/-- Linear-window small-`T` surface from the explicit cutoff `X0 = 16`
+slab/tail split for the normalized concrete contour-remainder defect. -/
+theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_slab16_and_tail16
+    (hslab16 : ∃ Cslab > (0 : ℝ), ∀ x T : ℝ,
+      x ≥ 2 → x ≤ 16 → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cslab)
+    (htail16 : ∃ Ctail > (0 : ℝ), ∀ x T : ℝ,
+      16 ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Ctail) :
+    SmallTPerronLinearWindowBoundHyp :=
+  small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
+    (small_T_concrete_contour_remainder_normalized_sup_from_slab16_and_tail16
+      hslab16 htail16)
 
 /-- Legacy public small-`T` provider from the smaller contour-remainder split,
 conditional on the explicit linear-window absorption atom.
