@@ -2716,3 +2716,46 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   period-correction zero for the vertical multiplier; independent debts remain
   the Jacobian-integral bound at `1/relativeWeight` and shifted
   stationary-phase target remainder.
+
+### 2026-04-29 Round 58 Vertical Principal-Log Big-O Handoff
+
+- Classification: `VALIDATED_STANDARD_THEOREM_REDUCTION`.
+- Exact theorem attacked:
+  direct vertical principal-log Stirling bound
+  `∃ C > 0, ∃ Y0, ∀ y ≥ Y0,`
+  `‖Complex.log (Complex.Gamma (1/4 + i*y)) -`
+  `StationaryPhaseStartValue.stirlingTerm (1/4 + i*y)‖ ≤ C / y`.
+- Facts banked:
+  added and proved `atkinson_vertical_principal_log_bound_of_isBigO`,
+  converting the standard vertical principal-log Stirling `IsBigO` theorem
+  into the pointwise bound required by the Atkinson multiplier route.  Also
+  added and proved `atkinson_multiplier_isBigO_of_vertical_principal_log_isBigO`,
+  wiring that standard `IsBigO` input directly to
+  `atkinsonGammaStirlingMultiplier t - 1 = O(1/t)`.
+- Smallest next theorem:
+  prove the standard principal-log vertical Stirling Big-O
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun y => Complex.log (Complex.Gamma (1/4 + i*y)) -`
+  `StationaryPhaseStartValue.stirlingTerm (1/4 + i*y))`
+  `(fun y => ((1 / y : ℝ) : ℂ))`.
+- Failed routes / guardrails:
+  searched Mathlib and local `BinetStirling`/`DigammaBinetBound`/
+  `StationaryPhaseStartValue` infrastructure.  Mathlib exposes real
+  factorial/Bohr-Mollerup Gamma material here, but no complex principal-log
+  Stirling theorem.  The local Binet path controls an auxiliary private
+  half-plane `gammaLog`, not principal `Complex.log`; using it still needs a
+  branch comparison.  Did not add imports, analytic providers, axioms, sorries,
+  statement weakening, direct Abel shortcuts, phase-weight division, circular
+  provider assumptions, or the demoted raw endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  standard complex principal-log Gamma/Stirling Big-O on the vertical line;
+  alternate branch route remains the period-correction-zero atom. Independent
+  debts remain the Jacobian-integral bound at `1/relativeWeight` and shifted
+  stationary-phase target remainder.
