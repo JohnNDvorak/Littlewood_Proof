@@ -5054,6 +5054,66 @@ theorem small_T_zeroSumRe_continuousOn_slab16_from_zerosBelow_eventually_eq
   unfold Littlewood.Development.ShiftedRemainderInterface.zeroSumRe
   rw [hq]
 
+/-- The local `ZerosBelow` constancy atom follows from local constancy of the
+underlying closed-height critical-zero set.
+
+This theorem isolates the genuine remaining analytic/topological issue: for
+the closed condition `|ρ.im| ≤ T`, set-level local constancy requires ruling out
+zeros exactly on the moving boundary height. -/
+theorem small_T_zerosBelow_eventually_eq_from_criticalZeroSet_eventually_eq
+    (hsets : ∀ p ∈
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᶠ q in
+        𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+            {ρ : ℂ | |ρ.im| ≤ q.2}) =
+          (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+            {ρ : ℂ | |ρ.im| ≤ p.2})) :
+    ∀ p ∈
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᶠ q in
+        𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        Aristotle.DirichletPhaseAlignment.ZerosBelow q.2 =
+          Aristotle.DirichletPhaseAlignment.ZerosBelow p.2 := by
+  intro p hp
+  filter_upwards [hsets p hp] with q hq
+  unfold Aristotle.DirichletPhaseAlignment.ZerosBelow
+  by_cases hqfin :
+      (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+        {ρ : ℂ | |ρ.im| ≤ q.2}).Finite
+  · have hpfin :
+        (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+          {ρ : ℂ | |ρ.im| ≤ p.2}).Finite := by
+      simpa [← hq] using hqfin
+    simp [hpfin, hq]
+  · have hpnot :
+        ¬ (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+          {ρ : ℂ | |ρ.im| ≤ p.2}).Finite := by
+      intro hpfin
+      exact hqfin (by simpa [hq] using hpfin)
+    simp [hqfin, hpnot]
+
+/-- Zero-sum slab continuity reduced directly to set-level local constancy of
+the closed-height critical-zero sets. -/
+theorem small_T_zeroSumRe_continuousOn_slab16_from_criticalZeroSet_eventually_eq
+    (hsets : ∀ p ∈
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᶠ q in
+        𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+            {ρ : ℂ | |ρ.im| ≤ q.2}) =
+          (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+            {ρ : ℂ | |ρ.im| ≤ p.2})) :
+    ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_zeroSumRe_continuousOn_slab16_from_zerosBelow_eventually_eq
+    (small_T_zerosBelow_eventually_eq_from_criticalZeroSet_eventually_eq hsets)
+
 /-- Continuity of the normalization denominator on the cutoff-`16` slab. -/
 theorem small_T_residue_error_shape_continuousOn_slab16 :
     ContinuousOn

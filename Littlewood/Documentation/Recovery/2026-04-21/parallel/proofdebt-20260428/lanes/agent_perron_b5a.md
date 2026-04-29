@@ -2234,3 +2234,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   or separately prove
   `ContinuousOn (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2) slab`,
   or the normalized asymptotic tail atom on `16 <= x`.
+
+### 2026-04-29 Round 44 - Push Zero-Sum Constancy Below `ZerosBelow`
+
+- Classification: `THEOREM_LEVEL_REDUCTION`.
+- Exact theorem attacked:
+  local zero-set constancy on the cutoff slab,
+  `∀ p ∈ slab, ∀ᶠ q in 𝓝[slab] p,
+      ZerosBelow q.2 = ZerosBelow p.2`.
+- Code facts banked:
+  added
+  `small_T_zerosBelow_eventually_eq_from_criticalZeroSet_eventually_eq`,
+  reducing local `ZerosBelow` equality to local equality of the underlying
+  closed-height critical-zero sets
+  `CriticalZeros ∩ {ρ | |ρ.im| <= T}`.  Added
+  `small_T_zeroSumRe_continuousOn_slab16_from_criticalZeroSet_eventually_eq`,
+  wiring that smaller set-level atom back into the zero-sum slab-continuity
+  route from Round 43.
+- Shape check:
+  `ZerosBelow T` is defined using the closed boundary condition
+  `|ρ.im| <= T`; unconditional local constancy at every slab height would fail
+  at a height equal to `|ρ.im|` for a critical zero.  This patch does not claim
+  such a boundary-zero exclusion.  It only removes the `Finset`/`toFinset`
+  wrapper and leaves the exact set-level stability statement.
+- Failed/demoted routes:
+  did not assert the global slab local constancy theorem.  Did not claim
+  zero-sum continuity through a moving finite set without proving boundary
+  stability.  Did not address the separate vertical Perron integral continuity
+  or `16 <= x` normalized tail atom.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, or `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check`; then
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.  Both passed.
+- Smallest next theorem:
+  prove the set-level local stability atom
+  `∀ p ∈ slab, ∀ᶠ q in 𝓝[slab] p,
+      CriticalZeros ∩ {ρ | |ρ.im| <= q.2} =
+        CriticalZeros ∩ {ρ | |ρ.im| <= p.2}`,
+  probably from a boundary-zero exclusion/gap condition; otherwise choose the
+  independent atom
+  `ContinuousOn (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2) slab`,
+  or the normalized asymptotic tail atom on `16 <= x`.
