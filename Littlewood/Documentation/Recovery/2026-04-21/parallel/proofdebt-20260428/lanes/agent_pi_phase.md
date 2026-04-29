@@ -2146,3 +2146,41 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`, with a proof route through quantitative relation-compatible Kronecker radius bounds for the target and anti-target finite-zero phase boxes at the same `T, ε`.
+
+### 2026-04-29 Round 40: Relation-Compatible Budgeted Kronecker Split
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`.
+- Facts banked:
+  - Added `TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp`.
+  - Added `targetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDense_of_relationCompatibleBudgetedKronecker_hyp`.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyRelationCompatibleBudgetedRadiusRoute`.
+- What changed:
+  - The budgeted-radius atom now reduces to a smaller theorem that takes the target and anti-target finite-zero relation-compatibility predicates explicitly.
+  - The new source preserves the same selected height and tolerance `T, ε`, and returns both target and anti-target radii under the required tower half-budget.
+  - The corrected route can now be packaged from `PerronThresholdTowerLogHalfBudgetHyp`, paired zeta compatibility, and the relation-compatible budgeted Kronecker source.
+- Remaining goal shape:
+  - Prove `TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp`: quantitative finite-dimensional Kronecker for the target/anti zeta phase boxes, with explicit relative-density radii bounded by
+    `Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2`
+    at the same `T, ε`.
+- Failed/circular route:
+  - Did not claim bounds for the old unconstrained `Classical.choose` radii.
+  - Did not weaken target/anti compatibility or split target and anti-target into independent heights/tolerances.
+  - Did not add provider instances for the new source.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-radius route, provider cycles, reverse-comparison instances, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Focused validation attempted under the coordinator singleflight rule, but the required `pgrep` guard reported `LEAN_BUSY`.
+- Validation command/result:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: not run; guard output included active worker command line and `LEAN_BUSY`.
+- Smallest next theorem:
+  - `TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp`.

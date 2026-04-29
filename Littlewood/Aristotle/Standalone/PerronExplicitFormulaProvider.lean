@@ -3436,9 +3436,69 @@ class TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp : Prop wh
             L < t0 ∧
             t0 < L + Ra ∧
             ∀ ρ ∈ (finite_zeros_le T).toFinset,
+          ∃ m : ℤ,
+            ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
+                m • (2 * Real.pi)‖ ≤ ε)
+
+/-- Relation-compatible quantitative Kronecker source for the paired
+target/anti finite-zero boxes.
+
+This is smaller than `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`:
+it assumes the exact target and anti-target relation-compatibility predicates
+for the finite zeta zero set at the same `T, ε`, and only supplies the
+quantitative Kronecker radii with the required half-budget bounds. -/
+class TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp :
+    Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε Complex.arg →
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε (fun ρ => Complex.arg ρ + Real.pi) →
+      ∃ Rt Ra : ℝ,
+        0 < Rt ∧
+        0 < Ra ∧
+        Rt + 1
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+        Ra + 1
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+        (∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + Rt ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - Complex.arg ρ -
+                    m • (2 * Real.pi)‖ ≤ ε) ∧
+        (∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + Ra ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
               ∃ m : ℤ,
                 ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
                     m • (2 * Real.pi)‖ ≤ ε)
+
+/-- Paired zeta relation compatibility plus the relation-compatible
+quantitative Kronecker source supply the budgeted target/anti finite-zero
+relative-density payload. -/
+theorem targetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDense_of_relationCompatibleBudgetedKronecker_hyp
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp] :
+    TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    rcases TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+        T ε hT4 hεpos with
+      ⟨hTargetCompat, hAntiCompat⟩
+    exact
+      TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp.witness
+        T ε hT4 hεpos hεlt hTargetCompat hAntiCompat
 
 /-- Majorant form of the paired finite-zero phase-radius growth source.
 

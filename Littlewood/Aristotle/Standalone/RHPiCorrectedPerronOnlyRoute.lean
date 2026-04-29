@@ -396,6 +396,19 @@ theorem rhPiWitnessData_of_correctedPerronOnlyBudgetedRadiusRoute
   letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
   exact rhPiWitnessData_of_exactSeedAboveThreshold_perron_corrected_hyp
 
+/-- Corrected RH-`pi` witness endpoint from paired zeta compatibility and a
+relation-compatible quantitative Kronecker theorem with explicit budgeted
+radii. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyRelationCompatibleBudgetedRadiusRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp] :
+    RhPiWitnessData := by
+  letI : TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp :=
+    targetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDense_of_relationCompatibleBudgetedKronecker_hyp
+  exact rhPiWitnessData_of_correctedPerronOnlyBudgetedRadiusRoute
+
 /-- Corrected Perron-only route from the explicit same-height growth sources
 below the two half-budget leaves. -/
 theorem rhPiWitnessData_of_correctedPerronOnlyGrowthBudgetRoute
