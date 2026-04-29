@@ -4255,6 +4255,46 @@ instance (priority := 90)
     AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
   antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
 
+/-- The target relation-compatible canonical selected-radius residual follows
+from the existing target chosen phase-radius residual.
+
+Under the relation-compatible Kronecker provider, the target phase-radius
+payload is supplied by the same `Classical.choose` expression as
+`finiteSetRelationCompatibleKroneckerRadius` with the canonical target zeta
+compatibility proof.  This theorem records that comparison explicitly without
+turning it into a provider instance. -/
+theorem targetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual_of_phaseRadiusResidual
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    (h : TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
+    TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual := by
+  intro T ε hT4 hεpos hεlt
+  simpa [TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual,
+    TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual,
+    targetFiniteZeroInhomogeneousPhaseRadius,
+    finiteSetRelationCompatibleKroneckerRadius,
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp,
+    hT4, hεpos] using h T ε hT4 hεpos hεlt
+
+/-- The anti-target relation-compatible canonical selected-radius residual
+follows from the existing anti-target chosen phase-radius residual.
+
+This is the symmetric comparison theorem for the phase
+`ρ ↦ arg ρ + π`; it keeps the selected-radius route explicit and avoids a
+separately chosen bounded witness. -/
+theorem antiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual_of_phaseRadiusResidual
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    (h : AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
+    AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual := by
+  intro T ε hT4 hεpos hεlt
+  simpa [AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual,
+    AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual,
+    antiTargetFiniteZeroInhomogeneousPhaseRadius,
+    finiteSetRelationCompatibleKroneckerRadius,
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp,
+    hT4, hεpos] using h T ε hT4 hεpos hεlt
+
 /-- Relation-compatible finite-set Kronecker plus paired target/anti zeta
 compatibility supplies the paired finite-zero relative-density payload. -/
 theorem targetAntiFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
