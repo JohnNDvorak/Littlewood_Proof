@@ -1278,6 +1278,22 @@ private theorem standardGabckeQuarterLocalDenominatorRawSine_thirdDerivative :
   rw [hcomp', hsin3']
   ring
 
+/-- The fourth derivative of the raw denominator sine vanishes at the origin. -/
+private theorem standardGabckeQuarterLocalDenominatorRawSine_fourthDerivative :
+    iteratedDeriv 4 standardGabckeQuarterLocalSineDenominator 0 = 0 := by
+  have hcomp := congrFun
+    (iteratedDeriv_comp_const_mul (𝕜 := ℝ) (n := 4) Real.contDiff_sin (2 * Real.pi)) 0
+  have hsin4 : iteratedDeriv 4 Real.sin 0 = 0 := by
+    norm_num [Real.iteratedDeriv_even_sin]
+  have hcomp' :
+      iteratedDeriv 4 standardGabckeQuarterLocalSineDenominator 0 =
+        (2 * Real.pi) ^ 4 * iteratedDeriv 4 Real.sin ((2 * Real.pi) * 0) := by
+    simpa [standardGabckeQuarterLocalSineDenominator] using hcomp
+  have hsin4' : iteratedDeriv 4 Real.sin ((2 * Real.pi) * 0) = 0 := by
+    simp [hsin4]
+  rw [hcomp', hsin4']
+  ring
+
 /-- The raw sine Taylor series has cubic coefficient
 `-(4*pi^3/3)`. This is the local sine-composition coefficient source below
 the denominator dslope quadratic coefficient. -/
@@ -1334,6 +1350,72 @@ theorem standardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp_proved :
     StandardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp :=
   standardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp_of_quadraticCoefficient
     standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_proved
+
+/-- The denominator dslope third derivative vanishes. This is the shifted
+fourth Taylor coefficient of the raw denominator sine. -/
+theorem standardGabckeQuarterLocalDenominatorDslopeThirdDerivativeProp_proved :
+    StandardGabckeQuarterLocalDenominatorDslopeThirdDerivativeProp := by
+  unfold StandardGabckeQuarterLocalDenominatorDslopeThirdDerivativeProp
+  let g : ℝ → ℝ := standardGabckeQuarterLocalSineDenominator
+  let A : ℕ → ℝ := fun n => iteratedDeriv n g 0 / n.factorial
+  let B : ℕ → ℝ := fun n => A (n + 1)
+  let f : ℝ → ℝ := dslope standardGabckeQuarterLocalSineDenominator 0
+  have hg_analytic : AnalyticAt ℝ g 0 := by
+    have hlin : AnalyticAt ℝ (fun w : ℝ => (2 * Real.pi) * w) 0 :=
+      analyticAt_const.mul analyticAt_id
+    simpa [g, standardGabckeQuarterLocalSineDenominator] using
+      (Real.analyticAt_sin.comp hlin)
+  have hA :
+      HasFPowerSeriesAt g (FormalMultilinearSeries.ofScalars ℝ A) 0 :=
+    hg_analytic.hasFPowerSeriesAt
+  have hB :
+      HasFPowerSeriesAt f (FormalMultilinearSeries.ofScalars ℝ B) 0 := by
+    rw [← standardGabckeQuarterLocalDenominatorDslope_fslope_ofScalars A]
+    simpa [f, g] using hA.has_fpower_series_dslope_fslope
+  have h_analytic : AnalyticAt ℝ f 0 :=
+    standardGabckeQuarterLocalDenominatorDslopeAnalyticProp_proved
+  have hTaylor :
+      HasFPowerSeriesAt f
+        (FormalMultilinearSeries.ofScalars ℝ
+          (fun n : ℕ => iteratedDeriv n f 0 / n.factorial)) 0 :=
+    h_analytic.hasFPowerSeriesAt
+  have hseries :
+      FormalMultilinearSeries.ofScalars ℝ B =
+        FormalMultilinearSeries.ofScalars ℝ
+          (fun n : ℕ => iteratedDeriv n f 0 / n.factorial) :=
+    hB.eq_formalMultilinearSeries hTaylor
+  have hcoeff := congrArg (fun p : FormalMultilinearSeries ℝ ℝ ℝ => p.coeff 3) hseries
+  have hB3 : B 3 = 0 := by
+    dsimp [B, A, g]
+    rw [standardGabckeQuarterLocalDenominatorRawSine_fourthDerivative]
+    norm_num
+  have hthird' :
+      iteratedDeriv 3 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 / 6 = 0 := by
+    have hcoeff' : B 3 = iteratedDeriv 3 f 0 / ((3 : ℕ).factorial : ℝ) := by
+      simpa using hcoeff
+    rw [hB3] at hcoeff'
+    have hcoeff'' :
+        iteratedDeriv 3 f 0 / ((3 : ℕ).factorial : ℝ) = 0 := hcoeff'.symm
+    norm_num at hcoeff''
+    simpa [f] using hcoeff''
+  have hthird_mul :
+      6 * (iteratedDeriv 3 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 / 6) =
+        0 := by
+    rw [hthird']
+    ring
+  calc
+    iteratedDeriv 3 (dslope standardGabckeQuarterLocalSineDenominator 0) 0
+        = 6 * (iteratedDeriv 3 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 / 6) := by
+          ring
+    _ = 0 := hthird_mul
+
+/-- The denominator low-order derivative bundle is now closed from the first,
+second, and third derivative point values. -/
+theorem standardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp_proved :
+    StandardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp :=
+  ⟨standardGabckeQuarterLocalDenominatorDslopeFirstDerivativeProp_proved,
+    standardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp_proved,
+    standardGabckeQuarterLocalDenominatorDslopeThirdDerivativeProp_proved⟩
 
 /-- The finite denominator coefficient data follows from the low-order
 derivative values of the removable sine quotient, using Mathlib's Taylor
