@@ -40,6 +40,7 @@ Co-authored-by: Claude (Anthropic)
 -/
 
 import Mathlib
+import Littlewood.Aristotle.ZetaZeroInfrastructure
 import Littlewood.Aristotle.Standalone.ExplicitFormulaPsiB5aDefs
 import Littlewood.Aristotle.Standalone.PerronVerticalFromRectangle
 import Littlewood.Development.PerronFormulaProof
@@ -5846,6 +5847,19 @@ following route uses a fixed finite envelope at height `16` instead of local
 constancy of `ZerosBelow T`.
 -/
 
+/-- The closed critical-zero set up to height `16` is finite. -/
+theorem small_T_criticalZeros_height_sixteen_finite :
+    (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+      {ρ : ℂ | |ρ.im| ≤ (16 : ℝ)}).Finite := by
+  rw [show
+      Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+          {ρ : ℂ | |ρ.im| ≤ (16 : ℝ)} =
+        zetaZerosUpTo (16 : ℝ) by
+    ext ρ
+    simp [Aristotle.DirichletPhaseAlignment.CriticalZeros, zetaZerosUpTo,
+      isNontrivialZero, and_assoc]]
+  exact finite_zeros (16 : ℝ)
+
 /-- If the closed critical-zero set up to height `16` is finite, then every
 `ZerosBelow T` with `T <= 16` is a subset of `ZerosBelow 16`. -/
 theorem small_T_zerosBelow_subset_zerosBelow_sixteen_of_finite16
@@ -6080,6 +6094,16 @@ theorem small_T_concrete_contour_remainder_slab16_bddAbove_image_of_zeroSum_fini
       small_T_perronVerticalIntegral_bddAbove_abs_image_slab16
       (small_T_zeroSumRe_bddAbove_abs_image_slab16_of_finite16 hfinite16))
 
+/-- Direct slab bounded-image route for the normalized concrete contour defect
+using the proved finite-zero theorem at height `16`. -/
+theorem small_T_concrete_contour_remainder_slab16_bddAbove_image_from_finiteZeros :
+    BddAbove
+      ((fun p : ℝ × ℝ =>
+          perronVerticalContourRemainderNormalized p.1 p.2) ''
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :=
+  small_T_concrete_contour_remainder_slab16_bddAbove_image_of_zeroSum_finite16
+    small_T_criticalZeros_height_sixteen_finite
+
 /-- Continuity of the normalization denominator on the cutoff-`16` slab. -/
 theorem small_T_residue_error_shape_continuousOn_slab16 :
     ContinuousOn
@@ -6208,6 +6232,20 @@ theorem small_T_concrete_contour_remainder_normalized_sup_from_bddAbove_slab16_a
           (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cc :=
   small_T_concrete_contour_remainder_normalized_sup_from_slab16_and_tail16
     (small_T_concrete_contour_remainder_slab16_from_bddAbove_image hslab_bdd)
+    htail16
+
+/-- Explicit cutoff-`16` normalized supremum from the proved finite-zero slab
+boundedness route and the separate unbounded tail atom. -/
+theorem small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_slab16_and_tail16
+    (htail16 : ∃ Ctail > (0 : ℝ), ∀ x T : ℝ,
+      16 ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Ctail) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cc :=
+  small_T_concrete_contour_remainder_normalized_sup_from_bddAbove_slab16_and_tail16
+    small_T_concrete_contour_remainder_slab16_bddAbove_image_from_finiteZeros
     htail16
 
 /-- Explicit cutoff-`16` normalized supremum from slab continuity and the
@@ -6459,6 +6497,18 @@ theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_bddAbove
   small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
     (small_T_concrete_contour_remainder_normalized_sup_from_bddAbove_slab16_and_tail16
       hslab_bdd htail16)
+
+/-- Linear-window small-`T` surface from the proved finite-zero slab route and
+the separate unbounded tail atom. -/
+theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_slab16_and_tail16
+    (htail16 : ∃ Ctail > (0 : ℝ), ∀ x T : ℝ,
+      16 ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Ctail) :
+    SmallTPerronLinearWindowBoundHyp :=
+  small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
+    (small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_slab16_and_tail16
+      htail16)
 
 /-- Linear-window small-`T` surface from continuity on the compact cutoff-`16`
 slab and the separate unbounded tail atom. -/
