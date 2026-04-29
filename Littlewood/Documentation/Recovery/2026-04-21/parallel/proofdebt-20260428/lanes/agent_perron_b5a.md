@@ -1179,3 +1179,49 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   harmonic sum.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 22 - Reciprocal Distance to Harmonic Floor
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the live pure reciprocal-distance atom
+  `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedReciprocalDistanceEnvelope x T <= Ch * Real.log x`.
+- Code facts banked:
+  added private `harmonic_floor_le_const_mul_log`, proving
+  `(harmonic (Nat.floor x) : ℝ) <= (1 + 1 / Real.log 2) * Real.log x`
+  for `x >= 2` using Mathlib's `harmonic_floor_le_one_add_log`.
+  Added
+  `small_T_separated_reciprocalDistance_bound_from_harmonic_floor`, reducing
+  the live reciprocal-distance atom to the exact finite harmonic majorant
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedReciprocalDistanceEnvelope x T
+      <= (harmonic (Nat.floor x) : ℝ)`.
+- Scale check:
+  the `(x / T)` scale is already factored out by Round 21.  This round keeps
+  only the logarithmic harmonic growth and does not introduce a bounded-height
+  pure Davenport envelope.
+- Failed/demoted routes:
+  did not assert a broad dummy constant.  A direct proof needs the finite
+  reindexing/injection from separated indices `n` to integer distances below
+  `Nat.floor x`; that combinatorial step was isolated instead of guessed.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the finite reindexing/cardinality majorant
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedReciprocalDistanceEnvelope x T
+      <= (harmonic (Nat.floor x) : ℝ)`.
+  It should map each separated `n <= floor x` to `Nat.floor x - n`, use
+  `1 < x - n` to exclude zero distance, and compare the resulting reciprocal
+  terms to the standard harmonic sum.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

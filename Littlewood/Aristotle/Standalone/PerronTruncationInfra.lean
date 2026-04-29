@@ -2969,6 +2969,51 @@ theorem small_T_separated_unweighted_logDistance_bound_from_reciprocal
         mul_le_mul_of_nonneg_left hreciprocal_x hscale_nonneg
     _ = Ch * (x / T) * Real.log x := by ring
 
+/-- Harmonic numbers at `floor x` are bounded by a constant multiple of
+`log x` for `x >= 2`. -/
+private theorem harmonic_floor_le_const_mul_log (x : ℝ) (hx : 2 ≤ x) :
+    (harmonic (Nat.floor x) : ℝ) ≤
+      (1 + 1 / Real.log 2) * Real.log x := by
+  have hx_one : 1 ≤ x := by linarith
+  have hlog2_pos : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hlog2_le : Real.log (2 : ℝ) ≤ Real.log x :=
+    Real.log_le_log (by norm_num) hx
+  have hone_le : (1 : ℝ) ≤ (1 / Real.log 2) * Real.log x := by
+    have hcoeff_nonneg : 0 ≤ (1 / Real.log 2 : ℝ) :=
+      (div_pos zero_lt_one hlog2_pos).le
+    calc (1 : ℝ)
+        = (1 / Real.log 2) * Real.log 2 := by
+          exact (one_div_mul_cancel hlog2_pos.ne').symm
+      _ ≤ (1 / Real.log 2) * Real.log x :=
+          mul_le_mul_of_nonneg_left hlog2_le hcoeff_nonneg
+  calc (harmonic (Nat.floor x) : ℝ)
+      ≤ 1 + Real.log x := harmonic_floor_le_one_add_log x hx_one
+    _ ≤ (1 / Real.log 2) * Real.log x + Real.log x :=
+        by linarith
+    _ = (1 + 1 / Real.log 2) * Real.log x := by ring
+
+/-- Reciprocal-distance envelope bound from the exact finite harmonic majorant.
+The remaining atom is now only the reindexing/cardinality proof that the
+separated reciprocal distances are dominated by `H_floor(x)`. -/
+theorem small_T_separated_reciprocalDistance_bound_from_harmonic_floor
+    (hharmonic : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedReciprocalDistanceEnvelope x T ≤
+        (harmonic (Nat.floor x) : ℝ)) :
+    ∃ Ch > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedReciprocalDistanceEnvelope x T ≤ Ch * Real.log x := by
+  let Ch : ℝ := 1 + 1 / Real.log 2
+  have hlog2_pos : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hCh_pos : 0 < Ch := by
+    dsimp [Ch]
+    exact add_pos zero_lt_one (div_pos zero_lt_one hlog2_pos)
+  refine ⟨Ch, hCh_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  calc perronKernelSeparatedReciprocalDistanceEnvelope x T
+      ≤ (harmonic (Nat.floor x) : ℝ) := hharmonic x T hx hT_lo hT_hi
+    _ ≤ Ch * Real.log x := by
+        dsimp [Ch]
+        exact harmonic_floor_le_const_mul_log x hx
+
 /-- The weighted harmonic-distance envelope is bounded by `log x` times the
 unweighted harmonic-distance envelope on the separated boundary window. -/
 theorem perronKernelSeparatedLogDistanceEnvelope_le_log_mul_unweighted
