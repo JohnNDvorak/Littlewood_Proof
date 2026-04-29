@@ -4763,6 +4763,80 @@ theorem small_T_direct_linear_bound_from_residue
   small_T_direct_linear_bound_from_perronVerticalIntegral_components
     small_T_perronVerticalIntegral_truncation_linear_bound hresidue
 
+/-- Adapter from the honest linear-window direct bound to the public small-`T`
+target, isolating the exact missing absorption statement.
+
+The second hypothesis is intentionally explicit.  On the full current
+small-`T` provider domain it is not supplied by the linear cutoff route: it is
+the precise statement needed to absorb `(x / T) * (log x)^2` into the public
+shape `sqrt x * (log T)^2 / sqrt T + (log x)^2`. -/
+theorem small_T_direct_bound_from_linear_bound_and_absorption
+    (hlinear : ∃ C₂ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+          (x / T) * (Real.log x) ^ 2))
+    (habsorb : ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      (x / T) * (Real.log x) ^ 2 ≤
+        A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+          (Real.log x) ^ 2)) :
+    ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+  rcases hlinear with ⟨Clin, hClin_pos, hlinear⟩
+  rcases habsorb with ⟨A, hA_pos, habsorb⟩
+  refine ⟨Clin * (1 + A), mul_pos hClin_pos (by positivity), ?_⟩
+  intro x T hx hT_lo hT_hi
+  let E : ℝ := Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T
+  let L : ℝ := (Real.log x) ^ 2
+  let Llin : ℝ := (x / T) * (Real.log x) ^ 2
+  have hE_nonneg : 0 ≤ E := by
+    dsimp [E]
+    exact Littlewood.Development.HadamardProductZeta.error_shape_nonneg x T
+  have hL_nonneg : 0 ≤ L := by
+    dsimp [L]
+    positivity
+  have hlinear_x :
+      |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+        Clin * (E + Llin) := by
+    dsimp [E, Llin]
+    simpa [mul_assoc] using hlinear x T hx hT_lo hT_hi
+  have habsorb_x : Llin ≤ A * (E + L) := by
+    dsimp [E, L, Llin]
+    exact habsorb x T hx hT_lo hT_hi
+  have hE_le_shape : E ≤ E + L := by linarith
+  have hlinear_shape : E + Llin ≤ (1 + A) * (E + L) := by
+    calc E + Llin
+        ≤ (E + L) + A * (E + L) := add_le_add hE_le_shape habsorb_x
+      _ = (1 + A) * (E + L) := by ring
+  calc |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T|
+      ≤ Clin * (E + Llin) := hlinear_x
+    _ ≤ Clin * ((1 + A) * (E + L)) :=
+        mul_le_mul_of_nonneg_left hlinear_shape hClin_pos.le
+    _ = Clin * (1 + A) *
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) := by
+        dsimp [E, L]
+        ring
+
+/-- Non-instance public provider adapter from the closed linear cutoff route
+and an explicit linear-window absorption atom.
+
+This is the safe boundary exposed by the current Perron work: it does not
+derive the missing absorption fact and it does not change the public
+`SmallTPerronBoundHyp` statement. -/
+theorem small_T_perron_bound_hyp_from_linear_residue_and_absorption
+    (hresidue : ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+        Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+    (habsorb : ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      (x / T) * (Real.log x) ^ 2 ≤
+        A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+          (Real.log x) ^ 2)) :
+    Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp :=
+  Littlewood.Development.HadamardProductZeta.small_T_perron_bound_hyp_of_direct_bound
+    (small_T_direct_bound_from_linear_bound_and_absorption
+      (small_T_direct_linear_bound_from_residue hresidue) habsorb)
+
 /-- Concrete small-`T` provider target from the finite weighted Perron-kernel
 cutoff atom plus the bounded-height residue extraction atom.
 
