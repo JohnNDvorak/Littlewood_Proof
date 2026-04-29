@@ -3632,6 +3632,40 @@ def PerronSqrtErrorRawChoiceFixedHalfBudgetThresholdComparisonResidual
         perronThresholdRawEventualChoice _hRH T ≤
           perronFixedHalfBudgetThreshold T
 
+/-- Least-valid-threshold residual below the fixed-half comparison.
+
+This is the exact chooser/minimality obstruction: eventually the named
+half-budget threshold is a valid Perron threshold, and the raw
+`Classical.choose` threshold is no larger than any valid Perron threshold at
+the same height.  The second conjunct is not supplied by `Classical.choose_spec`;
+that theorem only proves validity of the chosen threshold. -/
+def PerronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ (_hRH : ZetaZeros.RiemannHypothesis),
+    ∃ T0 : ℝ,
+      ∀ T : ℝ,
+        T0 ≤ T →
+        PerronSqrtErrorAtHeightValidThreshold _hRH T
+            (perronFixedHalfBudgetThreshold T) ∧
+          ∀ B : ℝ,
+            PerronSqrtErrorAtHeightValidThreshold _hRH T B →
+              perronThresholdRawEventualChoice _hRH T ≤ B
+
+/-- If the raw chooser is eventually least among valid thresholds, and the
+fixed-half budget threshold is valid, then the raw chooser is below that
+threshold. -/
+theorem perronSqrtErrorRawChoiceFixedHalfBudgetThresholdComparison_of_leastValidThresholdResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (h :
+      PerronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual) :
+    PerronSqrtErrorRawChoiceFixedHalfBudgetThresholdComparisonResidual := by
+  intro hRH
+  rcases h hRH with ⟨T0, hLeast⟩
+  refine ⟨T0, ?_⟩
+  intro T hT
+  rcases hLeast T hT with ⟨hFixedValid, hLeastAtT⟩
+  exact hLeastAtT (perronFixedHalfBudgetThreshold T) hFixedValid
+
 /-- The named fixed-half threshold comparison is exactly the minus-one
 residual after unfolding the budget threshold. -/
 theorem perronSqrtErrorRawChoiceMinusOneResidual_of_fixedHalfBudgetThresholdComparison
@@ -7095,6 +7129,25 @@ theorem exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfThresholdComparisonA
   exact
     exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfMinusOnePerronBudgetAndBudgetedRelativelyDense_hyp
       (perronSqrtErrorRawChoiceMinusOneResidual_of_fixedHalfBudgetThresholdComparison
+        hPerron)
+
+/-- Least-valid-threshold chooser residual plus explicit budgeted finite-zero
+radii package both Perron-only exact-seed classes.
+
+This endpoint records the current exact chooser obstruction: the raw eventual
+threshold must be least among valid thresholds, and the named half-budget
+threshold must itself be valid, at the same height. -/
+theorem exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfLeastValidThresholdAndBudgetedRelativelyDense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [ZeroCountingLowerBoundHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    (hPerron :
+      PerronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact
+    exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfThresholdComparisonAndBudgetedRelativelyDense_hyp
+      (perronSqrtErrorRawChoiceFixedHalfBudgetThresholdComparison_of_leastValidThresholdResidual
         hPerron)
 
 /-- Relation-compatible budgeted finite-zero Kronecker plus the Perron log
