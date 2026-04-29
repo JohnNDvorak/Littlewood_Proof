@@ -1423,6 +1423,40 @@ private noncomputable def atkinsonEndpointGapCorrectedModelResidual (n j : ℕ) 
       hardyStart (n + j) * Real.log ((n : ℝ) + 1)) -
     2 * Real.pi * ((2 * j + 1 : ℕ) : ℝ)
 
+/-- The elementary logarithmic core of the corrected model endpoint residual.
+After expanding `hardyStart m = 2π(m+1)^2`, the full model residual is
+`2π` times this expression. -/
+private noncomputable def atkinsonEndpointGapCorrectedModelLogCore (n j : ℕ) : ℝ :=
+  let a : ℝ := ((n + j : ℕ) : ℝ) + 1
+  let b : ℝ := ((n + j + 1 : ℕ) : ℝ) + 1
+  (1 / 2 : ℝ) * (b ^ 2 * Real.log (b ^ 2) - a ^ 2 * Real.log (a ^ 2)) -
+    (1 / 2 : ℝ) * (b ^ 2 - a ^ 2) -
+    (b ^ 2 - a ^ 2) * Real.log ((n : ℝ) + 1) -
+    ((2 * j + 1 : ℕ) : ℝ)
+
+private lemma atkinsonHardyStartThetaModel_eq_expanded (m : ℕ) :
+    atkinsonHardyStartThetaModel m =
+      Real.pi * ((((m : ℕ) : ℝ) + 1) ^ 2) *
+          Real.log (((((m : ℕ) : ℝ) + 1) ^ 2)) -
+        Real.pi * ((((m : ℕ) : ℝ) + 1) ^ 2) - Real.pi / 8 := by
+  have hπ_ne : (2 * Real.pi : ℝ) ≠ 0 := by positivity
+  have hdiv :
+      (2 * Real.pi * ((((m : ℕ) : ℝ) + 1) ^ 2)) / (2 * Real.pi) =
+        ((((m : ℕ) : ℝ) + 1) ^ 2) := by
+    field_simp [hπ_ne]
+  unfold atkinsonHardyStartThetaModel hardyStart
+  rw [hdiv]
+  ring
+
+private lemma atkinsonEndpointGapCorrectedModelResidual_eq_two_pi_logCore (n j : ℕ) :
+    atkinsonEndpointGapCorrectedModelResidual n j =
+      2 * Real.pi * atkinsonEndpointGapCorrectedModelLogCore n j := by
+  rw [atkinsonEndpointGapCorrectedModelResidual]
+  rw [atkinsonHardyStartThetaModel_eq_expanded (n + j + 1)]
+  rw [atkinsonHardyStartThetaModel_eq_expanded (n + j)]
+  unfold atkinsonEndpointGapCorrectedModelLogCore hardyStart
+  ring
+
 private noncomputable def atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral
     (n j : ℕ) : ℂ :=
   ∫ u in (0 : ℝ)..1,
@@ -20910,6 +20944,38 @@ private lemma atkinson_succ_inv_sq_le_shifted_inv_scale (n j : ℕ) (hj : 1 ≤ 
     _ = 1 / ((((n + j : ℕ) : ℝ) + 1) ^ 2) := by simp [a]
     _ ≤ (j : ℝ) / (((n + j : ℕ) : ℝ) + 1) :=
           atkinson_inv_sq_le_shifted_inv_scale n j hj
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+/-- The explicit corrected model residual reduces to the elementary log-core
+bound after the exact `hardyStart = 2π(m+1)^2` expansion. -/
+private theorem atkinson_modelResidual_bound_of_logCore_bound
+    (hlog :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ C_log > 0, ∃ N_log : ℕ, ∀ n : ℕ, N_log ≤ n →
+          |atkinsonEndpointGapCorrectedModelLogCore n j|
+            ≤ C_log * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n →
+        |atkinsonEndpointGapCorrectedModelResidual n j|
+          ≤ C_model * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+  intro j hj
+  obtain ⟨C_log, hC_log, N_log, hlog'⟩ := hlog j hj
+  refine ⟨2 * Real.pi * C_log, by positivity, N_log, ?_⟩
+  intro n hn
+  have hcore := hlog' n hn
+  calc
+    |atkinsonEndpointGapCorrectedModelResidual n j|
+        = |2 * Real.pi * atkinsonEndpointGapCorrectedModelLogCore n j| := by
+            rw [atkinsonEndpointGapCorrectedModelResidual_eq_two_pi_logCore]
+    _ = (2 * Real.pi) * |atkinsonEndpointGapCorrectedModelLogCore n j| := by
+            rw [abs_mul, abs_of_pos (by positivity : (0 : ℝ) < 2 * Real.pi)]
+    _ ≤ (2 * Real.pi) *
+          (C_log * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))) := by
+            exact mul_le_mul_of_nonneg_left hcore (by positivity)
+    _ = (2 * Real.pi * C_log) *
+          ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+            ring
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
   [AtkinsonLargeShiftPrefixBoundHyp] in

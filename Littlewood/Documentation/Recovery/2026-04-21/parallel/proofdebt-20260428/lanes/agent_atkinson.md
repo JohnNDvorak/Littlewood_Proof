@@ -1882,3 +1882,42 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   explicit logarithmic model residual at `j/(n+j+1)`, Hardy-start theta-model
   asymptotic at `(m+1)^-2`, Jacobian-integral bound at `1/relativeWeight`, and
   the shifted stationary-phase target remainder.
+
+### 2026-04-29 Round 39 Model Residual Log-Core Reduction
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  corrected theta-model residual
+  `|atkinsonEndpointGapCorrectedModelResidual n j|`
+  `≤ C_model * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))`.
+- Facts banked:
+  added the elementary logarithmic core
+  `atkinsonEndpointGapCorrectedModelLogCore` and proved the exact expansion
+  lemmas `atkinsonHardyStartThetaModel_eq_expanded` and
+  `atkinsonEndpointGapCorrectedModelResidual_eq_two_pi_logCore`. Proved
+  `atkinson_modelResidual_bound_of_logCore_bound`, reducing the current model
+  residual atom to the pure fixed-shift log-core estimate with the same
+  `j/(n+j+1)` scale.
+- Smallest next theorem:
+  prove, for every fixed `j ≥ 1`,
+  `∃ C_log > 0, ∃ N_log, ∀ n ≥ N_log,`
+  `|atkinsonEndpointGapCorrectedModelLogCore n j|`
+  `≤ C_log * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))`.
+  This is now an elementary real-log finite-difference bound after expanding
+  `hardyStart m = 2π(m+1)^2`.
+- Failed routes / guardrails:
+  did not revive the raw uncorrected phase-error route. Did not use direct
+  Abel, phase-weight division, circular provider assumptions, absolute
+  primitive bounds, broad analytic axioms, sorries, or statement weakening.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. The first focused build attempt
+  used the superseded `pgrep` guard and false-positive exited `LEAN_BUSY`
+  before running Lean. Retried with the corrected `ps -axo comm=` guard and ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`; result:
+  passed, `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  elementary log-core model residual at `j/(n+j+1)`, Hardy-start theta-model
+  asymptotic at `(m+1)^-2`, Jacobian-integral bound at `1/relativeWeight`, and
+  the shifted stationary-phase target remainder.
