@@ -1405,6 +1405,13 @@ private noncomputable def atkinsonEndpointGapPhaseError (n j : ℕ) : ℝ :=
       hardyStart (n + j) * Real.log ((n : ℝ) + 1)) -
     4 * Real.pi * j
 
+private noncomputable def atkinsonEndpointGapCorrectedPhaseError (n j : ℕ) : ℝ :=
+  (hardyTheta (hardyStart (n + j + 1)) -
+      hardyStart (n + j + 1) * Real.log ((n : ℝ) + 1)) -
+    (hardyTheta (hardyStart (n + j)) -
+      hardyStart (n + j) * Real.log ((n : ℝ) + 1)) -
+    2 * Real.pi * ((2 * j + 1 : ℕ) : ℝ)
+
 private noncomputable def atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral
     (n j : ℕ) : ℂ :=
   ∫ u in (0 : ℝ)..1,
@@ -1430,6 +1437,18 @@ private lemma atkinsonEndpointGap_periodic_main (j : ℕ) :
         push_cast
         ring]
   exact Complex.exp_nat_mul_two_pi_mul_I (2 * j)
+
+private lemma atkinsonEndpointGap_corrected_periodic_main (j : ℕ) :
+    Complex.exp
+        (Complex.I *
+          (((2 * Real.pi * ((2 * j + 1 : ℕ) : ℝ) : ℝ) : ℂ))) = 1 := by
+  rw [show
+      Complex.I *
+          (((2 * Real.pi * ((2 * j + 1 : ℕ) : ℝ) : ℝ) : ℂ))
+        = (((2 * j + 1 : ℕ) : ℂ)) * (2 * Real.pi * Complex.I) by
+        push_cast
+        ring]
+  exact Complex.exp_nat_mul_two_pi_mul_I (2 * j + 1)
 
 private theorem atkinsonNormalizedShiftedCorrectionCarrierEndpointGap_norm_le_phaseError
     (n j : ℕ) :
@@ -1501,6 +1520,81 @@ private theorem atkinsonNormalizedShiftedCorrectionCarrierEndpointGap_norm_le_ph
           simpa [Real.norm_eq_abs] using
             (norm_exp_I_mul_ofReal_sub_one_le (x := err))
     _ = |atkinsonEndpointGapPhaseError n j| := by
+          rfl
+
+private theorem atkinsonNormalizedShiftedCorrectionCarrierEndpointGap_norm_le_correctedPhaseError
+    (n j : ℕ) :
+    ‖atkinsonNormalizedShiftedCorrectionCarrierEndpointGap n j‖
+      ≤ |atkinsonEndpointGapCorrectedPhaseError n j| := by
+  let a : ℝ :=
+    hardyTheta (hardyStart (n + j + 1)) -
+      hardyStart (n + j + 1) * Real.log ((n : ℝ) + 1)
+  let b : ℝ :=
+    hardyTheta (hardyStart (n + j)) -
+      hardyStart (n + j) * Real.log ((n : ℝ) + 1)
+  let q : ℕ := 2 * j + 1
+  let period : ℝ := 2 * Real.pi * q
+  let err : ℝ := a - b - period
+  have hgap :
+      atkinsonNormalizedShiftedCorrectionCarrierEndpointGap n j
+        =
+      Complex.exp (Complex.I * ((a : ℝ) : ℂ)) -
+        Complex.exp (Complex.I * ((b : ℝ) : ℂ)) := by
+    unfold atkinsonNormalizedShiftedCorrectionCarrierEndpointGap
+    rw [HardyCosSmooth.hardyCosExp_eq_cexp_phaseArg,
+      HardyCosSmooth.hardyCosExp_eq_cexp_phaseArg]
+    rw [HardyCosSmooth.hardyPhaseArg_eq_hardyTheta_sub_log,
+      HardyCosSmooth.hardyPhaseArg_eq_hardyTheta_sub_log]
+  have hperiod :
+      Complex.exp (Complex.I * ((period : ℝ) : ℂ)) = 1 := by
+    dsimp [period, q]
+    exact atkinsonEndpointGap_corrected_periodic_main j
+  have hdiff :
+      Complex.exp (Complex.I * ((a : ℝ) : ℂ)) -
+          Complex.exp (Complex.I * ((b : ℝ) : ℂ))
+        =
+      Complex.exp (Complex.I * ((b : ℝ) : ℂ)) *
+        (Complex.exp (Complex.I * ((err : ℝ) : ℂ)) - 1) := by
+    have hbase :
+        Complex.exp (Complex.I * ((a : ℝ) : ℂ)) -
+            Complex.exp (Complex.I * ((b : ℝ) : ℂ))
+          =
+        Complex.exp (Complex.I * ((b : ℝ) : ℂ)) *
+          (Complex.exp (Complex.I * (((a - b : ℝ) : ℝ) : ℂ)) - 1) := by
+      rw [mul_sub, mul_one]
+      rw [← Complex.exp_add]
+      congr 1
+      rw [← mul_add, ← Complex.ofReal_add]
+      congr 1
+      ring
+    have herr_exp :
+        Complex.exp (Complex.I * (((a - b : ℝ) : ℝ) : ℂ))
+          =
+        Complex.exp (Complex.I * ((err : ℝ) : ℂ)) := by
+      have hsplit : a - b = err + period := by
+        dsimp [err]
+        ring
+      rw [hsplit]
+      have harg :
+          Complex.I * ((((err + period : ℝ) : ℝ) : ℂ))
+            =
+          Complex.I * ((err : ℝ) : ℂ) +
+            Complex.I * ((period : ℝ) : ℂ) := by
+        rw [Complex.ofReal_add, mul_add]
+      rw [harg, Complex.exp_add, hperiod, mul_one]
+    rw [hbase, herr_exp]
+  calc
+    ‖atkinsonNormalizedShiftedCorrectionCarrierEndpointGap n j‖
+        = ‖Complex.exp (Complex.I * ((b : ℝ) : ℂ)) *
+            (Complex.exp (Complex.I * ((err : ℝ) : ℂ)) - 1)‖ := by
+          rw [hgap, hdiff]
+    _ = ‖Complex.exp (Complex.I * ((err : ℝ) : ℂ)) - 1‖ := by
+          rw [norm_mul, Complex.norm_exp]
+          simp
+    _ ≤ |err| := by
+          simpa [Real.norm_eq_abs] using
+            (norm_exp_I_mul_ofReal_sub_one_le (x := err))
+    _ = |atkinsonEndpointGapCorrectedPhaseError n j| := by
           rfl
 
 private theorem atkinsonNormalizedShiftedCorrectionTerm_eq_relativeCoeff_mul_carrierIntegral
@@ -20637,6 +20731,32 @@ private theorem atkinson_endpointGap_bound_of_phaseError_bound
     (hphase' n hn)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Endpoint-gap control follows from the corrected compensated real
+phase-error atom. The corrected atom subtracts the native `2π` cell turn in
+addition to the shifted `4πj` turn; both are invisible to the complex
+exponential, but only this residual has the expected small scale. -/
+private theorem atkinson_endpointGap_bound_of_correctedPhaseError_bound
+    (hphase :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_phase > 0, ∃ N_phase : ℕ, ∀ n : ℕ, N_phase ≤ n →
+          |atkinsonEndpointGapCorrectedPhaseError n j|
+            ≤ A_phase *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j)) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ A_gap > 0, ∃ N_gap : ℕ, ∀ n : ℕ, N_gap ≤ n →
+        ‖atkinsonNormalizedShiftedCorrectionCarrierEndpointGap n j‖
+          ≤ A_gap *
+              (atkinsonShiftedRelativePhase (n + j) j /
+                atkinsonShiftedRelativeWeight (n + j) j) := by
+  intro j hj
+  obtain ⟨A_phase, hA_phase, N_phase, hphase'⟩ := hphase j hj
+  refine ⟨A_phase, hA_phase, N_phase, ?_⟩
+  intro n hn
+  exact (atkinsonNormalizedShiftedCorrectionCarrierEndpointGap_norm_le_correctedPhaseError n j).trans
+    (hphase' n hn)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Carrier cancellation after reducing the endpoint boundary to the shifted
 Hardy endpoint-gap atom. -/
 private theorem atkinson_carrierIntegral_bound_of_endpointGap_and_jacobian_estimates
@@ -20688,6 +20808,34 @@ private theorem atkinson_carrierIntegral_bound_of_endpointPhaseError_and_jacobia
   exact
     atkinson_carrierIntegral_bound_of_endpointGap_and_jacobian_estimates
       (atkinson_endpointGap_bound_of_phaseError_bound hphase)
+      hjacobian
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Carrier cancellation after reducing the endpoint boundary to the corrected
+compensated real phase-error atom. -/
+private theorem
+    atkinson_carrierIntegral_bound_of_correctedEndpointPhaseError_and_jacobian_estimates
+    (hphase :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_phase > 0, ∃ N_phase : ℕ, ∀ n : ℕ, N_phase ≤ n →
+          |atkinsonEndpointGapCorrectedPhaseError n j|
+            ≤ A_phase *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j))
+    (hjacobian :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_jac > 0, ∃ N_jac : ℕ, ∀ n : ℕ, N_jac ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+            ≤ B_jac / atkinsonShiftedRelativeWeight (n + j) j) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ E_corr > 0, ∃ N_corr : ℕ, ∀ n : ℕ, N_corr ≤ n →
+        ‖atkinsonNormalizedShiftedCorrectionCarrierIntegral n j‖
+          ≤ E_corr *
+              (atkinsonShiftedRelativePhase (n + j) j /
+                atkinsonShiftedRelativeWeight (n + j) j) := by
+  exact
+    atkinson_carrierIntegral_bound_of_endpointGap_and_jacobian_estimates
+      (atkinson_endpointGap_bound_of_correctedPhaseError_bound hphase)
       hjacobian
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
@@ -20950,6 +21098,37 @@ private theorem
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_fixedShift_correction
       hmode
       (atkinson_carrierIntegral_bound_of_endpointPhaseError_and_jacobian_estimates
+        hphase hjacobian)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Correction-prefix package with the endpoint boundary reduced to the
+corrected compensated real phase-error atom. -/
+private theorem
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_correctedEndpointPhaseError_jacobian_estimates
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hphase :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_phase > 0, ∃ N_phase : ℕ, ∀ n : ℕ, N_phase ≤ n →
+          |atkinsonEndpointGapCorrectedPhaseError n j|
+            ≤ A_phase *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j))
+    (hjacobian :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_jac > 0, ∃ N_jac : ℕ, ∀ n : ℕ, N_jac ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+            ≤ B_jac / atkinsonShiftedRelativeWeight (n + j) j) :
+    AtkinsonShiftedCorrectionPrefixBoundHyp := by
+  exact
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_fixedShift_correction
+      hmode
+      (atkinson_carrierIntegral_bound_of_correctedEndpointPhaseError_and_jacobian_estimates
         hphase hjacobian)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
@@ -21762,6 +21941,36 @@ private theorem
     AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
   letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_endpointPhaseError_jacobian_estimates
+      hmode hphase hjacobian
+  exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Public inverse-phase package with the endpoint boundary reduced to the
+corrected compensated real phase-error atom. -/
+private theorem
+    atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_correctedEndpointPhaseError_jacobian_estimates
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hphase :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_phase > 0, ∃ N_phase : ℕ, ∀ n : ℕ, N_phase ≤ n →
+          |atkinsonEndpointGapCorrectedPhaseError n j|
+            ≤ A_phase *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j))
+    (hjacobian :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_jac > 0, ∃ N_jac : ℕ, ∀ n : ℕ, N_jac ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+            ≤ B_jac / atkinsonShiftedRelativeWeight (n + j) j) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_correctedEndpointPhaseError_jacobian_estimates
       hmode hphase hjacobian
   exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
 
