@@ -1207,6 +1207,41 @@ private lemma atkinsonShiftedPacketPhase_continuous (k j : ℕ) :
   exact continuous_iff_continuousAt.2 fun u =>
     (atkinsonShiftedPacketPhase_hasDerivAt k j u).continuousAt
 
+private lemma atkinsonBlockMode_mul_shiftedPacketPhase_eq_shifted_hardyCosExp
+    (k j : ℕ) (u : ℝ) :
+    Aristotle.StationaryPhaseMainMode.blockMode k u *
+        atkinsonShiftedPacketPhase k j u
+      =
+    HardyCosSmooth.hardyCosExp (k - j) (blockCoord k u) := by
+  have hweighted :=
+    atkinsonWeighted_hardyCosExp_eq_resonant_times_shiftedPacket k j u
+  have hweight_ne :
+      (((atkinsonModeWeight (k - j) : ℝ) : ℂ)) ≠ 0 :=
+    Complex.ofReal_ne_zero.mpr (atkinsonModeWeight_ne_zero (k - j))
+  have hright :
+      ((((atkinsonModeWeight k : ℝ) : ℂ) *
+          HardyCosSmooth.hardyCosExp k (blockCoord k u))) *
+        atkinsonShiftedSinglePacket k j u
+        =
+      (((atkinsonModeWeight (k - j) : ℝ) : ℂ)) *
+        (Aristotle.StationaryPhaseMainMode.blockMode k u *
+          atkinsonShiftedPacketPhase k j u) := by
+    unfold Aristotle.StationaryPhaseMainMode.blockMode
+    unfold atkinsonShiftedSinglePacket
+    unfold atkinsonShiftedRelativeWeight
+    unfold atkinsonShiftedPacketPhase
+    rw [Complex.ofReal_div]
+    field_simp [Complex.ofReal_ne_zero.mpr (atkinsonModeWeight_ne_zero k)]
+  have hweighted' :
+      (((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+        HardyCosSmooth.hardyCosExp (k - j) (blockCoord k u))
+        =
+      (((atkinsonModeWeight (k - j) : ℝ) : ℂ)) *
+        (Aristotle.StationaryPhaseMainMode.blockMode k u *
+          atkinsonShiftedPacketPhase k j u) := by
+    rw [hweighted, hright]
+  exact (mul_left_cancel₀ hweight_ne hweighted').symm
+
 private lemma atkinsonShiftedPacketOmega_hasDerivAt (k j : ℕ) (u : ℝ) :
     HasDerivAt (atkinsonShiftedPacketOmega k j)
       (4 * Real.pi * atkinsonShiftedRelativePhase k j) u := by
@@ -1358,12 +1393,27 @@ private noncomputable def atkinsonNormalizedShiftedCorrectionCarrierBoundary (n 
     Aristotle.StationaryPhaseMainMode.blockMode (n + j) 0 *
       atkinsonShiftedPacketPhase (n + j) j 0
 
+private noncomputable def atkinsonNormalizedShiftedCorrectionCarrierEndpointGap
+    (n j : ℕ) : ℂ :=
+  HardyCosSmooth.hardyCosExp n (hardyStart (n + j + 1)) -
+    HardyCosSmooth.hardyCosExp n (hardyStart (n + j))
+
 private noncomputable def atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral
     (n j : ℕ) : ℂ :=
   ∫ u in (0 : ℝ)..1,
     (((blockJacobian (n + j) u : ℝ) : ℂ) *
       Aristotle.StationaryPhaseMainMode.blockMode (n + j) u) *
         atkinsonShiftedPacketPhase (n + j) j u
+
+private theorem atkinsonNormalizedShiftedCorrectionCarrierBoundary_eq_endpointGap
+    (n j : ℕ) :
+    atkinsonNormalizedShiftedCorrectionCarrierBoundary n j =
+      atkinsonNormalizedShiftedCorrectionCarrierEndpointGap n j := by
+  unfold atkinsonNormalizedShiftedCorrectionCarrierBoundary
+  unfold atkinsonNormalizedShiftedCorrectionCarrierEndpointGap
+  rw [atkinsonBlockMode_mul_shiftedPacketPhase_eq_shifted_hardyCosExp (n + j) j 1]
+  rw [atkinsonBlockMode_mul_shiftedPacketPhase_eq_shifted_hardyCosExp (n + j) j 0]
+  simp [blockCoord_one, blockCoord_zero, show n + j - j = n by omega]
 
 private theorem atkinsonNormalizedShiftedCorrectionTerm_eq_relativeCoeff_mul_carrierIntegral
     (n j : ℕ) :
@@ -20453,6 +20503,56 @@ private theorem atkinson_carrierIntegral_bound_of_boundary_and_jacobian_estimate
       hboundary hjacobian
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- The endpoint boundary atom is exactly the shifted Hardy endpoint-gap atom. -/
+private theorem atkinson_carrierBoundary_bound_of_endpointGap_bound
+    (hgap :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_gap > 0, ∃ N_gap : ℕ, ∀ n : ℕ, N_gap ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierEndpointGap n j‖
+            ≤ A_gap *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j)) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ A_bdry > 0, ∃ N_bdry : ℕ, ∀ n : ℕ, N_bdry ≤ n →
+        ‖atkinsonNormalizedShiftedCorrectionCarrierBoundary n j‖
+          ≤ A_bdry *
+              (atkinsonShiftedRelativePhase (n + j) j /
+                atkinsonShiftedRelativeWeight (n + j) j) := by
+  intro j hj
+  obtain ⟨A_gap, hA_gap, N_gap, hgap'⟩ := hgap j hj
+  refine ⟨A_gap, hA_gap, N_gap, ?_⟩
+  intro n hn
+  rw [atkinsonNormalizedShiftedCorrectionCarrierBoundary_eq_endpointGap n j]
+  exact hgap' n hn
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Carrier cancellation after reducing the endpoint boundary to the shifted
+Hardy endpoint-gap atom. -/
+private theorem atkinson_carrierIntegral_bound_of_endpointGap_and_jacobian_estimates
+    (hgap :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_gap > 0, ∃ N_gap : ℕ, ∀ n : ℕ, N_gap ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierEndpointGap n j‖
+            ≤ A_gap *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j))
+    (hjacobian :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_jac > 0, ∃ N_jac : ℕ, ∀ n : ℕ, N_jac ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+            ≤ B_jac / atkinsonShiftedRelativeWeight (n + j) j) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ E_corr > 0, ∃ N_corr : ℕ, ∀ n : ℕ, N_corr ≤ n →
+        ‖atkinsonNormalizedShiftedCorrectionCarrierIntegral n j‖
+          ≤ E_corr *
+              (atkinsonShiftedRelativePhase (n + j) j /
+                atkinsonShiftedRelativeWeight (n + j) j) := by
+  exact
+    atkinson_carrierIntegral_bound_of_boundary_and_jacobian_estimates
+      (atkinson_carrierBoundary_bound_of_endpointGap_bound hgap)
+      hjacobian
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Pointwise correction majorant from the eventual normalized fixed-shift
 bound, with finite initial modes absorbed by the previous compactness lemma. -/
 private theorem atkinson_pointwiseFixedShiftCorrection_of_eventual_normalized_bound
@@ -20651,6 +20751,37 @@ private theorem
       hmode
       (atkinson_carrierIntegral_bound_of_boundary_and_jacobian_estimates
         hboundary hjacobian)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Correction-prefix package with the endpoint boundary reduced to the shifted
+Hardy endpoint-gap atom. -/
+private theorem
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_endpointGap_jacobian_estimates
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hgap :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_gap > 0, ∃ N_gap : ℕ, ∀ n : ℕ, N_gap ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierEndpointGap n j‖
+            ≤ A_gap *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j))
+    (hjacobian :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_jac > 0, ∃ N_jac : ℕ, ∀ n : ℕ, N_jac ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+            ≤ B_jac / atkinsonShiftedRelativeWeight (n + j) j) :
+    AtkinsonShiftedCorrectionPrefixBoundHyp := by
+  exact
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_fixedShift_correction
+      hmode
+      (atkinson_carrierIntegral_bound_of_endpointGap_and_jacobian_estimates
+        hgap hjacobian)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
@@ -21403,6 +21534,36 @@ private theorem
   letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_boundary_jacobian_estimates
       hmode hboundary hjacobian
+  exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Public inverse-phase package with the endpoint boundary reduced to the
+shifted Hardy endpoint-gap atom. -/
+private theorem
+    atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_endpointGap_jacobian_estimates
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hgap :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_gap > 0, ∃ N_gap : ℕ, ∀ n : ℕ, N_gap ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierEndpointGap n j‖
+            ≤ A_gap *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j))
+    (hjacobian :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_jac > 0, ∃ N_jac : ℕ, ∀ n : ℕ, N_jac ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+            ≤ B_jac / atkinsonShiftedRelativeWeight (n + j) j) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_endpointGap_jacobian_estimates
+      hmode hgap hjacobian
   exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
