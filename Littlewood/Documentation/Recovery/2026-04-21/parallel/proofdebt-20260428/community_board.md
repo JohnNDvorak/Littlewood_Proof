@@ -511,3 +511,57 @@ Timestamp: 2026-04-28 22:56 CDT.
     finite-zero phase-radius half budget.
   - RS/Gabcke: quarter-lattice denominator-zero classification/range, then
     removable point bounds and the regular raw derivative estimate.
+
+## Overnight 2026-04-29 Fifth Pass Status
+
+- The coordinator again enforced the one-build rule. Atkinson and RS/Gabcke
+  were validated serially after the Perron and Pi heads from the prior pass.
+- Perron/B5a lane is validated and pushed through `5198f4b`
+  (`proofdebt/20260429-perron-b5a`):
+  - Halley commit `4e22d7b` initially failed in
+    `PerronTruncationInfra.lean` on separated-set positivity and an unavailable
+    `one_lt_div_iff₀` helper.
+  - Coordinator fix `5198f4b` added the needed `2 <= T` hypothesis at the
+    membership helper, derived the nonzero index contradiction from boundary
+    separation, and used the available `one_lt_div` route.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Halley is redeployed to the weighted Davenport-envelope summation atom:
+    `perronKernelSeparatedDavenportEnvelope x T <= Cd * (Real.log x)^2`
+    for `x >= 2`, `2 <= T`, `T <= 16`.
+- Pi/Phase lane is validated and pushed through `6e807f4`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Reduce pi half budgets to growth sources`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Planck is redeployed to the two growth-source classes:
+    `PerronThresholdTowerExpHalfBudgetGrowthHyp` and
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`.
+- Atkinson lane is validated and pushed through `cbd3f6d`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit stack includes the explicit revert of the false zero-model carrier
+    route (`a0bca65`) and the new reduction
+    `cbd3f6d Reduce Atkinson correction prefix to raw atoms`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Live route is now the correction-prefix route through
+    `atkinson_shiftedCorrectionPrefixBound_of_eventual_j3_and_correction_j1_j2`.
+  - Hooke is redeployed to prove the large-shift raw correction-prefix atom for
+    `3 <= j`.
+- RS/Gabcke lane is validated and pushed through `12e7314`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Close Gabcke quarter-lattice range`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`.
+  - Hume is redeployed to close the remaining
+    `StandardGabckeRawPsiDenominatorZeroQuarterLatticeProp` atom.
+- Current live atoms:
+  - Atkinson: raw correction-prefix atom for all large shifts `3 <= j`;
+    zero-model, Fourier-corrected carrier, and compensated-carrier routes are
+    forbidden unless their scale obstruction is explicitly changed.
+  - Perron/B5a: weighted Davenport-envelope summation, then separated
+    off-boundary/residue assembly.
+  - Pi/Phase: two growth-source half-budget providers feeding the corrected
+    Perron-only Pi route.
+  - RS/Gabcke: quarter-lattice zero atom, then any remaining removable/regular
+    raw derivative cleanup needed for the public Gabcke provider.
