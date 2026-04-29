@@ -3199,3 +3199,57 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `16 <= x <= Xtail`, `2 <= T <= 16`, or prove the eventual normalized
   asymptotic tail from `Xtail`.  The public legacy absorption obligation
   remains separate and should not be introduced without a real proof.
+
+### 2026-04-29 Round 64 - Close Transition Zero-Sum Boundedness
+
+- Classification: `PROOF_CLOSED`.
+- Exact theorem attacked:
+  transition `zeroSumRe` boundedness on
+  `16 <= x <= Xtail`, `2 <= T <= 16`, sufficient for the finite transition
+  normalized-defect bounded-image route.
+- Code facts banked:
+  generalized the fixed finite height-`16` zero-envelope route to finite
+  transition intervals with
+  `small_T_zeroSumRe_envelope16_continuousOn_transition` and
+  `small_T_zeroSumRe_envelope16_bddAbove_image_transition`.  Added
+  `small_T_zeroSumRe_bddAbove_abs_image_transition_of_finite16` and the closed
+  `small_T_zeroSumRe_bddAbove_abs_image_transition_from_finiteZeros`, avoiding
+  closed-cutoff continuity at zero-boundary heights.  Added
+  `small_T_perronVerticalIntegral_bddAbove_abs_image_transition`,
+  `small_T_concrete_contour_remainder_bddAbove_abs_image_transition_from_components`,
+  `small_T_concrete_contour_remainder_normalized_bddAbove_image_transition_from_abs_bound`,
+  and the closed
+  `small_T_concrete_contour_remainder_transition_bddAbove_image_from_finiteZeros`.
+  Added downstream wrappers
+  `small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_bddAbove_and_asymptotic_tail`
+  and
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_transition_bddAbove_and_asymptotic_tail`,
+  so the linear-window route now only needs the eventual normalized asymptotic
+  tail from `Xtail`.
+- Shape check:
+  did not assert transition continuity of `zeroSumRe`; boundedness is obtained
+  from the fixed finite envelope at height `16`, which is compatible with the
+  closed cutoff.  The finite transition slab remains separate from the
+  unbounded tail.
+- Failed/demoted routes:
+  transition `zeroSumRe` continuity remains intentionally avoided because
+  unconditional closed-cutoff continuity is not honest at zero heights.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, broad providers, dummy witnesses, new axioms, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check` passed.  `lake build
+  Littlewood.Aristotle.Standalone.PerronTruncationInfra` passed under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.
+- Smallest next theorem:
+  prove the eventual normalized asymptotic tail from `Xtail`:
+  `∃ Casymp > 0, ∀ x T, Xtail <= x -> 2 <= T -> T <= 16 ->
+    |perronVerticalContourRemainderRe x T| /
+      (Real.sqrt x * (Real.log T)^2 / Real.sqrt T) <= Casymp`.
+  The public legacy absorption obligation remains separate.
