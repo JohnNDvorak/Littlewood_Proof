@@ -1140,3 +1140,43 @@ Timestamp: 2026-04-28 22:56 CDT.
     canonical majorant residual, plus target/anti chosen-radius residuals.
   - RS/Gabcke: quarter local Taylor atoms and quarter raw-removable bridge,
     with analogous three-quarter atoms available if easier.
+
+## Overnight 2026-04-29 Twenty-Fourth Pass Status
+
+- Atkinson lane is validated and pushed through `a512bc6`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Package Atkinson correction provider from native atoms`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: `AtkinsonShiftedCorrectionPrefixBoundHyp` is now packaged from
+    the native shifted-interval stationary-phase target remainder, fixed-shift
+    correction-prefix leaf for `j >= 3`, and the `j = 1,2` correction patches.
+  - Guardrail preserved: no phase-weighted-to-unweighted division, direct
+    Abel, zero-model, mass-coefficient, Fourier-corrected, compensated-carrier,
+    circular provider, diffuse deweighting, axioms, sorries, or weakening.
+  - Hooke is redeployed to use the packaged correction provider toward the
+    public/deep `AtkinsonShiftedInversePhaseCellPrefixBoundHyp` leaf.
+- RS/Gabcke lane is validated and pushed through `a2226c9`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Reduce Gabcke local Taylor atom to HasDerivAt`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
+  - Result: the quarter local Taylor value route is reduced to the local
+    second-derivative `HasDerivAt` atom, while the removable-candidate local
+    coordinate and raw removable-source bridge remain explicit separate
+    targets.
+  - Guardrail preserved: do not define the removable candidate by the target
+    derivative, assume global raw regularity at the removable point, or assert
+    raw `standardGabckeRawPsi = rsPsi`.
+  - Hume is redeployed to close one of the exact local Taylor/removable atoms.
+- Current live atoms:
+  - Atkinson: use the correction provider to close or further reduce
+    `AtkinsonShiftedInversePhaseCellPrefixBoundHyp`; if blocked, isolate the
+    shifted-interval stationary-phase target remainder as the exact atom.
+  - Perron/B5a: assemble the linear Davenport boundary scale into the public
+    B5a route or adjust the truncation/residue handoff accordingly.
+  - Pi/Phase: selected-threshold/cofinality residual or corrected fixed-height
+    canonical majorant residual, plus target/anti chosen-radius residuals.
+  - RS/Gabcke: quarter local second-derivative `HasDerivAt`, removable
+    candidate local-coordinate third derivative, and raw quarter removable
+    bridge.
