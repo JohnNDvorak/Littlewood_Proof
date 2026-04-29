@@ -12621,90 +12621,6 @@ private noncomputable def atkinsonShiftedCompensatedPhaseError (n : ℕ) (p : �
     HardyCosSmooth.hardyCosExp n (hardyStart n) *
       Complex.exp (Complex.I * (((2 * Real.pi * p ^ 2 : ℝ)) : ℂ))
 
-/-- The inverse quadratic rotator used to reveal the slowly varying
-compensated carrier. -/
-private noncomputable def atkinsonShiftedQuadraticRotator (p : ℝ) : ℂ :=
-  Complex.exp (-Complex.I * (((2 * Real.pi * p ^ 2 : ℝ)) : ℂ))
-
-/-- `blockMode` after dividing out the quadratic kernel.  Its derivative is
-controlled by the angular-velocity defect `blockOmega n p - 4πp`. -/
-private noncomputable def atkinsonShiftedCompensatedCarrier (n : ℕ) (p : ℝ) : ℂ :=
-  HardyCosSmooth.hardyCosExp n (blockCoord n p) * atkinsonShiftedQuadraticRotator p
-
-/-- The compensated carrier error relative to the stationary point `p = 0`. -/
-private noncomputable def atkinsonShiftedCompensatedCarrierError (n : ℕ) (p : ℝ) : ℂ :=
-  atkinsonShiftedCompensatedCarrier n p -
-    HardyCosSmooth.hardyCosExp n (hardyStart n)
-
-/-- Carrier-error form of the shifted compensated integral. -/
-private noncomputable def atkinsonShiftedCompensatedCarrierErrorIntegral (n j : ℕ) : ℂ :=
-  (((atkinsonModeWeight n : ℝ) : ℂ) *
-    ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
-      atkinsonShiftedCompensatedCarrierError n p *
-        Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p)
-
-/-- The phase error is the compensated carrier error multiplied back by the
-quadratic kernel. -/
-private theorem atkinson_shifted_compensatedPhaseError_eq_carrierError_mul_kernel
-    (n : ℕ) (p : ℝ) :
-    atkinsonShiftedCompensatedPhaseError n p =
-      atkinsonShiftedCompensatedCarrierError n p *
-        Aristotle.StationaryPhaseMainMode.quadraticKernel p := by
-  have hcancel :
-      atkinsonShiftedQuadraticRotator p *
-        Aristotle.StationaryPhaseMainMode.quadraticKernel p = 1 := by
-    unfold atkinsonShiftedQuadraticRotator Aristotle.StationaryPhaseMainMode.quadraticKernel
-    rw [← Complex.exp_add]
-    have harg :
-        -Complex.I * (((2 * Real.pi * p ^ 2 : ℝ)) : ℂ) +
-            Complex.I * (((2 * Real.pi * p ^ 2 : ℝ)) : ℂ) = 0 := by
-      ring
-    rw [harg, Complex.exp_zero]
-  unfold atkinsonShiftedCompensatedPhaseError
-  unfold atkinsonShiftedCompensatedCarrierError
-  unfold atkinsonShiftedCompensatedCarrier
-  change
-    HardyCosSmooth.hardyCosExp n (blockCoord n p) -
-        HardyCosSmooth.hardyCosExp n (hardyStart n) *
-          Aristotle.StationaryPhaseMainMode.quadraticKernel p
-      =
-    (HardyCosSmooth.hardyCosExp n (blockCoord n p) *
-        atkinsonShiftedQuadraticRotator p -
-      HardyCosSmooth.hardyCosExp n (hardyStart n)) *
-        Aristotle.StationaryPhaseMainMode.quadraticKernel p
-  rw [mul_sub, ← mul_assoc, hcancel, mul_one]
-
-/-- Exact carrier-error form of the compensated phase-error integral. -/
-private theorem atkinson_shifted_compensatedPhaseErrorIntegral_eq_carrierErrorIntegral
-    (n j : ℕ) :
-    atkinsonShiftedCompensatedPhaseErrorIntegral n j =
-      atkinsonShiftedCompensatedCarrierErrorIntegral n j := by
-  unfold atkinsonShiftedCompensatedPhaseErrorIntegral
-  unfold atkinsonShiftedCompensatedCarrierErrorIntegral
-  congr 1
-  refine MeasureTheory.integral_congr_ae ?_
-  filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioc] with p hp
-  rw [atkinson_shifted_compensatedPhaseError_eq_carrierError_mul_kernel n p]
-  ring
-
-/-- The explicit phase-error integral bound follows from the carrier-error
-integral bound. -/
-private theorem atkinson_shifted_compensatedPhaseError_bound_of_carrierError_bound
-    (hcarrier :
-      ∃ C_carrier > 0, ∃ N_carrier : ℕ, ∀ n : ℕ, N_carrier ≤ n → ∀ j : ℕ,
-        3 ≤ j → 1 ≤ j → j ≤ n →
-          ‖atkinsonShiftedCompensatedCarrierErrorIntegral n j‖
-            ≤ C_carrier * (atkinsonModeWeight (n + j) / j)) :
-    ∃ C_phase > 0, ∃ N_phase : ℕ, ∀ n : ℕ, N_phase ≤ n → ∀ j : ℕ,
-      3 ≤ j → 1 ≤ j → j ≤ n →
-        ‖atkinsonShiftedCompensatedPhaseErrorIntegral n j‖
-          ≤ C_phase * (atkinsonModeWeight (n + j) / j) := by
-  obtain ⟨C_carrier, hC_carrier, N_carrier, hcarrier'⟩ := hcarrier
-  refine ⟨C_carrier, hC_carrier, N_carrier, ?_⟩
-  intro n hn j hj3 hj1 hjn
-  rw [atkinson_shifted_compensatedPhaseErrorIntegral_eq_carrierErrorIntegral n j]
-  exact hcarrier' n hn j hj3 hj1 hjn
-
 /-- The shifted zero-model residual written with `blockMode` and
 `quadraticKernel` fully unfolded.  This is the smallest shifted Taylor/Fourier
 atom: an oscillatory integral of the compensated Hardy phase error on
@@ -13196,55 +13112,6 @@ private lemma atkinson_quadraticKernel_hasDerivAt (p : ℝ) :
         Aristotle.StationaryPhaseMainMode.quadraticKernel p) p
   simpa [Aristotle.StationaryPhaseMainMode.quadraticKernel, mul_assoc, mul_left_comm, mul_comm]
     using harg.cexp
-
-/-- Derivative of the inverse quadratic rotator used in the compensated carrier. -/
-private lemma atkinson_shifted_quadraticRotator_hasDerivAt (p : ℝ) :
-    HasDerivAt atkinsonShiftedQuadraticRotator
-      (atkinsonShiftedQuadraticRotator p *
-        (-Complex.I * (((4 * Real.pi * p : ℝ) : ℂ)))) p := by
-  have hphaseC :
-      HasDerivAt (fun x : ℝ => ((2 * Real.pi * x ^ 2 : ℝ) : ℂ))
-        (((4 * Real.pi * p : ℝ) : ℂ)) p := by
-    exact HasDerivAt.ofReal_comp (atkinson_quadraticKernel_phase_hasDerivAt p)
-  have harg :
-      HasDerivAt
-        (fun x : ℝ => -Complex.I * (((2 * Real.pi * x ^ 2 : ℝ) : ℂ)))
-        (-Complex.I * (((4 * Real.pi * p : ℝ) : ℂ))) p := by
-    simpa [mul_assoc] using hphaseC.const_mul (-Complex.I)
-  change
-    HasDerivAt
-      (fun x : ℝ => Complex.exp (-Complex.I * (((2 * Real.pi * x ^ 2 : ℝ) : ℂ))))
-      (atkinsonShiftedQuadraticRotator p *
-        (-Complex.I * (((4 * Real.pi * p : ℝ) : ℂ)))) p
-  simpa [atkinsonShiftedQuadraticRotator, mul_assoc, mul_left_comm, mul_comm]
-    using harg.cexp
-
-/-- The compensated carrier varies only through the angular-velocity defect
-`blockOmega n p - 4πp`.  This is the differential source for the remaining
-shifted-cell Taylor estimate. -/
-private lemma atkinson_shifted_compensatedCarrier_hasDerivAt (n : ℕ) (p : ℝ) :
-    HasDerivAt (atkinsonShiftedCompensatedCarrier n)
-      (Complex.I *
-        (((Aristotle.StationaryPhaseMainMode.blockOmega n p - 4 * Real.pi * p : ℝ) : ℂ)) *
-        atkinsonShiftedCompensatedCarrier n p) p := by
-  have h :=
-    (Aristotle.StationaryPhaseMainMode.blockMode_hasDerivAt n p).mul
-      (atkinson_shifted_quadraticRotator_hasDerivAt p)
-  have hrewrite :
-      Complex.I * ((Aristotle.StationaryPhaseMainMode.blockOmega n p : ℂ)) *
-          Aristotle.StationaryPhaseMainMode.blockMode n p *
-          atkinsonShiftedQuadraticRotator p +
-        Aristotle.StationaryPhaseMainMode.blockMode n p *
-          (atkinsonShiftedQuadraticRotator p *
-            (-Complex.I * (((4 * Real.pi * p : ℝ) : ℂ))))
-        =
-      Complex.I *
-        (((Aristotle.StationaryPhaseMainMode.blockOmega n p - 4 * Real.pi * p : ℝ) : ℂ)) *
-        atkinsonShiftedCompensatedCarrier n p := by
-    unfold atkinsonShiftedCompensatedCarrier Aristotle.StationaryPhaseMainMode.blockMode
-    ring
-  simpa [atkinsonShiftedCompensatedCarrier, Aristotle.StationaryPhaseMainMode.blockMode] using
-    hrewrite ▸ h
 
 /-- The shifted quadratic kernel has unit value at every integer endpoint. -/
 private lemma atkinson_quadraticKernel_nat (m : ℕ) :
@@ -14071,25 +13938,6 @@ private theorem atkinson_blockMode_stationaryPhase_of_compensatedPhaseError_and_
   exact
     atkinson_blockMode_stationaryPhase_of_residual_and_fourierCorrectedTarget
       (atkinson_shifted_zeroModelResidual_bound_of_compensatedPhaseError_bound hphase)
-
-/-- Corrected-target handoff reduced to the compensated carrier-error integral.
-The carrier derivative is governed by `blockOmega n p - 4πp`, so this exposes
-the remaining shifted angular-defect estimate. -/
-private theorem atkinson_blockMode_stationaryPhase_of_carrierError_and_fourierCorrectedTarget
-    (hcarrier :
-      ∃ C_carrier > 0, ∃ N_carrier : ℕ, ∀ n : ℕ, N_carrier ≤ n → ∀ j : ℕ,
-        3 ≤ j → 1 ≤ j → j ≤ n →
-          ‖atkinsonShiftedCompensatedCarrierErrorIntegral n j‖
-            ≤ C_carrier * (atkinsonModeWeight (n + j) / j)) :
-    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
-      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
-            ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
-              Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
-                blockJacobian (k - j) p) - atkinsonFourierCorrectedCompleteBlockTargetK k j)‖
-        ≤ C_err * (atkinsonModeWeight k / j) := by
-  exact
-    atkinson_blockMode_stationaryPhase_of_compensatedPhaseError_and_fourierCorrectedTarget
-      (atkinson_shifted_compensatedPhaseError_bound_of_carrierError_bound hcarrier)
 
 /-- Complete-block-target stationary-phase handoff after discharging the
 shifted quadratic-kernel estimates. This is the narrowed interface directly
