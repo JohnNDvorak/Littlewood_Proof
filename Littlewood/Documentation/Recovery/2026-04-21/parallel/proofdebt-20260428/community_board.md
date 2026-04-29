@@ -1330,3 +1330,29 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Perron/B5a: smooth Davenport-envelope component, then singular component.
   - Pi/Phase: `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp`.
   - RS/Gabcke: shifted raw trig identity.
+
+## Overnight 2026-04-29 Twenty-Ninth Pass Status
+
+- Pi/Phase lane is validated and pushed through `85b1f27`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Reduce pi fixed-height phase fit to window`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp` is reduced
+    to `FixedHeightPerronErrorPhaseWideWindowHyp` plus
+    `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp`.
+  - Interpretation: the arbitrary `targetPhase` quantifier is now exposed as
+    the real blocker. The public route should avoid turning arbitrary-target
+    finite-zero relative density into a main-chain prerequisite when the
+    corrected proof path only needs target/anti-specific phase fits.
+  - Next Pi move: build target/anti-specific fixed-height phase-fit
+    classes/bridges using the existing relation-compatible target/anti
+    finite-zero payloads, then route those into corrected phase-coupling and
+    provider construction.
+- Current live atoms:
+  - Atkinson: all-positive fixed-shift correction-prefix family or shifted
+    stationary-phase target remainder.
+  - Perron/B5a: smooth Davenport-envelope component, then singular component.
+  - Pi/Phase: target/anti-specific fixed-height phase-fit bridge, avoiding
+    arbitrary-target relative density as a public-path blocker.
+  - RS/Gabcke: shifted raw trig identity.
