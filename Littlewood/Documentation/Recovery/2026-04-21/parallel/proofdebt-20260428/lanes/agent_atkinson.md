@@ -741,3 +741,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 14 Compensated Carrier Error Reduction
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  the explicit compensated phase-error integral
+  `atkinsonShiftedCompensatedPhaseErrorIntegral n j`.
+- Facts banked:
+  `atkinsonShiftedQuadraticRotator` defines the inverse quadratic oscillation.
+  `atkinsonShiftedCompensatedCarrier` divides `blockMode n p` by the
+  quadratic kernel, and `atkinsonShiftedCompensatedCarrierError` subtracts
+  the stationary value at `p = 0`.
+  `atkinsonShiftedCompensatedCarrierErrorIntegral` is the shifted-cell
+  integral of the carrier error after multiplying the quadratic kernel back.
+  `atkinson_shifted_compensatedPhaseError_eq_carrierError_mul_kernel`
+  proves the pointwise exact rewrite from phase error to carrier error.
+  `atkinson_shifted_compensatedPhaseErrorIntegral_eq_carrierErrorIntegral`
+  and `atkinson_shifted_compensatedPhaseError_bound_of_carrierError_bound`
+  reduce the phase-error bound to the carrier-error integral bound.
+  `atkinson_shifted_compensatedCarrier_hasDerivAt` proves the differential
+  source: the carrier derivative is
+  `i * (blockOmega n p - 4πp) * carrier`.
+  `atkinson_blockMode_stationaryPhase_of_carrierError_and_fourierCorrectedTarget`
+  wires the carrier-error atom through the corrected Fourier-target route.
+- Failed routes / guardrails:
+  no Abel/gamma-8 route, circular provider assumption, stale import, generic
+  absolute mass/norm bound, or direct first-block-only quadratic model reuse
+  was used. The pointwise carrier derivative alone is not enough unless it is
+  paired with a shifted angular-defect estimate strong enough to preserve the
+  `1 / j` scale.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local algebra in
+  `atkinson_shifted_compensatedPhaseError_eq_carrierError_mul_kernel`, or the
+  derivative normalization in
+  `atkinson_shifted_compensatedCarrier_hasDerivAt`.
+- Smallest next theorem:
+  prove the shifted compensated carrier-error integral bound
+  `∃ C_carrier > 0, ∃ N_carrier : ℕ, ∀ n : ℕ, N_carrier ≤ n → ∀ j : ℕ,`
+  `3 ≤ j → 1 ≤ j → j ≤ n →`
+  `‖atkinsonShiftedCompensatedCarrierErrorIntegral n j‖`
+  `≤ C_carrier * (atkinsonModeWeight (n + j) / j)`,
+  using the angular-defect source
+  `atkinson_shifted_compensatedCarrier_hasDerivAt`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
