@@ -953,6 +953,15 @@ def StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp : Prop :=
     (FormalMultilinearSeries.ofScalars ℝ
       standardGabckeQuarterLocalDenominatorDslopeCoeff) 0
 
+/-- Low-order Taylor derivative source for the denominator dslope
+`sin(2*pi*w) / w`. This is the finite coefficient content needed downstream
+if the all-order sine series has not yet been instantiated. -/
+def StandardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp : Prop :=
+  iteratedDeriv 1 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 = 0 ∧
+    iteratedDeriv 2 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 =
+      -(8 * Real.pi ^ 3 / 3) ∧
+    iteratedDeriv 3 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 = 0
+
 /-- Formal division/coefficient step from the numerator and denominator dslope
 series data to the quotient series coefficient `-pi^2/6`. -/
 def StandardGabckeQuarterLocalDslopeQuotientDivisionCoefficientProp : Prop :=
@@ -1137,6 +1146,32 @@ theorem standardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp_of_sineSe
   · norm_num [standardGabckeQuarterLocalDenominatorDslopeCoeff]
     ring
   · norm_num [standardGabckeQuarterLocalDenominatorDslopeCoeff]
+
+/-- The finite denominator coefficient data follows from the low-order
+derivative values of the removable sine quotient, using Mathlib's Taylor
+coefficient power series for analytic one-variable real functions. -/
+theorem standardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp_of_lowOrderDerivatives
+    (h_deriv : StandardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp) :
+    StandardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp := by
+  rcases h_deriv with ⟨h1, h2, h3⟩
+  let f : ℝ → ℝ := dslope standardGabckeQuarterLocalSineDenominator 0
+  let B : ℕ → ℝ := fun n => iteratedDeriv n f 0 / n.factorial
+  have h_analytic : AnalyticAt ℝ f 0 :=
+    standardGabckeQuarterLocalDenominatorDslopeAnalyticProp_proved
+  refine ⟨B, ?_, ?_, ?_, ?_, ?_⟩
+  · exact h_analytic.hasFPowerSeriesAt
+  · dsimp [B, f]
+    rw [iteratedDeriv_zero, standardGabckeQuarterLocalDenominatorDslopeValueProp_proved]
+    norm_num
+  · dsimp [B, f]
+    rw [h1]
+    norm_num
+  · dsimp [B, f]
+    rw [h2]
+    ring
+  · dsimp [B, f]
+    rw [h3]
+    norm_num
 
 /-- The quotient series is reduced to explicit numerator/denominator dslope
 coefficient data plus the finite formal-division calculation. -/
