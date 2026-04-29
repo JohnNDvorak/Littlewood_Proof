@@ -456,6 +456,48 @@ theorem rhPiWitnessData_of_correctedPerronOnlyTargetCanonicalKroneckerRadiusBudg
       hTarget
   exact rhPiWitnessData_of_correctedPerronOnlyOneSidedKroneckerRadiusBudgetRoute
 
+/-- Corrected RH-`pi` witness endpoint with the anti-target selected-radius
+bound reduced to the canonical zeta compatibility proof. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyAntiTargetCanonicalKroneckerRadiusBudgetRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp]
+    (hAnti :
+      AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual) :
+    RhPiWitnessData := by
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+  letI : AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp :=
+    antiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_canonicalResidual
+      hAnti
+  exact rhPiWitnessData_of_correctedPerronOnlyOneSidedKroneckerRadiusBudgetRoute
+
+/-- Corrected RH-`pi` witness endpoint with both selected-radius bounds
+reduced to their canonical zeta compatibility proofs. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyCanonicalKroneckerRadiusBudgetRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    (hTarget :
+      TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual)
+    (hAnti :
+      AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual) :
+    RhPiWitnessData := by
+  letI : TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+  letI : TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp :=
+    targetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_canonicalResidual
+      hTarget
+  letI : AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp :=
+    antiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_canonicalResidual
+      hAnti
+  exact rhPiWitnessData_of_correctedPerronOnlyOneSidedKroneckerRadiusBudgetRoute
+
 /-- Corrected RH-`pi` witness endpoint from paired zeta compatibility and a
 generic finite-set pair Kronecker theorem with explicit same-budget target and
 anti-target radii. -/
