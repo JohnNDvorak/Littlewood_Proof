@@ -1136,3 +1136,66 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Smallest next theorem:
   - Prove/source `PerronThresholdTowerExpHalfBudgetGrowthHyp`.
   - Prove/source `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`.
+
+### 2026-04-29 Round 18: Majorant Splits Below Growth Budgets
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronThresholdTowerExpHalfBudgetGrowthHyp`
+  - `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`
+- Target choice:
+  - Split the Perron exponential half-budget into the smallest explicit
+    same-height fixed-point form: produce one majorant `B` at the selected
+    `T, ε` for both `X + 1` and `perronThreshold hRH T + 1`, then prove the
+    same zero-count tower half-budget dominates `B`.
+  - Split the phase-radius growth budget analogously: produce one majorant
+    `R` for the paired target/anti chosen relative-density radius at the same
+    `T, ε`, then prove the same half-budget tower dominates `R`.
+- Facts banked:
+  - Added `PerronThresholdTowerExpHalfBudgetMajorantHyp`, the fixed-point
+    Perron-threshold majorant/tower source below
+    `PerronThresholdTowerExpHalfBudgetGrowthHyp`.
+  - Added `perronThresholdTowerExpHalfBudgetGrowth_of_majorant_hyp`, deriving
+    `PerronThresholdTowerExpHalfBudgetGrowthHyp` by transitivity through the
+    same majorant `B`.
+  - Added `TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp`, the
+    quantitative paired Kronecker-radius majorant/tower source below
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`.
+  - Added `targetAntiFiniteZeroPhaseRadiusHalfBudgetGrowth_of_majorant_hyp`,
+    deriving `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp` by
+    transitivity through the same radius majorant `R`.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyMajorantBudgetRoute`, exposing
+    the corrected Perron-only endpoint directly from the two new majorant
+    source classes plus the relation-compatible finite-zero inputs.
+- Guardrails:
+  - The selected `T, ε` remain shared on both sides of each majorant split.
+  - The new Perron majorant class still requires the missing fixed-point
+    bridge for `perronThreshold hRH T`; it does not use
+    `tower_cap_unbounded_with_eps` on height-dependent quantities.
+  - The new phase-radius majorant class preserves the paired target/anti
+    radius through one shared `R`; no independent target/anti heights were
+    introduced.
+  - No new route uses `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No arbitrary-target Kronecker or constant-1 Perron sqrt-error shortcut was
+    introduced.
+- Failed route guardrails:
+  - Do not replace the Perron majorant source with a bare tower unboundedness
+    call; the missing theorem is a same-height fixed-point/growth theorem.
+  - Do not replace the paired radius majorant with two independent one-sided
+    radius bounds unless there is an explicit same-height max recombination.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, `git diff --check`, or other check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove/source `PerronThresholdTowerExpHalfBudgetMajorantHyp`.
+  - Prove/source `TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp`.
