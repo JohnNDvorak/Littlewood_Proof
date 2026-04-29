@@ -4835,6 +4835,21 @@ instance (priority := 95)
     PerronThresholdTowerLogHalfBudgetHyp :=
   perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp
 
+/-- The exact canonical Perron residual is enough for the Perron log
+half-budget leaf.
+
+This keeps the same selected height `T, ε`: the residual first supplies the
+pre-log exponential budget, and the existing logarithmic comparison then closes
+`PerronThresholdTowerLogHalfBudgetHyp`. -/
+theorem perronThresholdTowerLogHalfBudget_of_canonicalMajorantResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (h :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual) :
+    PerronThresholdTowerLogHalfBudgetHyp := by
+  letI : PerronThresholdTowerExpHalfBudgetGrowthHyp :=
+    perronThresholdTowerExpHalfBudgetGrowth_of_canonicalMajorantResidual h
+  exact perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp
+
 /-- A same-height majorant/tower split implies the Perron exponential
 half-budget growth source. -/
 theorem perronThresholdTowerExpHalfBudgetGrowth_of_majorant_hyp
@@ -6364,6 +6379,29 @@ theorem exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleCanoni
     targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_canonicalResiduals
       hTarget hAnti
   exact exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleKroneckerRadiusBudget_hyp
+
+/-- Exact-seed endpoint for the current three canonical residual atoms.
+
+This packages the corrected explicit-radius relation-compatible route from the
+Perron canonical residual and the two target/anti selected Kronecker-radius
+residuals, without adding any provider instance edges. -/
+theorem exactSeedAboveThreshold_perron_of_canonicalPerronAndRelationCompatibleRadiusResiduals_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    (hPerron :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual)
+    (hTarget :
+      TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual)
+    (hAnti :
+      AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : PerronThresholdTowerLogHalfBudgetHyp :=
+    perronThresholdTowerLogHalfBudget_of_canonicalMajorantResidual hPerron
+  exact
+    exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleCanonicalRadiusResiduals_hyp
+      hTarget hAnti
 
 /-- Paired finite-zero relative density plus the two same-height half-budget
 inputs packages both Perron-only exact-seed classes. -/
