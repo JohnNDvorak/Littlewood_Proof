@@ -1607,6 +1607,13 @@ private noncomputable def atkinsonGammaStirlingMultiplier (t : ℝ) : ℂ :=
   Complex.Gamma (1 / 4 + Complex.I * (t / 2)) /
     Complex.exp (atkinsonLogGammaStirlingTerm t)
 
+private lemma atkinson_quarter_line_norm_ge_half_abs (t : ℝ) :
+    |t| / 2 ≤ ‖(1 / 4 : ℂ) + Complex.I * (t / 2)‖ := by
+  norm_num [Complex.normSq, Complex.norm_def]
+  exact Real.le_sqrt_of_sq_le (by
+    nlinarith [sq_nonneg (t / 2 - 1 / 4), sq_nonneg (t / 2 + 1 / 4),
+      abs_mul_abs_self t])
+
 private noncomputable def atkinsonLogGammaStirlingApprox (t : ℝ) : ℝ :=
   (t / 2) * Real.log (t / 2) - t / 2 - Real.pi / 8
 
@@ -2567,6 +2574,50 @@ private theorem atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO
     ‖atkinsonGammaStirlingMultiplier t - 1‖
         ≤ 2 * (K / t) := hmain
     _ = (2 * K) * ‖((1 / t : ℝ) : ℂ)‖ := by
+          rw [hnorm_inv]
+          ring
+
+/-- A standard vertical Stirling-ratio estimate at scale `1 / ‖s‖`
+implies the Atkinson multiplier Big-O, since
+`‖1/4 + i*t/2‖ ≥ t/2` for positive large `t`. -/
+private theorem atkinson_multiplier_isBigO_of_stirling_ratio_norm_bound
+    (hstirling :
+      ∃ Cst > 0, ∃ Tst : ℝ, ∀ t : ℝ, Tst ≤ t →
+        ‖Complex.Gamma (1 / 4 + Complex.I * (t / 2)) /
+            Complex.exp (atkinsonLogGammaStirlingTerm t) - 1‖
+          ≤ Cst / ‖(1 / 4 : ℂ) + Complex.I * (t / 2)‖) :
+    Asymptotics.IsBigO Filter.atTop
+      (fun t : ℝ => atkinsonGammaStirlingMultiplier t - 1)
+      (fun t : ℝ => ((1 / t : ℝ) : ℂ)) := by
+  obtain ⟨Cst, hCst, Tst, hstirling'⟩ := hstirling
+  rw [Asymptotics.isBigO_iff]
+  refine ⟨2 * Cst, ?_⟩
+  filter_upwards [Filter.eventually_ge_atTop (max Tst 1)] with t ht
+  have htTst : Tst ≤ t := le_trans (le_max_left _ _) ht
+  have ht1 : (1 : ℝ) ≤ t := le_trans (le_max_right _ _) ht
+  have htpos : 0 < t := lt_of_lt_of_le zero_lt_one ht1
+  let s : ℂ := (1 / 4 : ℂ) + Complex.I * (t / 2)
+  have hs_norm_lower : t / 2 ≤ ‖s‖ := by
+    have h := atkinson_quarter_line_norm_ge_half_abs t
+    simpa [s, abs_of_nonneg htpos.le] using h
+  have hs_norm_pos : 0 < ‖s‖ := lt_of_lt_of_le (by positivity : 0 < t / 2) hs_norm_lower
+  have hnorm_inv : ‖((1 / t : ℝ) : ℂ)‖ = 1 / t := by
+    rw [Complex.norm_real, Real.norm_eq_abs,
+      abs_of_pos (one_div_pos.mpr htpos)]
+  have hinv_scale : 1 / ‖s‖ ≤ 2 / t := by
+    calc
+      1 / ‖s‖ ≤ 1 / (t / 2) :=
+        one_div_le_one_div_of_le (by positivity : 0 < t / 2) hs_norm_lower
+      _ = 2 / t := by field_simp [htpos.ne']
+  have hraw :
+      ‖atkinsonGammaStirlingMultiplier t - 1‖ ≤ Cst / ‖s‖ := by
+    simpa [atkinsonGammaStirlingMultiplier, s] using hstirling' t htTst
+  calc
+    ‖atkinsonGammaStirlingMultiplier t - 1‖
+        ≤ Cst / ‖s‖ := hraw
+    _ = Cst * (1 / ‖s‖) := by ring
+    _ ≤ Cst * (2 / t) := mul_le_mul_of_nonneg_left hinv_scale hCst.le
+    _ = (2 * Cst) * ‖((1 / t : ℝ) : ℂ)‖ := by
           rw [hnorm_inv]
           ring
 
