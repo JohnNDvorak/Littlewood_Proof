@@ -1823,6 +1823,9 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
 - Requested coordinator validation:
   `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Local validation:
+  passed under `/tmp/littlewood-lean-singleflight.lock` with
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
 - Smallest next theorem:
   either prove the bounded-height residue atom for
   `perronVerticalIntegral`, which would close the new linear-window surface,
