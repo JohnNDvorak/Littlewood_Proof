@@ -1939,6 +1939,121 @@ private theorem atkinson_logGamma_to_stirlingTerm_of_multiplier_isBigO
   atkinson_logGamma_to_stirlingTerm_of_relative_gamma_stirling hbranch
     (atkinson_relative_gamma_stirling_of_multiplier_isBigO hmult)
 
+/-- A complex logarithmic Stirling remainder controls the normalized
+Stirling multiplier after exponentiation. -/
+private theorem atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO
+    (hlog :
+      Asymptotics.IsBigO Filter.atTop
+        (fun t : ℝ =>
+          Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2))) -
+            atkinsonLogGammaStirlingTerm t)
+        (fun t : ℝ => ((1 / t : ℝ) : ℂ))) :
+    Asymptotics.IsBigO Filter.atTop
+      (fun t : ℝ => atkinsonGammaStirlingMultiplier t - 1)
+      (fun t : ℝ => ((1 / t : ℝ) : ℂ)) := by
+  rw [Asymptotics.isBigO_iff] at hlog ⊢
+  obtain ⟨C0, hC0eventual⟩ := hlog
+  obtain ⟨T0, hT0⟩ := Filter.eventually_atTop.mp hC0eventual
+  set K : ℝ := max C0 0 + 1
+  refine ⟨2 * K, ?_⟩
+  filter_upwards [Filter.eventually_ge_atTop (max T0 (max 1 K))] with t ht
+  have htT0 : T0 ≤ t := le_trans (le_max_left _ _) ht
+  have htmax : max (1 : ℝ) K ≤ t := le_trans (le_max_right _ _) ht
+  have ht1 : (1 : ℝ) ≤ t := le_trans (le_max_left _ _) htmax
+  have htK : K ≤ t := le_trans (le_max_right _ _) htmax
+  have htpos : 0 < t := lt_of_lt_of_le zero_lt_one ht1
+  let R : ℂ :=
+    Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2))) -
+      atkinsonLogGammaStirlingTerm t
+  have hnorm_inv : ‖((1 / t : ℝ) : ℂ)‖ = 1 / t := by
+    rw [Complex.norm_real, Real.norm_eq_abs,
+      abs_of_pos (one_div_pos.mpr htpos)]
+  have hR0 := hT0 t htT0
+  have hR_le_C0 : ‖R‖ ≤ C0 * (1 / t) := by
+    simpa [R, hnorm_inv, abs_of_pos htpos, one_div] using hR0
+  have hC0_le_K : C0 ≤ K := by
+    dsimp [K]
+    linarith [le_max_left C0 0]
+  have hinv_nonneg : 0 ≤ 1 / t := by positivity
+  have hR_le_K : ‖R‖ ≤ K / t := by
+    calc
+      ‖R‖ ≤ C0 * (1 / t) := hR_le_C0
+      _ ≤ K * (1 / t) := mul_le_mul_of_nonneg_right hC0_le_K hinv_nonneg
+      _ = K / t := by ring
+  have hK_div_le_one : K / t ≤ 1 := by
+    exact (div_le_one htpos).mpr htK
+  have hR_small : ‖R‖ ≤ 1 := le_trans hR_le_K hK_div_le_one
+  have hΓ_ne :
+      Complex.Gamma (1 / 4 + Complex.I * (t / 2)) ≠ 0 := by
+    apply Complex.Gamma_ne_zero_of_re_pos
+    norm_num [Complex.add_re, Complex.mul_re, Complex.div_re]
+  have hmult_exp : atkinsonGammaStirlingMultiplier t = Complex.exp R := by
+    dsimp [R, atkinsonGammaStirlingMultiplier]
+    rw [Complex.exp_sub, Complex.exp_log hΓ_ne]
+  have hmain :
+      ‖atkinsonGammaStirlingMultiplier t - 1‖ ≤ 2 * (K / t) := by
+    calc
+      ‖atkinsonGammaStirlingMultiplier t - 1‖
+          = ‖Complex.exp R - 1‖ := by rw [hmult_exp]
+      _ ≤ 2 * ‖R‖ := Complex.norm_exp_sub_one_le hR_small
+      _ ≤ 2 * (K / t) := mul_le_mul_of_nonneg_left hR_le_K (by norm_num)
+  calc
+    ‖atkinsonGammaStirlingMultiplier t - 1‖
+        ≤ 2 * (K / t) := hmain
+    _ = (2 * K) * ‖((1 / t : ℝ) : ℂ)‖ := by
+          rw [hnorm_inv]
+          ring
+
+/-- A complex logarithmic Stirling remainder gives the branch-sensitive
+imaginary log-to-Stirling comparison directly. -/
+private theorem atkinson_logGamma_to_stirlingTerm_of_logGammaStirlingRemainder_isBigO
+    (hlog :
+      Asymptotics.IsBigO Filter.atTop
+        (fun t : ℝ =>
+          Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2))) -
+            atkinsonLogGammaStirlingTerm t)
+        (fun t : ℝ => ((1 / t : ℝ) : ℂ))) :
+    ∃ Clog > 0, ∃ Tlog : ℝ, ∀ t : ℝ, Tlog ≤ t →
+      |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+          (atkinsonLogGammaStirlingTerm t).im| ≤ Clog / t := by
+  rw [Asymptotics.isBigO_iff] at hlog
+  obtain ⟨C0, hC0eventual⟩ := hlog
+  obtain ⟨T0, hT0⟩ := Filter.eventually_atTop.mp hC0eventual
+  refine ⟨max C0 0 + 1, by positivity, max T0 1, ?_⟩
+  intro t ht
+  have htT0 : T0 ≤ t := le_trans (le_max_left _ _) ht
+  have ht1 : (1 : ℝ) ≤ t := le_trans (le_max_right _ _) ht
+  have htpos : 0 < t := lt_of_lt_of_le zero_lt_one ht1
+  let R : ℂ :=
+    Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2))) -
+      atkinsonLogGammaStirlingTerm t
+  have hnorm_inv : ‖((1 / t : ℝ) : ℂ)‖ = 1 / t := by
+    rw [Complex.norm_real, Real.norm_eq_abs,
+      abs_of_pos (one_div_pos.mpr htpos)]
+  have hR0 := hT0 t htT0
+  have hR_le_C0 : ‖R‖ ≤ C0 * (1 / t) := by
+    simpa [R, hnorm_inv, abs_of_pos htpos, one_div] using hR0
+  have hC0_le : C0 ≤ max C0 0 + 1 := by
+    linarith [le_max_left C0 0]
+  have hinv_nonneg : 0 ≤ 1 / t := by positivity
+  have hR_le : ‖R‖ ≤ (max C0 0 + 1) / t := by
+    calc
+      ‖R‖ ≤ C0 * (1 / t) := hR_le_C0
+      _ ≤ (max C0 0 + 1) * (1 / t) :=
+            mul_le_mul_of_nonneg_right hC0_le hinv_nonneg
+      _ = (max C0 0 + 1) / t := by ring
+  have him_eq :
+      R.im =
+        (Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+          (atkinsonLogGammaStirlingTerm t).im := by
+    dsimp [R]
+  calc
+    |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+        (atkinsonLogGammaStirlingTerm t).im|
+        = |R.im| := by rw [← him_eq]
+    _ ≤ ‖R‖ := Complex.abs_im_le_norm R
+    _ ≤ (max C0 0 + 1) / t := hR_le
+
 /-- The continuous Hardy-theta Stirling atom is exactly the corresponding
 uniform Stirling remainder for the imaginary part of `log Γ(1/4 + it/2)`,
 after the Hardy normalization `-(t/2)log π` is folded into the logarithm. -/
@@ -21983,6 +22098,30 @@ private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_multip
           ≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) :=
   atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_log_to_stirlingTerm
     (atkinson_logGamma_to_stirlingTerm_of_multiplier_isBigO hbranch hmult)
+    hterm
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+/-- Endpoint phase package from the complex logarithmic Stirling remainder,
+bypassing the separate multiplier branch identity. -/
+private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_logGammaStirlingRemainder_isBigO
+    (hlog :
+      Asymptotics.IsBigO Filter.atTop
+        (fun t : ℝ =>
+          Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2))) -
+            atkinsonLogGammaStirlingTerm t)
+        (fun t : ℝ => ((1 / t : ℝ) : ℂ)))
+    (hterm :
+      Asymptotics.IsBigO Filter.atTop
+        (fun t : ℝ =>
+          (atkinsonLogGammaStirlingTerm t).im - atkinsonLogGammaStirlingApprox t)
+        (fun t : ℝ => 1 / t)) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_res > 0, ∃ N_res : ℕ, ∀ n : ℕ, N_res ≤ n →
+        |atkinsonEndpointGapCorrectedPhaseError n j|
+          ≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) :=
+  atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_log_to_stirlingTerm
+    (atkinson_logGamma_to_stirlingTerm_of_logGammaStirlingRemainder_isBigO hlog)
     hterm
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in

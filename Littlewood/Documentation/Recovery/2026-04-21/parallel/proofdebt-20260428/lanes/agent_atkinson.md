@@ -2345,3 +2345,49 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   multiplier Stirling-ratio Big-O at `O(1/t)`, multiplier branch identity,
   Jacobian-integral bound at `1/relativeWeight`, and the shifted
   stationary-phase target remainder.
+
+### 2026-04-29 Round 50 Multiplier Big-O to Log-Gamma Remainder
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  multiplier Stirling-ratio Big-O
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun t => atkinsonGammaStirlingMultiplier t - 1)`
+  `(fun t => ((1 / t : ℝ) : ℂ))`.
+- Facts banked:
+  proved `atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO`,
+  reducing the multiplier Big-O to the sharper complex logarithmic Stirling
+  remainder
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun t => Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2))) -`
+  `atkinsonLogGammaStirlingTerm t)`
+  `(fun t => ((1 / t : ℝ) : ℂ))`.
+  Also proved
+  `atkinson_logGamma_to_stirlingTerm_of_logGammaStirlingRemainder_isBigO`
+  and
+  `atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_logGammaStirlingRemainder_isBigO`,
+  so the same logarithmic remainder now feeds the branch-sensitive imaginary
+  comparison and endpoint phase package directly.
+- Smallest next theorem:
+  prove the complex logarithmic Stirling remainder above. The multiplier branch
+  identity remains only if the coordinator chooses the older multiplier route;
+  this new endpoint package bypasses it. The independent Jacobian-integral
+  bound at `1/relativeWeight` and shifted stationary-phase target remainder
+  remain live.
+- Failed routes / guardrails:
+  did not import generated broad Stirling files, add analytic providers,
+  axioms, sorries, statement weakening, direct Abel shortcuts, phase-weight
+  division, circular provider assumptions, or the demoted raw endpoint
+  phase-error route. First focused build in this round failed on a redundant
+  rewrite after `dsimp`; removed the rewrite and kept the proof local.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  complex logarithmic Stirling remainder at `O(1/t)`,
+  Jacobian-integral bound at `1/relativeWeight`, and the shifted
+  stationary-phase target remainder.
