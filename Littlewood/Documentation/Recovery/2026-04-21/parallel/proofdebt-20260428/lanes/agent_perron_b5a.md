@@ -2696,3 +2696,56 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `small_T_concrete_contour_remainder_continuousOn_slab16_from_components`,
   preferably via a boundary-exclusion or half-open zero-sum surface that avoids
   unconditional local constancy of closed `ZerosBelow` at zero heights.
+
+### 2026-04-29 Round 54 - Reduce Slab Defect Boundedness to Finite Zeros
+
+- Classification: `PROOF_REDUCTION`.
+- Exact theorem attacked:
+  direct boundedness of `zeroSumRe` on the cutoff slab sufficient for the
+  normalized concrete-defect slab bounded-image estimate.  This deliberately
+  avoids unconditional closed-cutoff continuity of `zeroSumRe`, which is not
+  honest at zero heights.
+- Code facts banked:
+  added `small_T_residue_error_shape_lower_bound`, giving the uniform lower
+  bound `(Real.log 2)^2 / 4` for
+  `Real.sqrt x * (Real.log T)^2 / Real.sqrt T` on
+  `x >= 2`, `2 <= T`, `T <= 16`.  Added
+  `small_T_zerosBelow_subset_zerosBelow_sixteen_of_finite16`,
+  `small_T_zeroSumRe_abs_le_envelope16_of_finite16`,
+  `small_T_zeroSumRe_envelope16_continuousOn`,
+  `small_T_zeroSumRe_envelope16_bddAbove_image`, and
+  `small_T_zeroSumRe_bddAbove_abs_image_slab16_of_finite16`, bounding the
+  closed zero sum by the fixed height-`16` finite envelope.  Added
+  `small_T_perronVerticalIntegral_bddAbove_abs_image_slab16`,
+  `small_T_concrete_contour_remainder_bddAbove_abs_image_from_components`,
+  `small_T_concrete_contour_remainder_normalized_bddAbove_image_from_abs_bound`,
+  and
+  `small_T_concrete_contour_remainder_slab16_bddAbove_image_of_zeroSum_finite16`.
+- Shape check:
+  the final slab boundedness theorem assumes only the explicit finite zero-set
+  fact
+  `(Aristotle.DirichletPhaseAlignment.CriticalZeros ∩ {ρ : ℂ | |ρ.im| <= 16}).Finite`.
+  It does not require local constancy of `ZerosBelow T`, and it does not assert
+  zero-sum continuity at closed cutoff boundary heights.
+- Failed/demoted routes:
+  unconditional closed-cutoff zero-set constancy and unconditional
+  `zeroSumRe` continuity remain excluded.  The route uses boundedness by a
+  fixed finite envelope instead.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, broad providers, dummy witnesses, new axioms, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check`; then
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.  Both passed.
+- Smallest next theorem:
+  close or import the finite closed zero-set fact at height `16`,
+  `(Aristotle.DirichletPhaseAlignment.CriticalZeros ∩ {ρ : ℂ | |ρ.im| <= 16}).Finite`,
+  then combine the slab bounded-image theorem with the already isolated
+  normalized tail atom for the cutoff-`16` concrete defect supremum.

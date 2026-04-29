@@ -146,13 +146,12 @@ theorem perronVerticalIntegral_residue_identity (x T : ℝ) :
   unfold perronVerticalContourRemainderRe
   ring
 
-/-- On the small-`T` box, the residue error scale is uniformly positive.
-
-This packages the denominator positivity needed to pass between a normalized
-supremum bound and the bounded-height contour-remainder estimate. -/
-theorem small_T_residue_error_shape_pos
+/-- On the small-`T` box, the residue error scale has a uniform positive
+lower bound. -/
+theorem small_T_residue_error_shape_lower_bound
     (x T : ℝ) (hx : x ≥ 2) (hT_lo : 2 ≤ T) (hT_hi : T ≤ 16) :
-    0 < Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
+    (Real.log 2) ^ 2 / (4 : ℝ) ≤
+      Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
   have hlog2_sq_pos : 0 < (Real.log 2) ^ 2 :=
     sq_pos_of_pos (Real.log_pos (by norm_num))
   have hL_pos : 0 < (Real.log 2) ^ 2 / (4 : ℝ) := by positivity
@@ -163,19 +162,26 @@ theorem small_T_residue_error_shape_pos
   have hsqrt_ge_one : (1 : ℝ) ≤ Real.sqrt x := by
     rw [← Real.sqrt_one]
     exact Real.sqrt_le_sqrt (by linarith)
-  have hlower :
-      (Real.log 2) ^ 2 / (4 : ℝ) ≤
-        Real.sqrt x * ((Real.log T) ^ 2 / Real.sqrt T) := by
-    calc (Real.log 2) ^ 2 / (4 : ℝ)
-        = (1 : ℝ) * ((Real.log 2) ^ 2 / (4 : ℝ)) := by ring
+  calc (Real.log 2) ^ 2 / (4 : ℝ)
+      = (1 : ℝ) * ((Real.log 2) ^ 2 / (4 : ℝ)) := by ring
       _ ≤ Real.sqrt x * ((Real.log T) ^ 2 / Real.sqrt T) :=
           mul_le_mul hsqrt_ge_one hdenom hL_pos.le (Real.sqrt_nonneg x)
+      _ = Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by ring
+
+/-- On the small-`T` box, the residue error scale is uniformly positive.
+
+This packages the denominator positivity needed to pass between a normalized
+supremum bound and the bounded-height contour-remainder estimate. -/
+theorem small_T_residue_error_shape_pos
+    (x T : ℝ) (hx : x ≥ 2) (hT_lo : 2 ≤ T) (hT_hi : T ≤ 16) :
+    0 < Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
+  have hlog2_sq_pos : 0 < (Real.log 2) ^ 2 :=
+    sq_pos_of_pos (Real.log_pos (by norm_num))
+  have hL_pos : 0 < (Real.log 2) ^ 2 / (4 : ℝ) := by positivity
   have :
       (Real.log 2) ^ 2 / (4 : ℝ) ≤
         Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
-    calc (Real.log 2) ^ 2 / (4 : ℝ)
-        ≤ Real.sqrt x * ((Real.log T) ^ 2 / Real.sqrt T) := hlower
-      _ = Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by ring
+    exact small_T_residue_error_shape_lower_bound x T hx hT_lo hT_hi
   linarith
 
 /-! ## Mathlib bridge: Dirichlet series = -ζ'/ζ -/
@@ -5831,6 +5837,248 @@ theorem small_T_perronVerticalIntegral_continuousOn_slab16 :
       {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
   small_T_perronVerticalIntegral_continuousOn_slab16_of_fixedWindow
     small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16
+
+/-! ### Boundary-aware boundedness route for the zero sum
+
+The closed-cutoff zero sum is not continuous at heights where a zero lies on
+the boundary.  For the compact slab estimate we only need boundedness, so the
+following route uses a fixed finite envelope at height `16` instead of local
+constancy of `ZerosBelow T`.
+-/
+
+/-- If the closed critical-zero set up to height `16` is finite, then every
+`ZerosBelow T` with `T <= 16` is a subset of `ZerosBelow 16`. -/
+theorem small_T_zerosBelow_subset_zerosBelow_sixteen_of_finite16
+    (hfinite16 :
+      (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+        {ρ : ℂ | |ρ.im| ≤ (16 : ℝ)}).Finite)
+    {T : ℝ} (hT : T ≤ 16) :
+    Aristotle.DirichletPhaseAlignment.ZerosBelow T ⊆
+      Aristotle.DirichletPhaseAlignment.ZerosBelow (16 : ℝ) := by
+  intro ρ hρ
+  unfold Aristotle.DirichletPhaseAlignment.ZerosBelow at hρ ⊢
+  rw [dif_pos hfinite16]
+  by_cases hfiniteT :
+      (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+        {ρ : ℂ | |ρ.im| ≤ T}).Finite
+  · rw [dif_pos hfiniteT] at hρ
+    rw [Set.Finite.mem_toFinset] at hρ ⊢
+    exact ⟨hρ.1, le_trans hρ.2 hT⟩
+  · rw [dif_neg hfiniteT] at hρ
+    simp at hρ
+
+/-- Pointwise zero-sum bound by the fixed height-`16` finite envelope. -/
+theorem small_T_zeroSumRe_abs_le_envelope16_of_finite16
+    (hfinite16 :
+      (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+        {ρ : ℂ | |ρ.im| ≤ (16 : ℝ)}).Finite)
+    (x T : ℝ) (hT : T ≤ 16) :
+    |Littlewood.Development.HadamardProductZeta.zeroSumRe x T| ≤
+      ∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow (16 : ℝ),
+        ‖((x : ℂ) ^ ρ) / ρ‖ := by
+  let term : ℂ → ℂ := fun ρ => ((x : ℂ) ^ ρ) / ρ
+  have hsubset :
+      Aristotle.DirichletPhaseAlignment.ZerosBelow T ⊆
+        Aristotle.DirichletPhaseAlignment.ZerosBelow (16 : ℝ) :=
+    small_T_zerosBelow_subset_zerosBelow_sixteen_of_finite16 hfinite16 hT
+  calc
+    |Littlewood.Development.HadamardProductZeta.zeroSumRe x T|
+        = |(∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T, term ρ).re| := by
+            rfl
+    _ ≤ ‖∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T, term ρ‖ :=
+        Complex.abs_re_le_norm _
+    _ ≤ ∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T, ‖term ρ‖ :=
+        norm_sum_le _ _
+    _ ≤ ∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow (16 : ℝ), ‖term ρ‖ :=
+        Finset.sum_le_sum_of_subset_of_nonneg hsubset
+          (by intro ρ _hρ _hnot; exact norm_nonneg _)
+
+/-- The fixed height-`16` zero envelope is continuous in `x` on
+`2 <= x <= 16`. -/
+theorem small_T_zeroSumRe_envelope16_continuousOn :
+    ContinuousOn
+      (fun x : ℝ =>
+        ∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow (16 : ℝ),
+          ‖((x : ℂ) ^ ρ) / ρ‖)
+      {x : ℝ | 2 ≤ x ∧ x ≤ 16} := by
+  classical
+  refine continuousOn_finset_sum
+    (Aristotle.DirichletPhaseAlignment.ZerosBelow (16 : ℝ)) ?_
+  intro ρ _hρ
+  have hbase : ContinuousOn (fun x : ℝ => (x : ℂ)) {x : ℝ | 2 ≤ x ∧ x ≤ 16} :=
+    Complex.continuous_ofReal.continuousOn
+  exact ((hbase.cpow_const (fun x hx =>
+    Complex.ofReal_mem_slitPlane.mpr (by linarith [hx.1]))).div_const ρ).norm
+
+/-- The fixed height-`16` zero envelope has bounded image on `2 <= x <= 16`. -/
+theorem small_T_zeroSumRe_envelope16_bddAbove_image :
+    BddAbove
+      ((fun x : ℝ =>
+        ∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow (16 : ℝ),
+          ‖((x : ℂ) ^ ρ) / ρ‖) ''
+        {x : ℝ | 2 ≤ x ∧ x ≤ 16}) := by
+  have hcompact : IsCompact {x : ℝ | 2 ≤ x ∧ x ≤ 16} := by
+    simpa [Set.Icc] using (isCompact_Icc : IsCompact (Set.Icc (2 : ℝ) (16 : ℝ)))
+  exact hcompact.bddAbove_image
+    small_T_zeroSumRe_envelope16_continuousOn
+
+/-- Direct boundedness of the zero sum on the cutoff slab from the finite
+height-`16` zero envelope.  This bypasses the false unconditional continuity
+route at closed zero-boundary heights. -/
+theorem small_T_zeroSumRe_bddAbove_abs_image_slab16_of_finite16
+    (hfinite16 :
+      (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+        {ρ : ℂ | |ρ.im| ≤ (16 : ℝ)}).Finite) :
+    BddAbove
+      ((fun p : ℝ × ℝ =>
+          |Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2|) ''
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) := by
+  rcases small_T_zeroSumRe_envelope16_bddAbove_image with ⟨M, hM⟩
+  refine ⟨M, ?_⟩
+  rintro y ⟨p, hp, rfl⟩
+  have hxmem : p.1 ∈ {x : ℝ | 2 ≤ x ∧ x ≤ 16} := ⟨hp.1, hp.2.1⟩
+  have himage :
+      (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow (16 : ℝ),
+          ‖((p.1 : ℂ) ^ ρ) / ρ‖) ∈
+        ((fun x : ℝ =>
+          ∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow (16 : ℝ),
+            ‖((x : ℂ) ^ ρ) / ρ‖) ''
+          {x : ℝ | 2 ≤ x ∧ x ≤ 16}) :=
+    ⟨p.1, hxmem, rfl⟩
+  exact le_trans
+    (small_T_zeroSumRe_abs_le_envelope16_of_finite16 hfinite16 p.1 p.2 hp.2.2.2)
+    (hM himage)
+
+/-- The public vertical Perron integral has bounded absolute image on the
+cutoff slab. -/
+theorem small_T_perronVerticalIntegral_bddAbove_abs_image_slab16 :
+    BddAbove
+      ((fun p : ℝ × ℝ => |perronVerticalIntegral p.1 p.2|) ''
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) := by
+  have hcompact :
+      IsCompact {p : ℝ × ℝ |
+        2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+    convert
+      (isCompact_Icc :
+        IsCompact (Set.Icc ((2 : ℝ), (2 : ℝ)) ((16 : ℝ), (16 : ℝ)))) using 1
+    ext p
+    constructor
+    · intro hp
+      exact
+        ⟨Prod.le_def.2 ⟨hp.1, hp.2.2.1⟩,
+          Prod.le_def.2 ⟨hp.2.1, hp.2.2.2⟩⟩
+    · intro hp
+      exact
+        ⟨(Prod.le_def.1 hp.1).1, (Prod.le_def.1 hp.2).1,
+          (Prod.le_def.1 hp.1).2, (Prod.le_def.1 hp.2).2⟩
+  exact hcompact.bddAbove_image
+    (ContinuousOn.abs small_T_perronVerticalIntegral_continuousOn_slab16)
+
+/-- Boundedness of the unnormalized concrete contour-remainder defect from
+bounded Perron and zero-sum components on the cutoff slab. -/
+theorem small_T_concrete_contour_remainder_bddAbove_abs_image_from_components
+    (hperron : BddAbove
+      ((fun p : ℝ × ℝ => |perronVerticalIntegral p.1 p.2|) ''
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}))
+    (hzero : BddAbove
+      ((fun p : ℝ × ℝ =>
+          |Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2|) ''
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})) :
+    BddAbove
+      ((fun p : ℝ × ℝ => |perronVerticalContourRemainderRe p.1 p.2|) ''
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) := by
+  rcases hperron with ⟨Mp, hMp⟩
+  rcases hzero with ⟨Mz, hMz⟩
+  refine ⟨Mp + 16 + Mz, ?_⟩
+  rintro y ⟨p, hp, rfl⟩
+  have hp_image :
+      |perronVerticalIntegral p.1 p.2| ∈
+        ((fun p : ℝ × ℝ => |perronVerticalIntegral p.1 p.2|) ''
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :=
+    ⟨p, hp, rfl⟩
+  have hz_image :
+      |Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2| ∈
+        ((fun p : ℝ × ℝ =>
+            |Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2|) ''
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :=
+    ⟨p, hp, rfl⟩
+  have hp_le : |perronVerticalIntegral p.1 p.2| ≤ Mp := hMp hp_image
+  have hz_le : |Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2| ≤ Mz :=
+    hMz hz_image
+  have hx_abs : |p.1| ≤ (16 : ℝ) := by
+    rw [abs_of_nonneg (by linarith [hp.1])]
+    exact hp.2.1
+  have htri :
+      |perronVerticalContourRemainderRe p.1 p.2| ≤
+        |perronVerticalIntegral p.1 p.2| + |p.1| +
+          |Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2| := by
+    unfold perronVerticalContourRemainderRe
+    have h1 := abs_add_le (perronVerticalIntegral p.1 p.2 - p.1)
+      (Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+    have h2 := abs_sub (perronVerticalIntegral p.1 p.2) p.1
+    linarith
+  linarith
+
+/-- A bounded unnormalized concrete defect and the uniform positive lower
+bound on the normalization denominator give boundedness of the normalized
+defect image on the cutoff slab. -/
+theorem small_T_concrete_contour_remainder_normalized_bddAbove_image_from_abs_bound
+    (hrem : BddAbove
+      ((fun p : ℝ × ℝ => |perronVerticalContourRemainderRe p.1 p.2|) ''
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})) :
+    BddAbove
+      ((fun p : ℝ × ℝ =>
+          perronVerticalContourRemainderNormalized p.1 p.2) ''
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) := by
+  rcases hrem with ⟨M, hM⟩
+  let lowerConst : ℝ := (Real.log 2) ^ 2 / (4 : ℝ)
+  have hL_pos : 0 < lowerConst := by
+    dsimp [lowerConst]
+    positivity
+  refine ⟨max (0 : ℝ) M / lowerConst, ?_⟩
+  rintro y ⟨p, hp, rfl⟩
+  have hrem_image :
+      |perronVerticalContourRemainderRe p.1 p.2| ∈
+        ((fun p : ℝ × ℝ => |perronVerticalContourRemainderRe p.1 p.2|) ''
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :=
+    ⟨p, hp, rfl⟩
+  have hrem_le : |perronVerticalContourRemainderRe p.1 p.2| ≤ max (0 : ℝ) M :=
+    le_trans (hM hrem_image) (le_max_right (0 : ℝ) M)
+  have hshape_lower :
+      lowerConst ≤ Real.sqrt p.1 * (Real.log p.2) ^ 2 / Real.sqrt p.2 := by
+    dsimp [lowerConst]
+    exact small_T_residue_error_shape_lower_bound p.1 p.2 hp.1 hp.2.2.1 hp.2.2.2
+  have hshape_pos :
+      0 < Real.sqrt p.1 * (Real.log p.2) ^ 2 / Real.sqrt p.2 :=
+    lt_of_lt_of_le hL_pos hshape_lower
+  have hcoef_nonneg : 0 ≤ max (0 : ℝ) M / lowerConst := by positivity
+  have hscale :
+      max (0 : ℝ) M ≤
+        (max (0 : ℝ) M / lowerConst) *
+          (Real.sqrt p.1 * (Real.log p.2) ^ 2 / Real.sqrt p.2) := by
+    calc max (0 : ℝ) M
+        = (max (0 : ℝ) M / lowerConst) * lowerConst := by
+            field_simp [ne_of_gt hL_pos]
+      _ ≤ (max (0 : ℝ) M / lowerConst) *
+          (Real.sqrt p.1 * (Real.log p.2) ^ 2 / Real.sqrt p.2) :=
+            mul_le_mul_of_nonneg_left hshape_lower hcoef_nonneg
+  unfold perronVerticalContourRemainderNormalized
+  exact (div_le_iff₀ hshape_pos).mpr (le_trans hrem_le hscale)
+
+/-- Direct slab bounded-image route for the normalized concrete contour defect
+from the finite zero-set fact at height `16`. -/
+theorem small_T_concrete_contour_remainder_slab16_bddAbove_image_of_zeroSum_finite16
+    (hfinite16 :
+      (Aristotle.DirichletPhaseAlignment.CriticalZeros ∩
+        {ρ : ℂ | |ρ.im| ≤ (16 : ℝ)}).Finite) :
+    BddAbove
+      ((fun p : ℝ × ℝ =>
+          perronVerticalContourRemainderNormalized p.1 p.2) ''
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :=
+  small_T_concrete_contour_remainder_normalized_bddAbove_image_from_abs_bound
+    (small_T_concrete_contour_remainder_bddAbove_abs_image_from_components
+      small_T_perronVerticalIntegral_bddAbove_abs_image_slab16
+      (small_T_zeroSumRe_bddAbove_abs_image_slab16_of_finite16 hfinite16))
 
 /-- Continuity of the normalization denominator on the cutoff-`16` slab. -/
 theorem small_T_residue_error_shape_continuousOn_slab16 :
