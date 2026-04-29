@@ -1656,3 +1656,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   local power-series expansion at `0` for the removable sine quotient
   `if w = 0 then 1/2 else sin(pi*w - 2*pi*w^2) / sin(2*pi*w)`, with
   coefficients `a 0 = 1/2` and `a 3 = -pi^2 / 6`.
+
+### 2026-04-29 Round 34: removable power series reduced to dslope bridge
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp`.
+- Banked inputs:
+  - Mathlib has `AnalyticAt.hasFPowerSeriesAt`, which gives the canonical
+    one-variable Taylor series
+    `FormalMultilinearSeries.ofScalars ℝ
+      (fun n => iteratedDeriv n f 0 / n.factorial)`.
+  - Mathlib analytic division applies after removing the common zero via
+    `dslope`.
+- Proof facts banked:
+  - Added `standardGabckeQuarterLocalSineNumerator` and
+    `standardGabckeQuarterLocalSineDenominator`.
+  - Added
+    `StandardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp`, requiring:
+    the removable quotient is locally equal to the quotient of the numerator
+    and denominator dslopes; both dslopes are analytic at `0`; the denominator
+    dslope is nonzero at `0`; and the third derivative of the removable
+    quotient is `-Real.pi ^ 2`.
+  - Proved
+    `standardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp_of_dslopeBridge`,
+    deriving the current power-series target from that bridge via analytic
+    division and the canonical Taylor-coefficient series.
+- Failed routes:
+  - I did not define the removable derivative candidate by the raw third
+    derivative.
+  - I did not assume global regularity of the original quotient at
+    denominator-zero points.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, provider shortcuts, or weaken the live
+    coefficient target.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - `git diff --check`: passed.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` with the corrected
+    non-self-matching guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp`.
+  The next useful split is likely:
+  local dslope equality for the filled quotient, analyticity of the two
+  dslopes from the sine numerator/denominator power series, denominator
+  dslope value `2*pi ≠ 0`, and the exact third-derivative value
+  `-pi^2`.
