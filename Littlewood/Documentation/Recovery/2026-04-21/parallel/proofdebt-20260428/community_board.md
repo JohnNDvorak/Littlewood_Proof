@@ -258,6 +258,64 @@ Each agent report must state:
   - Strict public import probes passed:
     `import Littlewood.Main.LittlewoodPsi` and
     `import Littlewood.Main.LittlewoodPi`.
+
+## Overnight 2026-04-29 Validation Checkpoint
+
+Timestamp: 2026-04-28 22:56 CDT.
+
+- Coordinator preserved the single-build rule throughout this checkpoint: no
+  second Lean/Lake job was started while a validation was running.
+- Pi/Phase lane pushed through `f7c8b38`
+  (`proofdebt/20260429-pi-phase`):
+  - `b75d132`: paired target/anti finite-zero inhomogeneous relative-density
+    providers.
+  - `243e1d9`: reduced paired tower geometry to log-scale domination.
+  - `da02d9f`: reduced log geometry to the paired log-budget class.
+  - `f7c8b38`: added the corrected Perron-only RH-`pi` route endpoint. The
+    coordinator repaired the file so it does not require
+    `TruncatedExplicitFormulaPiHyp`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+- Perron/B5a lane pushed through `27ed5e9`
+  (`proofdebt/20260429-perron-b5a`):
+  - `08ea602`: reduced near-diagonal boundary error to cardinality/kernel
+    supremum.
+  - `d499131`: closed the near-diagonal cardinality atom.
+  - `e73a902`: closed the near-diagonal punctured kernel bound.
+  - `27ed5e9`: reduced the separated Perron boundary to a weighted atom.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- RS/Gabcke lane pushed through `7cce500`
+  (`proofdebt/20260429-rs-gabcke`):
+  - `c6daa97`: reduced Gabcke first coefficient to source atoms.
+  - `5d29dbc`: reduced the Tabelle coefficient bound to a raw derivative bound.
+  - `15cb908`: split the raw derivative bound into regular/removable atoms.
+  - `7cce500`: reduced the removable bound to denominator-zero classification
+    and point checks.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`.
+- Atkinson lane pushed through `206673f`
+  (`proofdebt/20260429-atkinson-provider`):
+  - `9d55fa6`: reduced shifted quadratic mass/target surface to Fourier
+    matching.
+  - `ccfe50b` plus coordinator fix `8ff5a67`: exposed the corrected Fourier
+    target route and fixed positivity.
+  - `cee0acc`: reduced the corrected Fourier-target zero-model surface to the
+    exact residual atom.
+  - `206673f`: reduced that residual to compensated phase error.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- All four lane agents were redeployed after their validated heads:
+  - Hooke: compensated phase-error bound.
+  - Halley: separated weighted Perron boundary atom.
+  - Planck: paired log-budget / corrected Perron-only synthesis.
+  - Hume: Gabcke denominator-zero classification or removable point bounds.
+- Aristotle sidecar status at this checkpoint, polled with the masked temp key:
+  - Atkinson `57447356-4c39-4c20-8da2-6096b6243dfe`: in progress, 38%.
+  - Perron/B5a `ee5694b1-8a5d-4b26-926a-16a38549bfb4`: in progress, 32%.
+  - Pi/Phase `730f40bc-99a7-49bd-89fa-46039f150c23`: complete and already
+    downloaded; useful as a packaging audit, not a log-budget closure.
+  - RS/Gabcke `55d45e98-54c8-435a-9dde-c7fc59926147`: in progress, 33%.
 - Coordinator stopped one non-coordinator `lake env lean` process in the
   Atkinson worktree and re-issued the hard rule: agents must not run `lake`,
   `lake env lean`, `lean`, or any focused build/check themselves.
