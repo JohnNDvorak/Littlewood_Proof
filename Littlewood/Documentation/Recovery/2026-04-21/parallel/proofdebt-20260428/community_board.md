@@ -2387,3 +2387,16 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Guardrail: next RS pass should not merely bounce the coefficient back to
     the all-order sine-series theorem. Split the sine-composition series or the
     `dslope`/`fslope` coefficient transfer at index `2`.
+
+## Overnight 2026-04-29 Seventy-Sixth Pass Status
+
+- Coordinator recovery branch is pushed through `71bf039`.
+- Perron/B5a lane is integrated through `2eb51ee`:
+  - Fixed-window DCT is split into measurability, a.e. convergence, and local
+    integrable-majorant inputs.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron atom: prove endpoint-exclusion/eventual membership
+    stability for `t ∈ Set.Ioc (-T) T` under
+    `volume.restrict (Set.Ioc (-16) 16)`, plus the remaining unwindowed
+    integrand measurability/convergence and local majorant atoms.
