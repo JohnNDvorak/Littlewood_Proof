@@ -1126,3 +1126,56 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   then compare the finite integer-distance sum to a harmonic sum.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 21 - Unweighted Harmonic Scale Factorization
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the remaining unweighted finite harmonic-distance bound
+  `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedUnweightedLogDistanceEnvelope x T
+      <= Ch * (x / T) * Real.log x`.
+- Code facts banked:
+  added `perronKernelSeparatedReciprocalDistanceEnvelope`, the pure reciprocal
+  sum `Σ (x - n)⁻¹` over `perronKernelSeparatedPuncturedBoundarySet`.
+  Proved `perronKernelSeparatedPuncturedBoundarySet_mem_distance_bounds`,
+  extracting the separated distance facts `1 < x - n` and `x - n <= x / T`
+  from existing large-side membership and the boundary-window filters.
+  Proved
+  `perronKernelSeparatedUnweightedLogDistanceEnvelope_eq_scale_mul_reciprocal`,
+  factoring the global `x / T` scale out of the unweighted log-distance
+  envelope.
+  Added `small_T_separated_unweighted_logDistance_bound_from_reciprocal`,
+  reducing the target to the strictly smaller pure finite harmonic atom
+  `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedReciprocalDistanceEnvelope x T <= Ch * Real.log x`.
+  Added the downstream wiring lemmas
+  `small_T_separated_logDistance_bound_from_reciprocal` and
+  `small_T_separated_singular_envelope_bound_from_reciprocal_logDistance`.
+- Scale check:
+  preserved the `(x / T)` factor exactly.  No bounded-height pure Davenport
+  envelope was asserted; the only remaining growth is the expected harmonic
+  `Real.log x`.
+- Failed/demoted routes:
+  did not try to bound the macroscopic separated window by a pure
+  `O((Real.log x)^2)` von Mangoldt weight, and did not use the false
+  near-integer pointwise decay route.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the pure reciprocal-distance harmonic sum
+  `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedReciprocalDistanceEnvelope x T <= Ch * Real.log x`.
+  The proof should reindex by integer distance below the cutoff, using
+  `1 < x - n` and `x - n <= x / T`, then compare to a standard finite
+  harmonic sum.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
