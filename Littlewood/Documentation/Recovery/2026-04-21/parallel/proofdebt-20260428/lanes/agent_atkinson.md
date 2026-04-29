@@ -1530,3 +1530,49 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 31 Carrier-Integral Correction Atom
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  eventual normalized fixed-shift correction atom
+  `∀ j ≥ 1, ∃ D_j > 0, ∃ N_j, ∀ n ≥ N_j,`
+  `‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_j`.
+- Facts banked:
+  `atkinsonNormalizedShiftedCorrectionCarrierIntegral` removes the explicit
+  reciprocal primitive coefficient from the normalized correction term.
+  `atkinsonNormalizedShiftedCorrectionTerm_eq_relativeCoeff_mul_carrierIntegral`
+  proves
+  `normalizedCorrection n j = (relativeWeight/relativePhase) * carrier n j`.
+  `atkinson_eventualNormalizedFixedShiftCorrection_of_carrierIntegral_bound`
+  reduces the eventual normalized bound to the scale-correct cancellation atom
+  `‖carrier n j‖ ≤ E_j * (relativePhase (n+j) j / relativeWeight (n+j) j)`
+  eventually in `n`, for each fixed positive `j`.
+  The correction and inverse wrappers
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_fixedShift_correction`
+  and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_carrier_fixedShift_correction`
+  wire this carrier atom into the current provider route.
+- Failed routes / guardrails:
+  no absolute primitive bound was used; that route loses `(n+j+1)/j`. No
+  phase-weight division, direct Abel shortcut, circular provider, axioms,
+  sorries, or statement weakening were used.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  algebra normalization in
+  `atkinsonNormalizedShiftedCorrectionTerm_eq_relativeCoeff_mul_carrierIntegral`
+  or the final `field_simp` in
+  `atkinson_eventualNormalizedFixedShiftCorrection_of_carrierIntegral_bound`.
+- Remaining goal shape:
+  prove the shifted-interval stationary-phase target remainder, and prove the
+  carrier-integral fixed-shift cancellation atom
+  `∀ j ≥ 1, ∃ E_j > 0, ∃ N_j, ∀ n ≥ N_j,`
+  `‖atkinsonNormalizedShiftedCorrectionCarrierIntegral n j‖`
+  `≤ E_j * (atkinsonShiftedRelativePhase (n+j) j /`
+  `atkinsonShiftedRelativeWeight (n+j) j)`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
