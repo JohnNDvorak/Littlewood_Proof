@@ -2558,3 +2558,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `perronVerticalIntegrand q.1 t` at fixed `t`, or the corresponding local
   `AEStronglyMeasurable`/integrable-majorant input needed by
   `small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16_from_dominated_convergence`.
+
+### 2026-04-29 Round 51 - Close Fixed-Window Measurability Input
+
+- Classification: `PROOF_CLOSED`.
+- Exact theorem attacked:
+  the local `AEStronglyMeasurable` input for
+  `small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16_from_dominated_convergence`.
+- Code facts banked:
+  added `small_T_perronVerticalIntegrand_continuous_height`, proving that for
+  fixed `x >= 2`, `fun t => perronVerticalIntegrand x t` is continuous in
+  the height variable.  The proof keeps the vertical line in `Re(s) > 1`,
+  uses `riemannZeta_ne_zero_of_one_lt_re` for the zeta denominator, proves
+  the linear denominator nonzero from its positive real part, and proves local
+  continuity of `deriv riemannZeta` away from `1` via `DifferentiableOn.deriv`.
+  Added `small_T_perronVerticalIntegrand_aestronglyMeasurable_slab16` and
+  `small_T_perronVerticalFixedWindowIntegrand_aestronglyMeasurable_slab16`,
+  closing the fixed-window DCT measurability premise on the cutoff slab.
+- Shape check:
+  this is only the measurability input.  It does not assert fixed-`t`
+  parameter convergence in `x` and does not supply the local integrable
+  majorant.
+- Failed/demoted routes:
+  the first focused build exposed that the old commented skeleton's
+  `riemannZeta_differentiable.deriv.neg` name is not live.  Replaced it with
+  an explicit local derivative-continuity proof; no new imports were added.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, or `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check` passed.  The first focused
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock` failed on the stale derivative
+  continuity name above; after the local proof replacement, the same focused
+  build under the corrected `ps -axo comm=` guard passed.
+- Smallest next theorem:
+  prove the fixed-`t` unwindowed-integrand convergence atom for
+  `perronVerticalIntegrand q.1 t`, or prove the local integrable-majorant
+  input for the fixed-window DCT handoff.

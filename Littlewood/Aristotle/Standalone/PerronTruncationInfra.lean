@@ -5250,6 +5250,70 @@ theorem small_T_perronVerticalIntegral_continuousOn_slab16_of_fixedWindow
   small_T_perronVerticalIntegral_continuousOn_slab16_from_rawIntegral
     (small_T_perronVerticalRawIntegral_continuousOn_slab16_of_fixedWindow hfixed)
 
+/-- For fixed `x >= 2`, the unwindowed vertical Perron integrand is continuous
+as a function of the vertical height.  The line has real part `> 1`, so both
+the zeta denominator and the linear denominator stay nonzero. -/
+theorem small_T_perronVerticalIntegrand_continuous_height
+    (x : ℝ) (hx : 2 ≤ x) :
+    Continuous (fun t : ℝ => perronVerticalIntegrand x t) := by
+  have hx_pos : 0 < x := by linarith
+  have hx_ne : (x : ℂ) ≠ 0 := by
+    exact_mod_cast (ne_of_gt hx_pos)
+  let s : ℝ → ℂ :=
+    fun t : ℝ => ((1 + 1 / Real.log x : ℝ) : ℂ) + (t : ℂ) * Complex.I
+  have hs_cont : Continuous s := by
+    dsimp [s]
+    exact continuous_const.add (continuous_ofReal.mul continuous_const)
+  have hzeta_ne : ∀ t : ℝ, riemannZeta (s t) ≠ 0 := by
+    intro t
+    exact riemannZeta_ne_zero_of_one_lt_re (by
+      simpa [s] using c_param_re_gt_one x hx t)
+  have hs_ne : ∀ t : ℝ, s t ≠ 0 := by
+    intro t hzero
+    have hre : 1 < (s t).re := by
+      simpa [s] using c_param_re_gt_one x hx t
+    rw [hzero] at hre
+    norm_num at hre
+  have hlogderiv :
+      Continuous (fun t : ℝ => -deriv riemannZeta (s t) / riemannZeta (s t)) :=
+    continuous_iff_continuousAt.2 fun t => by
+      have hs_ne_one : s t ≠ 1 := by
+        intro hst
+        have hre : 1 < (s t).re := by
+          simpa [s] using c_param_re_gt_one x hx t
+        rw [hst] at hre
+        norm_num at hre
+      have hderiv_at : DifferentiableAt ℂ (deriv riemannZeta) (s t) := by
+        have hdo : DifferentiableOn ℂ (deriv riemannZeta) {(1 : ℂ)}ᶜ :=
+          DifferentiableOn.deriv
+            (fun w hw => (differentiableAt_riemannZeta
+              (Set.mem_compl_singleton_iff.mp hw)).differentiableWithinAt)
+            isOpen_compl_singleton
+        exact (hdo (s t) (Set.mem_compl_singleton_iff.mpr hs_ne_one)).differentiableAt
+          (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hs_ne_one))
+      exact
+        (hderiv_at.neg.div (differentiableAt_riemannZeta hs_ne_one)
+          (hzeta_ne t)).continuousAt.comp hs_cont.continuousAt
+  have hpow : Continuous (fun t : ℝ => (x : ℂ) ^ s t) :=
+    hs_cont.const_cpow (Or.inl hx_ne)
+  have hquot :
+      Continuous (fun t : ℝ =>
+        (-deriv riemannZeta (s t) / riemannZeta (s t)) *
+          (x : ℂ) ^ s t / s t) :=
+    (hlogderiv.mul hpow).div hs_cont hs_ne
+  simpa [perronVerticalIntegrand, s] using Complex.continuous_re.comp hquot
+
+/-- On the cutoff slab, the unwindowed Perron integrand is strongly measurable
+on the fixed height window. -/
+theorem small_T_perronVerticalIntegrand_aestronglyMeasurable_slab16
+    (q : ℝ × ℝ)
+    (hq : q ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    AEStronglyMeasurable
+      (fun t : ℝ => perronVerticalIntegrand q.1 t)
+      (volume.restrict (Set.Ioc (-16 : ℝ) 16)) :=
+  (small_T_perronVerticalIntegrand_continuous_height q.1 hq.1).aestronglyMeasurable.restrict
+
 /-- The fixed-window DCT measurability input follows from measurability of the
 unwindowed Perron integrand on the fixed window. -/
 theorem small_T_perronVerticalFixedWindowIntegrand_aestronglyMeasurable_from_integrand
@@ -5268,6 +5332,21 @@ theorem small_T_perronVerticalFixedWindowIntegrand_aestronglyMeasurable_from_int
   filter_upwards with q
   unfold perronVerticalFixedWindowIntegrandParam
   exact (hperron q).indicator measurableSet_Ioc
+
+/-- Closed fixed-window DCT measurability input on the cutoff slab. -/
+theorem small_T_perronVerticalFixedWindowIntegrand_aestronglyMeasurable_slab16 :
+    ∀ p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᶠ q in 𝓝[
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        AEStronglyMeasurable
+          (fun t : ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (volume.restrict (Set.Ioc (-16 : ℝ) 16)) := by
+  intro p hp
+  filter_upwards [eventually_mem_nhdsWithin] with q hq
+  unfold perronVerticalFixedWindowIntegrandParam
+  exact (small_T_perronVerticalIntegrand_aestronglyMeasurable_slab16 q hq).indicator
+    measurableSet_Ioc
 
 /-- The fixed-window DCT a.e. convergence input follows from ordinary Perron
 integrand convergence and eventual stability of membership in the moving
