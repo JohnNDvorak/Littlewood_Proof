@@ -2039,3 +2039,40 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Remaining goal shape:
   Hardy-start theta-model asymptotic at `(m+1)^-2`, Jacobian-integral bound at
   `1/relativeWeight`, and the shifted stationary-phase target remainder.
+
+### 2026-04-29 Round 43 Theta Stirling Reduction
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  Hardy-start theta-model asymptotic at `O((m+1)^-2)` feeding
+  `atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_model_residual`.
+- Facts banked:
+  proved `atkinson_hardyStartThetaModel_bound_of_thetaStirling`, reducing the
+  discrete Hardy-start model atom to the continuous pointwise Stirling
+  remainder
+  `∃ Cθ > 0, ∃ Tθ, ∀ t ≥ Tθ,`
+  `|hardyTheta t - ((t / 2) * Real.log (t / (2 * Real.pi)) - t / 2 - Real.pi / 8)|`
+  `≤ Cθ / t`. The proof uses `hardyStart m = 2π * (m+1)^2` and returns the
+  discrete constant `Cθ / (2π)`. Also added
+  `atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_thetaStirling`,
+  packaging that input with the already-closed elementary model residual.
+- Smallest next theorem:
+  prove the continuous pointwise Hardy theta Stirling remainder above, or move
+  to the independent Jacobian-integral bound at `1/relativeWeight`. The shifted
+  stationary-phase target remainder remains separate public-path debt.
+- Failed routes / guardrails:
+  inspected the Jacobian route but did not pursue the existing tail VdC bound as
+  a closure because its visible scale is too coarse for the required
+  `1/relativeWeight` target. Did not use direct Abel, phase-weight division,
+  circular provider assumptions, broad analytic axioms, sorries, or statement
+  weakening.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  continuous pointwise Hardy theta Stirling remainder, Jacobian-integral bound
+  at `1/relativeWeight`, and the shifted stationary-phase target remainder.
