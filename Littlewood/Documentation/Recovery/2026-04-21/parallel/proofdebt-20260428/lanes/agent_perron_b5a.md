@@ -2600,3 +2600,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   prove the fixed-`t` unwindowed-integrand convergence atom for
   `perronVerticalIntegrand q.1 t`, or prove the local integrable-majorant
   input for the fixed-window DCT handoff.
+
+### 2026-04-29 Round 52 - Close Fixed-Window A.E. Convergence Input
+
+- Classification: `PROOF_CLOSED`.
+- Exact theorem attacked:
+  fixed-`t` unwindowed integrand convergence for
+  `perronVerticalIntegrand q.1 t`, and the resulting fixed-window a.e.
+  convergence input for
+  `small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16_from_dominated_convergence`.
+- Code facts banked:
+  added
+  `small_T_perronVerticalIntegrand_continuousWithinAt_slab16_fixed_height`,
+  proving continuity within the cutoff slab of
+  `fun q => perronVerticalIntegrand q.1 t` at each slab point and fixed
+  height.  The proof keeps `q.1 >= 2`, so `log q.1` is locally nonzero,
+  the variable base `(q.1 : ℂ)` stays in the slit plane, and the zeta and
+  linear denominators stay nonzero because the vertical-line real part is
+  `> 1`.  Added `small_T_perronVerticalIntegrand_tendsto_ae_slab16`, then
+  combined it with
+  `small_T_perronVerticalFixedWindow_membership_eventually_ae_slab16` to add
+  `small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_slab16`.
+- Shape check:
+  this closes only the a.e. pointwise convergence premise of the fixed-window
+  DCT handoff.  It does not assert dominated convergence by itself and does
+  not supply the local integrable-majorant input.
+- Failed/demoted routes:
+  did not try to use provider classes or contour statements.  The proof is
+  direct local continuity of the explicit unwindowed Perron integrand.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, or `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check`; then
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.  Both passed.
+- Smallest next theorem:
+  prove the local integrable-majorant input for
+  `perronVerticalFixedWindowIntegrandParam` on
+  `volume.restrict (Set.Ioc (-16) 16)`, which is now the remaining DCT atom
+  after measurability and a.e. convergence are closed.

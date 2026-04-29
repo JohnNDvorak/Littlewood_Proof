@@ -5348,6 +5348,94 @@ theorem small_T_perronVerticalFixedWindowIntegrand_aestronglyMeasurable_slab16 :
   exact (small_T_perronVerticalIntegrand_aestronglyMeasurable_slab16 q hq).indicator
     measurableSet_Ioc
 
+/-- For fixed height, the unwindowed Perron integrand is continuous on the
+cutoff slab as a function of the `x` parameter. -/
+theorem small_T_perronVerticalIntegrand_continuousWithinAt_slab16_fixed_height
+    (p : ℝ × ℝ)
+    (hp : p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (t : ℝ) :
+    ContinuousWithinAt
+      (fun q : ℝ × ℝ => perronVerticalIntegrand q.1 t)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} p := by
+  let slab : Set (ℝ × ℝ) :=
+    {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}
+  let s : ℝ × ℝ → ℂ :=
+    fun q : ℝ × ℝ =>
+      ((1 + 1 / Real.log q.1 : ℝ) : ℂ) + (t : ℂ) * Complex.I
+  have hp_slab : p ∈ slab := hp
+  have hp_x_pos : 0 < p.1 := by linarith [hp.1]
+  have hp_x_ne : p.1 ≠ 0 := ne_of_gt hp_x_pos
+  have hp_log_pos : 0 < Real.log p.1 := Real.log_pos (by linarith [hp.1])
+  have hp_log_ne : Real.log p.1 ≠ 0 := ne_of_gt hp_log_pos
+  have hx_cont :
+      ContinuousWithinAt (fun q : ℝ × ℝ => q.1) slab p :=
+    continuous_fst.continuousWithinAt
+  have hlog_cont :
+      ContinuousWithinAt (fun q : ℝ × ℝ => Real.log q.1) slab p :=
+    hx_cont.log hp_x_ne
+  have hc_cont :
+      ContinuousWithinAt (fun q : ℝ × ℝ => 1 + 1 / Real.log q.1) slab p :=
+    continuousWithinAt_const.add
+      (ContinuousWithinAt.div continuousWithinAt_const hlog_cont hp_log_ne)
+  have hs_cont : ContinuousWithinAt s slab p := by
+    dsimp [s]
+    exact
+      (continuous_ofReal.continuousAt.comp_continuousWithinAt hc_cont).add
+        continuousWithinAt_const
+  have hs_re_gt_one : 1 < (s p).re := by
+    simpa [s] using c_param_re_gt_one p.1 hp.1 t
+  have hzeta_ne : riemannZeta (s p) ≠ 0 :=
+    riemannZeta_ne_zero_of_one_lt_re hs_re_gt_one
+  have hs_ne : s p ≠ 0 := by
+    intro hzero
+    rw [hzero] at hs_re_gt_one
+    norm_num at hs_re_gt_one
+  have hs_ne_one : s p ≠ 1 := by
+    intro hone
+    rw [hone] at hs_re_gt_one
+    norm_num at hs_re_gt_one
+  have hderiv_at : DifferentiableAt ℂ (deriv riemannZeta) (s p) := by
+    have hdo : DifferentiableOn ℂ (deriv riemannZeta) {(1 : ℂ)}ᶜ :=
+      DifferentiableOn.deriv
+        (fun w hw => (differentiableAt_riemannZeta
+          (Set.mem_compl_singleton_iff.mp hw)).differentiableWithinAt)
+        isOpen_compl_singleton
+    exact (hdo (s p) (Set.mem_compl_singleton_iff.mpr hs_ne_one)).differentiableAt
+      (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hs_ne_one))
+  have hlogderiv :
+      ContinuousWithinAt
+        (fun q : ℝ × ℝ => -deriv riemannZeta (s q) / riemannZeta (s q)) slab p :=
+    (hderiv_at.neg.div (differentiableAt_riemannZeta hs_ne_one)
+      hzeta_ne).continuousAt.comp_continuousWithinAt hs_cont
+  have hbase :
+      ContinuousWithinAt (fun q : ℝ × ℝ => (q.1 : ℂ)) slab p :=
+    continuous_ofReal.continuousAt.comp_continuousWithinAt hx_cont
+  have hpow : ContinuousWithinAt (fun q : ℝ × ℝ => (q.1 : ℂ) ^ s q) slab p :=
+    hbase.cpow hs_cont (ofReal_mem_slitPlane.2 hp_x_pos)
+  have hquot :
+      ContinuousWithinAt
+        (fun q : ℝ × ℝ =>
+          (-deriv riemannZeta (s q) / riemannZeta (s q)) *
+            (q.1 : ℂ) ^ s q / s q) slab p :=
+    (hlogderiv.mul hpow).div hs_cont hs_ne
+  simpa [perronVerticalIntegrand, s, slab] using
+    Complex.continuous_re.continuousAt.comp_continuousWithinAt hquot
+
+/-- Closed unwindowed fixed-height convergence input on the cutoff slab. -/
+theorem small_T_perronVerticalIntegrand_tendsto_ae_slab16 :
+    ∀ p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalIntegrand q.1 t)
+          (𝓝[
+            {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalIntegrand p.1 t)) := by
+  intro p hp
+  filter_upwards with t
+  exact small_T_perronVerticalIntegrand_continuousWithinAt_slab16_fixed_height p hp t
+
 /-- The fixed-window DCT a.e. convergence input follows from ordinary Perron
 integrand convergence and eventual stability of membership in the moving
 half-open interval. -/
@@ -5499,6 +5587,20 @@ theorem small_T_perronVerticalFixedWindow_membership_eventually_ae_slab16 :
     simp [ae_iff, measure_singleton]
   filter_upwards [ae_restrict_of_ae hpos, ae_restrict_of_ae hneg] with t ht_pos ht_neg
   exact small_T_perronVerticalFixedWindow_membership_eventually_of_ne_endpoints p t ht_pos ht_neg
+
+/-- Closed fixed-window DCT a.e. convergence input on the cutoff slab. -/
+theorem small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_slab16 :
+    ∀ p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (𝓝[
+            {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalFixedWindowIntegrandParam p t)) :=
+  small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_from_integrand_and_membership
+    small_T_perronVerticalIntegrand_tendsto_ae_slab16
+    small_T_perronVerticalFixedWindow_membership_eventually_ae_slab16
 
 /-- Fixed-window slab continuity reduced to the exact local dominated
 convergence inputs on the fixed window `(-16,16]`.  The remaining analytic
