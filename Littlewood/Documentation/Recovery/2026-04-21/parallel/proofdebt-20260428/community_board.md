@@ -984,3 +984,27 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Pi/Phase: three named canonical-budget residuals.
   - RS/Gabcke: quarter value formula and quarter raw-removable bridge, with
     analogous three-quarter atoms still available if that route proves easier.
+
+## Overnight 2026-04-29 Nineteenth Pass Status
+
+- Pi/Phase lane is validated and pushed through `936ef57`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Reduce pi Perron residual to transfer`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the Perron-threshold tower half-budget canonical majorant residual
+    is reduced to a same-height transfer inequality:
+    `perronThreshold hRH T + 1 <=
+      max (X + 1) (perronThreshold hRH T0 + 1)`.
+  - Planck is redeployed to determine whether this transfer follows from
+    existing monotonicity/definition of `perronThreshold`, needs a corrected
+    fixed-height residual, or is false as currently stated.
+- Current live atoms:
+  - Atkinson: stationary-phase complete-block target remainder, finite
+    fixed-shift boundary-prefix leaf, and finite fixed-shift correction-prefix
+    leaf.
+  - Perron/B5a: finite reindexing/injection into `harmonic (Nat.floor x)`.
+  - Pi/Phase: Perron transfer inequality plus target/anti chosen-radius
+    canonical residuals.
+  - RS/Gabcke: quarter value formula and quarter raw-removable bridge, with
+    analogous three-quarter atoms still available if that route proves easier.
