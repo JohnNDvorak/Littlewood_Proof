@@ -1626,3 +1626,46 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 33 Carrier FTC Decomposition
+
+- Classification: `PROOF_ATTEMPT`, pending coordinator validation.
+- Exact theorem attacked:
+  carrier FTC decomposition
+  `atkinsonNormalizedShiftedCorrectionCarrierIntegral n j`
+  `= -I * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j`
+  `- relativePhase * atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j`.
+- Facts banked:
+  added
+  `atkinsonNormalizedShiftedCorrectionCarrierIntegral_eq_boundary_jacobian`,
+  a direct FTC proof for the product
+  `blockMode (n+j) u * atkinsonShiftedPacketPhase (n+j) j u`.
+  The derivative splits into the carrier integrand plus
+  `relativePhase *` the Jacobian carrier integrand, preserving the scale needed
+  by the previous boundary/Jacobian reduction. Added
+  `atkinson_carrierIntegral_bound_of_boundary_and_jacobian_estimates`, plus
+  correction and inverse wrappers
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_boundary_jacobian_estimates`
+  and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_carrier_boundary_jacobian_estimates`,
+  so the decomposition hypothesis is no longer a live provider input.
+- Failed routes / guardrails:
+  no absolute primitive bound was used; no phase-weight division, direct Abel
+  shortcut, circular provider, axioms, sorries, statement weakening, or broad
+  rewrite was introduced.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  the derivative normalization inside
+  `atkinsonNormalizedShiftedCorrectionCarrierIntegral_eq_boundary_jacobian`,
+  especially the `hpacket` rewrite from `atkinsonShiftedPacketOmega` and the
+  `intervalIntegral.integral_const_mul` normalization in `hInt_decomp`.
+- Remaining goal shape:
+  shifted stationary-phase target remainder, endpoint boundary bound at
+  `relativePhase/relativeWeight` scale, and Jacobian-integral bound at
+  `1/relativeWeight` scale.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

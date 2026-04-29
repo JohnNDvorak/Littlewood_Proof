@@ -1402,6 +1402,145 @@ private theorem atkinsonNormalizedShiftedCorrectionTerm_eq_relativeCoeff_mul_car
           rw [hI]
           ring
 
+private theorem atkinsonNormalizedShiftedCorrectionCarrierIntegral_eq_boundary_jacobian
+    (n j : ℕ) :
+    atkinsonNormalizedShiftedCorrectionCarrierIntegral n j =
+      (-Complex.I) * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j -
+        (((atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+          atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j := by
+  let k : ℕ := n + j
+  let carrier : ℝ → ℂ := fun u =>
+    (((Aristotle.StationaryPhaseMainMode.blockOmega k u : ℝ) : ℂ) *
+      Aristotle.StationaryPhaseMainMode.blockMode k u) *
+        atkinsonShiftedPacketPhase k j u
+  let jac : ℝ → ℂ := fun u =>
+    (((blockJacobian k u : ℝ) : ℂ) *
+      Aristotle.StationaryPhaseMainMode.blockMode k u) *
+        atkinsonShiftedPacketPhase k j u
+  let F : ℝ → ℂ := fun u =>
+    Aristotle.StationaryPhaseMainMode.blockMode k u *
+      atkinsonShiftedPacketPhase k j u
+  let derivCarrier : ℝ → ℂ := fun u => Complex.I * carrier u
+  let derivJac : ℝ → ℂ := fun u =>
+    Complex.I * (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ) * jac u)
+  let derivExpr : ℝ → ℂ := fun u => derivCarrier u + derivJac u
+  have hmode_cont :
+      Continuous (Aristotle.StationaryPhaseMainMode.blockMode k) := by
+    unfold Aristotle.StationaryPhaseMainMode.blockMode
+    exact (HardyCosSmooth.continuous_hardyCosExp_complex k).comp
+      (blockCoord_continuous k)
+  have hcarrier_cont : Continuous carrier := by
+    dsimp [carrier]
+    exact ((Complex.continuous_ofReal.comp (atkinsonBlockOmega_continuous k)).mul
+      hmode_cont).mul (atkinsonShiftedPacketPhase_continuous k j)
+  have hjac_cont : Continuous jac := by
+    dsimp [jac]
+    exact ((Complex.continuous_ofReal.comp (blockJacobian_continuous k)).mul
+      hmode_cont).mul (atkinsonShiftedPacketPhase_continuous k j)
+  have hderivCarrier_int :
+      IntervalIntegrable derivCarrier volume (0 : ℝ) 1 := by
+    simpa [derivCarrier] using
+      ((continuous_const : Continuous fun _ : ℝ => Complex.I).mul
+        hcarrier_cont).intervalIntegrable (0 : ℝ) 1
+  have hderivJac_int :
+      IntervalIntegrable derivJac volume (0 : ℝ) 1 := by
+    have hcont : Continuous derivJac := by
+      dsimp [derivJac]
+      exact (continuous_const.mul (continuous_const.mul hjac_cont))
+    simpa using hcont.intervalIntegrable (0 : ℝ) 1
+  have hderiv :
+      ∀ u ∈ Set.uIcc (0 : ℝ) 1, HasDerivAt F (derivExpr u) u := by
+    intro u hu
+    have hprod :=
+      (Aristotle.StationaryPhaseMainMode.blockMode_hasDerivAt k u).mul
+        (atkinsonShiftedPacketPhase_hasDerivAt k j u)
+    have hpacket :
+        (((atkinsonShiftedPacketOmega k j u : ℝ) : ℂ))
+          =
+        (((blockJacobian k u : ℝ) : ℂ) *
+          (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ))) := by
+      unfold atkinsonShiftedPacketOmega
+      rw [Complex.ofReal_mul]
+    have htarget :
+        (Complex.I * ((Aristotle.StationaryPhaseMainMode.blockOmega k u : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseMainMode.blockMode k u) *
+            atkinsonShiftedPacketPhase k j u +
+          Aristotle.StationaryPhaseMainMode.blockMode k u *
+            (Complex.I * ↑(atkinsonShiftedPacketOmega k j u) *
+              atkinsonShiftedPacketPhase k j u)
+          =
+        derivExpr u := by
+      dsimp [derivExpr, derivCarrier, derivJac, carrier, jac]
+      rw [hpacket]
+      ring
+    exact hprod.congr_deriv htarget
+  have hFTC :
+      ∫ u in (0 : ℝ)..1, derivExpr u = F 1 - F 0 :=
+    intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv
+      (by simpa [derivExpr] using hderivCarrier_int.add hderivJac_int)
+  have hInt_decomp :
+      ∫ u in (0 : ℝ)..1, derivExpr u =
+        Complex.I *
+          ((∫ u in (0 : ℝ)..1, carrier u) +
+            (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+              (∫ u in (0 : ℝ)..1, jac u)) := by
+    dsimp [derivExpr, derivCarrier, derivJac]
+    rw [intervalIntegral.integral_add hderivCarrier_int hderivJac_int]
+    rw [intervalIntegral.integral_const_mul]
+    rw [intervalIntegral.integral_const_mul]
+    rw [intervalIntegral.integral_const_mul]
+    ring
+  have hboundary :
+      Complex.I *
+          ((∫ u in (0 : ℝ)..1, carrier u) +
+            (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+              (∫ u in (0 : ℝ)..1, jac u))
+        =
+      atkinsonNormalizedShiftedCorrectionCarrierBoundary n j := by
+    rw [← hInt_decomp]
+    simpa [F, k, atkinsonNormalizedShiftedCorrectionCarrierBoundary] using hFTC
+  have hsolve :
+      (∫ u in (0 : ℝ)..1, carrier u) =
+        (-Complex.I) * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j -
+          (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+            (∫ u in (0 : ℝ)..1, jac u) := by
+    have hI : (-Complex.I) * Complex.I = 1 := by norm_num
+    have hmul :
+        (-Complex.I) *
+            (Complex.I *
+              ((∫ u in (0 : ℝ)..1, carrier u) +
+                (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+                  (∫ u in (0 : ℝ)..1, jac u))) =
+          ((∫ u in (0 : ℝ)..1, carrier u) +
+            (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+              (∫ u in (0 : ℝ)..1, jac u)) := by
+      rw [← mul_assoc, hI, one_mul]
+    calc
+      (∫ u in (0 : ℝ)..1, carrier u)
+          =
+        ((∫ u in (0 : ℝ)..1, carrier u) +
+          (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+            (∫ u in (0 : ℝ)..1, jac u)) -
+        (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+          (∫ u in (0 : ℝ)..1, jac u) := by
+            ring
+      _ =
+        (-Complex.I) *
+            (Complex.I *
+                ((∫ u in (0 : ℝ)..1, carrier u) +
+                  (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+                    (∫ u in (0 : ℝ)..1, jac u))) -
+            (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+              (∫ u in (0 : ℝ)..1, jac u) := by
+            rw [hmul]
+      _ =
+        (-Complex.I) * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j -
+          (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+            (∫ u in (0 : ℝ)..1, jac u) := by
+          rw [hboundary]
+  simpa [atkinsonNormalizedShiftedCorrectionCarrierIntegral,
+    atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral, carrier, jac, k] using hsolve
+
 private theorem atkinsonResonantShiftedCorrectionTerm_eq_modeWeight_mul_normalized
     (n j : ℕ) :
     atkinsonResonantShiftedCorrectionTerm n j =
@@ -20287,6 +20426,33 @@ private theorem atkinson_carrierIntegral_bound_of_boundary_and_jacobian_bounds
             ring
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Carrier cancellation after the local FTC decomposition has been closed:
+only the endpoint boundary estimate and the Jacobian-integral estimate remain. -/
+private theorem atkinson_carrierIntegral_bound_of_boundary_and_jacobian_estimates
+    (hboundary :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_bdry > 0, ∃ N_bdry : ℕ, ∀ n : ℕ, N_bdry ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierBoundary n j‖
+            ≤ A_bdry *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j))
+    (hjacobian :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_jac > 0, ∃ N_jac : ℕ, ∀ n : ℕ, N_jac ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+            ≤ B_jac / atkinsonShiftedRelativeWeight (n + j) j) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ E_corr > 0, ∃ N_corr : ℕ, ∀ n : ℕ, N_corr ≤ n →
+        ‖atkinsonNormalizedShiftedCorrectionCarrierIntegral n j‖
+          ≤ E_corr *
+              (atkinsonShiftedRelativePhase (n + j) j /
+                atkinsonShiftedRelativeWeight (n + j) j) := by
+  exact
+    atkinson_carrierIntegral_bound_of_boundary_and_jacobian_bounds
+      (fun n j => atkinsonNormalizedShiftedCorrectionCarrierIntegral_eq_boundary_jacobian n j)
+      hboundary hjacobian
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Pointwise correction majorant from the eventual normalized fixed-shift
 bound, with finite initial modes absorbed by the previous compactness lemma. -/
 private theorem atkinson_pointwiseFixedShiftCorrection_of_eventual_normalized_bound
@@ -20454,6 +20620,37 @@ private theorem
       hmode
       (atkinson_carrierIntegral_bound_of_boundary_and_jacobian_bounds
         hdecomp hboundary hjacobian)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Correction-prefix package after closing the carrier FTC decomposition:
+only the endpoint boundary and Jacobian-integral carrier estimates remain. -/
+private theorem
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_boundary_jacobian_estimates
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hboundary :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_bdry > 0, ∃ N_bdry : ℕ, ∀ n : ℕ, N_bdry ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierBoundary n j‖
+            ≤ A_bdry *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j))
+    (hjacobian :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_jac > 0, ∃ N_jac : ℕ, ∀ n : ℕ, N_jac ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+            ≤ B_jac / atkinsonShiftedRelativeWeight (n + j) j) :
+    AtkinsonShiftedCorrectionPrefixBoundHyp := by
+  exact
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_fixedShift_correction
+      hmode
+      (atkinson_carrierIntegral_bound_of_boundary_and_jacobian_estimates
+        hboundary hjacobian)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
@@ -21176,6 +21373,36 @@ private theorem
   letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_boundary_jacobian
       hmode hdecomp hboundary hjacobian
+  exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Public inverse-phase package after closing the carrier FTC decomposition:
+only the endpoint boundary and Jacobian-integral carrier estimates remain. -/
+private theorem
+    atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_carrier_boundary_jacobian_estimates
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hboundary :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_bdry > 0, ∃ N_bdry : ℕ, ∀ n : ℕ, N_bdry ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierBoundary n j‖
+            ≤ A_bdry *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j))
+    (hjacobian :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_jac > 0, ∃ N_jac : ℕ, ∀ n : ℕ, N_jac ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+            ≤ B_jac / atkinsonShiftedRelativeWeight (n + j) j) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_boundary_jacobian_estimates
+      hmode hboundary hjacobian
   exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
