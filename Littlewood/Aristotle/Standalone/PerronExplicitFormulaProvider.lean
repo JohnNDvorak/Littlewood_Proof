@@ -3521,6 +3521,59 @@ class PerronThresholdEventuallyBelowExpHalfBudgetHyp
             Real.exp (Real.exp (Real.exp
               (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
 
+/-- Raw `Classical.choose` expression underlying `perronThreshold`.
+
+This definition is intentionally not used as a replacement API. It exposes the
+exact opaque choice whose growth must be controlled to prove
+`PerronThresholdEventuallyBelowExpHalfBudgetHyp` from
+`PerronSqrtErrorEventuallyAtHeightHyp`. -/
+noncomputable def perronThresholdRawEventualChoice
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hRH : ZetaZeros.RiemannHypothesis) (T : ℝ) : ℝ :=
+  Classical.choose <| Filter.eventually_atTop.1
+    (PerronSqrtErrorEventuallyAtHeightHyp.witness hRH T)
+
+/-- The named raw chooser is definitionally the imported `perronThreshold`. -/
+theorem perronThreshold_eq_rawEventualChoice
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hRH : ZetaZeros.RiemannHypothesis) (T : ℝ) :
+    perronThreshold hRH T =
+      perronThresholdRawEventualChoice hRH T := by
+  rfl
+
+/-- Exact chooser-growth residual below
+`PerronThresholdEventuallyBelowExpHalfBudgetHyp`.
+
+The usual eventual witness does not order the `Classical.choose` threshold; it
+only proves that the chosen threshold is valid.  This residual states precisely
+the missing same-height growth theorem for that chosen threshold. -/
+def PerronSqrtErrorRawChoiceEventuallyBelowExpHalfBudgetResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ (_hRH : ZetaZeros.RiemannHypothesis),
+    ∃ T0 : ℝ,
+      ∀ T ε : ℝ,
+        T0 ≤ T →
+        0 < ε →
+        ε < 1 →
+        perronThresholdRawEventualChoice _hRH T + 1 ≤
+          Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
+
+/-- The exact raw-chooser residual supplies the public Perron-threshold budget
+class. -/
+theorem perronThresholdEventuallyBelowExpHalfBudget_of_rawChoiceResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (h :
+      PerronSqrtErrorRawChoiceEventuallyBelowExpHalfBudgetResidual) :
+    PerronThresholdEventuallyBelowExpHalfBudgetHyp where
+  witness := by
+    intro hRH
+    rcases h hRH with ⟨T0, hBudget⟩
+    refine ⟨T0, ?_⟩
+    intro T ε hT hεpos hεlt
+    simpa [perronThreshold_eq_rawEventualChoice] using
+      hBudget T ε hT hεpos hεlt
+
 /-- The pure tower cofinality plus eventual same-height Perron-threshold
 budget closes the canonical Perron residual. -/
 theorem perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_eventualThresholdBudget_hyp
@@ -3540,6 +3593,18 @@ theorem perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_eventualTh
           (((1 - (1 / 2 : ℝ)) * ((N T : ℝ) / (T + 1))) / 2)) / 2) :=
     hPerron T (1 / 2 : ℝ) hT0 (by norm_num) (by norm_num)
   exact ⟨T, (1 / 2 : ℝ), hT4, by norm_num, by norm_num, max_le hX hP⟩
+
+/-- Raw-chooser growth is enough for the exact canonical Perron residual via
+the already-proved tower cofinality split. -/
+theorem perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_rawChoiceResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [ZeroCountingLowerBoundHyp]
+    (h :
+      PerronSqrtErrorRawChoiceEventuallyBelowExpHalfBudgetResidual) :
+    PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual := by
+  letI : PerronThresholdEventuallyBelowExpHalfBudgetHyp :=
+    perronThresholdEventuallyBelowExpHalfBudget_of_rawChoiceResidual h
+  exact perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_eventualThresholdBudget_hyp
 
 /-- Corrected residual for the fixed-height Perron majorant route.
 
@@ -6827,6 +6892,25 @@ theorem exactSeedAboveThreshold_perron_of_eventualPerronBudgetAndBudgetedRelativ
   exact
     exactSeedAboveThreshold_perron_of_canonicalPerronAndBudgetedRelativelyDense_hyp
       perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_eventualThresholdBudget_hyp
+
+/-- Raw-chooser Perron-threshold growth plus explicit budgeted finite-zero
+radii package both Perron-only exact-seed classes.
+
+This is the most literal endpoint for the current `perronThreshold` API: the
+remaining Perron atom is the same-height budget for the exact `Classical.choose`
+value used by `perronThreshold`. -/
+theorem exactSeedAboveThreshold_perron_of_rawChoicePerronBudgetAndBudgetedRelativelyDense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [ZeroCountingLowerBoundHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    (hPerron :
+      PerronSqrtErrorRawChoiceEventuallyBelowExpHalfBudgetResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact
+    exactSeedAboveThreshold_perron_of_canonicalPerronAndBudgetedRelativelyDense_hyp
+      (perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_rawChoiceResidual
+        hPerron)
 
 /-- Relation-compatible budgeted finite-zero Kronecker plus the Perron log
 half-budget packages both target-specific Perron phase-fit classes through the
