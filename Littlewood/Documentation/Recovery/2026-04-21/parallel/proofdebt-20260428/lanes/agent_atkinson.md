@@ -2759,3 +2759,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   alternate branch route remains the period-correction-zero atom. Independent
   debts remain the Jacobian-integral bound at `1/relativeWeight` and shifted
   stationary-phase target remainder.
+
+### 2026-04-29 Round 59 Vertical Principal-Log Branch-Route Reduction
+
+- Classification: `VALIDATED_BRANCH_ROUTE_REDUCTION`.
+- Exact theorem attacked:
+  vertical principal-log Stirling Big-O
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun y => Complex.log (Complex.Gamma (1/4 + i*y)) -`
+  `StationaryPhaseStartValue.stirlingTerm (1/4 + i*y))`
+  `(fun y => ((1 / y : ℝ) : ℂ))`.
+- Facts banked:
+  added and proved
+  `atkinson_vertical_principal_log_isBigO_of_period_correction_zero_and_multiplier_isBigO`.
+  This gives the vertical principal-log Big-O from exactly two previously
+  isolated branch-route atoms: eventual vanishing of the principal-log period
+  correction in `atkinson_vertical_multiplier_branch_with_period_correction`,
+  and the standard multiplier estimate
+  `atkinsonGammaStirlingMultiplier t - 1 = O(1/t)`.
+- Smallest next theorem:
+  either prove the standard complex principal-log Gamma/Stirling Big-O directly,
+  or prove the branch-route pair:
+  1. period-correction zero for
+     `toIocDiv Real.two_pi_pos (-Real.pi)
+       (stirlingTerm (1/4+i*y) + log verticalMultiplier y).im`;
+  2. standard multiplier Big-O
+     `(fun t => atkinsonGammaStirlingMultiplier t - 1) =O[atTop]
+       (fun t => ((1 / t : ℝ) : ℂ))`.
+- Failed routes / guardrails:
+  searched local Gamma/Stirling/Binet infrastructure again.  No existing
+  theorem states the principal `Complex.log Γ - stirlingTerm` vertical Big-O.
+  Local Binet/derivative machinery remains tied to the auxiliary private
+  half-plane `gammaLog`; converting that to principal `Complex.log` is exactly
+  the branch issue exposed by the period-correction theorem.  Did not add
+  imports, analytic providers, axioms, sorries, statement weakening, direct
+  Abel shortcuts, phase-weight division, circular provider assumptions, or the
+  demoted raw endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  direct standard complex principal-log Gamma/Stirling Big-O, or the two
+  branch-route atoms above. Independent debts remain the Jacobian-integral
+  bound at `1/relativeWeight` and shifted stationary-phase target remainder.
