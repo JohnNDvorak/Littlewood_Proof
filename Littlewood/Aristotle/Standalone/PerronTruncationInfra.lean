@@ -78,6 +78,26 @@ def perronVerticalIntegral (x T : ℝ) : ℝ :=
      (x : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
      ((c : ℂ) + (t : ℂ) * Complex.I)).re
 
+/-- The real integrand in the vertical Perron line integral, with the Perron
+abscissa `c = 1 + 1 / log x` built in. -/
+def perronVerticalIntegrand (x t : ℝ) : ℝ :=
+  let c := 1 + 1 / Real.log x
+  ((-deriv riemannZeta ((c : ℂ) + (t : ℂ) * Complex.I) /
+    riemannZeta ((c : ℂ) + (t : ℂ) * Complex.I)) *
+   (x : ℂ) ^ ((c : ℂ) + (t : ℂ) * Complex.I) /
+   ((c : ℂ) + (t : ℂ) * Complex.I)).re
+
+/-- The unscaled variable-height vertical Perron integral. -/
+def perronVerticalRawIntegral (x T : ℝ) : ℝ :=
+  ∫ t in (-T)..T, perronVerticalIntegrand x t
+
+/-- The public vertical Perron integral is the constant Perron prefactor times
+the raw variable-height integral. -/
+theorem perronVerticalIntegral_eq_rawIntegral (x T : ℝ) :
+    perronVerticalIntegral x T =
+      (2 * Real.pi)⁻¹ * perronVerticalRawIntegral x T := by
+  rfl
+
 /-- The concrete contour-remainder defect for the actual vertical Perron
 integral in this file.
 
@@ -5113,6 +5133,20 @@ theorem small_T_zeroSumRe_continuousOn_slab16_from_criticalZeroSet_eventually_eq
       {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
   small_T_zeroSumRe_continuousOn_slab16_from_zerosBelow_eventually_eq
     (small_T_zerosBelow_eventually_eq_from_criticalZeroSet_eventually_eq hsets)
+
+/-- Slab continuity of the vertical Perron integral reduced to the raw
+variable-height interval integral.  The remaining atom is the parametric
+continuity of the interval integral itself; this lemma only removes the
+constant Perron prefactor and the inlined integrand expression. -/
+theorem small_T_perronVerticalIntegral_continuousOn_slab16_from_rawIntegral
+    (hraw : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalRawIntegral p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+  simpa [perronVerticalIntegral_eq_rawIntegral] using
+    (continuousOn_const.mul hraw)
 
 /-- Continuity of the normalization denominator on the cutoff-`16` slab. -/
 theorem small_T_residue_error_shape_continuousOn_slab16 :
