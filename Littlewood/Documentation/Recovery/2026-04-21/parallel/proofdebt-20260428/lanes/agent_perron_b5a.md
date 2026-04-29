@@ -1538,3 +1538,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `x - x / T`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 29 - Singular Off-Boundary Distance Reduction
+
+- Classification: `CANDIDATE_REDUCTION`.
+- Exact theorem attacked:
+  the remaining singular off-boundary Davenport component
+  `∃ Cs > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDavenportSingularEnvelope x T
+      <= Cs * (x / T) * (Real.log x)^2`.
+- Code facts banked:
+  added `perronKernelOffBoundaryDistanceWeight`, the finite
+  `Σ Λ(n) / (x - n)` weight on the off-boundary set.
+  Added
+  `small_T_offBoundary_davenportSingularEnvelope_bound_from_pointwise_and_distance`,
+  reducing the singular envelope to:
+  a pointwise reciprocal-log comparison against
+  `(x / T) * (Λ(n)/n + Λ(n)/(x-n))`, plus the distance-weight summation bound.
+  Added
+  `small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_singularDistance`,
+  wiring this singular-distance reduction together with the validated smooth
+  component through the linear-scale cutoff route.
+- Scale check:
+  preserved the `x / T` factor explicitly.  The existing reciprocal-weight
+  theorem supplies the `Λ(n)/n` part; the only new summation atom is the
+  distance weight at `O((Real.log x)^2)`.
+- Failed/demoted routes:
+  did not use a constant singular kernel supremum or a pure
+  `O((Real.log x)^2)` off-boundary cutoff.  The reciprocal-log singularity is
+  kept inside the pointwise/distance split.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the pointwise reciprocal-log comparison
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈ offBoundary,
+    perronKernelOffBoundaryDavenportSingularTerm x T n
+      <= K * (x / T) * (Λ(n)/n + Λ(n)/(x-n))`,
+  then prove the distance-weight summation
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDistanceWeight x T <= Cd * (Real.log x)^2`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

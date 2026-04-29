@@ -1596,6 +1596,14 @@ def perronKernelVonMangoldtReciprocalWeight (x : ℝ) : ℝ :=
   ∑ n ∈ Finset.range (Nat.floor x + 1),
     if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)
 
+/-- Off-boundary reciprocal-distance von Mangoldt weight.  This is the
+singular summation atom left after converting `1 / log (x / n)` into a
+distance from the sharp cutoff. -/
+def perronKernelOffBoundaryDistanceWeight (x T : ℝ) : ℝ :=
+  ∑ n ∈ (Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T),
+    if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (x - (n : ℝ))
+
 /-- Exact finite-sum split of the weighted cutoff error into the sharp boundary
 window and its complement. -/
 theorem perronKernelWeightedCutoffError_eq_boundary_add_offBoundary
@@ -3931,6 +3939,77 @@ theorem small_T_offBoundary_davenportSmoothEnvelope_bound :
         dsimp [Cm]
         ring
 
+/-- Conditional singular off-boundary Davenport bound from the pointwise
+reciprocal-log comparison and the remaining distance-weight summation atom. -/
+theorem small_T_offBoundary_davenportSingularEnvelope_bound_from_pointwise_and_distance
+    (hpoint : ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ (Finset.range (Nat.floor x + 1)).filter
+          (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T) →
+          perronKernelOffBoundaryDavenportSingularTerm x T n ≤
+            K * (x / T) *
+              ((if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)) +
+                (if n = 0 then 0 else
+                  ArithmeticFunction.vonMangoldt n / (x - (n : ℝ)))))
+    (hdistance : ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDistanceWeight x T ≤ Cd * (Real.log x) ^ 2) :
+    ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDavenportSingularEnvelope x T ≤
+        Cs * (x / T) * (Real.log x) ^ 2 := by
+  rcases hpoint with ⟨K, hK_pos, hpoint⟩
+  rcases small_T_vonMangoldt_reciprocalWeight_bound with ⟨Cr, hCr_pos, hrecip⟩
+  rcases hdistance with ⟨Cd, hCd_pos, hdistance⟩
+  refine ⟨K * (Cr + Cd), mul_pos hK_pos (add_pos hCr_pos hCd_pos), ?_⟩
+  intro x T hx hT_lo hT_hi
+  let s := (Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T)
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hT_pos : 0 < T := by linarith
+  have hscale_nonneg : 0 ≤ K * (x / T) :=
+    mul_nonneg hK_pos.le (div_nonneg hx_nonneg hT_pos.le)
+  have hrecip_x := hrecip x hx
+  have hdistance_x := hdistance x T hx hT_lo hT_hi
+  have hrecip_subset :
+      (∑ n ∈ s, if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)) ≤
+        perronKernelVonMangoldtReciprocalWeight x := by
+    dsimp [perronKernelVonMangoldtReciprocalWeight, s]
+    apply Finset.sum_le_sum_of_subset_of_nonneg
+    · exact Finset.filter_subset _ _
+    · intro n _hn_range _hn_not_s
+      by_cases hn_zero : n = 0
+      · simp [hn_zero]
+      · simpa [hn_zero] using
+          div_nonneg (vonMangoldt_nonneg n) (Nat.cast_nonneg n)
+  calc perronKernelOffBoundaryDavenportSingularEnvelope x T
+      = ∑ n ∈ s, perronKernelOffBoundaryDavenportSingularTerm x T n := by
+        rfl
+    _ ≤ ∑ n ∈ s,
+          K * (x / T) *
+            ((if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)) +
+              (if n = 0 then 0 else
+                ArithmeticFunction.vonMangoldt n / (x - (n : ℝ)))) := by
+        exact Finset.sum_le_sum (fun n hn => hpoint x T hx hT_lo hT_hi n hn)
+    _ = K * (x / T) *
+          ((∑ n ∈ s, if n = 0 then 0 else
+              ArithmeticFunction.vonMangoldt n / (n : ℝ)) +
+            perronKernelOffBoundaryDistanceWeight x T) := by
+        dsimp [perronKernelOffBoundaryDistanceWeight, s]
+        rw [← Finset.mul_sum]
+        congr 1
+        rw [Finset.sum_add_distrib]
+    _ ≤ K * (x / T) *
+          (perronKernelVonMangoldtReciprocalWeight x +
+            perronKernelOffBoundaryDistanceWeight x T) := by
+        exact mul_le_mul_of_nonneg_left
+          (add_le_add hrecip_subset
+            (le_refl (perronKernelOffBoundaryDistanceWeight x T)))
+          hscale_nonneg
+    _ ≤ K * (x / T) *
+          (Cr * (Real.log x) ^ 2 + Cd * (Real.log x) ^ 2) := by
+        exact mul_le_mul_of_nonneg_left
+          (add_le_add hrecip_x hdistance_x) hscale_nonneg
+    _ = K * (Cr + Cd) * (x / T) * (Real.log x) ^ 2 := by ring
+
 /-- Off-boundary Davenport-envelope bound from separate singular and smooth
 summation bounds. -/
 theorem small_T_offBoundary_davenportEnvelope_linear_bound_from_components
@@ -3972,6 +4051,28 @@ theorem small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_davenport_c
   small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_davenportEnvelope
     (small_T_offBoundary_davenportEnvelope_linear_bound_from_components
       hsingular hsmooth)
+
+/-- The remaining singular off-boundary route after the smooth component has
+been closed: it is enough to prove the pointwise reciprocal-log comparison and
+the finite distance-weight summation bound. -/
+theorem small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_singularDistance
+    (hpoint : ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ (Finset.range (Nat.floor x + 1)).filter
+          (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T) →
+          perronKernelOffBoundaryDavenportSingularTerm x T n ≤
+            K * (x / T) *
+              ((if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)) +
+                (if n = 0 then 0 else
+                  ArithmeticFunction.vonMangoldt n / (x - (n : ℝ)))))
+    (hdistance : ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDistanceWeight x T ≤ Cd * (Real.log x) ^ 2) :
+    ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (x / T) * (Real.log x) ^ 2 :=
+  small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_davenport_components
+    (small_T_offBoundary_davenportSingularEnvelope_bound_from_pointwise_and_distance
+      hpoint hdistance)
+    small_T_offBoundary_davenportSmoothEnvelope_bound
 
 /-- Weighted finite cutoff from the Davenport separated-bound route and the
 off-boundary weighted atom. -/
