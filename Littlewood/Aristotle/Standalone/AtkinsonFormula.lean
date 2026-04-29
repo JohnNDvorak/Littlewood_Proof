@@ -18273,6 +18273,110 @@ class AtkinsonShiftedCorrectionPrefixBoundHyp : Prop where
           atkinsonResonantShiftedCorrectionTerm n j‖
         ≤ C * Real.log (↑j + 1) * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)
 
+/-- Package the correction-prefix hypothesis from its honest fixed-shift
+pieces: a large-shift correction prefix and the two finite shifts `j = 1,2`.
+This is the non-circular provider surface for
+`atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix`. -/
+private theorem atkinson_shiftedCorrectionPrefixBound_of_eventual_j3_and_correction_j1_j2
+    (hevent :
+      ∃ Cevent > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n j‖
+          ≤ Cevent * Real.log (↑j + 1) *
+              (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j))
+    (hcorr1 :
+      ∃ C1 > 0, ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico ((1 : ℕ) - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n (1 : ℕ)‖
+          ≤ C1 * (Real.sqrt (((m + (1 : ℕ) : ℕ) : ℝ) + 1) / ((1 : ℕ) : ℝ)))
+    (hcorr2 :
+      ∃ C2 > 0, ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico ((2 : ℕ) - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n (2 : ℕ)‖
+          ≤ C2 * (Real.sqrt (((m + (2 : ℕ) : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ))) :
+    AtkinsonShiftedCorrectionPrefixBoundHyp := by
+  constructor
+  obtain ⟨Cevent, hCevent, hevent'⟩ := hevent
+  obtain ⟨C1, hC1, hcorr1'⟩ := hcorr1
+  obtain ⟨C2, hC2, hcorr2'⟩ := hcorr2
+  let C : ℝ := Cevent + C1 / Real.log 2 + C2 / Real.log 2
+  have hlog2_pos : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  refine ⟨C, by
+    dsimp [C]
+    positivity, ?_⟩
+  intro j hj m
+  let scale : ℝ := Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j
+  have hscale_nonneg : 0 ≤ scale := by
+    dsimp [scale]
+    positivity
+  have hlog_nonneg : 0 ≤ Real.log (↑j + 1) :=
+    Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
+  by_cases hj3 : 3 ≤ j
+  · have hraw := hevent' j hj3 hj m
+    have hCevent_le : Cevent ≤ C := by
+      dsimp [C]
+      have h1_nonneg : 0 ≤ C1 / Real.log 2 := div_nonneg hC1.le hlog2_pos.le
+      have h2_nonneg : 0 ≤ C2 / Real.log 2 := div_nonneg hC2.le hlog2_pos.le
+      nlinarith
+    calc
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1), atkinsonResonantShiftedCorrectionTerm n j‖
+          ≤ Cevent * Real.log (↑j + 1) * scale := by
+            simpa [scale] using hraw
+      _ ≤ C * Real.log (↑j + 1) * scale := by
+            exact mul_le_mul_of_nonneg_right
+              (mul_le_mul_of_nonneg_right hCevent_le hlog_nonneg) hscale_nonneg
+  · have hj_cases : j = 1 ∨ j = 2 := by omega
+    rcases hj_cases with rfl | rfl
+    · have hraw := hcorr1' m
+      have hC1_le : C1 ≤ C * Real.log 2 := by
+        have hevent_nonneg : 0 ≤ Cevent := le_of_lt hCevent
+        have h2_nonneg : 0 ≤ C2 / Real.log 2 := div_nonneg hC2.le hlog2_pos.le
+        have hC1div_le : C1 / Real.log 2 ≤ C := by
+          dsimp [C]
+          nlinarith
+        have hC1_eq : C1 = (C1 / Real.log 2) * Real.log 2 := by
+          field_simp [hlog2_pos.ne']
+        calc
+          C1 = (C1 / Real.log 2) * Real.log 2 := hC1_eq
+          _ ≤ C * Real.log 2 := by
+            exact mul_le_mul_of_nonneg_right hC1div_le hlog2_pos.le
+      calc
+        ‖∑ n ∈ Finset.Ico ((1 : ℕ) - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n (1 : ℕ)‖
+            ≤ C1 * (Real.sqrt (((m + (1 : ℕ) : ℕ) : ℝ) + 1) / ((1 : ℕ) : ℝ)) := hraw
+        _ ≤ C * Real.log (↑(1 : ℕ) + 1) *
+              (Real.sqrt (((m + (1 : ℕ) : ℕ) : ℝ) + 1) / ((1 : ℕ) : ℝ)) := by
+              norm_num
+              exact mul_le_mul_of_nonneg_right hC1_le (by positivity)
+    · have hraw := hcorr2' m
+      have hlog2_le_log3 : Real.log 2 ≤ Real.log 3 :=
+        Real.log_le_log (by norm_num) (by norm_num)
+      have hC2_le_log2 : C2 ≤ C * Real.log 2 := by
+        have hevent_nonneg : 0 ≤ Cevent := le_of_lt hCevent
+        have h1_nonneg : 0 ≤ C1 / Real.log 2 := div_nonneg hC1.le hlog2_pos.le
+        have hC2div_le : C2 / Real.log 2 ≤ C := by
+          dsimp [C]
+          nlinarith
+        have hC2_eq : C2 = (C2 / Real.log 2) * Real.log 2 := by
+          field_simp [hlog2_pos.ne']
+        calc
+          C2 = (C2 / Real.log 2) * Real.log 2 := hC2_eq
+          _ ≤ C * Real.log 2 := by
+            exact mul_le_mul_of_nonneg_right hC2div_le hlog2_pos.le
+      have hC2_le_log3 : C2 ≤ C * Real.log 3 := by
+        have hC_nonneg : 0 ≤ C := by
+          dsimp [C]
+          positivity
+        nlinarith
+      calc
+        ‖∑ n ∈ Finset.Ico ((2 : ℕ) - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n (2 : ℕ)‖
+            ≤ C2 * (Real.sqrt (((m + (2 : ℕ) : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ)) := hraw
+        _ ≤ C * Real.log (↑(2 : ℕ) + 1) *
+              (Real.sqrt (((m + (2 : ℕ) : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ)) := by
+              norm_num
+              exact mul_le_mul_of_nonneg_right hC2_le_log3 (by positivity)
+
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
     atkinson_large_modes_complete_resonant_packet_row_correction_sum_bound_atomic_of_shifted_correction_prefix

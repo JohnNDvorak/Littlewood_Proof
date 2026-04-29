@@ -251,6 +251,62 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
 
+### 2026-04-29 Round 14 Correction-Prefix Route Reset
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  `AtkinsonShiftedCorrectionPrefixBoundHyp`, the viable non-circular provider
+  surface feeding
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix`.
+- Aristotle guardrail / demoted route:
+  the zero-model, mass-coefficient, Fourier-corrected target, and compensated
+  carrier path is no longer an active proof route. Aristotle found the scale
+  mismatch: `atkinsonShiftedQuadraticMassCoeff` has size
+  `O(sqrt(n) / j^2)` while the old target coefficient has size
+  `O(sqrt(n) / j)`, and the shifted zero-model phase error on
+  `p in [j, j + 1]` is too large for the
+  `atkinsonModeWeight (n + j) / j` budget. I reverted my unvalidated local
+  compensated-carrier commit with `a0bca65` rather than carrying that bad route
+  forward.
+- Facts banked:
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix`
+  already proves
+  `AtkinsonShiftedCorrectionPrefixBoundHyp ->
+   AtkinsonShiftedInversePhaseCellPrefixBoundHyp` using the established
+  boundary-prefix/IBP machinery.
+  The new reducer
+  `atkinson_shiftedCorrectionPrefixBound_of_eventual_j3_and_correction_j1_j2`
+  packages the correction-prefix class from three honest raw correction atoms:
+  the eventual large-shift prefix for `3 <= j`, plus the finite native
+  correction-prefix patches for `j = 1` and `j = 2`.
+- Failed routes / guardrails:
+  did not use `AtkinsonShiftedInversePhaseCellPrefixBoundHyp` circularly, did
+  not retry direct Abel/gamma-8 contraction, did not import stale CloudDocs or
+  quarantine files, and did not reuse any zero-model/mass-coefficient target as
+  the proof route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local real-inequality proof engineering in
+  `atkinson_shiftedCorrectionPrefixBound_of_eventual_j3_and_correction_j1_j2`,
+  especially simplification of the `j = 1` and `j = 2` logarithmic constants.
+- Smallest next theorem:
+  prove the large-shift raw correction-prefix atom
+  `∃ Cevent > 0, ∀ j : ℕ, 3 ≤ j -> 1 ≤ j -> ∀ m : ℕ,`
+  `‖∑ n ∈ Finset.Ico (j - 1) (m + 1),`
+  `atkinsonResonantShiftedCorrectionTerm n j‖`
+  `≤ Cevent * Real.log (↑j + 1) *`
+  `(Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)`,
+  using `atkinson_weighted_shifted_completeBlock_complex_bound_eventually`
+  and Abel summation/deweighting machinery if the phase factor can be removed
+  without losing the required `sqrt(m+j) / j` scale. The finite `j = 1,2`
+  raw correction patches remain separate small atoms if not already supplied.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
+
 ### 2026-04-28 Coordinator Validation, Round 4
 
 - Commit amended/pushed by coordinator as `5e12977`
