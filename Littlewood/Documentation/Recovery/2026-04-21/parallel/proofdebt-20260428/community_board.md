@@ -1496,3 +1496,35 @@ Timestamp: 2026-04-28 22:56 CDT.
     comparison.
   - Pi/Phase: same-height `PerronThresholdTowerPhaseWideWindowHyp` source.
   - RS/Gabcke: shifted raw numerator trig atom.
+
+## Overnight 2026-04-29 Thirty-Fourth Pass Status
+
+- Atkinson lane is validated and pushed through `3901947`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Reduce Atkinson pointwise correction to normalized integral`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the pointwise fixed-shift correction majorant now reduces to the
+    normalized fixed-shift correction atom
+    `∀ j ≥ 1, ∃ D_j > 0, ∀ n,
+      ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_j`.
+  - Remaining Atkinson atoms:
+    - normalized fixed-shift correction bound above;
+    - shifted-interval stationary-phase target remainder.
+- Perron/B5a lane is validated and pushed through `4fdd92a`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Close Perron singular pointwise split`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the pointwise reciprocal-log split is closed. The singular
+    Davenport route now depends only on the finite distance-weight summation.
+  - Remaining Perron atom:
+    `∃ Cd > 0, ∀ x T, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDistanceWeight x T
+        ≤ Cd * (Real.log x)^2`.
+- Current live atoms:
+  - Atkinson: normalized fixed-shift correction bound and shifted
+    stationary-phase target remainder.
+  - Perron/B5a: finite distance-weight summation bound.
+  - Pi/Phase: same-height `PerronThresholdTowerPhaseWideWindowHyp` source.
+  - RS/Gabcke: shifted raw numerator trig atom.
