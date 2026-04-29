@@ -19877,6 +19877,72 @@ private theorem
       (by simpa using hfixed (2 : ℕ) (by norm_num))
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- A fixed-shift absolute correction-prefix majorant is enough for the native
+fixed-shift correction family. The apparent `1 / j` loss is harmless here
+because the constant is allowed to depend on the fixed positive shift. -/
+private theorem atkinson_fixedShiftCorrectionPrefix_of_absolute_prefix
+    (habsolute :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_corr > 0, ∀ m : ℕ,
+          ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              ‖atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ A_corr * Real.sqrt (((m + j : ℕ) : ℝ) + 1)) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_corr > 0, ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n j‖
+          ≤ C_corr * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  intro j hj
+  obtain ⟨A_corr, hA_corr, habs⟩ := habsolute j hj
+  refine ⟨A_corr * (j : ℝ), by
+    exact mul_pos hA_corr (by exact_mod_cast (show 0 < j by omega)), ?_⟩
+  intro m
+  let scale : ℝ := Real.sqrt (((m + j : ℕ) : ℝ) + 1)
+  have hnorm :
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          atkinsonResonantShiftedCorrectionTerm n j‖
+        ≤ ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            ‖atkinsonResonantShiftedCorrectionTerm n j‖ :=
+    norm_sum_le _ _
+  have hrewrite :
+      A_corr * scale = (A_corr * (j : ℝ)) * (scale / j) := by
+    field_simp [show (j : ℝ) ≠ 0 by exact_mod_cast (show j ≠ 0 by omega)]
+  calc
+    ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+        atkinsonResonantShiftedCorrectionTerm n j‖
+        ≤ ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            ‖atkinsonResonantShiftedCorrectionTerm n j‖ := hnorm
+    _ ≤ A_corr * scale := by
+          simpa [scale] using habs m
+    _ = (A_corr * (j : ℝ)) * (scale / j) := hrewrite
+    _ = (A_corr * (j : ℝ)) * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+          simp [scale]
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Correction-prefix provider package from the stationary-phase remainder and
+the scale-safe absolute fixed-shift correction-prefix atom. -/
+private theorem
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_absolute_fixedShift_correction
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (habsolute :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_corr > 0, ∀ m : ℕ,
+          ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              ‖atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ A_corr * Real.sqrt (((m + j : ℕ) : ℝ) + 1)) :
+    AtkinsonShiftedCorrectionPrefixBoundHyp := by
+  exact
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_all
+      hmode
+      (atkinson_fixedShiftCorrectionPrefix_of_absolute_prefix habsolute)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
     atkinson_large_modes_complete_resonant_packet_row_correction_sum_bound_atomic_of_shifted_correction_prefix
     [AtkinsonShiftedCorrectionPrefixBoundHyp] :
@@ -20444,6 +20510,31 @@ private theorem
   letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_all
       hmode hfixed
+  exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Public inverse-phase provider package from the stationary-phase remainder
+and the absolute fixed-shift correction-prefix atom. This is a non-circular
+immediate-instantiation surface below the public class. -/
+private theorem
+    atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_absolute_fixedShift_correction
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (habsolute :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_corr > 0, ∀ m : ℕ,
+          ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              ‖atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ A_corr * Real.sqrt (((m + j : ℕ) : ℝ) + 1)) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_absolute_fixedShift_correction
+      hmode habsolute
   exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in

@@ -1358,3 +1358,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 27 Absolute Fixed-Shift Correction Atom
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  the all-positive fixed-shift correction-prefix family feeding the immediate
+  correction/inverse provider package.
+- Facts banked:
+  `atkinson_fixedShiftCorrectionPrefix_of_absolute_prefix` reduces the native
+  fixed-shift correction family to an absolute correction-prefix majorant:
+  for each fixed positive `j`, it is enough to prove
+  `∃ A_j > 0, ∀ m, ∑ n ∈ Ico (j - 1) (m + 1), ‖correction n j‖`
+  `≤ A_j * sqrt(m + j + 1)`. The required `sqrt(m+j+1) / j` form follows by
+  replacing the constant with `A_j * j`, so no global deweighting or
+  phase-weight division is involved.
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_absolute_fixedShift_correction`
+  and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_absolute_fixedShift_correction`
+  wire this absolute fixed-shift atom into the already validated provider
+  route.
+- Failed routes / guardrails:
+  I did not attempt to derive raw correction from a phase-weighted
+  inverse-cell prefix, and I did not use direct Abel, zero-model,
+  mass-coefficient, Fourier-corrected target, compensated-carrier, circular
+  provider, diffuse deweighting, axioms, sorries, or statement weakening. The
+  absolute-prefix reduction is fixed-shift only; its constant depends on `j`,
+  which is exactly why the `1 / j` scale is safe.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  arithmetic/coercion details in
+  `atkinson_fixedShiftCorrectionPrefix_of_absolute_prefix`, especially the
+  `field_simp` normalization of
+  `A_j * sqrt = (A_j * j) * (sqrt / j)`.
+- Remaining goal shape:
+  prove the shifted-interval stationary-phase target remainder, and prove the
+  absolute fixed-shift correction-prefix atom for each positive shift.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
