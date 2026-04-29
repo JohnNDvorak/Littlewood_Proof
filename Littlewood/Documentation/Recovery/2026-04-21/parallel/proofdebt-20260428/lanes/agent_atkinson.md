@@ -1311,3 +1311,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 26 All-Fixed-Shift Correction Provider Surface
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  immediate instantiation of `AtkinsonShiftedCorrectionPrefixBoundHyp` and
+  `AtkinsonShiftedInversePhaseCellPrefixBoundHyp` from the native atom package.
+- Facts banked:
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_all`
+  packages the shifted-interval stationary-phase target remainder together
+  with a single native fixed-shift correction-prefix family
+  `∀ j, 1 ≤ j -> ∃ C_corr > 0, ∀ m, ...` into
+  `AtkinsonShiftedCorrectionPrefixBoundHyp`. The `j ≥ 3` large-shift input and
+  the `j = 1, 2` small patches are extracted directly by specialization of the
+  same native fixed-shift family.
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_all`
+  then constructs the inverse-phase cell-prefix provider by building that
+  correction provider locally and applying
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix`.
+- Failed routes / guardrails:
+  the tempting route from a phase-weighted inverse-cell prefix back to the raw
+  correction prefix remains forbidden and was not used. No direct Abel,
+  zero-model, mass-coefficient, Fourier-corrected target, compensated-carrier,
+  circular provider, diffuse deweighting, axioms, sorries, or statement
+  weakening were used.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  the two `simpa` specializations of the all-fixed-shift correction family at
+  `j = 1` and `j = 2`; the terms are intended to be definitionally identical
+  to the existing small-patch hypotheses.
+- Remaining goal shape:
+  prove the shifted-interval stationary-phase target remainder
+  `∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j -> 3 ≤ j -> 1 ≤ j ->`
+  `∀ k : ℕ, 2 * j ≤ k ->`
+  `‖(((atkinsonModeWeight (k - j) : ℝ) : ℂ) *`
+  `∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `StationaryPhaseMainMode.blockMode (k - j) p * blockJacobian (k - j) p)`
+  `- atkinsonCompleteBlockTargetK k j‖`
+  `≤ C_err * (atkinsonModeWeight k / j)`,
+  and prove the native fixed-shift correction-prefix family for every
+  positive fixed shift.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

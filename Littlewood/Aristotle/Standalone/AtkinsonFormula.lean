@@ -19850,6 +19850,33 @@ private theorem
       hcorr1 hcorr2
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Correction-prefix provider package when the native fixed-shift correction
+leaf is supplied uniformly for every positive shift. This removes the separate
+`j = 1, 2` patch surface from the immediate provider-instantiation route. -/
+private theorem
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_all
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hfixed :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ C_corr > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ C_corr * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    AtkinsonShiftedCorrectionPrefixBoundHyp := by
+  exact
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_j1_j2
+      hmode
+      (fun j _ hj1 => hfixed j hj1)
+      (by simpa using hfixed (1 : ℕ) (by norm_num))
+      (by simpa using hfixed (2 : ℕ) (by norm_num))
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
     atkinson_large_modes_complete_resonant_packet_row_correction_sum_bound_atomic_of_shifted_correction_prefix
     [AtkinsonShiftedCorrectionPrefixBoundHyp] :
@@ -20391,6 +20418,32 @@ private theorem
   letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_j1_j2
       hmode hfixed hcorr1 hcorr2
+  exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Public inverse-phase cell-prefix provider package from the shifted
+stationary-phase remainder plus a single native fixed-shift correction-prefix
+family for all positive shifts. This is the immediate-instantiation surface
+after the correction provider has been packaged. -/
+private theorem
+    atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_all
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hfixed :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ C_corr > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ C_corr * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_all
+      hmode hfixed
   exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
