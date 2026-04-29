@@ -19168,6 +19168,238 @@ private theorem atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefi
       atkinson_largeShiftRowIntegralHead_bound
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Native complete-block tail handoff from an eventual no-log estimate plus
+finite fixed-shift patches. This is the remaining weighted tail analogue of
+the already-closed head finite patch. -/
+private theorem atkinson_weighted_shifted_completeBlock_prefix_bound_of_eventual_and_finite_patch
+    (hevent :
+      ∃ Cevent > 0, ∃ J0 : ℕ, ∀ j : ℕ, J0 ≤ j → 3 ≤ j → 1 ≤ j → ∀ M : ℕ,
+        ‖∑ n ∈ Finset.range M,
+            (if j ≤ n then
+              (((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                  HardyCosSmooth.hardyCosExp n t)
+            else 0)‖
+          ≤ Cevent * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j))
+    (hpatch :
+      ∀ J0 : ℕ, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → j < J0 →
+        ∃ Cj > 0, ∀ M : ℕ,
+          ‖∑ n ∈ Finset.range M,
+              (if j ≤ n then
+                (((atkinsonModeWeight n : ℝ) : ℂ) *
+                  ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                    HardyCosSmooth.hardyCosExp n t)
+              else 0)‖
+            ≤ Cj * Real.log (↑j + 1) *
+                (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)) :
+    ∃ C_block > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ M : ℕ,
+      ‖∑ n ∈ Finset.range M,
+          (if j ≤ n then
+            (((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                HardyCosSmooth.hardyCosExp n t)
+          else 0)‖
+        ≤ C_block * Real.log (↑j + 1) *
+            (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+  obtain ⟨Cevent, hCevent, J0, hlarge⟩ := hevent
+  let Cpatch : ℕ → ℝ := fun j =>
+    if hj : 3 ≤ j ∧ j < J0 then
+      Classical.choose (hpatch J0 j hj.1 (by omega) hj.2)
+    else 0
+  let Csmall : ℝ := Finset.sum (Finset.range J0) Cpatch
+  let C : ℝ := Cevent / Real.log 4 + Csmall
+  have hlog4_pos : (0 : ℝ) < Real.log 4 := Real.log_pos (by norm_num)
+  have hCpatch_nonneg : ∀ k : ℕ, 0 ≤ Cpatch k := by
+    intro k
+    dsimp [Cpatch]
+    split_ifs with hcond
+    · exact le_of_lt (Classical.choose_spec (hpatch J0 k hcond.1 (by omega) hcond.2)).1
+    · exact le_rfl
+  have hCsmall_nonneg : 0 ≤ Csmall := by
+    unfold Csmall
+    exact Finset.sum_nonneg (by intro k hk; exact hCpatch_nonneg k)
+  refine ⟨C, by
+    dsimp [C]
+    positivity, ?_⟩
+  intro j hj3 hj1 M
+  let target : ℝ := Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j
+  have htarget_nonneg : 0 ≤ target := by
+    dsimp [target]
+    positivity
+  have hlog_nonneg : 0 ≤ Real.log (↑j + 1) :=
+    Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
+  by_cases hJ : J0 ≤ j
+  · have hraw := hlarge j hJ hj3 hj1 M
+    have hlog4_le : Real.log 4 ≤ Real.log (↑j + 1) :=
+      Real.log_le_log (by norm_num) (by exact_mod_cast show 4 ≤ j + 1 by omega)
+    have hlarge_const : Cevent ≤ C * Real.log (↑j + 1) := by
+      have hdiv_le : Cevent / Real.log 4 ≤ C := by
+        dsimp [C]
+        nlinarith
+      calc
+        Cevent = (Cevent / Real.log 4) * Real.log 4 := by
+          field_simp [hlog4_pos.ne']
+        _ ≤ (Cevent / Real.log 4) * Real.log (↑j + 1) := by
+          exact mul_le_mul_of_nonneg_left hlog4_le
+            (div_nonneg hCevent.le hlog4_pos.le)
+        _ ≤ C * Real.log (↑j + 1) := by
+          exact mul_le_mul_of_nonneg_right hdiv_le hlog_nonneg
+    calc
+      ‖∑ n ∈ Finset.range M,
+          (if j ≤ n then
+            (((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                HardyCosSmooth.hardyCosExp n t)
+          else 0)‖
+          ≤ Cevent * target := by
+            simpa [target] using hraw
+      _ ≤ C * Real.log (↑j + 1) * target := by
+            exact mul_le_mul_of_nonneg_right hlarge_const htarget_nonneg
+  · have hj_lt : j < J0 := lt_of_not_ge hJ
+    have hsmallj := hpatch J0 j hj3 hj1 hj_lt
+    have hCpatch_eq : Cpatch j = Classical.choose hsmallj := by
+      dsimp [Cpatch]
+      simp [hj3, hj_lt]
+    have hCpatch_le : Cpatch j ≤ Csmall := by
+      unfold Csmall
+      exact Finset.single_le_sum (by
+        intro k hk
+        exact hCpatch_nonneg k) (Finset.mem_range.mpr hj_lt)
+    obtain ⟨hCj_pos, hCj⟩ := Classical.choose_spec hsmallj
+    have hC_le : Cpatch j ≤ C := by
+      dsimp [C]
+      nlinarith [hCpatch_le, div_pos hCevent hlog4_pos]
+    calc
+      ‖∑ n ∈ Finset.range M,
+          (if j ≤ n then
+            (((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                HardyCosSmooth.hardyCosExp n t)
+          else 0)‖
+          ≤ Classical.choose hsmallj * Real.log (↑j + 1) * target := by
+            simpa [target] using hCj M
+      _ = Cpatch j * Real.log (↑j + 1) * target := by
+            rw [hCpatch_eq]
+      _ ≤ C * Real.log (↑j + 1) * target := by
+            exact mul_le_mul_of_nonneg_right
+              (mul_le_mul_of_nonneg_right hC_le hlog_nonneg) htarget_nonneg
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Eventual weighted complete-block prefix from a cancellative target in
+native block coordinates and a pointwise `modeWeight / j` remainder. -/
+private theorem atkinson_weighted_shifted_completeBlock_prefix_bound_of_kTarget_and_modeWeight_remainder
+    (targetK : ℕ → ℕ → ℂ)
+    (htarget :
+      ∃ C_target > 0, ∃ J_target : ℕ, ∀ j : ℕ, J_target ≤ j → 3 ≤ j → 1 ≤ j → ∀ M : ℕ,
+        ‖∑ k ∈ Finset.Ico (2 * j) (M + j), targetK k j‖
+          ≤ C_target * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j))
+    (herr :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+                HardyCosSmooth.hardyCosExp (k - j) t) - targetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j)) :
+    ∃ C_block > 0, ∃ J_block : ℕ, ∀ j : ℕ, J_block ≤ j → 3 ≤ j → 1 ≤ j → ∀ M : ℕ,
+      ‖∑ n ∈ Finset.range M,
+          (if j ≤ n then
+            (((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                HardyCosSmooth.hardyCosExp n t)
+          else 0)‖
+        ≤ C_block * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+  refine
+    atkinson_weighted_shifted_completeBlock_prefix_bound_of_target_and_modeWeight_remainder
+      (targetFn := fun n j => targetK (n + j) j) ?_ ?_
+  · obtain ⟨C_target, hC_target, J_target, htarget'⟩ := htarget
+    refine ⟨C_target, hC_target, J_target, ?_⟩
+    intro j hJ_target hj3 hj1 M
+    have hsum₁ :
+        ∑ n ∈ Finset.range M, (if j ≤ n then targetK (n + j) j else 0)
+          =
+        ∑ n ∈ Finset.Ico j M, targetK (n + j) j := by
+      rw [← Finset.sum_filter]
+      have hset : (Finset.range M).filter (fun n => j ≤ n) = Finset.Ico j M := by
+        ext x
+        simp [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]
+        omega
+      rw [hset]
+    have hsum₂ :
+        ∑ n ∈ Finset.Ico j M, targetK (n + j) j
+          =
+        ∑ k ∈ Finset.Ico (2 * j) (M + j), targetK k j := by
+      rw [Finset.sum_Ico_eq_sum_range, Finset.sum_Ico_eq_sum_range]
+      rw [show (M + j) - 2 * j = M - j by omega]
+      refine Finset.sum_congr rfl ?_
+      intro r hr
+      simp [two_mul, Nat.add_assoc, add_left_comm, add_comm]
+    have hsum := hsum₁.trans hsum₂
+    calc
+      ‖∑ n ∈ Finset.range M, (if j ≤ n then targetK (n + j) j else 0)‖
+          = ‖∑ k ∈ Finset.Ico (2 * j) (M + j), targetK k j‖ := by
+            rw [hsum]
+      _ ≤ C_target * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) :=
+            htarget' j hJ_target hj3 hj1 M
+  · obtain ⟨C_err, hC_err, J_err, herr'⟩ := herr
+    refine ⟨C_err, hC_err, J_err, ?_⟩
+    intro j hJ_err hj3 hj1 n hjn
+    simpa [Nat.add_sub_cancel_right, Nat.add_assoc, add_left_comm, add_comm] using
+      herr' j hJ_err hj3 hj1 (n + j) (by omega : 2 * j ≤ n + j)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Concrete eventual weighted complete-block prefix from the stationary-phase
+complete-block target remainder. -/
+private theorem atkinson_weighted_shifted_completeBlock_prefix_bound_of_completeBlockTargetK_remainder
+    (herr :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+                HardyCosSmooth.hardyCosExp (k - j) t) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j)) :
+    ∃ C_block > 0, ∃ J_block : ℕ, ∀ j : ℕ, J_block ≤ j → 3 ≤ j → 1 ≤ j → ∀ M : ℕ,
+      ‖∑ n ∈ Finset.range M,
+          (if j ≤ n then
+            (((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                HardyCosSmooth.hardyCosExp n t)
+          else 0)‖
+        ≤ C_block * (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+  exact
+    atkinson_weighted_shifted_completeBlock_prefix_bound_of_kTarget_and_modeWeight_remainder
+      atkinsonCompleteBlockTargetK atkinsonCompleteBlockTargetK_prefix_bound herr
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Row-prefix handoff from the complete-block target remainder plus finite
+fixed-shift patches for the weighted complete-block tail. -/
+private theorem atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockTargetK_remainder_and_finite_block_patch
+    (herr :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+                HardyCosSmooth.hardyCosExp (k - j) t) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hpatch :
+      ∀ J0 : ℕ, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → j < J0 →
+        ∃ Cj > 0, ∀ M : ℕ,
+          ‖∑ n ∈ Finset.range M,
+              (if j ≤ n then
+                (((atkinsonModeWeight n : ℝ) : ℂ) *
+                  ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                    HardyCosSmooth.hardyCosExp n t)
+              else 0)‖
+            ≤ Cj * Real.log (↑j + 1) *
+                (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)) :
+    ∃ C_row > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ,
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+        ≤ C_row * Real.log (↑j + 1) *
+            (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  exact
+    atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefix
+      (atkinson_weighted_shifted_completeBlock_prefix_bound_of_eventual_and_finite_patch
+        (atkinson_weighted_shifted_completeBlock_prefix_bound_of_completeBlockTargetK_remainder herr)
+        hpatch)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
     atkinson_large_modes_complete_resonant_packet_row_correction_sum_bound_atomic_of_shifted_correction_prefix
     [AtkinsonShiftedCorrectionPrefixBoundHyp] :

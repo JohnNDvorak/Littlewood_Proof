@@ -984,3 +984,54 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 19 Complete-Block Tail to Eventual Plus Finite Patches
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  the remaining weighted complete-block tail prefix feeding
+  `atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefix`.
+- Facts banked:
+  `atkinson_weighted_shifted_completeBlock_prefix_bound_of_eventual_and_finite_patch`
+  packages the global log-weighted weighted complete-block tail from an
+  eventual no-log bound plus finite fixed-shift patches below the eventual
+  cutoff.
+  `atkinson_weighted_shifted_completeBlock_prefix_bound_of_kTarget_and_modeWeight_remainder`
+  exposes the eventual weighted tail in native `k = n + j` block coordinates:
+  a cancellative `targetK` prefix and a pointwise `modeWeight k / j`
+  remainder imply the eventual no-log tail.
+  `atkinson_weighted_shifted_completeBlock_prefix_bound_of_completeBlockTargetK_remainder`
+  specializes that interface to `atkinsonCompleteBlockTargetK` using the
+  existing target-prefix bound.
+  `atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockTargetK_remainder_and_finite_block_patch`
+  wires these atoms through the already-closed finite head patch and row-prefix
+  handoff.
+- Failed routes / guardrails:
+  I did not use the boundary/correction decomposition to prove the weighted
+  complete-block tail, because that would require
+  `AtkinsonShiftedCorrectionPrefixBoundHyp` and is circular for the current
+  provider route. No raw direct-Abel shortcut, zero-model, mass-coefficient,
+  Fourier-corrected target, compensated-carrier, circular provider, or diffuse
+  deweighting route was used.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local reindexing in
+  `atkinson_weighted_shifted_completeBlock_prefix_bound_of_kTarget_and_modeWeight_remainder`,
+  specifically the `Ico j M` to `Ico (2 * j) (M + j)` conversion copied from
+  the earlier inverse-phase complete-block wrapper.
+- Remaining goal shape:
+  prove the stationary-phase complete-block target remainder
+  `∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j -> 3 ≤ j -> 1 ≤ j ->`
+  `∀ k : ℕ, 2 * j ≤ k ->`
+  `‖(((atkinsonModeWeight (k - j) : ℝ) : ℂ) *`
+  `∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),`
+  `HardyCosSmooth.hardyCosExp (k - j) t) - atkinsonCompleteBlockTargetK k j‖`
+  `≤ C_err * (atkinsonModeWeight k / j)`,
+  and prove finite fixed-shift weighted complete-block tail patches below the
+  eventual cutoff.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
