@@ -2674,3 +2674,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   period-correction/alternate direct principal-log Stirling input,
   Jacobian-integral bound at `1/relativeWeight`, and the shifted
   stationary-phase target remainder.
+
+### 2026-04-29 Round 57 Direct Principal-Log Multiplier Reduction
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  standard Atkinson multiplier Big-O
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun t : ℝ => atkinsonGammaStirlingMultiplier t - 1)`
+  `(fun t : ℝ => ((1 / t : ℝ) : ℂ))`.
+- Facts banked:
+  added and proved
+  `atkinson_multiplier_isBigO_of_vertical_principal_log_bound`.
+  This gives the standard multiplier Big-O directly from the pointwise
+  principal-log vertical Stirling bound
+  `∃ C > 0, ∃ Y0, ∀ y ≥ Y0,`
+  `‖Complex.log (Complex.Gamma (1/4 + i*y)) -`
+  `StationaryPhaseStartValue.stirlingTerm (1/4 + i*y)‖ ≤ C / y`.
+  The proof composes the previously banked vertical-line `IsBigO` reduction
+  with `atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO`, so it
+  bypasses the separate multiplier principal-branch identity.
+- Smallest next theorem:
+  prove the direct vertical principal-log Stirling bound above, or separately
+  close the period-correction-zero atom if staying on the branch-identity
+  route.
+- Failed routes / guardrails:
+  did not try to derive exact branch additivity from multiplier closeness to
+  `1`; Round 56 recorded why that leaves a period correction. Did not add
+  imports, analytic providers, axioms, sorries, statement weakening, direct
+  Abel shortcuts, phase-weight division, circular provider assumptions, or the
+  demoted raw endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  direct principal-log vertical Stirling pointwise bound, or branch
+  period-correction zero for the vertical multiplier; independent debts remain
+  the Jacobian-integral bound at `1/relativeWeight` and shifted
+  stationary-phase target remainder.
