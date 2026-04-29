@@ -4915,6 +4915,35 @@ theorem small_T_perronVerticalIntegral_residue_bound_from_concrete_contour_remai
     (fun x T _hx _hT_lo _hT_hi => perronVerticalIntegral_residue_identity x T)
     hbound
 
+/-- Eventual bounded-height residue extraction for the actual vertical Perron
+integral from the eventual bound on the concrete named contour-remainder
+defect.
+
+This is the tail-local analogue of
+`small_T_perronVerticalIntegral_residue_bound_from_concrete_contour_remainder`.
+It removes only the residue algebra from the unbounded-tail atom; the remaining
+analytic estimate is the direct bound for `perronVerticalContourRemainderRe`. -/
+theorem small_T_eventual_perronVerticalIntegral_residue_bound_from_concrete_contour_remainder
+    (Xtail : ℝ)
+    (hbound : ∃ Cc > (0 : ℝ), ∀ x T : ℝ, Xtail ≤ x → 2 ≤ T → T ≤ 16 →
+      |perronVerticalContourRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ, Xtail ≤ x → 2 ≤ T → T ≤ 16 →
+      |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+        Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  rcases hbound with ⟨Cc, hCc_pos, hbound⟩
+  refine ⟨Cc, hCc_pos, ?_⟩
+  intro x T hx_tail hT_lo hT_hi
+  have hrem_eq :
+      perronVerticalContourRemainderRe x T =
+        perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T) := by
+    unfold perronVerticalContourRemainderRe
+    ring
+  rw [← hrem_eq]
+  exact hbound x T hx_tail hT_lo hT_hi
+
 /-- Bounded-height estimate for the concrete contour-remainder defect from a
 normalized supremum bound.
 
@@ -7904,6 +7933,20 @@ theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZe
     Xtail
     (small_T_concrete_contour_remainder_normalized_asymptotic_tail_from_eventual_residue_bound
       Xtail hXtail hresidue)
+
+/-- Linear-window small-`T` surface from the proved finite-zero transition
+boundedness route and an eventual direct bound on the concrete contour defect
+on the unbounded tail. -/
+theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_transition_bddAbove_and_eventual_concrete_bound
+    (Xtail : ℝ) (hXtail : 16 ≤ Xtail)
+    (hbound : ∃ Cc > (0 : ℝ), ∀ x T : ℝ, Xtail ≤ x → 2 ≤ T → T ≤ 16 →
+      |perronVerticalContourRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    SmallTPerronLinearWindowBoundHyp :=
+  small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_transition_bddAbove_and_eventual_residue_bound
+    Xtail hXtail
+    (small_T_eventual_perronVerticalIntegral_residue_bound_from_concrete_contour_remainder
+      Xtail hbound)
 
 /-- Linear-window small-`T` surface from the proved finite-zero slab,
 transition-slab continuity, and an eventual asymptotic tail. -/
