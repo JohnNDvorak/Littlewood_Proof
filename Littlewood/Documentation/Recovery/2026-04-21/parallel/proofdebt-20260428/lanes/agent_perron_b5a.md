@@ -1225,3 +1225,55 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   terms to the standard harmonic sum.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 23 - Finite Harmonic Floor Reindexing
+
+- Classification: `CANDIDATE_CLOSE`.
+- Exact theorem attacked:
+  the finite reindexing atom
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedReciprocalDistanceEnvelope x T
+      <= (harmonic (Nat.floor x) : ℝ)`.
+- Code facts banked:
+  added `perronKernelSeparatedFloorDistanceEnvelope`, the integer
+  floor-distance sum `Σ (floor x - n)⁻¹` over the separated punctured boundary
+  set.  Added private membership helpers extracting `n <= floor x` and
+  `0 < floor x - n` from the existing separated facts, using `1 < x - n` and
+  `x < floor x + 1`.
+  Proved
+  `perronKernelSeparatedReciprocalDistanceEnvelope_le_floorDistanceEnvelope`
+  by termwise reciprocal comparison
+  `(x - n)⁻¹ <= (floor x - n)⁻¹`.
+  Proved
+  `perronKernelSeparatedFloorDistanceEnvelope_le_harmonic_floor` by injecting
+  `n` into the positive integer distance `floor x - n`, proving the image is a
+  subset of `Finset.Icc 1 (Nat.floor x)`, and comparing to
+  `harmonic_eq_sum_Icc`.
+  Proved the requested closed majorant
+  `perronKernelSeparatedReciprocalDistanceEnvelope_le_harmonic_floor` and
+  added the closed consequence `small_T_separated_reciprocalDistance_bound`.
+- Scale check:
+  preserved the existing `(x / T)` factorization and only closed the pure
+  harmonic `O(log x)` reciprocal-distance atom.  Did not introduce a false
+  pure bounded-height Davenport-envelope bound.
+- Failed/demoted routes:
+  did not use the demoted pointwise `K * T * log^2 x / x` route near integer
+  `x`, and did not assert a macroscopic pure `O((log x)^2)` von Mangoldt
+  window estimate.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  after validation, use `small_T_separated_reciprocalDistance_bound` to close
+  the existing separated log-distance / singular Davenport-envelope wiring, or
+  continue to the remaining off-boundary weighted cutoff estimate if that
+  wiring is already sufficient.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

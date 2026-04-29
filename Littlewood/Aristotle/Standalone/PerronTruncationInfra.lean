@@ -1518,6 +1518,12 @@ def perronKernelSeparatedReciprocalDistanceEnvelope (x T : ℝ) : ℝ :=
   ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
     (x - (n : ℝ))⁻¹
 
+/-- Integer floor-distance majorant for the separated reciprocal-distance sum.
+It reindexes each term by its distance below `floor x`. -/
+def perronKernelSeparatedFloorDistanceEnvelope (x T : ℝ) : ℝ :=
+  ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
+    (((Nat.floor x - n : ℕ) : ℝ)⁻¹)
+
 /-- Pure von Mangoldt weight of the near-diagonal punctured boundary set. -/
 def perronKernelNearDiagonalPuncturedVonMangoldtWeight (x T : ℝ) : ℝ :=
   ∑ n ∈ perronKernelNearDiagonalPuncturedBoundarySet x T,
@@ -2922,6 +2928,134 @@ theorem perronKernelSeparatedPuncturedBoundarySet_mem_distance_bounds
     exact hnot_unit habs_le
   exact ⟨hdist_gt_one, hdist_le⟩
 
+private theorem perronKernelSeparatedPuncturedBoundarySet_mem_le_floor
+    (x T : ℝ) {n : ℕ}
+    (hn : n ∈ perronKernelSeparatedPuncturedBoundarySet x T) :
+    n ≤ Nat.floor x := by
+  have hn_unfold := hn
+  dsimp [perronKernelSeparatedPuncturedBoundarySet] at hn_unfold
+  have hsp := (Finset.mem_filter.mp hn_unfold).1
+  have hboundary := (Finset.mem_filter.mp hsp).1
+  have hrange : n ∈ Finset.range (Nat.floor x + 1) :=
+    (Finset.mem_filter.mp hboundary).1
+  exact Nat.lt_succ_iff.mp (Finset.mem_range.mp hrange)
+
+private theorem perronKernelSeparatedPuncturedBoundarySet_mem_floor_distance_pos
+    (x T : ℝ) (hx : 2 ≤ x) (hT_lo : 2 ≤ T) {n : ℕ}
+    (hn : n ∈ perronKernelSeparatedPuncturedBoundarySet x T) :
+    0 < Nat.floor x - n := by
+  rcases perronKernelSeparatedPuncturedBoundarySet_mem_distance_bounds
+      x T hx hT_lo hn with
+    ⟨hdist_gt_one, _hdist_le⟩
+  have hx_lt_floor_add_one : x < (Nat.floor x : ℝ) + 1 := by
+    exact_mod_cast Nat.lt_floor_add_one x
+  have hn_lt_floor : n < Nat.floor x := by
+    have hn_lt_floor_real : (n : ℝ) < (Nat.floor x : ℝ) := by
+      linarith
+    exact_mod_cast hn_lt_floor_real
+  exact Nat.sub_pos_of_lt hn_lt_floor
+
+/-- The real reciprocal distance is dominated termwise by the reciprocal of
+the integer floor-distance. -/
+theorem perronKernelSeparatedReciprocalDistanceEnvelope_le_floorDistanceEnvelope
+    (x T : ℝ) (hx : 2 ≤ x) (hT_lo : 2 ≤ T) :
+    perronKernelSeparatedReciprocalDistanceEnvelope x T ≤
+      perronKernelSeparatedFloorDistanceEnvelope x T := by
+  classical
+  dsimp [perronKernelSeparatedReciprocalDistanceEnvelope,
+    perronKernelSeparatedFloorDistanceEnvelope]
+  apply Finset.sum_le_sum
+  intro n hn
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hn_le_floor :
+      n ≤ Nat.floor x :=
+    perronKernelSeparatedPuncturedBoundarySet_mem_le_floor x T hn
+  rcases perronKernelSeparatedPuncturedBoundarySet_mem_distance_bounds
+      x T hx hT_lo hn with
+    ⟨hdist_gt_one, _hdist_le⟩
+  have hdist_pos : 0 < x - (n : ℝ) := by linarith
+  have hfloor_sub_pos_nat :
+      0 < Nat.floor x - n :=
+    perronKernelSeparatedPuncturedBoundarySet_mem_floor_distance_pos
+      x T hx hT_lo hn
+  have hfloor_sub_pos : 0 < ((Nat.floor x - n : ℕ) : ℝ) := by
+    exact_mod_cast hfloor_sub_pos_nat
+  have hfloor_sub_cast :
+      ((Nat.floor x - n : ℕ) : ℝ) = (Nat.floor x : ℝ) - (n : ℝ) := by
+    rw [Nat.cast_sub hn_le_floor]
+  have hfloor_le_x : (Nat.floor x : ℝ) ≤ x := Nat.floor_le hx_nonneg
+  have hfloor_dist_le : ((Nat.floor x - n : ℕ) : ℝ) ≤ x - (n : ℝ) := by
+    rw [hfloor_sub_cast]
+    linarith
+  exact (inv_le_inv₀ hdist_pos hfloor_sub_pos).2 hfloor_dist_le
+
+/-- The floor-distance reciprocal sum injects into the usual harmonic sum up
+to `floor x`. -/
+theorem perronKernelSeparatedFloorDistanceEnvelope_le_harmonic_floor
+    (x T : ℝ) (hx : 2 ≤ x) (hT_lo : 2 ≤ T) :
+    perronKernelSeparatedFloorDistanceEnvelope x T ≤
+      (harmonic (Nat.floor x) : ℝ) := by
+  classical
+  let s := perronKernelSeparatedPuncturedBoundarySet x T
+  let N := Nat.floor x
+  have hinj :
+      Set.InjOn (fun n : ℕ => N - n) (s : Set ℕ) := by
+    intro a ha b hb hdist
+    have ha_pos_sub :
+        0 < N - a := by
+      dsimp [N, s] at ha
+      simpa [N] using
+        (perronKernelSeparatedPuncturedBoundarySet_mem_floor_distance_pos
+          x T hx hT_lo ha)
+    have hb_pos_sub :
+        0 < N - b := by
+      dsimp [N, s] at hb
+      simpa [N] using
+        (perronKernelSeparatedPuncturedBoundarySet_mem_floor_distance_pos
+          x T hx hT_lo hb)
+    have ha_lt : a < N := tsub_pos_iff_lt.mp ha_pos_sub
+    have hb_lt : b < N := tsub_pos_iff_lt.mp hb_pos_sub
+    exact (tsub_right_inj ha_lt.le hb_lt.le).mp hdist
+  have hsubset :
+      s.image (fun n : ℕ => N - n) ⊆ Finset.Icc 1 N := by
+    intro k hk
+    rcases Finset.mem_image.mp hk with ⟨n, hn, rfl⟩
+    have hpos :
+        0 < N - n := by
+      dsimp [N, s] at hn
+      simpa [N] using
+        (perronKernelSeparatedPuncturedBoundarySet_mem_floor_distance_pos
+          x T hx hT_lo hn)
+    exact Finset.mem_Icc.mpr ⟨hpos, Nat.sub_le N n⟩
+  have hsum_image :
+      ∑ k ∈ s.image (fun n : ℕ => N - n), ((k : ℝ)⁻¹) =
+        ∑ n ∈ s, (((N - n : ℕ) : ℝ)⁻¹) :=
+    Finset.sum_image hinj
+  calc perronKernelSeparatedFloorDistanceEnvelope x T
+      = ∑ n ∈ s, (((N - n : ℕ) : ℝ)⁻¹) := by
+        dsimp [perronKernelSeparatedFloorDistanceEnvelope, s, N]
+    _ = ∑ k ∈ s.image (fun n : ℕ => N - n), ((k : ℝ)⁻¹) :=
+        hsum_image.symm
+    _ ≤ ∑ k ∈ Finset.Icc 1 N, ((k : ℝ)⁻¹) :=
+        Finset.sum_le_sum_of_subset_of_nonneg
+          hsubset
+          (by
+            intro k _hk_Icc _hk_not_image
+            exact inv_nonneg.mpr (Nat.cast_nonneg k))
+    _ = (harmonic N : ℝ) := by
+        simp only [harmonic_eq_sum_Icc, Rat.cast_sum, Rat.cast_inv, Rat.cast_natCast]
+
+/-- Exact finite reindexing majorant for the separated reciprocal-distance
+envelope. -/
+theorem perronKernelSeparatedReciprocalDistanceEnvelope_le_harmonic_floor
+    (x T : ℝ) (hx : 2 ≤ x) (hT_lo : 2 ≤ T) :
+    perronKernelSeparatedReciprocalDistanceEnvelope x T ≤
+      (harmonic (Nat.floor x) : ℝ) :=
+  le_trans
+    (perronKernelSeparatedReciprocalDistanceEnvelope_le_floorDistanceEnvelope
+      x T hx hT_lo)
+    (perronKernelSeparatedFloorDistanceEnvelope_le_harmonic_floor x T hx hT_lo)
+
 /-- The unweighted log-distance envelope is exactly the global `x / T` scale
 times the reciprocal-distance harmonic atom. -/
 theorem perronKernelSeparatedUnweightedLogDistanceEnvelope_eq_scale_mul_reciprocal
@@ -2992,9 +3126,9 @@ private theorem harmonic_floor_le_const_mul_log (x : ℝ) (hx : 2 ≤ x) :
         by linarith
     _ = (1 + 1 / Real.log 2) * Real.log x := by ring
 
-/-- Reciprocal-distance envelope bound from the exact finite harmonic majorant.
-The remaining atom is now only the reindexing/cardinality proof that the
-separated reciprocal distances are dominated by `H_floor(x)`. -/
+/-- Reciprocal-distance envelope bound from an exact finite harmonic majorant.
+This conditional form is kept for downstream wiring; the closed majorant is
+provided by `perronKernelSeparatedReciprocalDistanceEnvelope_le_harmonic_floor`. -/
 theorem small_T_separated_reciprocalDistance_bound_from_harmonic_floor
     (hharmonic : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
       perronKernelSeparatedReciprocalDistanceEnvelope x T ≤
@@ -3013,6 +3147,16 @@ theorem small_T_separated_reciprocalDistance_bound_from_harmonic_floor
     _ ≤ Ch * Real.log x := by
         dsimp [Ch]
         exact harmonic_floor_le_const_mul_log x hx
+
+/-- Closed pure reciprocal-distance harmonic bound for the separated boundary
+window. -/
+theorem small_T_separated_reciprocalDistance_bound :
+    ∃ Ch > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedReciprocalDistanceEnvelope x T ≤ Ch * Real.log x :=
+  small_T_separated_reciprocalDistance_bound_from_harmonic_floor
+    (fun x T hx hT_lo _hT_hi =>
+      perronKernelSeparatedReciprocalDistanceEnvelope_le_harmonic_floor
+        x T hx hT_lo)
 
 /-- The weighted harmonic-distance envelope is bounded by `log x` times the
 unweighted harmonic-distance envelope on the separated boundary window. -/
