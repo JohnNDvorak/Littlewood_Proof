@@ -2539,3 +2539,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   vertical relative Gamma/Stirling residual at `O(1/y)`, principal-log branch
   identity for the vertical multiplier, Jacobian-integral bound at
   `1/relativeWeight`, and the shifted stationary-phase target remainder.
+
+### 2026-04-29 Round 54 Vertical Relative Residual to Multiplier Big-O
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  vertical relative Gamma/Stirling residual
+  `∃ Crel > 0, ∃ Yrel, ∀ y ≥ Yrel,`
+  `‖Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y) -`
+  `Complex.exp (Aristotle.StationaryPhaseStartValue.stirlingTerm`
+  `((1 / 4 : ℂ) + Complex.I * y))‖ ≤`
+  `(Crel / y) * ‖Complex.exp (Aristotle.StationaryPhaseStartValue.stirlingTerm`
+  `((1 / 4 : ℂ) + Complex.I * y))‖`.
+- Facts banked:
+  searched local/recovered infrastructure. `StationaryPhaseStartValue` still
+  has the sharp private `gammaLog - stirlingTerm` machinery, while the exposed
+  growth files provide coarser Gamma growth/ratio bounds rather than the
+  needed relative `1/y` residual. Added and proved
+  `atkinson_vertical_relative_gamma_stirling_of_multiplier_isBigO`, showing
+  the vertical relative residual follows from the standard normalized
+  multiplier estimate
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun y => atkinsonVerticalGammaStirlingMultiplier y - 1)`
+  `(fun y => ((1 / y : ℝ) : ℂ))`.
+- Smallest next theorem:
+  prove the normalized vertical multiplier Big-O above, or prove the eventual
+  principal-log branch identity for `atkinsonVerticalGammaStirlingMultiplier`.
+  The multiplier Big-O is the non-branch analytic residual; the branch identity
+  is separate and should not be hidden inside a norm estimate.
+- Failed routes / guardrails:
+  did not use coarser Gamma growth bounds as a substitute for the relative
+  residual, since they do not imply `multiplier - 1 = O(1/y)`. Did not add
+  imports, analytic providers, axioms, sorries, statement weakening, direct
+  Abel shortcuts, phase-weight division, circular provider assumptions, or the
+  demoted raw endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  normalized vertical multiplier Big-O at `O(1/y)`, principal-log branch
+  identity for the vertical multiplier, Jacobian-integral bound at
+  `1/relativeWeight`, and the shifted stationary-phase target remainder.

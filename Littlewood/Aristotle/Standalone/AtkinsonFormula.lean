@@ -2162,6 +2162,74 @@ private theorem atkinson_principal_log_bound_of_vertical_relative_and_branch
     _ = ((3 / 2) * Crel) / y := by
           ring
 
+/-- The vertical relative Gamma/Stirling residual is exactly the near-one
+asymptotic for the normalized vertical multiplier. -/
+private theorem atkinson_vertical_relative_gamma_stirling_of_multiplier_isBigO
+    (hmult :
+      Asymptotics.IsBigO Filter.atTop
+        (fun y : ℝ => atkinsonVerticalGammaStirlingMultiplier y - 1)
+        (fun y : ℝ => ((1 / y : ℝ) : ℂ))) :
+    ∃ Crel > 0, ∃ Yrel : ℝ, ∀ y : ℝ, Yrel ≤ y →
+      ‖Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y) -
+          Complex.exp
+            (Aristotle.StationaryPhaseStartValue.stirlingTerm
+              ((1 / 4 : ℂ) + Complex.I * y))‖
+        ≤
+      (Crel / y) *
+        ‖Complex.exp
+          (Aristotle.StationaryPhaseStartValue.stirlingTerm
+            ((1 / 4 : ℂ) + Complex.I * y))‖ := by
+  rw [Asymptotics.isBigO_iff] at hmult
+  obtain ⟨C0, hC0eventual⟩ := hmult
+  obtain ⟨Y0, hY0⟩ := Filter.eventually_atTop.mp hC0eventual
+  refine ⟨max C0 0 + 1, by positivity, max Y0 1, ?_⟩
+  intro y hy
+  have hyY0 : Y0 ≤ y := le_trans (le_max_left _ _) hy
+  have hy1 : (1 : ℝ) ≤ y := le_trans (le_max_right _ _) hy
+  have hypos : 0 < y := lt_of_lt_of_le zero_lt_one hy1
+  let G : ℂ := Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)
+  let E : ℂ :=
+    Complex.exp
+      (Aristotle.StationaryPhaseStartValue.stirlingTerm
+        ((1 / 4 : ℂ) + Complex.I * y))
+  have hE_ne : E ≠ 0 := by
+    dsimp [E]
+    exact Complex.exp_ne_zero _
+  have hE_norm_pos : 0 < ‖E‖ := norm_pos_iff.mpr hE_ne
+  have hmult_y := hY0 y hyY0
+  have hmult_y' :
+      ‖atkinsonVerticalGammaStirlingMultiplier y - 1‖ ≤ C0 * (1 / y) := by
+    have hnorm : ‖((1 / y : ℝ) : ℂ)‖ = 1 / y := by
+      rw [Complex.norm_real, Real.norm_eq_abs,
+        abs_of_pos (one_div_pos.mpr hypos)]
+    simpa [hnorm, abs_of_pos hypos, one_div] using hmult_y
+  have hC0_le : C0 ≤ max C0 0 + 1 := by
+    linarith [le_max_left C0 0]
+  have hinv_nonneg : 0 ≤ 1 / y := by positivity
+  have hmult_bound :
+      ‖atkinsonVerticalGammaStirlingMultiplier y - 1‖ ≤ (max C0 0 + 1) / y := by
+    calc
+      ‖atkinsonVerticalGammaStirlingMultiplier y - 1‖
+          ≤ C0 * (1 / y) := hmult_y'
+      _ ≤ (max C0 0 + 1) * (1 / y) :=
+            mul_le_mul_of_nonneg_right hC0_le hinv_nonneg
+      _ = (max C0 0 + 1) / y := by ring
+  have hrewrite : atkinsonVerticalGammaStirlingMultiplier y - 1 = (G - E) / E := by
+    dsimp [G, E, atkinsonVerticalGammaStirlingMultiplier]
+    field_simp [hE_ne]
+  have hdiv_bound : ‖G - E‖ / ‖E‖ ≤ (max C0 0 + 1) / y := by
+    calc
+      ‖G - E‖ / ‖E‖ = ‖(G - E) / E‖ := (norm_div _ _).symm
+      _ = ‖atkinsonVerticalGammaStirlingMultiplier y - 1‖ := by rw [← hrewrite]
+      _ ≤ (max C0 0 + 1) / y := hmult_bound
+  have htarget : ‖G - E‖ ≤ ((max C0 0 + 1) / y) * ‖E‖ := by
+    have hmul :=
+      mul_le_mul_of_nonneg_right hdiv_bound hE_norm_pos.le
+    have hcancel : (‖G - E‖ / ‖E‖) * ‖E‖ = ‖G - E‖ := by
+      field_simp [ne_of_gt hE_norm_pos]
+    simpa [hcancel] using hmul
+  simpa [G, E] using htarget
+
 /-- A complex logarithmic Stirling remainder controls the normalized
 Stirling multiplier after exponentiation. -/
 private theorem atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO
