@@ -1416,3 +1416,60 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   quotient `standardGabckeQuarterLocalPsi` at `x = 0`.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 29: local Taylor atom reduced to cubic coefficient
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalThirdDerivativeFormulaProp`, equivalently the
+  `StandardGabckeQuarterLocalSecondDerivativeHasDerivAtProp` local Taylor
+  atom.
+- Banked inputs:
+  - Round 28 closed
+    `standardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp_proved`,
+    so the quarter removable-source value now only needs the one-variable
+    Taylor calculation for `standardGabckeQuarterLocalPsi`.
+  - Mathlib's analytic power-series API gives the third derivative from the
+    third coefficient of a local `HasFPowerSeriesAt` witness.
+- Proof facts banked:
+  - Added `StandardGabckeQuarterLocalCubicTaylorCoefficientProp`, the exact
+    local source atom:
+    there is a local power series for `standardGabckeQuarterLocalPsi` at `0`
+    whose cubic coefficient on `(1,1,1)` is `-pi^2 / 6`.
+  - Proved
+    `standardGabckeQuarterLocalThirdDerivativeFormulaProp_of_cubicTaylorCoefficient`,
+    deriving
+    `deriv (deriv (deriv standardGabckeQuarterLocalPsi)) 0 = -pi^2`
+    from that cubic coefficient using `HasFPowerSeriesOnBall.iteratedFDeriv_eq_sum_of_completeSpace`
+    and the fact that `#Perm (Fin 3) = 3! = 6`.
+  - Proved
+    `standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_cubicTaylorCoefficient`
+    and
+    `standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_cubicTaylorCoefficient`,
+    wiring the coefficient source through the already-closed coordinate bridge
+    to the quarter removable-source value and numeric bound.
+- Failed routes:
+  - I did not replace the local Taylor calculation with a broad regularity
+    assumption or a defect quotient.
+  - I did not infer quotient behavior from global regularity of the raw
+    quotient at a denominator-zero point.
+  - I did not define `D := standardGabckeRawPsiThirdDerivative`.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, or weaken statements.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+  - A one-off Python/SymPy expansion was used only as scratch arithmetic to
+    confirm the expected coefficient
+    `1/2 - x + (pi^2/4)x^2 - (pi^2/6)x^3 + O(x^4)`.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+- Remaining goal shape:
+  prove `StandardGabckeQuarterLocalCubicTaylorCoefficientProp` by expanding the
+  filled local quotient
+  `sin(pi*x - 2*pi*x^2) / sin(2*pi*x)` at `x = 0`, with filled value `1/2`,
+  and showing its cubic coefficient is `-pi^2 / 6`.
+- Coordinator action requested:
+  run the requested serialized validation command.
