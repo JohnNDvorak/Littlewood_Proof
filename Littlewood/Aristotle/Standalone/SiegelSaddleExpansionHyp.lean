@@ -971,6 +971,15 @@ def StandardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp : Prop :=
   iteratedDeriv 2 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 =
     -(8 * Real.pi ^ 3 / 3)
 
+/-- Exact quadratic coefficient source for the denominator dslope. This is the
+coefficient-level input equivalent to the second derivative value, stated in
+the local `HasFPowerSeriesAt` form used by the quotient calculation. -/
+def StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp : Prop :=
+  ∃ B : ℕ → ℝ,
+    HasFPowerSeriesAt (dslope standardGabckeQuarterLocalSineDenominator 0)
+      (FormalMultilinearSeries.ofScalars ℝ B) 0 ∧
+      B 2 = -(4 * Real.pi ^ 3 / 3)
+
 /-- Third derivative value for the denominator dslope at the removable point. -/
 def StandardGabckeQuarterLocalDenominatorDslopeThirdDerivativeProp : Prop :=
   iteratedDeriv 3 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 = 0
@@ -1108,6 +1117,38 @@ theorem standardGabckeQuarterLocalDenominatorDslopeFirstDerivativeProp_proved :
         dslope standardGabckeQuarterLocalSineDenominator 0 :=
     Filter.Eventually.of_forall (congrFun standardGabckeQuarterLocalDenominatorDslope_even)
   exact deriv_zero_of_eventually_even_at_zero hf heven
+
+/-- A quadratic Taylor coefficient for the denominator dslope gives the exact
+second derivative value by uniqueness of local power-series coefficients. -/
+theorem standardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp_of_quadraticCoefficient
+    (hquad : StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp) :
+    StandardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp := by
+  rcases hquad with ⟨B, hB, hB2⟩
+  unfold StandardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp
+  let f : ℝ → ℝ := dslope standardGabckeQuarterLocalSineDenominator 0
+  have h_analytic : AnalyticAt ℝ f 0 :=
+    standardGabckeQuarterLocalDenominatorDslopeAnalyticProp_proved
+  have hTaylor :
+      HasFPowerSeriesAt f
+        (FormalMultilinearSeries.ofScalars ℝ
+          (fun n : ℕ => iteratedDeriv n f 0 / n.factorial)) 0 :=
+    h_analytic.hasFPowerSeriesAt
+  have hseries :
+      FormalMultilinearSeries.ofScalars ℝ B =
+        FormalMultilinearSeries.ofScalars ℝ
+          (fun n : ℕ => iteratedDeriv n f 0 / n.factorial) :=
+    hB.eq_formalMultilinearSeries hTaylor
+  have hcoeff := congrArg (fun p : FormalMultilinearSeries ℝ ℝ ℝ => p.coeff 2) hseries
+  have hquad' :
+      iteratedDeriv 2 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 / 2 =
+        -(4 * Real.pi ^ 3 / 3) := by
+    simpa [f, hB2] using hcoeff.symm
+  calc
+    iteratedDeriv 2 (dslope standardGabckeQuarterLocalSineDenominator 0) 0
+        = 2 * (iteratedDeriv 2 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 / 2) := by
+          ring
+    _ = 2 * (-(4 * Real.pi ^ 3 / 3)) := by rw [hquad']
+    _ = -(8 * Real.pi ^ 3 / 3) := by ring
 
 /-- Analyticity of the numerator dslope follows from the analytic polynomial
 phase `pi*w - 2*pi*w^2` and the Mathlib `dslope` power-series transfer. -/
