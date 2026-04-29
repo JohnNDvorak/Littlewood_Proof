@@ -2066,6 +2066,80 @@ private noncomputable def atkinsonVerticalGammaStirlingMultiplier (y : ℝ) : �
       (Aristotle.StationaryPhaseStartValue.stirlingTerm
         ((1 / 4 : ℂ) + Complex.I * y))
 
+/-- Exact principal-log bookkeeping for the vertical Stirling multiplier.  The
+missing branch identity is precisely the assertion that this `toIocDiv`
+period correction vanishes eventually. -/
+private theorem atkinson_vertical_multiplier_branch_with_period_correction
+    (y : ℝ) :
+    Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+        Aristotle.StationaryPhaseStartValue.stirlingTerm
+          ((1 / 4 : ℂ) + Complex.I * y)
+      =
+    Complex.log (atkinsonVerticalGammaStirlingMultiplier y) -
+      (toIocDiv Real.two_pi_pos (-Real.pi)
+          (Aristotle.StationaryPhaseStartValue.stirlingTerm
+              ((1 / 4 : ℂ) + Complex.I * y) +
+            Complex.log (atkinsonVerticalGammaStirlingMultiplier y)).im) *
+        (2 * Real.pi * Complex.I) := by
+  let s : ℂ := (1 / 4 : ℂ) + Complex.I * y
+  let S : ℂ := Aristotle.StationaryPhaseStartValue.stirlingTerm s
+  let M : ℂ := atkinsonVerticalGammaStirlingMultiplier y
+  have hs_re : 0 < s.re := by
+    dsimp [s]
+    norm_num [Complex.add_re, Complex.mul_re]
+  have hGamma_ne : Complex.Gamma s ≠ 0 :=
+    Complex.Gamma_ne_zero_of_re_pos hs_re
+  have hE_ne : Complex.exp S ≠ 0 := Complex.exp_ne_zero S
+  have hM_ne : M ≠ 0 := by
+    dsimp [M, atkinsonVerticalGammaStirlingMultiplier, s, S]
+    exact div_ne_zero hGamma_ne hE_ne
+  have hGamma_eq : Complex.Gamma s = Complex.exp (S + Complex.log M) := by
+    calc
+      Complex.Gamma s = Complex.exp S * M := by
+        dsimp [M, atkinsonVerticalGammaStirlingMultiplier, s, S]
+        field_simp [hE_ne]
+      _ = Complex.exp (S + Complex.log M) := by
+        rw [Complex.exp_add, Complex.exp_log hM_ne]
+  have hlog :
+      Complex.log (Complex.Gamma s) =
+        S + Complex.log M -
+          (toIocDiv Real.two_pi_pos (-Real.pi)
+              (S + Complex.log M).im) *
+            (2 * Real.pi * Complex.I) := by
+    rw [hGamma_eq, Complex.log_exp_eq_sub_toIocDiv]
+  have hmain :
+      Complex.log (Complex.Gamma s) - S =
+        Complex.log M -
+          (toIocDiv Real.two_pi_pos (-Real.pi)
+              (S + Complex.log M).im) *
+            (2 * Real.pi * Complex.I) := by
+    rw [hlog]
+    ring
+  simpa [s, S, M] using hmain
+
+/-- The exact vertical multiplier branch identity follows once the principal
+log period correction from `atkinson_vertical_multiplier_branch_with_period_correction`
+is known to vanish eventually. -/
+private theorem atkinson_vertical_multiplier_branch_of_period_correction_zero
+    (hzero :
+      ∃ Yzero : ℝ, ∀ y : ℝ, Yzero ≤ y →
+        toIocDiv Real.two_pi_pos (-Real.pi)
+          (Aristotle.StationaryPhaseStartValue.stirlingTerm
+              ((1 / 4 : ℂ) + Complex.I * y) +
+            Complex.log (atkinsonVerticalGammaStirlingMultiplier y)).im = 0) :
+    ∃ Ybranch : ℝ, ∀ y : ℝ, Ybranch ≤ y →
+      Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+          Aristotle.StationaryPhaseStartValue.stirlingTerm
+            ((1 / 4 : ℂ) + Complex.I * y)
+        =
+      Complex.log (atkinsonVerticalGammaStirlingMultiplier y) := by
+  obtain ⟨Yzero, hzero'⟩ := hzero
+  refine ⟨Yzero, ?_⟩
+  intro y hy
+  have hcorr := atkinson_vertical_multiplier_branch_with_period_correction y
+  rw [hzero' y hy] at hcorr
+  simpa using hcorr
+
 /-- The principal-log pointwise Stirling bound follows from the usual relative
 Stirling residual and the exact branch identity for the normalized vertical
 multiplier. -/
