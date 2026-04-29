@@ -617,3 +617,40 @@ Timestamp: 2026-04-28 22:56 CDT.
     Davenport envelope route.
   - Pi/Phase: the two majorant classes for the corrected Perron-only Pi route.
   - RS/Gabcke: `StandardGabckeRawPsiDenominatorZeroQuarterLatticeProp`.
+
+## Overnight 2026-04-29 Eighth Pass Status
+
+- RS/Gabcke lane is validated and pushed through `da48525`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Close Gabcke denominator quarter lattice`.
+  - Validation passed after a coordinator over-tactic fix:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`.
+  - Result: `StandardGabckeRawPsiDenominatorZeroQuarterLatticeProp` and the
+    classified denominator-zero route are now proved.
+  - Hume is redeployed to `StandardGabckeRawPsiRemovablePointBoundsProp`, or
+    `StandardGabckeRawPsiRegularThirdDerivativeBoundProp` if the removable
+    point bounds are already closed.
+- Perron/B5a lane is validated and pushed through `acf84ac`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Reduce singular Perron envelope to log distance`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the singular Davenport component is reduced to a pointwise
+    comparison with `x / (T * (x - n))` plus a weighted harmonic-distance
+    summation atom, keeping the scale-correct `(x / T)` factor.
+  - Halley is redeployed to close one of those two log-distance subatoms.
+- Pi/Phase lane is validated and pushed through `37641ae`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Refine pi majorant leaves`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the Pi majorant route now splits to three refined leaves:
+    `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp`,
+    `TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp`, and
+    `AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp`.
+  - Planck is redeployed to close one of the three refined majorant leaves.
+- Current live atoms:
+  - Atkinson: raw row-integral prefix atom on the correction-prefix route.
+  - Perron/B5a: one of the two log-distance subatoms.
+  - Pi/Phase: one of the three refined majorant leaves.
+  - RS/Gabcke: removable point bounds or regular raw third-derivative bound.
