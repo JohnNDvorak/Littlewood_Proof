@@ -860,7 +860,7 @@ theorem standardGabckeQuarterLocalThirdDerivativeFormulaProp_of_cubicTaylorCoeff
           ∑ _σ : Equiv.Perm (Fin 3), (-Real.pi ^ 2 / 6) := by
         simp [hP3]
       _ = (6 : ℝ) * (-Real.pi ^ 2 / 6) := by
-        simp [Fintype.card_perm]
+        norm_num [Fintype.card_perm]
       _ = -Real.pi ^ 2 := by
         ring
   have h_nested :
