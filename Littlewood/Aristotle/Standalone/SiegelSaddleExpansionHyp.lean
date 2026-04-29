@@ -229,6 +229,32 @@ project-local `rsPsi` leading term. -/
 def standardGabckeRawFirstCoefficient (p : ℝ) : ℝ :=
   -deriv (deriv (deriv standardGabckeRawPsi)) p / (96 * Real.pi ^ 2)
 
+/-- The phase/parameter-normalized standard leading coefficient in the local
+block convention. This is the standard leading phase after translating into
+the project-local `p` and absorbing the phase convention used by `rsPsi`. -/
+def standardGabckePhaseNormalizedLead (p : ℝ) : ℝ :=
+  Real.cos (2 * Real.pi * (p ^ 2 - p + 1 / 8))
+
+/-- The phase-normalized standard leading coefficient is exactly the local
+`rsPsi` convention. -/
+theorem standardGabckePhaseNormalizedLead_eq_rsPsi (p : ℝ) :
+    standardGabckePhaseNormalizedLead p = rsPsi p := by
+  unfold standardGabckePhaseNormalizedLead rsPsi
+  congr 1
+  ring
+
+/-- The missing normalization bridge from a standard Riemann-Siegel leading
+coefficient convention to the repo-local `rsPsi` convention. -/
+def StandardGabckeLocalLeadingNormalizationProp (stdLead : ℝ → ℝ) : Prop :=
+  ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 → stdLead p = rsPsi p
+
+/-- The correctly phase/parameter-normalized standard leading coefficient
+satisfies the local leading-normalization bridge. -/
+theorem standardGabckeLocalLeadingNormalization_phaseNormalized :
+    StandardGabckeLocalLeadingNormalizationProp standardGabckePhaseNormalizedLead := by
+  intro p _hp
+  exact standardGabckePhaseNormalizedLead_eq_rsPsi p
+
 /-- Standard-normalized stationary-phase identity, parameterized by the
 standard leading coefficient and standard first coefficient after any necessary
 source-side phase/parameter conversion has been made explicit.
@@ -245,11 +271,6 @@ def StandardGabckeStationaryPhaseIdentityProp
         stdLead p =
       (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
         (stdCoeff p * (blockCoord k p) ^ (-(1 : ℝ) / 2))
-
-/-- The missing normalization bridge from a standard Riemann-Siegel leading
-coefficient convention to the repo-local `rsPsi` convention. -/
-def StandardGabckeLocalLeadingNormalizationProp (stdLead : ℝ → ℝ) : Prop :=
-  ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 → stdLead p = rsPsi p
 
 /-- The standard first-coefficient bound in source normalization. -/
 def StandardGabckeCoefficientBoundProp (stdCoeff : ℝ → ℝ) : Prop :=

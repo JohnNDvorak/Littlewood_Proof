@@ -328,3 +328,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   the Tabelle-1 first-coefficient estimate.
 - Coordinator action requested:
   run the requested serialized validation commands.
+
+### 2026-04-28 Round 7: phase-normalized leading coefficient closed
+
+- Classification: `PROVED`.
+- Theorem/file attacked:
+  `StandardGabckeLocalLeadingNormalizationProp stdLead` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Proof facts banked:
+  - Added `standardGabckePhaseNormalizedLead p =
+    cos(2*pi*(p^2 - p + 1/8))`, the phase/parameter-normalized standard
+    leading coefficient in the local block convention.
+  - Added `standardGabckePhaseNormalizedLead_eq_rsPsi`, proving this
+    phase-normalized leading coefficient is exactly the repo-local
+    `rsPsi p = cos(pi*(2*p^2 - 2*p + 1/4))`.
+  - Added `standardGabckeLocalLeadingNormalization_phaseNormalized`, closing
+    `StandardGabckeLocalLeadingNormalizationProp
+      standardGabckePhaseNormalizedLead`.
+- Failed routes that should not be retried:
+  - The raw quotient-normalized `standardGabckeRawPsi` is still not asserted
+    equal to local `rsPsi`; the proved bridge is through the phase-normalized
+    leading coefficient, as requested.
+  - Block-independence remains out of scope.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra`
+  - `lake build Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp`
+  - `lake build Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+  - `printf 'import Littlewood.Main.LittlewoodPsi\n' | lake env lean --stdin`
+  - `printf 'import Littlewood.Main.LittlewoodPi\n' | lake env lean --stdin`
+- Smallest next theorem:
+  prove `StandardGabckeStationaryPhaseIdentityProp
+    standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient`
+  from the actual contour/Taylor expansion, and prove
+  `StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient` from
+  the Tabelle-1 first-coefficient estimate.
+- Coordinator action requested:
+  run the requested serialized validation commands.
