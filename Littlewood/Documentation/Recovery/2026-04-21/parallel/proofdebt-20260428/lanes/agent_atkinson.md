@@ -2847,3 +2847,46 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   branch range atom, standard multiplier Big-O, or direct principal-log
   Gamma/Stirling theorem. Independent debts remain the Jacobian-integral bound
   at `1/relativeWeight` and shifted stationary-phase target remainder.
+
+### 2026-04-29 Round 61 Multiplier Big-O Norm-Scale Reduction
+
+- Classification: `VALIDATED_MULTIPLIER_REDUCTION`.
+- Exact theorem attacked:
+  standard multiplier Big-O
+  `(fun t => atkinsonGammaStirlingMultiplier t - 1) =O[atTop]
+    (fun t => ((1 / t : ℝ) : ℂ))`.
+- Facts banked:
+  added and proved `atkinson_quarter_line_norm_ge_half_abs`, the vertical-line
+  lower bound `|t| / 2 ≤ ‖(1/4 : ℂ) + I * (t/2)‖`.  Added and proved
+  `atkinson_multiplier_isBigO_of_stirling_ratio_norm_bound`, reducing the
+  standard multiplier Big-O to the standard vertical Stirling-ratio estimate
+  at scale `1 / ‖1/4 + i*t/2‖`.
+- Smallest next theorem:
+  prove the norm-scale Stirling-ratio atom:
+  `∃ Cst > 0, ∃ Tst, ∀ t ≥ Tst,
+    ‖Gamma (1/4 + I*(t/2)) / exp (atkinsonLogGammaStirlingTerm t) - 1‖
+      ≤ Cst / ‖(1/4 : ℂ) + I*(t/2)‖`.
+- Failed routes / guardrails:
+  the eventual branch range
+  `(stirlingTerm (1/4+i*y) + log verticalMultiplier y).im ∈
+    Set.Ioc (-Real.pi) Real.pi`
+  was not pursued as a proof route because the Stirling-term imaginary part is
+  not a bounded branch quantity.  Existing local Gamma/Stirling files expose
+  growth and private Binet/gammaLog infrastructure, but no imported public
+  norm-scale relative Stirling-ratio theorem for this vertical line.  Did not
+  add imports, analytic providers, axioms, sorries, statement weakening, direct
+  Abel shortcuts, phase-weight division, circular provider assumptions, or the
+  demoted raw endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  first focused build failed on a local rewrite in the new norm bridge; fixed
+  the rewrite.  Then ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  norm-scale vertical Stirling-ratio bound above, or a direct standard
+  principal-log Gamma/Stirling theorem. Independent debts remain the
+  Jacobian-integral bound at `1/relativeWeight` and shifted stationary-phase
+  target remainder.
