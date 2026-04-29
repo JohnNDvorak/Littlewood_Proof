@@ -2526,3 +2526,35 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Smallest next theorem:
   - Replace the projected-chooser route with an interface that makes the canonical phase-radius route consume explicit budgeted target/anti radii, or prove the new exact chooser identity specs:
     `TargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec` and `AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec`.
+
+### 2026-04-29 Round 50: Explicit Budgeted Radius Endpoint
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec`.
+  - `AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec`.
+- Facts banked:
+  - Added `targetAntiPhaseFitAbovePerronThresholdPerron_of_logHalfBudget_budgetedRelativelyDense_hyp`.
+  - Added `exactSeedAboveThreshold_perron_of_logHalfBudget_budgetedRelativelyDense_hyp`.
+- What changed:
+  - The corrected exact-seed route can now consume `PerronThresholdTowerLogHalfBudgetHyp` plus `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp` directly.
+  - This bypasses the projected canonical phase-radius chooser entirely: the lower realized-radius theorem uses the explicit target and anti-target radii returned by the budgeted paired payload.
+  - No `TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`, `AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`, or choice-spec equality is needed for this endpoint.
+- Failed route:
+  - The choice-spec route remains blocked by opacity of `Classical.choose`; no equality or inequality between the projected chosen radius and the explicitly budgeted radius follows from the existing specs alone.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set Kronecker, arbitrary-radius route, provider cycles, reverse-comparison instances, or choice-control assumption was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed local focused validation under the corrected singleflight rule.
+- Validation command/result:
+  - `git diff --check`
+  - Result: passed.
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - Close or further reduce `PerronThresholdTowerLogHalfBudgetHyp`, or source `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp` from the relation-compatible finite-zero/Kronecker payloads already named in the route.
