@@ -2822,6 +2822,51 @@ theorem perronThreshold_fixedHeightTransfer_sameHeight
       max (X + 1) (perronThreshold hRH T0 + 1) :=
   le_max_right _ _
 
+/-- Corrected residual for the fixed-height Perron majorant route.
+
+This keeps the cofinal tower bound on the fixed-height majorant
+`max (X + 1) (perronThreshold hRH T0 + 1)`, and states the extra selected-height
+fact in its stripped form
+`perronThreshold hRH T ≤ max X (perronThreshold hRH T0)`.
+
+Unlike the invalid monotonicity route, this does not claim that choosing a
+larger tower height automatically controls the new `Classical.choose`
+threshold at that height. -/
+def PerronThresholdTowerExpHalfBudgetSelectedThresholdResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+    ∃ T0 T ε : ℝ,
+      4 ≤ T ∧
+      0 < ε ∧ ε < 1 ∧
+      max (X + 1) (perronThreshold _hRH T0 + 1) ≤
+        Real.exp
+          (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2) ∧
+      perronThreshold _hRH T ≤ max X (perronThreshold _hRH T0)
+
+/-- The corrected selected-threshold residual supplies the original canonical
+Perron residual.
+
+This is a non-instance reduction: it names the exact missing analytic input
+without adding a reverse edge into the canonical/growth provider chain. -/
+theorem perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_selectedThresholdResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (h :
+      PerronThresholdTowerExpHalfBudgetSelectedThresholdResidual) :
+    PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual := by
+  intro hRH X
+  rcases h hRH X with
+    ⟨T0, T, ε, hT4, hεpos, hεlt, hFixed, hSelected⟩
+  have hTransfer :
+      perronThreshold hRH T + 1 ≤
+        max (X + 1) (perronThreshold hRH T0 + 1) :=
+    (perronThreshold_fixedHeightTransfer_iff_selectedThreshold_bound
+      (hRH := hRH) (X := X) (T0 := T0) (T := T)).2 hSelected
+  exact
+    ⟨T, ε, hT4, hεpos, hεlt,
+      perronThresholdTowerExpHalfBudgetCanonicalMajorant_bound_of_fixedHeightTransfer
+        (hFixed := hFixed) (hTransfer := hTransfer)⟩
+
 /-- The earlier two-sided growth source implies the canonical max-majorant
 form by recombining the two same-height inequalities with `max_le`.
 
