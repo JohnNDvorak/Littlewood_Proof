@@ -2000,3 +2000,42 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   one-step endpoint log finite-difference estimate, Hardy-start theta-model
   asymptotic at `(m+1)^-2`, Jacobian-integral bound at `1/relativeWeight`, and
   the shifted stationary-phase target remainder.
+
+### 2026-04-29 Round 42 Endpoint Log Atom Closed
+
+- Classification: `VALIDATED_LEAF_CLOSED`.
+- Exact theorem attacked:
+  one-step endpoint finite-difference estimate
+  `|atkinsonEndpointGapCorrectedModelEndpointLogPart n j|`
+  `≤ C_endpoint * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))`.
+- Facts banked:
+  proved the elementary real-log auxiliary bound
+  `atkinson_endpointLogPart_aux_bound` and the endpoint leaf
+  `atkinson_endpointLogPart_bound` with `C_endpoint = 1` and
+  `N_endpoint = 0`. The proof rewrites the endpoint as a symmetric log
+  quotient with `x = 1 / (2 * a + 1)` and uses
+  `Real.sum_range_le_log_div` / `Real.log_div_le_sum_range_add` at one term.
+  Packaged the now-closed log-core and model-residual bounds as
+  `atkinson_logCore_bound` and `atkinson_modelResidual_bound`.
+- Smallest next theorem:
+  prove the Hardy-start theta-model asymptotic feeding
+  `atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_model_residual`,
+  namely an eventual `O((m+1)^-2)` bound for
+  `|hardyTheta (hardyStart m) - atkinsonHardyStartThetaModel m|`. The
+  Jacobian-integral bound at `1/relativeWeight` and shifted stationary-phase
+  target remainder remain separate live atoms.
+- Failed routes / guardrails:
+  did not revive the raw uncorrected phase-error route or replace the endpoint
+  finite-difference atom by a diffuse absolute bound. Did not use direct Abel,
+  phase-weight division, circular provider assumptions, broad analytic axioms,
+  sorries, or statement weakening.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  Hardy-start theta-model asymptotic at `(m+1)^-2`, Jacobian-integral bound at
+  `1/relativeWeight`, and the shifted stationary-phase target remainder.
