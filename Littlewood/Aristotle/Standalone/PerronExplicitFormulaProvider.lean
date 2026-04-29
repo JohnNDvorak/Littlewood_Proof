@@ -4480,6 +4480,29 @@ theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndHalfBudgets_hy
       AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
   exact ⟨inferInstance, inferInstance⟩
 
+/-- Paired finite-zero relative density plus the explicit same-height growth
+budget leaves packages both Perron-only exact-seed classes.
+
+This is a non-instance endpoint parallel to the corrected RH witness route; it
+uses local instances only, so it does not add a reverse canonical/growth edge
+to typeclass search. -/
+theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndGrowthBudgets_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [PerronThresholdTowerExpHalfBudgetGrowthHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : PerronThresholdTowerLogHalfBudgetHyp :=
+    perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp
+  letI : TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp :=
+    targetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThreshold_of_growth_hyp
+  exact exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndHalfBudgets_hyp
+
 /-- Paired finite-zero relative density plus the current canonical Perron and
 one-sided radius budget leaves packages both Perron-only exact-seed classes.
 

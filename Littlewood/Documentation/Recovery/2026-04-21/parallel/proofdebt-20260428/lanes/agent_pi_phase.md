@@ -1435,3 +1435,67 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
     existing `Classical.choose` radii directly or be rerouted through a
     direct bounded relative-density witness that carries the bounded radius
     instead of projecting through the chosen-radius definitions.
+
+### 2026-04-29 Round 23: Growth-Budget Exact-Seed Endpoint
+
+- Classification: `HONEST_ROUTE_PACKAGING_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndGrowthBudgets_hyp`
+- Facts banked:
+  - Added
+    `exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndGrowthBudgets_hyp`,
+    a non-instance provider endpoint from paired finite-zero relative density,
+    `PerronThresholdTowerExpHalfBudgetGrowthHyp`, and
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp` directly to the
+    target/anti Perron-only exact-seed classes.
+  - This mirrors the already validated corrected RH witness route
+    `rhPiWitnessData_of_correctedPerronOnlyGrowthBudgetRoute` at exact-seed
+    level, using only local `letI`s for the existing growth-to-half-budget
+    reductions.
+- Remaining goal shape:
+  - `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp` still needs one
+    same-height `T, ε` with
+    `max (X + 1) (perronThreshold hRH T + 1)` below the half triple-exp
+    tower.
+  - `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp` and
+    `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp` still need direct
+    bounds on the chosen radii
+    `targetFiniteZeroInhomogeneousPhaseRadius T ε` and
+    `antiTargetFiniteZeroInhomogeneousPhaseRadius T ε`.
+- Failed/circular route:
+  - Did not make `PerronThresholdTowerExpHalfBudgetGrowthHyp` imply
+    `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp` by instance; the
+    reverse canonical-to-majorant-to-growth path is already an instance path,
+    so this would be circular.
+  - Did not make paired radius growth imply the one-sided canonical radius
+    leaves by instance for the same reason: one-sided canonical leaves already
+    imply paired growth through majorants.
+  - Did not attempt to bound the current `Classical.choose` radius from a
+    separately bounded existential Kronecker witness. That route is invalid
+    unless the bounded witness is what the chosen-radius definition chooses,
+    or the exact-seed route carries the bounded radius directly.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No arbitrary-target Kronecker, independent target/anti heights,
+    `tower_cap_unbounded_with_eps` fixed-point shortcut, or constant-1 Perron
+    sqrt-error shortcut was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, `git diff --check`, or other check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove/source the fixed-height Perron-threshold growth source
+    `PerronThresholdTowerExpHalfBudgetGrowthHyp`, or keep
+    `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp` as the canonical
+    non-instance surface.
+  - For the radius side, introduce a direct bounded-radius exact-seed route if
+    the project wants to avoid bounding the existing `Classical.choose`
+    radius definitions.
