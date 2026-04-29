@@ -2646,6 +2646,19 @@ instance (priority := 100)
     PerronThresholdTowerPhaseWideWindowHyp :=
   perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp
 
+/-- Same-height wide domination is enough for the fixed-height Perron-error
+window, through the existing wide-window adapter.
+
+This keeps the residual theorem at the exact arbitrary-radius domination scale
+and does not introduce another provider instance. -/
+theorem fixedHeightPerronErrorPhaseWideWindow_of_perronThresholdWideDomination_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerWideDominationHyp] :
+    FixedHeightPerronErrorPhaseWideWindowHyp := by
+  letI : PerronThresholdTowerPhaseWideWindowHyp :=
+    perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp
+  exact fixedHeightPerronErrorPhaseWideWindow_of_perronThresholdWideWindow_hyp
+
 /-- Relative-density finite inhomogeneous phase approximation boundary.
 
 For each fixed finite zero cutoff and tolerance, the orbit hits the requested
