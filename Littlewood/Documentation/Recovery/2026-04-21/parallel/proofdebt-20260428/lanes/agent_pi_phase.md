@@ -3236,3 +3236,51 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed after code and ledger updates.
 - Smallest next theorem:
   - `PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetMinusOneResidual`.
+
+### 2026-04-29 Round 66: Raw Chooser Threshold Comparison
+
+- Classification: `PARTIAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetMinusOneResidual`.
+- Facts banked:
+  - Added `PerronSqrtErrorAtHeightValidThreshold`.
+  - Proved `perronThresholdRawEventualChoice_validThreshold`, exposing exactly
+    what `Classical.choose_spec` gives for the raw Perron threshold.
+  - Added named half-budget threshold `perronFixedHalfBudgetThreshold`.
+  - Added
+    `PerronSqrtErrorRawChoiceFixedHalfBudgetThresholdComparisonResidual`.
+  - Proved
+    `perronSqrtErrorRawChoiceMinusOneResidual_of_fixedHalfBudgetThresholdComparison`.
+  - Added endpoint
+    `exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfThresholdComparisonAndBudgetedRelativelyDense_hyp`.
+- What changed:
+  - The minus-one atom is now reduced to a pure chooser-comparison statement:
+    eventually
+    `perronThresholdRawEventualChoice hRH T ≤ perronFixedHalfBudgetThreshold T`.
+  - The raw chooser specification is recorded separately as validity of the
+    chosen threshold, making explicit that validity alone does not imply
+    minimality or comparison to the half-budget threshold.
+- Failed/direct route:
+  - Direct proof from `PerronSqrtErrorEventuallyAtHeightHyp.witness` still does
+    not close: the witness/choose structure gives a valid threshold, not an
+    upper bound on the chosen threshold relative to any other threshold.
+  - Did not introduce a minimization axiom or assume `Classical.choose` picks
+    the least valid threshold.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set
+    Kronecker, provider cycles, or broad provider was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation command/result:
+  - Under the corrected singleflight lock:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+  - `git diff --check`
+  - Result: passed after code and ledger updates.
+- Smallest next theorem:
+  - `PerronSqrtErrorRawChoiceFixedHalfBudgetThresholdComparisonResidual`.
