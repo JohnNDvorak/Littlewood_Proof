@@ -936,6 +936,15 @@ def StandardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp : Prop :=
       A 3 = -Real.pi ^ 3 / 6 ∧
       A 4 = Real.pi ^ 3
 
+/-- Low-order derivative source for the raw numerator sine
+`sin (pi*w - 2*pi*w^2)`. These are exactly the derivative values equivalent
+to the finite Taylor coefficient data through fourth order. -/
+def StandardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp : Prop :=
+  iteratedDeriv 1 standardGabckeQuarterLocalSineNumerator 0 = Real.pi ∧
+    iteratedDeriv 2 standardGabckeQuarterLocalSineNumerator 0 = -4 * Real.pi ∧
+    iteratedDeriv 3 standardGabckeQuarterLocalSineNumerator 0 = -Real.pi ^ 3 ∧
+    iteratedDeriv 4 standardGabckeQuarterLocalSineNumerator 0 = 24 * Real.pi ^ 3
+
 /-- Exact coefficient data for the denominator dslope through cubic order.
 For `sin(2*pi*w) / w`, the coefficients are
 `2*pi, 0, -4*pi^3/3, 0`. -/
@@ -1350,6 +1359,35 @@ theorem standardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp_of_rawSineC
   · simpa using hA2
   · simpa using hA3
   · simpa using hA4
+
+/-- The raw numerator Taylor coefficient data follows from the corresponding
+first through fourth derivative values. -/
+theorem standardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp_of_lowOrderDerivatives
+    (h_deriv : StandardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp) :
+    StandardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp := by
+  rcases h_deriv with ⟨h1, h2, h3, h4⟩
+  let f : ℝ → ℝ := standardGabckeQuarterLocalSineNumerator
+  let A : ℕ → ℝ := fun n => iteratedDeriv n f 0 / n.factorial
+  have h_analytic : AnalyticAt ℝ f 0 := by
+    have hphase :
+        AnalyticAt ℝ (fun w : ℝ => Real.pi * w - 2 * Real.pi * w ^ 2) 0 :=
+      (analyticAt_const.mul analyticAt_id).sub
+        (analyticAt_const.mul (analyticAt_id.pow 2))
+    simpa [f, standardGabckeQuarterLocalSineNumerator] using
+      (Real.analyticAt_sin.comp hphase)
+  refine ⟨A, h_analytic.hasFPowerSeriesAt, ?_, ?_, ?_, ?_⟩
+  · dsimp [A, f]
+    rw [h1]
+    norm_num
+  · dsimp [A, f]
+    rw [h2]
+    ring
+  · dsimp [A, f]
+    rw [h3]
+    norm_num
+  · dsimp [A, f]
+    rw [h4]
+    norm_num
 
 /-- A raw cubic coefficient for `sin (2*pi*w)` gives the quadratic coefficient
 of the removable quotient `sin (2*pi*w) / w` via the Mathlib `dslope`/`fslope`
