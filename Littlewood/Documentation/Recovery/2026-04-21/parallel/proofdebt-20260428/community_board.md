@@ -2514,3 +2514,14 @@ Timestamp: 2026-04-28 22:56 CDT.
     `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`,
     `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`, and
     `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`.
+
+## Overnight 2026-04-29 Eighty-Sixth Pass Status
+
+- Coordinator recovery branch is pushed through `d92ec90`.
+- Perron/B5a lane is integrated through `84e95a9`:
+  - Fixed-window convergence input is proved.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron atom: prove the local integrable-majorant input for
+    `perronVerticalFixedWindowIntegrandParam` on
+    `volume.restrict (Set.Ioc (-16) 16)`.
