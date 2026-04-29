@@ -12602,6 +12602,14 @@ private noncomputable def atkinsonShiftedQuadraticBlockModeZeroModel (n j : ℕ)
     ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
       Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p)
 
+/-- The scalar coefficient left after removing the known alternating
+stationary-anchor factor from the explicit complete-block target.  This is a
+smaller target-matching surface than the full anchored complex expression. -/
+private noncomputable def atkinsonShiftedQuadraticTargetCoeff (n j : ℕ) : ℂ :=
+  ((((((-1 : ℝ) ^ (n + 1) : ℝ) : ℂ) *
+      Aristotle.StationaryPhaseStartValue.hardyStationaryAnchor)⁻¹) *
+    atkinsonCompleteBlockTargetK (n + j) j)
+
 /-- The native shifted-interval quadratic-anchor approximation follows from a
 zero-model approximation plus the oscillatory bound for the shifted quadratic
 kernel integral. The latter is the exact place where the missing `1 / j`
@@ -13248,6 +13256,64 @@ private theorem atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model
     atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model_and_kernel_bound
       hzeroModel atkinson_shifted_quadratic_kernel_integral_bound
 
+/-- Target matching after removing the unit alternating stationary-anchor
+factor.  The remaining analytic atom is a scalar coefficient estimate for the
+shifted quadratic integral. -/
+private theorem atkinson_shifted_quadratic_target_match_of_coeff_bound
+    (hcoeff :
+      ∃ C_coeff > 0, ∃ N_coeff : ℕ, ∀ n : ℕ, N_coeff ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.quadraticKernel p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticTargetCoeff n j)‖
+            ≤ C_coeff * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_target > 0, ∃ N_target : ℕ, ∀ n : ℕ, N_target ≤ n → ∀ j : ℕ,
+      3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖(atkinsonShiftedQuadraticAnchorModel n j - atkinsonCompleteBlockTargetK (n + j) j)‖
+          ≤ C_target * (atkinsonModeWeight (n + j) / j) := by
+  obtain ⟨C_coeff, hC_coeff, N_coeff, hcoeff'⟩ := hcoeff
+  refine ⟨C_coeff, hC_coeff, N_coeff, ?_⟩
+  intro n hn j hj3 hj1 hjn
+  let unit : ℂ :=
+    ((((-1 : ℝ) ^ (n + 1) : ℝ) : ℂ) *
+      Aristotle.StationaryPhaseStartValue.hardyStationaryAnchor)
+  let raw : ℂ :=
+    (((atkinsonModeWeight n : ℝ) : ℂ) *
+      ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+        Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p)
+  let coeff : ℂ := atkinsonShiftedQuadraticTargetCoeff n j
+  let scale : ℝ := atkinsonModeWeight (n + j) / j
+  have hcoeff_bound : ‖raw - coeff‖ ≤ C_coeff * scale := by
+    simpa [raw, coeff, scale] using hcoeff' n hn j hj3 hj1 hjn
+  have hunit_norm : ‖unit‖ = 1 := by
+    dsimp [unit]
+    rw [norm_mul, Complex.norm_real, Real.norm_eq_abs]
+    have hpow_abs : |(-1 : ℝ) ^ (n + 1)| = 1 := by
+      rw [abs_pow, abs_neg, abs_one, one_pow]
+    rw [hpow_abs]
+    unfold Aristotle.StationaryPhaseStartValue.hardyStationaryAnchor
+    rw [Complex.norm_exp]
+    simp
+  have hunit_ne : unit ≠ 0 := by
+    intro hzero
+    have hnorm_zero : ‖unit‖ = 0 := by simp [hzero]
+    linarith
+  have hmodel_eq : atkinsonShiftedQuadraticAnchorModel n j = unit * raw := by
+    dsimp [unit, raw, atkinsonShiftedQuadraticAnchorModel]
+    ring
+  have htarget_eq : atkinsonCompleteBlockTargetK (n + j) j = unit * coeff := by
+    dsimp [coeff, atkinsonShiftedQuadraticTargetCoeff, unit]
+    rw [mul_assoc, mul_inv_cancel₀ hunit_ne, one_mul]
+  calc
+    ‖(atkinsonShiftedQuadraticAnchorModel n j - atkinsonCompleteBlockTargetK (n + j) j)‖
+        = ‖unit * (raw - coeff)‖ := by
+            rw [hmodel_eq, htarget_eq]
+            ring
+    _ = ‖unit‖ * ‖raw - coeff‖ := norm_mul _ _
+    _ = ‖raw - coeff‖ := by rw [hunit_norm, one_mul]
+    _ ≤ C_coeff * scale := hcoeff_bound
+
 /-- The mode-eventual shifted-interval `blockMode` remainder follows once the
 native integral is close to the quadratic-anchor model and that model matches
 the explicit Atkinson complete-block target. -/
@@ -13361,6 +13427,97 @@ private theorem atkinson_blockMode_stationaryPhase_of_zero_model_and_target
     atkinson_blockMode_stationaryPhase_of_mode_eventual_shifted_interval_remainder
       (atkinson_mode_eventual_shifted_interval_remainder_of_zero_model_and_target
         hzeroModel htarget)
+
+/-- Complete-block-target stationary-phase handoff with target matching reduced
+to the scalar coefficient atom. -/
+private theorem atkinson_blockMode_stationaryPhase_of_zero_model_and_targetCoeff
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j))
+    (hcoeff :
+      ∃ C_coeff > 0, ∃ N_coeff : ℕ, ∀ n : ℕ, N_coeff ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.quadraticKernel p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticTargetCoeff n j)‖
+            ≤ C_coeff * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+            ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+              Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+        ≤ C_err * (atkinsonModeWeight k / j) := by
+  exact
+    atkinson_blockMode_stationaryPhase_of_zero_model_and_target hzeroModel
+      (atkinson_shifted_quadratic_target_match_of_coeff_bound hcoeff)
+
+/-- Complete-block-target remainder with the target side reduced to the scalar
+coefficient atom. -/
+private theorem atkinson_completeBlockTargetK_remainder_of_zero_model_and_targetCoeff
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j))
+    (hcoeff :
+      ∃ C_coeff > 0, ∃ N_coeff : ℕ, ∀ n : ℕ, N_coeff ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.quadraticKernel p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticTargetCoeff n j)‖
+            ≤ C_coeff * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+            ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+              HardyCosSmooth.hardyCosExp (k - j) t) - atkinsonCompleteBlockTargetK k j)‖
+        ≤ C_err * (atkinsonModeWeight k / j) := by
+  exact
+    atkinson_completeBlockTargetK_remainder_of_blockMode_stationaryPhase
+      (atkinson_blockMode_stationaryPhase_of_zero_model_and_targetCoeff
+        hzeroModel hcoeff)
+
+/-- Public provider packaging once the zero-model approximation, scalar target
+coefficient match, and finite patch are supplied. -/
+private theorem atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_targetCoeff_and_finite_patch
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j))
+    (hcoeff :
+      ∃ C_coeff > 0, ∃ N_coeff : ℕ, ∀ n : ℕ, N_coeff ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.quadraticKernel p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticTargetCoeff n j)‖
+            ≤ C_coeff * (atkinsonModeWeight (n + j) / j))
+    (hpatch :
+      ∀ J0 : ℕ, ∀ j : ℕ, 1 ≤ j → j < J0 →
+        ∃ Cj > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+                atkinsonResonantShiftedPhaseWeightedCell n j)‖
+            ≤ Cj * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  exact
+    atkinson_shiftedInversePhaseCellPrefixBound_of_completeBlockTargetK_remainder_and_finite_patch
+      (atkinson_completeBlockTargetK_remainder_of_zero_model_and_targetCoeff
+        hzeroModel hcoeff)
+      hpatch
 
 /-- Equivalent concrete public-leaf reduction in the shifted block-parameter
 coordinates of the mode `k - j`.

@@ -399,3 +399,57 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-28 Coordinator Validation, Round 7
+
+- Commit validated and pushed by coordinator as `70078bf`
+  (`Close Atkinson shifted quadratic mass bound`).
+- The shifted quadratic mass and kernel integral atoms are closed.
+- Hard rule remains:
+  no local `lake`, `lake env lean`, `lean`, focused builds, public import
+  probes, or compilation checks by this lane agent.
+
+### 2026-04-28 Round 8 Target-Coefficient Reduction
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Theorem/file attacked:
+  the explicit target-matching atom below
+  `atkinson_blockMode_stationaryPhase_of_zero_model_and_target`.
+- Facts banked:
+  `atkinsonShiftedQuadraticTargetCoeff` removes the known alternating
+  stationary-anchor factor from `atkinsonCompleteBlockTargetK (n + j) j`.
+  `atkinson_shifted_quadratic_target_match_of_coeff_bound` proves the original
+  anchored target-matching atom from the scalar coefficient estimate for
+  `((atkinsonModeWeight n : ℝ) : ℂ) * ∫ quadraticKernel p * blockJacobian n p`.
+  `atkinson_blockMode_stationaryPhase_of_zero_model_and_targetCoeff`,
+  `atkinson_completeBlockTargetK_remainder_of_zero_model_and_targetCoeff`, and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_targetCoeff_and_finite_patch`
+  package that reduced target surface through the complete-block and public
+  provider handoffs.
+- Failed routes / guardrails:
+  did not reopen the coefficient-8 predecessor-tail route. Static inspection
+  found the available `StationaryPhaseMainMode.blockMode_quadratic_model_eventually`
+  is only a first-block statement on `p ∈ Icc 0 1`; it does not directly supply
+  the shifted zero-model atom on `p ∈ Ioc j (j + 1)`. The next proof needs a
+  genuine shifted/tail-local quadratic approximation or a bypass around the
+  current zero-model object.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  Strict public import probes for `Littlewood.Main.LittlewoodPsi` and
+  `Littlewood.Main.LittlewoodPi` if the focused module passes.
+- Next smallest theorem:
+  prove the scalar target coefficient atom
+  `∃ C_coeff > 0, ∃ N_coeff : ℕ, ∀ n : ℕ, N_coeff ≤ n → ∀ j : ℕ,`
+  `3 ≤ j → 1 ≤ j → j ≤ n →`
+  `‖((((atkinsonModeWeight n : ℝ) : ℂ) *`
+  `∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p) -`
+  `atkinsonShiftedQuadraticTargetCoeff n j)‖`
+  `≤ C_coeff * (atkinsonModeWeight (n + j) / j)`,
+  and separately resolve the shifted zero-model approximation on
+  `p ∈ Ioc j (j + 1)`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
