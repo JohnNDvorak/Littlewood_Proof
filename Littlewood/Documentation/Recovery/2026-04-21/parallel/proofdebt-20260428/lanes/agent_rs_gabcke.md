@@ -691,3 +691,47 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   closes `StandardGabckeRawPsiDenominatorZeroClassifiedProp`.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 14: denominator-zero quarter lattice closed
+
+- Classification: `PROVED`.
+- Exact theorem attacked:
+  `StandardGabckeRawPsiDenominatorZeroQuarterLatticeProp` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Banked inputs:
+  - Round 13 already proved
+    `standardGabckeRawPsiDenominatorZeroQuarterLatticeRangeProp_proved`.
+  - The raw denominator-zero locus remains explicit as
+    `standardGabckeRawPsiDenominatorZero p = (cos (2*pi*p) = 0)`.
+- Proof facts banked:
+  - Proved
+    `standardGabckeRawPsiDenominatorZeroQuarterLatticeProp_proved` using
+    `Real.cos_eq_zero_iff` for the angle `2*pi*p`, then dividing by
+    `2*pi` to obtain `p = m/2 + 1/4`.
+  - Added `standardGabckeRawPsiDenominatorZeroClassifiedProp_proved`, closing
+    the classified denominator-zero route from the proved quarter-lattice and
+    range theorems.
+  - Added
+    `standardGabckeTargets_of_contourTaylor_regular_and_removablePointBounds`,
+    so the removable-singularity route now needs only the regular raw
+    derivative bound, contour/Taylor identity, and two pointwise removable
+    derivative bounds.
+- Failed routes:
+  - Do not treat `standardGabckeRawPsi` as globally regular.
+  - Do not assert raw `standardGabckeRawPsi = rsPsi`.
+  - Do not use block-independence or a defect-quotient coefficient.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+- Smallest next theorem:
+  prove `StandardGabckeRawPsiRemovablePointBoundsProp` by evaluating the
+  removable extension of the raw quotient's third derivative at `1/4` and
+  `3/4`; independently, prove
+  `StandardGabckeRawPsiRegularThirdDerivativeBoundProp` on the nonzero
+  denominator locus.
+- Coordinator action requested:
+  run the requested serialized validation command.
