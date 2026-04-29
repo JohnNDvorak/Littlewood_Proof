@@ -1841,3 +1841,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_equality_and_third`:
   the local equality to the quotient of numerator/denominator dslopes, or the
   third derivative value `-Real.pi ^ 2`.
+
+### 2026-04-29 Round 38: local dslope quotient equality closed
+
+- Classification: `PROVED` for the local dslope quotient equality clause, and
+  `CONDITIONAL_REDUCTION` for the full dslope bridge.
+- Exact theorem attacked:
+  `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_equality_and_third`.
+- Banked inputs:
+  - At `w = 0`, the quotient of dslopes is the quotient of the ordinary
+    derivatives.
+  - Away from `0`, `dslope_of_ne` unfolds both dslopes to ordinary slopes, and
+    the common factor `w⁻¹` cancels from the quotient.
+- Proof facts banked:
+  - Added and proved `StandardGabckeQuarterLocalNumeratorDslopeValueProp`:
+    `dslope standardGabckeQuarterLocalSineNumerator 0 0 = Real.pi`.
+  - Added and proved
+    `StandardGabckeQuarterLocalRemovableSineQuotientDslopeEqualityProp`:
+    the removable quotient is locally, in fact pointwise, the quotient of the
+    numerator and denominator dslopes.
+  - Added
+    `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_third`,
+    reducing the entire dslope bridge to the single cubic derivative value.
+- Failed routes:
+  - The first validation attempt exposed two local proof-shape issues: the
+    quadratic derivative needed an explicit conversion from `(2*pi*w) * w` to
+    `2*pi*w^2`, and the zero-case quotient proof had a trailing `ring` after
+    `field_simp` had already closed the goal. Both were repaired locally.
+  - I did not define the removable derivative candidate by the raw third
+    derivative.
+  - I did not assume global regularity of the original quotient at
+    denominator-zero points.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, provider shortcuts, or weaken the live
+    coefficient target.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to `origin/recovery/provider-forensics-2026-04-21`
+    at `07da4c6` before editing.
+  - `git diff --check`: passed.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove the remaining cubic derivative value
+  `iteratedDeriv 3 standardGabckeQuarterLocalRemovableSineQuotient 0 =
+    -Real.pi ^ 2`, now the only input to
+  `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_third`.
