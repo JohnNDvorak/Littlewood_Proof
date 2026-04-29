@@ -2428,6 +2428,32 @@ private theorem atkinson_vertical_multiplier_isBigO_of_atkinson_multiplier_isBig
     _ = K * ‖((1 / y : ℝ) : ℂ)‖ := by
           rw [hnorm_y]
 
+/-- The vertical principal-log Stirling `IsBigO` can also be obtained from the
+branch route: the period correction must vanish, and the normalized multiplier
+must satisfy its standard near-one estimate. -/
+private theorem atkinson_vertical_principal_log_isBigO_of_period_correction_zero_and_multiplier_isBigO
+    (hzero :
+      ∃ Yzero : ℝ, ∀ y : ℝ, Yzero ≤ y →
+        toIocDiv Real.two_pi_pos (-Real.pi)
+          (Aristotle.StationaryPhaseStartValue.stirlingTerm
+              ((1 / 4 : ℂ) + Complex.I * y) +
+            Complex.log (atkinsonVerticalGammaStirlingMultiplier y)).im = 0)
+    (hmult :
+      Asymptotics.IsBigO Filter.atTop
+        (fun t : ℝ => atkinsonGammaStirlingMultiplier t - 1)
+        (fun t : ℝ => ((1 / t : ℝ) : ℂ))) :
+    Asymptotics.IsBigO Filter.atTop
+      (fun y : ℝ =>
+        Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+          Aristotle.StationaryPhaseStartValue.stirlingTerm
+            ((1 / 4 : ℂ) + Complex.I * y))
+      (fun y : ℝ => ((1 / y : ℝ) : ℂ)) :=
+  atkinson_vertical_line_stirling_isBigO_of_principal_log_bound
+    (atkinson_principal_log_bound_of_vertical_relative_and_branch
+      (atkinson_vertical_multiplier_branch_of_period_correction_zero hzero)
+      (atkinson_vertical_relative_gamma_stirling_of_multiplier_isBigO
+        (atkinson_vertical_multiplier_isBigO_of_atkinson_multiplier_isBigO hmult)))
+
 /-- A complex logarithmic Stirling remainder controls the normalized
 Stirling multiplier after exponentiation. -/
 private theorem atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO
