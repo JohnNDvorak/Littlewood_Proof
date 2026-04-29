@@ -622,3 +622,68 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
     likely around typeclass synthesis for
     `exactSeedAboveThreshold_perron_of_pairedPhaseRadiusGeometry_hyp` or the
     monotonic `Real.exp_le_exp` steps in the paired-geometry adapters.
+
+### 2026-04-28 Round 10: Paired Zeta Compatibility Endpoint
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - Zeta finite-zero compatibility atoms feeding the paired phase-radius
+    geometry route.
+- Target choice:
+  - Continued the realized phase-radius geometry and zeta finite-zero
+    compatibility route. The harvested `PerronPhaseCouplingReduction.lean` is
+    documentation-only for now because it is sorry-backed and failed
+    current-branch standalone Lean due to `RiemannHypothesis` ambiguity.
+- Facts banked:
+  - Added `TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`, a
+    paired zeta finite-zero compatibility leaf for exactly the two target
+    phases used by corrected Pi: `Complex.arg` and
+    `fun ρ => Complex.arg ρ + Real.pi`.
+  - Added
+    `targetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp` and
+    `antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp`,
+    deriving the one-sided target/anti compatibility classes from the paired
+    compatibility leaf.
+  - Added
+    `exactSeedAboveThreshold_perron_of_pairedCompatibilityAndGeometry_hyp`,
+    packaging both repaired Perron-only exact-seed classes from
+    `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`,
+    `TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`, and
+    `TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp`.
+- False-surface audit:
+  - No new declaration uses `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - The route still avoids arbitrary-target Kronecker and only packages the
+    target/anti phase functions required by corrected Pi.
+  - No constant-1 `PerronSqrtErrorEventuallyAtHeightHyp` shortcut was used.
+- Failed routes that must not be retried:
+  - Do not import or depend on the harvested
+    `PerronPhaseCouplingReduction.lean` as code until it is made sorry-free
+    and its `RiemannHypothesis` namespace ambiguity is fixed.
+  - Do not replace paired target/anti compatibility with the false
+    arbitrary-target finite-zero compatibility leaf.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, or check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem/interface:
+  - Prove/source `TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`
+    for the actual zeta finite-zero target and anti-target phases.
+  - Prove/source `TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp`,
+    requiring same-height growth for `perronThreshold hRH T` and the paired
+    chosen Kronecker radius.
+  - Prove/source
+    `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`
+    from finite-dimensional Kronecker on the relation-compatible torus orbit.
+- Coordinator action requested:
+  - Run the requested validation commands and report the first compile risk,
+    likely around typeclass synthesis for
+    `exactSeedAboveThreshold_perron_of_pairedCompatibilityAndGeometry_hyp`.

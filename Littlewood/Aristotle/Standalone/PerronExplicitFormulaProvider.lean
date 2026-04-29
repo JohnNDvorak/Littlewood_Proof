@@ -2416,6 +2416,21 @@ class AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp : Prop where
       finiteSetInhomogeneousPhaseRelationCompatible
         (finite_zeros_le T).toFinset ε (fun ρ => Complex.arg ρ + Real.pi)
 
+/-- Paired target/anti-target finite-zero relation-compatibility leaf.
+
+This is the zeta finite-zero compatibility atom for the corrected `pi` route:
+the target and anti-target phases are handled together, while still avoiding
+the false arbitrary-target compatibility surface. -/
+class TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε Complex.arg ∧
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε (fun ρ => Complex.arg ρ + Real.pi)
+
 /-- Target-specific finite-zero relative-density phase approximation. -/
 class TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
   witness :
@@ -2694,6 +2709,40 @@ instance (priority := 90)
     [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
     AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
   antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+
+/-- Paired target/anti finite-zero compatibility supplies the target
+compatibility leaf. -/
+theorem targetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp where
+  witness := by
+    intro T ε hT4 hε
+    exact (TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+      T ε hT4 hε).1
+
+/-- Instance form of
+`targetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp`. -/
+instance (priority := 95)
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+  targetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+
+/-- Paired target/anti finite-zero compatibility supplies the anti-target
+compatibility leaf. -/
+theorem antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp where
+  witness := by
+    intro T ε hT4 hε
+    exact (TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+      T ε hT4 hε).2
+
+/-- Instance form of
+`antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp`. -/
+instance (priority := 95)
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+  antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
 
 /-- Paired target/anti tower geometry supplies the target-side geometry leaf by
 bounding the target radius by the maximum of the two chosen radii. -/
@@ -3679,6 +3728,18 @@ theorem exactSeedAboveThreshold_perron_of_pairedPhaseRadiusGeometry_hyp
     [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
     [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
     [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact ⟨inferInstance, inferInstance⟩
+
+/-- Fully paired corrected-route endpoint: finite-set relation-compatible
+Kronecker, paired target/anti zeta compatibility, and paired phase-radius tower
+geometry package both Perron-only exact-seed classes. -/
+theorem exactSeedAboveThreshold_perron_of_pairedCompatibilityAndGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
     [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
     TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
       AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
