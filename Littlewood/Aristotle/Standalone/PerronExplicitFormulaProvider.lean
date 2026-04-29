@@ -2749,6 +2749,30 @@ theorem perronThresholdTowerExpHalfBudgetCanonicalMajorant_of_residual
     PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp where
   witness := h
 
+/-- Fixed-height transfer inequality for the Perron canonical majorant.
+
+If a tower half-budget at `T, ε` dominates the fixed-height majorant built from
+`perronThreshold hRH T0`, and the selected-height threshold
+`perronThreshold hRH T` is controlled by that same fixed majorant, then the
+exact residual inequality at the selected height follows.  The missing
+analytic content is precisely the transfer bound from `T0` to `T`. -/
+theorem perronThresholdTowerExpHalfBudgetCanonicalMajorant_bound_of_fixedHeightTransfer
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    {hRH : ZetaZeros.RiemannHypothesis} {X T0 T ε : ℝ}
+    (hFixed :
+      max (X + 1) (perronThreshold hRH T0 + 1) ≤
+        Real.exp
+          (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2))
+    (hTransfer :
+      perronThreshold hRH T + 1 ≤
+        max (X + 1) (perronThreshold hRH T0 + 1)) :
+    max (X + 1) (perronThreshold hRH T + 1) ≤
+      Real.exp
+        (Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2) := by
+  exact (max_le (le_max_left _ _) hTransfer).trans hFixed
+
 /-- The earlier two-sided growth source implies the canonical max-majorant
 form by recombining the two same-height inequalities with `max_le`.
 
