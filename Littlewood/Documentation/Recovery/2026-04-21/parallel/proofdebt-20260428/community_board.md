@@ -1382,3 +1382,45 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Perron/B5a: smooth Davenport-envelope component, then singular component.
   - Pi/Phase: target/anti-specific fixed-height phase-fit bridge.
   - RS/Gabcke: shifted raw trig identity.
+
+## Overnight 2026-04-29 Thirty-First Pass Status
+
+- Perron/B5a lane is validated and pushed through amended commit `3948c63`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Close Perron off-boundary smooth envelope`.
+  - Coordinator repair: fixed strict denominator positivity, removed a
+    redundant post-`field_simp` `ring`, and normalized the nonzero branch of
+    the reciprocal-weight nonnegativity proof.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the smooth Davenport-envelope component is closed at the honest
+    `x / T` scale through `Σ Λ(n) / n`.
+  - Remaining Perron atom: singular Davenport-envelope component at
+    `Cs * (x / T) * (Real.log x)^2`.
+- Pi/Phase lane is validated and pushed through `9617ab1`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Split pi fixed-height target anti route`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the corrected route now uses target/anti-specific fixed-height
+    phase-fit classes and relation-compatible target/anti finite-zero data.
+    The arbitrary-target fixed-height phase-fit class is no longer the
+    preferred public path.
+  - Remaining Pi atom: `FixedHeightPerronErrorPhaseWideWindowHyp`, the
+    same-height fixed Perron-error/tower window for a supplied radius function.
+- RS/Gabcke lane is validated and pushed through `200046a`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Reduce Gabcke shifted raw trig identity`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
+  - Result: shifted raw trig identity is reduced to numerator and denominator
+    trig atoms plus a proved sign-cancellation bridge.
+  - Remaining RS/Gabcke atoms:
+    `StandardGabckeQuarterShiftedRawNumeratorTrigProp` and
+    `StandardGabckeQuarterShiftedRawDenominatorTrigProp`.
+- Current live atoms:
+  - Atkinson: shifted stationary-phase target remainder and absolute
+    fixed-shift correction-prefix atom.
+  - Perron/B5a: singular Davenport-envelope component.
+  - Pi/Phase: `FixedHeightPerronErrorPhaseWideWindowHyp`.
+  - RS/Gabcke: shifted raw numerator/denominator trig atoms.
