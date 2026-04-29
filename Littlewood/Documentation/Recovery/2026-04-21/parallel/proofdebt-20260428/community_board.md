@@ -3136,3 +3136,18 @@ Timestamp: 2026-04-28 22:56 CDT.
     (`7903 jobs`).
   - Current Atkinson atoms: prove the eventual branch range above or prove the
     standard multiplier Big-O.
+
+## Overnight 2026-04-29 One-Hundred-Thirty-First Pass Status
+
+- Coordinator recovery branch is advanced locally through `9e10f78`.
+- Perron/B5a lane is integrated through `897f0b2`:
+  - The eventual normalized asymptotic tail is reduced to a bounded-height
+    unnormalized residue extraction bound for
+    `perronVerticalIntegral x T - (x - zeroSumRe x T)`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron atom:
+    `∃ Cᵣ > 0, ∀ x T, Xtail <= x -> 2 <= T -> T <= 16 ->
+      |perronVerticalIntegral x T -
+        (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| <=
+      Cᵣ * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
