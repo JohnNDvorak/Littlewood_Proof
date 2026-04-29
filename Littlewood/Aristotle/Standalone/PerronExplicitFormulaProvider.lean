@@ -5135,6 +5135,41 @@ instance (priority := 95)
     AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
   antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
 
+/-- The paired selected-radius budget class specializes to the two canonical
+target/anti selected-radius residuals.
+
+This is non-instance-only: it gives a direct route from the existing
+relation-compatible selected-radius budget source to the exact canonical
+residuals, without using projected budgeted `Classical.choose` equality or
+the arbitrary-budget finite-set theorem. -/
+theorem targetAntiFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResiduals_of_chosenKroneckerRadiusHalfBudget_hyp
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp] :
+    TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual ∧
+      AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual := by
+  letI : TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+  constructor
+  · intro T ε hT4 hεpos hεlt
+    exact
+      (TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp.witness
+        T ε hT4 hεpos hεlt
+        (TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+          T ε hT4 hεpos)
+        (AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+          T ε hT4 hεpos)).1
+  · intro T ε hT4 hεpos hεlt
+    exact
+      (TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp.witness
+        T ε hT4 hεpos hεlt
+        (TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+          T ε hT4 hεpos)
+        (AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+          T ε hT4 hεpos)).2
+
 /-- The paired phase-radius growth leaf follows from the two canonical
 relation-compatible selected-radius residuals.
 
@@ -6458,6 +6493,26 @@ theorem exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleKronec
     targetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKronecker_of_relationCompatibleKronecker_radiusBudget_hyp
   exact
     exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleBudgetedKronecker_hyp
+
+/-- Perron canonical residual plus the paired selected-radius budget class
+packages the corrected explicit-radius exact-seed endpoint.
+
+This records the current non-circular two-atom route: the Perron side is still
+the canonical same-height threshold residual, while the finite-zero side is the
+actual relation-compatible selected-radius budget class. -/
+theorem exactSeedAboveThreshold_perron_of_canonicalPerronAndChosenKroneckerRadiusBudget_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp]
+    (hPerron :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : PerronThresholdTowerLogHalfBudgetHyp :=
+    perronThresholdTowerLogHalfBudget_of_canonicalMajorantResidual hPerron
+  exact
+    exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleKroneckerRadiusBudget_hyp
 
 /-- Canonical selected-radius residuals supply the selected-radius budget needed
 by the explicit relation-compatible Kronecker endpoint.
