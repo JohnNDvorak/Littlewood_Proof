@@ -3151,3 +3151,16 @@ Timestamp: 2026-04-28 22:56 CDT.
       |perronVerticalIntegral x T -
         (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| <=
       Cᵣ * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
+
+## Overnight 2026-04-29 One-Hundred-Thirty-Second Pass Status
+
+- Coordinator recovery branch is advanced locally through `2ddedc9`.
+- Pi/Phase lane is integrated through `6d8306f`:
+  - The least-valid-threshold residual is split into raw chooser least-validity
+    and the analytic validity of the fixed half-budget threshold.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
+  - Current Pi atoms:
+    `PerronSqrtErrorRawChoiceEventuallyLeastValidThresholdResidual` and
+    `PerronFixedHalfBudgetThresholdEventuallyValidResidual`.
