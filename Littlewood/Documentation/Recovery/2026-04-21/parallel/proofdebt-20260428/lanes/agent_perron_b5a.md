@@ -3003,3 +3003,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   transition a.e. convergence/membership stability input.  The zero-sum
   transition continuity and eventual normalized asymptotic tail remain
   separate open atoms.
+
+### 2026-04-29 Round 60 - Close Transition Fixed-Window Majorant
+
+- Classification: `PROOF_CLOSED`.
+- Exact theorem attacked:
+  transition local integrable-majorant input for
+  `perronVerticalFixedWindowIntegrandParam` on
+  `16 <= x <= Xtail`, `2 <= T <= 16`, with measure restricted to
+  `Set.Ioc (-16) 16`.
+- Code facts banked:
+  added `small_T_perronVerticalIntegrand_continuousOn_x_height_transition_box`,
+  proving joint continuity of the unwindowed Perron integrand on the finite
+  transition `x`/height box
+  `16 <= x <= Xtail`, `-16 <= t <= 16`.  Added
+  `small_T_perronVerticalIntegrand_bddAbove_norm_image_transition_box`,
+  deriving bounded image from compactness of that rectangle.  Added
+  `small_T_perronVerticalFixedWindowIntegrand_integrable_majorant_transition_of_bddAbove`
+  and the closed input
+  `small_T_perronVerticalFixedWindowIntegrand_integrable_majorant_transition`,
+  feeding the transition fixed-window DCT handoff.
+- Shape check:
+  compactness is only used on the finite transition `x`/height box; the
+  unbounded `x >= Xtail` asymptotic tail remains separate.  The theorem does
+  not touch zero-sum continuity or closed zero-set local constancy.
+- Failed/demoted routes:
+  did not attempt all DCT inputs or the full public small-`T` route.  The
+  majorant route was scale-safe because it is only a local boundedness input
+  for a finite transition rectangle.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, broad providers, dummy witnesses, new axioms, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check` passed.  `lake build
+  Littlewood.Aristotle.Standalone.PerronTruncationInfra` passed under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.
+- Smallest next theorem:
+  prove another transition fixed-window DCT input, preferably
+  `AEStronglyMeasurable` for
+  `perronVerticalFixedWindowIntegrandParam` on the transition rectangle by
+  mirroring the slab16 measurability lemmas, or prove the transition a.e.
+  pointwise convergence/membership stability input.  Zero-sum transition
+  continuity and the eventual normalized asymptotic tail remain separate open
+  atoms.
