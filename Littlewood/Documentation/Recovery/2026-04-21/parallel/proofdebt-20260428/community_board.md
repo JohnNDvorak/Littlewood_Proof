@@ -3070,3 +3070,16 @@ Timestamp: 2026-04-28 22:56 CDT.
       Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
   - Current Pi atom:
     `PerronSqrtErrorRawChoiceFixedHalfBudgetThresholdComparisonResidual`.
+
+## Overnight 2026-04-29 One-Hundred-Twenty-Sixth Pass Status
+
+- Coordinator recovery branch is advanced locally through `48f27fc`.
+- Perron/B5a lane is integrated through `ead1f71`:
+  - Transition `zeroSumRe` boundedness is closed via the fixed finite height-16
+    envelope.
+  - The transition normalized-defect bounded-image route is wired from that
+    zero-sum boundedness.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron atom: prove the eventual normalized asymptotic tail from
+    `Xtail`; the legacy absorption obligation remains separate.
