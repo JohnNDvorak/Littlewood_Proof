@@ -638,6 +638,45 @@ def StandardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp : Prop :=
       Real.sin (Real.pi * x - 2 * Real.pi * x ^ 2) /
         Real.sin (2 * Real.pi * x)
 
+/-- Numerator trigonometric shift for the raw quotient at `p = x + 1/4`. -/
+def StandardGabckeQuarterShiftedRawNumeratorTrigProp : Prop :=
+  ∀ x : ℝ,
+    Real.cos (2 * Real.pi * ((x + 1 / 4) ^ 2 - (x + 1 / 4) - 1 / 16)) =
+      -Real.sin (Real.pi * x - 2 * Real.pi * x ^ 2)
+
+/-- Denominator trigonometric shift for the raw quotient at `p = x + 1/4`. -/
+def StandardGabckeQuarterShiftedRawDenominatorTrigProp : Prop :=
+  ∀ x : ℝ,
+    Real.cos (2 * Real.pi * (x + 1 / 4)) = -Real.sin (2 * Real.pi * x)
+
+/-- The quotient signs introduced by the two quarter-shift trig identities
+cancel algebraically. -/
+def StandardGabckeQuarterShiftedRawTrigSignCancellationProp : Prop :=
+  ∀ x : ℝ,
+    (-Real.sin (Real.pi * x - 2 * Real.pi * x ^ 2)) /
+        (-Real.sin (2 * Real.pi * x)) =
+      Real.sin (Real.pi * x - 2 * Real.pi * x ^ 2) /
+        Real.sin (2 * Real.pi * x)
+
+/-- The sign cancellation in the shifted raw quotient is pure field algebra;
+it uses no nonvanishing or regularity assumption. -/
+theorem standardGabckeQuarterShiftedRawTrigSignCancellationProp_proved :
+    StandardGabckeQuarterShiftedRawTrigSignCancellationProp := by
+  intro x
+  simp [div_eq_mul_inv]
+
+/-- The shifted raw trigonometric identity follows from the numerator and
+denominator quarter-shift trig formulas. The off-filled-point hypotheses are
+preserved because this theorem feeds the local-function identity route. -/
+theorem standardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp_of_num_den
+    (h_num : StandardGabckeQuarterShiftedRawNumeratorTrigProp)
+    (h_den : StandardGabckeQuarterShiftedRawDenominatorTrigProp) :
+    StandardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp := by
+  intro x _hx_zero _hx_half
+  unfold standardGabckeRawPsi
+  rw [h_num x, h_den x]
+  exact standardGabckeQuarterShiftedRawTrigSignCancellationProp_proved x
+
 /-- The filled removable values are exactly `x = 0` and `x = 1/2` in the
 quarter-point coordinate. -/
 theorem standardGabckeRemovableCandidateQuarterShiftedFillEquivProp_proved :

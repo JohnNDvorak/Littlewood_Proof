@@ -1252,3 +1252,49 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `cos(y - pi/2) = sin y` and `cos(2*pi*x + pi/2) = -sin(2*pi*x)`.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 25: shifted raw quotient reduced to numerator and denominator trig shifts
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp`.
+- Banked inputs:
+  - Round 24 closed the filled-point arithmetic, so the local-function route
+    only needs the off-filled-points raw trig quotient identity.
+  - The raw quotient remains used only away from the filled points; no raw
+    regularity at the removable point is assumed.
+- Proof facts banked:
+  - Added `StandardGabckeQuarterShiftedRawNumeratorTrigProp`, the numerator
+    shift identity
+    `cos(2*pi*((x+1/4)^2 - (x+1/4) - 1/16)) =
+    -sin(pi*x - 2*pi*x^2)`.
+  - Added `StandardGabckeQuarterShiftedRawDenominatorTrigProp`, the denominator
+    shift identity
+    `cos(2*pi*(x+1/4)) = -sin(2*pi*x)`.
+  - Added `StandardGabckeQuarterShiftedRawTrigSignCancellationProp` and proved
+    `standardGabckeQuarterShiftedRawTrigSignCancellationProp_proved` by field
+    algebra; no nonzero denominator hypothesis is needed for the sign
+    cancellation.
+  - Proved
+    `standardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp_of_num_den`,
+    deriving the shifted raw quotient identity from the two trig-shift atoms.
+- Failed routes:
+  - I did not infer the off-point quotient identity from global regularity of
+    the raw quotient.
+  - I did not define `D := standardGabckeRawPsiThirdDerivative`.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, or weaken statements.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+- Remaining goal shape:
+  prove `StandardGabckeQuarterShiftedRawNumeratorTrigProp` and
+  `StandardGabckeQuarterShiftedRawDenominatorTrigProp` using elementary angle
+  normalization plus `cos(-y - pi/2) = -sin y` and
+  `cos(2*pi*x + pi/2) = -sin(2*pi*x)`.
+- Coordinator action requested:
+  run the requested serialized validation command.
