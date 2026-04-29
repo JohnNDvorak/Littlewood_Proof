@@ -1636,3 +1636,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `vonMangoldt_le_log` and harmonic-sum infrastructure.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 31 - Distance Weight Cancellation
+
+- Classification: `CANDIDATE_CLOSE`.
+- Exact theorem attacked:
+  the remaining distance-weight summation
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDistanceWeight x T <= Cd * (Real.log x)^2`.
+- Code facts banked:
+  proved `perronKernelOffBoundaryDistanceWeight_le_scaled_chebyshevPsi`.
+  For positive terms in the finite range, `n <= floor x <= x`; the
+  off-boundary predicate rules out `n = x` and gives
+  `x / T < x - n`, hence `(x - n)⁻¹ <= T / x`.  Summing over the finite
+  off-boundary subset gives the exact bound
+  `perronKernelOffBoundaryDistanceWeight x T <= (T / x) * chebyshevPsi x`.
+  Proved the closed summation theorem
+  `small_T_offBoundary_distanceWeight_bound` from Chebyshev's linear bound,
+  `T <= 16`, and absorption of the resulting constant into `(Real.log x)^2`
+  for `x >= 2`.
+  Added closed downstream consequences:
+  `small_T_offBoundary_davenportSingularEnvelope_bound`,
+  `small_T_offBoundary_davenportEnvelope_linear_bound`, and
+  `small_T_weighted_kernel_cutoff_linear_bound`.
+- Scale check:
+  the distance-weight proof keeps the `T / x` factor until it cancels against
+  the Chebyshev `O(x)` bound, giving a legitimate bounded contribution before
+  log-square absorption.  It does not use a constant kernel supremum.
+- Failed/demoted routes:
+  did not use a pure bounded-height cutoff target or asymptotic handwave.  The
+  resulting closed weighted cutoff is explicitly the linear-window theorem
+  `C * (x / T) * (Real.log x)^2`, not the false pure provider target.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  route the closed linear weighted cutoff through the finite Perron-kernel
+  linear handoff already present as
+  `small_T_perronKernelFiniteSum_cutoff_linear_bound_from_weighted_error`,
+  and decide whether any downstream truncation/residue theorem can honestly
+  consume the linear-window scale without reintroducing the false pure
+  `SmallTPerronBoundHyp` route.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

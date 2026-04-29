@@ -4061,6 +4061,128 @@ theorem small_T_offBoundary_davenportSingular_pointwise_bound :
                 ArithmeticFunction.vonMangoldt n / (x - (n : ℝ)))) := by
             simp [hn_zero]
 
+/-- Off-boundary distance weight is bounded by `(T / x) * psi(x)`.  This is
+the exact cancellation behind the remaining singular summation: off the
+boundary window, `x / T < x - n`, hence `(x - n)⁻¹ <= T / x`. -/
+theorem perronKernelOffBoundaryDistanceWeight_le_scaled_chebyshevPsi
+    (x T : ℝ) (hx : 2 ≤ x) (hT_lo : 2 ≤ T) :
+    perronKernelOffBoundaryDistanceWeight x T ≤
+      (T / x) * Aristotle.DirichletPhaseAlignment.chebyshevPsi x := by
+  classical
+  let s := (Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T)
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hx_pos : 0 < x := by linarith
+  have hT_pos : 0 < T := by linarith
+  have hscale_nonneg : 0 ≤ T / x := div_nonneg hT_pos.le hx_pos.le
+  have hterm :
+      ∀ n ∈ s,
+        (if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (x - (n : ℝ))) ≤
+          (T / x) * ArithmeticFunction.vonMangoldt n := by
+    intro n hn
+    by_cases hn_zero : n = 0
+    · have hrhs_nonneg : 0 ≤ (T / x) * ArithmeticFunction.vonMangoldt n :=
+        mul_nonneg hscale_nonneg (vonMangoldt_nonneg n)
+      simpa [hn_zero] using hrhs_nonneg
+    · have hn_pos : 1 ≤ n := Nat.pos_of_ne_zero hn_zero
+      have hrange : n ∈ Finset.range (Nat.floor x + 1) :=
+        (Finset.mem_filter.mp hn).1
+      have hoff : ¬ |x - (n : ℝ)| ≤ x / T :=
+        (Finset.mem_filter.mp hn).2
+      have hn_le_floor : n ≤ Nat.floor x :=
+        Nat.lt_succ_iff.mp (Finset.mem_range.mp hrange)
+      have hn_le_x : (n : ℝ) ≤ x :=
+        le_trans (Nat.cast_le.mpr hn_le_floor) (Nat.floor_le hx_nonneg)
+      have hx_over_T_pos : 0 < x / T := div_pos hx_pos hT_pos
+      have hn_ne_x : (n : ℝ) ≠ x := by
+        intro hn_eq
+        have hboundary : |x - (n : ℝ)| ≤ x / T := by
+          rw [hn_eq, sub_self, abs_zero]
+          exact hx_over_T_pos.le
+        exact hoff hboundary
+      have hn_lt_x : (n : ℝ) < x := lt_of_le_of_ne hn_le_x hn_ne_x
+      have hdist_pos : 0 < x - (n : ℝ) := sub_pos.mpr hn_lt_x
+      have hdist_nonneg : 0 ≤ x - (n : ℝ) := hdist_pos.le
+      have hdist_gt : x / T < x - (n : ℝ) := by
+        have hoff' : ¬ (x - (n : ℝ) ≤ x / T) := by
+          simpa [abs_of_nonneg hdist_nonneg] using hoff
+        exact lt_of_not_ge hoff'
+      have hrecip :
+          (x - (n : ℝ))⁻¹ ≤ T / x := by
+        calc (x - (n : ℝ))⁻¹
+            ≤ (x / T)⁻¹ :=
+              (inv_le_inv₀ hdist_pos hx_over_T_pos).2 hdist_gt.le
+          _ = T / x := by
+              field_simp [hx_pos.ne', hT_pos.ne']
+      calc (if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (x - (n : ℝ)))
+          = ArithmeticFunction.vonMangoldt n * (x - (n : ℝ))⁻¹ := by
+              simp [hn_zero, div_eq_mul_inv]
+        _ ≤ ArithmeticFunction.vonMangoldt n * (T / x) :=
+              mul_le_mul_of_nonneg_left hrecip (vonMangoldt_nonneg n)
+        _ = (T / x) * ArithmeticFunction.vonMangoldt n := by ring
+  calc perronKernelOffBoundaryDistanceWeight x T
+      = ∑ n ∈ s,
+          if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (x - (n : ℝ)) := by
+        rfl
+    _ ≤ ∑ n ∈ s, (T / x) * ArithmeticFunction.vonMangoldt n :=
+        Finset.sum_le_sum hterm
+    _ ≤ ∑ n ∈ Finset.range (Nat.floor x + 1),
+          (T / x) * ArithmeticFunction.vonMangoldt n := by
+        apply Finset.sum_le_sum_of_subset_of_nonneg
+        · exact Finset.filter_subset _ _
+        · intro n _hn_range _hn_not_s
+          exact mul_nonneg hscale_nonneg (vonMangoldt_nonneg n)
+    _ = (T / x) * Aristotle.DirichletPhaseAlignment.chebyshevPsi x := by
+        dsimp [Aristotle.DirichletPhaseAlignment.chebyshevPsi]
+        rw [Finset.mul_sum]
+
+/-- Closed off-boundary distance-weight summation bound. -/
+theorem small_T_offBoundary_distanceWeight_bound :
+    ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDistanceWeight x T ≤ Cd * (Real.log x) ^ 2 := by
+  let A : ℝ := Real.log 4 + 4
+  let Cd : ℝ := 16 * A * ((Real.log 2) ^ 2)⁻¹
+  have hlog4_nonneg : 0 ≤ Real.log (4 : ℝ) := Real.log_nonneg (by norm_num)
+  have hA_nonneg : 0 ≤ A := by
+    dsimp [A]
+    linarith
+  have hA_pos : 0 < A := by
+    dsimp [A]
+    linarith
+  have hlog2_pos : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hCd_pos : 0 < Cd := by
+    dsimp [Cd]
+    exact mul_pos (mul_pos (by norm_num) hA_pos)
+      (inv_pos.mpr (sq_pos_of_pos hlog2_pos))
+  refine ⟨Cd, hCd_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hx_pos : 0 < x := by linarith
+  have hT_nonneg : 0 ≤ T := by linarith
+  have hscale_nonneg : 0 ≤ T / x := div_nonneg hT_nonneg hx_pos.le
+  have hlog2_le_logx : Real.log (2 : ℝ) ≤ Real.log x :=
+    Real.log_le_log (by norm_num) hx
+  have hlog_sq_lower : (Real.log (2 : ℝ)) ^ 2 ≤ (Real.log x) ^ 2 := by
+    nlinarith [hlog2_pos, hlog2_le_logx]
+  have hconst_absorb :
+      16 * A ≤ Cd * (Real.log x) ^ 2 := by
+    calc 16 * A
+        = Cd * (Real.log (2 : ℝ)) ^ 2 := by
+            dsimp [Cd]
+            field_simp [ne_of_gt (sq_pos_of_pos hlog2_pos)]
+      _ ≤ Cd * (Real.log x) ^ 2 :=
+          mul_le_mul_of_nonneg_left hlog_sq_lower hCd_pos.le
+  calc perronKernelOffBoundaryDistanceWeight x T
+      ≤ (T / x) * Aristotle.DirichletPhaseAlignment.chebyshevPsi x :=
+        perronKernelOffBoundaryDistanceWeight_le_scaled_chebyshevPsi x T hx hT_lo
+    _ ≤ (T / x) * (A * x) :=
+        mul_le_mul_of_nonneg_left
+          (dirichletPhase_chebyshevPsi_le_const_mul_self x hx_nonneg)
+          hscale_nonneg
+    _ = T * A := by field_simp [hx_pos.ne']
+    _ ≤ 16 * A := mul_le_mul_of_nonneg_right hT_hi hA_nonneg
+    _ ≤ Cd * (Real.log x) ^ 2 := hconst_absorb
+
 /-- Conditional singular off-boundary Davenport bound from the pointwise
 reciprocal-log comparison and the remaining distance-weight summation atom. -/
 theorem small_T_offBoundary_davenportSingularEnvelope_bound_from_pointwise_and_distance
@@ -4144,6 +4266,14 @@ theorem small_T_offBoundary_davenportSingularEnvelope_bound_from_distance
   small_T_offBoundary_davenportSingularEnvelope_bound_from_pointwise_and_distance
     small_T_offBoundary_davenportSingular_pointwise_bound hdistance
 
+/-- Closed singular off-boundary Davenport-envelope bound. -/
+theorem small_T_offBoundary_davenportSingularEnvelope_bound :
+    ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDavenportSingularEnvelope x T ≤
+        Cs * (x / T) * (Real.log x) ^ 2 :=
+  small_T_offBoundary_davenportSingularEnvelope_bound_from_distance
+    small_T_offBoundary_distanceWeight_bound
+
 /-- Off-boundary Davenport-envelope bound from separate singular and smooth
 summation bounds. -/
 theorem small_T_offBoundary_davenportEnvelope_linear_bound_from_components
@@ -4186,6 +4316,16 @@ theorem small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_davenport_c
     (small_T_offBoundary_davenportEnvelope_linear_bound_from_components
       hsingular hsmooth)
 
+/-- Closed off-boundary Davenport-envelope bound at the honest linear-window
+scale. -/
+theorem small_T_offBoundary_davenportEnvelope_linear_bound :
+    ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDavenportEnvelope x T ≤
+        Cd * (x / T) * (Real.log x) ^ 2 :=
+  small_T_offBoundary_davenportEnvelope_linear_bound_from_components
+    small_T_offBoundary_davenportSingularEnvelope_bound
+    small_T_offBoundary_davenportSmoothEnvelope_bound
+
 /-- The remaining singular off-boundary route after the smooth component has
 been closed: it is enough to prove the pointwise reciprocal-log comparison and
 the finite distance-weight summation bound. -/
@@ -4217,6 +4357,15 @@ theorem small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_distance
       perronKernelWeightedCutoffError x T ≤ Cw * (x / T) * (Real.log x) ^ 2 :=
   small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_singularDistance
     small_T_offBoundary_davenportSingular_pointwise_bound hdistance
+
+/-- Closed scale-correct weighted Perron-kernel cutoff bound.  This is the
+honest bounded-height cutoff consequence; it remains at linear-window scale
+and is not the false pure `O((log x)^2)` provider target. -/
+theorem small_T_weighted_kernel_cutoff_linear_bound :
+    ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (x / T) * (Real.log x) ^ 2 :=
+  small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_distance
+    small_T_offBoundary_distanceWeight_bound
 
 /-- Weighted finite cutoff from the Davenport separated-bound route and the
 off-boundary weighted atom. -/
