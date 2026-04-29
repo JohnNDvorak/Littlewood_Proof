@@ -98,6 +98,38 @@ theorem perronVerticalIntegral_residue_identity (x T : ℝ) :
   unfold perronVerticalContourRemainderRe
   ring
 
+/-- On the small-`T` box, the residue error scale is uniformly positive.
+
+This packages the denominator positivity needed to pass between a normalized
+supremum bound and the bounded-height contour-remainder estimate. -/
+theorem small_T_residue_error_shape_pos
+    (x T : ℝ) (hx : x ≥ 2) (hT_lo : 2 ≤ T) (hT_hi : T ≤ 16) :
+    0 < Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
+  have hlog2_sq_pos : 0 < (Real.log 2) ^ 2 :=
+    sq_pos_of_pos (Real.log_pos (by norm_num))
+  have hL_pos : 0 < (Real.log 2) ^ 2 / (4 : ℝ) := by positivity
+  have hdenom :
+      (Real.log 2) ^ 2 / (4 : ℝ) ≤ (Real.log T) ^ 2 / Real.sqrt T :=
+    Littlewood.Development.HadamardProductZeta.small_T_denominator_lower
+      hT_lo hT_hi
+  have hsqrt_ge_one : (1 : ℝ) ≤ Real.sqrt x := by
+    rw [← Real.sqrt_one]
+    exact Real.sqrt_le_sqrt (by linarith)
+  have hlower :
+      (Real.log 2) ^ 2 / (4 : ℝ) ≤
+        Real.sqrt x * ((Real.log T) ^ 2 / Real.sqrt T) := by
+    calc (Real.log 2) ^ 2 / (4 : ℝ)
+        = (1 : ℝ) * ((Real.log 2) ^ 2 / (4 : ℝ)) := by ring
+      _ ≤ Real.sqrt x * ((Real.log T) ^ 2 / Real.sqrt T) :=
+          mul_le_mul hsqrt_ge_one hdenom hL_pos.le (Real.sqrt_nonneg x)
+  have :
+      (Real.log 2) ^ 2 / (4 : ℝ) ≤
+        Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by
+    calc (Real.log 2) ^ 2 / (4 : ℝ)
+        ≤ Real.sqrt x * ((Real.log T) ^ 2 / Real.sqrt T) := hlower
+      _ = Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T := by ring
+  linarith
+
 /-! ## Mathlib bridge: Dirichlet series = -ζ'/ζ -/
 
 /-- The von Mangoldt L-series equals -ζ'/ζ for Re(s) > 1.
@@ -4828,6 +4860,28 @@ theorem small_T_perronVerticalIntegral_residue_bound_from_concrete_contour_remai
     (fun x T _hx _hT_lo _hT_hi => perronVerticalIntegral_residue_identity x T)
     hbound
 
+/-- Bounded-height estimate for the concrete contour-remainder defect from a
+normalized supremum bound.
+
+The normalization denominator is strictly positive on `x ≥ 2`,
+`2 ≤ T ≤ 16`, by `small_T_residue_error_shape_pos`.  This is the precise
+supremum-style atom left after the algebraic residue identity has been named;
+it does not use any legacy small-`T` provider. -/
+theorem small_T_concrete_contour_remainder_bound_from_normalized_sup
+    (hsup : ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cc) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalContourRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  rcases hsup with ⟨Cc, hCc_pos, hsup⟩
+  refine ⟨Cc, hCc_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hshape_pos :
+      0 < Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T :=
+    small_T_residue_error_shape_pos x T hx hT_lo hT_hi
+  exact (div_le_iff₀ hshape_pos).mp (hsup x T hx hT_lo hT_hi)
+
 /-- Strengthened small-`T` surface matching the closed Perron cutoff route.
 
 This class is intentionally separate from
@@ -4980,6 +5034,16 @@ theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder
     (small_T_perronVerticalIntegral_residue_bound_from_concrete_contour_remainder
       hbound)
 
+/-- Linear-window small-`T` surface from the normalized supremum bound for the
+concrete contour-remainder defect. -/
+theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
+    (hsup : ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cc) :
+    SmallTPerronLinearWindowBoundHyp :=
+  small_T_linear_window_bound_hyp_from_concrete_contour_remainder
+    (small_T_concrete_contour_remainder_bound_from_normalized_sup hsup)
+
 /-- Legacy public small-`T` provider from the smaller contour-remainder split,
 conditional on the explicit linear-window absorption atom.
 
@@ -5019,6 +5083,23 @@ theorem small_T_perron_bound_hyp_from_concrete_contour_remainder_and_absorption
     Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp := by
   letI : SmallTPerronLinearWindowBoundHyp :=
     small_T_linear_window_bound_hyp_from_concrete_contour_remainder hbound
+  exact small_T_perron_bound_hyp_from_linear_window_hyp_and_absorption habsorb
+
+/-- Legacy public small-`T` provider from the normalized supremum bound for the
+concrete contour-remainder defect, conditional on the explicit linear-window
+absorption atom.  This keeps the legacy absorption obligation visible. -/
+theorem small_T_perron_bound_hyp_from_concrete_contour_remainder_normalized_sup_and_absorption
+    (hsup : ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cc)
+    (habsorb : ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      (x / T) * (Real.log x) ^ 2 ≤
+        A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+          (Real.log x) ^ 2)) :
+    Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp := by
+  letI : SmallTPerronLinearWindowBoundHyp :=
+    small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
+      hsup
   exact small_T_perron_bound_hyp_from_linear_window_hyp_and_absorption habsorb
 
 /-- Concrete small-`T` provider target from the finite weighted Perron-kernel
