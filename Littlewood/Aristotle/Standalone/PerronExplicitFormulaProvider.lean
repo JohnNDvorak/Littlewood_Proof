@@ -3925,6 +3925,66 @@ class TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp
         ≤ Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
 
+/-- Single max-radius residual for the actual target/anti relation-compatible
+finite-set Kronecker radii.
+
+This is the sharp paired quantitative atom below
+`TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`:
+at the same `T, ε` and for the same compatibility inputs, the larger of the
+two selected radii must fit under the tower half-budget. -/
+def TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusMaxHalfBudgetResidual
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp] :
+    Prop :=
+  ∀ (T ε : ℝ)
+    (hT4 : 4 ≤ T)
+    (hεpos : 0 < ε)
+    (hεlt : ε < 1)
+    (hTargetCompat :
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε Complex.arg)
+    (hAntiCompat :
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε
+          (fun ρ => Complex.arg ρ + Real.pi)),
+    max
+        (finiteSetRelationCompatibleKroneckerRadius
+          (finite_zeros_le T).toFinset ε Complex.arg hεpos hTargetCompat)
+        (finiteSetRelationCompatibleKroneckerRadius
+          (finite_zeros_le T).toFinset ε
+          (fun ρ => Complex.arg ρ + Real.pi) hεpos hAntiCompat) + 1
+      ≤ Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- The single max-radius residual supplies the paired selected-radius budget
+class by projecting each chosen radius through the same maximum. -/
+theorem targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_maxResidual
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    (h :
+      TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusMaxHalfBudgetResidual) :
+    TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt hTargetCompat hAntiCompat
+    let Rt : ℝ :=
+      finiteSetRelationCompatibleKroneckerRadius
+        (finite_zeros_le T).toFinset ε Complex.arg hεpos hTargetCompat
+    let Ra : ℝ :=
+      finiteSetRelationCompatibleKroneckerRadius
+        (finite_zeros_le T).toFinset ε
+        (fun ρ => Complex.arg ρ + Real.pi) hεpos hAntiCompat
+    have hMax : max Rt Ra + 1
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 := by
+      simpa [Rt, Ra,
+        TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusMaxHalfBudgetResidual]
+        using h T ε hT4 hεpos hεlt hTargetCompat hAntiCompat
+    constructor
+    · have hRt : Rt + 1 ≤ max Rt Ra + 1 := by
+        linarith [le_max_left Rt Ra]
+      exact hRt.trans hMax
+    · have hRa : Ra + 1 ≤ max Rt Ra + 1 := by
+        linarith [le_max_right Rt Ra]
+      exact hRa.trans hMax
+
 /-- The paired selected-radius budget leaf follows from the two one-sided
 selected-radius budget leaves. -/
 theorem targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_oneSided_hyp
@@ -6513,6 +6573,28 @@ theorem exactSeedAboveThreshold_perron_of_canonicalPerronAndChosenKroneckerRadiu
     perronThresholdTowerLogHalfBudget_of_canonicalMajorantResidual hPerron
   exact
     exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleKroneckerRadiusBudget_hyp
+
+/-- Perron canonical residual plus the single selected max-radius residual
+packages the corrected explicit-radius exact-seed endpoint.
+
+This keeps the finite-zero side at the exact same-height max-radius inequality
+for the actual relation-compatible Kronecker radii. -/
+theorem exactSeedAboveThreshold_perron_of_canonicalPerronAndChosenKroneckerRadiusMaxBudget_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    (hPerron :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual)
+    (hRadius :
+      TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusMaxHalfBudgetResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp :=
+    targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_maxResidual
+      hRadius
+  exact
+    exactSeedAboveThreshold_perron_of_canonicalPerronAndChosenKroneckerRadiusBudget_hyp
+      hPerron
 
 /-- Canonical selected-radius residuals supply the selected-radius budget needed
 by the explicit relation-compatible Kronecker endpoint.

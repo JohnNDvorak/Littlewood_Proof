@@ -2831,3 +2831,39 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Smallest next theorem:
   - `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`, or
     `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+
+### 2026-04-29 Round 58: Chosen Radius Max-Budget Residual
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+- Facts banked:
+  - Added `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusMaxHalfBudgetResidual`.
+  - Added `targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_maxResidual`.
+  - Added `exactSeedAboveThreshold_perron_of_canonicalPerronAndChosenKroneckerRadiusMaxBudget_hyp`.
+- What changed:
+  - Reduced the paired chosen-radius budget class to a single same-height max-radius inequality for the actual target/anti relation-compatible finite-set Kronecker radii.
+  - Added an exact-seed endpoint consuming `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual` plus the new max-radius residual.
+  - This is not a return to the canonical residual loop; the finite-zero atom is now one explicit max bound over the two chosen radii for arbitrary compatible target/anti phase data.
+- Remaining goal shape:
+  - Prove `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`, or prove the selected-threshold residual that implies it.
+  - Prove `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusMaxHalfBudgetResidual`, the direct same-height tower half-budget bound for the larger of the actual selected target/anti relation-compatible Kronecker radii.
+- Failed/circular route:
+  - Did not use projected budgeted `Classical.choose` equality.
+  - Did not revive `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`; arbitrary-budget finite-set Kronecker remains false/demoted.
+  - Did not cycle through phase-growth or canonical one-sided residuals to recover the same paired chosen-radius budget.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set Kronecker, arbitrary-radius route, opaque chooser equality, provider cycles, or broad provider was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation command/result:
+  - `git diff --check`
+  - Result: passed.
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed under the corrected singleflight lock; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`, or
+    `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusMaxHalfBudgetResidual`.
