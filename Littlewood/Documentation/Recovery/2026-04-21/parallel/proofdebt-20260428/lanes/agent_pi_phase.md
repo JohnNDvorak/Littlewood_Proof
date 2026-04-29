@@ -905,3 +905,63 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action requested:
   - Run the requested validation commands and report the first compile risk,
     likely around the `linarith` step adding the two half-budget inequalities.
+
+### 2026-04-29 Round 14: Split Budget Atom Into Same-Height Halves
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp`.
+- Target choice:
+  - Attacked the new budgeted paired log tower atom. Existing tower-height
+    budget infrastructure only gives unbounded domination of fixed external
+    budgets; it does not control the same-height opaque quantities
+    `perronThreshold hRH T` or the chosen finite-zero phase radii after `T, ε`
+    have been selected.
+- Banked inputs:
+  - `RHPiTowerHeightBudget.tower_cap_unbounded_with_eps` remains useful only
+    for fixed budgets independent of the selected height.
+  - The current paired route needs one shared `T, ε`, so independent target
+    and anti-target witnesses, or independent Perron/radius heights, are not
+    enough.
+- Facts banked:
+  - Added `PerronThresholdTowerLogHalfBudgetHyp`, the Perron lower-endpoint
+    half-budget source:
+    `log (max X (perronThreshold hRH T) + 1) ≤ tower(T, ε) / 2`.
+  - Added `TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`, the
+    same-height phase-radius half-budget source: at the `T, ε` selected by the
+    Perron half, the larger target/anti chosen finite-zero radius plus `1`
+    fits under the other half of the same double-exponential tower budget.
+  - Added
+    `targetAntiPerronThresholdTowerLogBudgetForPhaseRadii_of_halfBudgets_hyp`,
+    deriving `TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp` from
+    those two same-height inputs.
+  - Added
+    `exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndHalfBudgets_hyp`,
+    packaging both repaired Perron-only exact-seed classes from paired
+    relative density plus the two half-budget source atoms.
+- Failed route guardrails:
+  - Do not try to use `tower_cap_unbounded_with_eps` directly on
+    `perronThreshold hRH T` or the chosen phase radii; those quantities depend
+    on the same `T, ε` being selected.
+  - Do not split target and anti-target into separate heights, and do not
+    replace the paired radius with an ambient all-radius domination theorem
+    unless the implication back to the paired same-height budget is proved.
+  - Do not use `TruncatedExplicitFormulaPiHyp`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`,
+    `truncatedPiHyp_contradicts_rh`, arbitrary-target Kronecker, or the
+    constant-1 Perron sqrt-error shortcut.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, `git diff --check`, or other check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove/source `PerronThresholdTowerLogHalfBudgetHyp`.
+  - Prove/source
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`, probably
+    from an explicit same-height quantitative bound on the paired
+    relation-compatible Kronecker search radius.

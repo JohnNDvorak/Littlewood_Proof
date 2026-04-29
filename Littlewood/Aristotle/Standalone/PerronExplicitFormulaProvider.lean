@@ -2648,6 +2648,47 @@ class TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp
           ≤ Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
 
+/-- Perron lower-endpoint half of the paired log tower budget.
+
+This is the same-height Perron-threshold growth input below
+`TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp`.  It deliberately
+does not mention the finite-zero phase radii. -/
+class PerronThresholdTowerLogHalfBudgetHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.log (max X (perronThreshold _hRH T) + 1)
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Phase-radius half of the paired log tower budget at a Perron-selected
+height/tolerance.
+
+This is the finite-zero radius growth input below
+`TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp`: once the Perron
+side has selected a same-height `T, ε` with half of the double-exponential
+budget, the larger target/anti-target relative-density radius must fit inside
+the other half. -/
+class TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      Real.log (max X (perronThreshold _hRH T) + 1)
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 →
+      max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+          (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
 /-- Target-specific same-height Perron/tower domination by the realized
 relative-density phase radius.
 
@@ -2898,6 +2939,35 @@ instance (priority := 95)
     [TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp] :
     TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp :=
   targetAntiPerronThresholdTowerLogGeometryForPhaseRadii_of_budget_hyp
+
+/-- Same-height Perron and phase-radius half-budget inputs imply the paired
+budgeted log-level tower geometry leaf. -/
+theorem targetAntiPerronThresholdTowerLogBudgetForPhaseRadii_of_halfBudgets_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp] :
+    TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp where
+  witness := by
+    intro hRH X
+    rcases PerronThresholdTowerLogHalfBudgetHyp.witness hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hLower⟩
+    exact
+      ⟨T, ε, hT4, hεpos, hεlt, hLower,
+        TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp.witness
+          hRH X T ε hT4 hεpos hεlt hLower⟩
+
+/-- Instance form of
+`targetAntiPerronThresholdTowerLogBudgetForPhaseRadii_of_halfBudgets_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp] :
+    TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp :=
+  targetAntiPerronThresholdTowerLogBudgetForPhaseRadii_of_halfBudgets_hyp
 
 /-- Paired target/anti finite-zero compatibility supplies the target
 compatibility leaf. -/
@@ -3962,6 +4032,17 @@ theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndBudgetGeometry
     [PerronSqrtErrorEventuallyAtHeightHyp]
     [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
     [TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact ⟨inferInstance, inferInstance⟩
+
+/-- Paired finite-zero relative density plus the two same-height half-budget
+inputs packages both Perron-only exact-seed classes. -/
+theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndHalfBudgets_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp] :
     TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
       AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
   exact ⟨inferInstance, inferInstance⟩
