@@ -1834,3 +1834,43 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   target.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 35 - Residue To Contour Remainder Split
+
+- Classification: `CANDIDATE_REDUCTION_VALIDATED`.
+- Exact theorem attacked:
+  the bounded-height residue atom feeding `SmallTPerronLinearWindowBoundHyp`.
+- Code facts banked:
+  added `small_T_perronVerticalIntegral_residue_bound_from_contour_remainder`,
+  reducing the direct residue estimate to two strictly smaller atoms: an exact
+  identity
+  `perronVerticalIntegral x T = x - zeroSumRe x T + contourRemainderRe x T`,
+  and a bounded-height estimate for only `contourRemainderRe`.
+  Added `small_T_linear_window_bound_hyp_from_contour_remainder`, wiring this
+  split into `SmallTPerronLinearWindowBoundHyp`.  Added
+  `small_T_perron_bound_hyp_from_contour_remainder_and_absorption`, wiring the
+  same split through the explicit absorption bridge to the legacy public
+  provider target when, and only when, the absorption atom is supplied.
+- Scale check:
+  no false full-domain absorption was asserted, no legacy instance was added,
+  and the linear-window term remains visible until the explicit absorption
+  hypothesis is provided.
+- Failed/demoted routes:
+  did not route through shifted remainder atoms, contour provider shortcuts,
+  or `general_formula_accessible`.  The new split is algebraic/conditional and
+  leaves the analytic residue work in the exact contour-identity plus
+  contour-remainder bound atoms.
+- Circular/forbidden routes avoided:
+  no use of `SmallTPerronBoundHyp`, shifted remainder atoms, public main
+  imports, or `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  first lock-gated attempt exited `LEAN_BUSY` because another focused Lake
+  process was running.  Retried under `/tmp/littlewood-lean-singleflight.lock`;
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` passed.
+- Smallest next theorem:
+  prove the concrete bounded-height contour-remainder identity for
+  `perronVerticalIntegral`, or the bounded-height estimate for that concrete
+  `contourRemainderRe`, whichever is locally reachable first.

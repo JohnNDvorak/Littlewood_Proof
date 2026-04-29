@@ -4763,6 +4763,36 @@ theorem small_T_direct_linear_bound_from_residue
   small_T_direct_linear_bound_from_perronVerticalIntegral_components
     small_T_perronVerticalIntegral_truncation_linear_bound hresidue
 
+/-- Bounded-height residue extraction from an explicit contour-remainder
+identity and bound.
+
+This is the next smaller atom below the direct residue hypothesis: identify
+the vertical Perron integral as the pole and zero residues plus a concrete
+contour remainder, then bound only that contour remainder. -/
+theorem small_T_perronVerticalIntegral_residue_bound_from_contour_remainder
+    (contourRemainderRe : ℝ → ℝ → ℝ)
+    (hidentity : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronVerticalIntegral x T =
+        x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T +
+          contourRemainderRe x T)
+    (hbound : ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |contourRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+        Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) := by
+  rcases hbound with ⟨Cc, hCc_pos, hbound⟩
+  refine ⟨Cc, hCc_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  calc |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)|
+      = |contourRemainderRe x T| := by
+          rw [hidentity x T hx hT_lo hT_hi]
+          ring
+    _ ≤ Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) :=
+        hbound x T hx hT_lo hT_hi
+
 /-- Strengthened small-`T` surface matching the closed Perron cutoff route.
 
 This class is intentionally separate from
@@ -4886,6 +4916,46 @@ theorem small_T_perron_bound_hyp_from_linear_window_hyp_and_absorption
   Littlewood.Development.HadamardProductZeta.small_T_perron_bound_hyp_of_direct_bound
     (small_T_direct_bound_from_linear_bound_and_absorption
       small_T_direct_linear_bound_from_linear_window_hyp habsorb)
+
+/-- Linear-window small-`T` surface from the smaller contour-remainder
+residue split. -/
+theorem small_T_linear_window_bound_hyp_from_contour_remainder
+    (contourRemainderRe : ℝ → ℝ → ℝ)
+    (hidentity : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronVerticalIntegral x T =
+        x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T +
+          contourRemainderRe x T)
+    (hbound : ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |contourRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    SmallTPerronLinearWindowBoundHyp :=
+  small_T_linear_window_bound_hyp_from_residue
+    (small_T_perronVerticalIntegral_residue_bound_from_contour_remainder
+      contourRemainderRe hidentity hbound)
+
+/-- Legacy public small-`T` provider from the smaller contour-remainder split,
+conditional on the explicit linear-window absorption atom.
+
+No absorption is asserted here; the theorem only wires the smaller residue
+atoms through the already explicit bridge. -/
+theorem small_T_perron_bound_hyp_from_contour_remainder_and_absorption
+    (contourRemainderRe : ℝ → ℝ → ℝ)
+    (hidentity : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronVerticalIntegral x T =
+        x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T +
+          contourRemainderRe x T)
+    (hbound : ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |contourRemainderRe x T| ≤
+        Cc * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T))
+    (habsorb : ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      (x / T) * (Real.log x) ^ 2 ≤
+        A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+          (Real.log x) ^ 2)) :
+    Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp := by
+  letI : SmallTPerronLinearWindowBoundHyp :=
+    small_T_linear_window_bound_hyp_from_contour_remainder
+      contourRemainderRe hidentity hbound
+  exact small_T_perron_bound_hyp_from_linear_window_hyp_and_absorption habsorb
 
 /-- Concrete small-`T` provider target from the finite weighted Perron-kernel
 cutoff atom plus the bounded-height residue extraction atom.
