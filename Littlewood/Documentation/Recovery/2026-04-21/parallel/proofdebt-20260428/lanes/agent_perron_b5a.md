@@ -865,3 +865,57 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   preserving the exact `1 / log (x / n)` weight.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 16 - Davenport Envelope Scale Split
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the weighted Davenport-envelope summation target
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedDavenportEnvelope x T
+      <= Cd * (Real.log x)^2`.
+- Scale check:
+  the pure `O((log x)^2)` target is not scale-correct for the current
+  macroscopic separated window.  The smooth Davenport component alone has
+  one bounded-height contribution per boundary-window integer, so its natural
+  scale retains the linear window factor `x / T`.  The singular component
+  keeps the necessary `1 / log (x / n)` distance factor and should be handled
+  as a weighted harmonic-distance sum.
+- Code facts banked:
+  added `perronKernelSeparatedDavenportSingularEnvelope` and
+  `perronKernelSeparatedDavenportSmoothEnvelope`.
+  Proved the exact split
+  `perronKernelSeparatedDavenportEnvelope_eq_singular_add_smooth`.
+  Added
+  `small_T_separated_davenport_envelope_linear_bound_from_components`, reducing
+  the scale-correct linear-window envelope bound to singular and smooth
+  component bounds at scale `(x / T) * (Real.log x)^2`.
+  Added
+  `small_T_separated_weighted_bound_from_linear_davenport_envelope_bound`,
+  recording the scale-correct separated weighted-error consequence without
+  claiming the false pure `O((log x)^2)` envelope sum.
+- Failed/demoted routes:
+  demoted the pure `O((log x)^2)` weighted Davenport-envelope target as
+  scale-incorrect for bounded `T`.  Did not replace the separated window by a
+  pure macroscopic von Mangoldt weight, and did not retry pointwise decay at
+  `K * (T * (Real.log x)^2 / x)`.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the singular weighted harmonic-distance component at the scale
+  `∃ Cs > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedDavenportSingularEnvelope x T
+      <= Cs * (x / T) * (Real.log x)^2`.
+  If needed, split `perronKernelSeparatedPuncturedBoundarySet` by integer or
+  dyadic distance from `x`, using comparability of `Real.log (x / n)` with
+  `(x - n) / x`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
