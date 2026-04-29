@@ -1505,30 +1505,39 @@ private theorem atkinsonNormalizedShiftedCorrectionCarrierIntegral_eq_boundary_j
           (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
             (∫ u in (0 : ℝ)..1, jac u) := by
     have hI : (-Complex.I) * Complex.I = 1 := by norm_num
-    calc
-      (∫ u in (0 : ℝ)..1, carrier u)
-          =
-        ((∫ u in (0 : ℝ)..1, carrier u) +
-            (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
-              (∫ u in (0 : ℝ)..1, jac u)) -
-          (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
-            (∫ u in (0 : ℝ)..1, jac u) := by
-              ring
-      _ =
+    have hmul :
         (-Complex.I) *
             (Complex.I *
               ((∫ u in (0 : ℝ)..1, carrier u) +
                 (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
-                  (∫ u in (0 : ℝ)..1, jac u))) -
+                  (∫ u in (0 : ℝ)..1, jac u))) =
+          ((∫ u in (0 : ℝ)..1, carrier u) +
+            (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+              (∫ u in (0 : ℝ)..1, jac u)) := by
+      rw [← mul_assoc, hI, one_mul]
+    calc
+      (∫ u in (0 : ℝ)..1, carrier u)
+          =
+        ((∫ u in (0 : ℝ)..1, carrier u) +
           (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
-            (∫ u in (0 : ℝ)..1, jac u) := by
-              rw [hI]
-              ring
+            (∫ u in (0 : ℝ)..1, jac u)) -
+        (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+          (∫ u in (0 : ℝ)..1, jac u) := by
+            ring
+      _ =
+        (-Complex.I) *
+            (Complex.I *
+                ((∫ u in (0 : ℝ)..1, carrier u) +
+                  (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+                    (∫ u in (0 : ℝ)..1, jac u))) -
+            (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
+              (∫ u in (0 : ℝ)..1, jac u) := by
+            rw [hmul]
       _ =
         (-Complex.I) * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j -
           (((atkinsonShiftedRelativePhase k j : ℝ) : ℂ)) *
             (∫ u in (0 : ℝ)..1, jac u) := by
-              rw [hboundary]
+          rw [hboundary]
   simpa [atkinsonNormalizedShiftedCorrectionCarrierIntegral,
     atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral, carrier, jac, k] using hsolve
 
