@@ -458,6 +458,53 @@ def StandardGabckeRawPsiRemovablePointValueBoundsProp (C14 C34 : ℝ) : Prop :=
   |C14| ≤ fresnelC1Bound * (96 * Real.pi ^ 2) ∧
     |C34| ≤ fresnelC1Bound * (96 * Real.pi ^ 2)
 
+/-- Pointwise bridge from Gabcke's smooth removable quotient normalization to
+the raw totalized quotient derivative at the two denominator-zero points.
+This is deliberately only a two-point statement; it does not assert global
+regularity of `standardGabckeRawPsi`. -/
+def StandardGabckeRawPsiRemovableSourceBridgeProp (D : ℝ → ℝ) : Prop :=
+  standardGabckeRawPsiThirdDerivative (1 / 4 : ℝ) = D (1 / 4) ∧
+    standardGabckeRawPsiThirdDerivative (3 / 4 : ℝ) = D (3 / 4)
+
+/-- Tabelle/source values for the smooth removable third-derivative payload at
+the two denominator-zero points. -/
+def StandardGabckeRemovableSourceThirdDerivativeValueProp
+    (D : ℝ → ℝ) (C14 C34 : ℝ) : Prop :=
+  D (1 / 4) = C14 ∧ D (3 / 4) = C34
+
+/-- Exact raw point-value atoms follow from a two-point bridge to the smooth
+removable source derivative plus the sourced Tabelle values. -/
+theorem standardGabckeRawPsiRemovablePointValues_of_sourceBridge
+    {D : ℝ → ℝ} {C14 C34 : ℝ}
+    (h_bridge : StandardGabckeRawPsiRemovableSourceBridgeProp D)
+    (h_values : StandardGabckeRemovableSourceThirdDerivativeValueProp D C14 C34) :
+    StandardGabckeRawPsiQuarterThirdDerivativeValueProp C14 ∧
+      StandardGabckeRawPsiThreeQuarterThirdDerivativeValueProp C34 := by
+  constructor
+  · exact h_bridge.1.trans h_values.1
+  · exact h_bridge.2.trans h_values.2
+
+/-- The removable-point bounds follow from the exact two-point
+raw/removable-source bridge, the sourced values, and their numeric Tabelle
+bounds. -/
+theorem standardGabckeRawPsiRemovablePointBoundsProp_of_sourceBridge
+    {D : ℝ → ℝ} {C14 C34 : ℝ}
+    (h_bridge : StandardGabckeRawPsiRemovableSourceBridgeProp D)
+    (h_values : StandardGabckeRemovableSourceThirdDerivativeValueProp D C14 C34)
+    (h_bounds : StandardGabckeRawPsiRemovablePointValueBoundsProp C14 C34) :
+    StandardGabckeRawPsiRemovablePointBoundsProp := by
+  have h_quarter :
+      standardGabckeRawPsiThirdDerivative (1 / 4 : ℝ) = C14 :=
+    h_bridge.1.trans h_values.1
+  have h_threeQuarter :
+      standardGabckeRawPsiThirdDerivative (3 / 4 : ℝ) = C34 :=
+    h_bridge.2.trans h_values.2
+  constructor
+  · rw [h_quarter]
+    exact h_bounds.1
+  · rw [h_threeQuarter]
+    exact h_bounds.2
+
 /-- The two removable-point bounds follow from exact source values at the two
 quarter points plus the corresponding numeric bounds for those values. -/
 theorem standardGabckeRawPsiRemovablePointBoundsProp_of_pointValues
@@ -673,6 +720,24 @@ theorem standardGabckeTargets_of_contourTaylor_regular_and_removablePointValues
     h_id h_regular
     (standardGabckeRawPsiRemovablePointBoundsProp_of_pointValues
       h_quarter h_threeQuarter h_bounds)
+
+/-- Direct target route when the two removable point values are supplied by a
+smooth removable-source derivative and a two-point bridge back to the raw
+totalized quotient derivative. -/
+theorem standardGabckeTargets_of_contourTaylor_regular_and_removableSourceBridge
+    {D : ℝ → ℝ} {C14 C34 : ℝ}
+    (h_id : StandardGabckeContourTaylorFirstCoefficientIdentityProp)
+    (h_regular : StandardGabckeRawPsiRegularThirdDerivativeBoundProp)
+    (h_bridge : StandardGabckeRawPsiRemovableSourceBridgeProp D)
+    (h_values : StandardGabckeRemovableSourceThirdDerivativeValueProp D C14 C34)
+    (h_bounds : StandardGabckeRawPsiRemovablePointValueBoundsProp C14 C34) :
+    StandardGabckeStationaryPhaseIdentityProp
+        standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient ∧
+      StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient :=
+  standardGabckeTargets_of_contourTaylor_regular_and_removablePointBounds
+    h_id h_regular
+    (standardGabckeRawPsiRemovablePointBoundsProp_of_sourceBridge
+      h_bridge h_values h_bounds)
 
 /-- A standard-normalized stationary-phase identity becomes the local
 coefficient identity once the leading coefficient normalization has been

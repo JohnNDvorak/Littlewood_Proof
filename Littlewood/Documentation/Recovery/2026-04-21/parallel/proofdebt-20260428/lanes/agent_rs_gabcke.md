@@ -784,3 +784,55 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `StandardGabckeRawPsiRemovablePointValueBoundsProp C14 C34`.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 16: removable source bridge isolated
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the source values feeding
+  `StandardGabckeRawPsiQuarterThirdDerivativeValueProp` and
+  `StandardGabckeRawPsiThreeQuarterThirdDerivativeValueProp`.
+- Banked inputs:
+  - Round 15 reduced `StandardGabckeRawPsiRemovablePointBoundsProp` to exact
+    raw point values at `1/4`, `3/4` plus numeric bounds.
+  - The direct route through
+    `standardGabckeTargets_of_contourTaylor_regular_and_removablePointBounds`
+    remains intact.
+- Proof facts banked:
+  - Added `StandardGabckeRawPsiRemovableSourceBridgeProp D`, a two-point
+    bridge from a smooth removable-source third derivative `D` to the raw
+    totalized derivative values at `1/4` and `3/4`.
+  - Added `StandardGabckeRemovableSourceThirdDerivativeValueProp D C14 C34`,
+    the Tabelle/source-value atom for the smooth removable derivative at the
+    same two points.
+  - Proved `standardGabckeRawPsiRemovablePointValues_of_sourceBridge`, deriving
+    the existing raw point-value atoms from the two-point bridge and sourced
+    values.
+  - Proved `standardGabckeRawPsiRemovablePointBoundsProp_of_sourceBridge`,
+    deriving the removable point bounds from bridge, source values, and the
+    numeric source-value bound.
+  - Added
+    `standardGabckeTargets_of_contourTaylor_regular_and_removableSourceBridge`,
+    preserving the direct downstream Gabcke route while exposing the exact
+    removable/Tabelle normalization input.
+- Failed routes:
+  - Do not use a global regularity assertion for `standardGabckeRawPsi`; the
+    new bridge is pointwise at the classified denominator-zero locus only.
+  - Do not assert raw `standardGabckeRawPsi = rsPsi`.
+  - Do not use block-independence or a defect-quotient coefficient.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+- Smallest next theorem:
+  instantiate the removable-source derivative `D` from the actual local
+  Taylor/removable quotient normalization and prove
+  `StandardGabckeRawPsiRemovableSourceBridgeProp D`; then source the two
+  Tabelle values and prove
+  `StandardGabckeRemovableSourceThirdDerivativeValueProp D C14 C34` together
+  with `StandardGabckeRawPsiRemovablePointValueBoundsProp C14 C34`.
+- Coordinator action requested:
+  run the requested serialized validation command.
