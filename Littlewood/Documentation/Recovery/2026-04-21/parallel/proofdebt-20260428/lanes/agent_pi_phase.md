@@ -713,3 +713,72 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Run the requested validation commands and report the first compile risk,
     likely around typeclass synthesis for
     `exactSeedAboveThreshold_perron_of_pairedCompatibilityAndGeometry_hyp`.
+
+### 2026-04-29 Round 11: Paired Relation-Compatible Relative Density
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - Paired finite-zero compatibility and relation-compatible finite-set
+    Kronecker surface.
+- Target choice:
+  - Attacked the paired finite-zero compatibility route by adding a paired
+    finite-zero relative-density payload. This carries the target and
+    anti-target phase-hit families together after the relation-compatibility
+    predicate has been supplied, instead of routing through arbitrary-target
+    Kronecker.
+- Facts banked:
+  - Added `TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp`, a paired
+    finite-zero relative-density payload for the two corrected Pi targets
+    `Complex.arg` and `fun ρ => Complex.arg ρ + Real.pi`.
+  - Added
+    `targetAntiFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp`,
+    deriving the paired payload from
+    `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`
+    plus `TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`.
+  - Added
+    `targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp` and
+    `antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp`,
+    exposing the paired payload to the existing one-sided radius selectors and
+    geometry classes.
+  - Added
+    `exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndGeometry_hyp`,
+    packaging both repaired Perron-only exact-seed classes from paired
+    finite-zero relative density and paired phase-radius tower geometry.
+- False-surface audit:
+  - No new declaration uses `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No arbitrary-target Kronecker theorem was introduced; relation
+    compatibility is an explicit premise of the finite-set Kronecker source.
+  - No constant-1 `PerronSqrtErrorEventuallyAtHeightHyp` shortcut or
+    harvested sorry-backed file was used.
+- Failed routes that must not be retried:
+  - Do not prove arbitrary-target finite-zero compatibility. The paired class
+    only carries the target and anti-target phase functions needed by corrected
+    Pi.
+  - Do not activate the harvested `PerronPhaseCouplingReduction.lean` until it
+    is sorry-free and namespace-clean.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, or compilation/check command was run.
+  - `git diff --check` passed.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem/interface:
+  - Prove/source `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`
+    from finite-dimensional Kronecker on the relation-compatible torus orbit.
+  - Prove/source `TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`
+    for the actual zeta target/anti-target phases.
+  - Prove/source `TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp` from
+    same-height Perron-threshold growth and the paired chosen phase radius.
+- Coordinator action requested:
+  - Run the requested validation commands and report the first compile risk,
+    likely around typeclass synthesis from
+    `TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp` to the
+    one-sided radius classes.

@@ -2463,6 +2463,37 @@ class AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
                 ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
                     m • (2 * Real.pi)‖ ≤ ε
 
+/-- Paired target/anti-target finite-zero relative-density phase approximation.
+
+This is the finite-zero payload actually consumed by the paired corrected Pi
+route: both phase targets are carried together at the same height and
+tolerance, while their relative-density radii may differ. -/
+class TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      (∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - Complex.arg ρ -
+                    m • (2 * Real.pi)‖ ≤ ε) ∧
+      (∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
+                    m • (2 * Real.pi)‖ ≤ ε)
+
 /-- Chosen target finite-zero relative-density radius. Outside the meaningful
 `4 ≤ T`, `0 < ε` range it is set to `1` so it is total. -/
 noncomputable def targetFiniteZeroInhomogeneousPhaseRadius
@@ -2709,6 +2740,68 @@ instance (priority := 90)
     [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
     AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
   antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+
+/-- Relation-compatible finite-set Kronecker plus paired target/anti zeta
+compatibility supplies the paired finite-zero relative-density payload. -/
+theorem targetAntiFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hε
+    rcases TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+        T ε hT4 hε with
+      ⟨hTargetCompat, hAntiCompat⟩
+    constructor
+    · exact
+        FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp.witness
+          (finite_zeros_le T).toFinset ε Complex.arg hε hTargetCompat
+    · exact
+        FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp.witness
+          (finite_zeros_le T).toFinset ε
+          (fun ρ => Complex.arg ρ + Real.pi) hε hAntiCompat
+
+/-- Instance form of
+`targetAntiFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp`.
+-/
+instance (priority := 90)
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  targetAntiFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+
+/-- The paired target/anti relative-density payload supplies the target side. -/
+theorem targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hε
+    exact (TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+      T ε hT4 hε).1
+
+/-- Instance form of
+`targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp`. -/
+instance (priority := 95)
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+
+/-- The paired target/anti relative-density payload supplies the anti-target
+side. -/
+theorem antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hε
+    exact (TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+      T ε hT4 hε).2
+
+/-- Instance form of
+`antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp`. -/
+instance (priority := 95)
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
 
 /-- Paired target/anti finite-zero compatibility supplies the target
 compatibility leaf. -/
@@ -3740,6 +3833,18 @@ theorem exactSeedAboveThreshold_perron_of_pairedCompatibilityAndGeometry_hyp
     [PerronSqrtErrorEventuallyAtHeightHyp]
     [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
     [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact ⟨inferInstance, inferInstance⟩
+
+/-- Paired finite-zero relative density plus paired phase-radius geometry
+packages both Perron-only exact-seed classes.  This is the narrower endpoint
+after the finite-dimensional Kronecker and zeta relation-compatibility work has
+already been bundled into a paired finite-zero phase payload. -/
+theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
     [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
     TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
       AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
