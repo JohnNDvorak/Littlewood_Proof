@@ -2298,3 +2298,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   relative Gamma Stirling residual, multiplier branch identity,
   Jacobian-integral bound at `1/relativeWeight`, and the shifted
   stationary-phase target remainder.
+
+### 2026-04-29 Round 49 Relative Residual to Stirling-Ratio Big-O
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  relative Gamma Stirling residual
+  `∃ Crel > 0, ∃ Trel, ∀ t ≥ Trel,`
+  `‖Complex.Gamma (1 / 4 + Complex.I * (t / 2)) -`
+  `Complex.exp (atkinsonLogGammaStirlingTerm t)‖ ≤`
+  `(Crel / t) * ‖Complex.exp (atkinsonLogGammaStirlingTerm t)‖`.
+- Facts banked:
+  proved `atkinson_relative_gamma_stirling_of_multiplier_isBigO`, reducing
+  the residual to the standard one-dimensional Stirling-ratio atom
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun t => atkinsonGammaStirlingMultiplier t - 1)`
+  `(fun t => ((1 / t : ℝ) : ℂ))`. Also added
+  `atkinson_logGamma_to_stirlingTerm_of_multiplier_isBigO` and
+  `atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_multiplier_isBigO`
+  so this Big-O atom feeds the existing log-Gamma and corrected endpoint
+  packages.
+- Smallest next theorem:
+  prove the multiplier Stirling-ratio Big-O atom above, plus the separate
+  multiplier branch identity
+  `∃ Tbranch, ∀ t ≥ Tbranch,`
+  `(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -`
+  `(atkinsonLogGammaStirlingTerm t).im =`
+  `(Complex.log (atkinsonGammaStirlingMultiplier t)).im`. The independent
+  Jacobian-integral bound at `1/relativeWeight` and shifted stationary-phase
+  target remainder remain live.
+- Failed routes / guardrails:
+  did not import generated broad Stirling files, add analytic providers,
+  axioms, sorries, statement weakening, direct Abel shortcuts, phase-weight
+  division, circular provider assumptions, or the demoted raw endpoint
+  phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. First focused build failed on a
+  local normalization mismatch between `|t|⁻¹` and `t⁻¹`; fixed it using the
+  eventual cutoff `0 < t`. Reran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  multiplier Stirling-ratio Big-O at `O(1/t)`, multiplier branch identity,
+  Jacobian-integral bound at `1/relativeWeight`, and the shifted
+  stationary-phase target remainder.
