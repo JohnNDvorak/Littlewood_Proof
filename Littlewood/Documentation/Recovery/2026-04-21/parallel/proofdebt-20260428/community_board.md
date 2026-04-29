@@ -1288,3 +1288,45 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Perron/B5a: named Davenport-envelope bound at linear `x / T` scale.
   - Pi/Phase: `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp`.
   - RS/Gabcke: one of the split removable-candidate quarter atoms.
+
+## Overnight 2026-04-29 Twenty-Eighth Pass Status
+
+- Atkinson lane is validated and pushed through `9b4dcb5`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Package Atkinson provider from all fixed shifts`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the `j = 1,2` correction patches are no longer separate gates if
+    one native fixed-shift correction-prefix family is proved for every
+    positive shift. The route remains non-circular: all-fixed-shift correction
+    family plus shifted stationary-phase remainder builds
+    `AtkinsonShiftedCorrectionPrefixBoundHyp`, then
+    `AtkinsonShiftedInversePhaseCellPrefixBoundHyp`.
+  - Remaining Atkinson atoms: shifted-interval stationary-phase target
+    remainder and native fixed-shift correction-prefix family for every
+    positive fixed shift.
+- Perron/B5a lane is validated and pushed through `45d39d0`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Split Perron off-boundary Davenport envelope`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the Davenport envelope is split into singular and smooth
+    components with a component-combination theorem feeding the cutoff route.
+  - Remaining Perron atoms: prove the smooth component at
+    `Cm * (x / T) * (Real.log x)^2`, then close the singular
+    reciprocal-log/distance summation.
+- RS/Gabcke lane is validated and pushed through `c482eaf`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Close Gabcke shifted fill points`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
+  - Result: the local-function equality route is reduced to the
+    off-filled-points raw trig identity for `standardGabckeRawPsi (x + 1/4)`.
+  - Remaining RS/Gabcke atom:
+    `StandardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp`.
+- Current live atoms:
+  - Atkinson: all-positive fixed-shift correction-prefix family or shifted
+    stationary-phase target remainder.
+  - Perron/B5a: smooth Davenport-envelope component, then singular component.
+  - Pi/Phase: `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp`.
+  - RS/Gabcke: shifted raw trig identity.
