@@ -3303,3 +3303,54 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
       (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| <=
       Cᵣ * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
   The public legacy absorption obligation remains separate.
+
+### 2026-04-29 Round 66 - Reduce Residue Tail to Concrete Contour Defect
+
+- Classification: `REDUCTION_WIRED`.
+- Exact theorem attacked:
+  eventual bounded-height residue extraction for the actual
+  `perronVerticalIntegral` on `Xtail <= x`, `2 <= T <= 16`.
+- Code facts banked:
+  added
+  `small_T_eventual_perronVerticalIntegral_residue_bound_from_concrete_contour_remainder`,
+  the tail-local analogue of the existing global
+  `small_T_perronVerticalIntegral_residue_bound_from_concrete_contour_remainder`.
+  It rewrites
+  `perronVerticalIntegral x T - (x - zeroSumRe x T)` to the named concrete
+  defect `perronVerticalContourRemainderRe x T` and preserves the same
+  constant and bounded-height scale.  Added
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_transition_bddAbove_and_eventual_concrete_bound`,
+  wiring this smaller tail estimate through the finite-zero transition
+  linear-window route.
+- Search result:
+  no non-circular proved bound for the concrete actual residue expression was
+  found.  The nearby explicit Perron/rectangle files provide per-term and
+  abstract contour machinery, while provider-level shifted-remainder contour
+  bounds remain circular or too broad for this lane.
+- Shape check:
+  no new provider instance, no legacy absorption claim, and no compactness in
+  the unbounded `x` direction.  The reduction is purely algebraic and leaves
+  the analytic tail estimate on `perronVerticalContourRemainderRe`.
+- Failed/demoted routes:
+  did not use `ContourRemainderBoundHyp.bound` or shifted-remainder contour
+  providers to prove the residue tail; those routes would consume the public
+  provider surface this lane is isolating.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, broad providers, dummy witnesses, new axioms, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check` passed.  `lake build
+  Littlewood.Aristotle.Standalone.PerronTruncationInfra` passed under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.
+- Smallest next theorem:
+  prove the eventual concrete contour-defect bound on the unbounded tail:
+  `∃ Cc > 0, ∀ x T, Xtail <= x -> 2 <= T -> T <= 16 ->
+    |perronVerticalContourRemainderRe x T| <=
+      Cc * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
+  The public legacy absorption obligation remains separate.
