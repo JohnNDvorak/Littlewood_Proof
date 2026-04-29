@@ -2190,3 +2190,16 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Current RS atoms: prove the denominator coefficient data from the series of
     `sin(2*pi*w) / w`, or prove the numerator analogue for
     `sin(pi*w - 2*pi*w^2) / w`.
+
+## Overnight 2026-04-29 Sixty-First Pass Status
+
+- Coordinator recovery branch is pushed through `f7c314a`.
+- Perron/B5a lane is integrated through `06b8f41`:
+  - Local constancy of `ZerosBelow` is reduced to set-level local stability of
+    `CriticalZeros ∩ {ρ | |ρ.im| <= T}`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Guardrail: unconditional local constancy for the closed cutoff is not an
+    honest target at a zero height. Future Perron work should either add and
+    use a boundary-zero exclusion hypothesis, or pivot to slab continuity of
+    `perronVerticalIntegral` / the normalized tail route.
