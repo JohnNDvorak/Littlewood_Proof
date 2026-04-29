@@ -2594,3 +2594,39 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `PerronThresholdTowerLogHalfBudgetHyp` or `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+
+### 2026-04-29 Round 52: Canonical Radius Residual Reduction
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+- Facts banked:
+  - Added `targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_canonicalResiduals`.
+  - Added `exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleCanonicalRadiusResiduals_hyp`.
+- What changed:
+  - The paired selected-radius Kronecker budget leaf now reduces directly to the two one-sided canonical relation-compatible selected-radius residuals:
+    `TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual` and
+    `AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual`.
+  - The corrected Perron-only exact-seed endpoint can now consume those canonical residuals through the explicit-radius relation-compatible route, without using projected `Classical.choose` radius comparisons.
+- Remaining goal shape:
+  - Prove `PerronThresholdTowerLogHalfBudgetHyp`.
+  - Prove the actual one-sided canonical selected-radius residuals, or reduce them further to a quantitative finite-zero/Kronecker theorem that bounds the selected relation-compatible radius at the same `T, ε`.
+- Failed/circular route:
+  - Did not use `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`; the arbitrary-budget finite-set theorem remains demoted by the empty-set/zero-budget counterexample.
+  - Did not add provider instances or a reverse edge from exact-seed packaging back into the selected-radius residuals.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set Kronecker, arbitrary-radius route, provider cycles, reverse-comparison instances, or choice-control assumption was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed local focused validation under the corrected singleflight rule.
+- Validation command/result:
+  - `git diff --check`
+  - Result: passed.
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `PerronThresholdTowerLogHalfBudgetHyp`, `TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual`, or `AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual`.

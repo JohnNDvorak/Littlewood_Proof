@@ -3940,6 +3940,30 @@ theorem targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of
         AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp.witness
           T ε hT4 hεpos hεlt hAntiCompat⟩
 
+/-- The paired selected-radius budget leaf follows from the two canonical
+one-sided relation-compatible selected-radius residuals.
+
+This records the current non-circular reduction for the paired quantitative
+Kronecker atom: the remaining analytic work is exactly the two same-height
+canonical radius inequalities, not an arbitrary external-budget theorem. -/
+theorem targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_canonicalResiduals
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    (hTarget :
+      TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual)
+    (hAnti :
+      AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual) :
+    TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp := by
+  letI : TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp :=
+    targetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_canonicalResidual
+      hTarget
+  letI : AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp :=
+    antiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_canonicalResidual
+      hAnti
+  exact
+    targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_oneSided_hyp
+
 /-- Paired zeta relation compatibility plus the relation-compatible
 quantitative Kronecker source supply the budgeted target/anti finite-zero
 relative-density payload. -/
@@ -6315,6 +6339,31 @@ theorem exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleKronec
     targetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKronecker_of_relationCompatibleKronecker_radiusBudget_hyp
   exact
     exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleBudgetedKronecker_hyp
+
+/-- Canonical selected-radius residuals supply the selected-radius budget needed
+by the explicit relation-compatible Kronecker endpoint.
+
+This endpoint keeps the route on the actual target/anti finite-zero Kronecker
+radii and avoids the already-demoted arbitrary-budget finite-set theorem. -/
+theorem exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleCanonicalRadiusResiduals_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    (hTarget :
+      TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual)
+    (hAnti :
+      AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+  letI : TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp :=
+    targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_canonicalResiduals
+      hTarget hAnti
+  exact exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleKroneckerRadiusBudget_hyp
 
 /-- Paired finite-zero relative density plus the two same-height half-budget
 inputs packages both Perron-only exact-seed classes. -/
