@@ -2645,3 +2645,54 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `perronVerticalFixedWindowIntegrandParam` on
   `volume.restrict (Set.Ioc (-16) 16)`, which is now the remaining DCT atom
   after measurability and a.e. convergence are closed.
+
+### 2026-04-29 Round 53 - Close Fixed-Window Majorant and Perron Continuity
+
+- Classification: `PROOF_CLOSED`.
+- Exact theorem attacked:
+  the local integrable-majorant input for
+  `perronVerticalFixedWindowIntegrandParam` on
+  `volume.restrict (Set.Ioc (-16) 16)`, feeding
+  `small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16_from_dominated_convergence`.
+- Code facts banked:
+  added `small_T_perronVerticalIntegrand_continuousOn_x_height_box16`,
+  proving joint continuity of the explicit unwindowed Perron integrand on the
+  compact rectangle `2 <= x <= 16`, `-16 <= t <= 16`.  Added
+  `small_T_perronVerticalIntegrand_bddAbove_norm_image_box16`, using closed-box
+  compactness to bound the integrand norm image.  Added
+  `small_T_perronVerticalFixedWindowIntegrand_integrable_majorant_slab16_of_bddAbove`
+  and the closed
+  `small_T_perronVerticalFixedWindowIntegrand_integrable_majorant_slab16`,
+  using the resulting constant bound as an integrable majorant on the finite
+  fixed window.  This closes
+  `small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16`, then the
+  raw/public wrappers
+  `small_T_perronVerticalRawIntegral_continuousOn_slab16` and
+  `small_T_perronVerticalIntegral_continuousOn_slab16`.
+- Shape check:
+  the majorant is obtained from compactness of the explicit `x`/height box,
+  not from a provider class or contour shortcut.  The moving-window indicator
+  is handled by the already banked endpoint-a.e. membership stability, and the
+  pointwise bound only uses `q` eventually in the cutoff slab.
+- Failed/demoted routes:
+  no attempt was made to prove zero-sum continuity or unconditional
+  closed-cutoff zero-set constancy.  The latter remains dishonest at zero
+  heights and stays out of this route.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, or `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check`; then
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.  Both passed.
+- Smallest next theorem:
+  continue the cutoff-slab concrete-defect path by supplying the remaining
+  zero-sum component continuity input usable by
+  `small_T_concrete_contour_remainder_continuousOn_slab16_from_components`,
+  preferably via a boundary-exclusion or half-open zero-sum surface that avoids
+  unconditional local constancy of closed `ZerosBelow` at zero heights.
