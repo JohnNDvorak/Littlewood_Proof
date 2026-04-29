@@ -1715,3 +1715,44 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 35 Endpoint Phase-Error Reduction
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  endpoint boundary bound for
+  `atkinsonNormalizedShiftedCorrectionCarrierEndpointGap` at
+  `relativePhase/relativeWeight` scale.
+- Facts banked:
+  added the scalar compensated endpoint phase error
+  `atkinsonEndpointGapPhaseError n j`, proved the exact `4πj` periodic
+  cancellation in `atkinsonEndpointGap_periodic_main`, and proved
+  `atkinsonNormalizedShiftedCorrectionCarrierEndpointGap_norm_le_phaseError`.
+  This reduces endpoint-gap control to the scalar real phase-error atom without
+  touching the Jacobian or stationary-phase debts. Added
+  `atkinson_endpointGap_bound_of_phaseError_bound`,
+  `atkinson_carrierIntegral_bound_of_endpointPhaseError_and_jacobian_estimates`,
+  and correction/inverse provider wrappers
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_endpointPhaseError_jacobian_estimates`
+  and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_endpointPhaseError_jacobian_estimates`.
+- Failed routes / guardrails:
+  no analytic axiom, direct Abel shortcut, phase-weight division, circular
+  provider assumption, absolute primitive bound, or statement weakening was
+  used. This round did not merge the shifted stationary-phase target remainder
+  with the carrier endpoint/Jacobian route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  first lock-guarded attempt reported `LEAN_BUSY` because another worker's Lean
+  job was active. After the lock cleared, ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  singleflight lock; result: passed, `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  prove the scalar endpoint phase-error atom
+  `∀ j ≥ 1, ∃ A_phase > 0, ∃ N_phase, ∀ n ≥ N_phase,`
+  `|atkinsonEndpointGapPhaseError n j|`
+  `≤ A_phase * (atkinsonShiftedRelativePhase (n+j) j /`
+  `atkinsonShiftedRelativeWeight (n+j) j)`, prove the Jacobian-integral bound
+  at `1/relativeWeight`, and keep the shifted stationary-phase target remainder
+  as separate debt.
