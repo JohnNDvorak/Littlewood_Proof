@@ -1695,3 +1695,46 @@ Timestamp: 2026-04-28 22:56 CDT.
     arbitrary-radius budget.
   - RS/Gabcke: local second-derivative differentiability / third-derivative
     formula at `x = 0`.
+
+## Overnight 2026-04-29 Fortieth Pass Status
+
+- Pi/Phase lane is validated and pushed through `20fdfcd`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Package pi canonical residual route`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute
+      Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the corrected Perron-only route now packages the actual canonical
+    residual predicates for the Perron threshold and target/anti chosen radii,
+    avoiding the refuted arbitrary-radius log-budget route.
+- Perron/B5a lane is validated and pushed through amended commit `302a615`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Isolate Perron linear absorption boundary`.
+  - Coordinator repair: renamed the local log-square binding away from `L`,
+    which Lean resolved through the imported `LSeries` notation path.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the honest linear-window provider now has a safe non-instance
+    adapter that isolates exactly the missing absorption atom needed for the
+    current public `SmallTPerronBoundHyp` shape.
+- RS/Gabcke lane is validated and pushed through amended commit `620cddd`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Reduce Gabcke local Taylor atom to cubic coefficient`.
+  - Coordinator repair: used `norm_num [Fintype.card_perm]` for the finite
+    permutation count in the cubic Taylor bridge.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
+  - Result: the third-derivative formula is reduced to the local cubic Taylor
+    coefficient
+    `StandardGabckeQuarterLocalCubicTaylorCoefficientProp`.
+- Current live atoms:
+  - Atkinson: carrier-cancellation atom and shifted stationary-phase target
+    remainder.
+  - Perron/B5a: prove the isolated linear absorption atom, sharpen the small-T
+    cutoff to remove `(x / T) * (Real.log x)^2`, or deliberately strengthen the
+    public small-T surface used downstream.
+  - Pi/Phase: prove the canonical Perron/chosen-radius residual predicates
+    feeding the new corrected Perron-only route.
+  - RS/Gabcke: prove `StandardGabckeQuarterLocalCubicTaylorCoefficientProp`
+    by expanding the filled local quotient at `x = 0`.
