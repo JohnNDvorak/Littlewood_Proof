@@ -2714,3 +2714,43 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`,
     `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`, or
     `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`.
+
+### 2026-04-29 Round 55: Paired Phase-Radius Growth Reduction
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`.
+  - `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`.
+- Facts banked:
+  - Added `targetAntiFiniteZeroPhaseRadiusHalfBudgetCanonicalResiduals_of_pairedGrowth_hyp`.
+  - Added `exactSeedAboveThreshold_perron_of_canonicalPerronAndPairedPhaseRadiusGrowth_hyp`.
+- What changed:
+  - The target and anti-target phase-radius canonical residuals are now packaged together as projections of the paired same-height max-radius growth leaf.
+  - The corrected explicit-radius exact-seed route can now consume:
+    `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual` and
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`, while still passing through the relation-compatible finite-zero provider.
+  - This names the smaller phase-side quantitative atom without using projected budgeted-chooser equality.
+- Remaining goal shape:
+  - Prove `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`, or prove the selected-threshold residual that implies it.
+  - Prove `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`, the same-height quantitative bound for the actual paired target/anti finite-zero radii.
+- Failed/circular route:
+  - Did not use projected `Classical.choose` equality for the budgeted phase-radius route.
+  - Did not use `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`; arbitrary-budget finite-set Kronecker remains demoted.
+  - Did not add provider instances or a reverse edge from exact-seed packaging back into the residual leaves.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set Kronecker, arbitrary-radius route, provider cycles, reverse-comparison instances, or choice-control assumption was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed local focused validation under the corrected singleflight rule.
+- Validation command/result:
+  - `git diff --check`
+  - Result: passed.
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual` or
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`.
