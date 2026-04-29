@@ -2081,3 +2081,46 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `standardGabckeQuarterLocalSineDenominator`, or attack the analogous
   numerator coefficient-data source if that series-composition route is
   lower friction.
+
+### 2026-04-29 Round 43: denominator dslope data reduced to low-order derivatives
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp`.
+- Banked inputs:
+  - The all-order sine-series theorem is stronger than the downstream quotient
+    calculation currently needs.
+  - The finite denominator coefficient data only needs the first three Taylor
+    derivatives of the removable dslope after the already-proved value
+    `dslope standardGabckeQuarterLocalSineDenominator 0 0 = 2*pi`.
+- Proof facts banked:
+  - Added `StandardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp`,
+    the exact finite source:
+    first derivative `0`, second derivative `-(8*pi^3/3)`, and third
+    derivative `0` at `0`.
+  - Proved
+    `standardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp_of_lowOrderDerivatives`.
+    The proof uses the already-proved denominator dslope analyticity and
+    Mathlib's Taylor coefficient series
+    `AnalyticAt.hasFPowerSeriesAt`, then extracts the four finite coefficients.
+- Failed routes:
+  - I did not add a shortcut provider or broaden the analytic surface.
+  - I did not assert the all-order sine-series formula without proving the
+    derivative formula for every order.
+  - I kept the remaining source in the local sine-series/coefficient layer.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to `origin/recovery/provider-forensics-2026-04-21`
+    at `98b420d` before editing.
+  - `git diff --check`: passed.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp`
+  directly from the local expansion of `sin(2*pi*w) / w`, or return to the
+  stronger all-order source
+  `StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp` if the Mathlib
+  sine-series/fslope route is made explicit.
