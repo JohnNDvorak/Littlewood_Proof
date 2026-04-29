@@ -1072,3 +1072,57 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `small_T_separated_singular_envelope_bound_from_logDistance`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 20 - Weighted Harmonic-Distance Unweighting
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the weighted harmonic-distance summation bound
+  `∃ Cℓ > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedLogDistanceEnvelope x T
+      <= Cℓ * (x / T) * (Real.log x)^2`.
+- Code facts banked:
+  added `perronKernelSeparatedUnweightedLogDistanceEnvelope`, the finite
+  unweighted sum of `perronKernelSeparatedLogDistanceTerm` over
+  `perronKernelSeparatedPuncturedBoundarySet`.
+  Proved `perronKernelSeparatedLogDistanceEnvelope_le_log_mul_unweighted`,
+  bounding the weighted envelope by `Real.log x` times the unweighted envelope.
+  The proof uses large-side separated membership, `vonMangoldt_le_log`, and
+  `Real.log_le_log` from `(n : ℝ) <= x`.
+  Added `small_T_separated_logDistance_bound_from_unweighted`, reducing the
+  weighted harmonic-distance bound to the strictly smaller unweighted finite
+  harmonic-distance atom
+  `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedUnweightedLogDistanceEnvelope x T
+      <= Ch * (x / T) * Real.log x`.
+  Added
+  `small_T_separated_singular_envelope_bound_from_unweighted_logDistance`,
+  wiring the now-closed pointwise singular route directly to this unweighted
+  harmonic-distance atom.
+- Scale check:
+  preserved the `(x / T)` route.  The extra `Real.log x` comes only from the
+  honest pointwise `Λ(n) <= log x`; the remaining summation is the expected
+  unweighted harmonic series over distances from the cutoff.
+- Failed/demoted routes:
+  did not use a pure bounded-height `O((Real.log x)^2)` Davenport-envelope
+  route and did not replace the macroscopic separated window by a false pure
+  von Mangoldt weight estimate.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the unweighted finite harmonic-distance summation bound
+  `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedUnweightedLogDistanceEnvelope x T
+      <= Ch * (x / T) * Real.log x`.
+  This should use the separated facts `1 < x - n` and `x - n <= x / T`,
+  then compare the finite integer-distance sum to a harmonic sum.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

@@ -1505,6 +1505,13 @@ def perronKernelSeparatedLogDistanceEnvelope (x T : ℝ) : ℝ :=
     ArithmeticFunction.vonMangoldt n *
       perronKernelSeparatedLogDistanceTerm x T n
 
+/-- Unweighted harmonic-distance envelope for the separated boundary window.
+This isolates the purely finite harmonic-distance summation left after the
+von Mangoldt weight is bounded by `log x`. -/
+def perronKernelSeparatedUnweightedLogDistanceEnvelope (x T : ℝ) : ℝ :=
+  ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
+    perronKernelSeparatedLogDistanceTerm x T n
+
 /-- Pure von Mangoldt weight of the near-diagonal punctured boundary set. -/
 def perronKernelNearDiagonalPuncturedVonMangoldtWeight (x T : ℝ) : ℝ :=
   ∑ n ∈ perronKernelNearDiagonalPuncturedBoundarySet x T,
@@ -2881,6 +2888,80 @@ theorem small_T_separated_singular_pointwise_bound :
   small_T_separated_singular_pointwise_bound_from_num_and_recip
     small_T_separated_singular_numerator_bound
     small_T_separated_reciprocal_log_distance_bound
+
+/-- The weighted harmonic-distance envelope is bounded by `log x` times the
+unweighted harmonic-distance envelope on the separated boundary window. -/
+theorem perronKernelSeparatedLogDistanceEnvelope_le_log_mul_unweighted
+    (x T : ℝ) (hx : 2 ≤ x) (hT_lo : 2 ≤ T) :
+    perronKernelSeparatedLogDistanceEnvelope x T ≤
+      Real.log x * perronKernelSeparatedUnweightedLogDistanceEnvelope x T := by
+  classical
+  have hlogx_nonneg : 0 ≤ Real.log x := Real.log_nonneg (by linarith)
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hT_pos : 0 < T := by linarith
+  calc perronKernelSeparatedLogDistanceEnvelope x T
+      = ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
+          ArithmeticFunction.vonMangoldt n *
+            perronKernelSeparatedLogDistanceTerm x T n := by
+        rfl
+    _ ≤ ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
+          Real.log x * perronKernelSeparatedLogDistanceTerm x T n := by
+        apply Finset.sum_le_sum
+        intro n hn
+        rcases perronKernelSeparatedPuncturedBoundarySet_mem_large_side x T hx hT_lo hn with
+          ⟨hn_pos, hn_lt_x, _hy_gt_one⟩
+        have hn_pos_real : (0 : ℝ) < n := Nat.cast_pos.mpr hn_pos
+        have hn_le_x : (n : ℝ) ≤ x := le_of_lt hn_lt_x
+        have hdist_nonneg : 0 ≤ x - (n : ℝ) := sub_nonneg.mpr hn_le_x
+        have hterm_nonneg : 0 ≤ perronKernelSeparatedLogDistanceTerm x T n := by
+          dsimp [perronKernelSeparatedLogDistanceTerm]
+          exact div_nonneg hx_nonneg (mul_nonneg hT_pos.le hdist_nonneg)
+        have hΛ_le_logx : ArithmeticFunction.vonMangoldt n ≤ Real.log x := by
+          calc ArithmeticFunction.vonMangoldt n
+              ≤ Real.log (n : ℝ) := vonMangoldt_le_log n hn_pos
+            _ ≤ Real.log x := Real.log_le_log hn_pos_real hn_le_x
+        exact
+          mul_le_mul hΛ_le_logx
+            (le_rfl : perronKernelSeparatedLogDistanceTerm x T n ≤
+              perronKernelSeparatedLogDistanceTerm x T n)
+            hterm_nonneg hlogx_nonneg
+    _ = Real.log x * perronKernelSeparatedUnweightedLogDistanceEnvelope x T := by
+        dsimp [perronKernelSeparatedUnweightedLogDistanceEnvelope]
+        rw [Finset.mul_sum]
+
+/-- Weighted harmonic-distance bound from the strictly smaller unweighted
+harmonic-distance summation atom. -/
+theorem small_T_separated_logDistance_bound_from_unweighted
+    (hunweighted : ∃ Ch > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedUnweightedLogDistanceEnvelope x T ≤
+        Ch * (x / T) * Real.log x) :
+    ∃ Cℓ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedLogDistanceEnvelope x T ≤
+        Cℓ * (x / T) * (Real.log x) ^ 2 := by
+  rcases hunweighted with ⟨Ch, hCh_pos, hunweighted⟩
+  refine ⟨Ch, hCh_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hlogx_nonneg : 0 ≤ Real.log x := Real.log_nonneg (by linarith)
+  have hunweighted_x := hunweighted x T hx hT_lo hT_hi
+  calc perronKernelSeparatedLogDistanceEnvelope x T
+      ≤ Real.log x * perronKernelSeparatedUnweightedLogDistanceEnvelope x T :=
+        perronKernelSeparatedLogDistanceEnvelope_le_log_mul_unweighted x T hx hT_lo
+    _ ≤ Real.log x * (Ch * (x / T) * Real.log x) :=
+        mul_le_mul_of_nonneg_left hunweighted_x hlogx_nonneg
+    _ = Ch * (x / T) * (Real.log x) ^ 2 := by ring
+
+/-- Singular Davenport-envelope bound from the unweighted harmonic-distance
+summation atom, after the pointwise reciprocal-log route has been closed. -/
+theorem small_T_separated_singular_envelope_bound_from_unweighted_logDistance
+    (hunweighted : ∃ Ch > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedUnweightedLogDistanceEnvelope x T ≤
+        Ch * (x / T) * Real.log x) :
+    ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedDavenportSingularEnvelope x T ≤
+        Cs * (x / T) * (Real.log x) ^ 2 :=
+  small_T_separated_singular_envelope_bound_from_logDistance
+    small_T_separated_singular_pointwise_bound
+    (small_T_separated_logDistance_bound_from_unweighted hunweighted)
 
 /-- Scale-correct separated weighted atom from a linear-window Davenport
 envelope bound.  This records the usable consequence of the separated
