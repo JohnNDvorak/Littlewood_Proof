@@ -459,6 +459,27 @@ theorem rhPiWitnessData_of_correctedPerronOnlyCanonicalResidualRoute
   letI : AntiTargetTowerPhaseCouplingFamilyHyp_corrected := hAntiTargetPhase
   exact rhPiWitnessData_of_correctedHyp
 
+/-- Corrected Perron-only route through the exact canonical residual predicates,
+with those residuals closed by the existing same-height Perron and paired
+chosen-radius growth facts. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyGrowthResidualRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerExpHalfBudgetGrowthHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    RhPiWitnessData := by
+  letI : TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetAntiDensity_of_relationCompatibleKroneckerAndCompatibility
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  exact rhPiWitnessData_of_correctedPerronOnlyCanonicalResidualRoute
+    perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_growth_hyp
+    targetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_pairedGrowth_hyp
+    antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_pairedGrowth_hyp
+
 /-- Corrected Perron-only route to the concrete RH 7a/7c pair. -/
 theorem rh_pi_7a_7c_pair_of_correctedPerronOnlyRoute
     [PerronSqrtErrorEventuallyAtHeightHyp]
