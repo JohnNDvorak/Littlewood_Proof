@@ -2584,3 +2584,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   normalized vertical multiplier Big-O at `O(1/y)`, principal-log branch
   identity for the vertical multiplier, Jacobian-integral bound at
   `1/relativeWeight`, and the shifted stationary-phase target remainder.
+
+### 2026-04-29 Round 55 Vertical Multiplier Reparameterization
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  normalized vertical multiplier Big-O
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun y : ℝ => atkinsonVerticalGammaStirlingMultiplier y - 1)`
+  `(fun y : ℝ => ((1 / y : ℝ) : ℂ))`.
+- Facts banked:
+  added and proved
+  `atkinson_vertical_multiplier_isBigO_of_atkinson_multiplier_isBigO`.
+  This shows the vertical multiplier atom follows from the already isolated
+  standard Atkinson multiplier atom
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun t : ℝ => atkinsonGammaStirlingMultiplier t - 1)`
+  `(fun t : ℝ => ((1 / t : ℝ) : ℂ))`
+  by the exact reparameterization `t = 2*y`; the proof also records the
+  definitional agreement between `atkinsonLogGammaStirlingTerm (2*y)` and
+  `StationaryPhaseStartValue.stirlingTerm (1/4 + i*y)`.
+- Smallest next theorem:
+  prove the standard multiplier Big-O above, or prove the independent eventual
+  principal-log branch identity for `atkinsonVerticalGammaStirlingMultiplier`.
+  The branch identity still needs a principal-branch/range argument and does
+  not follow from the norm Big-O alone as an equality.
+- Failed routes / guardrails:
+  searched local `StationaryPhaseStartValue`/Gamma infrastructure; no exposed
+  normalized vertical multiplier asymptotic was available to wire directly.
+  Did not add imports, analytic providers, axioms, sorries, statement
+  weakening, direct Abel shortcuts, phase-weight division, circular provider
+  assumptions, or the demoted raw endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  standard Atkinson multiplier Big-O at `O(1/t)`, principal-log branch identity
+  for the vertical multiplier, Jacobian-integral bound at `1/relativeWeight`,
+  and the shifted stationary-phase target remainder.

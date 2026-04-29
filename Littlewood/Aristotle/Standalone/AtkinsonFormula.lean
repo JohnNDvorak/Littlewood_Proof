@@ -2230,6 +2230,86 @@ private theorem atkinson_vertical_relative_gamma_stirling_of_multiplier_isBigO
     simpa [hcancel] using hmul
   simpa [G, E] using htarget
 
+/-- The vertical multiplier is the `t = 2*y` reparameterization of the
+Atkinson multiplier.  This leaves the analytic Gamma/Stirling content in the
+single standard multiplier Big-O atom. -/
+private theorem atkinson_vertical_multiplier_isBigO_of_atkinson_multiplier_isBigO
+    (hmult :
+      Asymptotics.IsBigO Filter.atTop
+        (fun t : ℝ => atkinsonGammaStirlingMultiplier t - 1)
+        (fun t : ℝ => ((1 / t : ℝ) : ℂ))) :
+    Asymptotics.IsBigO Filter.atTop
+      (fun y : ℝ => atkinsonVerticalGammaStirlingMultiplier y - 1)
+      (fun y : ℝ => ((1 / y : ℝ) : ℂ)) := by
+  rw [Asymptotics.isBigO_iff] at hmult ⊢
+  obtain ⟨C0, hC0eventual⟩ := hmult
+  obtain ⟨T0, hT0⟩ := Filter.eventually_atTop.mp hC0eventual
+  set K : ℝ := max C0 0 + 1
+  refine ⟨K, ?_⟩
+  filter_upwards [Filter.eventually_ge_atTop (max (T0 / 2) 1)] with y hy
+  have hyT0 : T0 ≤ 2 * y := by nlinarith [le_trans (le_max_left _ _) hy]
+  have hy1 : (1 : ℝ) ≤ y := le_trans (le_max_right _ _) hy
+  have hypos : 0 < y := lt_of_lt_of_le zero_lt_one hy1
+  have hy2pos : 0 < 2 * y := by positivity
+  have hnorm_two_y :
+      ‖((1 / (2 * y) : ℝ) : ℂ)‖ = 1 / (2 * y) := by
+    rw [Complex.norm_real, Real.norm_eq_abs,
+      abs_of_pos (one_div_pos.mpr hy2pos)]
+  have hnorm_y : ‖((1 / y : ℝ) : ℂ)‖ = 1 / y := by
+    rw [Complex.norm_real, Real.norm_eq_abs,
+      abs_of_pos (one_div_pos.mpr hypos)]
+  have hvertical_eq :
+      atkinsonVerticalGammaStirlingMultiplier y =
+        atkinsonGammaStirlingMultiplier (2 * y) := by
+    have hy_div_complex : (((2 * y : ℝ) : ℂ) / 2) = (y : ℂ) := by
+      norm_num
+    have harg :
+        (1 / 4 : ℂ) + Complex.I * (((2 * y : ℝ) : ℂ) / 2) =
+          (1 / 4 : ℂ) + Complex.I * y := by
+      rw [hy_div_complex]
+    have hterm :
+        atkinsonLogGammaStirlingTerm (2 * y) =
+          Aristotle.StationaryPhaseStartValue.stirlingTerm
+            ((1 / 4 : ℂ) + Complex.I * y) := by
+      unfold atkinsonLogGammaStirlingTerm
+      rw [Aristotle.StationaryPhaseStartValue.stirlingTerm]
+      dsimp
+      rw [harg]
+    unfold atkinsonVerticalGammaStirlingMultiplier atkinsonGammaStirlingMultiplier
+    rw [hterm, harg]
+  have hraw := hT0 (2 * y) hyT0
+  have hraw_abs :
+      ‖atkinsonGammaStirlingMultiplier (2 * y) - 1‖ ≤
+        C0 * (|y|⁻¹ * (2 : ℝ)⁻¹) := by
+    simpa [hnorm_two_y, one_div, mul_comm, mul_left_comm, mul_assoc] using hraw
+  have hscale_eq : |y|⁻¹ * (2 : ℝ)⁻¹ = 1 / (2 * y) := by
+    rw [abs_of_pos hypos]
+    field_simp [hypos.ne']
+  have hraw' :
+      ‖atkinsonGammaStirlingMultiplier (2 * y) - 1‖ ≤
+        C0 * (1 / (2 * y)) := by
+    simpa [hscale_eq] using hraw_abs
+  have hC0_le_K : C0 ≤ K := by
+    dsimp [K]
+    linarith [le_max_left C0 0]
+  have hscale_nonneg : 0 ≤ 1 / (2 * y) := by positivity
+  have hhalf_le : 1 / (2 * y) ≤ 1 / y := by
+    have hy_le_two_y : y ≤ 2 * y := by nlinarith
+    exact one_div_le_one_div_of_le hypos hy_le_two_y
+  have hK_nonneg : 0 ≤ K := by
+    dsimp [K]
+    positivity
+  calc
+    ‖atkinsonVerticalGammaStirlingMultiplier y - 1‖
+        = ‖atkinsonGammaStirlingMultiplier (2 * y) - 1‖ := by
+          rw [hvertical_eq]
+    _ ≤ C0 * (1 / (2 * y)) := hraw'
+    _ ≤ K * (1 / (2 * y)) :=
+          mul_le_mul_of_nonneg_right hC0_le_K hscale_nonneg
+    _ ≤ K * (1 / y) := mul_le_mul_of_nonneg_left hhalf_le hK_nonneg
+    _ = K * ‖((1 / y : ℝ) : ℂ)‖ := by
+          rw [hnorm_y]
+
 /-- A complex logarithmic Stirling remainder controls the normalized
 Stirling multiplier after exponentiation. -/
 private theorem atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO
