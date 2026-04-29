@@ -355,8 +355,12 @@ Each agent report must state:
 
 ## Overnight 2026-04-29 Third Pass Status
 
-- Three third-pass lane commits have been validated serially by the
+- Four third-pass lane commits have been validated serially by the
   coordinator and pushed:
+  - Atkinson `cee0acc`:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` passed;
+    reduced the corrected Fourier-target zero-model surface to the exact
+    shifted residual atom `atkinsonShiftedQuadraticZeroModelResidual`.
   - Pi/Phase `da02d9f`:
     `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
     and
@@ -371,9 +375,9 @@ Each agent report must state:
     `SiegelSaddleExpansionHyp GabckePhaseCouplingInfra GabckePhaseCouplingHyp HardyZFirstMomentBridge`
     passed; split the raw third-derivative bound into regular and removable
     denominator-zero atoms.
-- Atkinson third-pass work is still in progress on the zero-model
-  approximation / corrected Fourier-target route.
 - Current follow-up lane assignments:
+  - Atkinson: attack the residual atom directly; do not replace it by a
+    generic mass/norm estimate that loses the `1 / j` scale.
   - Pi/Phase: attack
     `TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp` or integrate the
     completed Aristotle packaging endpoint if it fits the newer lane.
