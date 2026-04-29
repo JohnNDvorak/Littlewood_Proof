@@ -1599,6 +1599,54 @@ private lemma atkinsonHardyStartThetaModel_eq_expanded (m : ℕ) :
   rw [hdiv]
   ring
 
+/-- The discrete Hardy-start theta model atom follows from the standard
+pointwise Stirling remainder for Hardy's theta function.  This isolates the
+remaining branch-sensitive analytic input in its continuous form:
+`theta(t) = (t/2)log(t/(2π)) - t/2 - π/8 + O(1/t)`. -/
+private theorem atkinson_hardyStartThetaModel_bound_of_thetaStirling
+    (hstirling :
+      ∃ Cθ > 0, ∃ Tθ : ℝ, ∀ t : ℝ, Tθ ≤ t →
+        |hardyTheta t -
+            ((t / 2) * Real.log (t / (2 * Real.pi)) - t / 2 - Real.pi / 8)|
+          ≤ Cθ / t) :
+    ∃ Cθ > 0, ∃ Nθ : ℕ, ∀ m : ℕ, Nθ ≤ m →
+      |hardyTheta (hardyStart m) - atkinsonHardyStartThetaModel m|
+        ≤ Cθ / (((m : ℕ) : ℝ) + 1) ^ 2 := by
+  obtain ⟨Cθ, hCθ, Tθ, hstirling'⟩ := hstirling
+  obtain ⟨Nθ, hNθ⟩ : ∃ Nθ : ℕ, ∀ m ≥ Nθ, Tθ ≤ hardyStart m := by
+    obtain ⟨M, hM⟩ := exists_nat_ge (max Tθ 0 / (2 * Real.pi))
+    refine ⟨M, fun m hm => ?_⟩
+    rw [hardyStart_formula]
+    calc
+      Tθ ≤ max Tθ 0 := le_max_left _ _
+      _ = 2 * Real.pi * (max Tθ 0 / (2 * Real.pi)) := by
+            field_simp [Real.pi_ne_zero]
+      _ ≤ 2 * Real.pi * (M : ℝ) := by
+            exact mul_le_mul_of_nonneg_left hM (by positivity)
+      _ ≤ 2 * Real.pi * (m : ℝ) := by
+            exact mul_le_mul_of_nonneg_left (by exact_mod_cast hm) (by positivity)
+      _ ≤ 2 * Real.pi * (((m : ℕ) : ℝ) + 1) ^ 2 := by
+            gcongr
+            nlinarith [show (0 : ℝ) ≤ (m : ℝ) by exact_mod_cast Nat.zero_le m]
+  refine ⟨Cθ / (2 * Real.pi), by positivity, Nθ, ?_⟩
+  intro m hm
+  have hstart_pos : 0 < hardyStart m := by
+    rw [hardyStart_formula]
+    positivity
+  have hst := hstirling' (hardyStart m) (hNθ m hm)
+  calc
+    |hardyTheta (hardyStart m) - atkinsonHardyStartThetaModel m|
+        =
+      |hardyTheta (hardyStart m) -
+          ((hardyStart m / 2) * Real.log (hardyStart m / (2 * Real.pi)) -
+            hardyStart m / 2 - Real.pi / 8)| := by
+            rfl
+    _ ≤ Cθ / hardyStart m := hst
+    _ = (Cθ / (2 * Real.pi)) / (((m : ℕ) : ℝ) + 1) ^ 2 := by
+          rw [hardyStart_formula]
+          field_simp [Real.pi_ne_zero,
+            show (((m : ℕ) : ℝ) + 1) ^ 2 ≠ 0 by positivity]
+
 private lemma atkinsonEndpointGapCorrectedModelResidual_eq_two_pi_logCore (n j : ℕ) :
     atkinsonEndpointGapCorrectedModelResidual n j =
       2 * Real.pi * atkinsonEndpointGapCorrectedModelLogCore n j := by
@@ -21381,6 +21429,25 @@ private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_model_
     _ =
         (C_model + 2 * Cθ) * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
           ring
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+/-- Once the continuous pointwise Stirling remainder for Hardy's theta is
+available, the corrected endpoint phase atom is closed by the already-proved
+elementary model residual bound. -/
+private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_thetaStirling
+    (hstirling :
+      ∃ Cθ > 0, ∃ Tθ : ℝ, ∀ t : ℝ, Tθ ≤ t →
+        |hardyTheta t -
+            ((t / 2) * Real.log (t / (2 * Real.pi)) - t / 2 - Real.pi / 8)|
+          ≤ Cθ / t) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_res > 0, ∃ N_res : ℕ, ∀ n : ℕ, N_res ≤ n →
+        |atkinsonEndpointGapCorrectedPhaseError n j|
+          ≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) :=
+  atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_model_residual
+    (atkinson_hardyStartThetaModel_bound_of_thetaStirling hstirling)
+    atkinson_modelResidual_bound
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Carrier cancellation after reducing the endpoint boundary to the shifted
