@@ -2278,3 +2278,19 @@ Timestamp: 2026-04-28 22:56 CDT.
     `perronVerticalFixedWindowIntegral`, or prove
     `perronVerticalRawIntegral = perronVerticalFixedWindowIntegral` on the
     slab.
+
+## Overnight 2026-04-29 Sixty-Eighth Pass Status
+
+- Coordinator recovery branch is pushed through `8e5b11f`.
+- Pi/Phase lane is integrated through `48253d8`:
+  - The opaque `Classical.choose` projection comparison route is bypassed.
+  - New explicit-radius endpoints consume
+    `PerronThresholdTowerLogHalfBudgetHyp` and
+    `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`
+    directly.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
+  - Current Pi atoms: prove `PerronThresholdTowerLogHalfBudgetHyp`, or source
+    `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp` from the
+    relation-compatible finite-zero/Kronecker payload.
