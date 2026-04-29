@@ -1199,3 +1199,70 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Smallest next theorem:
   - Prove/source `PerronThresholdTowerExpHalfBudgetMajorantHyp`.
   - Prove/source `TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp`.
+
+### 2026-04-29 Round 19: Canonical Perron Majorant And Same-Height Radius Recombination
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronThresholdTowerExpHalfBudgetMajorantHyp`
+  - `TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp`
+- Target choice:
+  - The Perron majorant class itself still cannot be closed from local facts:
+    `perronThreshold hRH T` is an opaque `Classical.choose` threshold for a
+    fixed-height eventual statement, and no monotone/growth bridge in `T` is
+    available.
+  - Reduced it to the canonical same-height max-majorant inequality, removing
+    the arbitrary existential majorant `B`.
+  - Split the paired phase-radius majorant into target-side and anti-target
+    side same-height radius majorants, then recombined them at the same
+    `T, ε` by taking `R = max Rt Ra`.
+- Facts banked:
+  - Added `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp`, the exact
+    canonical Perron growth source:
+    `max (X + 1) (perronThreshold hRH T + 1)` is dominated by the tower
+    half-budget at the selected same height.
+  - Added `perronThresholdTowerExpHalfBudgetMajorant_of_canonical_hyp`,
+    deriving `PerronThresholdTowerExpHalfBudgetMajorantHyp` by choosing
+    `B = max (X + 1) (perronThreshold hRH T + 1)`.
+  - Added `TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp` and
+    `AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp`, the one-sided
+    radius majorant leaves at a fixed shared `T, ε`.
+  - Added `targetAntiFiniteZeroPhaseRadiusHalfBudgetMajorant_of_targetAnti_hyp`,
+    deriving the paired radius majorant from the one-sided leaves without
+    splitting heights.
+  - Added
+    `rhPiWitnessData_of_correctedPerronOnlyCanonicalRadiusMajorantRoute`, which
+    exposes the corrected Perron-only endpoint from the canonical Perron
+    majorant and one-sided same-height radius majorants.
+- Guardrails:
+  - No use of `tower_cap_unbounded_with_eps` on `perronThreshold hRH T` or any
+    height-dependent chosen radius.
+  - The target and anti-target radius bounds are recombined at the same
+    `T, ε`; no independent heights were introduced.
+  - No new route uses `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No arbitrary-target Kronecker or constant-1 Perron sqrt-error shortcut was
+    introduced.
+- Failed route guardrails:
+  - Do not treat the canonical Perron max-majorant as a proof of the
+    fixed-point growth theorem; it is the remaining exact same-height growth
+    atom.
+  - Do not replace the same-height target/anti radius recombination with
+    independently selected target/anti heights.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, `git diff --check`, or other check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove/source `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp`.
+  - Prove/source `TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp` and
+    `AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp` with a shared
+    same-height quantitative Kronecker-radius estimate.

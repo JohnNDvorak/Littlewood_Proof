@@ -2705,6 +2705,24 @@ class PerronThresholdTowerExpHalfBudgetMajorantHyp
           (Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
 
+/-- Canonical max-majorant form of the same-height Perron growth source.
+
+This removes the arbitrary existential majorant from
+`PerronThresholdTowerExpHalfBudgetMajorantHyp`: the remaining Perron growth
+obligation is exactly that the tower half-budget at the selected height
+dominates `max (X + 1) (perronThreshold hRH T + 1)`. -/
+class PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        max (X + 1) (perronThreshold _hRH T + 1) ≤
+          Real.exp
+            (Real.exp (Real.exp
+              (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
+
 /-- Phase-radius half of the paired log tower budget at a Perron-selected
 height/tolerance.
 
@@ -2767,6 +2785,32 @@ class TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp
       ∃ R : ℝ,
         max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
             (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1 ≤ R ∧
+        R ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Target-side height-only finite-zero phase-radius majorant source. -/
+class TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      ∃ R : ℝ,
+        targetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤ R ∧
+        R ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Anti-target-side height-only finite-zero phase-radius majorant source. -/
+class AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      ∃ R : ℝ,
+        antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤ R ∧
         R ≤ Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
 
@@ -3110,6 +3154,30 @@ instance (priority := 95)
     PerronThresholdTowerExpHalfBudgetGrowthHyp :=
   perronThresholdTowerExpHalfBudgetGrowth_of_majorant_hyp
 
+/-- The canonical max-majorant Perron growth source implies the existential
+majorant form. -/
+theorem perronThresholdTowerExpHalfBudgetMajorant_of_canonical_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp] :
+    PerronThresholdTowerExpHalfBudgetMajorantHyp where
+  witness := by
+    intro hRH X
+    rcases PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp.witness hRH X
+        with ⟨T, ε, hT4, hεpos, hεlt, hTower⟩
+    refine
+      ⟨T, ε, max (X + 1) (perronThreshold hRH T + 1),
+        hT4, hεpos, hεlt, ?_, ?_, hTower⟩
+    · exact le_max_left _ _
+    · exact le_max_right _ _
+
+/-- Instance form of
+`perronThresholdTowerExpHalfBudgetMajorant_of_canonical_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp] :
+    PerronThresholdTowerExpHalfBudgetMajorantHyp :=
+  perronThresholdTowerExpHalfBudgetMajorant_of_canonical_hyp
+
 /-- A height-only paired phase-radius growth source implies the Perron-selected
 phase-radius half-budget leaf. -/
 theorem targetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThreshold_of_growth_hyp
@@ -3155,6 +3223,50 @@ instance (priority := 95)
     [TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp] :
     TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp :=
   targetAntiFiniteZeroPhaseRadiusHalfBudgetGrowth_of_majorant_hyp
+
+/-- Same-height target-side and anti-target-side radius majorants recombine
+into the paired radius majorant. -/
+theorem targetAntiFiniteZeroPhaseRadiusHalfBudgetMajorant_of_targetAnti_hyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp]
+    [AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp] :
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    rcases TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp.witness
+        T ε hT4 hεpos hεlt with
+      ⟨Rt, hRt, hRtTower⟩
+    rcases AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp.witness
+        T ε hT4 hεpos hεlt with
+      ⟨Ra, hRa, hRaTower⟩
+    let R : ℝ := max Rt Ra
+    refine ⟨R, ?_, ?_⟩
+    · have hTarget :
+          targetFiniteZeroInhomogeneousPhaseRadius T ε ≤ R - 1 := by
+        dsimp [R]
+        linarith [hRt, le_max_left Rt Ra]
+      have hAnti :
+          antiTargetFiniteZeroInhomogeneousPhaseRadius T ε ≤ R - 1 := by
+        dsimp [R]
+        linarith [hRa, le_max_right Rt Ra]
+      have hMax :
+          max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+              (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) ≤ R - 1 :=
+        max_le hTarget hAnti
+      linarith
+    · dsimp [R]
+      exact max_le hRtTower hRaTower
+
+/-- Instance form of
+`targetAntiFiniteZeroPhaseRadiusHalfBudgetMajorant_of_targetAnti_hyp`. -/
+instance (priority := 95)
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp]
+    [AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp] :
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+  targetAntiFiniteZeroPhaseRadiusHalfBudgetMajorant_of_targetAnti_hyp
 
 /-- Paired target/anti finite-zero compatibility supplies the target
 compatibility leaf. -/

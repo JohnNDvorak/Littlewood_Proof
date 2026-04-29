@@ -209,6 +209,18 @@ theorem rhPiWitnessData_of_correctedPerronOnlyMajorantBudgetRoute
     RhPiWitnessData := by
   exact rhPiWitnessData_of_correctedPerronOnlyGrowthBudgetRoute
 
+/-- Corrected Perron-only route from the canonical Perron max-majorant and the
+same-height target/anti radius majorants. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyCanonicalRadiusMajorantRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp]
+    [TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp]
+    [AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp] :
+    RhPiWitnessData := by
+  exact rhPiWitnessData_of_correctedPerronOnlyMajorantBudgetRoute
+
 /-- Corrected Perron-only route to the concrete RH 7a/7c pair. -/
 theorem rh_pi_7a_7c_pair_of_correctedPerronOnlyRoute
     [PerronSqrtErrorEventuallyAtHeightHyp]
