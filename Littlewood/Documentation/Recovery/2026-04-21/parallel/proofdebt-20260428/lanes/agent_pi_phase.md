@@ -2487,3 +2487,42 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison` or `AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`; if these remain blocked by choice opacity, the smallest interface change is to expose canonical budgeted target/anti radii directly in the phase-radius route.
+
+### 2026-04-29 Round 49: Projection Choice-Spec Diagnostic
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`.
+  - `AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`.
+- Facts banked:
+  - Added `TargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec`.
+  - Added `targetFiniteZeroPhaseRadiusBudgetedProjectionComparison_of_choiceSpec`.
+  - Added `targetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_budgetedProjectionChoiceSpec`.
+  - Added `AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec`.
+  - Added `antiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison_of_choiceSpec`.
+  - Added `antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_budgetedProjectionChoiceSpec`.
+- What changed:
+  - The exact missing spec is now named for both target and anti-target: the canonical projected phase-radius chooser must be identified with the explicit budgeted radius selected from the paired payload.
+  - Once that chooser identity is supplied, the projection comparison and the corresponding canonical residual follow from the already-proved budgeted-radius half-budget theorem.
+  - This avoids pretending that the budgeted witness controls an arbitrary `Classical.choose` result.
+- Failed route:
+  - Tried to make the target projection transparent enough for `Classical.choose` to reduce to the explicit budgeted target radius. Lean still left the same opaque goal:
+    `Classical.choose ⋯ ≤ targetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt`.
+  - The direct comparison is therefore not derivable from the existing relative-density specs alone in the current interface.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set Kronecker, arbitrary-radius route, provider cycles, reverse-comparison instances, or choice-control assumption was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed local focused validation under the corrected singleflight rule.
+- Validation command/result:
+  - `git diff --check`
+  - Result: passed.
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - Replace the projected-chooser route with an interface that makes the canonical phase-radius route consume explicit budgeted target/anti radii, or prove the new exact chooser identity specs:
+    `TargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec` and `AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec`.
