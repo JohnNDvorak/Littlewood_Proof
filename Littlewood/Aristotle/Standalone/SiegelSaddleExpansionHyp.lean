@@ -363,6 +363,26 @@ def StandardGabckeRawPsiDenominatorZeroQuarterLatticeRangeProp : Prop :=
       (m : ℝ) / 2 + 1 / 4 = (1 / 4 : ℝ) ∨
         (m : ℝ) / 2 + 1 / 4 = (3 / 4 : ℝ)
 
+/-- The quarter-lattice range restriction is elementary integer arithmetic:
+`0 <= m/2 + 1/4 < 1` forces `m = 0` or `m = 1`. -/
+theorem standardGabckeRawPsiDenominatorZeroQuarterLatticeRangeProp_proved :
+    StandardGabckeRawPsiDenominatorZeroQuarterLatticeRangeProp := by
+  intro m hm
+  have hm_gt_neg_one_real : (-1 : ℝ) < (m : ℝ) := by
+    linarith [hm.1]
+  have hm_lt_two_real : (m : ℝ) < 2 := by
+    linarith [hm.2]
+  have hm_gt_neg_one : (-1 : ℤ) < m := by
+    exact_mod_cast hm_gt_neg_one_real
+  have hm_lt_two : m < 2 := by
+    exact_mod_cast hm_lt_two_real
+  have hm_cases : m = 0 ∨ m = 1 := by omega
+  rcases hm_cases with rfl | rfl
+  · left
+    norm_num
+  · right
+    norm_num
+
 /-- The denominator-zero classification follows from the standard `cos = 0`
 quarter-lattice theorem plus the elementary range restriction. -/
 theorem standardGabckeRawPsiDenominatorZeroClassifiedProp_of_quarterLattice
@@ -376,6 +396,15 @@ theorem standardGabckeRawPsiDenominatorZeroClassifiedProp_of_quarterLattice
   rcases h_range m hm_mem with h_quarter | h_threeQuarter
   · exact Or.inl (hm.trans h_quarter)
   · exact Or.inr (hm.trans h_threeQuarter)
+
+/-- With the interval range restriction proved, the denominator-zero
+classification now depends only on the standard trigonometric quarter-lattice
+source theorem. -/
+theorem standardGabckeRawPsiDenominatorZeroClassifiedProp_of_quarterLattice_only
+    (h_lattice : StandardGabckeRawPsiDenominatorZeroQuarterLatticeProp) :
+    StandardGabckeRawPsiDenominatorZeroClassifiedProp :=
+  standardGabckeRawPsiDenominatorZeroClassifiedProp_of_quarterLattice h_lattice
+    standardGabckeRawPsiDenominatorZeroQuarterLatticeRangeProp_proved
 
 /-- Pointwise removable-singularity bounds at the two denominator-zero
 parameters of the raw quotient normalization. -/
@@ -530,6 +559,23 @@ theorem standardGabckeTargets_of_contourTaylor_regular_quarterLattice_and_remova
     h_id h_regular
     (standardGabckeRawPsiDenominatorZeroClassifiedProp_of_quarterLattice
       h_lattice h_range)
+    h_points
+
+/-- Direct target route after closing the quarter-lattice range restriction:
+the remaining denominator-classification input is only the trigonometric
+quarter-lattice theorem. -/
+theorem standardGabckeTargets_of_contourTaylor_regular_latticeOnly_and_removablePoints
+    (h_id : StandardGabckeContourTaylorFirstCoefficientIdentityProp)
+    (h_regular : StandardGabckeRawPsiRegularThirdDerivativeBoundProp)
+    (h_lattice : StandardGabckeRawPsiDenominatorZeroQuarterLatticeProp)
+    (h_points : StandardGabckeRawPsiRemovablePointBoundsProp) :
+    StandardGabckeStationaryPhaseIdentityProp
+        standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient ∧
+      StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient :=
+  standardGabckeTargets_of_contourTaylor_regular_classified_and_removablePoints
+    h_id h_regular
+    (standardGabckeRawPsiDenominatorZeroClassifiedProp_of_quarterLattice_only
+      h_lattice)
     h_points
 
 /-- A standard-normalized stationary-phase identity becomes the local
