@@ -2082,3 +2082,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
       perronVerticalContourRemainderNormalized p.1 p.2) '')
     {p : ℝ × ℝ | 2 <= p.1 /\ p.1 <= 16 /\ 2 <= p.2 /\ p.2 <= 16})`,
   or prove the separate asymptotic tail atom on `16 <= x`.
+
+### 2026-04-29 Round 41 - Compact Slab Continuity Handoff
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the compactness/continuity input for the cutoff-`16` slab
+  `BddAbove` image atom.
+- Code facts banked:
+  added
+  `small_T_concrete_contour_remainder_slab16_bddAbove_image_from_continuousOn`.
+  It proves the closed rectangle
+  `{p : ℝ × ℝ | 2 <= p.1 /\ p.1 <= 16 /\ 2 <= p.2 /\ p.2 <= 16}`
+  is compact by rewriting it as `Icc 2 16 ×ˢ Icc 2 16`, then applies
+  `IsCompact.bddAbove_image`.  Added
+  `small_T_concrete_contour_remainder_slab16_from_continuousOn`,
+  `small_T_concrete_contour_remainder_normalized_sup_from_continuousOn_slab16_and_tail16`,
+  and
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder_continuousOn_slab16_and_tail16`
+  to wire explicit slab continuity into the existing slab/tail and
+  linear-window surfaces.
+- Scale check:
+  the compactness argument is restricted to `2 <= x <= 16`,
+  `2 <= T <= 16`.  The unbounded tail on `16 <= x` remains separate and no
+  global compactness in `x` is asserted.
+- Failed/demoted routes:
+  did not assert continuity of the Perron integral or zeta-log-derivative
+  expression yet; that analytic regularity remains an explicit hypothesis.
+  Did not introduce a legacy `SmallTPerronBoundHyp` instance.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock`.  Initial validation was blocked by
+  stale queued validation shells using the old `pgrep -fl` guard; stopped the
+  queued Perron shell and retried with the corrected `ps -axo comm=` guard.
+  First real build attempt exposed the product-box proposition ordering, so
+  the compactness proof was changed from `simpa` to an explicit set equality
+  conversion.  Final focused build passed.
+- Smallest next theorem:
+  prove the slab regularity hypothesis
+  `ContinuousOn (fun p : ℝ × ℝ =>
+      perronVerticalContourRemainderNormalized p.1 p.2)
+    {p : ℝ × ℝ | 2 <= p.1 /\ p.1 <= 16 /\ 2 <= p.2 /\ p.2 <= 16}`,
+  or prove the separate asymptotic tail atom on `16 <= x`.
