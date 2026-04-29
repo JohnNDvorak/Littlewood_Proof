@@ -1206,3 +1206,49 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
     sin(pi*x - 2*pi*x^2) / sin(2*pi*x)` off the two removable points.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 24: shifted fill points closed
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeRemovableCandidateQuarterLocalFunctionEqProp`.
+- Banked inputs:
+  - Round 23 reduced the coordinate bridge to the translation derivative atom
+    plus the shifted local-function identity.
+  - The removable-source candidate remains separate from the raw totalized
+    quotient; no raw regularity at the removable point is assumed.
+- Proof facts banked:
+  - Added `StandardGabckeRemovableCandidateQuarterShiftedFillEquivProp`,
+    stating the exact arithmetic equivalence
+    `(x + 1/4 = 1/4 or x + 1/4 = 3/4) <-> (x = 0 or x = 1/2)`.
+  - Added `StandardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp`,
+    the remaining off-filled-points identity
+    `standardGabckeRawPsi (x + 1/4) =
+    sin(pi*x - 2*pi*x^2) / sin(2*pi*x)` for `x != 0`, `x != 1/2`.
+  - Proved `standardGabckeRemovableCandidateQuarterShiftedFillEquivProp_proved`
+    by elementary linear arithmetic.
+  - Proved
+    `standardGabckeRemovableCandidateQuarterLocalFunctionEqProp_of_shiftedRawTrigIdentity`,
+    deriving the shifted local-function identity from the filled-point
+    arithmetic and the off-point trig identity.
+- Failed routes:
+  - I did not assert that the raw quotient is regular at the filled point.
+  - I did not define `D := standardGabckeRawPsiThirdDerivative`.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, or weaken statements.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+- Remaining goal shape:
+  prove `StandardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp`.
+  It is the exact trig identity
+  `cos(2*pi*((x+1/4)^2 - (x+1/4) - 1/16)) / cos(2*pi*(x+1/4))
+   = sin(pi*x - 2*pi*x^2) / sin(2*pi*x)`
+  away from `x = 0` and `x = 1/2`, using
+  `cos(y - pi/2) = sin y` and `cos(2*pi*x + pi/2) = -sin(2*pi*x)`.
+- Coordinator action requested:
+  run the requested serialized validation command.

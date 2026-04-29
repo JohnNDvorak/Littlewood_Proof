@@ -623,6 +623,66 @@ def StandardGabckeRemovableCandidateQuarterLocalFunctionEqProp : Prop :=
     standardGabckeRemovablePsiCandidate (x + 1 / 4) =
       standardGabckeQuarterLocalPsi x
 
+/-- The two filled removable values match exactly under the quarter-point
+coordinate shift `p = x + 1/4`. -/
+def StandardGabckeRemovableCandidateQuarterShiftedFillEquivProp : Prop :=
+  ∀ x : ℝ,
+    (x + 1 / 4 = (1 / 4 : ℝ) ∨ x + 1 / 4 = (3 / 4 : ℝ)) ↔
+      x = 0 ∨ x = (1 / 2 : ℝ)
+
+/-- Off the two filled removable values, the shifted raw quotient is the
+trigonometric local quotient in the coordinate `x = p - 1/4`. -/
+def StandardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp : Prop :=
+  ∀ x : ℝ, x ≠ 0 → x ≠ (1 / 2 : ℝ) →
+    standardGabckeRawPsi (x + 1 / 4) =
+      Real.sin (Real.pi * x - 2 * Real.pi * x ^ 2) /
+        Real.sin (2 * Real.pi * x)
+
+/-- The filled removable values are exactly `x = 0` and `x = 1/2` in the
+quarter-point coordinate. -/
+theorem standardGabckeRemovableCandidateQuarterShiftedFillEquivProp_proved :
+    StandardGabckeRemovableCandidateQuarterShiftedFillEquivProp := by
+  intro x
+  constructor
+  · intro h
+    rcases h with h | h
+    · left
+      linarith
+    · right
+      linarith
+  · intro h
+    rcases h with h | h
+    · left
+      linarith
+    · right
+      linarith
+
+/-- The shifted local-function identity follows from the elementary filled
+point equivalence and the remaining off-point trigonometric quotient identity. -/
+theorem standardGabckeRemovableCandidateQuarterLocalFunctionEqProp_of_shiftedRawTrigIdentity
+    (h_trig : StandardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp) :
+    StandardGabckeRemovableCandidateQuarterLocalFunctionEqProp := by
+  intro x
+  unfold standardGabckeRemovablePsiCandidate standardGabckeQuarterLocalPsi
+  have hfill := standardGabckeRemovableCandidateQuarterShiftedFillEquivProp_proved x
+  by_cases hx : x = 0 ∨ x = (1 / 2 : ℝ)
+  · have hshift :
+        x + 1 / 4 = (1 / 4 : ℝ) ∨ x + 1 / 4 = (3 / 4 : ℝ) :=
+      hfill.mpr hx
+    rw [if_pos hshift, if_pos hx]
+  · have hshift :
+        ¬ (x + 1 / 4 = (1 / 4 : ℝ) ∨ x + 1 / 4 = (3 / 4 : ℝ)) := by
+      intro h
+      exact hx (hfill.mp h)
+    have hx_zero : x ≠ 0 := by
+      intro h
+      exact hx (Or.inl h)
+    have hx_half : x ≠ (1 / 2 : ℝ) := by
+      intro h
+      exact hx (Or.inr h)
+    rw [if_neg hshift, if_neg hx]
+    exact h_trig x hx_zero hx_half
+
 /-- The quarter coordinate bridge follows from the translation derivative atom
 and the pointwise local-coordinate identity. -/
 theorem standardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp_of_translation_and_functionEq
