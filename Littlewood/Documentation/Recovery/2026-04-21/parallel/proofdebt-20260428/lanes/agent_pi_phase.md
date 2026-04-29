@@ -2030,3 +2030,42 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
 - Smallest next theorem:
   - Attack `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual` only if the same-height selected threshold can be controlled without the already-demoted transfer; otherwise attack `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual` or `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual` by proving bounds for the actual chosen finite-zero phase radii.
+
+### 2026-04-29 Round 37: Canonical Residuals From Growth Facts
+
+- Classification: `CONDITIONAL_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - The three canonical residual predicates feeding the target/anti realized-radius route.
+- Facts banked:
+  - Added `perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_growth_hyp`.
+  - Added `targetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_pairedGrowth_hyp`.
+  - Added `antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_pairedGrowth_hyp`.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyGrowthResidualRoute`.
+- What changed:
+  - `PerronThresholdTowerExpHalfBudgetGrowthHyp` now closes the exact Perron canonical residual by recombining its same-height `X + 1` and `perronThreshold hRH T + 1` bounds with `max_le`.
+  - `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp` now closes both one-sided chosen-radius residuals by projecting through the paired max; this controls the actual target/anti `Classical.choose` radii already used in the route.
+  - The corrected Perron-only route can now pass explicitly through the residual predicates while consuming existing same-height growth facts.
+- Remaining goal shape:
+  - The live quantitative atoms are now the existing growth facts:
+    `PerronThresholdTowerExpHalfBudgetGrowthHyp` and
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`.
+  - The stronger arbitrary-radius `PerronThresholdTowerWideLogBudgetHyp` remains refuted/demoted and is not used.
+- Failed/circular route:
+  - Did not add instances from residual predicates or reverse edges into the canonical/growth graph.
+  - Did not use arbitrary supplied radii, arbitrary-target Kronecker, cross-height `perronThreshold` monotonicity, or selected-threshold transfer.
+  - Did not bound a separately chosen Kronecker radius; the one-sided residual reductions project the actual paired chosen radii.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, independent target/anti heights, reverse-comparison instance, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build, public import probe, or other validation command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Attack `PerronThresholdTowerExpHalfBudgetGrowthHyp` if a same-height Perron threshold growth theorem is available; otherwise attack `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp` by proving a bound for the actual paired target/anti finite-zero phase radii.

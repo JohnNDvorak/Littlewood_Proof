@@ -3326,6 +3326,17 @@ theorem perronThresholdTowerExpHalfBudgetCanonicalMajorant_of_growth_hyp
       ⟨T, ε, hT4, hεpos, hεlt, hX, hPerron⟩
     exact ⟨T, ε, hT4, hεpos, hεlt, max_le hX hPerron⟩
 
+/-- The two-sided same-height Perron growth source also closes the exact
+canonical Perron residual predicate. -/
+theorem perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_growth_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetGrowthHyp] :
+    PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual := by
+  intro hRH X
+  rcases PerronThresholdTowerExpHalfBudgetGrowthHyp.witness hRH X with
+    ⟨T, ε, hT4, hεpos, hεlt, hX, hPerron⟩
+  exact ⟨T, ε, hT4, hεpos, hεlt, max_le hX hPerron⟩
+
 /-- Phase-radius half of the paired log tower budget at a Perron-selected
 height/tolerance.
 
@@ -3515,6 +3526,26 @@ theorem targetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_pairedGrowth_hyp
         (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε)]
     exact hTarget.trans hPair
 
+/-- The paired radius-growth source closes the exact target chosen-radius
+residual by projecting through the paired max. -/
+theorem targetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_pairedGrowth_hyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual := by
+  intro T ε hT4 hεpos hεlt
+  have hPair :=
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp.witness
+      T ε hT4 hεpos hεlt
+  have hTarget :
+      targetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤
+        max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+            (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1 := by
+    linarith [le_max_left
+      (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+      (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε)]
+  exact hTarget.trans hPair
+
 /-- The paired radius-growth source implies the anti-target-side canonical
 radius leaf by projecting the anti-target radius through the paired max.
 
@@ -3538,6 +3569,26 @@ theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_pairedGrowth_hyp
         (targetFiniteZeroInhomogeneousPhaseRadius T ε)
         (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε)]
     exact hAnti.trans hPair
+
+/-- The paired radius-growth source closes the exact anti-target chosen-radius
+residual by projecting through the paired max. -/
+theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_pairedGrowth_hyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual := by
+  intro T ε hT4 hεpos hεlt
+  have hPair :=
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp.witness
+      T ε hT4 hεpos hεlt
+  have hAnti :
+      antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤
+        max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+            (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1 := by
+    linarith [le_max_right
+      (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+      (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε)]
+  exact hAnti.trans hPair
 
 /-- Target-specific same-height Perron/tower domination by the realized
 relative-density phase radius.
