@@ -1352,6 +1352,19 @@ private noncomputable def atkinsonNormalizedShiftedCorrectionCarrierIntegral (n 
       Aristotle.StationaryPhaseMainMode.blockMode (n + j) u) *
         atkinsonShiftedPacketPhase (n + j) j u
 
+private noncomputable def atkinsonNormalizedShiftedCorrectionCarrierBoundary (n j : ℕ) : ℂ :=
+  Aristotle.StationaryPhaseMainMode.blockMode (n + j) 1 *
+      atkinsonShiftedPacketPhase (n + j) j 1 -
+    Aristotle.StationaryPhaseMainMode.blockMode (n + j) 0 *
+      atkinsonShiftedPacketPhase (n + j) j 0
+
+private noncomputable def atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral
+    (n j : ℕ) : ℂ :=
+  ∫ u in (0 : ℝ)..1,
+    (((blockJacobian (n + j) u : ℝ) : ℂ) *
+      Aristotle.StationaryPhaseMainMode.blockMode (n + j) u) *
+        atkinsonShiftedPacketPhase (n + j) j u
+
 private theorem atkinsonNormalizedShiftedCorrectionTerm_eq_relativeCoeff_mul_carrierIntegral
     (n j : ℕ) :
     atkinsonNormalizedShiftedCorrectionTerm n j =
@@ -20164,6 +20177,116 @@ private theorem atkinson_eventualNormalizedFixedShiftCorrection_of_carrierIntegr
           field_simp [ne_of_gt hphase_pos, ne_of_gt hweight_pos]
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- The carrier cancellation atom is reduced to the FTC decomposition plus two
+scale-safe local atoms: the endpoint boundary at `relativePhase/relativeWeight`
+scale, and the residual Jacobian carrier at `1/relativeWeight` scale. -/
+private theorem atkinson_carrierIntegral_bound_of_boundary_and_jacobian_bounds
+    (hdecomp :
+      ∀ n j : ℕ,
+        atkinsonNormalizedShiftedCorrectionCarrierIntegral n j =
+          (-Complex.I) * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j -
+            (((atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+              atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j)
+    (hboundary :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_bdry > 0, ∃ N_bdry : ℕ, ∀ n : ℕ, N_bdry ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierBoundary n j‖
+            ≤ A_bdry *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j))
+    (hjacobian :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_jac > 0, ∃ N_jac : ℕ, ∀ n : ℕ, N_jac ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+            ≤ B_jac / atkinsonShiftedRelativeWeight (n + j) j) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ E_corr > 0, ∃ N_corr : ℕ, ∀ n : ℕ, N_corr ≤ n →
+        ‖atkinsonNormalizedShiftedCorrectionCarrierIntegral n j‖
+          ≤ E_corr *
+              (atkinsonShiftedRelativePhase (n + j) j /
+                atkinsonShiftedRelativeWeight (n + j) j) := by
+  intro j hj
+  obtain ⟨A_bdry, hA_bdry, N_bdry, hboundary'⟩ := hboundary j hj
+  obtain ⟨B_jac, hB_jac, N_jac, hjacobian'⟩ := hjacobian j hj
+  refine ⟨A_bdry + B_jac, by linarith, max N_bdry N_jac, ?_⟩
+  intro n hn
+  have hn_bdry : N_bdry ≤ n := le_trans (Nat.le_max_left _ _) hn
+  have hn_jac : N_jac ≤ n := le_trans (Nat.le_max_right _ _) hn
+  have hphase_pos :
+      0 < atkinsonShiftedRelativePhase (n + j) j :=
+    atkinsonShiftedRelativePhase_pos (n + j) j hj (by omega)
+  have hphase_nonneg :
+      0 ≤ atkinsonShiftedRelativePhase (n + j) j := hphase_pos.le
+  have hbdry := hboundary' n hn_bdry
+  have hjac := hjacobian' n hn_jac
+  have hphase_jac :
+      ‖(((atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+          atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+        ≤ B_jac *
+            (atkinsonShiftedRelativePhase (n + j) j /
+              atkinsonShiftedRelativeWeight (n + j) j) := by
+    calc
+      ‖(((atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+          atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+          =
+        atkinsonShiftedRelativePhase (n + j) j *
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖ := by
+            rw [norm_mul, Complex.norm_real, Real.norm_eq_abs,
+              abs_of_nonneg hphase_nonneg]
+      _ ≤
+        atkinsonShiftedRelativePhase (n + j) j *
+          (B_jac / atkinsonShiftedRelativeWeight (n + j) j) := by
+            exact mul_le_mul_of_nonneg_left hjac hphase_nonneg
+      _ =
+        B_jac *
+          (atkinsonShiftedRelativePhase (n + j) j /
+            atkinsonShiftedRelativeWeight (n + j) j) := by
+            simp only [div_eq_mul_inv]
+            ring
+  rw [hdecomp n j]
+  have htri :
+      ‖(-Complex.I) * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j -
+          (((atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+            atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+        ≤
+      ‖(-Complex.I) * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j‖ +
+        ‖(((atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+          atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖ :=
+    norm_sub_le _ _
+  have hbdry_norm :
+      ‖(-Complex.I) * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j‖
+        =
+      ‖atkinsonNormalizedShiftedCorrectionCarrierBoundary n j‖ := by
+    rw [norm_mul, norm_neg, Complex.norm_I, one_mul]
+  calc
+    ‖(-Complex.I) * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j -
+        (((atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+          atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+        ≤
+      ‖(-Complex.I) * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j‖ +
+        ‖(((atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+          atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖ := htri
+    _ =
+      ‖atkinsonNormalizedShiftedCorrectionCarrierBoundary n j‖ +
+        ‖(((atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+          atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖ := by
+            rw [hbdry_norm]
+    _ ≤
+      A_bdry *
+          (atkinsonShiftedRelativePhase (n + j) j /
+            atkinsonShiftedRelativeWeight (n + j) j) +
+        B_jac *
+          (atkinsonShiftedRelativePhase (n + j) j /
+            atkinsonShiftedRelativeWeight (n + j) j) := by
+            exact add_le_add hbdry hphase_jac
+    _ =
+      (A_bdry + B_jac) *
+        (atkinsonShiftedRelativePhase (n + j) j /
+          atkinsonShiftedRelativeWeight (n + j) j) := by
+            simp only [div_eq_mul_inv]
+            ring
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Pointwise correction majorant from the eventual normalized fixed-shift
 bound, with finite initial modes absorbed by the previous compactness lemma. -/
 private theorem atkinson_pointwiseFixedShiftCorrection_of_eventual_normalized_bound
@@ -20294,6 +20417,43 @@ private theorem
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_eventual_normalized_fixedShift_correction
       hmode
       (atkinson_eventualNormalizedFixedShiftCorrection_of_carrierIntegral_bound hcarrier)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Correction-prefix package from the stationary-phase remainder and the
+boundary/Jacobian carrier atoms obtained after the FTC decomposition. -/
+private theorem
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_boundary_jacobian
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hdecomp :
+      ∀ n j : ℕ,
+        atkinsonNormalizedShiftedCorrectionCarrierIntegral n j =
+          (-Complex.I) * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j -
+            (((atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+              atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j)
+    (hboundary :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_bdry > 0, ∃ N_bdry : ℕ, ∀ n : ℕ, N_bdry ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierBoundary n j‖
+            ≤ A_bdry *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j))
+    (hjacobian :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_jac > 0, ∃ N_jac : ℕ, ∀ n : ℕ, N_jac ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+            ≤ B_jac / atkinsonShiftedRelativeWeight (n + j) j) :
+    AtkinsonShiftedCorrectionPrefixBoundHyp := by
+  exact
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_fixedShift_correction
+      hmode
+      (atkinson_carrierIntegral_bound_of_boundary_and_jacobian_bounds
+        hdecomp hboundary hjacobian)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
@@ -20980,6 +21140,42 @@ private theorem
   letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_fixedShift_correction
       hmode hcarrier
+  exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Public inverse-phase package from the stationary-phase remainder and the
+boundary/Jacobian carrier atoms obtained after the FTC decomposition. -/
+private theorem
+    atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_carrier_boundary_jacobian
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hdecomp :
+      ∀ n j : ℕ,
+        atkinsonNormalizedShiftedCorrectionCarrierIntegral n j =
+          (-Complex.I) * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j -
+            (((atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+              atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j)
+    (hboundary :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ A_bdry > 0, ∃ N_bdry : ℕ, ∀ n : ℕ, N_bdry ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierBoundary n j‖
+            ≤ A_bdry *
+                (atkinsonShiftedRelativePhase (n + j) j /
+                  atkinsonShiftedRelativeWeight (n + j) j))
+    (hjacobian :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_jac > 0, ∃ N_jac : ℕ, ∀ n : ℕ, N_jac ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j‖
+            ≤ B_jac / atkinsonShiftedRelativeWeight (n + j) j) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_boundary_jacobian
+      hmode hdecomp hboundary hjacobian
   exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in

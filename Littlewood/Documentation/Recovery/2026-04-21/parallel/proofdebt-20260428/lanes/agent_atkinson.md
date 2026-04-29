@@ -1576,3 +1576,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 32 Carrier Boundary/Jacobian Split
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  carrier cancellation atom
+  `∀ j ≥ 1, ∃ E_j > 0, ∃ N_j, ∀ n ≥ N_j,`
+  `‖atkinsonNormalizedShiftedCorrectionCarrierIntegral n j‖`
+  `≤ E_j * (atkinsonShiftedRelativePhase (n+j) j /`
+  `atkinsonShiftedRelativeWeight (n+j) j)`.
+- Facts banked:
+  added the local endpoint object
+  `atkinsonNormalizedShiftedCorrectionCarrierBoundary` and the local residual
+  Jacobian object
+  `atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral`.
+  `atkinson_carrierIntegral_bound_of_boundary_and_jacobian_bounds` reduces the
+  carrier cancellation atom to three precise inputs:
+  the FTC decomposition
+  `carrier = -I * boundary - relativePhase * jacobianIntegral`, an eventual
+  boundary bound at `relativePhase/relativeWeight` scale, and an eventual
+  Jacobian-integral bound at `1/relativeWeight` scale. The correction and
+  inverse wrappers
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_carrier_boundary_jacobian`
+  and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_carrier_boundary_jacobian`
+  wire these atoms into the current provider route.
+- Failed routes / guardrails:
+  no absolute primitive bound was used; no phase-weight division, direct Abel
+  shortcut, circular provider, axioms, sorries, or statement weakening were
+  used. The Jacobian atom keeps the `1/relativeWeight` scale explicitly rather
+  than deweighting diffusely.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  algebra normalization in
+  `atkinson_carrierIntegral_bound_of_boundary_and_jacobian_bounds`, especially
+  the `simp only [div_eq_mul_inv]; ring` steps.
+- Remaining goal shape:
+  prove the shifted-interval stationary-phase target remainder, and prove the
+  three carrier split atoms:
+  `atkinsonNormalizedShiftedCorrectionCarrierIntegral n j`
+  `= -I * atkinsonNormalizedShiftedCorrectionCarrierBoundary n j`
+  `- relativePhase * atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral n j`,
+  the endpoint boundary bound at `relativePhase/relativeWeight` scale, and the
+  residual Jacobian-integral bound at `1/relativeWeight` scale.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
