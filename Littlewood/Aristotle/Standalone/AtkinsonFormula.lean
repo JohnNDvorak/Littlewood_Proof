@@ -20358,6 +20358,42 @@ theorem atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
     nlinarith [htri, hboundaryPrefix, hcorr']
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Public inverse-phase cell-prefix provider package from the current native
+atoms. This route first constructs the correction-prefix provider locally and
+then applies the existing correction-to-cell theorem; it does not assume either
+provider class circularly. -/
+private theorem
+    atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_j1_j2
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hfixed :
+      ∀ j : ℕ, 3 ≤ j → 1 ≤ j →
+        ∃ C_corr > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ C_corr * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j))
+    (hcorr1 :
+      ∃ C1 > 0, ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico ((1 : ℕ) - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n (1 : ℕ)‖
+          ≤ C1 * (Real.sqrt (((m + (1 : ℕ) : ℕ) : ℝ) + 1) / ((1 : ℕ) : ℝ)))
+    (hcorr2 :
+      ∃ C2 > 0, ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico ((2 : ℕ) - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n (2 : ℕ)‖
+          ≤ C2 * (Real.sqrt (((m + (2 : ℕ) : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ))) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_j1_j2
+      hmode hfixed hcorr1 hcorr2
+  exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 theorem atkinson_shiftedCorrectionPrefixBound_of_inversePhaseCellPrefix
     [AtkinsonShiftedInversePhaseCellPrefixBoundHyp] :
     AtkinsonShiftedCorrectionPrefixBoundHyp := by
