@@ -899,6 +899,19 @@ def StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp : Prop :=
       a 0 = 1 / 2 ∧
       a 3 = -Real.pi ^ 2 / 6
 
+/-- Exact local power-series source for the quotient after removing the common
+zero by `dslope`. This is the remaining sine-composition/division coefficient
+calculation without the removable `if` wrapper. -/
+def StandardGabckeQuarterLocalDslopeQuotientPowerSeriesProp : Prop :=
+  ∃ a : ℕ → ℝ,
+    HasFPowerSeriesAt
+      (fun w : ℝ =>
+        dslope standardGabckeQuarterLocalSineNumerator 0 w /
+          dslope standardGabckeQuarterLocalSineDenominator 0 w)
+      (FormalMultilinearSeries.ofScalars ℝ a) 0 ∧
+      a 0 = 1 / 2 ∧
+      a 3 = -Real.pi ^ 2 / 6
+
 /-- Cubic derivative value for the removable sine quotient at `0`. -/
 def StandardGabckeQuarterLocalRemovableSineQuotientThirdDerivativeProp : Prop :=
   iteratedDeriv 3 standardGabckeQuarterLocalRemovableSineQuotient 0 =
@@ -1054,6 +1067,16 @@ theorem standardGabckeQuarterLocalRemovableSineQuotientDslopeEqualityProp_proved
     StandardGabckeQuarterLocalRemovableSineQuotientDslopeEqualityProp := by
   exact Filter.Eventually.of_forall
     standardGabckeQuarterLocalRemovableSineQuotient_eq_dslope_quotient
+
+/-- A power series for the dslope quotient transfers to the removable sine
+quotient by the already-proved pointwise equality. -/
+theorem standardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp_of_dslopeQuotient
+    (h_series : StandardGabckeQuarterLocalDslopeQuotientPowerSeriesProp) :
+    StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp := by
+  rcases h_series with ⟨a, hseries, ha0, ha3⟩
+  refine ⟨a, ?_, ha0, ha3⟩
+  exact hseries.congr
+    standardGabckeQuarterLocalRemovableSineQuotientDslopeEqualityProp_proved.symm
 
 /-- With the denominator nonzero clause closed, the dslope bridge reduces to
 local equality, dslope analyticity, and the third-derivative value. -/
