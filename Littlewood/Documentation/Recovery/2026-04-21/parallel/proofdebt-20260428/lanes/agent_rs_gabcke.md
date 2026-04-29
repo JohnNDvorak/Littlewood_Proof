@@ -735,3 +735,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   denominator locus.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 15: removable point values isolated
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeRawPsiRemovablePointBoundsProp` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Banked inputs:
+  - `standardGabckeRawPsiDenominatorZeroClassifiedProp_proved` is closed, so
+    the removable branch inside `Ico 0 1` is exactly the two points `1/4` and
+    `3/4`.
+  - The downstream route remains
+    `standardGabckeTargets_of_contourTaylor_regular_and_removablePointBounds`.
+- Proof facts banked:
+  - Added `StandardGabckeRawPsiQuarterThirdDerivativeValueProp C14` and
+    `StandardGabckeRawPsiThreeQuarterThirdDerivativeValueProp C34`, exact
+    point-value source atoms for the raw third derivative at the two
+    denominator-zero points.
+  - Added `StandardGabckeRawPsiRemovablePointValueBoundsProp C14 C34`, the
+    numeric bound atom for those sourced point values.
+  - Proved `standardGabckeRawPsiRemovablePointBoundsProp_of_pointValues`,
+    reducing the existing removable-point bound to the exact point values and
+    their numeric bounds.
+  - Added
+    `standardGabckeTargets_of_contourTaylor_regular_and_removablePointValues`,
+    preserving the direct standard Gabcke route through
+    `standardGabckeTargets_of_contourTaylor_regular_and_removablePointBounds`.
+- Failed routes:
+  - Do not differentiate the raw quotient through the zero denominator as if
+    it were globally regular; Lean's real division is totalized, so the two
+    point values require an explicit removable-extension/Tabelle source
+    identity.
+  - Do not assert raw `standardGabckeRawPsi = rsPsi`.
+  - Do not use block-independence or a defect-quotient coefficient.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+- Smallest next theorem:
+  identify the exact sourced constants `C14` and `C34` for
+  `standardGabckeRawPsiThirdDerivative (1/4)` and
+  `standardGabckeRawPsiThirdDerivative (3/4)` from Gabcke's smooth removable
+  quotient/Tabelle normalization, then prove
+  `StandardGabckeRawPsiRemovablePointValueBoundsProp C14 C34`.
+- Coordinator action requested:
+  run the requested serialized validation command.

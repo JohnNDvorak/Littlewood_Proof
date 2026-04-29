@@ -440,6 +440,43 @@ def StandardGabckeRawPsiRemovablePointBoundsProp : Prop :=
     |standardGabckeRawPsiThirdDerivative (3 / 4 : ℝ)| ≤
       fresnelC1Bound * (96 * Real.pi ^ 2)
 
+/-- Exact source value for the raw third derivative at the first removable
+quarter point. This keeps the totalized raw quotient separate from the smooth
+removable extension or Tabelle value used to source the number. -/
+def StandardGabckeRawPsiQuarterThirdDerivativeValueProp (C14 : ℝ) : Prop :=
+  standardGabckeRawPsiThirdDerivative (1 / 4 : ℝ) = C14
+
+/-- Exact source value for the raw third derivative at the second removable
+quarter point. -/
+def StandardGabckeRawPsiThreeQuarterThirdDerivativeValueProp (C34 : ℝ) : Prop :=
+  standardGabckeRawPsiThirdDerivative (3 / 4 : ℝ) = C34
+
+/-- Numeric source bound for the two removable-point third-derivative values
+after their exact values have been supplied by the local Taylor/Tabelle
+normalization. -/
+def StandardGabckeRawPsiRemovablePointValueBoundsProp (C14 C34 : ℝ) : Prop :=
+  |C14| ≤ fresnelC1Bound * (96 * Real.pi ^ 2) ∧
+    |C34| ≤ fresnelC1Bound * (96 * Real.pi ^ 2)
+
+/-- The two removable-point bounds follow from exact source values at the two
+quarter points plus the corresponding numeric bounds for those values. -/
+theorem standardGabckeRawPsiRemovablePointBoundsProp_of_pointValues
+    {C14 C34 : ℝ}
+    (h_quarter : StandardGabckeRawPsiQuarterThirdDerivativeValueProp C14)
+    (h_threeQuarter :
+      StandardGabckeRawPsiThreeQuarterThirdDerivativeValueProp C34)
+    (h_bounds : StandardGabckeRawPsiRemovablePointValueBoundsProp C14 C34) :
+    StandardGabckeRawPsiRemovablePointBoundsProp := by
+  have h_quarter' :
+      standardGabckeRawPsiThirdDerivative (1 / 4 : ℝ) = C14 := h_quarter
+  have h_threeQuarter' :
+      standardGabckeRawPsiThirdDerivative (3 / 4 : ℝ) = C34 := h_threeQuarter
+  constructor
+  · rw [h_quarter']
+    exact h_bounds.1
+  · rw [h_threeQuarter']
+    exact h_bounds.2
+
 /-- The removable-singularity derivative bound follows from classifying the
 denominator-zero locus and checking the two removable points. -/
 theorem standardGabckeRawPsiRemovableThirdDerivativeBoundProp_of_denominatorZeroClassified
@@ -617,6 +654,25 @@ theorem standardGabckeTargets_of_contourTaylor_regular_and_removablePointBounds
     h_id h_regular
     standardGabckeRawPsiDenominatorZeroClassifiedProp_proved
     h_points
+
+/-- Direct target route when the removable-point input is supplied as exact
+third-derivative values at `1/4` and `3/4` plus numeric bounds for those
+values. -/
+theorem standardGabckeTargets_of_contourTaylor_regular_and_removablePointValues
+    {C14 C34 : ℝ}
+    (h_id : StandardGabckeContourTaylorFirstCoefficientIdentityProp)
+    (h_regular : StandardGabckeRawPsiRegularThirdDerivativeBoundProp)
+    (h_quarter : StandardGabckeRawPsiQuarterThirdDerivativeValueProp C14)
+    (h_threeQuarter :
+      StandardGabckeRawPsiThreeQuarterThirdDerivativeValueProp C34)
+    (h_bounds : StandardGabckeRawPsiRemovablePointValueBoundsProp C14 C34) :
+    StandardGabckeStationaryPhaseIdentityProp
+        standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient ∧
+      StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient :=
+  standardGabckeTargets_of_contourTaylor_regular_and_removablePointBounds
+    h_id h_regular
+    (standardGabckeRawPsiRemovablePointBoundsProp_of_pointValues
+      h_quarter h_threeQuarter h_bounds)
 
 /-- A standard-normalized stationary-phase identity becomes the local
 coefficient identity once the leading coefficient normalization has been
