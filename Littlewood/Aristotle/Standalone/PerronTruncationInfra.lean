@@ -4489,6 +4489,15 @@ theorem small_T_perronKernelFiniteSum_cutoff_linear_bound_from_weighted_error
             rw [abs_mul, abs_of_nonneg (vonMangoldt_nonneg n)]
     _ ≤ Cw * (x / T) * (Real.log x) ^ 2 := hweighted x T hx hT_lo hT_hi
 
+/-- Closed finite Perron-kernel cutoff at the honest linear-window scale. -/
+theorem small_T_perronKernelFiniteSum_cutoff_linear_bound :
+    ∃ Ck > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T| ≤
+        Ck * (x / T) * (Real.log x) ^ 2 :=
+  small_T_perronKernelFiniteSum_cutoff_linear_bound_from_weighted_error
+    small_T_weighted_kernel_cutoff_linear_bound
+
 /-- Small-`T` truncation for the concrete vertical integral from the finite
 Perron-kernel cutoff estimate.
 
@@ -4551,6 +4560,85 @@ theorem small_T_perronVerticalIntegral_truncation_bound_from_kernel_sum_bound
         dsimp [logSq]
         ring
 
+/-- Small-`T` truncation for the concrete vertical integral at the honest
+linear-window scale.
+
+The finite kernel estimate contributes `(x / T) * (log x)^2`; the exchange
+error is `O(1)`, which is absorbed into the same scale on
+`x ≥ 2`, `2 ≤ T ≤ 16` because `x / T ≥ 1 / 8`. -/
+theorem small_T_perronVerticalIntegral_truncation_linear_bound_from_kernel_sum_bound
+    (hkernel : ∃ Ck > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T| ≤
+        Ck * (x / T) * (Real.log x) ^ 2) :
+    ∃ Cp > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronVerticalIntegral x T| ≤
+        Cp * (x / T) * (Real.log x) ^ 2 := by
+  rcases hkernel with ⟨Ck, hCk_pos, hkernel⟩
+  let Cexchange : ℝ := 8 * ((Real.log 2) ^ 2)⁻¹
+  have hlog2_pos : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hCexchange_pos : 0 < Cexchange := by
+    dsimp [Cexchange]
+    positivity
+  refine ⟨Ck + Cexchange, add_pos hCk_pos hCexchange_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  let psi : ℝ := Aristotle.DirichletPhaseAlignment.chebyshevPsi x
+  let P : ℝ := perronVerticalIntegral x T
+  let S : ℝ := perronKernelFiniteSum x T
+  let linLogSq : ℝ := (x / T) * (Real.log x) ^ 2
+  have hT_pos : 0 < T := by linarith
+  have hkernel_x : |psi - S| ≤ Ck * linLogSq := by
+    dsimp [psi, S, linLogSq]
+    simpa [mul_assoc] using hkernel x T hx hT_lo hT_hi
+  have hexchange : |P - S| ≤ 1 := by
+    dsimp [P, S]
+    simpa [perronKernelFiniteSum] using perron_exchange_error_bound x hx T hT_pos
+  have htri : |psi - P| ≤ |psi - S| + |P - S| := by
+    calc |psi - P|
+        = |(psi - S) + (S - P)| := by ring
+      _ ≤ |psi - S| + |S - P| := abs_add_le _ _
+      _ = |psi - S| + |P - S| := by rw [abs_sub_comm S P]
+  have hx_over_T_ge : (1 / 8 : ℝ) ≤ x / T := by
+    rw [le_div_iff₀ hT_pos]
+    nlinarith
+  have hx_over_T_nonneg : 0 ≤ x / T :=
+    le_trans (by norm_num : (0 : ℝ) ≤ 1 / 8) hx_over_T_ge
+  have hlog_mono : Real.log (2 : ℝ) ≤ Real.log x := by
+    exact Real.log_le_log (by norm_num) hx
+  have hlog_sq_le : (Real.log (2 : ℝ)) ^ 2 ≤ (Real.log x) ^ 2 := by
+    nlinarith [sq_nonneg (Real.log x - Real.log (2 : ℝ))]
+  have hbase :
+      (1 / 8 : ℝ) * (Real.log (2 : ℝ)) ^ 2 ≤ linLogSq := by
+    dsimp [linLogSq]
+    exact mul_le_mul hx_over_T_ge hlog_sq_le
+      (sq_nonneg (Real.log (2 : ℝ))) hx_over_T_nonneg
+  have hone_absorb : 1 ≤ Cexchange * linLogSq := by
+    dsimp [Cexchange]
+    calc (1 : ℝ)
+        = (8 * ((Real.log (2 : ℝ)) ^ 2)⁻¹) *
+            ((1 / 8 : ℝ) * (Real.log (2 : ℝ)) ^ 2) := by
+            field_simp [ne_of_gt (sq_pos_of_pos hlog2_pos)]
+      _ ≤ (8 * ((Real.log (2 : ℝ)) ^ 2)⁻¹) * linLogSq := by
+            exact mul_le_mul_of_nonneg_left hbase hCexchange_pos.le
+  calc |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronVerticalIntegral x T|
+      = |psi - P| := rfl
+    _ ≤ |psi - S| + |P - S| := htri
+    _ ≤ Ck * linLogSq + 1 := by linarith
+    _ ≤ Ck * linLogSq + Cexchange * linLogSq := by linarith
+    _ = (Ck + Cexchange) * (x / T) * (Real.log x) ^ 2 := by
+        dsimp [linLogSq]
+        ring
+
+/-- Closed concrete vertical-integral truncation at the honest linear-window
+scale.  This deliberately does not claim the pure `(log x)^2` provider
+target. -/
+theorem small_T_perronVerticalIntegral_truncation_linear_bound :
+    ∃ Cp > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronVerticalIntegral x T| ≤
+        Cp * (x / T) * (Real.log x) ^ 2 :=
+  small_T_perronVerticalIntegral_truncation_linear_bound_from_kernel_sum_bound
+    small_T_perronKernelFiniteSum_cutoff_linear_bound
+
 /-- Concrete small-`T` handoff for the actual Perron vertical integral.
 
 This is intentionally not an instance. It records the non-circular route from
@@ -4576,6 +4664,104 @@ theorem small_T_direct_bound_from_perronVerticalIntegral_components
         C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T + (Real.log x) ^ 2) :=
   Littlewood.Development.HadamardProductZeta.small_T_direct_bound_from_perron_components
     perronVerticalIntegral htrunc hresidue
+
+/-- Honest linear-window direct handoff from the concrete vertical Perron
+integral and residue extraction.
+
+This records what the validated cutoff route can currently support:
+the final direct bound contains `(x / T) * (log x)^2`.  That term is not
+absorbed into the public small-`T` provider target without a new analytic
+argument, so this theorem is intentionally not packaged as
+`SmallTPerronBoundHyp`. -/
+theorem small_T_direct_linear_bound_from_perronVerticalIntegral_components
+    (htrunc : ∃ Cₚ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x - perronVerticalIntegral x T| ≤
+        Cₚ * (x / T) * (Real.log x) ^ 2)
+    (hresidue : ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+        Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+          (x / T) * (Real.log x) ^ 2) := by
+  rcases htrunc with ⟨Cₚ, hCₚ_pos, htrunc⟩
+  rcases hresidue with ⟨Cᵣ, hCᵣ_pos, hresidue⟩
+  let C₂ : ℝ := max Cₚ Cᵣ
+  have hC₂_pos : 0 < C₂ := lt_max_of_lt_left hCₚ_pos
+  refine ⟨C₂, hC₂_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  let E : ℝ := Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T
+  let Llin : ℝ := (x / T) * (Real.log x) ^ 2
+  have hT_pos : 0 < T := by linarith
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hE_nonneg : 0 ≤ E := by
+    dsimp [E]
+    exact Littlewood.Development.HadamardProductZeta.error_shape_nonneg x T
+  have hLlin_nonneg : 0 ≤ Llin := by
+    dsimp [Llin]
+    exact mul_nonneg (div_nonneg hx_nonneg hT_pos.le) (sq_nonneg (Real.log x))
+  have hdecomp :
+      Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T =
+        (perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)) +
+        (Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronVerticalIntegral x T) := by
+    change Aristotle.DirichletPhaseAlignment.chebyshevPsi x - x +
+        Littlewood.Development.HadamardProductZeta.zeroSumRe x T =
+      (perronVerticalIntegral x T -
+        (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)) +
+      (Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+        perronVerticalIntegral x T)
+    ring
+  have htri :
+      |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+        |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| +
+        |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronVerticalIntegral x T| := by
+    rw [hdecomp]
+    exact abs_add_le _ _
+  have hresidue_x :
+      |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+        Cᵣ * E := by
+    dsimp [E]
+    exact hresidue x T hx hT_lo hT_hi
+  have htrunc_x :
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronVerticalIntegral x T| ≤
+        Cₚ * Llin := by
+    dsimp [Llin]
+    simpa [mul_assoc] using htrunc x T hx hT_lo hT_hi
+  calc |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T|
+      ≤ |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| +
+        |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronVerticalIntegral x T| := htri
+    _ ≤ Cᵣ * E + Cₚ * Llin := by linarith
+    _ ≤ C₂ * E + C₂ * Llin := by
+        exact add_le_add
+          (mul_le_mul_of_nonneg_right (le_max_right Cₚ Cᵣ) hE_nonneg)
+          (mul_le_mul_of_nonneg_right (le_max_left Cₚ Cᵣ) hLlin_nonneg)
+    _ = C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+          (x / T) * (Real.log x) ^ 2) := by
+        dsimp [C₂, E, Llin]
+        ring
+
+/-- Honest linear-window direct handoff from the closed finite Perron cutoff
+and a bounded-height residue extraction atom. -/
+theorem small_T_direct_linear_bound_from_residue
+    (hresidue : ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+        Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+          (x / T) * (Real.log x) ^ 2) :=
+  small_T_direct_linear_bound_from_perronVerticalIntegral_components
+    small_T_perronVerticalIntegral_truncation_linear_bound hresidue
 
 /-- Concrete small-`T` provider target from the finite weighted Perron-kernel
 cutoff atom plus the bounded-height residue extraction atom.
