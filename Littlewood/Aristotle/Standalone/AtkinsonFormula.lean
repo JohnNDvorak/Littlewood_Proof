@@ -19655,6 +19655,24 @@ private theorem
         hcellPatch)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Finite fixed-shift boundary-prefix patches are already supplied by the
+native boundary-prefix estimate: for each fixed shift below an eventual cutoff,
+the logarithmic factor is absorbed into the local constant. -/
+private theorem atkinsonResonantShiftedBoundary_finite_patch :
+    ∀ J0 : ℕ, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → j < J0 →
+      ∃ C_bdry > 0, ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            atkinsonResonantShiftedBoundaryTerm n j‖
+          ≤ C_bdry * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  obtain ⟨C_bdry, hC_bdry, hbdry⟩ := atkinsonResonantShiftedBoundaryPrefix_bound
+  intro _ j _ hj1 _
+  have hlog_pos : 0 < Real.log (↑j + 1) :=
+    Real.log_pos (by exact_mod_cast show 1 < j + 1 by omega)
+  refine ⟨C_bdry * Real.log (↑j + 1), mul_pos hC_bdry hlog_pos, ?_⟩
+  intro m
+  simpa [mul_assoc] using hbdry j hj1 m
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Finite fixed-shift inverse-phase cell patches reduce to the native
 fixed-shift boundary and correction leaves. This uses the local fixed-shift
 identity only, not the global correction-prefix provider. -/
@@ -19717,6 +19735,34 @@ private theorem
       (atkinson_completeBlockTargetK_remainder_of_blockMode_stationaryPhase hmode)
       (atkinson_shiftedInversePhaseCell_finite_patch_of_boundary_and_correction
         hbdryPatch hcorrPatch)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Native handoff after closing the finite boundary-prefix leaf: the row
+prefix now depends only on the shifted `blockMode` stationary-phase remainder
+and finite fixed-shift correction-prefix patches. -/
+private theorem
+    atkinson_largeShiftRowIntegralPrefix_bound_of_blockMode_stationaryPhase_and_finite_correction_patch
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hcorrPatch :
+      ∀ J0 : ℕ, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → j < J0 →
+        ∃ C_corr > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ C_corr * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    ∃ C_row > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ,
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+        ≤ C_row * Real.log (↑j + 1) *
+            (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  exact
+    atkinson_largeShiftRowIntegralPrefix_bound_of_blockMode_stationaryPhase_and_finite_boundary_correction_patch
+      hmode atkinsonResonantShiftedBoundary_finite_patch hcorrPatch
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem

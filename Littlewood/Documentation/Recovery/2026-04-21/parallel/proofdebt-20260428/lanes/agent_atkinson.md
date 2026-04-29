@@ -1130,3 +1130,47 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 22 Native Boundary Finite Patch Closed
+
+- Classification: `PROVED`, pending coordinator validation.
+- Exact theorem attacked:
+  the finite fixed-shift boundary-prefix leaf below the eventual cutoff, in
+  the form required by
+  `atkinson_shiftedInversePhaseCell_finite_patch_of_boundary_and_correction`.
+- Facts banked:
+  `atkinsonResonantShiftedBoundary_finite_patch` proves the finite boundary
+  patch family directly from the native all-shift boundary prefix
+  `atkinsonResonantShiftedBoundaryPrefix_bound`; for fixed `j < J0`, the
+  factor `Real.log (j + 1)` is absorbed into the local positive constant.
+  `atkinson_largeShiftRowIntegralPrefix_bound_of_blockMode_stationaryPhase_and_finite_correction_patch`
+  wires this closed boundary leaf into the native handoff, leaving only the
+  shifted `blockMode` stationary-phase remainder and finite fixed-shift
+  correction-prefix patches.
+- Failed routes / guardrails:
+  no `AtkinsonShiftedCorrectionPrefixBoundHyp` provider decomposition was used.
+  No direct Abel, zero-model, mass-coefficient, Fourier-corrected target,
+  compensated-carrier, circular provider, diffuse deweighting, axioms, sorries,
+  or statement weakening were used.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local positivity/elaboration in
+  `atkinsonResonantShiftedBoundary_finite_patch`, specifically the casted
+  proof that `0 < Real.log (j + 1)` from `1 ≤ j`.
+- Remaining goal shape:
+  prove the native shifted-interval stationary-phase remainder
+  `∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j -> 3 ≤ j -> 1 ≤ j ->`
+  `∀ k : ℕ, 2 * j ≤ k ->`
+  `‖(((atkinsonModeWeight (k - j) : ℝ) : ℂ) *`
+  `∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `StationaryPhaseMainMode.blockMode (k - j) p * blockJacobian (k - j) p)`
+  `- atkinsonCompleteBlockTargetK k j‖`
+  `≤ C_err * (atkinsonModeWeight k / j)`,
+  plus the finite fixed-shift correction-prefix patch family below the
+  eventual cutoff.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
