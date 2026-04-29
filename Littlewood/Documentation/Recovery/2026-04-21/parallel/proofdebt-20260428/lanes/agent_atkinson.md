@@ -251,6 +251,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
 
+### 2026-04-29 Round 34 Endpoint Boundary Reduction
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  endpoint boundary bound at
+  `atkinsonShiftedRelativePhase (n+j) j / atkinsonShiftedRelativeWeight (n+j) j`
+  scale, feeding the carrier boundary/Jacobian split.
+- Facts banked:
+  added
+  `atkinsonBlockMode_mul_shiftedPacketPhase_eq_shifted_hardyCosExp`, which
+  identifies the shifted packet phase times native `blockMode` with the shifted
+  Hardy exponential. Added
+  `atkinsonNormalizedShiftedCorrectionCarrierEndpointGap` and proved
+  `atkinsonNormalizedShiftedCorrectionCarrierBoundary_eq_endpointGap`, so the
+  carrier endpoint boundary is exactly the adjacent shifted Hardy endpoint gap.
+  Added
+  `atkinson_carrierBoundary_bound_of_endpointGap_bound` and
+  `atkinson_carrierIntegral_bound_of_endpointGap_and_jacobian_estimates`, plus
+  correction and inverse wrappers
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_endpointGap_jacobian_estimates`
+  and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_endpointGap_jacobian_estimates`.
+- Failed routes / guardrails:
+  no direct Abel shortcut, phase-weight division, circular provider, absolute
+  primitive bound, axioms, sorries, or statement weakening was used. The initial
+  local helper placement before `atkinsonShiftedPacketPhase` failed with an
+  unknown identifier and was corrected by moving the helper below the phase
+  definition; one redundant final `ring` after `field_simp` was removed.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` was run under the
+  required `/tmp/littlewood-lean-singleflight.lock` guard and completed
+  successfully.
+- Remaining goal shape:
+  shifted stationary-phase target remainder, shifted Hardy endpoint-gap bound at
+  `relativePhase/relativeWeight` scale, and Jacobian-integral bound at
+  `1/relativeWeight` scale.
+- Smallest next theorem:
+  prove the endpoint-gap atom
+  `∀ j ≥ 1, ∃ A_gap > 0, ∃ N_gap, ∀ n ≥ N_gap,`
+  `‖atkinsonNormalizedShiftedCorrectionCarrierEndpointGap n j‖`
+  `≤ A_gap * (atkinsonShiftedRelativePhase (n+j) j /`
+  `atkinsonShiftedRelativeWeight (n+j) j)`, or else the Jacobian-integral atom
+  if its oscillatory estimate is more local.
+
 ### 2026-04-29 Round 14 Correction-Prefix Route Reset
 
 - Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
