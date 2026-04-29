@@ -598,3 +598,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   extension of the raw quotient's third derivative at `1/4` and `3/4`.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 12: denominator-zero classification split into lattice and range
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeRawPsiDenominatorZeroClassifiedProp` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Banked inputs:
+  - Round 11 reduced the removable-singularity bound to
+    `StandardGabckeRawPsiDenominatorZeroClassifiedProp` plus the two pointwise
+    derivative checks at `1/4` and `3/4`.
+  - The live denominator is still exactly `cos(2*pi*p)` from
+    `standardGabckeRawPsiDenominatorZero`; no global regularity is assumed.
+- Proof facts banked:
+  - Added `StandardGabckeRawPsiDenominatorZeroQuarterLatticeProp`, the direct
+    trigonometric source theorem that denominator-zero points in `Ico 0 1`
+    lie on the quarter lattice `p = m/2 + 1/4`.
+  - Added `StandardGabckeRawPsiDenominatorZeroQuarterLatticeRangeProp`, the
+    elementary interval restriction showing quarter-lattice points in
+    `Ico 0 1` are exactly `1/4` or `3/4`.
+  - Proved
+    `standardGabckeRawPsiDenominatorZeroClassifiedProp_of_quarterLattice`,
+    deriving the existing two-point denominator-zero classification from
+    those two smaller facts.
+  - Added
+    `standardGabckeTargets_of_contourTaylor_regular_quarterLattice_and_removablePoints`,
+    wiring the quarter-lattice split back to the standard Gabcke target
+    propositions.
+- Failed routes:
+  - Do not try to prove denominator classification by treating the raw quotient
+    as regular at denominator-zero points.
+  - Do not assert raw `standardGabckeRawPsi = rsPsi`.
+  - Do not use block-independence or a defect-quotient coefficient.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+- Smallest next theorem:
+  prove `StandardGabckeRawPsiDenominatorZeroQuarterLatticeProp` using the
+  standard real `cos_eq_zero` theorem for `2*pi*p`, and prove
+  `StandardGabckeRawPsiDenominatorZeroQuarterLatticeRangeProp` by elementary
+  integer/range arithmetic on `0 <= m/2 + 1/4 < 1`.
+- Coordinator action requested:
+  run the requested serialized validation command.
