@@ -1756,3 +1756,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `atkinsonShiftedRelativeWeight (n+j) j)`, prove the Jacobian-integral bound
   at `1/relativeWeight`, and keep the shifted stationary-phase target remainder
   as separate debt.
+
+### 2026-04-29 Round 36 Corrected Endpoint Phase Residual
+
+- Classification: `VALIDATED_CORRECTED_REDUCTION`.
+- Exact theorem attacked:
+  scalar endpoint phase-error bound
+  `|atkinsonEndpointGapPhaseError n j|`
+  `≤ A_phase * (relativePhase / relativeWeight)`.
+- Scale obstruction:
+  the raw `-4πj` real phase residual is not the right small object: one full
+  native cell contributes an additional `2π` turn. That turn is invisible after
+  `Complex.exp`, but it is visible to absolute real phase error, so the raw
+  atom should not be the next analytic leaf.
+- Facts banked:
+  added `atkinsonEndpointGapCorrectedPhaseError`, subtracting
+  `2π * (2*j + 1)`, and proved
+  `atkinsonEndpointGap_corrected_periodic_main` plus
+  `atkinsonNormalizedShiftedCorrectionCarrierEndpointGap_norm_le_correctedPhaseError`.
+  Added
+  `atkinson_endpointGap_bound_of_correctedPhaseError_bound`,
+  `atkinson_carrierIntegral_bound_of_correctedEndpointPhaseError_and_jacobian_estimates`,
+  and correction/inverse wrappers
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_correctedEndpointPhaseError_jacobian_estimates`
+  and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_correctedEndpointPhaseError_jacobian_estimates`.
+- Failed routes / guardrails:
+  did not use direct Abel, phase-weight division, a circular provider, an
+  absolute primitive bound, axioms, sorries, or statement weakening. The old
+  `atkinsonEndpointGapPhaseError` wrapper is left available but demoted by the
+  scale obstruction.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected singleflight lock; result: passed, `Build completed successfully
+  (7903 jobs)`.
+- Remaining goal shape:
+  prove the corrected scalar endpoint phase residual
+  `∀ j ≥ 1, ∃ A_phase > 0, ∃ N_phase, ∀ n ≥ N_phase,`
+  `|atkinsonEndpointGapCorrectedPhaseError n j|`
+  `≤ A_phase * (atkinsonShiftedRelativePhase (n+j) j /`
+  `atkinsonShiftedRelativeWeight (n+j) j)`, prove the Jacobian-integral bound
+  at `1/relativeWeight`, and keep the shifted stationary-phase target remainder
+  separate.
