@@ -1629,3 +1629,30 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Pi/Phase: `PerronThresholdTowerWideLogBudgetHyp`.
   - RS/Gabcke: local second-derivative differentiability / third-derivative
     formula at `x = 0`.
+
+## Overnight 2026-04-29 Thirty-Eighth Pass Status
+
+- Perron/B5a lane is validated and pushed through amended commit `9684159`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Route Perron linear cutoff handoff`.
+  - Coordinator repair: normalized two associativity mismatches between
+    `C * (x / T) * (Real.log x)^2` and
+    `C * ((x / T) * (Real.log x)^2)`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the scale-correct small-T weighted cutoff now routes through the
+    finite Perron-kernel and vertical/direct handoff, with downstream shape
+    `sqrt x * (Real.log T)^2 / sqrt T +
+      (x / T) * (Real.log x)^2`.
+  - Honest blocker exposed:
+    this cannot feed the current `SmallTPerronBoundHyp` statement directly,
+    because that public target permits only
+    `sqrt x * (Real.log T)^2 / sqrt T + (Real.log x)^2`.
+- Current live atoms:
+  - Atkinson: eventual normalized fixed-shift correction bound and shifted
+    stationary-phase target remainder.
+  - Perron/B5a: resolve the public/provider scale mismatch for the
+    `(x / T) * (Real.log x)^2` linear-window term.
+  - Pi/Phase: `PerronThresholdTowerWideLogBudgetHyp`.
+  - RS/Gabcke: local second-derivative differentiability / third-derivative
+    formula at `x = 0`.
