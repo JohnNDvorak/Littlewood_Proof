@@ -3055,3 +3055,18 @@ Timestamp: 2026-04-28 22:56 CDT.
         - Aristotle.StationaryPhaseStartValue.stirlingTerm
           ((1 / 4 : ℂ) + Complex.I * y))
       (fun y : ℝ => ((1 / y : ℝ) : ℂ))`.
+
+## Overnight 2026-04-29 One-Hundred-Twenty-Fifth Pass Status
+
+- Coordinator recovery branch is advanced locally through `208c7e0`.
+- Pi/Phase lane is integrated through `e1ddb0c`:
+  - The raw chooser threshold validity and fixed half-budget threshold are now
+    named.
+  - The previous minus-one residual is reduced to a threshold-comparison
+    residual between the raw eventual choice and the fixed half-budget
+    threshold.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
+  - Current Pi atom:
+    `PerronSqrtErrorRawChoiceFixedHalfBudgetThresholdComparisonResidual`.
