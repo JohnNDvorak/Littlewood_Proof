@@ -1219,3 +1219,48 @@ Timestamp: 2026-04-28 22:56 CDT.
   - RS/Gabcke: quarter local second-derivative `HasDerivAt`, removable
     candidate local-coordinate third derivative, and raw quarter removable
     bridge.
+
+## Overnight 2026-04-29 Twenty-Sixth Pass Status
+
+- Atkinson lane is validated and pushed through `4b336cb`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Package Atkinson inverse provider from native atoms`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: `AtkinsonShiftedInversePhaseCellPrefixBoundHyp` is now reduced to
+    the native atom package by constructing `AtkinsonShiftedCorrectionPrefixBoundHyp`
+    locally, then applying the shifted-correction-prefix bridge.
+  - Remaining Atkinson atoms: shifted-interval stationary-phase target
+    remainder, native fixed-shift correction-prefix leaf for `j >= 3`, and
+    small correction patches `j = 1,2` if immediate provider instantiation
+    still needs them.
+- Perron/B5a lane is validated and pushed through `7d7cc48`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Reduce Perron off-boundary cutoff to Davenport envelope`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the off-boundary weighted window error is now bounded by a named
+    Davenport envelope, and the small-`T` weighted cutoff route is reduced to
+    a single scale-correct envelope estimate.
+  - Remaining Perron atom:
+    `perronKernelOffBoundaryDavenportEnvelope x T <=
+      Cd * (x / T) * (Real.log x)^2`.
+- RS/Gabcke lane is validated and pushed through `ea5b66c`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Split Gabcke quarter coordinate bridge`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
+  - Result: the removable-candidate quarter local-coordinate third derivative
+    is split into a local translation/chain-rule atom plus a local function
+    equality atom, avoiding the circular raw-regularity route.
+  - Remaining RS/Gabcke atoms:
+    `StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp`
+    or `StandardGabckeRemovableCandidateQuarterLocalFunctionEqProp`.
+- Current live atoms:
+  - Atkinson: prove the native stationary-phase/correction-prefix atoms needed
+    for immediate provider instantiation.
+  - Perron/B5a: prove the named Davenport-envelope bound at linear `x / T`
+    scale.
+  - Pi/Phase: fixed-height Perron-error exact-seed route is running with
+    Planck.
+  - RS/Gabcke: close one of the two split removable-candidate quarter atoms.
