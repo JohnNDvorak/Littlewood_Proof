@@ -612,6 +612,21 @@ This is the pure calculus atom for the expansion
 def StandardGabckeQuarterLocalThirdDerivativeFormulaProp : Prop :=
   deriv (deriv (deriv standardGabckeQuarterLocalPsi)) 0 = -Real.pi ^ 2
 
+/-- `HasDerivAt` form of the local Taylor atom: the second derivative of the
+quarter local quotient has derivative `-pi^2` at `x = 0`. This is the smallest
+calculus statement needed to identify the third derivative value. -/
+def StandardGabckeQuarterLocalSecondDerivativeHasDerivAtProp : Prop :=
+  HasDerivAt (deriv (deriv standardGabckeQuarterLocalPsi)) (-Real.pi ^ 2) 0
+
+/-- The `HasDerivAt` local Taylor atom supplies the derivative-value form used
+by the Gabcke coefficient route. -/
+theorem standardGabckeQuarterLocalThirdDerivativeFormulaProp_of_secondDerivative_hasDerivAt
+    (h_deriv : StandardGabckeQuarterLocalSecondDerivativeHasDerivAtProp) :
+    StandardGabckeQuarterLocalThirdDerivativeFormulaProp := by
+  unfold StandardGabckeQuarterLocalSecondDerivativeHasDerivAtProp at h_deriv
+  unfold StandardGabckeQuarterLocalThirdDerivativeFormulaProp
+  exact h_deriv.deriv
+
 /-- The candidate quarter-point value formula follows from the exact local
 coordinate bridge and the one-variable local Taylor calculation. -/
 theorem standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_localTaylor
@@ -623,6 +638,18 @@ theorem standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_o
   unfold StandardGabckeQuarterLocalThirdDerivativeFormulaProp at h_local
   unfold StandardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp
   exact h_coord.trans h_local
+
+/-- The candidate quarter-point value formula follows from the coordinate
+bridge plus the `HasDerivAt` form of the local Taylor atom. -/
+theorem standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_localSecondDerivative_hasDerivAt
+    (h_coord :
+      StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp)
+    (h_deriv : StandardGabckeQuarterLocalSecondDerivativeHasDerivAtProp) :
+    StandardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp :=
+  standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_localTaylor
+    h_coord
+    (standardGabckeQuarterLocalThirdDerivativeFormulaProp_of_secondDerivative_hasDerivAt
+      h_deriv)
 
 /-- The quarter-point numeric Tabelle bound follows from the exact local
 Taylor value of the instantiated removable candidate. -/
@@ -656,6 +683,19 @@ theorem standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_localTay
   standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_candidateValueFormula
     (standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_localTaylor
       h_coord h_local)
+
+/-- The quarter-point numeric Tabelle bound follows from the coordinate bridge
+plus the `HasDerivAt` form of the local Taylor atom. -/
+theorem standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_localSecondDerivative_hasDerivAt
+    (h_coord :
+      StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp)
+    (h_deriv : StandardGabckeQuarterLocalSecondDerivativeHasDerivAtProp) :
+    StandardGabckeRemovableSourceQuarterThirdDerivativeBoundProp
+      standardGabckeRemovableSourceThirdDerivative :=
+  standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_localTaylor
+    h_coord
+    (standardGabckeQuarterLocalThirdDerivativeFormulaProp_of_secondDerivative_hasDerivAt
+      h_deriv)
 
 /-- Numeric Tabelle bound for the smooth removable-source derivative at the
 second denominator-zero point. -/

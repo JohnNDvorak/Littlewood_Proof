@@ -1107,3 +1107,55 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   quotient as globally regular at the removable point.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 22: local Taylor atom put in HasDerivAt form
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalThirdDerivativeFormulaProp`.
+- Banked inputs:
+  - Round 21 isolated the quarter formula into a coordinate bridge plus the
+    one-variable local quotient derivative at `x = 0`.
+  - The active removable candidate remains
+    `standardGabckeRemovableSourceThirdDerivative`; no raw totalized
+    derivative is used as `D`.
+- Proof facts banked:
+  - Added `StandardGabckeQuarterLocalSecondDerivativeHasDerivAtProp`, the
+    smaller local calculus atom
+    `HasDerivAt (deriv (deriv standardGabckeQuarterLocalPsi))
+    (-Real.pi^2) 0`.
+  - Proved
+    `standardGabckeQuarterLocalThirdDerivativeFormulaProp_of_secondDerivative_hasDerivAt`,
+    deriving the third-derivative value formula from that `HasDerivAt` atom.
+  - Proved
+    `standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_localSecondDerivative_hasDerivAt`,
+    deriving the candidate quarter value formula from the coordinate bridge and
+    the smaller `HasDerivAt` atom.
+  - Proved
+    `standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_localSecondDerivative_hasDerivAt`,
+    deriving the quarter numeric source bound from the same inputs.
+- Failed routes:
+  - I did not try to expand the raw quotient at the removable point directly;
+    that would conflate the raw totalized quotient with the smooth removable
+    candidate.
+  - I did not prove raw/candidate equality from global raw regularity.
+  - I did not define `D := standardGabckeRawPsiThirdDerivative`, assert raw
+    `standardGabckeRawPsi = rsPsi`, introduce axioms, or add sorries.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+- Remaining goal shape:
+  prove `StandardGabckeQuarterLocalSecondDerivativeHasDerivAtProp` for
+  `standardGabckeQuarterLocalPsi`, and prove the separate coordinate bridge
+  `StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp`.
+  The raw/candidate bridge
+  `StandardGabckeRawPsiQuarterRemovableSourceBridgeProp
+  standardGabckeRemovableSourceThirdDerivative` remains a distinct
+  removable-normalization theorem and should not be sourced from global raw
+  regularity.
+- Coordinator action requested:
+  run the requested serialized validation command.
