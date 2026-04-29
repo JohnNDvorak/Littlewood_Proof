@@ -2174,3 +2174,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
     -(8 * Real.pi ^ 3 / 3)`. The third derivative zero should then follow
   from the same evenness/Taylor-parity route or from the local sine quotient
   expansion.
+
+### 2026-04-29 Round 45: denominator second derivative reduced to quadratic coefficient
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp`.
+- Banked inputs:
+  - Mathlib's `AnalyticAt.hasFPowerSeriesAt` gives the Taylor series
+    coefficient `iteratedDeriv n f 0 / n!` for analytic one-variable real
+    functions.
+  - `HasFPowerSeriesAt.eq_formalMultilinearSeries` identifies any other local
+    scalar power series for the same denominator dslope with that Taylor
+    series.
+- Proof facts banked:
+  - Added
+    `StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp`, the
+    exact remaining source asserting a local power series for the denominator
+    dslope with quadratic coefficient `-(4*pi^3/3)`.
+  - Proved
+    `standardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp_of_quadraticCoefficient`,
+    extracting the second derivative value
+    `-(8*pi^3/3)` from that coefficient by Taylor uniqueness and `2! = 2`.
+- Failed routes:
+  - I did not add a broad provider or analytic axiom.
+  - I did not assume global quotient regularity at the removable point.
+  - I did not assert the all-order sine series; the remaining source is a
+    single exact quadratic coefficient for `sin(2*pi*w)/w`.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to `origin/recovery/provider-forensics-2026-04-21`
+    at `26e16e7` before editing.
+  - `git diff --check`: passed.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp`
+  directly from the local sine quotient expansion, or prove the stronger
+  `StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp` and instantiate
+  the quadratic coefficient from it.
