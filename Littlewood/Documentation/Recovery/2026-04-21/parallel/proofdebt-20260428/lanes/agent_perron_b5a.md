@@ -132,6 +132,26 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required: run the requested focused validation; no full
   build requested.
 
+### 2026-04-28 Coordinator Validation - Exact-Hit Boundary Error
+
+- Classification: `VALIDATED_WITH_COORDINATOR_FIX`.
+- Focused command:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Result:
+  initial validation failed on two local proof-shape issues in
+  `perronKernelWeightedExactHitBoundaryError_le_kernelSup_mul_log`:
+  the `Finset.card_le_one_iff` intro order was wrong, and the final
+  `mul_le_mul` call supplied `vonMangoldt_nonneg n` where Lean required
+  `0 <= Real.log x`.
+- Fix:
+  corrected the intro order to `intro a b ha hb` and supplied the already
+  available `hlogx_nonneg` to `mul_le_mul`.
+- Final validation:
+  focused build completed successfully.  Public import probes were deferred
+  because this did not close a public provider yet.
+- Smallest next theorem:
+  prove the punctured-window decaying kernel estimate, excluding the exact hit.
+
 ### 2026-04-28 Round 3 - Weighted Kernel Boundary Split
 
 - Classification: `BOUNDARY_ATOM_ISOLATION`.

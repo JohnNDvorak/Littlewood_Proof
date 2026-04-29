@@ -1599,7 +1599,7 @@ theorem perronKernelWeightedExactHitBoundaryError_le_kernelSup_mul_log
   have hB_nonneg : 0 ≤ K * Real.log x := mul_nonneg hK_nonneg hlogx_nonneg
   have hcard : s.card ≤ 1 := by
     rw [Finset.card_le_one_iff]
-    intro a ha b hb
+    intro a b ha hb
     have ha_eq : (a : ℝ) = x := (Finset.mem_filter.mp ha).2
     have hb_eq : (b : ℝ) = x := (Finset.mem_filter.mp hb).2
     exact_mod_cast ha_eq.trans hb_eq.symm
@@ -1620,7 +1620,7 @@ theorem perronKernelWeightedExactHitBoundaryError_le_kernelSup_mul_log
           |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
         ≤ Real.log x * K :=
           mul_le_mul hΛ_le_logx (hkernel n hn) (abs_nonneg _)
-            (vonMangoldt_nonneg n)
+            hlogx_nonneg
       _ = K * Real.log x := by ring
   calc perronKernelWeightedExactHitBoundaryError x T
       = ∑ n ∈ s,
