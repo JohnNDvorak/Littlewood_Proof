@@ -2283,3 +2283,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   independent atom
   `ContinuousOn (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2) slab`,
   or the normalized asymptotic tail atom on `16 <= x`.
+
+### 2026-04-29 Round 45 - Reduce Perron Slab Continuity to Raw Interval Integral
+
+- Classification: `THEOREM_LEVEL_REDUCTION`.
+- Exact theorem attacked:
+  `ContinuousOn (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+    {p : ℝ × ℝ | 2 <= p.1 /\ p.1 <= 16 /\ 2 <= p.2 /\ p.2 <= 16}`.
+- Code facts banked:
+  added `perronVerticalIntegrand`, naming the real vertical-line integrand
+  with `c = 1 + 1 / Real.log x`.  Added
+  `perronVerticalRawIntegral`, naming the unscaled variable-height integral
+  `∫ t in (-T)..T, perronVerticalIntegrand x t`.  Proved
+  `perronVerticalIntegral_eq_rawIntegral`, showing the existing public
+  `perronVerticalIntegral` is exactly `(2 * Real.pi)⁻¹` times the raw
+  integral.  Added
+  `small_T_perronVerticalIntegral_continuousOn_slab16_from_rawIntegral`,
+  reducing vertical Perron slab continuity to parametric continuity of the raw
+  variable-limit interval integral.
+- Shape check:
+  did not retry unconditional `ZerosBelow`/closed critical-zero set local
+  constancy; that remains dishonest at zero boundary heights.  This pass pivots
+  to the independent Perron-integral continuity atom and only removes the
+  constant prefactor/inlined expression.
+- Failed/demoted routes:
+  did not attempt to prove the variable-limit integral continuity directly in
+  one step.  The remaining proof likely needs a dominated-convergence or fixed
+  `[-16,16]` indicator formulation for the moving interval endpoints.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, or `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check`; then
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.  Both passed.
+- Smallest next theorem:
+  prove
+  `ContinuousOn (fun p : ℝ × ℝ => perronVerticalRawIntegral p.1 p.2) slab`,
+  probably by rewriting the moving interval as a fixed `[-16,16]` integral with
+  an interval indicator and applying a dominated-convergence theorem; the
+  separate normalized `16 <= x` tail atom remains an alternate route.
