@@ -1795,3 +1795,34 @@ Timestamp: 2026-04-28 22:56 CDT.
     `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`.
   - RS/Gabcke: prove `StandardGabckeQuarterLocalCubicTaylorCoefficientProp`
     by expanding the filled local quotient at `x = 0`.
+
+## Overnight 2026-04-29 Forty-Third Pass Status
+
+- RS/Gabcke lane is validated and pushed through `11c446d`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Reduce Gabcke cubic coefficient to scalar series`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
+  - Result: the Gabcke cubic coefficient atom is now reduced to the scalar
+    Taylor-series property
+    `StandardGabckeQuarterLocalScalarTaylorSeriesProp`.
+- Atkinson lane is validated and pushed through `bfec4db`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Worker commit: `Close Atkinson carrier FTC decomposition`.
+  - Coordinator repair: replaced a brittle `-I * I` rewrite with an explicit
+    local multiplication identity and removed accidental tab characters.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the carrier FTC decomposition is closed; the Atkinson carrier
+    route is now reduced to endpoint boundary control and the
+    Jacobian-integral bound, plus the separate shifted stationary-phase target
+    remainder.
+- Current live atoms:
+  - Atkinson: shifted stationary-phase target remainder; endpoint boundary
+    bound at `relativePhase / relativeWeight`; Jacobian-integral bound at
+    `1 / relativeWeight`.
+  - Perron/B5a: choose and close the bridge from linear-window small-T to the
+    actual public/downstream small-T requirement.
+  - Pi/Phase: prove `PerronThresholdTowerExpHalfBudgetGrowthHyp` and
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`.
+  - RS/Gabcke: prove `StandardGabckeQuarterLocalScalarTaylorSeriesProp`.
