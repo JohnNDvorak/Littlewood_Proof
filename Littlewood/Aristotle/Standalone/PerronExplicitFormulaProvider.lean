@@ -3666,6 +3666,45 @@ def PerronFixedHalfBudgetThresholdEventuallyValidResidual
         PerronSqrtErrorAtHeightValidThreshold _hRH T
           (perronFixedHalfBudgetThreshold T)
 
+/-- Valid Perron thresholds are upward closed: if `B` is valid and `B ≤ C`,
+then `C` is valid as well. -/
+theorem perronSqrtErrorAtHeightValidThreshold_mono
+    {hRH : ZetaZeros.RiemannHypothesis} {T B C : ℝ}
+    (hValid : PerronSqrtErrorAtHeightValidThreshold hRH T B)
+    (hBC : B ≤ C) :
+    PerronSqrtErrorAtHeightValidThreshold hRH T C := by
+  intro x hCx
+  exact hValid x (hBC.trans hCx)
+
+/-- Dominating some valid threshold is the exact analytic content needed to
+prove fixed-half budget-threshold validity.
+
+The eventual Perron hypothesis supplies existence of valid thresholds, but not
+that the named half-budget threshold eventually lies above one of them. -/
+def PerronFixedHalfBudgetThresholdDominatesValidThresholdResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ (_hRH : ZetaZeros.RiemannHypothesis),
+    ∃ T0 : ℝ,
+      ∀ T : ℝ,
+        T0 ≤ T →
+        ∃ B : ℝ,
+          PerronSqrtErrorAtHeightValidThreshold _hRH T B ∧
+            B ≤ perronFixedHalfBudgetThreshold T
+
+/-- If the fixed-half budget eventually dominates a valid Perron threshold,
+then it is itself eventually a valid Perron threshold. -/
+theorem perronFixedHalfBudgetThresholdEventuallyValid_of_dominatesValidThreshold
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (h :
+      PerronFixedHalfBudgetThresholdDominatesValidThresholdResidual) :
+    PerronFixedHalfBudgetThresholdEventuallyValidResidual := by
+  intro hRH
+  rcases h hRH with ⟨T0, hDom⟩
+  refine ⟨T0, ?_⟩
+  intro T hT
+  rcases hDom T hT with ⟨B, hBValid, hB⟩
+  exact perronSqrtErrorAtHeightValidThreshold_mono hBValid hB
+
 /-- Exact chooser-minimality residual for the raw Perron threshold.
 
 This is the order property not exposed by `Classical.choose_spec`: eventually,
@@ -7214,6 +7253,25 @@ theorem exactSeedAboveThreshold_perron_of_fixedHalfValid_leastValidThresholdAndB
     exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfLeastValidThresholdAndBudgetedRelativelyDense_hyp
       (perronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual_of_validAndLeast
         hValid hLeast)
+
+/-- Dominating a valid fixed-height Perron threshold plus raw-chooser
+minimality and explicit budgeted finite-zero radii package both Perron-only
+exact-seed classes. -/
+theorem exactSeedAboveThreshold_perron_of_fixedHalfDominatesValidThreshold_leastValidThresholdAndBudgetedRelativelyDense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [ZeroCountingLowerBoundHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    (hValid :
+      PerronFixedHalfBudgetThresholdDominatesValidThresholdResidual)
+    (hLeast :
+      PerronSqrtErrorRawChoiceEventuallyLeastValidThresholdResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact
+    exactSeedAboveThreshold_perron_of_fixedHalfValid_leastValidThresholdAndBudgetedRelativelyDense_hyp
+      (perronFixedHalfBudgetThresholdEventuallyValid_of_dominatesValidThreshold
+        hValid)
+      hLeast
 
 /-- Relation-compatible budgeted finite-zero Kronecker plus the Perron log
 half-budget packages both target-specific Perron phase-fit classes through the
