@@ -2933,3 +2933,17 @@ Timestamp: 2026-04-28 22:56 CDT.
       Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
   - Current Pi atom:
     `PerronSqrtErrorRawChoiceEventuallyBelowExpHalfBudgetResidual`.
+
+## Overnight 2026-04-29 One-Hundred-Seventeenth Pass Status
+
+- Coordinator recovery branch is advanced locally through `b39c5f0`.
+- Atkinson lane is integrated through `660e837`:
+  - The vertical principal-log branch identity is reduced to the exact
+    `toIocDiv` period-correction atom for
+    `stirlingTerm + log atkinsonVerticalGammaStirlingMultiplier`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`
+    (`7903 jobs`).
+  - Current Atkinson atoms: standard `atkinsonGammaStirlingMultiplier t - 1 =
+    O(1/t)` and the period-correction zero statement, or a direct replacement
+    by a principal-log Stirling remainder theorem.
