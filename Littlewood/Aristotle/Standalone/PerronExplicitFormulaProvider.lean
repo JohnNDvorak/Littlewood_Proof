@@ -2801,6 +2801,23 @@ class TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp
         R ≤ Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
 
+/-- Canonical target-side finite-zero phase-radius half-budget source.
+
+This removes the existential majorant from
+`TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp`: the remaining quantitative
+Kronecker-radius obligation is the direct tower domination of the chosen
+target radius at the same `T, ε`. -/
+class TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      targetFiniteZeroInhomogeneousPhaseRadius T ε + 1
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
 /-- Anti-target-side height-only finite-zero phase-radius majorant source. -/
 class AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp
     [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
@@ -2812,6 +2829,18 @@ class AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp
       ∃ R : ℝ,
         antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤ R ∧
         R ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Canonical anti-target-side finite-zero phase-radius half-budget source. -/
+class AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1
+        ≤ Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
 
 /-- Target-specific same-height Perron/tower domination by the realized
@@ -3223,6 +3252,48 @@ instance (priority := 95)
     [TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp] :
     TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp :=
   targetAntiFiniteZeroPhaseRadiusHalfBudgetGrowth_of_majorant_hyp
+
+/-- A canonical target radius half-budget supplies the target-side existential
+majorant by choosing the realized radius plus `1`. -/
+theorem targetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp] :
+    TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    refine
+      ⟨targetFiniteZeroInhomogeneousPhaseRadius T ε + 1, le_rfl, ?_⟩
+    exact TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp.witness
+      T ε hT4 hεpos hεlt
+
+/-- Instance form of
+`targetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp`. -/
+instance (priority := 95)
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp] :
+    TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+  targetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+
+/-- A canonical anti-target radius half-budget supplies the anti-target-side
+existential majorant by choosing the realized radius plus `1`. -/
+theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp] :
+    AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    refine
+      ⟨antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1, le_rfl, ?_⟩
+    exact AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp.witness
+      T ε hT4 hεpos hεlt
+
+/-- Instance form of
+`antiTargetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp`. -/
+instance (priority := 95)
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp] :
+    AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+  antiTargetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
 
 /-- Same-height target-side and anti-target-side radius majorants recombine
 into the paired radius majorant. -/

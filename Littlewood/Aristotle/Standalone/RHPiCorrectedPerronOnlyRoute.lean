@@ -219,7 +219,39 @@ theorem rhPiWitnessData_of_correctedPerronOnlyCanonicalRadiusMajorantRoute
     [TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp]
     [AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp] :
     RhPiWitnessData := by
+  letI : TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetAntiDensity_of_relationCompatibleKroneckerAndCompatibility
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : PerronThresholdTowerExpHalfBudgetMajorantHyp :=
+    perronThresholdTowerExpHalfBudgetMajorant_of_canonical_hyp
+  letI : TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+    targetAntiFiniteZeroPhaseRadiusHalfBudgetMajorant_of_targetAnti_hyp
   exact rhPiWitnessData_of_correctedPerronOnlyMajorantBudgetRoute
+
+/-- Corrected Perron-only route from canonical Perron and one-sided canonical
+radius half-budget inequalities. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyCanonicalRadiusRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp]
+    [TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp]
+    [AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp] :
+    RhPiWitnessData := by
+  letI : TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetAntiDensity_of_relationCompatibleKroneckerAndCompatibility
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+    targetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+  letI : AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+    antiTargetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+  exact rhPiWitnessData_of_correctedPerronOnlyCanonicalRadiusMajorantRoute
 
 /-- Corrected Perron-only route to the concrete RH 7a/7c pair. -/
 theorem rh_pi_7a_7c_pair_of_correctedPerronOnlyRoute

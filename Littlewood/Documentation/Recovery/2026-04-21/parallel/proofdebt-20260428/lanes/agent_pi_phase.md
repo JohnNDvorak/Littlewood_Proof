@@ -1266,3 +1266,60 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Prove/source `TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp` and
     `AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp` with a shared
     same-height quantitative Kronecker-radius estimate.
+
+### 2026-04-29 Round 20: Canonical One-Sided Radius Leaves
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp`
+  - `AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp`
+- Target choice:
+  - Closed the existential-majorant part of the one-sided radius leaves
+    deterministically. For each side, the optimal majorant is just the chosen
+    realized radius plus `1`; the remaining content is the direct same-height
+    tower inequality.
+- Facts banked:
+  - Added `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp`, the direct
+    target-side tower domination of
+    `targetFiniteZeroInhomogeneousPhaseRadius T ε + 1`.
+  - Added `targetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp`,
+    deriving `TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp` by choosing
+    `R = targetFiniteZeroInhomogeneousPhaseRadius T ε + 1`.
+  - Added `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp`, the direct
+    anti-target-side tower domination of
+    `antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1`.
+  - Added `antiTargetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp`,
+    deriving `AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp` by
+    choosing `R = antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1`.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyCanonicalRadiusRoute`,
+    exposing the corrected Perron-only endpoint from the canonical Perron
+    majorant plus the two direct one-sided canonical radius leaves.
+- Guardrails:
+  - No target/anti height split was introduced; both one-sided canonical
+    radius leaves are still quantified over the same given `T, ε` and then
+    recombined through the existing same-height max route.
+  - No use of `tower_cap_unbounded_with_eps` on a height-dependent chosen
+    radius.
+  - No new route uses `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No arbitrary-target Kronecker or constant-1 Perron sqrt-error shortcut was
+    introduced.
+- Failed route guardrails:
+  - Do not treat either canonical one-sided radius leaf as a Kronecker proof;
+    each is now the exact quantitative radius-growth atom still needed.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, `git diff --check`, or other check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove/source `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp`.
+  - Prove/source `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp`.
+  - Prove/source `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp`.
