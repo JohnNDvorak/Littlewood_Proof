@@ -1565,3 +1565,49 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   local scalar series expansion of the filled quotient
   `sin(pi*x - 2*pi*x^2) / sin(2*pi*x)` at `x = 0` and showing the cubic
   coefficient is `-pi^2 / 6`.
+
+### 2026-04-29 Round 32: filled local series reduced to punctured quotient series
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalScalarHasSumExpansionProp`.
+- Banked inputs:
+  - Round 31 exposed the local scalar `HasSum` expansion as the source below
+    `StandardGabckeQuarterLocalScalarTaylorSeriesProp`.
+  - The filled local quotient differs from the explicit sine quotient only at
+    the removable points `0` and `1/2`; near `0`, the second filled point is
+    eventually absent.
+- Proof facts banked:
+  - Added `StandardGabckeQuarterLocalPuncturedSineQuotientExpansionProp`,
+    requiring coefficients `a : ℕ → ℝ`, exact values
+    `a 0 = 1 / 2` and `a 3 = -Real.pi ^ 2 / 6`, and a punctured-neighborhood
+    expansion of the explicit quotient
+    `sin(pi*w - 2*pi*w^2) / sin(2*pi*w)`.
+  - Proved
+    `standardGabckeQuarterLocalScalarHasSumExpansionProp_of_puncturedSineQuotient`,
+    using `eventually_nhdsWithin_iff`, `eventually_ne_nhds`, and
+    `HasSum.hasSum_at_zero` to supply the filled value at `0` and avoid the
+    remote filled point `1/2`.
+- Failed routes:
+  - I did not define the removable derivative candidate by the raw third
+    derivative.
+  - I did not assume global regularity of the raw quotient at denominator-zero
+    points.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, provider shortcuts, or weaken the live
+    coefficient target.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - `git diff --check`: passed.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock`.
+  - One intermediate focused build failed because the unfolded half value
+    normalized as `2⁻¹`; an explicit `change`/`rw [if_neg ...]` repaired the
+    proof and the focused build passed.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalPuncturedSineQuotientExpansionProp`, the
+  punctured-neighborhood scalar series expansion of
+  `sin(pi*w - 2*pi*w^2) / sin(2*pi*w)` at `w = 0`, with coefficients
+  `a 0 = 1/2` and `a 3 = -pi^2 / 6`.

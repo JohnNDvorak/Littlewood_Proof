@@ -855,6 +855,48 @@ def StandardGabckeQuarterLocalScalarHasSumExpansionProp : Prop :=
       HasSum (fun n : ℕ => w ^ n * a n) (standardGabckeQuarterLocalPsi w)) ∧
       a 3 = -Real.pi ^ 2 / 6
 
+/-- Punctured-neighborhood sine-quotient source for the local scalar
+expansion. This is the exact analytic atom below the filled local quotient:
+away from the removable point `0`, expand the explicit sine quotient and
+record the constant and cubic coefficients. -/
+def StandardGabckeQuarterLocalPuncturedSineQuotientExpansionProp : Prop :=
+  ∃ a : ℕ → ℝ,
+    a 0 = 1 / 2 ∧
+      a 3 = -Real.pi ^ 2 / 6 ∧
+      ∀ᶠ w in 𝓝[≠] (0 : ℝ),
+        HasSum (fun n : ℕ => w ^ n * a n)
+          (Real.sin (Real.pi * w - 2 * Real.pi * w ^ 2) /
+            Real.sin (2 * Real.pi * w))
+
+/-- The punctured sine-quotient expansion plus the removable value at `0`
+gives the filled local scalar expansion. The second filled point `1/2` is
+outside a sufficiently small neighborhood of `0`. -/
+theorem standardGabckeQuarterLocalScalarHasSumExpansionProp_of_puncturedSineQuotient
+    (h_series : StandardGabckeQuarterLocalPuncturedSineQuotientExpansionProp) :
+    StandardGabckeQuarterLocalScalarHasSumExpansionProp := by
+  rcases h_series with ⟨a, ha0, ha3, hpunct⟩
+  refine ⟨a, ?_, ha3⟩
+  rw [eventually_nhdsWithin_iff] at hpunct
+  filter_upwards [hpunct, eventually_ne_nhds (by norm_num :
+      (0 : ℝ) ≠ (1 / 2 : ℝ))] with w hquot hw_half
+  by_cases hw0 : w = 0
+  · subst w
+    have hzero :
+        HasSum (fun n : ℕ => (0 : ℝ) ^ n * a n) (a 0) := by
+      simpa [smul_eq_mul] using
+        (HasSum.hasSum_at_zero (𝕜 := ℝ) (E := ℝ) a)
+    simpa [standardGabckeQuarterLocalPsi, ha0] using hzero
+  · have hw_fill : ¬(w = 0 ∨ w = (1 / 2 : ℝ)) := by
+      exact not_or.mpr ⟨hw0, hw_half⟩
+    change HasSum (fun n : ℕ => w ^ n * a n)
+      (if w = 0 ∨ w = (1 / 2 : ℝ) then
+        1 / 2
+      else
+        Real.sin (Real.pi * w - 2 * Real.pi * w ^ 2) /
+          Real.sin (2 * Real.pi * w))
+    rw [if_neg hw_fill]
+    exact hquot hw0
+
 /-- A scalar local `HasSum` expansion is exactly the one-dimensional
 `ofScalars` power-series source required by the scalar Taylor atom. -/
 theorem standardGabckeQuarterLocalScalarTaylorSeriesProp_of_hasSumExpansion
