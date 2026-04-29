@@ -3596,6 +3596,44 @@ class TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp
         ≤ Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
 
+/-- Target-side selected-radius residual for the canonical zeta compatibility
+proof.
+
+This is smaller than `TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`:
+it only budgets the exact compatibility proof supplied by
+`TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`.  The general
+one-sided class then follows by proof irrelevance of compatibility proofs. -/
+def TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] : Prop :=
+  ∀ (T ε : ℝ)
+    (hT4 : 4 ≤ T)
+    (hεpos : 0 < ε)
+    (hεlt : ε < 1),
+    finiteSetRelationCompatibleKroneckerRadius
+        (finite_zeros_le T).toFinset ε Complex.arg hεpos
+        (TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+          T ε hT4 hεpos) + 1
+      ≤ Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- The target-side canonical selected-radius residual supplies the current
+target selected-radius budget class. -/
+theorem targetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_canonicalResidual
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    (h :
+      TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual) :
+    TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt hTargetCompat
+    have hCanon := h T ε hT4 hεpos hεlt
+    have hEq :
+        hTargetCompat =
+          TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+            T ε hT4 hεpos := Subsingleton.elim _ _
+    simpa [hEq] using hCanon
+
 /-- Anti-target-side budget domination for the actual finite-set Kronecker
 radius chosen from the existing relation-compatible finite-dimensional
 Kronecker source. -/
