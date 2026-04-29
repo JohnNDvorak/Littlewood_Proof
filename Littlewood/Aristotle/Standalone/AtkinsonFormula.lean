@@ -1462,6 +1462,16 @@ private lemma atkinsonEndpointGapCorrectedModelLogCore_eq_shift_plus_endpoint
   norm_num
   ring
 
+private lemma atkinsonEndpointGapCorrectedModelShiftLogPart_eq_phase (n j : ℕ) :
+    atkinsonEndpointGapCorrectedModelShiftLogPart n j =
+      (2 * (((n + j : ℕ) : ℝ)) + 3) *
+        atkinsonShiftedRelativePhase (n + j) j - 2 * (j : ℝ) := by
+  rw [atkinsonShiftedRelativePhase_eq_sub_logs (n + j) j]
+  have hsub : n + j - j = n := by omega
+  unfold atkinsonEndpointGapCorrectedModelShiftLogPart
+  simp [hsub]
+  ring
+
 private lemma atkinsonHardyStartThetaModel_eq_expanded (m : ℕ) :
     atkinsonHardyStartThetaModel m =
       Real.pi * ((((m : ℕ) : ℝ) + 1) ^ 2) *
@@ -21048,6 +21058,83 @@ private theorem atkinson_logCore_bound_of_shift_and_endpoint_log_bounds
     _ = (C_shift + C_endpoint) *
           ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
             ring
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+/-- The anchor-drift part of the elementary log core has the desired
+fixed-shift `j/(n+j+1)` scale.  It follows directly from the standard
+`log(1+x)` upper/lower bounds already packaged as shifted relative phase
+estimates. -/
+private theorem atkinson_shiftLogPart_bound :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_shift > 0, ∃ N_shift : ℕ, ∀ n : ℕ, N_shift ≤ n →
+        |atkinsonEndpointGapCorrectedModelShiftLogPart n j|
+          ≤ C_shift * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+  intro j hj
+  refine ⟨(2 * (j : ℝ) + 1) * ((j : ℝ) + 1), by positivity, 0, ?_⟩
+  intro n _hn
+  have hjk : j ≤ n + j := by omega
+  have hk_pos : 0 < (((n + j : ℕ) : ℝ) + 1) := by positivity
+  have hn_pos : 0 < ((n : ℝ) + 1) := by positivity
+  have hj_nonneg_real : (0 : ℝ) ≤ (j : ℝ) := by exact_mod_cast Nat.zero_le j
+  have hn_nonneg_real : (0 : ℝ) ≤ (n : ℝ) := by exact_mod_cast Nat.zero_le n
+  have hphase_lower := atkinsonShiftedRelativePhase_lower (n + j) j hj hjk
+  have hphase_upper := atkinsonShiftedRelativePhase_upper (n + j) j hj hjk
+  have htwo_le_lower :
+      2 * (j : ℝ) ≤
+        (2 * (((n + j : ℕ) : ℝ)) + 3) *
+          ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+    field_simp [hk_pos.ne']
+    ring_nf
+    nlinarith [hj_nonneg_real]
+  have hphase_nonneg_part :
+      0 ≤ atkinsonEndpointGapCorrectedModelShiftLogPart n j := by
+    rw [atkinsonEndpointGapCorrectedModelShiftLogPart_eq_phase]
+    have hmul_lower :
+        (2 * (((n + j : ℕ) : ℝ)) + 3) *
+            ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))
+          ≤ (2 * (((n + j : ℕ) : ℝ)) + 3) *
+              atkinsonShiftedRelativePhase (n + j) j := by
+      exact mul_le_mul_of_nonneg_left hphase_lower (by positivity)
+    nlinarith
+  have hraw_upper :
+      atkinsonEndpointGapCorrectedModelShiftLogPart n j
+        ≤ (j : ℝ) * (2 * (j : ℝ) + 1) / ((n : ℝ) + 1) := by
+    rw [atkinsonEndpointGapCorrectedModelShiftLogPart_eq_phase]
+    have hsub : n + j - j = n := by omega
+    have hmul_upper :
+        (2 * (((n + j : ℕ) : ℝ)) + 3) *
+            atkinsonShiftedRelativePhase (n + j) j
+          ≤ (2 * (((n + j : ℕ) : ℝ)) + 3) *
+              ((j : ℝ) / ((n : ℝ) + 1)) := by
+      simpa [hsub] using
+        mul_le_mul_of_nonneg_left hphase_upper (by positivity :
+          0 ≤ 2 * (((n + j : ℕ) : ℝ)) + 3)
+    calc
+      (2 * (((n + j : ℕ) : ℝ)) + 3) *
+            atkinsonShiftedRelativePhase (n + j) j - 2 * (j : ℝ)
+          ≤ (2 * (((n + j : ℕ) : ℝ)) + 3) *
+              ((j : ℝ) / ((n : ℝ) + 1)) - 2 * (j : ℝ) := by
+            linarith
+      _ = (j : ℝ) * (2 * (j : ℝ) + 1) / ((n : ℝ) + 1) := by
+            field_simp [hn_pos.ne']
+            rw [Nat.cast_add]
+            ring
+  have hscale :
+      (j : ℝ) * (2 * (j : ℝ) + 1) / ((n : ℝ) + 1)
+        ≤ ((2 * (j : ℝ) + 1) * ((j : ℝ) + 1)) *
+            ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+    rw [Nat.cast_add]
+    field_simp [hn_pos.ne', hk_pos.ne']
+    ring_nf
+    nlinarith [hn_nonneg_real, hj_nonneg_real]
+  calc
+    |atkinsonEndpointGapCorrectedModelShiftLogPart n j|
+        = atkinsonEndpointGapCorrectedModelShiftLogPart n j :=
+            abs_of_nonneg hphase_nonneg_part
+    _ ≤ (j : ℝ) * (2 * (j : ℝ) + 1) / ((n : ℝ) + 1) := hraw_upper
+    _ ≤ ((2 * (j : ℝ) + 1) * ((j : ℝ) + 1)) *
+          ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := hscale
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
   [AtkinsonLargeShiftPrefixBoundHyp] in

@@ -1961,3 +1961,42 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   difference estimate, Hardy-start theta-model asymptotic at `(m+1)^-2`,
   Jacobian-integral bound at `1/relativeWeight`, and the shifted
   stationary-phase target remainder.
+
+### 2026-04-29 Round 41 Anchor-Drift Log Atom Closed
+
+- Classification: `VALIDATED_LEAF_CLOSED`.
+- Exact theorem attacked:
+  fixed-shift anchor-drift estimate
+  `|atkinsonEndpointGapCorrectedModelShiftLogPart n j|`
+  `≤ C_shift * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))`.
+- Facts banked:
+  proved the exact phase rewrite
+  `atkinsonEndpointGapCorrectedModelShiftLogPart_eq_phase` and the closed
+  bound `atkinson_shiftLogPart_bound`. The proof uses only the existing
+  shifted relative phase lower/upper estimates
+  `atkinsonShiftedRelativePhase_lower` and
+  `atkinsonShiftedRelativePhase_upper`; it gives `N_shift = 0` and constant
+  `(2 * (j : ℝ) + 1) * ((j : ℝ) + 1)`.
+- Smallest next theorem:
+  prove the one-step endpoint finite-difference estimate
+  `∀ j ≥ 1, ∃ C_endpoint > 0, ∃ N_endpoint, ∀ n ≥ N_endpoint,`
+  `|atkinsonEndpointGapCorrectedModelEndpointLogPart n j|`
+  `≤ C_endpoint * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))`.
+  This should then discharge the log-core atom through
+  `atkinson_logCore_bound_of_shift_and_endpoint_log_bounds`.
+- Failed routes / guardrails:
+  did not revive the raw uncorrected phase-error route or replace the endpoint
+  finite-difference atom by a diffuse absolute bound. Did not use direct Abel,
+  phase-weight division, circular provider assumptions, broad analytic axioms,
+  sorries, or statement weakening.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  one-step endpoint log finite-difference estimate, Hardy-start theta-model
+  asymptotic at `(m+1)^-2`, Jacobian-integral bound at `1/relativeWeight`, and
+  the shifted stationary-phase target remainder.
