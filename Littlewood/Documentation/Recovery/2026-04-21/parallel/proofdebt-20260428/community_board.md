@@ -1826,3 +1826,42 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Pi/Phase: prove `PerronThresholdTowerExpHalfBudgetGrowthHyp` and
     `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`.
   - RS/Gabcke: prove `StandardGabckeQuarterLocalScalarTaylorSeriesProp`.
+
+## Overnight 2026-04-29 Forty-Fourth Pass Status
+
+- Perron/B5a lane is integrated through `3bd2db2`:
+  - `1766508` recorded the validated linear-window surface status.
+  - `3bd2db2` reduced the residue route to a concrete contour-remainder
+    surface.
+  - Validation reported by the lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron atom: prove the contour-remainder identity for
+    `perronVerticalIntegral`, or prove the bounded-height estimate for the
+    concrete `contourRemainderRe`. The legacy absorption obligation remains
+    separate.
+- Pi/Phase lane is integrated through `66317c5`:
+  - `0843ac3` showed the growth leaves are equivalent in substance to the
+    canonical residual inequalities.
+  - `66317c5` added the budgeted-radius route and packages the corrected
+    Perron-only route through a new relation-compatible radius surface.
+  - Validation reported by the lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
+  - Current Pi atom:
+    `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`, with
+    the Perron-side residual still available as the alternate route.
+- RS/Gabcke lane is integrated through `735fa0f`:
+  - The scalar Taylor-series atom is reduced to
+    `StandardGabckeQuarterLocalScalarHasSumExpansionProp`.
+  - Validation reported by the lane:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
+  - Current RS atom: prove the local HasSum expansion of
+    `sin(pi*x - 2*pi*x^2) / sin(2*pi*x)` at `x = 0`.
+- Atkinson lane is integrated through `c55ab20`:
+  - The endpoint boundary term is reduced to
+    `atkinsonNormalizedShiftedCorrectionCarrierEndpointGap`.
+  - Validation reported by the lane:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Current Atkinson atoms: endpoint-gap bound at
+    `relativePhase / relativeWeight`, Jacobian-integral bound at
+    `1 / relativeWeight`, and the shifted stationary-phase target remainder.
