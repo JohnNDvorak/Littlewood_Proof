@@ -1745,3 +1745,41 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
 - Smallest next theorem:
   - Prove a direct-error phase-coupling bridge consuming `TargetTowerExactSeedWithFixedHeightPerronError` and `AntiTargetTowerExactSeedWithFixedHeightPerronError`, or prove the selected-threshold residual with a genuine non-`Classical.choose` growth theorem.
+
+### 2026-04-29 Round 29: Fixed-Height Error Route Bridge
+
+- Classification: `CONDITIONAL_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - Fixed-height Perron-error seed route below the corrected phase-coupling provider endpoint.
+- Facts banked:
+  - Added `targetTowerArgApproxFamily_of_exactSeedWithFixedHeightPerronError`.
+  - Added `antiTargetTowerArgApproxFamily_of_exactSeedWithFixedHeightPerronError`.
+  - Added `correctedPhaseCoupling_of_exactSeedWithFixedHeightPerronError`.
+  - Added `rhPiWitnessData_of_exactSeedWithFixedHeightPerronError`.
+  - Added `rhPiWitnessData_of_fixedHeightPerronErrorPhaseFit_hyp`.
+  - Added route-file packaging endpoints `correctedPhaseCoupling_of_correctedPerronOnlyFixedHeightErrorRoute` and `rhPiWitnessData_of_correctedPerronOnlyFixedHeightErrorRoute`.
+- What changed:
+  - `TargetTowerExactSeedWithFixedHeightPerronError` and `AntiTargetTowerExactSeedWithFixedHeightPerronError` now feed full target/anti arg-approx families by taking `x = Real.exp t0`; the carried fixed-height Perron error estimate supplies the exact field that was previously recovered through `perronThreshold_spec`.
+  - The corrected phase-coupling and `RhPiWitnessData` endpoints can now be reached from `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp` without constructing `TargetTowerExactSeedAbovePerronThresholdPerronHyp` or `AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp`.
+- Remaining goal shape:
+  - The analytic/cofinality payload is now `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp`: for each `hRH`, lower bound `X`, and target phase, choose `x, T, ε` with the actual fixed-height Perron error bound, phase approximation, and tower cap at the same selected height.
+  - The old selected-threshold residual remains available but is no longer the preferred route.
+- Failed/circular route:
+  - Did not prove or assume cross-height monotonicity/minimality of `perronThreshold`.
+  - Did not add provider instances; all new bridges are explicit theorem endpoints.
+  - Did not weaken target statements or route through the false truncated-π surface.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh` in the new route.
+  - No arbitrary-target Kronecker revival, independent target/anti heights, constant-1 Perron sqrt-error shortcut, axioms/sorries, reverse-comparison instance, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build, public import probe, `git diff --check`, or other validation command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove or reduce `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp`, likely by combining fixed-height Perron eventuality, relation-compatible finite-zero phase approximation, and same-height tower cofinality around the chosen `x` rather than a `perronThreshold` comparison.

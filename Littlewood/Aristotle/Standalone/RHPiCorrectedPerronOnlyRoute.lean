@@ -161,6 +161,17 @@ theorem correctedPhaseCoupling_of_correctedPerronOnlyHalfBudgetRoute
   letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
   exact correctedPhaseCoupling_of_exactSeedAboveThreshold_perron_hyp
 
+/-- Fixed-height Perron-error phase fit supplies the corrected phase-coupling
+payloads without using the Perron-threshold exact-seed classes. -/
+theorem correctedPhaseCoupling_of_correctedPerronOnlyFixedHeightErrorRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp] :
+    TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  exact correctedPhaseCoupling_of_exactSeedWithFixedHeightPerronError
+    target_exact_seed_withFixedHeightPerronError_from_phase_fit
+    antiTarget_exact_seed_withFixedHeightPerronError_from_phase_fit
+
 /-- Corrected Perron-only route to the RH-side `pi` witness data. -/
 theorem rhPiWitnessData_of_correctedPerronOnlyRoute
     [PerronSqrtErrorEventuallyAtHeightHyp]
@@ -172,6 +183,14 @@ theorem rhPiWitnessData_of_correctedPerronOnlyRoute
   letI : TargetTowerExactSeedAbovePerronThresholdPerronHyp := hTarget
   letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
   exact rhPiWitnessData_of_exactSeedAboveThreshold_perron_corrected_hyp
+
+/-- Fixed-height Perron-error phase fit supplies the corrected RH-`pi` witness
+data without the opaque cross-height `perronThreshold` comparison. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyFixedHeightErrorRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp] :
+    RhPiWitnessData := by
+  exact rhPiWitnessData_of_fixedHeightPerronErrorPhaseFit_hyp
 
 /-- Half-budget corrected route to the RH-side `pi` witness data. -/
 theorem rhPiWitnessData_of_correctedPerronOnlyHalfBudgetRoute

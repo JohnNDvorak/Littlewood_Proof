@@ -2235,6 +2235,78 @@ theorem antiTarget_exact_seed_withFixedHeightPerronError_from_phase_fit
     exact ⟨m, by simpa using hm⟩
   · rwa [Real.exp_log hx_pos]
 
+/-- A positive fixed-height Perron-error seed is already a full target
+arg-approximation family.
+
+This is the key bypass around the opaque threshold comparison: the payload
+contains the actual Perron error estimate at `x = exp t0`, so no
+`perronThreshold` inequality is needed. -/
+theorem targetTowerArgApproxFamily_of_exactSeedWithFixedHeightPerronError
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hSeed : TargetTowerExactSeedWithFixedHeightPerronError) :
+    Aristotle.Standalone.RHPiTargetPhaseArgReduction.TargetTowerArgApproxFamily := by
+  intro hRH X
+  rcases hSeed hRH X with
+    ⟨t0, T, ε, hT4, hεpos, hεlt, hX, hx1, herror, hphase, hUpper⟩
+  refine ⟨Real.exp t0, hX, T, hT4, hx1, herror, ε, hεpos, hεlt, ?_, hUpper⟩
+  intro ρ hρ
+  rcases hphase ρ hρ with ⟨m, hm⟩
+  exact ⟨m, by simpa [Real.log_exp] using hm⟩
+
+/-- An anti-target fixed-height Perron-error seed is already a full anti-target
+arg-approximation family. -/
+theorem antiTargetTowerArgApproxFamily_of_exactSeedWithFixedHeightPerronError
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hSeed : AntiTargetTowerExactSeedWithFixedHeightPerronError) :
+    Aristotle.Standalone.RHPiTargetPhaseArgReduction.AntiTargetTowerArgApproxFamily := by
+  intro hRH X
+  rcases hSeed hRH X with
+    ⟨t0, T, ε, hT4, hεpos, hεlt, hX, hx1, herror, hphase, hUpper⟩
+  refine ⟨Real.exp t0, hX, T, hT4, hx1, herror, ε, hεpos, hεlt, ?_, hUpper⟩
+  intro ρ hρ
+  rcases hphase ρ hρ with ⟨m, hm⟩
+  exact ⟨m, by simpa [Real.log_exp] using hm⟩
+
+/-- Fixed-height Perron-error seed payloads supply the corrected phase-coupling
+classes without routing through the Perron-threshold exact-seed classes. -/
+theorem correctedPhaseCoupling_of_exactSeedWithFixedHeightPerronError
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hTarget : TargetTowerExactSeedWithFixedHeightPerronError)
+    (hAntiTarget : AntiTargetTowerExactSeedWithFixedHeightPerronError) :
+    Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  exact
+    ⟨Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.targetPhaseCouplingFamilyHyp_corrected_of_argApprox
+        (targetTowerArgApproxFamily_of_exactSeedWithFixedHeightPerronError hTarget),
+      Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.antiTargetPhaseCouplingFamilyHyp_corrected_of_argApprox
+        (antiTargetTowerArgApproxFamily_of_exactSeedWithFixedHeightPerronError hAntiTarget)⟩
+
+/-- Fixed-height Perron-error seed payloads imply the corrected RH-`pi` witness
+endpoint directly. -/
+theorem rhPiWitnessData_of_exactSeedWithFixedHeightPerronError
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hTarget : TargetTowerExactSeedWithFixedHeightPerronError)
+    (hAntiTarget : AntiTargetTowerExactSeedWithFixedHeightPerronError) :
+    Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData := by
+  rcases correctedPhaseCoupling_of_exactSeedWithFixedHeightPerronError
+      hTarget hAntiTarget with
+    ⟨hTargetPhase, hAntiTargetPhase⟩
+  letI : Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected :=
+    hTargetPhase
+  letI : Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected :=
+    hAntiTargetPhase
+  exact Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.rhPiWitnessData_of_correctedHyp
+
+/-- Direct fixed-height Perron-error phase fit is enough for the corrected
+RH-`pi` witness endpoint. -/
+theorem rhPiWitnessData_of_fixedHeightPerronErrorPhaseFit_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp] :
+    Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData := by
+  exact rhPiWitnessData_of_exactSeedWithFixedHeightPerronError
+    target_exact_seed_withFixedHeightPerronError_from_phase_fit
+    antiTarget_exact_seed_withFixedHeightPerronError_from_phase_fit
+
 /-- Same-height Perron-threshold/tower window boundary.
 
 For each RH branch and lower bound `X`, this provides one zero cutoff `T`, one
