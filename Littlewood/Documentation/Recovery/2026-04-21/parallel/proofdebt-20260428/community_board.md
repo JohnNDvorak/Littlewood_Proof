@@ -3097,3 +3097,15 @@ Timestamp: 2026-04-28 22:56 CDT.
     (`7903 jobs`).
   - Current Atkinson atoms: period-correction zero, standard multiplier Big-O,
     or a direct standard complex principal-log Gamma/Stirling Big-O theorem.
+
+## Overnight 2026-04-29 One-Hundred-Twenty-Eighth Pass Status
+
+- Coordinator recovery branch is advanced locally through `6eefac9`.
+- Pi/Phase lane is integrated through `10db487`:
+  - The fixed half-budget threshold comparison is reduced to a least valid
+    threshold residual for the raw Perron chooser.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
+  - Current Pi atom:
+    `PerronSqrtErrorRawChoiceFixedHalfBudgetLeastValidThresholdResidual`.
