@@ -1721,16 +1721,18 @@ theorem perronKernelWeightedSeparatedPuncturedBoundaryError_le_davenportEnvelope
 on the large side of the sharp cutoff.  The finite Perron sum only ranges over
 `n <= floor x`, so no `n > x` branch is present here. -/
 theorem perronKernelSeparatedPuncturedBoundarySet_mem_large_side
-    (x T : ℝ) (hx : 2 ≤ x) {n : ℕ}
+    (x T : ℝ) (hx : 2 ≤ x) (hT_lo : 2 ≤ T) {n : ℕ}
     (hn : n ∈ perronKernelSeparatedPuncturedBoundarySet x T) :
     1 ≤ n ∧ (n : ℝ) < x ∧ 1 < x / (n : ℝ) := by
   have hx_nonneg : 0 ≤ x := by linarith
+  have hT_pos : 0 < T := by linarith
   have hn_unfold := hn
   dsimp [perronKernelSeparatedPuncturedBoundarySet] at hn_unfold
   have hnot_unit : ¬ |x - (n : ℝ)| ≤ 1 := (Finset.mem_filter.mp hn_unfold).2
   have hsp := (Finset.mem_filter.mp hn_unfold).1
   have hne : (n : ℝ) ≠ x := (Finset.mem_filter.mp hsp).2
   have hboundary := (Finset.mem_filter.mp hsp).1
+  have hboundary_dist : |x - (n : ℝ)| ≤ x / T := (Finset.mem_filter.mp hboundary).2
   have hrange : n ∈ Finset.range (Nat.floor x + 1) := (Finset.mem_filter.mp hboundary).1
   have hn_le_floor : n ≤ Nat.floor x := Nat.lt_succ_iff.mp (Finset.mem_range.mp hrange)
   have hn_le_x : (n : ℝ) ≤ x :=
@@ -1739,14 +1741,14 @@ theorem perronKernelSeparatedPuncturedBoundarySet_mem_large_side
     by_contra hn_nonpos
     have hn_zero : (n : ℝ) = 0 :=
       le_antisymm (le_of_not_gt hn_nonpos) (Nat.cast_nonneg n)
-    have hunit : |x - (n : ℝ)| ≤ 1 := by
-      rw [hn_zero, sub_zero, abs_of_nonneg hx_nonneg]
-      linarith
-    exact hnot_unit hunit
+    have hx_le_div : x ≤ x / T := by
+      simpa [hn_zero, sub_zero, abs_of_nonneg hx_nonneg] using hboundary_dist
+    have hx_mul_le : x * T ≤ x := (le_div_iff₀ hT_pos).mp hx_le_div
+    nlinarith [hx, hT_lo]
   have hn_pos : 1 ≤ n := Nat.succ_le_of_lt (Nat.cast_pos.mp hn_pos_real)
   have hn_lt_x : (n : ℝ) < x := lt_of_le_of_ne hn_le_x hne
   have hy_gt_one : 1 < x / (n : ℝ) := by
-    rw [one_lt_div_iff₀ hn_pos_real]
+    rw [one_lt_div hn_pos_real]
     simpa using hn_lt_x
   exact ⟨hn_pos, hn_lt_x, hy_gt_one⟩
 
@@ -1761,7 +1763,7 @@ theorem small_T_separated_davenport_kernel_bound :
             perronKernelSeparatedDavenportEnvelopeTerm x T n := by
   intro x T hx hT_lo _hT_hi n hn
   have hT_pos : 0 < T := by linarith
-  rcases perronKernelSeparatedPuncturedBoundarySet_mem_large_side x T hx hn with
+  rcases perronKernelSeparatedPuncturedBoundarySet_mem_large_side x T hx hT_lo hn with
     ⟨_hn_pos, _hn_lt_x, hy_gt_one⟩
   have hc_pos := c_param_pos x hx
   calc |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
