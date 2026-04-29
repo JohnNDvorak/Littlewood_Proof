@@ -1921,3 +1921,43 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   elementary log-core model residual at `j/(n+j+1)`, Hardy-start theta-model
   asymptotic at `(m+1)^-2`, Jacobian-integral bound at `1/relativeWeight`, and
   the shifted stationary-phase target remainder.
+
+### 2026-04-29 Round 40 Log-Core Two-Atom Split
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  elementary log-core model residual
+  `|atkinsonEndpointGapCorrectedModelLogCore n j|`
+  `≤ C_log * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))`.
+- Facts banked:
+  added the two smaller real-log atoms
+  `atkinsonEndpointGapCorrectedModelShiftLogPart` and
+  `atkinsonEndpointGapCorrectedModelEndpointLogPart`. Proved the exact split
+  `atkinsonEndpointGapCorrectedModelLogCore_eq_shift_plus_endpoint` and the
+  packaging theorem `atkinson_logCore_bound_of_shift_and_endpoint_log_bounds`.
+- Smallest next theorems:
+  prove the fixed-shift anchor-drift estimate
+  `∀ j ≥ 1, ∃ C_shift > 0, ∃ N_shift, ∀ n ≥ N_shift,`
+  `|atkinsonEndpointGapCorrectedModelShiftLogPart n j|`
+  `≤ C_shift * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))`, and prove the one-step
+  endpoint finite-difference estimate
+  `∀ j ≥ 1, ∃ C_endpoint > 0, ∃ N_endpoint, ∀ n ≥ N_endpoint,`
+  `|atkinsonEndpointGapCorrectedModelEndpointLogPart n j|`
+  `≤ C_endpoint * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))`.
+- Failed routes / guardrails:
+  did not revive the raw uncorrected phase-error route or replace the needed
+  fixed-shift log estimates by a diffuse absolute bound. Did not use direct
+  Abel, phase-weight division, circular provider assumptions, broad analytic
+  axioms, sorries, or statement weakening.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  fixed-shift anchor-drift log estimate, one-step endpoint log finite
+  difference estimate, Hardy-start theta-model asymptotic at `(m+1)^-2`,
+  Jacobian-integral bound at `1/relativeWeight`, and the shifted
+  stationary-phase target remainder.

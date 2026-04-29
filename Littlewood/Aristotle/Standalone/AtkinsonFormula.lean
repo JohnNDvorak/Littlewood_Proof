@@ -1434,6 +1434,34 @@ private noncomputable def atkinsonEndpointGapCorrectedModelLogCore (n j : ℕ) :
     (b ^ 2 - a ^ 2) * Real.log ((n : ℝ) + 1) -
     ((2 * j + 1 : ℕ) : ℝ)
 
+/-- The part of the elementary model log core comparing the shifted endpoint
+`a = n+j+1` with the original mode anchor `n+1`. -/
+private noncomputable def atkinsonEndpointGapCorrectedModelShiftLogPart (n j : ℕ) : ℝ :=
+  let a : ℝ := ((n + j : ℕ) : ℝ) + 1
+  let b : ℝ := ((n + j + 1 : ℕ) : ℝ) + 1
+  (1 / 2 : ℝ) * (b ^ 2 - a ^ 2) * Real.log (a ^ 2) -
+    (b ^ 2 - a ^ 2) * Real.log ((n : ℝ) + 1) - 2 * (j : ℝ)
+
+/-- The one-step endpoint part of the elementary model log core.  This is the
+finite-difference correction between `a` and `a+1`, after subtracting its
+linear term. -/
+private noncomputable def atkinsonEndpointGapCorrectedModelEndpointLogPart (n j : ℕ) : ℝ :=
+  let a : ℝ := ((n + j : ℕ) : ℝ) + 1
+  let b : ℝ := ((n + j + 1 : ℕ) : ℝ) + 1
+  (1 / 2 : ℝ) * b ^ 2 * (Real.log (b ^ 2) - Real.log (a ^ 2)) -
+    (1 / 2 : ℝ) * (b ^ 2 - a ^ 2) - 1
+
+private lemma atkinsonEndpointGapCorrectedModelLogCore_eq_shift_plus_endpoint
+    (n j : ℕ) :
+    atkinsonEndpointGapCorrectedModelLogCore n j =
+      atkinsonEndpointGapCorrectedModelShiftLogPart n j +
+        atkinsonEndpointGapCorrectedModelEndpointLogPart n j := by
+  unfold atkinsonEndpointGapCorrectedModelLogCore
+  unfold atkinsonEndpointGapCorrectedModelShiftLogPart
+  unfold atkinsonEndpointGapCorrectedModelEndpointLogPart
+  norm_num
+  ring
+
 private lemma atkinsonHardyStartThetaModel_eq_expanded (m : ℕ) :
     atkinsonHardyStartThetaModel m =
       Real.pi * ((((m : ℕ) : ℝ) + 1) ^ 2) *
@@ -20974,6 +21002,50 @@ private theorem atkinson_modelResidual_bound_of_logCore_bound
           (C_log * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))) := by
             exact mul_le_mul_of_nonneg_left hcore (by positivity)
     _ = (2 * Real.pi * C_log) *
+          ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+            ring
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+/-- The elementary log-core atom reduces to two smaller fixed-shift real-log
+atoms: the anchor drift from `n+1` to `n+j+1`, and the endpoint one-step
+finite-difference correction. -/
+private theorem atkinson_logCore_bound_of_shift_and_endpoint_log_bounds
+    (hshift :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ C_shift > 0, ∃ N_shift : ℕ, ∀ n : ℕ, N_shift ≤ n →
+          |atkinsonEndpointGapCorrectedModelShiftLogPart n j|
+            ≤ C_shift * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)))
+    (hendpoint :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ C_endpoint > 0, ∃ N_endpoint : ℕ, ∀ n : ℕ, N_endpoint ≤ n →
+          |atkinsonEndpointGapCorrectedModelEndpointLogPart n j|
+            ≤ C_endpoint * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_log > 0, ∃ N_log : ℕ, ∀ n : ℕ, N_log ≤ n →
+        |atkinsonEndpointGapCorrectedModelLogCore n j|
+          ≤ C_log * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+  intro j hj
+  obtain ⟨C_shift, hC_shift, N_shift, hshift'⟩ := hshift j hj
+  obtain ⟨C_endpoint, hC_endpoint, N_endpoint, hendpoint'⟩ := hendpoint j hj
+  refine ⟨C_shift + C_endpoint, by positivity, max N_shift N_endpoint, ?_⟩
+  intro n hn
+  have hn_shift : N_shift ≤ n := le_trans (Nat.le_max_left _ _) hn
+  have hn_endpoint : N_endpoint ≤ n := le_trans (Nat.le_max_right _ _) hn
+  have hshift_bound := hshift' n hn_shift
+  have hendpoint_bound := hendpoint' n hn_endpoint
+  calc
+    |atkinsonEndpointGapCorrectedModelLogCore n j|
+        = |atkinsonEndpointGapCorrectedModelShiftLogPart n j +
+            atkinsonEndpointGapCorrectedModelEndpointLogPart n j| := by
+            rw [atkinsonEndpointGapCorrectedModelLogCore_eq_shift_plus_endpoint]
+    _ ≤ |atkinsonEndpointGapCorrectedModelShiftLogPart n j| +
+          |atkinsonEndpointGapCorrectedModelEndpointLogPart n j| :=
+            abs_add_le _ _
+    _ ≤ C_shift * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) +
+          C_endpoint * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) :=
+            add_le_add hshift_bound hendpoint_bound
+    _ = (C_shift + C_endpoint) *
           ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
             ring
 
