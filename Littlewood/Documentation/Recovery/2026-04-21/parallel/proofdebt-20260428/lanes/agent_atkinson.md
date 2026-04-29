@@ -1222,3 +1222,46 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 24 Native Atoms to Correction Provider
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  packaging the current public-path atoms into the correction-prefix provider
+  without assuming `AtkinsonShiftedCorrectionPrefixBoundHyp`.
+- Facts banked:
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_j1_j2`
+  builds `AtkinsonShiftedCorrectionPrefixBoundHyp` from the shifted-interval
+  stationary-phase target remainder, the native fixed-shift correction-prefix
+  leaf for all `j ≥ 3`, and the two small-shift correction patches `j = 1, 2`.
+  The proof composes the already-validated row-prefix handoff with
+  `atkinson_shiftedCorrectionPrefixBound_of_rowIntegralPrefix_and_correction_j1_j2`.
+- Failed routes / guardrails:
+  no correction-prefix provider assumption was used. The phase-weighted
+  correction prefix remains a forbidden source for the unweighted fixed-shift
+  correction prefix because division by `atkinsonShiftedRelativePhase` loses
+  the endpoint scale. No direct Abel, zero-model, mass-coefficient,
+  Fourier-corrected target, compensated-carrier, circular provider, diffuse
+  deweighting, axioms, sorries, or statement weakening were used.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local elaboration of the long stationary-phase hypothesis in
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_j1_j2`.
+- Remaining goal shape:
+  prove the shifted-interval stationary-phase target remainder
+  `∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j -> 3 ≤ j -> 1 ≤ j ->`
+  `∀ k : ℕ, 2 * j ≤ k ->`
+  `‖(((atkinsonModeWeight (k - j) : ℝ) : ℂ) *`
+  `∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `StationaryPhaseMainMode.blockMode (k - j) p * blockJacobian (k - j) p)`
+  `- atkinsonCompleteBlockTargetK k j‖`
+  `≤ C_err * (atkinsonModeWeight k / j)`,
+  and prove the native fixed-shift correction-prefix leaf for `j ≥ 3`
+  (plus the already-isolated small correction patches if the coordinator wants
+  the provider instantiated immediately).
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

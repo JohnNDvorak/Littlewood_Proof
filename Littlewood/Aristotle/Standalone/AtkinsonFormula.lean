@@ -19813,6 +19813,43 @@ private theorem
       (atkinsonResonantShiftedCorrection_finite_patch_of_fixedShift hfixed)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Correction-prefix provider package from the current native atoms. This
+does not assume the correction-prefix provider; it builds it from the shifted
+stationary-phase row estimate, the fixed-shift correction leaf for `j ≥ 3`,
+and the two small-shift correction patches. -/
+private theorem
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_j1_j2
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hfixed :
+      ∀ j : ℕ, 3 ≤ j → 1 ≤ j →
+        ∃ C_corr > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ C_corr * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j))
+    (hcorr1 :
+      ∃ C1 > 0, ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico ((1 : ℕ) - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n (1 : ℕ)‖
+          ≤ C1 * (Real.sqrt (((m + (1 : ℕ) : ℕ) : ℝ) + 1) / ((1 : ℕ) : ℝ)))
+    (hcorr2 :
+      ∃ C2 > 0, ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico ((2 : ℕ) - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n (2 : ℕ)‖
+          ≤ C2 * (Real.sqrt (((m + (2 : ℕ) : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ))) :
+    AtkinsonShiftedCorrectionPrefixBoundHyp := by
+  exact
+    atkinson_shiftedCorrectionPrefixBound_of_rowIntegralPrefix_and_correction_j1_j2
+      (atkinson_largeShiftRowIntegralPrefix_bound_of_blockMode_stationaryPhase_and_fixedShift_correction
+        hmode hfixed)
+      hcorr1 hcorr2
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
     atkinson_large_modes_complete_resonant_packet_row_correction_sum_bound_atomic_of_shifted_correction_prefix
     [AtkinsonShiftedCorrectionPrefixBoundHyp] :
