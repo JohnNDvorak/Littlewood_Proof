@@ -597,3 +597,23 @@ Timestamp: 2026-04-28 22:56 CDT.
     atom for `3 <= j`.
   - RS/Gabcke: Hume remains assigned to
     `StandardGabckeRawPsiDenominatorZeroQuarterLatticeProp`.
+
+## Overnight 2026-04-29 Seventh Pass Status
+
+- Atkinson lane is validated and pushed through `382d32f`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Reduce Atkinson raw correction prefix to row prefix`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the large-shift correction-prefix atom is reduced to a raw
+    row-integral prefix atom, with the boundary side extracted from existing
+    boundary machinery.
+  - Hooke is redeployed to the raw row-integral prefix atom feeding
+    `atkinson_largeShiftCorrectionPrefix_bound_of_rowIntegralPrefix` and
+    `atkinson_shiftedCorrectionPrefixBound_of_rowIntegralPrefix_and_correction_j1_j2`.
+- Current live atoms:
+  - Atkinson: raw row-integral prefix atom on the correction-prefix route.
+  - Perron/B5a: singular harmonic-distance component for the scale-correct
+    Davenport envelope route.
+  - Pi/Phase: the two majorant classes for the corrected Perron-only Pi route.
+  - RS/Gabcke: `StandardGabckeRawPsiDenominatorZeroQuarterLatticeProp`.
