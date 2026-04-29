@@ -3141,3 +3141,54 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `PerronSqrtErrorRawChoiceEventuallyBelowExpHalfBudgetResidual`.
+
+### 2026-04-29 Round 64: Fixed-Half Perron Chooser Budget
+
+- Classification: `PARTIAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronSqrtErrorRawChoiceEventuallyBelowExpHalfBudgetResidual`.
+- Facts banked:
+  - Added `PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetResidual`.
+  - Added
+    `perronSqrtErrorRawChoiceFixedHalfBudgetResidual_of_rawChoiceResidual`.
+  - Added
+    `perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_rawChoiceFixedHalfResidual`.
+  - Added
+    `exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfPerronBudgetAndBudgetedRelativelyDense_hyp`.
+- What changed:
+  - Reduced the all-`ε` raw chooser budget to the narrower `ε = 1 / 2`
+    statement actually used by the canonical Perron majorant construction.
+  - Proved the fixed-half chooser budget is enough to close
+    `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`, using the
+    existing cofinal half-budget tower split.
+  - Wired the explicit budgeted finite-zero exact-seed endpoint through the
+    fixed-half residual.
+- Remaining goal shape:
+  - Prove `PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetResidual`, or
+    bypass the opaque `perronThreshold` chooser with fixed-height explicit
+    Perron-error windows.
+- Failed/circular route:
+  - Did not try to prove all-`ε` chooser domination; that is stronger than the
+    current canonical route needs.
+  - Did not use cross-height Perron-threshold monotonicity, chooser-radius
+    comparison, arbitrary-budget finite-set Kronecker, or a new provider
+    instance.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-radius route, opaque
+    finite-zero chooser equality, provider cycles, or broad provider was
+    introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation command/result:
+  - `git diff --check`
+  - Result: passed after code and ledger updates.
+  - Under the corrected singleflight lock:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetResidual`.
