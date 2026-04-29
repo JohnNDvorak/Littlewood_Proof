@@ -3577,6 +3577,46 @@ class TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp 
                 ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
                     m • (2 * Real.pi)‖ ≤ ε)
 
+/-- Target-side budget domination for the actual finite-set Kronecker radius
+chosen from the existing relation-compatible finite-dimensional Kronecker
+source. -/
+class TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp] :
+    Prop where
+  witness :
+    ∀ (T ε : ℝ)
+      (hT4 : 4 ≤ T)
+      (hεpos : 0 < ε)
+      (hεlt : ε < 1)
+      (hTargetCompat :
+        finiteSetInhomogeneousPhaseRelationCompatible
+          (finite_zeros_le T).toFinset ε Complex.arg),
+      finiteSetRelationCompatibleKroneckerRadius
+          (finite_zeros_le T).toFinset ε Complex.arg hεpos hTargetCompat + 1
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Anti-target-side budget domination for the actual finite-set Kronecker
+radius chosen from the existing relation-compatible finite-dimensional
+Kronecker source. -/
+class AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp] :
+    Prop where
+  witness :
+    ∀ (T ε : ℝ)
+      (hT4 : 4 ≤ T)
+      (hεpos : 0 < ε)
+      (hεlt : ε < 1)
+      (hAntiCompat :
+        finiteSetInhomogeneousPhaseRelationCompatible
+          (finite_zeros_le T).toFinset ε
+            (fun ρ => Complex.arg ρ + Real.pi)),
+      finiteSetRelationCompatibleKroneckerRadius
+          (finite_zeros_le T).toFinset ε
+          (fun ρ => Complex.arg ρ + Real.pi) hεpos hAntiCompat + 1
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
 /-- Budget domination for the actual finite-set Kronecker radii chosen from
 the existing relation-compatible finite-dimensional Kronecker source.
 
@@ -3608,6 +3648,21 @@ class TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp
           (fun ρ => Complex.arg ρ + Real.pi) hεpos hAntiCompat + 1
         ≤ Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- The paired selected-radius budget leaf follows from the two one-sided
+selected-radius budget leaves. -/
+theorem targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_oneSided_hyp
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp]
+    [AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp] :
+    TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt hTargetCompat hAntiCompat
+    exact
+      ⟨TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp.witness
+          T ε hT4 hεpos hεlt hTargetCompat,
+        AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp.witness
+          T ε hT4 hεpos hεlt hAntiCompat⟩
 
 /-- Paired zeta relation compatibility plus the relation-compatible
 quantitative Kronecker source supply the budgeted target/anti finite-zero
