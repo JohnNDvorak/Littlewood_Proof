@@ -1412,6 +1412,17 @@ private noncomputable def atkinsonEndpointGapCorrectedPhaseError (n j : ℕ) : �
       hardyStart (n + j) * Real.log ((n : ℝ) + 1)) -
     2 * Real.pi * ((2 * j + 1 : ℕ) : ℝ)
 
+private noncomputable def atkinsonHardyStartThetaModel (m : ℕ) : ℝ :=
+  (hardyStart m / 2) * Real.log (hardyStart m / (2 * Real.pi)) -
+    hardyStart m / 2 - Real.pi / 8
+
+private noncomputable def atkinsonEndpointGapCorrectedModelResidual (n j : ℕ) : ℝ :=
+  (atkinsonHardyStartThetaModel (n + j + 1) -
+      hardyStart (n + j + 1) * Real.log ((n : ℝ) + 1)) -
+    (atkinsonHardyStartThetaModel (n + j) -
+      hardyStart (n + j) * Real.log ((n : ℝ) + 1)) -
+    2 * Real.pi * ((2 * j + 1 : ℕ) : ℝ)
+
 private noncomputable def atkinsonNormalizedShiftedCorrectionCarrierJacobianIntegral
     (n j : ℕ) : ℂ :=
   ∫ u in (0 : ℝ)..1,
@@ -20841,6 +20852,145 @@ private theorem atkinson_correctedEndpointPhaseError_bound_of_shifted_inv_bound
         (C_res * Real.sqrt 2) *
           (atkinsonShiftedRelativePhase (n + j) j /
             atkinsonShiftedRelativeWeight (n + j) j) := by
+          ring
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+private lemma atkinson_inv_sq_le_shifted_inv_scale (n j : ℕ) (hj : 1 ≤ j) :
+    1 / ((((n + j : ℕ) : ℝ) + 1) ^ 2)
+      ≤ (j : ℝ) / (((n + j : ℕ) : ℝ) + 1) := by
+  set a : ℝ := ((n + j : ℕ) : ℝ) + 1
+  have ha_pos : 0 < a := by
+    dsimp [a]
+    positivity
+  have hone_le_a : (1 : ℝ) ≤ a := by
+    dsimp [a]
+    exact_mod_cast Nat.succ_le_succ (Nat.zero_le (n + j))
+  have h_inv_le_one : 1 / a ≤ 1 := by
+    rw [div_le_iff₀ ha_pos]
+    simpa using hone_le_a
+  have h_one_le_j : (1 : ℝ) ≤ (j : ℝ) := by exact_mod_cast hj
+  have h_inv_nonneg : 0 ≤ 1 / a := by positivity
+  calc
+    1 / ((((n + j : ℕ) : ℝ) + 1) ^ 2)
+        = 1 / a ^ 2 := by simp [a]
+    _ = (1 / a) * (1 / a) := by ring
+    _ ≤ 1 * (1 / a) := by
+          exact mul_le_mul_of_nonneg_right h_inv_le_one h_inv_nonneg
+    _ ≤ (j : ℝ) * (1 / a) := by
+          exact mul_le_mul_of_nonneg_right h_one_le_j h_inv_nonneg
+    _ = (j : ℝ) / (((n + j : ℕ) : ℝ) + 1) := by
+          simp [a]
+          ring
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+private lemma atkinson_succ_inv_sq_le_shifted_inv_scale (n j : ℕ) (hj : 1 ≤ j) :
+    1 / ((((n + j + 1 : ℕ) : ℝ) + 1) ^ 2)
+      ≤ (j : ℝ) / (((n + j : ℕ) : ℝ) + 1) := by
+  set a : ℝ := ((n + j : ℕ) : ℝ) + 1
+  set b : ℝ := ((n + j + 1 : ℕ) : ℝ) + 1
+  have ha_pos : 0 < a := by
+    dsimp [a]
+    positivity
+  have hb_pos : 0 < b := by
+    dsimp [b]
+    positivity
+  have hab : a ≤ b := by
+    dsimp [a, b]
+    norm_num
+  have hsq : a ^ 2 ≤ b ^ 2 := by
+    nlinarith
+  have hinv : 1 / b ^ 2 ≤ 1 / a ^ 2 := by
+    exact one_div_le_one_div_of_le (by positivity : 0 < a ^ 2) hsq
+  calc
+    1 / ((((n + j + 1 : ℕ) : ℝ) + 1) ^ 2)
+        = 1 / b ^ 2 := by simp [b]
+    _ ≤ 1 / a ^ 2 := hinv
+    _ = 1 / ((((n + j : ℕ) : ℝ) + 1) ^ 2) := by simp [a]
+    _ ≤ (j : ℝ) / (((n + j : ℕ) : ℝ) + 1) :=
+          atkinson_inv_sq_le_shifted_inv_scale n j hj
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+/-- The shifted-inverse corrected endpoint residual is reduced to two native
+leaves: a branch-sensitive Hardy-start theta model asymptotic and an explicit
+logarithmic model residual. The proof here only performs the phase/model
+decomposition and the `O((n+j)⁻²) ≤ O(j/(n+j+1))` scale bookkeeping. -/
+private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_model_residual
+    (htheta :
+      ∃ Cθ > 0, ∃ Nθ : ℕ, ∀ m : ℕ, Nθ ≤ m →
+        |hardyTheta (hardyStart m) - atkinsonHardyStartThetaModel m|
+          ≤ Cθ / (((m : ℕ) : ℝ) + 1) ^ 2)
+    (hmodel :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n →
+          |atkinsonEndpointGapCorrectedModelResidual n j|
+            ≤ C_model * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_res > 0, ∃ N_res : ℕ, ∀ n : ℕ, N_res ≤ n →
+        |atkinsonEndpointGapCorrectedPhaseError n j|
+          ≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+  obtain ⟨Cθ, hCθ, Nθ, htheta'⟩ := htheta
+  intro j hj
+  obtain ⟨C_model, hC_model, N_model, hmodel'⟩ := hmodel j hj
+  refine ⟨C_model + 2 * Cθ, by positivity, max N_model Nθ, ?_⟩
+  intro n hn
+  have hn_model : N_model ≤ n := le_trans (Nat.le_max_left _ _) hn
+  have hn_theta_base : Nθ ≤ n + j := by
+    exact le_trans (le_trans (Nat.le_max_right _ _) hn) (Nat.le_add_right n j)
+  have hn_theta_succ : Nθ ≤ n + j + 1 := by
+    exact le_trans hn_theta_base (Nat.le_succ _)
+  let e0 : ℝ := hardyTheta (hardyStart (n + j)) - atkinsonHardyStartThetaModel (n + j)
+  let e1 : ℝ :=
+    hardyTheta (hardyStart (n + j + 1)) - atkinsonHardyStartThetaModel (n + j + 1)
+  have hdecomp :
+      atkinsonEndpointGapCorrectedPhaseError n j =
+        atkinsonEndpointGapCorrectedModelResidual n j + (e1 - e0) := by
+    dsimp [atkinsonEndpointGapCorrectedPhaseError,
+      atkinsonEndpointGapCorrectedModelResidual, e0, e1]
+    ring
+  have hscale0 := atkinson_inv_sq_le_shifted_inv_scale n j hj
+  have hscale1 := atkinson_succ_inv_sq_le_shifted_inv_scale n j hj
+  have he0 :
+      |e0| ≤ Cθ * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+    calc
+      |e0|
+          = |hardyTheta (hardyStart (n + j)) -
+              atkinsonHardyStartThetaModel (n + j)| := by rfl
+      _ ≤ Cθ / ((((n + j : ℕ) : ℝ) + 1) ^ 2) :=
+            htheta' (n + j) hn_theta_base
+      _ = Cθ * (1 / ((((n + j : ℕ) : ℝ) + 1) ^ 2)) := by ring
+      _ ≤ Cθ * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+            exact mul_le_mul_of_nonneg_left hscale0 hCθ.le
+  have he1 :
+      |e1| ≤ Cθ * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+    calc
+      |e1|
+          = |hardyTheta (hardyStart (n + j + 1)) -
+              atkinsonHardyStartThetaModel (n + j + 1)| := by rfl
+      _ ≤ Cθ / ((((n + j + 1 : ℕ) : ℝ) + 1) ^ 2) :=
+            htheta' (n + j + 1) hn_theta_succ
+      _ = Cθ * (1 / ((((n + j + 1 : ℕ) : ℝ) + 1) ^ 2)) := by ring
+      _ ≤ Cθ * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+            exact mul_le_mul_of_nonneg_left hscale1 hCθ.le
+  have hmodel_bound := hmodel' n hn_model
+  calc
+    |atkinsonEndpointGapCorrectedPhaseError n j|
+        = |atkinsonEndpointGapCorrectedModelResidual n j + (e1 - e0)| := by
+            rw [hdecomp]
+    _ ≤ |atkinsonEndpointGapCorrectedModelResidual n j| + |e1 - e0| :=
+          abs_add_le _ _
+    _ ≤ |atkinsonEndpointGapCorrectedModelResidual n j| + (|e1| + |e0|) := by
+          have hdiff : |e1 - e0| ≤ |e1| + |e0| := by
+            simpa [sub_eq_add_neg] using abs_add_le e1 (-e0)
+          nlinarith
+    _ ≤ C_model * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) +
+          (Cθ * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) +
+            Cθ * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))) := by
+          exact add_le_add hmodel_bound (add_le_add he1 he0)
+    _ =
+        (C_model + 2 * Cθ) * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
           ring
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
