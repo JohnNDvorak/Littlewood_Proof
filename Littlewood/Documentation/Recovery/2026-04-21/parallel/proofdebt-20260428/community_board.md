@@ -757,3 +757,33 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Perron/B5a: weighted harmonic-distance summation.
   - Pi/Phase: remaining canonical majorant/growth leaves.
   - RS/Gabcke: removable source bridge or sourced Tabelle value property.
+
+## Overnight 2026-04-29 Twelfth Pass Status
+
+- Atkinson lane is validated and pushed through `cb94ef9`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Close Atkinson finite head patch`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the finite head patch is closed. The Atkinson row-prefix route now
+    depends only on the weighted complete-block tail prefix feeding the
+    correction-prefix route.
+  - Hooke is redeployed to that complete-block tail prefix. Direct raw Abel
+    shortcuts remain forbidden.
+- RS/Gabcke lane is validated and pushed through `0a3cc55`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Split Gabcke removable source point atoms`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`.
+  - Result: the removable source bridge/value route is split pointwise into
+    quarter and three-quarter bridge atoms plus sourced third-derivative value
+    atoms.
+  - Hume is redeployed to close one of those point atoms. Global regularity at
+    denominator-zero points and raw `standardGabckeRawPsi = rsPsi` remain
+    forbidden routes.
+- Current live atoms:
+  - Atkinson: weighted complete-block tail prefix.
+  - Perron/B5a: weighted harmonic-distance summation.
+  - Pi/Phase: remaining canonical majorant/growth leaves.
+  - RS/Gabcke: quarter/three-quarter removable source bridge and sourced
+    third-derivative value atoms.
