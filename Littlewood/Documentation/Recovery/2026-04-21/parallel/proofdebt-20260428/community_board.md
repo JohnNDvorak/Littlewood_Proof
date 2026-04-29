@@ -2236,3 +2236,19 @@ Timestamp: 2026-04-28 22:56 CDT.
     `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
   - Current RS atom: prove the first, second, and third derivative values of
     `sin(2*pi*w) / w` at `0`.
+
+## Overnight 2026-04-29 Sixty-Fifth Pass Status
+
+- Coordinator recovery branch is pushed through `227325f`.
+- Pi/Phase lane is integrated through `ff1b828`:
+  - Direct projected-radius comparison remains blocked by opaque
+    `Classical.choose`.
+  - Exact residuals are now named as
+    `TargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec` and
+    `AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
+  - Current Pi direction: prove those choice specs only if derivable from the
+    existing chooser definitions, otherwise replace the projected-chooser route
+    with an interface that consumes explicit budgeted target/anti radii.
