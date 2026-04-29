@@ -2058,6 +2058,50 @@ private theorem atkinson_vertical_line_stirling_isBigO_of_principal_log_bound
           rw [hnorm_inv]
           ring
 
+/-- A standard principal-log vertical Stirling `IsBigO` theorem gives the
+pointwise bound currently needed by the Atkinson multiplier route. -/
+private theorem atkinson_vertical_principal_log_bound_of_isBigO
+    (hvertical :
+      Asymptotics.IsBigO Filter.atTop
+        (fun y : ℝ =>
+          Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+            Aristotle.StationaryPhaseStartValue.stirlingTerm
+              ((1 / 4 : ℂ) + Complex.I * y))
+        (fun y : ℝ => ((1 / y : ℝ) : ℂ))) :
+    ∃ C > 0, ∃ Y0 : ℝ, ∀ y : ℝ, Y0 ≤ y →
+      ‖Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+          Aristotle.StationaryPhaseStartValue.stirlingTerm
+            ((1 / 4 : ℂ) + Complex.I * y)‖ ≤ C / y := by
+  rw [Asymptotics.isBigO_iff] at hvertical
+  obtain ⟨C0, hC0eventual⟩ := hvertical
+  obtain ⟨Y0, hY0⟩ := Filter.eventually_atTop.mp hC0eventual
+  set C : ℝ := max C0 0 + 1
+  refine ⟨C, by positivity, max Y0 1, ?_⟩
+  intro y hy
+  have hyY0 : Y0 ≤ y := le_trans (le_max_left _ _) hy
+  have hy1 : (1 : ℝ) ≤ y := le_trans (le_max_right _ _) hy
+  have hypos : 0 < y := lt_of_lt_of_le zero_lt_one hy1
+  have hnorm_inv : ‖((1 / y : ℝ) : ℂ)‖ = 1 / y := by
+    rw [Complex.norm_real, Real.norm_eq_abs,
+      abs_of_pos (one_div_pos.mpr hypos)]
+  have hraw := hY0 y hyY0
+  have hraw' :
+      ‖Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+          Aristotle.StationaryPhaseStartValue.stirlingTerm
+            ((1 / 4 : ℂ) + Complex.I * y)‖ ≤ C0 * (1 / y) := by
+    simpa [hnorm_inv, abs_of_pos hypos, one_div] using hraw
+  have hC0_le_C : C0 ≤ C := by
+    dsimp [C]
+    linarith [le_max_left C0 0]
+  have hinv_nonneg : 0 ≤ 1 / y := by positivity
+  calc
+    ‖Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+        Aristotle.StationaryPhaseStartValue.stirlingTerm
+          ((1 / 4 : ℂ) + Complex.I * y)‖
+        ≤ C0 * (1 / y) := hraw'
+    _ ≤ C * (1 / y) := mul_le_mul_of_nonneg_right hC0_le_C hinv_nonneg
+    _ = C / y := by ring
+
 /-- The normalized vertical-line Gamma/Stirling multiplier.  Keeping this
 separate makes the remaining principal-log branch identity explicit. -/
 private noncomputable def atkinsonVerticalGammaStirlingMultiplier (y : ℝ) : ℂ :=
@@ -2464,6 +2508,22 @@ private theorem atkinson_multiplier_isBigO_of_vertical_principal_log_bound
   atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO
     (atkinson_logGammaStirlingRemainder_isBigO_of_vertical_line_stirling
       (atkinson_vertical_line_stirling_isBigO_of_principal_log_bound hbound))
+
+/-- The standard multiplier Big-O can be wired directly from a standard
+principal-log vertical Stirling `IsBigO` theorem. -/
+private theorem atkinson_multiplier_isBigO_of_vertical_principal_log_isBigO
+    (hvertical :
+      Asymptotics.IsBigO Filter.atTop
+        (fun y : ℝ =>
+          Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+            Aristotle.StationaryPhaseStartValue.stirlingTerm
+              ((1 / 4 : ℂ) + Complex.I * y))
+        (fun y : ℝ => ((1 / y : ℝ) : ℂ))) :
+    Asymptotics.IsBigO Filter.atTop
+      (fun t : ℝ => atkinsonGammaStirlingMultiplier t - 1)
+      (fun t : ℝ => ((1 / t : ℝ) : ℂ)) :=
+  atkinson_multiplier_isBigO_of_vertical_principal_log_bound
+    (atkinson_vertical_principal_log_bound_of_isBigO hvertical)
 
 /-- A complex logarithmic Stirling remainder gives the branch-sensitive
 imaginary log-to-Stirling comparison directly. -/
