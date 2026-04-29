@@ -3776,6 +3776,62 @@ class TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp 
                 ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
                     m • (2 * Real.pi)‖ ≤ ε)
 
+/-- Same-radius residual for the chooser-free relation-compatible budgeted
+Kronecker route.
+
+This is the finite-dimensional theorem shape still missing below
+`TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp`:
+for the same zero set, tolerance, and relation-compatible target/anti phases,
+produce one search radius that works for both boxes and is already inside the
+same tower half-budget.  It avoids any comparison with the opaque
+`Classical.choose` radius from the unbudgeted Kronecker source. -/
+def TargetAntiFiniteZeroRelationCompatibleBudgetedSameRadiusKroneckerResidual :
+    Prop :=
+  ∀ (T ε : ℝ)
+    (hT4 : 4 ≤ T)
+    (hεpos : 0 < ε)
+    (hεlt : ε < 1)
+    (hTargetCompat :
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε Complex.arg)
+    (hAntiCompat :
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε
+          (fun ρ => Complex.arg ρ + Real.pi)),
+    ∃ R : ℝ,
+      0 < R ∧
+      R + 1
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+      (∀ L : ℝ,
+        ∃ t0 : ℝ,
+          L < t0 ∧
+          t0 < L + R ∧
+          ∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖t0 * ρ.im - Complex.arg ρ -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+      (∀ L : ℝ,
+        ∃ t0 : ℝ,
+          L < t0 ∧
+          t0 < L + R ∧
+          ∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
+                  m • (2 * Real.pi)‖ ≤ ε)
+
+/-- A same-radius budgeted Kronecker residual supplies the chooser-free
+relation-compatible budgeted Kronecker class. -/
+theorem targetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKronecker_of_sameRadiusResidual
+    (h :
+      TargetAntiFiniteZeroRelationCompatibleBudgetedSameRadiusKroneckerResidual) :
+    TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt hTargetCompat hAntiCompat
+    rcases h T ε hT4 hεpos hεlt hTargetCompat hAntiCompat with
+      ⟨R, hRpos, hRbudget, hTarget, hAnti⟩
+    exact ⟨R, R, hRpos, hRpos, hRbudget, hRbudget, hTarget, hAnti⟩
+
 /-- Target-side budget domination for the actual finite-set Kronecker radius
 chosen from the existing relation-compatible finite-dimensional Kronecker
 source. -/
@@ -6557,6 +6613,28 @@ theorem exactSeedAboveThreshold_perron_of_canonicalPerronAndRelationCompatibleBu
     perronThresholdTowerLogHalfBudget_of_canonicalMajorantResidual hPerron
   exact
     exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleBudgetedKronecker_hyp
+
+/-- Perron canonical residual plus the same-radius chooser-free budgeted
+Kronecker residual packages both Perron-only exact-seed classes.
+
+This endpoint records the reduced finite-zero atom directly: prove one
+same-height radius that hits both target and anti-target relation-compatible
+phase boxes inside the tower half-budget. -/
+theorem exactSeedAboveThreshold_perron_of_canonicalPerronAndSameRadiusBudgetedKroneckerResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    (hPerron :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual)
+    (hKronecker :
+      TargetAntiFiniteZeroRelationCompatibleBudgetedSameRadiusKroneckerResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp :=
+    targetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKronecker_of_sameRadiusResidual
+      hKronecker
+  exact
+    exactSeedAboveThreshold_perron_of_canonicalPerronAndRelationCompatibleBudgetedKronecker_hyp
+      hPerron
 
 /-- Existing relation-compatible finite-set Kronecker plus explicit selected
 radius half-budgets supplies the corrected exact-seed endpoint through the
