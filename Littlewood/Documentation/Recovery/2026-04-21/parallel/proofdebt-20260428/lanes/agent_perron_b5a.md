@@ -1488,3 +1488,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `Σ_{1 <= n <= floor x} Λ(n) / n = O((Real.log x)^2)`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 28 - Smooth Off-Boundary Envelope
+
+- Classification: `CANDIDATE_CLOSE`.
+- Exact theorem attacked:
+  the smooth off-boundary Davenport component
+  `∃ Cm > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDavenportSmoothEnvelope x T
+      <= Cm * (x / T) * (Real.log x)^2`.
+- Code facts banked:
+  added `perronKernelVonMangoldtReciprocalWeight`, the finite reciprocal
+  von Mangoldt weight over `range (floor x + 1)` with an explicit zero branch.
+  Proved
+  `perronKernelVonMangoldtReciprocalWeight_le_log_mul_harmonic_floor` from
+  `vonMangoldt_le_log`, monotonicity of `log`, and the harmonic majorant.
+  Proved the closed reciprocal-weight bound
+  `small_T_vonMangoldt_reciprocalWeight_bound`.
+  Proved
+  `perronKernelOffBoundaryDavenportSmoothEnvelope_le_reciprocalWeight` using
+  `per_term_rpow_bound`, `c >= 1`, and positivity of `T`.
+  Closed the target as
+  `small_T_offBoundary_davenportSmoothEnvelope_bound`.
+- Scale check:
+  preserved the required `x / T` factor.  The proof sums the natural
+  `Λ(n) / n` weight and does not use a constant kernel supremum or a pure
+  `O((Real.log x)^2)` off-boundary route.
+- Failed/demoted routes:
+  no attempt to bound the smooth envelope by full Chebyshev weight
+  `ψ(x) = O(x)`, which would lose a factor of `x`.  The reciprocal-weight
+  route keeps the scale correct.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  attack the singular component
+  `∃ Cs > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDavenportSingularEnvelope x T
+      <= Cs * (x / T) * (Real.log x)^2`.
+  The expected route is a reciprocal-log/distance comparison on the
+  off-boundary set, followed by a finite weighted distance summation below
+  `x - x / T`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

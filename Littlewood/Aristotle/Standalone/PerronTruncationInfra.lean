@@ -1590,6 +1590,12 @@ def perronKernelOffBoundaryDavenportSmoothEnvelope (x T : ℝ) : ℝ :=
       (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T),
     perronKernelOffBoundaryDavenportSmoothTerm x T n
 
+/-- Finite reciprocal von Mangoldt weight up to `floor x`.  The zero branch is
+included to match `Finset.range (floor x + 1)` without dividing by zero. -/
+def perronKernelVonMangoldtReciprocalWeight (x : ℝ) : ℝ :=
+  ∑ n ∈ Finset.range (Nat.floor x + 1),
+    if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)
+
 /-- Exact finite-sum split of the weighted cutoff error into the sharp boundary
 window and its complement. -/
 theorem perronKernelWeightedCutoffError_eq_boundary_add_offBoundary
@@ -3291,6 +3297,92 @@ private theorem harmonic_floor_le_const_mul_log (x : ℝ) (hx : 2 ≤ x) :
         by linarith
     _ = (1 + 1 / Real.log 2) * Real.log x := by ring
 
+/-- The finite reciprocal von Mangoldt weight is bounded by
+`log x * harmonic (floor x)`. -/
+private theorem perronKernelVonMangoldtReciprocalWeight_le_log_mul_harmonic_floor
+    (x : ℝ) (hx : 2 ≤ x) :
+    perronKernelVonMangoldtReciprocalWeight x ≤
+      Real.log x * (harmonic (Nat.floor x) : ℝ) := by
+  classical
+  let N := Nat.floor x
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hlogx_nonneg : 0 ≤ Real.log x := Real.log_nonneg (by linarith)
+  have hterm :
+      ∀ n ∈ Finset.range (N + 1),
+        (if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)) ≤
+          Real.log x * (if n = 0 then 0 else ((n : ℝ)⁻¹)) := by
+    intro n hn
+    by_cases hn_zero : n = 0
+    · simp [hn_zero]
+    · have hn_pos : 1 ≤ n := Nat.pos_of_ne_zero hn_zero
+      have hn_pos_real : (0 : ℝ) < n := Nat.cast_pos.mpr hn_pos
+      have hn_le_floor : n ≤ Nat.floor x := by
+        simpa [N] using Nat.lt_succ_iff.mp (Finset.mem_range.mp hn)
+      have hn_le_x : (n : ℝ) ≤ x :=
+        le_trans (Nat.cast_le.mpr hn_le_floor) (Nat.floor_le hx_nonneg)
+      have hΛ_le_logx : ArithmeticFunction.vonMangoldt n ≤ Real.log x := by
+        calc ArithmeticFunction.vonMangoldt n
+            ≤ Real.log (n : ℝ) := vonMangoldt_le_log n hn_pos
+          _ ≤ Real.log x := Real.log_le_log hn_pos_real hn_le_x
+      simpa [hn_zero, div_eq_mul_inv] using
+        mul_le_mul_of_nonneg_right hΛ_le_logx (inv_nonneg.mpr hn_pos_real.le)
+  have hrecip_le_harmonic :
+      (∑ n ∈ Finset.range (N + 1), if n = 0 then 0 else ((n : ℝ)⁻¹)) ≤
+        (harmonic N : ℝ) := by
+    calc (∑ n ∈ Finset.range (N + 1), if n = 0 then 0 else ((n : ℝ)⁻¹))
+        = ∑ n ∈ (Finset.range (N + 1)).filter (fun n : ℕ => n ≠ 0),
+            ((n : ℝ)⁻¹) := by
+          rw [Finset.sum_filter]
+          apply Finset.sum_congr rfl
+          intro n _hn
+          by_cases hn_zero : n = 0
+          · simp [hn_zero]
+          · simp [hn_zero]
+      _ ≤ ∑ n ∈ Finset.Icc 1 N, ((n : ℝ)⁻¹) := by
+          apply Finset.sum_le_sum_of_subset_of_nonneg
+          · intro n hn
+            rcases Finset.mem_filter.mp hn with ⟨hn_range, hn_ne_zero⟩
+            have hn_pos : 1 ≤ n := Nat.pos_of_ne_zero hn_ne_zero
+            have hn_le_N : n ≤ N :=
+              Nat.lt_succ_iff.mp (Finset.mem_range.mp hn_range)
+            exact Finset.mem_Icc.mpr ⟨hn_pos, hn_le_N⟩
+          · intro n _hn_Icc _hn_not
+            exact inv_nonneg.mpr (Nat.cast_nonneg n)
+      _ = (harmonic N : ℝ) := by
+          simp only [harmonic_eq_sum_Icc, Rat.cast_sum, Rat.cast_inv, Rat.cast_natCast]
+  calc perronKernelVonMangoldtReciprocalWeight x
+      ≤ ∑ n ∈ Finset.range (N + 1),
+          Real.log x * (if n = 0 then 0 else ((n : ℝ)⁻¹)) := by
+        simpa [perronKernelVonMangoldtReciprocalWeight, N, div_eq_mul_inv]
+          using Finset.sum_le_sum hterm
+    _ = Real.log x *
+          ∑ n ∈ Finset.range (N + 1), if n = 0 then 0 else ((n : ℝ)⁻¹) := by
+        rw [Finset.mul_sum]
+    _ ≤ Real.log x * (harmonic N : ℝ) :=
+        mul_le_mul_of_nonneg_left hrecip_le_harmonic hlogx_nonneg
+    _ = Real.log x * (harmonic (Nat.floor x) : ℝ) := by rfl
+
+/-- Closed finite reciprocal von Mangoldt weight bound. -/
+theorem small_T_vonMangoldt_reciprocalWeight_bound :
+    ∃ Cr > (0 : ℝ), ∀ x : ℝ, x ≥ 2 →
+      perronKernelVonMangoldtReciprocalWeight x ≤ Cr * (Real.log x) ^ 2 := by
+  let Cr : ℝ := 1 + 1 / Real.log 2
+  have hlog2_pos : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hCr_pos : 0 < Cr := by
+    dsimp [Cr]
+    exact add_pos zero_lt_one (div_pos zero_lt_one hlog2_pos)
+  refine ⟨Cr, hCr_pos, ?_⟩
+  intro x hx
+  have hlogx_nonneg : 0 ≤ Real.log x := Real.log_nonneg (by linarith)
+  calc perronKernelVonMangoldtReciprocalWeight x
+      ≤ Real.log x * (harmonic (Nat.floor x) : ℝ) :=
+        perronKernelVonMangoldtReciprocalWeight_le_log_mul_harmonic_floor x hx
+    _ ≤ Real.log x * (Cr * Real.log x) :=
+        mul_le_mul_of_nonneg_left (by
+          dsimp [Cr]
+          exact harmonic_floor_le_const_mul_log x hx) hlogx_nonneg
+    _ = Cr * (Real.log x) ^ 2 := by ring
+
 /-- Reciprocal-distance envelope bound from an exact finite harmonic majorant.
 This conditional form is kept for downstream wiring; the closed majorant is
 provided by `perronKernelSeparatedReciprocalDistanceEnvelope_le_harmonic_floor`. -/
@@ -3722,6 +3814,122 @@ theorem perronKernelOffBoundaryDavenportEnvelope_eq_singular_add_smooth
       perronKernelOffBoundaryDavenportSingularTerm,
       perronKernelOffBoundaryDavenportSmoothTerm, hn_zero]
     ring
+
+/-- The off-boundary smooth Davenport component is controlled by the finite
+reciprocal von Mangoldt weight. -/
+theorem perronKernelOffBoundaryDavenportSmoothEnvelope_le_reciprocalWeight
+    (x T : ℝ) (hx : 2 ≤ x) (hT_lo : 2 ≤ T) :
+    perronKernelOffBoundaryDavenportSmoothEnvelope x T ≤
+      (2 * Real.exp 1) * (x / T) * perronKernelVonMangoldtReciprocalWeight x := by
+  classical
+  let s := (Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T)
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hx_pos : 0 < x := by linarith
+  have hT_pos : 0 < T := by linarith
+  have hc_pos := c_param_pos x hx
+  have hc_ge_one : (1 : ℝ) ≤ 1 + 1 / Real.log x :=
+    le_of_lt (c_param_gt_one x hx)
+  have hcoef_nonneg : 0 ≤ (2 * Real.exp 1) * (x / T) := by positivity
+  have hterm :
+      ∀ n ∈ s,
+        perronKernelOffBoundaryDavenportSmoothTerm x T n ≤
+          (2 * Real.exp 1) * (x / T) *
+            (if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)) := by
+    intro n hn
+    by_cases hn_zero : n = 0
+    · simp [perronKernelOffBoundaryDavenportSmoothTerm, hn_zero]
+    · have hn_pos : 1 ≤ n := Nat.pos_of_ne_zero hn_zero
+      have hn_pos_real : (0 : ℝ) < n := Nat.cast_pos.mpr hn_pos
+      have hrange : n ∈ Finset.range (Nat.floor x + 1) :=
+        (Finset.mem_filter.mp hn).1
+      have hn_le_floor : n ≤ Nat.floor x :=
+        Nat.lt_succ_iff.mp (Finset.mem_range.mp hrange)
+      have hn_le_x : (n : ℝ) ≤ x :=
+        le_trans (Nat.cast_le.mpr hn_le_floor) (Nat.floor_le hx_nonneg)
+      have hrpow :
+          (x / (n : ℝ)) ^ (1 + 1 / Real.log x) ≤
+            Real.exp 1 * (x / (n : ℝ)) :=
+        per_term_rpow_bound x hx n hn_pos hn_le_x
+      have hden_ge_T : T ≤ (1 + 1 / Real.log x) * T := by
+        nlinarith
+      have hnum_nonneg : 0 ≤ 2 * (Real.exp 1 * (x / (n : ℝ))) := by
+        positivity
+      have hkernel :
+          2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+              ((1 + 1 / Real.log x) * T) ≤
+            2 * (Real.exp 1 * (x / (n : ℝ))) / T := by
+        calc 2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+              ((1 + 1 / Real.log x) * T)
+            ≤ 2 * (Real.exp 1 * (x / (n : ℝ))) /
+                ((1 + 1 / Real.log x) * T) := by
+              exact div_le_div_of_nonneg_right
+                (mul_le_mul_of_nonneg_left hrpow (by norm_num))
+                (mul_pos hc_pos hT_pos).le
+          _ ≤ 2 * (Real.exp 1 * (x / (n : ℝ))) / T :=
+              div_le_div_of_nonneg_left hnum_nonneg hT_pos hden_ge_T
+      calc perronKernelOffBoundaryDavenportSmoothTerm x T n
+          = ArithmeticFunction.vonMangoldt n *
+              (2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+                ((1 + 1 / Real.log x) * T)) := by
+              simp [perronKernelOffBoundaryDavenportSmoothTerm, hn_zero]
+        _ ≤ ArithmeticFunction.vonMangoldt n *
+              (2 * (Real.exp 1 * (x / (n : ℝ))) / T) :=
+              mul_le_mul_of_nonneg_left hkernel (vonMangoldt_nonneg n)
+        _ = (2 * Real.exp 1) * (x / T) *
+              (ArithmeticFunction.vonMangoldt n / (n : ℝ)) := by
+              field_simp [hT_pos.ne', hn_pos_real.ne']
+        _ = (2 * Real.exp 1) * (x / T) *
+              (if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)) := by
+              simp [hn_zero]
+  calc perronKernelOffBoundaryDavenportSmoothEnvelope x T
+      = ∑ n ∈ s, perronKernelOffBoundaryDavenportSmoothTerm x T n := by
+        rfl
+    _ ≤ ∑ n ∈ s,
+          (2 * Real.exp 1) * (x / T) *
+            (if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)) :=
+        Finset.sum_le_sum hterm
+    _ ≤ ∑ n ∈ Finset.range (Nat.floor x + 1),
+          (2 * Real.exp 1) * (x / T) *
+            (if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)) := by
+        apply Finset.sum_le_sum_of_subset_of_nonneg
+        · exact Finset.filter_subset _ _
+        · intro n _hn_range _hn_not_s
+          by_cases hn_zero : n = 0
+          · simp [hn_zero]
+          · simpa [hn_zero] using
+              mul_nonneg hcoef_nonneg
+                (div_nonneg (vonMangoldt_nonneg n) (Nat.cast_nonneg n))
+    _ = (2 * Real.exp 1) * (x / T) *
+          perronKernelVonMangoldtReciprocalWeight x := by
+        dsimp [perronKernelVonMangoldtReciprocalWeight]
+        rw [Finset.mul_sum]
+
+/-- Closed smooth off-boundary Davenport-envelope bound at the honest
+linear-window scale. -/
+theorem small_T_offBoundary_davenportSmoothEnvelope_bound :
+    ∃ Cm > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDavenportSmoothEnvelope x T ≤
+        Cm * (x / T) * (Real.log x) ^ 2 := by
+  rcases small_T_vonMangoldt_reciprocalWeight_bound with ⟨Cr, hCr_pos, hrecip⟩
+  let Cm : ℝ := 2 * Real.exp 1 * Cr
+  refine ⟨Cm, by positivity, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hT_pos : 0 < T := by linarith
+  have hscale_nonneg : 0 ≤ (2 * Real.exp 1) * (x / T) := by positivity
+  have hsmooth :=
+    perronKernelOffBoundaryDavenportSmoothEnvelope_le_reciprocalWeight x T hx hT_lo
+  have hrecip_x := hrecip x hx
+  calc perronKernelOffBoundaryDavenportSmoothEnvelope x T
+      ≤ (2 * Real.exp 1) * (x / T) *
+          perronKernelVonMangoldtReciprocalWeight x := hsmooth
+    _ ≤ (2 * Real.exp 1) * (x / T) *
+          (Cr * (Real.log x) ^ 2) :=
+        mul_le_mul_of_nonneg_left hrecip_x hscale_nonneg
+    _ = Cm * (x / T) * (Real.log x) ^ 2 := by
+        dsimp [Cm]
+        ring
 
 /-- Off-boundary Davenport-envelope bound from separate singular and smooth
 summation bounds. -/
