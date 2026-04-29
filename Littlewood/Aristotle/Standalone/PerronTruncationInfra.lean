@@ -5250,6 +5250,88 @@ theorem small_T_perronVerticalIntegral_continuousOn_slab16_of_fixedWindow
   small_T_perronVerticalIntegral_continuousOn_slab16_from_rawIntegral
     (small_T_perronVerticalRawIntegral_continuousOn_slab16_of_fixedWindow hfixed)
 
+/-- The fixed-window DCT measurability input follows from measurability of the
+unwindowed Perron integrand on the fixed window. -/
+theorem small_T_perronVerticalFixedWindowIntegrand_aestronglyMeasurable_from_integrand
+    (hperron : ∀ q : ℝ × ℝ,
+      AEStronglyMeasurable
+        (fun t : ℝ => perronVerticalIntegrand q.1 t)
+        (volume.restrict (Set.Ioc (-16 : ℝ) 16))) :
+    ∀ p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᶠ q in 𝓝[
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        AEStronglyMeasurable
+          (fun t : ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (volume.restrict (Set.Ioc (-16 : ℝ) 16)) := by
+  intro p hp
+  filter_upwards with q
+  unfold perronVerticalFixedWindowIntegrandParam
+  exact (hperron q).indicator measurableSet_Ioc
+
+/-- The fixed-window DCT a.e. convergence input follows from ordinary Perron
+integrand convergence and eventual stability of membership in the moving
+half-open interval. -/
+theorem small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_from_integrand_and_membership
+    (hperron : ∀ p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalIntegrand q.1 t)
+          (𝓝[
+            {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalIntegrand p.1 t)))
+    (hmem : ∀ p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        ∀ᶠ q in 𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          (t ∈ Set.Ioc (-q.2) q.2 ↔ t ∈ Set.Ioc (-p.2) p.2)) :
+    ∀ p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (𝓝[
+            {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalFixedWindowIntegrandParam p t)) := by
+  intro p hp
+  filter_upwards [hperron p hp, hmem p hp] with t htend hstable
+  by_cases ht : t ∈ Set.Ioc (-p.2) p.2
+  · have hstable_mem : ∀ᶠ q in
+        𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        t ∈ Set.Ioc (-q.2) q.2 := by
+      filter_upwards [hstable] with q hq
+      exact hq.mpr ht
+    have hcongr :
+        (fun q : ℝ × ℝ => perronVerticalIntegrand q.1 t) =ᶠ[
+          𝓝[
+            {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p]
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t) := by
+      filter_upwards [hstable_mem] with q hq
+      simp [perronVerticalFixedWindowIntegrandParam, hq]
+    simpa [perronVerticalFixedWindowIntegrandParam, ht] using
+      htend.congr' hcongr
+  · have hstable_notMem : ∀ᶠ q in
+        𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        t ∉ Set.Ioc (-q.2) q.2 := by
+      filter_upwards [hstable] with q hq
+      exact fun hqmem => ht (hq.mp hqmem)
+    have hcongr :
+        (fun _q : ℝ × ℝ => (0 : ℝ)) =ᶠ[
+          𝓝[
+            {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p]
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t) := by
+      filter_upwards [hstable_notMem] with q hq
+      simp [perronVerticalFixedWindowIntegrandParam, hq]
+    simpa [perronVerticalFixedWindowIntegrandParam, ht] using
+      (tendsto_const_nhds : Tendsto (fun _q : ℝ × ℝ => (0 : ℝ))
+        (𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+        (𝓝 (0 : ℝ))).congr' hcongr
+
 /-- Fixed-window slab continuity reduced to the exact local dominated
 convergence inputs on the fixed window `(-16,16]`.  The remaining analytic
 work is local eventual measurability, a local integrable majorant, and a.e.

@@ -2472,3 +2472,46 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
         (𝓝 (perronVerticalFixedWindowIntegrandParam p t))`;
   then prove the local measurability and local bounded-majorant atoms for the
   same fixed-window integrand.
+
+### 2026-04-29 Round 49 - Split Fixed-Window DCT Inputs
+
+- Classification: `THEOREM_LEVEL_REDUCTION`.
+- Exact DCT inputs attacked:
+  local eventual `AEStronglyMeasurable` of
+  `fun t => perronVerticalFixedWindowIntegrandParam q t`, and the a.e.
+  moving-indicator convergence input for the same fixed-window integrand.
+- Code facts banked:
+  added
+  `small_T_perronVerticalFixedWindowIntegrand_aestronglyMeasurable_from_integrand`,
+  reducing the DCT measurability input to measurability of the unwindowed
+  Perron integrand on `volume.restrict (Set.Ioc (-16) 16)`.  Added
+  `small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_from_integrand_and_membership`,
+  reducing the DCT a.e. convergence input to two smaller facts: ordinary
+  convergence of `perronVerticalIntegrand q.1 t` at fixed `t`, and eventual
+  stability of membership in `Set.Ioc (-q.2) q.2`.
+- Shape check:
+  did not claim joint continuity of the moving indicator.  The indicator jump
+  is isolated into the exact eventual-membership atom, which should be proved
+  a.e. by excluding the two endpoint heights `t = p.2` and `t = -p.2`.
+- Failed/demoted routes:
+  did not force a direct proof of the local integrable-majorant atom.  Did not
+  use closed-cutoff zero-set constancy or any public/provider shortcut.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, or `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check`; then
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.  Both passed.
+- Smallest next theorem:
+  prove the endpoint-exclusion/eventual-membership atom
+  `∀ p ∈ slab, ∀ᵐ t ∂volume.restrict (Set.Ioc (-16) 16),
+      ∀ᶠ q in 𝓝[slab] p,
+        (t ∈ Set.Ioc (-q.2) q.2 ↔ t ∈ Set.Ioc (-p.2) p.2)`;
+  separately prove unwindowed Perron integrand measurability/convergence on
+  the fixed window and the local integrable-majorant atom.
