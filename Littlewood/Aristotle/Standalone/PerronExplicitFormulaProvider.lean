@@ -4654,6 +4654,26 @@ theorem antiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudget
     antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp,
     hT4, hεpos] using h T ε hT4 hεpos hεlt
 
+/-- The two phase-radius canonical residuals supply the two
+relation-compatible selected Kronecker-radius residuals.
+
+This is the paired form of the definitional comparison: under the
+relation-compatible Kronecker provider, the one-sided finite-zero phase radii
+are the selected finite-set relation-compatible Kronecker radii for the
+canonical target and anti-target zeta compatibility proofs. -/
+theorem targetAntiFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResiduals_of_phaseRadiusResiduals
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    (hTarget : TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual)
+    (hAnti : AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
+    TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual ∧
+      AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual :=
+  ⟨targetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual_of_phaseRadiusResidual
+      hTarget,
+    antiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual_of_phaseRadiusResidual
+      hAnti⟩
+
 /-- Relation-compatible finite-set Kronecker plus paired target/anti zeta
 compatibility supplies the paired finite-zero relative-density payload. -/
 theorem targetAntiFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
@@ -6402,6 +6422,34 @@ theorem exactSeedAboveThreshold_perron_of_canonicalPerronAndRelationCompatibleRa
   exact
     exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleCanonicalRadiusResiduals_hyp
       hTarget hAnti
+
+/-- Exact-seed endpoint from the Perron canonical residual and the one-sided
+phase-radius canonical residuals.
+
+The target/anti relation-compatible radius residuals are obtained by unfolding
+the canonical finite-zero phase radii along the relation-compatible Kronecker
+provider; no opaque projected chooser comparison is used. -/
+theorem exactSeedAboveThreshold_perron_of_canonicalPerronAndPhaseRadiusResiduals_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    (hPerron :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual)
+    (hTarget : TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual)
+    (hAnti : AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+  rcases
+    targetAntiFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResiduals_of_phaseRadiusResiduals
+      hTarget hAnti with
+    ⟨hTargetRelation, hAntiRelation⟩
+  exact
+    exactSeedAboveThreshold_perron_of_canonicalPerronAndRelationCompatibleRadiusResiduals_hyp
+      hPerron hTargetRelation hAntiRelation
 
 /-- Paired finite-zero relative density plus the two same-height half-budget
 inputs packages both Perron-only exact-seed classes. -/
