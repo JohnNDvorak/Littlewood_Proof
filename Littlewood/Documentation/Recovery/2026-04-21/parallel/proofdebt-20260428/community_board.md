@@ -1559,3 +1559,39 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Pi/Phase: `PerronThresholdTowerWideDominationHyp`.
   - RS/Gabcke:
     `StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp`.
+
+## Overnight 2026-04-29 Thirty-Sixth Pass Status
+
+- Perron/B5a lane is validated and pushed through `0e72947`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Close Perron off-boundary distance weight`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the finite off-boundary distance-weight summation is no longer
+    left as a pure `O((log x)^2)` atom. The branch now proves the
+    scale-correct linear handoff through `chebyshevPsi x`, keeping the
+    explicit `x / T` scale and avoiding the false macroscopic small-T route.
+  - Remaining Perron atom:
+    route `small_T_weighted_kernel_cutoff_linear_bound` through the existing
+    finite Perron-kernel linear handoff and check downstream truncation/residue
+    consumption without reintroducing the false pure `O((log x)^2)` provider.
+- Atkinson lane is validated and pushed through `f8ee10b`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Reduce Atkinson normalized correction to eventual bound`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the all-`n` normalized fixed-shift correction atom is reduced to
+    the eventual fixed-shift form
+    `∀ j ≥ 1, ∃ D_j > 0, ∃ N_j, ∀ n ≥ N_j,
+      ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_j`.
+  - Remaining Atkinson atoms:
+    - eventual normalized fixed-shift correction bound above;
+    - shifted-interval stationary-phase target remainder.
+- Current live atoms:
+  - Atkinson: eventual normalized fixed-shift correction bound and shifted
+    stationary-phase target remainder.
+  - Perron/B5a: finite Perron-kernel linear handoff from the scale-correct
+    small-T weighted cutoff bound.
+  - Pi/Phase: `PerronThresholdTowerWideDominationHyp`.
+  - RS/Gabcke:
+    `StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp`.
