@@ -3192,3 +3192,47 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetResidual`.
+
+### 2026-04-29 Round 65: Minus-One Perron Chooser Budget
+
+- Classification: `PARTIAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetResidual`.
+- Facts banked:
+  - Added
+    `PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetMinusOneResidual`.
+  - Proved
+    `perronSqrtErrorRawChoiceFixedHalfBudgetResidual_of_minusOneResidual`.
+  - Added endpoint
+    `exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfMinusOnePerronBudgetAndBudgetedRelativelyDense_hyp`.
+- What changed:
+  - Reduced the fixed-`ε = 1 / 2` raw chooser budget to the exact
+    minus-one eventual-majorization inequality:
+    `perronThresholdRawEventualChoice hRH T ≤ halfBudget(T) - 1`.
+  - Wired that smaller Perron chooser atom into the explicit budgeted
+    finite-zero exact-seed endpoint without adding a provider instance.
+- Failed/direct route:
+  - Direct proof from `PerronSqrtErrorEventuallyAtHeightHyp.witness` still does
+    not close: `Classical.choose_spec` only proves the raw choice is a valid
+    eventual threshold, not that it is minimal or below any later analytic
+    majorant.
+  - No cross-height Perron-threshold monotonicity or chooser-radius comparison
+    was used.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set
+    Kronecker, provider cycles, or broad provider was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation command/result:
+  - Under the corrected singleflight lock:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+  - `git diff --check`
+  - Result: passed after code and ledger updates.
+- Smallest next theorem:
+  - `PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetMinusOneResidual`.

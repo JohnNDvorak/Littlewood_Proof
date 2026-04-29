@@ -3575,6 +3575,35 @@ def PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetResidual
           Real.exp (Real.exp (Real.exp
             (((1 - (1 / 2 : ℝ)) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
 
+/-- Minus-one form of the fixed-half chooser-growth residual.
+
+This is the exact eventual-majorization fact missing from the raw
+`Classical.choose`: the chosen Perron threshold itself must fit below the
+same-height half-budget after reserving the final `+ 1` margin. -/
+def PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetMinusOneResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ (_hRH : ZetaZeros.RiemannHypothesis),
+    ∃ T0 : ℝ,
+      ∀ T : ℝ,
+        T0 ≤ T →
+        perronThresholdRawEventualChoice _hRH T ≤
+          Real.exp (Real.exp (Real.exp
+            (((1 - (1 / 2 : ℝ)) * ((N T : ℝ) / (T + 1))) / 2)) / 2) - 1
+
+/-- The minus-one chooser majorant is exactly the arithmetic input needed for
+the fixed-half budget statement. -/
+theorem perronSqrtErrorRawChoiceFixedHalfBudgetResidual_of_minusOneResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (h :
+      PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetMinusOneResidual) :
+    PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetResidual := by
+  intro hRH
+  rcases h hRH with ⟨T0, hBudget⟩
+  refine ⟨T0, ?_⟩
+  intro T hT
+  have hTBudget := hBudget T hT
+  linarith
+
 /-- The all-`ε` raw chooser residual implies the narrower fixed-half residual. -/
 theorem perronSqrtErrorRawChoiceFixedHalfBudgetResidual_of_rawChoiceResidual
     [PerronSqrtErrorEventuallyAtHeightHyp]
@@ -6975,6 +7004,25 @@ theorem exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfPerronBudgetAndBudge
   exact
     exactSeedAboveThreshold_perron_of_canonicalPerronAndBudgetedRelativelyDense_hyp
       (perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_rawChoiceFixedHalfResidual
+        hPerron)
+
+/-- Minus-one raw-chooser Perron budget plus explicit budgeted finite-zero radii
+package both Perron-only exact-seed classes.
+
+This exposes the smallest current Perron chooser atom for the endpoint: prove
+that the raw threshold itself is eventually below the half-budget minus the
+reserved `+ 1` margin. -/
+theorem exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfMinusOnePerronBudgetAndBudgetedRelativelyDense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [ZeroCountingLowerBoundHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    (hPerron :
+      PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetMinusOneResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact
+    exactSeedAboveThreshold_perron_of_rawChoiceFixedHalfPerronBudgetAndBudgetedRelativelyDense_hyp
+      (perronSqrtErrorRawChoiceFixedHalfBudgetResidual_of_minusOneResidual
         hPerron)
 
 /-- Relation-compatible budgeted finite-zero Kronecker plus the Perron log
