@@ -936,6 +936,23 @@ def StandardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp : Prop :=
       B 2 = -(4 * Real.pi ^ 3 / 3) ∧
       B 3 = 0
 
+/-- Explicit all-order coefficient formula for the denominator dslope
+`sin(2*pi*w) / w`. Only even powers occur, with coefficient
+`(-1)^m * (2*pi)^(2*m+1)/(2*m+1)!` at order `2*m`. -/
+def standardGabckeQuarterLocalDenominatorDslopeCoeff (n : ℕ) : ℝ :=
+  if Even n then
+    (-1 : ℝ) ^ (n / 2) * (2 * Real.pi) ^ (n + 1) /
+      ((n + 1).factorial : ℝ)
+  else
+    0
+
+/-- Exact sine-series source for the denominator dslope. This is the all-order
+source formula below the finite denominator coefficient data. -/
+def StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp : Prop :=
+  HasFPowerSeriesAt (dslope standardGabckeQuarterLocalSineDenominator 0)
+    (FormalMultilinearSeries.ofScalars ℝ
+      standardGabckeQuarterLocalDenominatorDslopeCoeff) 0
+
 /-- Formal division/coefficient step from the numerator and denominator dslope
 series data to the quotient series coefficient `-pi^2/6`. -/
 def StandardGabckeQuarterLocalDslopeQuotientDivisionCoefficientProp : Prop :=
@@ -1108,6 +1125,18 @@ theorem standardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp_of_dslope
   refine ⟨a, ?_, ha0, ha3⟩
   exact hseries.congr
     standardGabckeQuarterLocalRemovableSineQuotientDslopeEqualityProp_proved.symm
+
+/-- The explicit all-order denominator sine-series formula supplies the finite
+coefficient data needed by the quotient calculation. -/
+theorem standardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp_of_sineSeries
+    (h_series : StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp) :
+    StandardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp := by
+  refine ⟨standardGabckeQuarterLocalDenominatorDslopeCoeff, h_series, ?_, ?_, ?_, ?_⟩
+  · norm_num [standardGabckeQuarterLocalDenominatorDslopeCoeff]
+  · norm_num [standardGabckeQuarterLocalDenominatorDslopeCoeff]
+  · norm_num [standardGabckeQuarterLocalDenominatorDslopeCoeff]
+    ring
+  · norm_num [standardGabckeQuarterLocalDenominatorDslopeCoeff]
 
 /-- The quotient series is reduced to explicit numerator/denominator dslope
 coefficient data plus the finite formal-division calculation. -/

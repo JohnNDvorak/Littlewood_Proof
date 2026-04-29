@@ -2037,3 +2037,47 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   series of `sin(2*pi*w) / w`, or
   `StandardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp` from the
   composed sine series for `sin(pi*w - 2*pi*w^2) / w`.
+
+### 2026-04-29 Round 42: denominator dslope data reduced to all-order sine series
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp`.
+- Banked inputs:
+  - The denominator dslope is the removable quotient
+    `sin(2*pi*w) / w`.
+  - Its all-order coefficients should be
+    `(-1)^m * (2*pi)^(2*m+1) / (2*m+1)!` at order `2*m`, and `0` at odd
+    orders.
+- Proof facts banked:
+  - Added `standardGabckeQuarterLocalDenominatorDslopeCoeff`, the explicit
+    all-order coefficient function for the denominator dslope.
+  - Added `StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp`, the
+    exact remaining source theorem asserting the power series with those
+    coefficients.
+  - Proved
+    `standardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp_of_sineSeries`,
+    extracting the finite coefficients `2*pi, 0, -4*pi^3/3, 0` from that
+    all-order sine-series source.
+- Failed routes:
+  - I did not introduce a shortcut provider or broaden the analytic surface.
+  - I did not use the removable quotient bridge backwards; the remaining source
+    is the direct sine-series theorem for `sin(2*pi*w) / w`.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to `origin/recovery/provider-forensics-2026-04-21`
+    at `3f0c4ed` before editing.
+  - `git diff --check`: passed.
+  - Initial focused build exposed one finite odd-index simplification issue.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed after the arithmetic repair under
+    `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp` from the
+  Mathlib sine power series and the removable dslope of
+  `standardGabckeQuarterLocalSineDenominator`, or attack the analogous
+  numerator coefficient-data source if that series-composition route is
+  lower friction.
