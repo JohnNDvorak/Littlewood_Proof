@@ -443,3 +443,65 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
       <= K * (T * (Real.log x)^2 / x)`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-28 Round 9 - Punctured Window Near-Diagonal Split
+
+- Classification: `TARGET_FALSE_AS_STATED_REDUCED_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  punctured-window decaying kernel estimate below
+  `small_T_boundary_window_bound_from_punctured_scaled_kernel_linear_weight_and_exactHit`
+  in `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Scale obstruction:
+  excluding only the exact hit `(n : ℝ) = x` is still not enough for the
+  pointwise decaying estimate
+  `|1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T|
+    <= K * (T * (Real.log x)^2 / x)`.
+  For large real `x` arbitrarily close to an integer `n`, the truncated Perron
+  kernel remains in its transition region while the right side tends to zero.
+  The statement therefore needs a near-diagonal punctured atom before a
+  separated pointwise decay theorem can be scale-correct.
+- Code facts banked:
+  added `perronKernelWeightedNearDiagonalPuncturedBoundaryError`, the
+  punctured boundary contribution with `|x - n| <= 1`.
+  Added `perronKernelWeightedSeparatedPuncturedBoundaryError`, the remaining
+  punctured contribution with `¬ |x - n| <= 1`.
+  Proved
+  `perronKernelWeightedPuncturedBoundaryWindowError_eq_nearDiagonal_add_separated`,
+  an exact finite-sum partition of the punctured boundary window.
+  Added
+  `perronKernelWeightedSeparatedPuncturedBoundaryError_le_kernelSup_mul_vonMangoldtWeight`,
+  controlling the separated weighted piece by a separated kernel supremum times
+  the full validated boundary-window von Mangoldt weight.
+  Added
+  `small_T_punctured_boundary_window_bound_from_nearDiagonal_and_separated_kernel`,
+  reducing the punctured-window weighted bound to:
+  1. a near-diagonal punctured weighted error bound
+     `perronKernelWeightedNearDiagonalPuncturedBoundaryError x T
+       <= Cn * (Real.log x)^2`;
+  2. a separated punctured pointwise kernel estimate at scale
+     `K * (T * (Real.log x)^2 / x)`;
+  3. the existing linear boundary-window weight estimate.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports, or any
+  theorem consuming `SmallTPerronBoundHyp`.  Did not use or modify
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
+  followed by strict public import probes for `Littlewood.Main.LittlewoodPsi`
+  and `Littlewood.Main.LittlewoodPi` if the focused build passes.
+- Smallest next theorem:
+  first prove the near-diagonal punctured weighted error bound
+  `∃ Cn > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelWeightedNearDiagonalPuncturedBoundaryError x T
+      <= Cn * (Real.log x)^2`.
+  The separated pointwise kernel estimate is now the scale-correct version of
+  the original target:
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈ separatedPuncturedBoundary(x,T),
+    |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T|
+      <= K * (T * (Real.log x)^2 / x)`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
