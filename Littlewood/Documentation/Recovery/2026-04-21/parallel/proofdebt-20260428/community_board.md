@@ -729,3 +729,31 @@ Timestamp: 2026-04-28 22:56 CDT.
     distance summation.
   - Pi/Phase: one of the three canonical majorant leaves.
   - RS/Gabcke: removable source bridge or sourced Tabelle value property.
+
+## Overnight 2026-04-29 Eleventh Pass Status
+
+- Perron/B5a lane is validated and pushed through `3be3a37`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Close singular Perron reciprocal log`.
+  - Validation passed after a coordinator normalization fix:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the reciprocal-log distance inequality is proved. The singular
+    Perron component now points at the weighted harmonic-distance summation
+    leaf, still preserving the scale-correct `(x / T)` route.
+  - Halley is redeployed to close that weighted summation. The false pure
+    bounded-height envelope remains forbidden.
+- Pi/Phase lane is validated and pushed through `ebd9c25`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Compare pi canonical budget leaves`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the canonical Pi budget comparisons have advanced; remaining
+    pressure stays on the canonical majorant/growth leaves feeding the Pi
+    phase route.
+  - Planck is redeployed to continue closing those canonical leaves, avoiding
+    typeclass loops and the false truncated-Pi shortcut.
+- Current live atoms:
+  - Atkinson: weighted complete-block tail prefix and finite head patch.
+  - Perron/B5a: weighted harmonic-distance summation.
+  - Pi/Phase: remaining canonical majorant/growth leaves.
+  - RS/Gabcke: removable source bridge or sourced Tabelle value property.
