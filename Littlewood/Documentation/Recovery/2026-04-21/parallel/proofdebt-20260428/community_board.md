@@ -817,3 +817,38 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Pi/Phase: three canonical budget leaves.
   - RS/Gabcke: quarter/three-quarter removable source bridge and sourced
     third-derivative value atoms.
+
+## Overnight 2026-04-29 Fourteenth Pass Status
+
+- Atkinson lane is validated and pushed through `bfe18a7`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Reduce Atkinson block tail to target remainder`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the complete-block tail is reduced to the stationary-phase
+    complete-block target remainder at `C_err * (atkinsonModeWeight k / j)`
+    plus finite fixed-shift weighted complete-block tail patches below the
+    eventual cutoff.
+  - Hooke is redeployed to those two exact targets. Boundary/correction
+    decomposition is forbidden here because it would require the correction
+    prefix provider currently being built.
+- RS/Gabcke lane is validated and pushed through `bcd870e`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Close Gabcke removable source value atoms`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`.
+  - Result: the self-value and point-bound scaffolding for the removable
+    source derivative values is closed. The remaining work is to instantiate
+    the smooth removable-source derivative `D`, prove the quarter/three-quarter
+    raw-removable bridges, and prove the corresponding numeric point bound.
+  - Hume is redeployed to the smooth removable-source bridge route. Defining
+    `D := standardGabckeRawPsiThirdDerivative`, global regularity at
+    denominator-zero points, and raw `standardGabckeRawPsi = rsPsi` remain
+    forbidden.
+- Current live atoms:
+  - Atkinson: stationary-phase complete-block target remainder and finite
+    fixed-shift tail patches.
+  - Perron/B5a: unweighted finite harmonic-distance bound.
+  - Pi/Phase: three canonical budget leaves.
+  - RS/Gabcke: smooth removable-source derivative instantiation, point
+    bridges, and numeric point bounds.
