@@ -6069,6 +6069,107 @@ theorem small_T_perronVerticalIntegrand_bddAbove_norm_image_box16 :
   exact hcompact.bddAbove_image
     small_T_perronVerticalIntegrand_continuousOn_x_height_box16.norm
 
+/-- Joint continuity of the unwindowed Perron integrand on the finite
+transition `x`/height rectangle used for the fixed-window
+dominated-convergence majorant. -/
+theorem small_T_perronVerticalIntegrand_continuousOn_x_height_transition_box
+    (Xtail : ℝ) :
+    ContinuousOn
+      (fun z : ℝ × ℝ => perronVerticalIntegrand z.1 z.2)
+      {z : ℝ × ℝ | 16 ≤ z.1 ∧ z.1 ≤ Xtail ∧ (-16 : ℝ) ≤ z.2 ∧ z.2 ≤ 16} := by
+  intro z hz
+  let box : Set (ℝ × ℝ) :=
+    {z : ℝ × ℝ | 16 ≤ z.1 ∧ z.1 ≤ Xtail ∧ (-16 : ℝ) ≤ z.2 ∧ z.2 ≤ 16}
+  let s : ℝ × ℝ → ℂ :=
+    fun q : ℝ × ℝ =>
+      ((1 + 1 / Real.log q.1 : ℝ) : ℂ) + (q.2 : ℂ) * Complex.I
+  have hz_x_pos : 0 < z.1 := by linarith [hz.1]
+  have hz_log_pos : 0 < Real.log z.1 := Real.log_pos (by linarith [hz.1])
+  have hz_log_ne : Real.log z.1 ≠ 0 := ne_of_gt hz_log_pos
+  have hx_cont :
+      ContinuousWithinAt (fun q : ℝ × ℝ => q.1) box z :=
+    continuous_fst.continuousWithinAt
+  have ht_cont :
+      ContinuousWithinAt (fun q : ℝ × ℝ => q.2) box z :=
+    continuous_snd.continuousWithinAt
+  have hlog_cont :
+      ContinuousWithinAt (fun q : ℝ × ℝ => Real.log q.1) box z :=
+    hx_cont.log (ne_of_gt hz_x_pos)
+  have hc_cont :
+      ContinuousWithinAt (fun q : ℝ × ℝ => 1 + 1 / Real.log q.1) box z :=
+    continuousWithinAt_const.add
+      (ContinuousWithinAt.div continuousWithinAt_const hlog_cont hz_log_ne)
+  have hs_cont : ContinuousWithinAt s box z := by
+    dsimp [s]
+    exact
+      (continuous_ofReal.continuousAt.comp_continuousWithinAt hc_cont).add
+        ((continuous_ofReal.continuousAt.comp_continuousWithinAt ht_cont).mul
+          continuousWithinAt_const)
+  have hs_re_gt_one : 1 < (s z).re := by
+    simpa [s] using c_param_re_gt_one z.1 (by linarith [hz.1]) z.2
+  have hzeta_ne : riemannZeta (s z) ≠ 0 :=
+    riemannZeta_ne_zero_of_one_lt_re hs_re_gt_one
+  have hs_ne : s z ≠ 0 := by
+    intro hzero
+    rw [hzero] at hs_re_gt_one
+    norm_num at hs_re_gt_one
+  have hs_ne_one : s z ≠ 1 := by
+    intro hone
+    rw [hone] at hs_re_gt_one
+    norm_num at hs_re_gt_one
+  have hderiv_at : DifferentiableAt ℂ (deriv riemannZeta) (s z) := by
+    have hdo : DifferentiableOn ℂ (deriv riemannZeta) {(1 : ℂ)}ᶜ :=
+      DifferentiableOn.deriv
+        (fun w hw => (differentiableAt_riemannZeta
+          (Set.mem_compl_singleton_iff.mp hw)).differentiableWithinAt)
+        isOpen_compl_singleton
+    exact (hdo (s z) (Set.mem_compl_singleton_iff.mpr hs_ne_one)).differentiableAt
+      (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hs_ne_one))
+  have hlogderiv :
+      ContinuousWithinAt
+        (fun q : ℝ × ℝ => -deriv riemannZeta (s q) / riemannZeta (s q)) box z :=
+    (hderiv_at.neg.div (differentiableAt_riemannZeta hs_ne_one)
+      hzeta_ne).continuousAt.comp_continuousWithinAt hs_cont
+  have hbase :
+      ContinuousWithinAt (fun q : ℝ × ℝ => (q.1 : ℂ)) box z :=
+    continuous_ofReal.continuousAt.comp_continuousWithinAt hx_cont
+  have hpow : ContinuousWithinAt (fun q : ℝ × ℝ => (q.1 : ℂ) ^ s q) box z :=
+    hbase.cpow hs_cont (ofReal_mem_slitPlane.2 hz_x_pos)
+  have hquot :
+      ContinuousWithinAt
+        (fun q : ℝ × ℝ =>
+          (-deriv riemannZeta (s q) / riemannZeta (s q)) *
+            (q.1 : ℂ) ^ s q / s q) box z :=
+    (hlogderiv.mul hpow).div hs_cont hs_ne
+  simpa [perronVerticalIntegrand, s, box] using
+    Complex.continuous_re.continuousAt.comp_continuousWithinAt hquot
+
+/-- The norm of the unwindowed Perron integrand is bounded above on a finite
+transition `x`/height rectangle. -/
+theorem small_T_perronVerticalIntegrand_bddAbove_norm_image_transition_box
+    (Xtail : ℝ) :
+    BddAbove
+      ((fun z : ℝ × ℝ => ‖perronVerticalIntegrand z.1 z.2‖) ''
+        {z : ℝ × ℝ | 16 ≤ z.1 ∧ z.1 ≤ Xtail ∧ (-16 : ℝ) ≤ z.2 ∧ z.2 ≤ 16}) := by
+  have hcompact :
+      IsCompact {z : ℝ × ℝ |
+        16 ≤ z.1 ∧ z.1 ≤ Xtail ∧ (-16 : ℝ) ≤ z.2 ∧ z.2 ≤ 16} := by
+    convert
+      (isCompact_Icc :
+        IsCompact (Set.Icc ((16 : ℝ), (-16 : ℝ)) ((Xtail : ℝ), (16 : ℝ)))) using 1
+    ext z
+    constructor
+    · intro hz
+      exact
+        ⟨Prod.le_def.2 ⟨hz.1, hz.2.2.1⟩,
+          Prod.le_def.2 ⟨hz.2.1, hz.2.2.2⟩⟩
+    · intro hz
+      exact
+        ⟨(Prod.le_def.1 hz.1).1, (Prod.le_def.1 hz.2).1,
+          (Prod.le_def.1 hz.1).2, (Prod.le_def.1 hz.2).2⟩
+  exact hcompact.bddAbove_image
+    (small_T_perronVerticalIntegrand_continuousOn_x_height_transition_box Xtail).norm
+
 /-- A bounded image of the unwindowed integrand on the compact `x`/height box
 supplies the local integrable-majorant input required by the fixed-window DCT
 handoff. -/
@@ -6122,6 +6223,65 @@ theorem small_T_perronVerticalFixedWindowIntegrand_integrable_majorant_slab16 :
             ‖perronVerticalFixedWindowIntegrandParam q t‖ ≤ bound t :=
   small_T_perronVerticalFixedWindowIntegrand_integrable_majorant_slab16_of_bddAbove
     small_T_perronVerticalIntegrand_bddAbove_norm_image_box16
+
+/-- A bounded image of the unwindowed integrand on a transition `x`/height box
+supplies the local integrable-majorant input required by the fixed-window DCT
+handoff on the same transition rectangle. -/
+theorem small_T_perronVerticalFixedWindowIntegrand_integrable_majorant_transition_of_bddAbove
+    (Xtail : ℝ)
+    (hbdd : BddAbove
+      ((fun z : ℝ × ℝ => ‖perronVerticalIntegrand z.1 z.2‖) ''
+        {z : ℝ × ℝ | 16 ≤ z.1 ∧ z.1 ≤ Xtail ∧ (-16 : ℝ) ≤ z.2 ∧ z.2 ≤ 16})) :
+    ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∃ bound : ℝ → ℝ,
+        Integrable bound (volume.restrict (Set.Ioc (-16 : ℝ) 16)) ∧
+        ∀ᶠ q in 𝓝[
+          {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+            ‖perronVerticalFixedWindowIntegrandParam q t‖ ≤ bound t := by
+  rcases hbdd with ⟨M, hM⟩
+  intro p hp
+  refine ⟨fun _t : ℝ => max (0 : ℝ) M, ?_, ?_⟩
+  · exact integrable_const (max (0 : ℝ) M)
+  · filter_upwards [eventually_mem_nhdsWithin] with q hq
+    filter_upwards with t
+    by_cases ht : t ∈ Set.Ioc (-q.2) q.2
+    · have ht_box : (q.1, t) ∈
+          {z : ℝ × ℝ | 16 ≤ z.1 ∧ z.1 ≤ Xtail ∧ (-16 : ℝ) ≤ z.2 ∧ z.2 ≤ 16} := by
+        rcases hq with ⟨hqx16, hqx_tail, hqT2, hqT16⟩
+        exact ⟨hqx16, hqx_tail, by linarith [ht.1, hqT16], le_trans ht.2 hqT16⟩
+      have himage :
+          ‖perronVerticalIntegrand q.1 t‖ ∈
+            ((fun z : ℝ × ℝ => ‖perronVerticalIntegrand z.1 z.2‖) ''
+              {z : ℝ × ℝ | 16 ≤ z.1 ∧ z.1 ≤ Xtail ∧
+                (-16 : ℝ) ≤ z.2 ∧ z.2 ≤ 16}) := by
+        exact ⟨(q.1, t), ht_box, rfl⟩
+      have hleM : ‖perronVerticalIntegrand q.1 t‖ ≤ M := hM himage
+      have hleMax : ‖perronVerticalIntegrand q.1 t‖ ≤ max (0 : ℝ) M :=
+        le_trans hleM (le_max_right (0 : ℝ) M)
+      simpa [perronVerticalFixedWindowIntegrandParam, ht] using hleMax
+    · have hzero :
+          ‖perronVerticalFixedWindowIntegrandParam q t‖ = (0 : ℝ) := by
+        simp [perronVerticalFixedWindowIntegrandParam, ht]
+      rw [hzero]
+      exact le_max_left (0 : ℝ) M
+
+/-- Closed local integrable-majorant input for the transition fixed-window DCT
+handoff. -/
+theorem small_T_perronVerticalFixedWindowIntegrand_integrable_majorant_transition
+    (Xtail : ℝ) :
+    ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∃ bound : ℝ → ℝ,
+        Integrable bound (volume.restrict (Set.Ioc (-16 : ℝ) 16)) ∧
+        ∀ᶠ q in 𝓝[
+          {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+            ‖perronVerticalFixedWindowIntegrandParam q t‖ ≤ bound t :=
+  small_T_perronVerticalFixedWindowIntegrand_integrable_majorant_transition_of_bddAbove
+    Xtail
+    (small_T_perronVerticalIntegrand_bddAbove_norm_image_transition_box Xtail)
 
 /-- Fixed-window slab continuity reduced to the exact local dominated
 convergence inputs on the fixed window `(-16,16]`.  The remaining analytic
