@@ -2894,3 +2894,16 @@ Timestamp: 2026-04-28 22:56 CDT.
       Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
   - Current Pi atom:
     `PerronThresholdEventuallyBelowExpHalfBudgetHyp`.
+
+## Overnight 2026-04-29 One-Hundred-Fourteenth Pass Status
+
+- Coordinator recovery branch is pushed through `7e0c5ae`.
+- Perron/B5a lane is integrated through `b17df29`:
+  - The transition fixed-window DCT measurability input is closed.
+  - The transition fixed-window continuity handoff now needs only the remaining
+    a.e. pointwise convergence/tendsto input.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron atom: transition a.e. tendsto for
+    `perronVerticalFixedWindowIntegrandParam`; zero-sum transition continuity
+    and eventual normalized asymptotic tail remain separate.
