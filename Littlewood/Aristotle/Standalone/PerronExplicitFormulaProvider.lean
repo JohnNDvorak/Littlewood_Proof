@@ -2827,6 +2827,42 @@ class FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp :
             ∀ ρ ∈ S,
               ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
 
+/-- Quantitative finite-set relation-compatible Kronecker source with an
+externally supplied radius budget.
+
+This is the finite-dimensional theorem shape below the zeta-specialized
+budgeted Pi route: after compatibility is supplied for two target phase
+functions on the same finite set and tolerance, the theorem returns two
+relative-density radii already bounded by the same budget `B`. -/
+class FiniteSetRelationCompatibleBudgetedPairKroneckerHyp : Prop where
+  witness :
+    ∀ (S : Finset ℂ) (ε B : ℝ)
+      (targetPhase antiTargetPhase : ℂ → ℝ),
+      0 < ε →
+      finiteSetInhomogeneousPhaseRelationCompatible S ε targetPhase →
+      finiteSetInhomogeneousPhaseRelationCompatible S ε antiTargetPhase →
+      ∃ Rt Ra : ℝ,
+        0 < Rt ∧
+        0 < Ra ∧
+        Rt + 1 ≤ B ∧
+        Ra + 1 ≤ B ∧
+        (∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + Rt ∧
+            ∀ ρ ∈ S,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - targetPhase ρ -
+                    m • (2 * Real.pi)‖ ≤ ε) ∧
+        (∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + Ra ∧
+            ∀ ρ ∈ S,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - antiTargetPhase ρ -
+                    m • (2 * Real.pi)‖ ≤ ε)
+
 /-- Zeta finite-zero relation-compatibility leaf for the target phase function
 used by the Perron-only phase-fit boundary. -/
 class FiniteZeroInhomogeneousPhaseRelationCompatibleHyp : Prop where
@@ -3499,6 +3535,22 @@ theorem targetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDense_of_relatio
     exact
       TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp.witness
         T ε hT4 hεpos hεlt hTargetCompat hAntiCompat
+
+/-- A generic finite-set pair Kronecker theorem with an external budget
+specializes to the zeta finite-zero target/anti budgeted Kronecker leaf. -/
+theorem targetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKronecker_of_finiteSetBudgetedPairKronecker_hyp
+    [FiniteSetRelationCompatibleBudgetedPairKroneckerHyp] :
+    TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp where
+  witness := by
+    intro T ε _hT4 hεpos _hεlt hTargetCompat hAntiCompat
+    let B : ℝ :=
+      Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+    simpa [B] using
+      FiniteSetRelationCompatibleBudgetedPairKroneckerHyp.witness
+        (finite_zeros_le T).toFinset ε B
+        Complex.arg (fun ρ => Complex.arg ρ + Real.pi)
+        hεpos hTargetCompat hAntiCompat
 
 /-- Majorant form of the paired finite-zero phase-radius growth source.
 
