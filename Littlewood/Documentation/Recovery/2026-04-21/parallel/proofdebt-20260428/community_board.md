@@ -654,3 +654,51 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Perron/B5a: one of the two log-distance subatoms.
   - Pi/Phase: one of the three refined majorant leaves.
   - RS/Gabcke: removable point bounds or regular raw third-derivative bound.
+
+## Overnight 2026-04-29 Ninth Pass Status
+
+- Atkinson lane is validated and pushed through `8fd9279`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Reduce Atkinson row prefix to complete-block tail`.
+  - Validation passed after a coordinator nonnegativity/empty-branch fix:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the row-integral prefix atom is reduced to two leaves: a weighted
+    complete-block tail prefix and the isolated `j - 1` head row-cell bound.
+  - Hooke is redeployed to close one of those two leaves while preserving the
+    correction-prefix route and scale.
+- RS/Gabcke lane is validated and pushed through `130576f`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Isolate Gabcke removable point values`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`.
+  - Result: removable point bounds are reduced to exact third-derivative values
+    at `1/4` and `3/4`, plus numeric bounds for those values.
+  - Hume is redeployed to source those values through the removable/Tabelle
+    normalization or to attack the regular raw third-derivative bound.
+- Perron/B5a lane is validated and pushed through `bd4010d`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Reduce singular Perron pointwise distance`.
+  - Validation passed after a coordinator denominator-normalization fix:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the pointwise singular comparison now has a proved numerator
+    bound and is reduced to the reciprocal-log distance inequality
+    `(Real.log (x / (n : ℝ)))⁻¹ <= x / (x - (n : ℝ))`.
+  - Halley is redeployed to close that inequality or the weighted harmonic
+    distance summation leaf. The false pure bounded-height envelope remains
+    forbidden.
+- Pi/Phase lane is validated and pushed through `c7339c5`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Canonize pi one-sided radius leaves`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the two finite-zero radius half-budget leaves are canonicalized
+    into target and anti-target one-sided classes.
+  - Planck is redeployed to one of the three current majorant leaves.
+- Current live atoms:
+  - Atkinson: weighted complete-block tail prefix or isolated head row-cell
+    bound feeding the correction-prefix route.
+  - Perron/B5a: reciprocal-log distance inequality or weighted harmonic
+    distance summation.
+  - Pi/Phase: one of the three canonical majorant leaves.
+  - RS/Gabcke: exact removable point values or regular raw third-derivative
+    bound.
