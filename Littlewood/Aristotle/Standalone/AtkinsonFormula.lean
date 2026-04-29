@@ -2184,6 +2184,35 @@ private theorem atkinson_vertical_multiplier_branch_of_period_correction_zero
   rw [hzero' y hy] at hcorr
   simpa using hcorr
 
+/-- The period correction vanishes once the principal-log argument already
+lies in the target branch interval `(-π, π]`. -/
+private theorem atkinson_vertical_period_correction_zero_of_im_mem_Ioc
+    (hrange :
+      ∃ Yrange : ℝ, ∀ y : ℝ, Yrange ≤ y →
+        (Aristotle.StationaryPhaseStartValue.stirlingTerm
+            ((1 / 4 : ℂ) + Complex.I * y) +
+          Complex.log (atkinsonVerticalGammaStirlingMultiplier y)).im ∈
+          Set.Ioc (-Real.pi) Real.pi) :
+    ∃ Yzero : ℝ, ∀ y : ℝ, Yzero ≤ y →
+      toIocDiv Real.two_pi_pos (-Real.pi)
+        (Aristotle.StationaryPhaseStartValue.stirlingTerm
+            ((1 / 4 : ℂ) + Complex.I * y) +
+          Complex.log (atkinsonVerticalGammaStirlingMultiplier y)).im = 0 := by
+  obtain ⟨Yrange, hrange'⟩ := hrange
+  refine ⟨Yrange, ?_⟩
+  intro y hy
+  let θ : ℝ :=
+    (Aristotle.StationaryPhaseStartValue.stirlingTerm
+        ((1 / 4 : ℂ) + Complex.I * y) +
+      Complex.log (atkinsonVerticalGammaStirlingMultiplier y)).im
+  have hθ : θ ∈ Set.Ioc (-Real.pi) (-Real.pi + 2 * Real.pi) := by
+    have hraw : θ ∈ Set.Ioc (-Real.pi) Real.pi := by
+      simpa [θ] using hrange' y hy
+    simpa [sub_eq_add_neg, two_mul, add_assoc, add_left_comm, add_comm] using hraw
+  simpa [θ] using
+    (toIocDiv_eq_of_sub_zsmul_mem_Ioc Real.two_pi_pos (a := -Real.pi)
+      (b := θ) (n := 0) (by simpa using hθ))
+
 /-- The principal-log pointwise Stirling bound follows from the usual relative
 Stirling residual and the exact branch identity for the normalized vertical
 multiplier. -/
@@ -2453,6 +2482,28 @@ private theorem atkinson_vertical_principal_log_isBigO_of_period_correction_zero
       (atkinson_vertical_multiplier_branch_of_period_correction_zero hzero)
       (atkinson_vertical_relative_gamma_stirling_of_multiplier_isBigO
         (atkinson_vertical_multiplier_isBigO_of_atkinson_multiplier_isBigO hmult)))
+
+/-- Version of the vertical principal-log `IsBigO` reduction with the period
+correction expressed as the concrete branch interval condition. -/
+private theorem atkinson_vertical_principal_log_isBigO_of_period_range_and_multiplier_isBigO
+    (hrange :
+      ∃ Yrange : ℝ, ∀ y : ℝ, Yrange ≤ y →
+        (Aristotle.StationaryPhaseStartValue.stirlingTerm
+            ((1 / 4 : ℂ) + Complex.I * y) +
+          Complex.log (atkinsonVerticalGammaStirlingMultiplier y)).im ∈
+          Set.Ioc (-Real.pi) Real.pi)
+    (hmult :
+      Asymptotics.IsBigO Filter.atTop
+        (fun t : ℝ => atkinsonGammaStirlingMultiplier t - 1)
+        (fun t : ℝ => ((1 / t : ℝ) : ℂ))) :
+    Asymptotics.IsBigO Filter.atTop
+      (fun y : ℝ =>
+        Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+          Aristotle.StationaryPhaseStartValue.stirlingTerm
+            ((1 / 4 : ℂ) + Complex.I * y))
+      (fun y : ℝ => ((1 / y : ℝ) : ℂ)) :=
+  atkinson_vertical_principal_log_isBigO_of_period_correction_zero_and_multiplier_isBigO
+    (atkinson_vertical_period_correction_zero_of_im_mem_Ioc hrange) hmult
 
 /-- A complex logarithmic Stirling remainder controls the normalized
 Stirling multiplier after exponentiation. -/
