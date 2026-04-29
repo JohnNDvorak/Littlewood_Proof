@@ -3370,3 +3370,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `PerronSqrtErrorRawChoiceEventuallyLeastValidThresholdResidual`.
   - Parallel analytic side atom:
     `PerronFixedHalfBudgetThresholdEventuallyValidResidual`.
+
+### 2026-04-29 Round 69: Fixed-Half Valid Threshold Domination
+
+- Classification: `PARTIAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronFixedHalfBudgetThresholdEventuallyValidResidual`.
+  - Audited `PerronSqrtErrorRawChoiceEventuallyLeastValidThresholdResidual`
+    but did not force a false chooser-minimality proof.
+- Facts banked:
+  - Proved `perronSqrtErrorAtHeightValidThreshold_mono`.
+  - Added
+    `PerronFixedHalfBudgetThresholdDominatesValidThresholdResidual`.
+  - Proved
+    `perronFixedHalfBudgetThresholdEventuallyValid_of_dominatesValidThreshold`.
+  - Added endpoint
+    `exactSeedAboveThreshold_perron_of_fixedHalfDominatesValidThreshold_leastValidThresholdAndBudgetedRelativelyDense_hyp`.
+- What changed:
+  - Reduced fixed-half budget threshold validity to the exact analytic fact
+    that the named half-budget threshold eventually dominates some valid
+    Perron threshold at the same height.
+  - The new endpoint packages this domination residual with the existing
+    raw-chooser least-valid residual and the budgeted finite-zero route.
+- Failed/direct route:
+  - Raw chooser least-validity still does not follow from the existing
+    `Classical.choose_spec`; the chooser exposes validity only, not
+    minimality or comparison against other valid thresholds.
+  - Did not replace the chooser or add a minimization axiom.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set
+    Kronecker, provider cycles, or broad provider was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation command/result:
+  - Under the corrected singleflight lock:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+  - `git diff --check`
+  - Result: passed after code and ledger updates.
+- Smallest next theorem:
+  - `PerronFixedHalfBudgetThresholdDominatesValidThresholdResidual`.
+  - Chooser side remains:
+    `PerronSqrtErrorRawChoiceEventuallyLeastValidThresholdResidual`.
