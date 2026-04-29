@@ -526,3 +526,63 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
       <= K * (T * (Real.log x)^2 / x)`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 10 - Near-Diagonal Punctured Error Reduction
+
+- Classification: `STRICTER_NEAR_DIAGONAL_REDUCTION_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  near-diagonal punctured weighted boundary error below
+  `small_T_punctured_boundary_window_bound_from_nearDiagonal_and_separated_kernel`
+  in `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Code facts banked:
+  added `perronKernelNearDiagonalPuncturedBoundarySet`, naming the exact finite
+  set
+  `{n <= floor x | |x - n| <= x / T, (n : ℝ) != x, |x - n| <= 1}`.
+  Added `perronKernelNearDiagonalPuncturedVonMangoldtWeight`, the pure
+  von Mangoldt weight of this unit punctured boundary set.
+  Added
+  `perronKernelWeightedNearDiagonalPuncturedBoundaryError_le_kernelSup_mul_weight`,
+  reducing the near-diagonal weighted error to a uniform kernel bound times the
+  pure near-diagonal weight.
+  Added
+  `perronKernelWeightedNearDiagonalPuncturedBoundaryError_le_kernelSup_mul_log`,
+  showing that if the named near-diagonal set has cardinality at most one, then
+  the near-diagonal weighted error is `<= K * Real.log x` under a uniform
+  kernel bound.  The proof uses only `vonMangoldt_le_log`, membership in
+  `range (floor x + 1)`, `Nat.floor_le`, and the unit-band exclusion of
+  `n = 0`.
+  Added
+  `small_T_nearDiagonal_punctured_boundary_bound_from_cardinality_and_kernel`,
+  reducing the target
+  `perronKernelWeightedNearDiagonalPuncturedBoundaryError x T
+    <= Cn * (Real.log x)^2`
+  to:
+  1. the exact finite-cardinality atom
+     `(perronKernelNearDiagonalPuncturedBoundarySet x T).card <= 1`;
+  2. a uniform bounded-height kernel estimate on that same finite set.
+- Failed route / scale note:
+  did not attempt to prove the decaying kernel estimate on the near-diagonal
+  punctured set.  That would still be scale-unsafe near real `x` arbitrarily
+  close to an integer.  The near-diagonal path only needs a uniform kernel
+  bound because the finite-cardinality/log-weight atom absorbs it into
+  `O((Real.log x)^2)`.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the exact finite-cardinality atom
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    (perronKernelNearDiagonalPuncturedBoundarySet x T).card <= 1`.
+  Then prove the uniform local kernel atom
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelNearDiagonalPuncturedBoundarySet x T,
+      |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| <= K`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

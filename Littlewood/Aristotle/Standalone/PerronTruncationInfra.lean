@@ -1418,6 +1418,14 @@ def perronKernelWeightedPuncturedBoundaryWindowError (x T : ℝ) : ℝ :=
     ArithmeticFunction.vonMangoldt n *
       |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
 
+/-- The finite near-diagonal punctured boundary set.  It lies in the unit band
+`|x - n| <= 1` below the sharp cutoff and removes the exact hit `(n : ℝ) = x`. -/
+def perronKernelNearDiagonalPuncturedBoundarySet (x T : ℝ) : Finset ℕ :=
+  (((Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => |x - (n : ℝ)| ≤ x / T)).filter
+        (fun n : ℕ => (n : ℝ) ≠ x)).filter
+          (fun n : ℕ => |x - (n : ℝ)| ≤ 1)
+
 /-- Near-diagonal part of the punctured boundary-window weighted error.  The
 exact hit has already been removed, but this unit band records the remaining
 integer-nearby obstruction where pointwise decay at scale
@@ -1440,6 +1448,11 @@ def perronKernelWeightedSeparatedPuncturedBoundaryError (x T : ℝ) : ℝ :=
           (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ 1),
     ArithmeticFunction.vonMangoldt n *
       |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+
+/-- Pure von Mangoldt weight of the near-diagonal punctured boundary set. -/
+def perronKernelNearDiagonalPuncturedVonMangoldtWeight (x T : ℝ) : ℝ :=
+  ∑ n ∈ perronKernelNearDiagonalPuncturedBoundarySet x T,
+    ArithmeticFunction.vonMangoldt n
 
 /-- Pure von Mangoldt weight of the boundary window. This is the exact
 arithmetic count/log-weight atom left after separating the uniformly bounded
@@ -1653,6 +1666,100 @@ theorem perronKernelWeightedSeparatedPuncturedBoundaryError_le_kernelSup_mul_von
             (by
               intro n _hn_s _hn_not_ss
               exact vonMangoldt_nonneg n)
+
+/-- Near-diagonal punctured boundary weighted error is controlled by a uniform
+kernel bound times the pure near-diagonal von Mangoldt weight. -/
+theorem perronKernelWeightedNearDiagonalPuncturedBoundaryError_le_kernelSup_mul_weight
+    (x T K : ℝ)
+    (hkernel : ∀ n : ℕ,
+      n ∈ perronKernelNearDiagonalPuncturedBoundarySet x T →
+        |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤ K) :
+    perronKernelWeightedNearDiagonalPuncturedBoundaryError x T ≤
+      K * perronKernelNearDiagonalPuncturedVonMangoldtWeight x T := by
+  classical
+  let s := perronKernelNearDiagonalPuncturedBoundarySet x T
+  calc perronKernelWeightedNearDiagonalPuncturedBoundaryError x T
+      = ∑ n ∈ s,
+          ArithmeticFunction.vonMangoldt n *
+            |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| := by
+        rfl
+    _ ≤ ∑ n ∈ s, ArithmeticFunction.vonMangoldt n * K := by
+        apply Finset.sum_le_sum
+        intro n hn
+        exact
+          mul_le_mul_of_nonneg_left
+            (hkernel n (by simpa [s] using hn)) (vonMangoldt_nonneg n)
+    _ = K * perronKernelNearDiagonalPuncturedVonMangoldtWeight x T := by
+        dsimp [perronKernelNearDiagonalPuncturedVonMangoldtWeight, s]
+        rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl
+        intro n _hn
+        ring
+
+/-- If the near-diagonal punctured boundary set has at most one element, then
+its weighted kernel error is only `O(log x)` under a uniform kernel bound. -/
+theorem perronKernelWeightedNearDiagonalPuncturedBoundaryError_le_kernelSup_mul_log
+    (x T K : ℝ) (hx : 2 ≤ x) (hK_nonneg : 0 ≤ K)
+    (hcard : (perronKernelNearDiagonalPuncturedBoundarySet x T).card ≤ 1)
+    (hkernel : ∀ n : ℕ,
+      n ∈ perronKernelNearDiagonalPuncturedBoundarySet x T →
+        |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤ K) :
+    perronKernelWeightedNearDiagonalPuncturedBoundaryError x T ≤ K * Real.log x := by
+  classical
+  let s := perronKernelNearDiagonalPuncturedBoundarySet x T
+  have hlogx_nonneg : 0 ≤ Real.log x := Real.log_nonneg (by linarith)
+  have hB_nonneg : 0 ≤ K * Real.log x := mul_nonneg hK_nonneg hlogx_nonneg
+  have hterm :
+      ∀ n ∈ s,
+        ArithmeticFunction.vonMangoldt n *
+            |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤
+          K * Real.log x := by
+    intro n hn
+    have hn_set : n ∈ perronKernelNearDiagonalPuncturedBoundarySet x T := by
+      simpa [s] using hn
+    have hn_unfold := hn_set
+    dsimp [perronKernelNearDiagonalPuncturedBoundarySet] at hn_unfold
+    have hnear : |x - (n : ℝ)| ≤ 1 := (Finset.mem_filter.mp hn_unfold).2
+    have hsp := (Finset.mem_filter.mp hn_unfold).1
+    have hs := (Finset.mem_filter.mp hsp).1
+    have hrange : n ∈ Finset.range (Nat.floor x + 1) := (Finset.mem_filter.mp hs).1
+    have hn_le_floor : n ≤ Nat.floor x := Nat.lt_succ_iff.mp (Finset.mem_range.mp hrange)
+    have hn_le_x : (n : ℝ) ≤ x := by
+      exact le_trans (Nat.cast_le.mpr hn_le_floor) (Nat.floor_le (by linarith : 0 ≤ x))
+    have hn_pos_real : (0 : ℝ) < n := by
+      by_contra hn_nonpos
+      have hn_zero : (n : ℝ) = 0 :=
+        le_antisymm (le_of_not_gt hn_nonpos) (Nat.cast_nonneg n)
+      have hx_le_one : x ≤ 1 := by
+        have hnear_zero : |x| ≤ 1 := by
+          simpa [hn_zero] using hnear
+        exact le_trans (le_abs_self x) hnear_zero
+      linarith
+    have hn_pos : 1 ≤ n := Nat.succ_le_of_lt (Nat.cast_pos.mp hn_pos_real)
+    have hΛ_le_logx : ArithmeticFunction.vonMangoldt n ≤ Real.log x := by
+      calc ArithmeticFunction.vonMangoldt n
+          ≤ Real.log (n : ℝ) := vonMangoldt_le_log n hn_pos
+        _ ≤ Real.log x := Real.log_le_log hn_pos_real hn_le_x
+    calc ArithmeticFunction.vonMangoldt n *
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+        ≤ Real.log x * K :=
+          mul_le_mul hΛ_le_logx (hkernel n hn_set) (abs_nonneg _)
+            hlogx_nonneg
+      _ = K * Real.log x := by ring
+  calc perronKernelWeightedNearDiagonalPuncturedBoundaryError x T
+      = ∑ n ∈ s,
+          ArithmeticFunction.vonMangoldt n *
+            |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| := by
+        rfl
+    _ ≤ s.card • (K * Real.log x) :=
+        Finset.sum_le_card_nsmul s
+          (fun n =>
+            ArithmeticFunction.vonMangoldt n *
+              |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|)
+          (K * Real.log x) hterm
+    _ ≤ 1 • (K * Real.log x) :=
+        nsmul_le_nsmul_left hB_nonneg (by simpa [s] using hcard)
+    _ = K * Real.log x := by simp
 
 /-- For `x >= 2`, one logarithm is absorbed by a constant multiple of
 `(log x)^2`. -/
@@ -2048,6 +2155,36 @@ theorem small_T_punctured_boundary_window_bound_from_nearDiagonal_and_separated_
     _ ≤ Cn * (Real.log x) ^ 2 + K * Cv * (Real.log x) ^ 2 :=
         add_le_add hnear_x hseparated
     _ = (Cn + K * Cv) * (Real.log x) ^ 2 := by ring
+
+/-- Near-diagonal punctured weighted error from its two small atoms:
+finite-cardinality of the unit punctured boundary set and a uniform bounded
+kernel estimate on that set. -/
+theorem small_T_nearDiagonal_punctured_boundary_bound_from_cardinality_and_kernel
+    (hcard : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      (perronKernelNearDiagonalPuncturedBoundarySet x T).card ≤ 1)
+    (hkernel : ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelNearDiagonalPuncturedBoundarySet x T →
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤ K) :
+    ∃ Cn > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedNearDiagonalPuncturedBoundaryError x T ≤ Cn * (Real.log x) ^ 2 := by
+  rcases hkernel with ⟨K, hK_pos, hkernel⟩
+  let Cn : ℝ := K / Real.log 2
+  have hlog2_pos : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  refine ⟨Cn, div_pos hK_pos hlog2_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hlog_absorb := log_le_const_mul_log_sq_of_ge_two x hx
+  have hnear :=
+    perronKernelWeightedNearDiagonalPuncturedBoundaryError_le_kernelSup_mul_log
+      x T K hx hK_pos.le (hcard x T hx hT_lo hT_hi)
+      (hkernel x T hx hT_lo hT_hi)
+  calc perronKernelWeightedNearDiagonalPuncturedBoundaryError x T
+      ≤ K * Real.log x := hnear
+    _ ≤ K * ((1 / Real.log 2) * (Real.log x) ^ 2) :=
+        mul_le_mul_of_nonneg_left hlog_absorb hK_pos.le
+    _ = Cn * (Real.log x) ^ 2 := by
+        dsimp [Cn]
+        ring
 
 /-- Finite Perron-kernel cutoff from a weighted per-term cutoff-error bound.
 
