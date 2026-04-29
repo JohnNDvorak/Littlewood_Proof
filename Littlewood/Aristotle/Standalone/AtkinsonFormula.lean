@@ -19765,6 +19765,54 @@ private theorem
       hmode atkinsonResonantShiftedBoundary_finite_patch hcorrPatch
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- The finite correction-patch family below an eventual cutoff reduces to
+native single-shift correction-prefix leaves. The constant may depend on the
+fixed shift, but not on the prefix length. -/
+private theorem atkinsonResonantShiftedCorrection_finite_patch_of_fixedShift
+    (hfixed :
+      ∀ j : ℕ, 3 ≤ j → 1 ≤ j →
+        ∃ C_corr > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ C_corr * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    ∀ J0 : ℕ, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → j < J0 →
+      ∃ C_corr > 0, ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n j‖
+          ≤ C_corr * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  intro _ j hj3 hj1 _
+  exact hfixed j hj3 hj1
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Native row-prefix handoff with the finite correction input stated as the
+single-shift correction-prefix leaf. This removes the bookkeeping cutoff from
+the remaining correction atom. -/
+private theorem
+    atkinson_largeShiftRowIntegralPrefix_bound_of_blockMode_stationaryPhase_and_fixedShift_correction
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hfixed :
+      ∀ j : ℕ, 3 ≤ j → 1 ≤ j →
+        ∃ C_corr > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ C_corr * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    ∃ C_row > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ,
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+        ≤ C_row * Real.log (↑j + 1) *
+            (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  exact
+    atkinson_largeShiftRowIntegralPrefix_bound_of_blockMode_stationaryPhase_and_finite_correction_patch
+      hmode
+      (atkinsonResonantShiftedCorrection_finite_patch_of_fixedShift hfixed)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
     atkinson_large_modes_complete_resonant_packet_row_correction_sum_bound_atomic_of_shifted_correction_prefix
     [AtkinsonShiftedCorrectionPrefixBoundHyp] :
