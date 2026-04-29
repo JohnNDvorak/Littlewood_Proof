@@ -1264,3 +1264,27 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Pi/Phase: fixed-height Perron-error exact-seed route is running with
     Planck.
   - RS/Gabcke: close one of the two split removable-candidate quarter atoms.
+
+## Overnight 2026-04-29 Twenty-Seventh Pass Status
+
+- Pi/Phase lane is validated and pushed through `4e04ec6`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Bridge pi fixed-height error route`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the fixed-height Perron-error target and anti-target exact-seed
+    payloads now feed the full target/anti arg-approx families, corrected
+    phase-coupling, and `RhPiWitnessData`, without constructing
+    Perron-threshold exact-seed classes.
+  - Remaining Pi atom:
+    `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp`, choosing `x, T, ε`
+    with actual fixed-height Perron error, phase approximation, and tower cap
+    at the same height.
+  - Guardrail preserved: no cross-height `perronThreshold` monotonicity, no
+    false truncated-Pi route, no circular provider instances, no axioms/sorries.
+- Current live atoms:
+  - Atkinson: native stationary-phase/correction-prefix atoms needed for
+    immediate provider instantiation.
+  - Perron/B5a: named Davenport-envelope bound at linear `x / T` scale.
+  - Pi/Phase: `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp`.
+  - RS/Gabcke: one of the split removable-candidate quarter atoms.
