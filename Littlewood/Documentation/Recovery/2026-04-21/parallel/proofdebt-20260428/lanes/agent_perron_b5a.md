@@ -1737,3 +1737,51 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `SmallTPerronBoundHyp` target.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 33 - Linear Absorption Boundary
+
+- Classification: `CANDIDATE_REDUCTION`.
+- Exact theorem attacked:
+  the blocker between the validated linear-window cutoff shape
+  `sqrt x * (log T)^2 / sqrt T + (x / T) * (log x)^2` and the public
+  `SmallTPerronBoundHyp` target
+  `sqrt x * (log T)^2 / sqrt T + (log x)^2`.
+- Code facts banked:
+  added `small_T_direct_bound_from_linear_bound_and_absorption`, an ordinary
+  theorem adapter from an honest linear direct bound plus the explicit
+  absorption atom
+  `(x / T) * (Real.log x)^2 <= A *
+    (sqrt x * (Real.log T)^2 / sqrt T + (Real.log x)^2)`.
+  Added the non-instance provider adapter
+  `small_T_perron_bound_hyp_from_linear_residue_and_absorption`, which combines
+  the closed linear cutoff/residue handoff with that explicit absorption atom.
+- Scale check:
+  no unconditional absorption was asserted.  On the current public domain
+  `x >= 2`, `2 <= T <= 16`, the linear-window term has growth
+  `(x / T) * (log x)^2`; for bounded `T` this is not uniformly controlled by
+  `sqrt x * (log T)^2 / sqrt T + (log x)^2`.  The adapter therefore isolates
+  the missing statement instead of feeding the linear theorem into
+  `SmallTPerronBoundHyp`.
+- Failed/demoted routes:
+  did not change the public `SmallTPerronBoundHyp` statement, did not create
+  an automatic instance, and did not weaken the main theorem.  The current
+  linear cutoff route remains a valid handoff only for a strengthened target
+  or for a later proof/cancellation theorem that removes or absorbs the
+  `x / T` factor under a genuinely narrower parameter regime.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, contour providers,
+  `general_formula_accessible`, public main imports, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  either prove a sharper cutoff/truncation theorem with pure
+  `O((Real.log x)^2)` error, prove a cancellation/residue handoff that removes
+  the linear-window term before the public provider boundary, or intentionally
+  introduce a separate strengthened small-`T` surface for consumers that can
+  use the linear-window shape.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
