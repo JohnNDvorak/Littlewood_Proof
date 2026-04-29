@@ -684,3 +684,62 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   exact hits and the unit near-diagonal band.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 13 - Separated Boundary Weighted Assembly
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  separated punctured boundary route below
+  `small_T_punctured_boundary_window_bound_from_nearDiagonal_and_separated_kernel`
+  in `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Banked inputs:
+  validated exact-hit bound `small_T_exactHit_boundary_error_bound`, validated
+  near-diagonal bound `small_T_nearDiagonal_punctured_boundary_bound`, and the
+  exact finite-sum splits
+  `perronKernelWeightedBoundaryWindowError_eq_exactHit_add_punctured` and
+  `perronKernelWeightedPuncturedBoundaryWindowError_eq_nearDiagonal_add_separated`.
+- Failed route:
+  the separated pointwise decay estimate at scale
+  `K * (T * (Real.log x)^2 / x)` is demoted for the current bounded-height
+  window.  Even after removing exact hits and the unit near-diagonal band,
+  fixed bounded `T` leaves macroscopic boundary points where the truncated
+  Perron kernel need not have pointwise error tending to zero with `x`.  This
+  route should not be retried without a stronger distance-from-transition
+  hypothesis that really forces decay.
+- Code facts banked:
+  added
+  `small_T_punctured_boundary_window_bound_from_nearDiagonal_and_separated_weighted`,
+  reducing the punctured boundary-window estimate to near-diagonal weighted
+  control plus a direct separated weighted-error estimate.
+  Added
+  `small_T_punctured_boundary_window_bound_from_separated_weighted`, using the
+  closed near-diagonal atom so the punctured window now depends only on
+  `perronKernelWeightedSeparatedPuncturedBoundaryError`.
+  Added `small_T_boundary_window_bound_from_separated_weighted`, using the
+  closed exact-hit and near-diagonal atoms so the full boundary window depends
+  only on the direct separated weighted-error estimate.
+  Added
+  `small_T_weighted_kernel_cutoff_bound_from_separated_boundary_and_offBoundary`,
+  reducing the finite weighted cutoff atom to:
+  1. the separated punctured boundary weighted estimate;
+  2. the off-boundary weighted estimate.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the direct separated weighted-error atom
+  `∃ Cs > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelWeightedSeparatedPuncturedBoundaryError x T
+      <= Cs * (Real.log x)^2`.
+  If this remains too broad, split the separated boundary window by dyadic
+  distance from `x`, proving an exact weighted summation lemma rather than a
+  pointwise decay supremum.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

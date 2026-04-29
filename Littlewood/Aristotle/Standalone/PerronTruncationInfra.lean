@@ -2368,6 +2368,81 @@ theorem small_T_nearDiagonal_punctured_boundary_bound :
   small_T_nearDiagonal_punctured_boundary_bound_from_kernel
     small_T_nearDiagonal_punctured_kernel_uniform_bound
 
+/-- Punctured boundary-window estimate from a direct separated weighted-error
+bound.
+
+The previously exposed pointwise-decay route is too strong for bounded height:
+after the exact hit and unit near-diagonal band are removed, the remaining
+macroscopic boundary window can still have bounded-height kernel error of
+constant size.  This assembly keeps the true remaining target as a weighted
+separated estimate. -/
+theorem small_T_punctured_boundary_window_bound_from_nearDiagonal_and_separated_weighted
+    (hnear : ∃ Cn > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedNearDiagonalPuncturedBoundaryError x T ≤ Cn * (Real.log x) ^ 2)
+    (hseparated : ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedSeparatedPuncturedBoundaryError x T ≤ Cs * (Real.log x) ^ 2) :
+    ∃ Cp > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedPuncturedBoundaryWindowError x T ≤ Cp * (Real.log x) ^ 2 := by
+  rcases hnear with ⟨Cn, hCn_pos, hnear⟩
+  rcases hseparated with ⟨Cs, hCs_pos, hseparated⟩
+  refine ⟨Cn + Cs, add_pos hCn_pos hCs_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hnear_x := hnear x T hx hT_lo hT_hi
+  have hseparated_x := hseparated x T hx hT_lo hT_hi
+  calc perronKernelWeightedPuncturedBoundaryWindowError x T
+      = perronKernelWeightedNearDiagonalPuncturedBoundaryError x T +
+          perronKernelWeightedSeparatedPuncturedBoundaryError x T :=
+        perronKernelWeightedPuncturedBoundaryWindowError_eq_nearDiagonal_add_separated x T
+    _ ≤ Cn * (Real.log x) ^ 2 + Cs * (Real.log x) ^ 2 :=
+        add_le_add hnear_x hseparated_x
+    _ = (Cn + Cs) * (Real.log x) ^ 2 := by ring
+
+/-- Punctured boundary-window estimate from only the separated weighted-error
+atom; the near-diagonal weighted atom is already closed. -/
+theorem small_T_punctured_boundary_window_bound_from_separated_weighted
+    (hseparated : ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedSeparatedPuncturedBoundaryError x T ≤ Cs * (Real.log x) ^ 2) :
+    ∃ Cp > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedPuncturedBoundaryWindowError x T ≤ Cp * (Real.log x) ^ 2 :=
+  small_T_punctured_boundary_window_bound_from_nearDiagonal_and_separated_weighted
+    small_T_nearDiagonal_punctured_boundary_bound hseparated
+
+/-- Boundary-window estimate from a direct separated weighted-error bound.
+Exact-hit and near-diagonal punctured pieces are already closed; the separated
+weighted error is the remaining boundary-window atom. -/
+theorem small_T_boundary_window_bound_from_separated_weighted
+    (hseparated : ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedSeparatedPuncturedBoundaryError x T ≤ Cs * (Real.log x) ^ 2) :
+    ∃ Cb > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedBoundaryWindowError x T ≤ Cb * (Real.log x) ^ 2 := by
+  rcases small_T_exactHit_boundary_error_bound with ⟨Ce, hCe_pos, hexact⟩
+  rcases small_T_punctured_boundary_window_bound_from_separated_weighted hseparated with
+    ⟨Cp, hCp_pos, hpunctured⟩
+  refine ⟨Ce + Cp, add_pos hCe_pos hCp_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hexact_x := hexact x T hx hT_lo hT_hi
+  have hpunctured_x := hpunctured x T hx hT_lo hT_hi
+  calc perronKernelWeightedBoundaryWindowError x T
+      = perronKernelWeightedExactHitBoundaryError x T +
+          perronKernelWeightedPuncturedBoundaryWindowError x T :=
+        perronKernelWeightedBoundaryWindowError_eq_exactHit_add_punctured x T
+    _ ≤ Ce * (Real.log x) ^ 2 + Cp * (Real.log x) ^ 2 :=
+        add_le_add hexact_x hpunctured_x
+    _ = (Ce + Cp) * (Real.log x) ^ 2 := by ring
+
+/-- Weighted finite cutoff from the separated boundary weighted atom and the
+off-boundary weighted atom. -/
+theorem small_T_weighted_kernel_cutoff_bound_from_separated_boundary_and_offBoundary
+    (hseparated : ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedSeparatedPuncturedBoundaryError x T ≤ Cs * (Real.log x) ^ 2)
+    (hoffBoundary : ∃ Co > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedOffBoundaryWindowError x T ≤ Co * (Real.log x) ^ 2) :
+    ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x) ^ 2 :=
+  small_T_weighted_kernel_cutoff_bound_from_boundary_split
+    (small_T_boundary_window_bound_from_separated_weighted hseparated)
+    hoffBoundary
+
 /-- Finite Perron-kernel cutoff from a weighted per-term cutoff-error bound.
 
 The only remaining analytic content is the weighted finite sum
