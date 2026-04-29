@@ -1936,3 +1936,40 @@ Timestamp: 2026-04-28 22:56 CDT.
     `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
   - Current RS atom: prove the local `HasFPowerSeriesAt` expansion for the
     removable sine quotient with `a 0 = 1/2` and `a 3 = -pi^2 / 6`.
+
+## Overnight 2026-04-29 Forty-Seventh Pass Status
+
+- Atkinson lane is integrated through `7e52ff7`:
+  - `7e52ff7` reduced the corrected endpoint phase-residual estimate to a
+    shifted-inverse scale atom:
+    `|atkinsonEndpointGapCorrectedPhaseError n j| <=
+      C_res * (j / ((n + j) + 1))` eventually for each `j >= 1`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Current Atkinson atoms: shifted-inverse endpoint residual bound,
+    Jacobian-integral bound at `1 / relativeWeight`, and shifted
+    stationary-phase target remainder.
+- Perron/B5a lane is integrated through `40c572a`:
+  - The normalized concrete-defect supremum is specialized to cutoff `16`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron atom: prove either the compact slab estimate on
+    `2 <= x <= 16`, `2 <= T <= 16`, or the normalized asymptotic tail estimate
+    on `16 <= x`.
+- Pi/Phase lane is integrated through `c0f82b0`:
+  - The arbitrary-budget finite-set Kronecker class is proved false as stated
+    via the `S = ∅`, `B = 0` obstruction and is now a forbidden route.
+  - The route is corrected to the actual selected-radius theorem
+    `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
+  - Current Pi atom: same-height half-budget bound for the actual selected
+    target/anti finite-set Kronecker radii.
+- Combined focused certification after the Forty-Sixth checkpoint passed:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula
+    Littlewood.Aristotle.Standalone.PerronTruncationInfra
+    Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp
+    Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+    Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  (`8040 jobs`).
