@@ -1374,3 +1374,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp`.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 28: quarter translation derivative closed
+
+- Classification: `PROVED`.
+- Exact theorem attacked:
+  `StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp`.
+- Banked inputs:
+  - Round 27 closed the pointwise local-function identity
+    `StandardGabckeRemovableCandidateQuarterLocalFunctionEqProp`.
+  - Mathlib provides `deriv_comp_add_const`, the exact derivative translation
+    lemma for arbitrary functions; no quotient regularity or differentiability
+    assumption is needed for the totalized `deriv` translation identity.
+- Proof facts banked:
+  - Added an explicit import of `Mathlib.Analysis.Calculus.Deriv.Shift`.
+  - Proved
+    `standardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp_proved`
+    by applying `deriv_comp_add_const` successively to the first, second, and
+    third derivatives under the coordinate shift `p = x + 1/4`.
+  - Proved
+    `standardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp_proved`
+    by combining the translation derivative proof with the already-proved
+    pointwise local-function identity.
+- Failed routes:
+  - I did not infer quotient behavior from global regularity of the raw
+    quotient at a denominator-zero point.
+  - I did not define `D := standardGabckeRawPsiThirdDerivative`.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, or weaken statements.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+- Remaining goal shape:
+  prove the local Taylor calculus atom
+  `StandardGabckeQuarterLocalSecondDerivativeHasDerivAtProp`, or equivalently
+  `StandardGabckeQuarterLocalThirdDerivativeFormulaProp`, for the filled local
+  quotient `standardGabckeQuarterLocalPsi` at `x = 0`.
+- Coordinator action requested:
+  run the requested serialized validation command.
