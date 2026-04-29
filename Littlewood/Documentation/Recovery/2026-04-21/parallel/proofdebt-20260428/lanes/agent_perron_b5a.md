@@ -526,3 +526,1113 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
       <= K * (T * (Real.log x)^2 / x)`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 10 - Near-Diagonal Punctured Error Reduction
+
+- Classification: `STRICTER_NEAR_DIAGONAL_REDUCTION_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  near-diagonal punctured weighted boundary error below
+  `small_T_punctured_boundary_window_bound_from_nearDiagonal_and_separated_kernel`
+  in `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Code facts banked:
+  added `perronKernelNearDiagonalPuncturedBoundarySet`, naming the exact finite
+  set
+  `{n <= floor x | |x - n| <= x / T, (n : ℝ) != x, |x - n| <= 1}`.
+  Added `perronKernelNearDiagonalPuncturedVonMangoldtWeight`, the pure
+  von Mangoldt weight of this unit punctured boundary set.
+  Added
+  `perronKernelWeightedNearDiagonalPuncturedBoundaryError_le_kernelSup_mul_weight`,
+  reducing the near-diagonal weighted error to a uniform kernel bound times the
+  pure near-diagonal weight.
+  Added
+  `perronKernelWeightedNearDiagonalPuncturedBoundaryError_le_kernelSup_mul_log`,
+  showing that if the named near-diagonal set has cardinality at most one, then
+  the near-diagonal weighted error is `<= K * Real.log x` under a uniform
+  kernel bound.  The proof uses only `vonMangoldt_le_log`, membership in
+  `range (floor x + 1)`, `Nat.floor_le`, and the unit-band exclusion of
+  `n = 0`.
+  Added
+  `small_T_nearDiagonal_punctured_boundary_bound_from_cardinality_and_kernel`,
+  reducing the target
+  `perronKernelWeightedNearDiagonalPuncturedBoundaryError x T
+    <= Cn * (Real.log x)^2`
+  to:
+  1. the exact finite-cardinality atom
+     `(perronKernelNearDiagonalPuncturedBoundarySet x T).card <= 1`;
+  2. a uniform bounded-height kernel estimate on that same finite set.
+- Failed route / scale note:
+  did not attempt to prove the decaying kernel estimate on the near-diagonal
+  punctured set.  That would still be scale-unsafe near real `x` arbitrarily
+  close to an integer.  The near-diagonal path only needs a uniform kernel
+  bound because the finite-cardinality/log-weight atom absorbs it into
+  `O((Real.log x)^2)`.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the exact finite-cardinality atom
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    (perronKernelNearDiagonalPuncturedBoundarySet x T).card <= 1`.
+  Then prove the uniform local kernel atom
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelNearDiagonalPuncturedBoundarySet x T,
+      |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| <= K`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 11 - Near-Diagonal Cardinality Closure
+
+- Classification: `FINITE_CARDINALITY_ATOM_CLOSED_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  exact finite-cardinality atom for
+  `perronKernelNearDiagonalPuncturedBoundarySet` in
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Code facts banked:
+  added `perronKernelNearDiagonalPuncturedBoundarySet_card_le_one`:
+  `∀ x T, x >= 2 ->
+    (perronKernelNearDiagonalPuncturedBoundarySet x T).card <= 1`.
+  The proof uses only finite-set membership, `Nat.floor_le`, the unit-band
+  constraint `|x - n| <= 1`, and the puncturing condition `(n : ℝ) != x`.
+  If two natural numbers in the set are distinct, they must be consecutive;
+  the interval constraints then force the larger one to equal `x`, contradicting
+  the puncture.
+  Added `small_T_nearDiagonal_punctured_boundary_bound_from_kernel`, reducing
+  the near-diagonal weighted error to the single remaining source atom: a
+  uniform bounded-height kernel estimate on
+  `perronKernelNearDiagonalPuncturedBoundarySet`.
+- Failed route / scale note:
+  did not retry the decaying-kernel route on the near-diagonal punctured set.
+  That route remains scale-unsafe when real `x` approaches an integer.  The
+  cardinality closure confirms the correct near-diagonal strategy is uniform
+  kernel control plus one logarithmic von Mangoldt weight.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the uniform local kernel atom
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelNearDiagonalPuncturedBoundarySet x T,
+      |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| <= K`.
+  A scale-safe route should use only bounded-height Perron per-term estimates
+  and the facts `1 <= n`, `n <= x`, and `x <= n + 1` from near-diagonal
+  membership; it should not try to prove decay in `x`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 12 - Near-Diagonal Kernel Closure
+
+- Classification: `PROVED_PENDING_VALIDATION`.
+- Exact theorem attacked:
+  uniform local Perron-kernel bound feeding
+  `small_T_nearDiagonal_punctured_boundary_bound_from_kernel` in
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Banked inputs:
+  `perron_per_term_abs_bound_general`, `per_term_rpow_bound`,
+  `c_param_pos`, `c_param_gt_one`, `Real.pi_gt_three`, and the validated
+  finite-cardinality theorem
+  `perronKernelNearDiagonalPuncturedBoundarySet_card_le_one`.
+- Code facts banked:
+  added `perronKernelNearDiagonalPuncturedBoundarySet_mem_bounds`, extracting
+  from near-diagonal membership the scale-safe facts
+  `1 <= n`, `(n : ℝ) <= x`, and `x <= (n : ℝ) + 1`.
+  Proved `small_T_nearDiagonal_punctured_kernel_uniform_bound`:
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelNearDiagonalPuncturedBoundarySet x T,
+      |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| <= K`.
+  The proof uses only the absolute bounded-height per-term estimate, `T <= 16`,
+  and the local consequence `x / n <= 2`; it does not assert any decay in `x`.
+  Added `small_T_nearDiagonal_punctured_boundary_bound`, closing
+  `∃ Cn > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelWeightedNearDiagonalPuncturedBoundaryError x T
+      <= Cn * (Real.log x)^2`.
+- Failed routes:
+  did not use the decaying near-integer kernel route.  It remains forbidden
+  because real `x` can approach an integer while the requested decaying right
+  side tends to zero.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  return to the separated punctured boundary-window pointwise estimate:
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    (((range (floor x + 1)).filter boundary).filter (fun n => (n : ℝ) != x)).filter
+      (fun n => ¬ |x - (n : ℝ)| <= 1),
+    |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T|
+      <= K * (T * (Real.log x)^2 / x)`.
+  This is the first remaining place where decay is scale-safe after removing
+  exact hits and the unit near-diagonal band.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 13 - Separated Boundary Weighted Assembly
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  separated punctured boundary route below
+  `small_T_punctured_boundary_window_bound_from_nearDiagonal_and_separated_kernel`
+  in `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Banked inputs:
+  validated exact-hit bound `small_T_exactHit_boundary_error_bound`, validated
+  near-diagonal bound `small_T_nearDiagonal_punctured_boundary_bound`, and the
+  exact finite-sum splits
+  `perronKernelWeightedBoundaryWindowError_eq_exactHit_add_punctured` and
+  `perronKernelWeightedPuncturedBoundaryWindowError_eq_nearDiagonal_add_separated`.
+- Failed route:
+  the separated pointwise decay estimate at scale
+  `K * (T * (Real.log x)^2 / x)` is demoted for the current bounded-height
+  window.  Even after removing exact hits and the unit near-diagonal band,
+  fixed bounded `T` leaves macroscopic boundary points where the truncated
+  Perron kernel need not have pointwise error tending to zero with `x`.  This
+  route should not be retried without a stronger distance-from-transition
+  hypothesis that really forces decay.
+- Code facts banked:
+  added
+  `small_T_punctured_boundary_window_bound_from_nearDiagonal_and_separated_weighted`,
+  reducing the punctured boundary-window estimate to near-diagonal weighted
+  control plus a direct separated weighted-error estimate.
+  Added
+  `small_T_punctured_boundary_window_bound_from_separated_weighted`, using the
+  closed near-diagonal atom so the punctured window now depends only on
+  `perronKernelWeightedSeparatedPuncturedBoundaryError`.
+  Added `small_T_boundary_window_bound_from_separated_weighted`, using the
+  closed exact-hit and near-diagonal atoms so the full boundary window depends
+  only on the direct separated weighted-error estimate.
+  Added
+  `small_T_weighted_kernel_cutoff_bound_from_separated_boundary_and_offBoundary`,
+  reducing the finite weighted cutoff atom to:
+  1. the separated punctured boundary weighted estimate;
+  2. the off-boundary weighted estimate.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the direct separated weighted-error atom
+  `∃ Cs > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelWeightedSeparatedPuncturedBoundaryError x T
+      <= Cs * (Real.log x)^2`.
+  If this remains too broad, split the separated boundary window by dyadic
+  distance from `x`, proving an exact weighted summation lemma rather than a
+  pointwise decay supremum.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 14 - Separated Davenport Envelope Reduction
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the direct separated weighted-error atom
+  `∃ Cs > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelWeightedSeparatedPuncturedBoundaryError x T
+      <= Cs * (Real.log x)^2`.
+- Scale check:
+  a uniform separated kernel supremum paired with a pure window weight is still
+  scale-unsafe on the macroscopic `|x - n| <= x / T` window.  The replacement
+  keeps the Davenport `1 / log (x / n)` distance singularity inside the weighted
+  finite sum.  This is the scale where the expected harmonic summation can
+  plausibly produce `O((log x)^2)`.
+- Banked inputs:
+  validated exact-hit and near-diagonal closures from earlier rounds, the
+  exact finite-sum split
+  `perronKernelWeightedPuncturedBoundaryWindowError_eq_nearDiagonal_add_separated`,
+  and the existing per-term Davenport-style Perron bounds
+  `perron_per_term_large_bound` / `perron_per_term_small_bound`.
+- Code facts banked:
+  added `perronKernelSeparatedPuncturedBoundarySet` to name the separated
+  finite set directly.
+  Added `perronKernelSeparatedDavenportEnvelopeTerm` and
+  `perronKernelSeparatedDavenportEnvelope`, preserving the local
+  `1 / log (x / n)` kernel singularity in the finite weighted sum.
+  Added
+  `perronKernelWeightedSeparatedPuncturedBoundaryError_le_davenportEnvelope`,
+  an exact finite-sum domination by the Davenport envelope under a pointwise
+  local envelope hypothesis.
+  Added `small_T_separated_weighted_bound_from_davenport_envelope`, reducing
+  the separated weighted atom to:
+  1. the pointwise Davenport-envelope kernel normalization on
+     `perronKernelSeparatedPuncturedBoundarySet`;
+  2. the weighted Davenport-envelope summation bound
+     `perronKernelSeparatedDavenportEnvelope x T <= Cd * (Real.log x)^2`.
+  Added
+  `small_T_weighted_kernel_cutoff_bound_from_davenport_separated_and_offBoundary`,
+  wiring this separated route back into the finite cutoff surface together with
+  the existing off-boundary weighted atom.
+- Failed/demoted routes:
+  did not retry the demoted pointwise
+  `K * (T * (Real.log x)^2 / x)` route.  Also did not assert a pure
+  `O((log x)^2)` von Mangoldt weight for the macroscopic separated window.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the pointwise Davenport-envelope normalization:
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelSeparatedPuncturedBoundarySet x T,
+      |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+        <= perronKernelSeparatedDavenportEnvelopeTerm x T n`.
+  This should first extract membership facts
+  `1 <= n`, `(n : ℝ) < x`, and `1 < x / (n : ℝ)` from the separated set, then
+  apply `perron_per_term_large_bound`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 15 - Separated Davenport Kernel Normalization
+
+- Classification: `PROVED_PENDING_VALIDATION`.
+- Exact theorem attacked:
+  the pointwise Davenport-envelope normalization feeding
+  `small_T_separated_weighted_bound_from_davenport_envelope`:
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelSeparatedPuncturedBoundarySet x T,
+      |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+        <= perronKernelSeparatedDavenportEnvelopeTerm x T n`.
+- Scale check:
+  no two-sided split is needed in the current finite Perron cutoff because
+  `perronKernelSeparatedPuncturedBoundarySet` is still a subset of
+  `range (Nat.floor x + 1)`, hence every member has `(n : ℝ) <= x`.  The exact
+  hit filter plus range bound gives `(n : ℝ) < x`, so the large-side
+  Davenport bound applies with `1 < x / (n : ℝ)`.
+- Code facts banked:
+  added `perronKernelSeparatedPuncturedBoundarySet_mem_large_side`, extracting
+  `1 <= n`, `(n : ℝ) < x`, and `1 < x / (n : ℝ)` from separated-set
+  membership under `x >= 2`.
+  Added `small_T_separated_davenport_kernel_bound`, proving the pointwise
+  Davenport-envelope normalization directly from
+  `perron_per_term_large_bound`.
+  Added `small_T_separated_weighted_bound_from_davenport_envelope_bound`, so
+  the separated weighted atom now depends only on the weighted Davenport
+  envelope summation bound.
+  Added
+  `small_T_weighted_kernel_cutoff_bound_from_davenport_envelope_and_offBoundary`,
+  so the finite weighted cutoff route now depends only on:
+  1. `perronKernelSeparatedDavenportEnvelope x T <= Cd * (Real.log x)^2`;
+  2. the off-boundary weighted atom.
+- Failed/demoted routes:
+  did not retry pointwise decay at
+  `K * (T * (Real.log x)^2 / x)` and did not replace the separated window by a
+  pure macroscopic `O((log x)^2)` von Mangoldt weight.  The Davenport
+  `1 / log (x / n)` singularity remains inside the finite weighted sum.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the weighted Davenport-envelope summation bound
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedDavenportEnvelope x T
+      <= Cd * (Real.log x)^2`.
+  If this is too broad, split the finite set by dyadic distance from `x` while
+  preserving the exact `1 / log (x / n)` weight.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 16 - Davenport Envelope Scale Split
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the weighted Davenport-envelope summation target
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedDavenportEnvelope x T
+      <= Cd * (Real.log x)^2`.
+- Scale check:
+  the pure `O((log x)^2)` target is not scale-correct for the current
+  macroscopic separated window.  The smooth Davenport component alone has
+  one bounded-height contribution per boundary-window integer, so its natural
+  scale retains the linear window factor `x / T`.  The singular component
+  keeps the necessary `1 / log (x / n)` distance factor and should be handled
+  as a weighted harmonic-distance sum.
+- Code facts banked:
+  added `perronKernelSeparatedDavenportSingularEnvelope` and
+  `perronKernelSeparatedDavenportSmoothEnvelope`.
+  Proved the exact split
+  `perronKernelSeparatedDavenportEnvelope_eq_singular_add_smooth`.
+  Added
+  `small_T_separated_davenport_envelope_linear_bound_from_components`, reducing
+  the scale-correct linear-window envelope bound to singular and smooth
+  component bounds at scale `(x / T) * (Real.log x)^2`.
+  Added
+  `small_T_separated_weighted_bound_from_linear_davenport_envelope_bound`,
+  recording the scale-correct separated weighted-error consequence without
+  claiming the false pure `O((log x)^2)` envelope sum.
+- Failed/demoted routes:
+  demoted the pure `O((log x)^2)` weighted Davenport-envelope target as
+  scale-incorrect for bounded `T`.  Did not replace the separated window by a
+  pure macroscopic von Mangoldt weight, and did not retry pointwise decay at
+  `K * (T * (Real.log x)^2 / x)`.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the singular weighted harmonic-distance component at the scale
+  `∃ Cs > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedDavenportSingularEnvelope x T
+      <= Cs * (x / T) * (Real.log x)^2`.
+  If needed, split `perronKernelSeparatedPuncturedBoundarySet` by integer or
+  dyadic distance from `x`, using comparability of `Real.log (x / n)` with
+  `(x - n) / x`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 17 - Singular Envelope Log-Distance Reduction
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the singular weighted harmonic-distance component
+  `∃ Cs > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedDavenportSingularEnvelope x T
+      <= Cs * (x / T) * (Real.log x)^2`.
+- Scale check:
+  kept the `(x / T)` scale from Round 16.  The singular term is now compared
+  to the explicit harmonic-distance weight `x / (T * (x - n))`; no pure
+  `O((log x)^2)` window-weight route is used.
+- Code facts banked:
+  added `perronKernelSeparatedDavenportSingularTerm`, so the singular summand
+  can be targeted pointwise.
+  Added `perronKernelSeparatedLogDistanceTerm` and
+  `perronKernelSeparatedLogDistanceEnvelope`, naming the weighted harmonic
+  distance sum over `perronKernelSeparatedPuncturedBoundarySet`.
+  Added
+  `perronKernelSeparatedDavenportSingularEnvelope_le_logDistanceEnvelope`,
+  reducing the singular envelope to a pointwise comparison with
+  `K * perronKernelSeparatedLogDistanceTerm`.
+  Added
+  `small_T_separated_singular_envelope_bound_from_logDistance`, reducing the
+  singular component to:
+  1. pointwise log-distance comparison of the singular Davenport summand;
+  2. the weighted harmonic-distance summation bound for
+     `perronKernelSeparatedLogDistanceEnvelope`.
+- Failed/demoted routes:
+  did not retry the refuted pure `O((log x)^2)` Davenport-envelope target and
+  did not collapse the separated window to a macroscopic von Mangoldt weight.
+  The `1 / log (x / n)` singularity is preserved through the explicit
+  `x / (x - n)` distance envelope.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the pointwise comparison
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelSeparatedPuncturedBoundarySet x T,
+      perronKernelSeparatedDavenportSingularTerm x T n
+        <= K * perronKernelSeparatedLogDistanceTerm x T n`.
+  This should use the existing large-side membership facts and the elementary
+  comparison `Real.log (x / n) >= (x - n) / x`, plus bounded control of
+  `(x/n)^(1 + 1/log x) + 1` on the boundary window.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 18 - Singular Pointwise Numerator Closure
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the pointwise comparison
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelSeparatedPuncturedBoundarySet x T,
+      perronKernelSeparatedDavenportSingularTerm x T n
+        <= K * perronKernelSeparatedLogDistanceTerm x T n`.
+- Code facts banked:
+  added `perronKernelSeparatedDavenportSingularNumerator`, isolating the
+  numerator `(x/n)^(1 + 1/log x) + 1`.
+  Added
+  `perronKernelSeparatedDavenportSingularTerm_le_logDistanceTerm_of_num_and_recip`,
+  reducing each singular summand to two elementary pointwise facts:
+  numerator boundedness and reciprocal-log distance comparison.
+  Added `small_T_separated_singular_pointwise_bound_from_num_and_recip`,
+  lifting those two local facts to the existential pointwise comparison needed
+  by `small_T_separated_singular_envelope_bound_from_logDistance`.
+  Proved `small_T_separated_singular_numerator_bound` with constant
+  `2 * Real.exp 1 + 1`; the proof uses separated-set large-side membership,
+  the boundary-window inequality, `T >= 2` to get `x / n <= 2`, and
+  `per_term_rpow_bound`.
+- Remaining pointwise atom:
+  prove the reciprocal-log distance comparison
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelSeparatedPuncturedBoundarySet x T,
+      (Real.log (x / (n : ℝ)))⁻¹ <= x / (x - (n : ℝ))`.
+  This is the formal version of
+  `Real.log (x / n) >= (x - n) / x`.
+- Failed/demoted routes:
+  no use of the pure `O((log x)^2)` bounded-`T` envelope route, no macroscopic
+  pure window-weight replacement, and no pointwise
+  `K * T * (Real.log x)^2 / x` decay route.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the reciprocal-log comparison above, likely from
+  `Real.one_sub_inv_le_log_of_pos` applied to `x / (n : ℝ)`, after rewriting
+  `1 - (x / n)⁻¹` as `(x - n) / x` using separated-set large-side membership.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 19 - Singular Reciprocal-Log Closure
+
+- Classification: `PROOF_REDUCTION_CLOSURE`.
+- Exact theorem attacked:
+  the reciprocal-log distance comparison feeding
+  `perronKernelSeparatedDavenportSingularTerm_le_logDistanceTerm_of_num_and_recip`:
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelSeparatedPuncturedBoundarySet x T,
+      (Real.log (x / (n : ℝ)))⁻¹ <= x / (x - (n : ℝ))`.
+- Code facts banked:
+  proved `small_T_separated_reciprocal_log_distance_bound`.  The proof uses
+  `perronKernelSeparatedPuncturedBoundarySet_mem_large_side` to obtain
+  `1 <= n`, `(n : ℝ) < x`, and `1 < x / n`, then applies
+  `Real.one_sub_inv_le_log_of_pos` to `x / (n : ℝ)` and rewrites
+  `1 - (x / n)⁻¹` as `(x - n) / x`.  Positivity of both sides permits
+  inversion by `inv_le_inv₀`.
+  Added `small_T_separated_singular_pointwise_bound`, combining the new
+  reciprocal-log comparison with the previously validated numerator bound
+  `small_T_separated_singular_numerator_bound`.
+- Scale check:
+  preserved the `(x / T)` harmonic-distance route.  The singularity remains in
+  `perronKernelSeparatedLogDistanceTerm`; this round does not replace the
+  separated window by a pure bounded-height `O((Real.log x)^2)` weight.
+- Failed/demoted routes:
+  did not use the refuted pointwise `K * T * (Real.log x)^2 / x` decay route
+  near integer `x`, and did not revive the false pure macroscopic window-weight
+  estimate.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the weighted harmonic-distance summation bound
+  `∃ Cℓ > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedLogDistanceEnvelope x T
+      <= Cℓ * (x / T) * (Real.log x)^2`.
+  This is now the remaining input to
+  `small_T_separated_singular_envelope_bound_from_logDistance`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 20 - Weighted Harmonic-Distance Unweighting
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the weighted harmonic-distance summation bound
+  `∃ Cℓ > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedLogDistanceEnvelope x T
+      <= Cℓ * (x / T) * (Real.log x)^2`.
+- Code facts banked:
+  added `perronKernelSeparatedUnweightedLogDistanceEnvelope`, the finite
+  unweighted sum of `perronKernelSeparatedLogDistanceTerm` over
+  `perronKernelSeparatedPuncturedBoundarySet`.
+  Proved `perronKernelSeparatedLogDistanceEnvelope_le_log_mul_unweighted`,
+  bounding the weighted envelope by `Real.log x` times the unweighted envelope.
+  The proof uses large-side separated membership, `vonMangoldt_le_log`, and
+  `Real.log_le_log` from `(n : ℝ) <= x`.
+  Added `small_T_separated_logDistance_bound_from_unweighted`, reducing the
+  weighted harmonic-distance bound to the strictly smaller unweighted finite
+  harmonic-distance atom
+  `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedUnweightedLogDistanceEnvelope x T
+      <= Ch * (x / T) * Real.log x`.
+  Added
+  `small_T_separated_singular_envelope_bound_from_unweighted_logDistance`,
+  wiring the now-closed pointwise singular route directly to this unweighted
+  harmonic-distance atom.
+- Scale check:
+  preserved the `(x / T)` route.  The extra `Real.log x` comes only from the
+  honest pointwise `Λ(n) <= log x`; the remaining summation is the expected
+  unweighted harmonic series over distances from the cutoff.
+- Failed/demoted routes:
+  did not use a pure bounded-height `O((Real.log x)^2)` Davenport-envelope
+  route and did not replace the macroscopic separated window by a false pure
+  von Mangoldt weight estimate.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the unweighted finite harmonic-distance summation bound
+  `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedUnweightedLogDistanceEnvelope x T
+      <= Ch * (x / T) * Real.log x`.
+  This should use the separated facts `1 < x - n` and `x - n <= x / T`,
+  then compare the finite integer-distance sum to a harmonic sum.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 21 - Unweighted Harmonic Scale Factorization
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the remaining unweighted finite harmonic-distance bound
+  `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedUnweightedLogDistanceEnvelope x T
+      <= Ch * (x / T) * Real.log x`.
+- Code facts banked:
+  added `perronKernelSeparatedReciprocalDistanceEnvelope`, the pure reciprocal
+  sum `Σ (x - n)⁻¹` over `perronKernelSeparatedPuncturedBoundarySet`.
+  Proved `perronKernelSeparatedPuncturedBoundarySet_mem_distance_bounds`,
+  extracting the separated distance facts `1 < x - n` and `x - n <= x / T`
+  from existing large-side membership and the boundary-window filters.
+  Proved
+  `perronKernelSeparatedUnweightedLogDistanceEnvelope_eq_scale_mul_reciprocal`,
+  factoring the global `x / T` scale out of the unweighted log-distance
+  envelope.
+  Added `small_T_separated_unweighted_logDistance_bound_from_reciprocal`,
+  reducing the target to the strictly smaller pure finite harmonic atom
+  `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedReciprocalDistanceEnvelope x T <= Ch * Real.log x`.
+  Added the downstream wiring lemmas
+  `small_T_separated_logDistance_bound_from_reciprocal` and
+  `small_T_separated_singular_envelope_bound_from_reciprocal_logDistance`.
+- Scale check:
+  preserved the `(x / T)` factor exactly.  No bounded-height pure Davenport
+  envelope was asserted; the only remaining growth is the expected harmonic
+  `Real.log x`.
+- Failed/demoted routes:
+  did not try to bound the macroscopic separated window by a pure
+  `O((Real.log x)^2)` von Mangoldt weight, and did not use the false
+  near-integer pointwise decay route.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the pure reciprocal-distance harmonic sum
+  `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedReciprocalDistanceEnvelope x T <= Ch * Real.log x`.
+  The proof should reindex by integer distance below the cutoff, using
+  `1 < x - n` and `x - n <= x / T`, then compare to a standard finite
+  harmonic sum.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 22 - Reciprocal Distance to Harmonic Floor
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the live pure reciprocal-distance atom
+  `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedReciprocalDistanceEnvelope x T <= Ch * Real.log x`.
+- Code facts banked:
+  added private `harmonic_floor_le_const_mul_log`, proving
+  `(harmonic (Nat.floor x) : ℝ) <= (1 + 1 / Real.log 2) * Real.log x`
+  for `x >= 2` using Mathlib's `harmonic_floor_le_one_add_log`.
+  Added
+  `small_T_separated_reciprocalDistance_bound_from_harmonic_floor`, reducing
+  the live reciprocal-distance atom to the exact finite harmonic majorant
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedReciprocalDistanceEnvelope x T
+      <= (harmonic (Nat.floor x) : ℝ)`.
+- Scale check:
+  the `(x / T)` scale is already factored out by Round 21.  This round keeps
+  only the logarithmic harmonic growth and does not introduce a bounded-height
+  pure Davenport envelope.
+- Failed/demoted routes:
+  did not assert a broad dummy constant.  A direct proof needs the finite
+  reindexing/injection from separated indices `n` to integer distances below
+  `Nat.floor x`; that combinatorial step was isolated instead of guessed.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the finite reindexing/cardinality majorant
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedReciprocalDistanceEnvelope x T
+      <= (harmonic (Nat.floor x) : ℝ)`.
+  It should map each separated `n <= floor x` to `Nat.floor x - n`, use
+  `1 < x - n` to exclude zero distance, and compare the resulting reciprocal
+  terms to the standard harmonic sum.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 23 - Finite Harmonic Floor Reindexing
+
+- Classification: `CANDIDATE_CLOSE`.
+- Exact theorem attacked:
+  the finite reindexing atom
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedReciprocalDistanceEnvelope x T
+      <= (harmonic (Nat.floor x) : ℝ)`.
+- Code facts banked:
+  added `perronKernelSeparatedFloorDistanceEnvelope`, the integer
+  floor-distance sum `Σ (floor x - n)⁻¹` over the separated punctured boundary
+  set.  Added private membership helpers extracting `n <= floor x` and
+  `0 < floor x - n` from the existing separated facts, using `1 < x - n` and
+  `x < floor x + 1`.
+  Proved
+  `perronKernelSeparatedReciprocalDistanceEnvelope_le_floorDistanceEnvelope`
+  by termwise reciprocal comparison
+  `(x - n)⁻¹ <= (floor x - n)⁻¹`.
+  Proved
+  `perronKernelSeparatedFloorDistanceEnvelope_le_harmonic_floor` by injecting
+  `n` into the positive integer distance `floor x - n`, proving the image is a
+  subset of `Finset.Icc 1 (Nat.floor x)`, and comparing to
+  `harmonic_eq_sum_Icc`.
+  Proved the requested closed majorant
+  `perronKernelSeparatedReciprocalDistanceEnvelope_le_harmonic_floor` and
+  added the closed consequence `small_T_separated_reciprocalDistance_bound`.
+- Scale check:
+  preserved the existing `(x / T)` factorization and only closed the pure
+  harmonic `O(log x)` reciprocal-distance atom.  Did not introduce a false
+  pure bounded-height Davenport-envelope bound.
+- Failed/demoted routes:
+  did not use the demoted pointwise `K * T * log^2 x / x` route near integer
+  `x`, and did not assert a macroscopic pure `O((log x)^2)` von Mangoldt
+  window estimate.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  after validation, use `small_T_separated_reciprocalDistance_bound` to close
+  the existing separated log-distance / singular Davenport-envelope wiring, or
+  continue to the remaining off-boundary weighted cutoff estimate if that
+  wiring is already sufficient.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 24 - Linear Davenport Separated Route
+
+- Classification: `CANDIDATE_CLOSE`.
+- Exact theorem attacked:
+  the next separated Davenport/public-path surface below the validated
+  reciprocal-distance bound, keeping the honest linear-window scale
+  `x / T`.
+- Code facts banked:
+  updated the `perronKernelSeparatedDavenportEnvelope` doc comment to record
+  that the pure `O((log x)^2)` envelope is false on the macroscopic separated
+  window.
+  Added `small_T_separated_davenport_smooth_pointwise_bound`, bounding the
+  smooth Davenport summand uniformly from the existing numerator bound and
+  `T >= 2`, `1 + 1 / log x >= 1`.
+  Added `small_T_separated_davenport_smooth_envelope_bound`, bounding the
+  smooth envelope by `Cm * (x / T) * (Real.log x)^2` using the already proved
+  linear boundary-window von Mangoldt weight and log-square absorption.
+  Added closed linear-scale consequences
+  `small_T_separated_singular_envelope_bound`,
+  `small_T_separated_davenport_envelope_linear_bound`, and
+  `small_T_separated_weighted_linear_bound`.
+- Scale check:
+  preserved the scale-correct `x / T` factor.  This deliberately does not
+  claim the false pure bounded-height separated Davenport envelope needed by
+  older conditional cutoff lemmas.
+- Failed/demoted routes:
+  did not use the demoted near-integer pointwise
+  `K * T * (log x)^2 / x` route, and did not assert a macroscopic pure
+  `O((log x)^2)` von Mangoldt or Davenport-envelope estimate.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  continue outside the separated Davenport route: either prove a compatible
+  off-boundary weighted cutoff estimate, or decide whether the public
+  small-`T` weighted cutoff theorem must be restated through the existing
+  residue/truncation route because the separated boundary contribution is only
+  available at linear-window scale.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 25 - Linear Cutoff Assembly
+
+- Classification: `CANDIDATE_REDUCTION`.
+- Exact theorem attacked:
+  the weighted cutoff/public-path surface after the validated separated
+  Davenport route, under the scale-correct target
+  `C * (x / T) * (Real.log x)^2`.
+- Code facts banked:
+  added the private absorption helper
+  `small_T_logSq_le_eight_linear_logSq`, using `x >= 2` and `T <= 16` to
+  embed pure `log^2` exact-hit and near-diagonal contributions into the
+  linear-window scale.
+  Added
+  `small_T_boundary_window_linear_bound_from_separated_linear` and closed
+  `small_T_boundary_window_linear_bound`, assembling the exact-hit,
+  near-diagonal, and separated boundary-window errors without using the old
+  pure Davenport target.
+  Added
+  `small_T_weighted_kernel_cutoff_linear_bound_from_boundary_and_offBoundary`
+  and `small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary`, reducing
+  the scale-correct weighted cutoff to the remaining off-boundary estimate at
+  the same linear-window scale.
+  Added
+  `small_T_perronKernelFiniteSum_cutoff_linear_bound_from_weighted_error`,
+  carrying a linear weighted cutoff bound to the finite Perron-kernel cutoff
+  error.
+- Scale check:
+  the separated Davenport boundary contribution remains at
+  `C * (x / T) * (Real.log x)^2`.  This round intentionally does not claim the
+  false pure `O((Real.log x)^2)` weighted cutoff needed by the older
+  `SmallTPerronBoundHyp` handoff.
+- Failed/demoted routes:
+  did not force the macroscopic separated boundary contribution into a pure
+  bounded-height estimate.  The existing public small-`T` provider route still
+  requires either a different cancellation/residue route or a modified
+  handoff, because the linear-window cutoff alone is too large for the pure
+  small-`T` target.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the compatible off-boundary weighted cutoff estimate
+  `∃ Co > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelWeightedOffBoundaryWindowError x T
+      <= Co * (x / T) * (Real.log x)^2`,
+  or introduce a non-circular truncation/residue handoff that explicitly
+  bypasses the false pure weighted cutoff target.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 26 - Off-Boundary Davenport Handoff
+
+- Classification: `CANDIDATE_REDUCTION`.
+- Exact theorem attacked:
+  the compatible off-boundary atom at the honest linear-window scale
+  `C * (x / T) * (Real.log x)^2`.
+- Code facts banked:
+  added `perronKernelOffBoundaryDavenportEnvelopeTerm` and
+  `perronKernelOffBoundaryDavenportEnvelope`, retaining Davenport's
+  `1 / log (x / n)` structure off the sharp boundary window.
+  Proved
+  `perronKernelWeightedOffBoundaryWindowError_le_davenportEnvelope`: for
+  `x >= 2`, `2 <= T`, every positive off-boundary finite-sum term satisfies
+  `1 < x / n`, so `perron_per_term_large_bound` gives the weighted Davenport
+  envelope; the `n = 0` term is zero because `vonMangoldt 0 = 0`.
+  Added
+  `small_T_offBoundary_weighted_linear_bound_from_davenportEnvelope`, reducing
+  the requested off-boundary weighted cutoff to the envelope summation bound,
+  and
+  `small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_davenportEnvelope`,
+  wiring that bound into the closed linear boundary-window assembly.
+- Scale check:
+  preserved the scale-correct `x / T` factor.  The new off-boundary envelope
+  is a summation target at linear-window scale; it does not assert the false
+  pure bounded-height cutoff estimate.
+- Failed/demoted routes:
+  did not use a constant off-boundary kernel supremum.  That route is too
+  coarse for small `n`, where Davenport's bound naturally has `x / (T * n)`
+  size and must be summed with the von Mangoldt weight.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the off-boundary Davenport-envelope summation bound
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDavenportEnvelope x T
+      <= Cd * (x / T) * (Real.log x)^2`.
+  The likely route is to split the envelope into the smooth
+  `1 / T` part and the singular `1 / (T * log (x / n))` part; on the
+  off-boundary set, convert `1 / log (x / n)` to a distance term and sum by
+  harmonic-distance or dyadic bands below `x - x / T`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 27 - Off-Boundary Envelope Components
+
+- Classification: `CANDIDATE_REDUCTION`.
+- Exact theorem attacked:
+  the closed off-boundary Davenport-envelope summation bound
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDavenportEnvelope x T
+      <= Cd * (x / T) * (Real.log x)^2`.
+- Code facts banked:
+  split `perronKernelOffBoundaryDavenportEnvelope` into exact component
+  definitions:
+  `perronKernelOffBoundaryDavenportSingularTerm`,
+  `perronKernelOffBoundaryDavenportSmoothTerm`,
+  `perronKernelOffBoundaryDavenportSingularEnvelope`, and
+  `perronKernelOffBoundaryDavenportSmoothEnvelope`.
+  Proved the exact finite-sum identity
+  `perronKernelOffBoundaryDavenportEnvelope_eq_singular_add_smooth`.
+  Added
+  `small_T_offBoundary_davenportEnvelope_linear_bound_from_components`,
+  reducing the closed envelope target to separate singular and smooth
+  summation bounds at the same scale.
+  Added
+  `small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_davenport_components`
+  to wire those two component bounds through the already validated
+  linear-scale cutoff assembly.
+- Scale check:
+  preserved the linear-window target
+  `C * (x / T) * (Real.log x)^2`; no pure
+  `O((Real.log x)^2)` off-boundary or boundary-window bound was introduced.
+- Failed/demoted routes:
+  did not use a constant kernel supremum.  The smooth component still needs
+  the weighted reciprocal sum `Σ Λ(n)/n`, and the singular component still
+  needs the reciprocal-log/distance summation away from
+  `|x - n| <= x / T`.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  close the smooth component first:
+  `∃ Cm > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDavenportSmoothEnvelope x T
+      <= Cm * (x / T) * (Real.log x)^2`.
+  A local route should use `per_term_rpow_bound`, `c >= 1`, and the finite
+  weighted reciprocal estimate
+  `Σ_{1 <= n <= floor x} Λ(n) / n = O((Real.log x)^2)`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 28 - Smooth Off-Boundary Envelope
+
+- Classification: `CANDIDATE_CLOSE`.
+- Exact theorem attacked:
+  the smooth off-boundary Davenport component
+  `∃ Cm > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDavenportSmoothEnvelope x T
+      <= Cm * (x / T) * (Real.log x)^2`.
+- Code facts banked:
+  added `perronKernelVonMangoldtReciprocalWeight`, the finite reciprocal
+  von Mangoldt weight over `range (floor x + 1)` with an explicit zero branch.
+  Proved
+  `perronKernelVonMangoldtReciprocalWeight_le_log_mul_harmonic_floor` from
+  `vonMangoldt_le_log`, monotonicity of `log`, and the harmonic majorant.
+  Proved the closed reciprocal-weight bound
+  `small_T_vonMangoldt_reciprocalWeight_bound`.
+  Proved
+  `perronKernelOffBoundaryDavenportSmoothEnvelope_le_reciprocalWeight` using
+  `per_term_rpow_bound`, `c >= 1`, and positivity of `T`.
+  Closed the target as
+  `small_T_offBoundary_davenportSmoothEnvelope_bound`.
+- Scale check:
+  preserved the required `x / T` factor.  The proof sums the natural
+  `Λ(n) / n` weight and does not use a constant kernel supremum or a pure
+  `O((Real.log x)^2)` off-boundary route.
+- Failed/demoted routes:
+  no attempt to bound the smooth envelope by full Chebyshev weight
+  `ψ(x) = O(x)`, which would lose a factor of `x`.  The reciprocal-weight
+  route keeps the scale correct.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  attack the singular component
+  `∃ Cs > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDavenportSingularEnvelope x T
+      <= Cs * (x / T) * (Real.log x)^2`.
+  The expected route is a reciprocal-log/distance comparison on the
+  off-boundary set, followed by a finite weighted distance summation below
+  `x - x / T`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 29 - Singular Off-Boundary Distance Reduction
+
+- Classification: `CANDIDATE_REDUCTION`.
+- Exact theorem attacked:
+  the remaining singular off-boundary Davenport component
+  `∃ Cs > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDavenportSingularEnvelope x T
+      <= Cs * (x / T) * (Real.log x)^2`.
+- Code facts banked:
+  added `perronKernelOffBoundaryDistanceWeight`, the finite
+  `Σ Λ(n) / (x - n)` weight on the off-boundary set.
+  Added
+  `small_T_offBoundary_davenportSingularEnvelope_bound_from_pointwise_and_distance`,
+  reducing the singular envelope to:
+  a pointwise reciprocal-log comparison against
+  `(x / T) * (Λ(n)/n + Λ(n)/(x-n))`, plus the distance-weight summation bound.
+  Added
+  `small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_singularDistance`,
+  wiring this singular-distance reduction together with the validated smooth
+  component through the linear-scale cutoff route.
+- Scale check:
+  preserved the `x / T` factor explicitly.  The existing reciprocal-weight
+  theorem supplies the `Λ(n)/n` part; the only new summation atom is the
+  distance weight at `O((Real.log x)^2)`.
+- Failed/demoted routes:
+  did not use a constant singular kernel supremum or a pure
+  `O((Real.log x)^2)` off-boundary cutoff.  The reciprocal-log singularity is
+  kept inside the pointwise/distance split.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the pointwise reciprocal-log comparison
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈ offBoundary,
+    perronKernelOffBoundaryDavenportSingularTerm x T n
+      <= K * (x / T) * (Λ(n)/n + Λ(n)/(x-n))`,
+  then prove the distance-weight summation
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDistanceWeight x T <= Cd * (Real.log x)^2`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
+
+### 2026-04-29 Round 30 - Singular Pointwise Log Split
+
+- Classification: `CANDIDATE_CLOSE`.
+- Exact theorem attacked:
+  the pointwise reciprocal-log comparison feeding the singular off-boundary
+  reduction.
+- Code facts banked:
+  proved `small_T_offBoundary_davenportSingular_pointwise_bound`.  For
+  positive off-boundary terms, the finite range gives `n <= floor x <= x`;
+  the off-boundary predicate rules out `n = x`, so `n < x` and
+  `1 < x / n`.  The proof uses
+  `Real.one_sub_inv_le_log_of_pos` to obtain
+  `(log (x / n))⁻¹ <= x / (x - n)`, and `per_term_rpow_bound` plus
+  `1 <= exp(1) * x / n` to bound the numerator by
+  `2 * exp(1) * x / n`.  Algebra then splits
+  `x / (n * (x - n))` as `1 / n + 1 / (x - n)`.
+  Added
+  `small_T_offBoundary_davenportSingularEnvelope_bound_from_distance`, so the
+  singular envelope now depends only on the distance-weight summation.
+  Added
+  `small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_distance`,
+  wiring the complete linear cutoff route from that single remaining atom.
+- Scale check:
+  the proof keeps the `x / T` factor explicit and does not replace the
+  reciprocal-log singularity by a constant supremum.
+- Failed/demoted routes:
+  did not attempt a pure `O((Real.log x)^2)` cutoff route and did not use the
+  false global tail statement.  The only remaining analytic atom is the finite
+  weighted distance sum.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the finite off-boundary distance-weight summation
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDistanceWeight x T <= Cd * (Real.log x)^2`.
+  The likely proof should reindex by the integer distance below `floor x` or
+  use dyadic bands below `x - x / T`, with the existing
+  `vonMangoldt_le_log` and harmonic-sum infrastructure.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
