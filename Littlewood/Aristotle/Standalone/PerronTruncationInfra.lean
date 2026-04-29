@@ -99,6 +99,20 @@ def perronVerticalFixedWindowIntegral (x T : ℝ) : ℝ :=
   ∫ t in (-16 : ℝ)..(16 : ℝ),
     (Set.Ioc (-T) T).indicator (fun u : ℝ => perronVerticalIntegrand x u) t
 
+/-- The integrand of the fixed-window Perron formulation, with both parameters
+bundled for direct use in dominated-convergence statements. -/
+def perronVerticalFixedWindowIntegrandParam (p : ℝ × ℝ) (t : ℝ) : ℝ :=
+  (Set.Ioc (-p.2) p.2).indicator (fun u : ℝ => perronVerticalIntegrand p.1 u) t
+
+/-- The fixed-window Perron integral as a set integral over the fixed
+half-open window used by `intervalIntegral`. -/
+theorem perronVerticalFixedWindowIntegral_eq_setIntegral (p : ℝ × ℝ) :
+    perronVerticalFixedWindowIntegral p.1 p.2 =
+      ∫ t in Set.Ioc (-16 : ℝ) 16,
+        perronVerticalFixedWindowIntegrandParam p t := by
+  unfold perronVerticalFixedWindowIntegral perronVerticalFixedWindowIntegrandParam
+  rw [intervalIntegral.integral_of_le (by norm_num : (-16 : ℝ) ≤ 16)]
+
 /-- The public vertical Perron integral is the constant Perron prefactor times
 the raw variable-height integral. -/
 theorem perronVerticalIntegral_eq_rawIntegral (x T : ℝ) :
@@ -5235,6 +5249,53 @@ theorem small_T_perronVerticalIntegral_continuousOn_slab16_of_fixedWindow
       {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
   small_T_perronVerticalIntegral_continuousOn_slab16_from_rawIntegral
     (small_T_perronVerticalRawIntegral_continuousOn_slab16_of_fixedWindow hfixed)
+
+/-- Fixed-window slab continuity reduced to the exact local dominated
+convergence inputs on the fixed window `(-16,16]`.  The remaining analytic
+work is local eventual measurability, a local integrable majorant, and a.e.
+pointwise convergence away from the moving indicator endpoints. -/
+theorem small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16_from_dominated_convergence
+    (hmeas : ∀ p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᶠ q in 𝓝[
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        AEStronglyMeasurable
+          (fun t : ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (volume.restrict (Set.Ioc (-16 : ℝ) 16)))
+    (hbound : ∀ p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∃ bound : ℝ → ℝ,
+        Integrable bound (volume.restrict (Set.Ioc (-16 : ℝ) 16)) ∧
+        ∀ᶠ q in 𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+            ‖perronVerticalFixedWindowIntegrandParam q t‖ ≤ bound t)
+    (hlim : ∀ p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (𝓝[
+            {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalFixedWindowIntegrandParam p t))) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalFixedWindowIntegral p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+  intro p hp
+  rcases hbound p hp with ⟨bound, hbound_int, hbound_event⟩
+  have htend :=
+    MeasureTheory.tendsto_integral_filter_of_dominated_convergence
+      (μ := volume.restrict (Set.Ioc (-16 : ℝ) 16))
+      (l := 𝓝[
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+      (F := fun q t => perronVerticalFixedWindowIntegrandParam q t)
+      (f := fun t => perronVerticalFixedWindowIntegrandParam p t)
+      bound
+      (hmeas p hp)
+      hbound_event
+      hbound_int
+      (hlim p hp)
+  simpa [perronVerticalFixedWindowIntegral_eq_setIntegral] using htend
 
 /-- Continuity of the normalization denominator on the cutoff-`16` slab. -/
 theorem small_T_residue_error_shape_continuousOn_slab16 :

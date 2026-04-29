@@ -2420,3 +2420,55 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   prove the remaining fixed-window dominated-convergence atom
   `ContinuousOn (fun p : ℝ × ℝ =>
       perronVerticalFixedWindowIntegral p.1 p.2) slab`.
+
+### 2026-04-29 Round 48 - Reduce Fixed-Window Continuity to Dominated Convergence
+
+- Classification: `THEOREM_LEVEL_REDUCTION`.
+- Exact theorem attacked:
+  `ContinuousOn (fun p : ℝ × ℝ =>
+      perronVerticalFixedWindowIntegral p.1 p.2)
+    {p : ℝ × ℝ | 2 <= p.1 /\ p.1 <= 16 /\ 2 <= p.2 /\ p.2 <= 16}`.
+- Code facts banked:
+  added `perronVerticalFixedWindowIntegrandParam`, bundling the fixed-window
+  integrand as a function of `(x,T)` and `t`.  Added
+  `perronVerticalFixedWindowIntegral_eq_setIntegral`, rewriting the interval
+  integral over `(-16)..16` as the set integral over `Set.Ioc (-16) 16`.
+  Added
+  `small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16_from_dominated_convergence`,
+  reducing fixed-window slab continuity to Mathlib's
+  `MeasureTheory.tendsto_integral_filter_of_dominated_convergence`.
+- Remaining exact inputs to that theorem:
+  local eventual `AEStronglyMeasurable` of
+  `fun t => perronVerticalFixedWindowIntegrandParam q t` on
+  `volume.restrict (Set.Ioc (-16) 16)`; a local integrable majorant for
+  `‖perronVerticalFixedWindowIntegrandParam q t‖`; and a.e. pointwise
+  convergence in `q` at each slab point away from the moving indicator
+  endpoints.
+- Shape check:
+  did not claim joint continuity of the indicator integrand.  The pointwise
+  convergence obligation is explicitly a.e. on the fixed window, which is the
+  honest way to avoid the moving endpoint discontinuities.
+- Failed/demoted routes:
+  did not attempt to force `continuousOn_integral_of_compact_support`, since
+  the indicator factor is not continuous in `(q,t)` at `t = ±q.2`.  Did not
+  return to the closed-cutoff zero-set constancy route.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, or `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check`; then
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.  Both passed.
+- Smallest next theorem:
+  prove the a.e. moving-indicator convergence atom
+  `∀ p ∈ slab, ∀ᵐ t ∂volume.restrict (Set.Ioc (-16) 16),
+      Tendsto (fun q : ℝ × ℝ =>
+        perronVerticalFixedWindowIntegrandParam q t) (𝓝[slab] p)
+        (𝓝 (perronVerticalFixedWindowIntegrandParam p t))`;
+  then prove the local measurability and local bounded-majorant atoms for the
+  same fixed-window integrand.
