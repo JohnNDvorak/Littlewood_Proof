@@ -55,6 +55,7 @@ open Aristotle.Standalone.ExplicitFormulaPsiB5aRootInfra
 open Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
 open Aristotle.Standalone.ExternalPort.RHPiExternalTruncatedPiBuilder
 open Aristotle.Standalone.RHPiPerronFromTruncatedPiBridge
+open Aristotle.Standalone.RHPiZeroSumAlignmentBridge
 
 variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
 variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
@@ -2116,6 +2117,302 @@ class InhomogeneousPhaseFitAbovePerronThresholdPerronHyp
           x ≤ Real.exp (Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
+/-- Direct fixed-height Perron-error phase-fit boundary.
+
+This is the Perron-only replacement surface that avoids comparing opaque
+`perronThreshold` choices across heights.  Instead of asking for
+`perronThreshold hRH T ≤ x`, it carries the actual fixed-height Perron error
+bound at the selected `x`. -/
+class InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ) (targetPhase : ℂ → ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x|
+          ≤ Real.sqrt x / Real.log x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Target-specific fixed-height Perron-error phase-fit boundary.
+
+This is the threshold-free target-side surface needed by the corrected `pi`
+route.  It avoids the arbitrary `targetPhase` quantifier and carries the actual
+fixed-height Perron error estimate at the selected `x`. -/
+class TargetPhaseFitWithFixedHeightPerronErrorHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x|
+          ≤ Real.sqrt x / Real.log x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Anti-target-specific fixed-height Perron-error phase-fit boundary. -/
+class AntiTargetPhaseFitWithFixedHeightPerronErrorHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x|
+          ≤ Real.sqrt x / Real.log x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - (Complex.arg ρ + Real.pi) -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Existing above-threshold phase fit supplies the direct fixed-height
+Perron-error payload by applying `perronThreshold_spec` once.
+
+This is a one-way theorem, not an instance: the direct-error surface is intended
+as the next refactor target, not as another typeclass route through the current
+opaque threshold chain. -/
+theorem inhomogeneousPhaseFitWithFixedHeightPerronError_of_aboveThreshold_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdPerronHyp] :
+    InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp where
+  witness := by
+    intro hRH X targetPhase
+    rcases InhomogeneousPhaseFitAbovePerronThresholdPerronHyp.witness
+        hRH X targetPhase with
+      ⟨x, hXx, T, hT4, hThreshold, ε, hεpos, hεlt, hphase, hxUpper⟩
+    have hperron := perronThreshold_spec hRH T x hThreshold
+    exact
+      ⟨x, hXx, T, hT4, hperron.1, hperron.2,
+        ε, hεpos, hεlt, hphase, hxUpper⟩
+
+/-- Target approximate-seed payload carrying the actual fixed-height Perron
+error bound instead of a `perronThreshold` inequality. -/
+abbrev TargetTowerExactSeedWithFixedHeightPerronError
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ _hRH : ZetaZeros.RiemannHypothesis, ∀ X : ℝ, ∃ t0 T ε : ℝ,
+    4 ≤ T ∧
+    0 < ε ∧ ε < 1 ∧
+    X < Real.exp t0 ∧
+    1 < Real.exp t0 ∧
+    |piLiErr (Real.exp t0) +
+        piMainFromZeros ((finite_zeros_le T).toFinset) (Real.exp t0)|
+      ≤ Real.sqrt (Real.exp t0) / Real.log (Real.exp t0) ∧
+    (∀ ρ ∈ (finite_zeros_le T).toFinset,
+      ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
+    Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
+      (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Anti-target approximate-seed payload carrying the actual fixed-height
+Perron error bound instead of a `perronThreshold` inequality. -/
+abbrev AntiTargetTowerExactSeedWithFixedHeightPerronError
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ _hRH : ZetaZeros.RiemannHypothesis, ∀ X : ℝ, ∃ t0 T ε : ℝ,
+    4 ≤ T ∧
+    0 < ε ∧ ε < 1 ∧
+    X < Real.exp t0 ∧
+    1 < Real.exp t0 ∧
+    |piLiErr (Real.exp t0) +
+        piMainFromZeros ((finite_zeros_le T).toFinset) (Real.exp t0)|
+      ≤ Real.sqrt (Real.exp t0) / Real.log (Real.exp t0) ∧
+    (∀ ρ ∈ (finite_zeros_le T).toFinset,
+      ∃ m : ℤ,
+        ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε) ∧
+    Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
+      (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Direct fixed-height Perron-error phase fit gives the positive target
+exact-seed-shaped payload without a threshold comparison. -/
+theorem target_exact_seed_withFixedHeightPerronError_from_phase_fit
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp] :
+    TargetTowerExactSeedWithFixedHeightPerronError := by
+  intro hRH X
+  rcases InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp.witness
+      hRH X Complex.arg with
+    ⟨x, hXx, T, hT4, hx1, herror, ε, hεpos, hεlt, hphase, hxUpper⟩
+  have hx_pos : 0 < x := lt_trans zero_lt_one hx1
+  refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_, ?_⟩
+  · rwa [Real.exp_log hx_pos]
+  · rwa [Real.exp_log hx_pos]
+  · simpa [Real.exp_log hx_pos] using herror
+  · intro ρ hρ
+    rcases hphase ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa using hm⟩
+  · rwa [Real.exp_log hx_pos]
+
+/-- Direct fixed-height Perron-error phase fit gives the anti-target
+exact-seed-shaped payload without a threshold comparison. -/
+theorem antiTarget_exact_seed_withFixedHeightPerronError_from_phase_fit
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp] :
+    AntiTargetTowerExactSeedWithFixedHeightPerronError := by
+  intro hRH X
+  rcases InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp.witness
+      hRH X (fun ρ => Complex.arg ρ + Real.pi) with
+    ⟨x, hXx, T, hT4, hx1, herror, ε, hεpos, hεlt, hphase, hxUpper⟩
+  have hx_pos : 0 < x := lt_trans zero_lt_one hx1
+  refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_, ?_⟩
+  · rwa [Real.exp_log hx_pos]
+  · rwa [Real.exp_log hx_pos]
+  · simpa [Real.exp_log hx_pos] using herror
+  · intro ρ hρ
+    rcases hphase ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa using hm⟩
+  · rwa [Real.exp_log hx_pos]
+
+/-- Target-specific fixed-height Perron-error phase fit gives the positive
+exact-seed-shaped payload without the arbitrary phase-fit class. -/
+theorem target_exact_seed_withFixedHeightPerronError_from_target_phase_fit
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetPhaseFitWithFixedHeightPerronErrorHyp] :
+    TargetTowerExactSeedWithFixedHeightPerronError := by
+  intro hRH X
+  rcases TargetPhaseFitWithFixedHeightPerronErrorHyp.witness hRH X with
+    ⟨x, hXx, T, hT4, hx1, herror, ε, hεpos, hεlt, hphase, hxUpper⟩
+  have hx_pos : 0 < x := lt_trans zero_lt_one hx1
+  refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_, ?_⟩
+  · rwa [Real.exp_log hx_pos]
+  · rwa [Real.exp_log hx_pos]
+  · simpa [Real.exp_log hx_pos] using herror
+  · intro ρ hρ
+    rcases hphase ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa using hm⟩
+  · rwa [Real.exp_log hx_pos]
+
+/-- Anti-target-specific fixed-height Perron-error phase fit gives the
+anti-target exact-seed-shaped payload without the arbitrary phase-fit class. -/
+theorem antiTarget_exact_seed_withFixedHeightPerronError_from_antiTarget_phase_fit
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetPhaseFitWithFixedHeightPerronErrorHyp] :
+    AntiTargetTowerExactSeedWithFixedHeightPerronError := by
+  intro hRH X
+  rcases AntiTargetPhaseFitWithFixedHeightPerronErrorHyp.witness hRH X with
+    ⟨x, hXx, T, hT4, hx1, herror, ε, hεpos, hεlt, hphase, hxUpper⟩
+  have hx_pos : 0 < x := lt_trans zero_lt_one hx1
+  refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_, ?_⟩
+  · rwa [Real.exp_log hx_pos]
+  · rwa [Real.exp_log hx_pos]
+  · simpa [Real.exp_log hx_pos] using herror
+  · intro ρ hρ
+    rcases hphase ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa using hm⟩
+  · rwa [Real.exp_log hx_pos]
+
+/-- A positive fixed-height Perron-error seed is already a full target
+arg-approximation family.
+
+This is the key bypass around the opaque threshold comparison: the payload
+contains the actual Perron error estimate at `x = exp t0`, so no
+`perronThreshold` inequality is needed. -/
+theorem targetTowerArgApproxFamily_of_exactSeedWithFixedHeightPerronError
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hSeed : TargetTowerExactSeedWithFixedHeightPerronError) :
+    Aristotle.Standalone.RHPiTargetPhaseArgReduction.TargetTowerArgApproxFamily := by
+  intro hRH X
+  rcases hSeed hRH X with
+    ⟨t0, T, ε, hT4, hεpos, hεlt, hX, hx1, herror, hphase, hUpper⟩
+  refine ⟨Real.exp t0, hX, T, hT4, hx1, herror, ε, hεpos, hεlt, ?_, hUpper⟩
+  intro ρ hρ
+  rcases hphase ρ hρ with ⟨m, hm⟩
+  exact ⟨m, by simpa [Real.log_exp] using hm⟩
+
+/-- An anti-target fixed-height Perron-error seed is already a full anti-target
+arg-approximation family. -/
+theorem antiTargetTowerArgApproxFamily_of_exactSeedWithFixedHeightPerronError
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hSeed : AntiTargetTowerExactSeedWithFixedHeightPerronError) :
+    Aristotle.Standalone.RHPiTargetPhaseArgReduction.AntiTargetTowerArgApproxFamily := by
+  intro hRH X
+  rcases hSeed hRH X with
+    ⟨t0, T, ε, hT4, hεpos, hεlt, hX, hx1, herror, hphase, hUpper⟩
+  refine ⟨Real.exp t0, hX, T, hT4, hx1, herror, ε, hεpos, hεlt, ?_, hUpper⟩
+  intro ρ hρ
+  rcases hphase ρ hρ with ⟨m, hm⟩
+  exact ⟨m, by simpa [Real.log_exp] using hm⟩
+
+/-- Fixed-height Perron-error seed payloads supply the corrected phase-coupling
+classes without routing through the Perron-threshold exact-seed classes. -/
+theorem correctedPhaseCoupling_of_exactSeedWithFixedHeightPerronError
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hTarget : TargetTowerExactSeedWithFixedHeightPerronError)
+    (hAntiTarget : AntiTargetTowerExactSeedWithFixedHeightPerronError) :
+    Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  exact
+    ⟨Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.targetPhaseCouplingFamilyHyp_corrected_of_argApprox
+        (targetTowerArgApproxFamily_of_exactSeedWithFixedHeightPerronError hTarget),
+      Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.antiTargetPhaseCouplingFamilyHyp_corrected_of_argApprox
+        (antiTargetTowerArgApproxFamily_of_exactSeedWithFixedHeightPerronError hAntiTarget)⟩
+
+/-- Fixed-height Perron-error seed payloads imply the corrected RH-`pi` witness
+endpoint directly. -/
+theorem rhPiWitnessData_of_exactSeedWithFixedHeightPerronError
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hTarget : TargetTowerExactSeedWithFixedHeightPerronError)
+    (hAntiTarget : AntiTargetTowerExactSeedWithFixedHeightPerronError) :
+    Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData := by
+  rcases correctedPhaseCoupling_of_exactSeedWithFixedHeightPerronError
+      hTarget hAntiTarget with
+    ⟨hTargetPhase, hAntiTargetPhase⟩
+  letI : Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected :=
+    hTargetPhase
+  letI : Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected :=
+    hAntiTargetPhase
+  exact Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.rhPiWitnessData_of_correctedHyp
+
+/-- Direct fixed-height Perron-error phase fit is enough for the corrected
+RH-`pi` witness endpoint. -/
+theorem rhPiWitnessData_of_fixedHeightPerronErrorPhaseFit_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp] :
+    Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData := by
+  exact rhPiWitnessData_of_exactSeedWithFixedHeightPerronError
+    target_exact_seed_withFixedHeightPerronError_from_phase_fit
+    antiTarget_exact_seed_withFixedHeightPerronError_from_phase_fit
+
+/-- Target/anti-specific fixed-height Perron-error phase fits are enough for
+the corrected phase-coupling endpoint, without arbitrary-target phase fitting. -/
+theorem correctedPhaseCoupling_of_targetAntiFixedHeightPerronErrorPhaseFit_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetPhaseFitWithFixedHeightPerronErrorHyp]
+    [AntiTargetPhaseFitWithFixedHeightPerronErrorHyp] :
+    Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  exact correctedPhaseCoupling_of_exactSeedWithFixedHeightPerronError
+    target_exact_seed_withFixedHeightPerronError_from_target_phase_fit
+    antiTarget_exact_seed_withFixedHeightPerronError_from_antiTarget_phase_fit
+
+/-- Target/anti-specific fixed-height Perron-error phase fits imply the
+corrected RH-`pi` witness endpoint. -/
+theorem rhPiWitnessData_of_targetAntiFixedHeightPerronErrorPhaseFit_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetPhaseFitWithFixedHeightPerronErrorHyp]
+    [AntiTargetPhaseFitWithFixedHeightPerronErrorHyp] :
+    Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData := by
+  rcases correctedPhaseCoupling_of_targetAntiFixedHeightPerronErrorPhaseFit_hyp with
+    ⟨hTargetPhase, hAntiTargetPhase⟩
+  letI : Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected :=
+    hTargetPhase
+  letI : Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected :=
+    hAntiTargetPhase
+  exact Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.rhPiWitnessData_of_correctedHyp
+
 /-- Same-height Perron-threshold/tower window boundary.
 
 For each RH branch and lower bound `X`, this provides one zero cutoff `T`, one
@@ -2244,6 +2541,50 @@ class PerronThresholdTowerPhaseWideWindowHyp
         L + radius T ε < U ∧
         Real.exp U ≤ Real.exp (Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Fixed-height Perron-error wide window boundary.
+
+This is the threshold-free analogue of
+`PerronThresholdTowerPhaseWideWindowHyp`: after fixing the selected height `T`,
+the lower logarithmic endpoint is already far enough that every
+`x ≥ exp L` has the actual fixed-height Perron error estimate.  It avoids any
+comparison between `perronThreshold` choices at different heights. -/
+class FixedHeightPerronErrorPhaseWideWindowHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
+      (radius : ℝ → ℝ → ℝ),
+      (∀ T ε : ℝ, 0 < radius T ε) →
+      ∃ T ε L U : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        X < Real.exp L ∧
+        (∀ x : ℝ,
+          Real.exp L ≤ x →
+            1 < x ∧
+            |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x|
+              ≤ Real.sqrt x / Real.log x) ∧
+        L + radius T ε < U ∧
+        Real.exp U ≤ Real.exp (Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Same-height threshold windows supply fixed-height Perron-error windows.
+
+This adapter only uses `perronThreshold_spec` at the selected height `T`; it
+does not compare thresholds at different heights or introduce a provider
+instance. -/
+theorem fixedHeightPerronErrorPhaseWideWindow_of_perronThresholdWideWindow_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp] :
+    FixedHeightPerronErrorPhaseWideWindowHyp where
+  witness := by
+    intro hRH X radius hRadius
+    rcases PerronThresholdTowerPhaseWideWindowHyp.witness
+        hRH X radius hRadius with
+      ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, hThreshold, hWide, hUcap⟩
+    refine ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, ?_, hWide, hUcap⟩
+    intro x hx
+    exact perronThreshold_spec hRH T x (le_trans hThreshold hx)
 
 /-- Same-height wide Perron-threshold/tower domination boundary.
 
@@ -2463,6 +2804,37 @@ class AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
                 ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
                     m • (2 * Real.pi)‖ ≤ ε
 
+/-- Paired target/anti-target finite-zero relative-density phase approximation.
+
+This is the finite-zero payload actually consumed by the paired corrected Pi
+route: both phase targets are carried together at the same height and
+tolerance, while their relative-density radii may differ. -/
+class TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      (∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - Complex.arg ρ -
+                    m • (2 * Real.pi)‖ ≤ ε) ∧
+      (∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
+                    m • (2 * Real.pi)‖ ≤ ε)
+
 /-- Chosen target finite-zero relative-density radius. Outside the meaningful
 `4 ≤ T`, `0 < ε` range it is set to `1` so it is total. -/
 noncomputable def targetFiniteZeroInhomogeneousPhaseRadius
@@ -2572,6 +2944,497 @@ class TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp
               (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1)
           ≤ Real.exp (Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Log-level paired target/anti-target Perron/tower geometry.
+
+This peels off the final monotone `Real.exp` from
+`TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp`: the remaining
+same-height growth obligation is a direct domination of the Perron lower
+endpoint plus the larger chosen phase radius by the double-exponential tower
+scale. -/
+class TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.log (max X (perronThreshold _hRH T) + 1) +
+            max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+              (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))
+
+/-- Budgeted log-level paired tower geometry.
+
+This splits the live log-scale tower domination into two same-height budgets:
+one half controls the Perron lower endpoint and one half controls the larger
+of the target/anti-target chosen phase radii. -/
+class TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.log (max X (perronThreshold _hRH T) + 1)
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+        max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+            (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Perron lower-endpoint half of the paired log tower budget.
+
+This is the same-height Perron-threshold growth input below
+`TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp`.  It deliberately
+does not mention the finite-zero phase radii. -/
+class PerronThresholdTowerLogHalfBudgetHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.log (max X (perronThreshold _hRH T) + 1)
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Pre-log same-height Perron threshold growth source.
+
+This is the explicit fixed-point growth input below
+`PerronThresholdTowerLogHalfBudgetHyp`: at one selected height/tolerance, both
+the external lower bound `X` and the opaque Perron threshold at that same
+height fit below `exp(half the double-exponential log budget)`. -/
+class PerronThresholdTowerExpHalfBudgetGrowthHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        X + 1
+          ≤ Real.exp
+            (Real.exp (Real.exp
+              (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2) ∧
+        perronThreshold _hRH T + 1
+          ≤ Real.exp
+            (Real.exp (Real.exp
+              (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
+
+/-- Majorant form of the same-height Perron threshold growth source.
+
+This is the fixed-point/tower split below
+`PerronThresholdTowerExpHalfBudgetGrowthHyp`: first find a same-height
+majorant `B` for the external lower bound and the opaque Perron threshold,
+then prove the zero-count tower at that same `T, ε` dominates `B`. -/
+class PerronThresholdTowerExpHalfBudgetMajorantHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε B : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        X + 1 ≤ B ∧
+        perronThreshold _hRH T + 1 ≤ B ∧
+        B ≤ Real.exp
+          (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
+
+/-- Canonical max-majorant form of the same-height Perron growth source.
+
+This removes the arbitrary existential majorant from
+`PerronThresholdTowerExpHalfBudgetMajorantHyp`: the remaining Perron growth
+obligation is exactly that the tower half-budget at the selected height
+dominates `max (X + 1) (perronThreshold hRH T + 1)`. -/
+class PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        max (X + 1) (perronThreshold _hRH T + 1) ≤
+          Real.exp
+            (Real.exp (Real.exp
+              (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
+
+/-- Exact residual inequality for the canonical Perron same-height budget.
+
+This is theorem-shaped rather than an instance source: proving this predicate
+is exactly the remaining fixed-height growth problem for
+`PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp`. -/
+def PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+    ∃ T ε : ℝ,
+      4 ≤ T ∧
+      0 < ε ∧ ε < 1 ∧
+      max (X + 1) (perronThreshold _hRH T + 1) ≤
+        Real.exp
+          (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
+
+/-- The exact residual Perron inequality supplies the canonical Perron budget
+leaf.  This is not an instance, to avoid a reverse edge into the
+canonical/majorant/growth provider chain. -/
+theorem perronThresholdTowerExpHalfBudgetCanonicalMajorant_of_residual
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (h :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual) :
+    PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp where
+  witness := h
+
+/-- Fixed-height transfer inequality for the Perron canonical majorant.
+
+If a tower half-budget at `T, ε` dominates the fixed-height majorant built from
+`perronThreshold hRH T0`, and the selected-height threshold
+`perronThreshold hRH T` is controlled by that same fixed majorant, then the
+exact residual inequality at the selected height follows.  The missing
+analytic content is precisely the transfer bound from `T0` to `T`. -/
+theorem perronThresholdTowerExpHalfBudgetCanonicalMajorant_bound_of_fixedHeightTransfer
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    {hRH : ZetaZeros.RiemannHypothesis} {X T0 T ε : ℝ}
+    (hFixed :
+      max (X + 1) (perronThreshold hRH T0 + 1) ≤
+        Real.exp
+          (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2))
+    (hTransfer :
+      perronThreshold hRH T + 1 ≤
+        max (X + 1) (perronThreshold hRH T0 + 1)) :
+    max (X + 1) (perronThreshold hRH T + 1) ≤
+      Real.exp
+        (Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2) := by
+  exact (max_le (le_max_left _ _) hTransfer).trans hFixed
+
+/-- The fixed-height transfer condition is exactly a selected-height threshold
+bound, with the `+1` and `max` bookkeeping stripped away.
+
+Thus the transfer is not a consequence of tower cofinality; it requires
+control of the opaque chosen threshold at the selected height `T`. -/
+theorem perronThreshold_fixedHeightTransfer_iff_selectedThreshold_bound
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    {hRH : ZetaZeros.RiemannHypothesis} {X T0 T : ℝ} :
+    perronThreshold hRH T + 1 ≤
+        max (X + 1) (perronThreshold hRH T0 + 1) ↔
+      perronThreshold hRH T ≤ max X (perronThreshold hRH T0) := by
+  constructor
+  · intro h
+    have hX :
+        X + 1 ≤ max X (perronThreshold hRH T0) + 1 := by
+      linarith [le_max_left X (perronThreshold hRH T0)]
+    have hT0 :
+        perronThreshold hRH T0 + 1 ≤
+          max X (perronThreshold hRH T0) + 1 := by
+      linarith [le_max_right X (perronThreshold hRH T0)]
+    have hMax :
+        max (X + 1) (perronThreshold hRH T0 + 1) ≤
+          max X (perronThreshold hRH T0) + 1 :=
+      max_le hX hT0
+    linarith
+  · intro h
+    have hX :
+        X ≤ max (X + 1) (perronThreshold hRH T0 + 1) - 1 := by
+      linarith [le_max_left (X + 1) (perronThreshold hRH T0 + 1)]
+    have hT0 :
+        perronThreshold hRH T0 ≤
+          max (X + 1) (perronThreshold hRH T0 + 1) - 1 := by
+      linarith [le_max_right (X + 1) (perronThreshold hRH T0 + 1)]
+    have hMax :
+        max X (perronThreshold hRH T0) ≤
+          max (X + 1) (perronThreshold hRH T0 + 1) - 1 :=
+      max_le hX hT0
+    linarith
+
+/-- The transfer bound is tautological if the tower-selected height is the same
+height used to form the fixed majorant.  The obstruction is precisely changing
+from `T0` to a new tower-selected height `T`. -/
+theorem perronThreshold_fixedHeightTransfer_sameHeight
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hRH : ZetaZeros.RiemannHypothesis) (X T0 : ℝ) :
+    perronThreshold hRH T0 + 1 ≤
+      max (X + 1) (perronThreshold hRH T0 + 1) :=
+  le_max_right _ _
+
+/-- Corrected residual for the fixed-height Perron majorant route.
+
+This keeps the cofinal tower bound on the fixed-height majorant
+`max (X + 1) (perronThreshold hRH T0 + 1)`, and states the extra selected-height
+fact in its stripped form
+`perronThreshold hRH T ≤ max X (perronThreshold hRH T0)`.
+
+Unlike the invalid monotonicity route, this does not claim that choosing a
+larger tower height automatically controls the new `Classical.choose`
+threshold at that height. -/
+def PerronThresholdTowerExpHalfBudgetSelectedThresholdResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+    ∃ T0 T ε : ℝ,
+      4 ≤ T ∧
+      0 < ε ∧ ε < 1 ∧
+      max (X + 1) (perronThreshold _hRH T0 + 1) ≤
+        Real.exp
+          (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2) ∧
+      perronThreshold _hRH T ≤ max X (perronThreshold _hRH T0)
+
+/-- The corrected selected-threshold residual supplies the original canonical
+Perron residual.
+
+This is a non-instance reduction: it names the exact missing analytic input
+without adding a reverse edge into the canonical/growth provider chain. -/
+theorem perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_selectedThresholdResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (h :
+      PerronThresholdTowerExpHalfBudgetSelectedThresholdResidual) :
+    PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual := by
+  intro hRH X
+  rcases h hRH X with
+    ⟨T0, T, ε, hT4, hεpos, hεlt, hFixed, hSelected⟩
+  have hTransfer :
+      perronThreshold hRH T + 1 ≤
+        max (X + 1) (perronThreshold hRH T0 + 1) :=
+    (perronThreshold_fixedHeightTransfer_iff_selectedThreshold_bound
+      (hRH := hRH) (X := X) (T0 := T0) (T := T)).2 hSelected
+  exact
+    ⟨T, ε, hT4, hεpos, hεlt,
+      perronThresholdTowerExpHalfBudgetCanonicalMajorant_bound_of_fixedHeightTransfer
+        (hFixed := hFixed) (hTransfer := hTransfer)⟩
+
+/-- The earlier two-sided growth source implies the canonical max-majorant
+form by recombining the two same-height inequalities with `max_le`.
+
+This is deliberately not an instance, to avoid a typeclass loop with the
+canonical-to-majorant route below. -/
+theorem perronThresholdTowerExpHalfBudgetCanonicalMajorant_of_growth_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetGrowthHyp] :
+    PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp where
+  witness := by
+    intro hRH X
+    rcases PerronThresholdTowerExpHalfBudgetGrowthHyp.witness hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hX, hPerron⟩
+    exact ⟨T, ε, hT4, hεpos, hεlt, max_le hX hPerron⟩
+
+/-- Phase-radius half of the paired log tower budget at a Perron-selected
+height/tolerance.
+
+This is the finite-zero radius growth input below
+`TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp`: once the Perron
+side has selected a same-height `T, ε` with half of the double-exponential
+budget, the larger target/anti-target relative-density radius must fit inside
+the other half. -/
+class TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      Real.log (max X (perronThreshold _hRH T) + 1)
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 →
+      max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+          (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Height-only paired finite-zero phase-radius growth source.
+
+This isolates the quantitative Kronecker-radius growth input below
+`TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`.  It no longer
+mentions the RH branch, the external lower bound, or the Perron lower-endpoint
+half-budget proof; it only controls the realized paired target/anti radius at
+the same selected `T, ε`. -/
+class TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+          (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Majorant form of the paired finite-zero phase-radius growth source.
+
+This is the quantitative Kronecker-radius split below
+`TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`: at the same selected
+height/tolerance, produce a concrete majorant for the larger target/anti
+relative-density radius and prove the tower half-budget dominates it. -/
+class TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      ∃ R : ℝ,
+        max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+            (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1 ≤ R ∧
+        R ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Target-side height-only finite-zero phase-radius majorant source. -/
+class TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      ∃ R : ℝ,
+        targetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤ R ∧
+        R ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Canonical target-side finite-zero phase-radius half-budget source.
+
+This removes the existential majorant from
+`TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp`: the remaining quantitative
+Kronecker-radius obligation is the direct tower domination of the chosen
+target radius at the same `T, ε`. -/
+class TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      targetFiniteZeroInhomogeneousPhaseRadius T ε + 1
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Exact residual inequality for the target chosen-radius budget.
+
+This names the direct bound on the actual `Classical.choose` radius used by
+`targetFiniteZeroInhomogeneousPhaseRadius`; a separately bounded existential
+Kronecker radius is not enough to prove this predicate. -/
+def TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop :=
+  ∀ (T ε : ℝ),
+    4 ≤ T →
+    0 < ε →
+    ε < 1 →
+    targetFiniteZeroInhomogeneousPhaseRadius T ε + 1
+      ≤ Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- The exact target chosen-radius residual supplies the canonical target
+radius budget leaf.  This is deliberately non-instance-only. -/
+theorem targetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_residual
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    (h : TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
+    TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp where
+  witness := h
+
+/-- Anti-target-side height-only finite-zero phase-radius majorant source. -/
+class AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      ∃ R : ℝ,
+        antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤ R ∧
+        R ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Canonical anti-target-side finite-zero phase-radius half-budget source. -/
+class AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Exact residual inequality for the anti-target chosen-radius budget.
+
+This names the direct bound on the actual `Classical.choose` radius used by
+`antiTargetFiniteZeroInhomogeneousPhaseRadius`. -/
+def AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop :=
+  ∀ (T ε : ℝ),
+    4 ≤ T →
+    0 < ε →
+    ε < 1 →
+    antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1
+      ≤ Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- The exact anti-target chosen-radius residual supplies the canonical
+anti-target radius budget leaf.  This is deliberately non-instance-only. -/
+theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_residual
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    (h : AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
+    AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp where
+  witness := h
+
+/-- The paired radius-growth source implies the target-side canonical radius
+leaf by projecting the target radius through the paired max.
+
+This comparison theorem is non-instance-only to keep the canonical leaves as
+the current explicit atoms. -/
+theorem targetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_pairedGrowth_hyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    have hPair :=
+      TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp.witness
+        T ε hT4 hεpos hεlt
+    have hTarget :
+        targetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤
+          max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+              (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1 := by
+      linarith [le_max_left
+        (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+        (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε)]
+    exact hTarget.trans hPair
+
+/-- The paired radius-growth source implies the anti-target-side canonical
+radius leaf by projecting the anti-target radius through the paired max.
+
+This comparison theorem is non-instance-only to keep the canonical leaves as
+the current explicit atoms. -/
+theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_pairedGrowth_hyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    have hPair :=
+      TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp.witness
+        T ε hT4 hεpos hεlt
+    have hAnti :
+        antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤
+          max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+              (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1 := by
+      linarith [le_max_right
+        (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+        (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε)]
+    exact hAnti.trans hPair
 
 /-- Target-specific same-height Perron/tower domination by the realized
 relative-density phase radius.
@@ -2709,6 +3572,365 @@ instance (priority := 90)
     [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
     AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
   antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+
+/-- Relation-compatible finite-set Kronecker plus paired target/anti zeta
+compatibility supplies the paired finite-zero relative-density payload. -/
+theorem targetAntiFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hε
+    rcases TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+        T ε hT4 hε with
+      ⟨hTargetCompat, hAntiCompat⟩
+    constructor
+    · exact
+        FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp.witness
+          (finite_zeros_le T).toFinset ε Complex.arg hε hTargetCompat
+    · exact
+        FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp.witness
+          (finite_zeros_le T).toFinset ε
+          (fun ρ => Complex.arg ρ + Real.pi) hε hAntiCompat
+
+/-- Instance form of
+`targetAntiFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp`.
+-/
+instance (priority := 90)
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  targetAntiFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+
+/-- The paired target/anti relative-density payload supplies the target side. -/
+theorem targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hε
+    exact (TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+      T ε hT4 hε).1
+
+/-- Instance form of
+`targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp`. -/
+instance (priority := 95)
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+
+/-- The paired target/anti relative-density payload supplies the anti-target
+side. -/
+theorem antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hε
+    exact (TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+      T ε hT4 hε).2
+
+/-- Instance form of
+`antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp`. -/
+instance (priority := 95)
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+
+/-- Log-level paired tower geometry implies the paired tower geometry leaf by
+monotonicity of the outer exponential. -/
+theorem targetAntiPerronThresholdTowerGeometryForPhaseRadii_of_logGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp] :
+    TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp where
+  witness := by
+    intro hRH X
+    rcases TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp.witness
+        hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hlogDom⟩
+    refine ⟨T, ε, hT4, hεpos, hεlt, ?_⟩
+    exact Real.exp_le_exp.mpr hlogDom
+
+/-- Instance form of
+`targetAntiPerronThresholdTowerGeometryForPhaseRadii_of_logGeometry_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp] :
+    TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp :=
+  targetAntiPerronThresholdTowerGeometryForPhaseRadii_of_logGeometry_hyp
+
+/-- A budgeted log-level geometry source implies the live log-level paired
+geometry by adding the two half-budget estimates. -/
+theorem targetAntiPerronThresholdTowerLogGeometryForPhaseRadii_of_budget_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp] :
+    TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp where
+  witness := by
+    intro hRH X
+    rcases TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp.witness
+        hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hLower, hRadius⟩
+    refine ⟨T, ε, hT4, hεpos, hεlt, ?_⟩
+    linarith
+
+/-- Instance form of
+`targetAntiPerronThresholdTowerLogGeometryForPhaseRadii_of_budget_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp] :
+    TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp :=
+  targetAntiPerronThresholdTowerLogGeometryForPhaseRadii_of_budget_hyp
+
+/-- Same-height Perron and phase-radius half-budget inputs imply the paired
+budgeted log-level tower geometry leaf. -/
+theorem targetAntiPerronThresholdTowerLogBudgetForPhaseRadii_of_halfBudgets_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp] :
+    TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp where
+  witness := by
+    intro hRH X
+    rcases PerronThresholdTowerLogHalfBudgetHyp.witness hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hLower⟩
+    exact
+      ⟨T, ε, hT4, hεpos, hεlt, hLower,
+        TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp.witness
+          hRH X T ε hT4 hεpos hεlt hLower⟩
+
+/-- Instance form of
+`targetAntiPerronThresholdTowerLogBudgetForPhaseRadii_of_halfBudgets_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp] :
+    TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp :=
+  targetAntiPerronThresholdTowerLogBudgetForPhaseRadii_of_halfBudgets_hyp
+
+/-- A pre-log same-height growth source implies the Perron log half-budget. -/
+theorem perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetGrowthHyp] :
+    PerronThresholdTowerLogHalfBudgetHyp where
+  witness := by
+    intro hRH X
+    rcases PerronThresholdTowerExpHalfBudgetGrowthHyp.witness hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hX, hPerron⟩
+    refine ⟨T, ε, hT4, hεpos, hεlt, ?_⟩
+    let C : ℝ :=
+      Real.exp
+        (Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
+    have hCmax : max X (perronThreshold hRH T) + 1 ≤ C := by
+      have hX' : X ≤ C - 1 := by
+        dsimp [C]
+        linarith [hX]
+      have hP' : perronThreshold hRH T ≤ C - 1 := by
+        dsimp [C]
+        linarith [hPerron]
+      have hmax' : max X (perronThreshold hRH T) ≤ C - 1 :=
+        max_le hX' hP'
+      linarith
+    have hApos : 0 < max X (perronThreshold hRH T) + 1 := by
+      have hPgt1 := perronThreshold_gt_one_perron hRH T
+      linarith [le_max_right X (perronThreshold hRH T)]
+    rw [Real.log_le_iff_le_exp hApos]
+    simpa [C] using hCmax
+
+/-- Instance form of
+`perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetGrowthHyp] :
+    PerronThresholdTowerLogHalfBudgetHyp :=
+  perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp
+
+/-- A same-height majorant/tower split implies the Perron exponential
+half-budget growth source. -/
+theorem perronThresholdTowerExpHalfBudgetGrowth_of_majorant_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetMajorantHyp] :
+    PerronThresholdTowerExpHalfBudgetGrowthHyp where
+  witness := by
+    intro hRH X
+    rcases PerronThresholdTowerExpHalfBudgetMajorantHyp.witness hRH X with
+      ⟨T, ε, B, hT4, hεpos, hεlt, hX, hPerron, hTower⟩
+    exact
+      ⟨T, ε, hT4, hεpos, hεlt,
+        hX.trans hTower, hPerron.trans hTower⟩
+
+/-- Instance form of
+`perronThresholdTowerExpHalfBudgetGrowth_of_majorant_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetMajorantHyp] :
+    PerronThresholdTowerExpHalfBudgetGrowthHyp :=
+  perronThresholdTowerExpHalfBudgetGrowth_of_majorant_hyp
+
+/-- The canonical max-majorant Perron growth source implies the existential
+majorant form. -/
+theorem perronThresholdTowerExpHalfBudgetMajorant_of_canonical_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp] :
+    PerronThresholdTowerExpHalfBudgetMajorantHyp where
+  witness := by
+    intro hRH X
+    rcases PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp.witness hRH X
+        with ⟨T, ε, hT4, hεpos, hεlt, hTower⟩
+    refine
+      ⟨T, ε, max (X + 1) (perronThreshold hRH T + 1),
+        hT4, hεpos, hεlt, ?_, ?_, hTower⟩
+    · exact le_max_left _ _
+    · exact le_max_right _ _
+
+/-- Instance form of
+`perronThresholdTowerExpHalfBudgetMajorant_of_canonical_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp] :
+    PerronThresholdTowerExpHalfBudgetMajorantHyp :=
+  perronThresholdTowerExpHalfBudgetMajorant_of_canonical_hyp
+
+/-- A height-only paired phase-radius growth source implies the Perron-selected
+phase-radius half-budget leaf. -/
+theorem targetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThreshold_of_growth_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp where
+  witness := by
+    intro _hRH _X T ε hT4 hεpos hεlt _hLower
+    exact TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp.witness
+      T ε hT4 hεpos hεlt
+
+/-- Instance form of
+`targetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThreshold_of_growth_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp :=
+  targetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThreshold_of_growth_hyp
+
+/-- A same-height radius majorant/tower split implies the paired phase-radius
+half-budget growth source. -/
+theorem targetAntiFiniteZeroPhaseRadiusHalfBudgetGrowth_of_majorant_hyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp] :
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    rcases TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp.witness
+        T ε hT4 hεpos hεlt with
+      ⟨R, hRadius, hTower⟩
+    exact hRadius.trans hTower
+
+/-- Instance form of
+`targetAntiFiniteZeroPhaseRadiusHalfBudgetGrowth_of_majorant_hyp`. -/
+instance (priority := 95)
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp] :
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp :=
+  targetAntiFiniteZeroPhaseRadiusHalfBudgetGrowth_of_majorant_hyp
+
+/-- A canonical target radius half-budget supplies the target-side existential
+majorant by choosing the realized radius plus `1`. -/
+theorem targetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp] :
+    TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    refine
+      ⟨targetFiniteZeroInhomogeneousPhaseRadius T ε + 1, le_rfl, ?_⟩
+    exact TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp.witness
+      T ε hT4 hεpos hεlt
+
+/-- Instance form of
+`targetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp`. -/
+instance (priority := 95)
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp] :
+    TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+  targetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+
+/-- A canonical anti-target radius half-budget supplies the anti-target-side
+existential majorant by choosing the realized radius plus `1`. -/
+theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp] :
+    AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    refine
+      ⟨antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1, le_rfl, ?_⟩
+    exact AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp.witness
+      T ε hT4 hεpos hεlt
+
+/-- Instance form of
+`antiTargetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp`. -/
+instance (priority := 95)
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp] :
+    AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+  antiTargetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+
+/-- Same-height target-side and anti-target-side radius majorants recombine
+into the paired radius majorant. -/
+theorem targetAntiFiniteZeroPhaseRadiusHalfBudgetMajorant_of_targetAnti_hyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp]
+    [AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp] :
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    rcases TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp.witness
+        T ε hT4 hεpos hεlt with
+      ⟨Rt, hRt, hRtTower⟩
+    rcases AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp.witness
+        T ε hT4 hεpos hεlt with
+      ⟨Ra, hRa, hRaTower⟩
+    let R : ℝ := max Rt Ra
+    refine ⟨R, ?_, ?_⟩
+    · have hTarget :
+          targetFiniteZeroInhomogeneousPhaseRadius T ε ≤ R - 1 := by
+        dsimp [R]
+        linarith [hRt, le_max_left Rt Ra]
+      have hAnti :
+          antiTargetFiniteZeroInhomogeneousPhaseRadius T ε ≤ R - 1 := by
+        dsimp [R]
+        linarith [hRa, le_max_right Rt Ra]
+      have hMax :
+          max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+              (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) ≤ R - 1 :=
+        max_le hTarget hAnti
+      linarith
+    · dsimp [R]
+      exact max_le hRtTower hRaTower
+
+/-- Instance form of
+`targetAntiFiniteZeroPhaseRadiusHalfBudgetMajorant_of_targetAnti_hyp`. -/
+instance (priority := 95)
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp]
+    [AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp] :
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+  targetAntiFiniteZeroPhaseRadiusHalfBudgetMajorant_of_targetAnti_hyp
 
 /-- Paired target/anti finite-zero compatibility supplies the target
 compatibility leaf. -/
@@ -3068,6 +4290,185 @@ instance (priority := 90)
     [FiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
     InhomogeneousPhaseFitAbovePerronThresholdPerronHyp :=
   inhomogeneousPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+
+/-- Fixed-height Perron-error wide windows plus finite-zero relative density
+give the direct fixed-height Perron-error phase-fit payload.
+
+This is deliberately not an instance.  It isolates the exact remaining
+cofinality/window theorem needed for the threshold-free route while making the
+arbitrary-target finite-zero requirement explicit. -/
+theorem inhomogeneousPhaseFitWithFixedHeightPerronError_of_wideWindow_relativeDense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FixedHeightPerronErrorPhaseWideWindowHyp]
+    [FiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp where
+  witness := by
+    intro hRH X targetPhase
+    let radius : ℝ → ℝ → ℝ := fun T ε =>
+      if h : 4 ≤ T ∧ 0 < ε then
+        Classical.choose
+          (FiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+            T ε targetPhase h.1 h.2)
+      else 1
+    have hRadius : ∀ T ε : ℝ, 0 < radius T ε := by
+      intro T ε
+      by_cases h : 4 ≤ T ∧ 0 < ε
+      · dsimp [radius]
+        rw [dif_pos h]
+        exact (Classical.choose_spec
+          (FiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+            T ε targetPhase h.1 h.2)).1
+      · dsimp [radius]
+        rw [dif_neg h]
+        norm_num
+    rcases FixedHeightPerronErrorPhaseWideWindowHyp.witness
+        hRH X radius hRadius with
+      ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, hErr, hWide, hUcap⟩
+    let hRel :=
+      FiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+        T ε targetPhase hT4 hεpos
+    let R : ℝ := Classical.choose hRel
+    have hRspec := Classical.choose_spec hRel
+    have hRadius_eq : radius T ε = R := by
+      dsimp [radius, R]
+      rw [dif_pos ⟨hT4, hεpos⟩]
+    rcases hRspec with ⟨_hRpos, hHit⟩
+    rcases hHit L with ⟨t0, hLt, htR, hPhase⟩
+    have htU : t0 < U := by
+      have htRadius : t0 < L + radius T ε := by
+        simpa [hRadius_eq, R] using htR
+      exact lt_trans htRadius hWide
+    have hExpLle : Real.exp L ≤ Real.exp t0 :=
+      le_of_lt (Real.exp_strictMono hLt)
+    have hExpU : Real.exp t0 ≤ Real.exp U :=
+      Real.exp_le_exp.mpr (le_of_lt htU)
+    have hPerron := hErr (Real.exp t0) hExpLle
+    refine
+      ⟨Real.exp t0, ?_, T, hT4, hPerron.1, hPerron.2,
+        ε, hεpos, hεlt, ?_, ?_⟩
+    · exact lt_of_lt_of_le hX hExpLle
+    · intro ρ hρ
+      rcases hPhase ρ hρ with ⟨m, hm⟩
+      exact ⟨m, by simpa [Real.log_exp] using hm⟩
+    · exact le_trans hExpU hUcap
+
+private theorem fixedHeightPerronErrorPhaseFit_of_relative_dense_witness
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FixedHeightPerronErrorPhaseWideWindowHyp]
+    (targetPhase : ℂ → ℝ)
+    (hDense :
+      ∀ (T ε : ℝ),
+        4 ≤ T →
+        0 < ε →
+        ∃ R : ℝ,
+          0 < R ∧
+          ∀ L : ℝ,
+            ∃ t0 : ℝ,
+              L < t0 ∧
+              t0 < L + R ∧
+              ∀ ρ ∈ (finite_zeros_le T).toFinset,
+                ∃ m : ℤ,
+                  ‖t0 * ρ.im - targetPhase ρ -
+                      m • (2 * Real.pi)‖ ≤ ε) :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x|
+          ≤ Real.sqrt x / Real.log x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - targetPhase ρ -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
+  intro hRH X
+  let radius : ℝ → ℝ → ℝ := fun T ε =>
+    if h : 4 ≤ T ∧ 0 < ε then
+      Classical.choose (hDense T ε h.1 h.2)
+    else 1
+  have hRadius : ∀ T ε : ℝ, 0 < radius T ε := by
+    intro T ε
+    by_cases h : 4 ≤ T ∧ 0 < ε
+    · dsimp [radius]
+      rw [dif_pos h]
+      exact (Classical.choose_spec (hDense T ε h.1 h.2)).1
+    · dsimp [radius]
+      rw [dif_neg h]
+      norm_num
+  rcases FixedHeightPerronErrorPhaseWideWindowHyp.witness
+      hRH X radius hRadius with
+    ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, hErr, hWide, hUcap⟩
+  let hRel := hDense T ε hT4 hεpos
+  let R : ℝ := Classical.choose hRel
+  have hRspec := Classical.choose_spec hRel
+  have hRadius_eq : radius T ε = R := by
+    dsimp [radius, R]
+    rw [dif_pos ⟨hT4, hεpos⟩]
+  rcases hRspec with ⟨_hRpos, hHit⟩
+  rcases hHit L with ⟨t0, hLt, htR, hPhase⟩
+  have htU : t0 < U := by
+    have htRadius : t0 < L + radius T ε := by
+      simpa [hRadius_eq, R] using htR
+    exact lt_trans htRadius hWide
+  have hExpLle : Real.exp L ≤ Real.exp t0 :=
+    le_of_lt (Real.exp_strictMono hLt)
+  have hExpU : Real.exp t0 ≤ Real.exp U :=
+    Real.exp_le_exp.mpr (le_of_lt htU)
+  have hPerron := hErr (Real.exp t0) hExpLle
+  refine
+    ⟨Real.exp t0, ?_, T, hT4, hPerron.1, hPerron.2,
+      ε, hεpos, hεlt, ?_, ?_⟩
+  · exact lt_of_lt_of_le hX hExpLle
+  · intro ρ hρ
+    rcases hPhase ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa [Real.log_exp] using hm⟩
+  · exact le_trans hExpU hUcap
+
+/-- Target-specific finite-zero relative density plus the fixed-height
+Perron-error wide window source gives target fixed-height phase fit. -/
+theorem targetPhaseFitWithFixedHeightPerronError_of_relative_dense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FixedHeightPerronErrorPhaseWideWindowHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    TargetPhaseFitWithFixedHeightPerronErrorHyp where
+  witness :=
+    fixedHeightPerronErrorPhaseFit_of_relative_dense_witness
+      Complex.arg TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+
+/-- Anti-target-specific finite-zero relative density plus the fixed-height
+Perron-error wide window source gives anti-target fixed-height phase fit. -/
+theorem antiTargetPhaseFitWithFixedHeightPerronError_of_relative_dense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FixedHeightPerronErrorPhaseWideWindowHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    AntiTargetPhaseFitWithFixedHeightPerronErrorHyp where
+  witness :=
+    fixedHeightPerronErrorPhaseFit_of_relative_dense_witness
+      (fun ρ => Complex.arg ρ + Real.pi)
+      AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+
+/-- Relation-compatible finite-set Kronecker plus paired target/anti zeta
+compatibility and the fixed-height window source package both target-specific
+fixed-height phase-fit classes. -/
+theorem targetAntiFixedHeightPerronErrorPhaseFit_of_relationCompatibleAndWindow_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FixedHeightPerronErrorPhaseWideWindowHyp] :
+    TargetPhaseFitWithFixedHeightPerronErrorHyp ∧
+      AntiTargetPhaseFitWithFixedHeightPerronErrorHyp := by
+  letI : TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetAntiFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  exact
+    ⟨targetPhaseFitWithFixedHeightPerronError_of_relative_dense_hyp,
+      antiTargetPhaseFitWithFixedHeightPerronError_of_relative_dense_hyp⟩
 
 /-- Target-only Perron phase-fit boundary for `ρ ↦ arg ρ`.
 
@@ -3744,6 +5145,108 @@ theorem exactSeedAboveThreshold_perron_of_pairedCompatibilityAndGeometry_hyp
     TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
       AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
   exact ⟨inferInstance, inferInstance⟩
+
+/-- Paired finite-zero relative density plus paired phase-radius geometry
+packages both Perron-only exact-seed classes.  This is the narrower endpoint
+after the finite-dimensional Kronecker and zeta relation-compatibility work has
+already been bundled into a paired finite-zero phase payload. -/
+theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact ⟨inferInstance, inferInstance⟩
+
+/-- Paired finite-zero relative density plus log-level paired phase-radius
+geometry packages both Perron-only exact-seed classes. -/
+theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndLogGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact ⟨inferInstance, inferInstance⟩
+
+/-- Paired finite-zero relative density plus budgeted log-level paired
+phase-radius geometry packages both Perron-only exact-seed classes. -/
+theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndBudgetGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact ⟨inferInstance, inferInstance⟩
+
+/-- Paired finite-zero relative density plus the two same-height half-budget
+inputs packages both Perron-only exact-seed classes. -/
+theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndHalfBudgets_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact ⟨inferInstance, inferInstance⟩
+
+/-- Paired finite-zero relative density plus the explicit same-height growth
+budget leaves packages both Perron-only exact-seed classes.
+
+This is a non-instance endpoint parallel to the corrected RH witness route; it
+uses local instances only, so it does not add a reverse canonical/growth edge
+to typeclass search. -/
+theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndGrowthBudgets_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [PerronThresholdTowerExpHalfBudgetGrowthHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : PerronThresholdTowerLogHalfBudgetHyp :=
+    perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp
+  letI : TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp :=
+    targetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThreshold_of_growth_hyp
+  exact exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndHalfBudgets_hyp
+
+/-- Paired finite-zero relative density plus the current canonical Perron and
+one-sided radius budget leaves packages both Perron-only exact-seed classes.
+
+This is a non-instance endpoint: it records the explicit canonical-leaf route
+without asking typeclass search to traverse both directions of the
+canonical/majorant/growth comparison graph. -/
+theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndCanonicalBudgets_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp]
+    [TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp]
+    [AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : PerronThresholdTowerExpHalfBudgetMajorantHyp :=
+    perronThresholdTowerExpHalfBudgetMajorant_of_canonical_hyp
+  letI : PerronThresholdTowerExpHalfBudgetGrowthHyp :=
+    perronThresholdTowerExpHalfBudgetGrowth_of_majorant_hyp
+  letI : PerronThresholdTowerLogHalfBudgetHyp :=
+    perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp
+  letI : TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+    targetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+  letI : AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+    antiTargetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+  letI : TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+    targetAntiFiniteZeroPhaseRadiusHalfBudgetMajorant_of_targetAnti_hyp
+  letI : TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp :=
+    targetAntiFiniteZeroPhaseRadiusHalfBudgetGrowth_of_majorant_hyp
+  letI : TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp :=
+    targetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThreshold_of_growth_hyp
+  exact exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndHalfBudgets_hyp
 
 /-- Target approximate-seed phase alignment above the Perron threshold.
 
