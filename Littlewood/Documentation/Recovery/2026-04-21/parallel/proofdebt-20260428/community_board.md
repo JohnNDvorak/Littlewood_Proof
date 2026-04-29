@@ -1595,3 +1595,37 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Pi/Phase: `PerronThresholdTowerWideDominationHyp`.
   - RS/Gabcke:
     `StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp`.
+
+## Overnight 2026-04-29 Thirty-Seventh Pass Status
+
+- RS/Gabcke lane is validated and pushed through `0e42226`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Close Gabcke quarter translation derivative`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
+  - Result: the quarter-translation third-derivative atom is closed, together
+    with the local-coordinate transfer helper.
+  - Remaining RS/Gabcke atom:
+    `StandardGabckeQuarterLocalSecondDerivativeHasDerivAtProp`, equivalently
+    the local third-derivative formula at `x = 0`.
+- Pi/Phase lane is validated and pushed through `cd3b46d`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Split pi wide domination log budget`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute
+      Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: `PerronThresholdTowerWideDominationHyp` is reduced to the
+    separated log-budget source `PerronThresholdTowerWideLogBudgetHyp`.
+  - Remaining Pi atom:
+    for every positive supplied radius function, choose the same `T, ε` so
+    both `Real.log (max X (perronThreshold hRH T) + 1)` and `radius T ε + 1`
+    fit within half of the same double-exponential tower scale.
+- Current live atoms:
+  - Atkinson: eventual normalized fixed-shift correction bound and shifted
+    stationary-phase target remainder.
+  - Perron/B5a: finite Perron-kernel linear handoff from the scale-correct
+    small-T weighted cutoff bound.
+  - Pi/Phase: `PerronThresholdTowerWideLogBudgetHyp`.
+  - RS/Gabcke: local second-derivative differentiability / third-derivative
+    formula at `x = 0`.
