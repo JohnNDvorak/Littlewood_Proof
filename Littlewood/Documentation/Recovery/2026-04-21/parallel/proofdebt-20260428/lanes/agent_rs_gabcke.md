@@ -1159,3 +1159,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   regularity.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 23: coordinate bridge split into translation and shifted function identity
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp`.
+- Banked inputs:
+  - Round 21 introduced `standardGabckeQuarterLocalPsi` as the exact local
+    coordinate quotient for `p = x + 1/4`.
+  - Round 22 reduced the Taylor value side to
+    `StandardGabckeQuarterLocalSecondDerivativeHasDerivAtProp`.
+- Proof facts banked:
+  - Added
+    `StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp`,
+    the chain-rule/translation atom identifying the third derivative at
+    `p = 1/4` with the third derivative at `x = 0` of
+    `fun x => standardGabckeRemovablePsiCandidate (x + 1/4)`.
+  - Added `StandardGabckeRemovableCandidateQuarterLocalFunctionEqProp`, the
+    exact pointwise algebraic/trigonometric identity
+    `standardGabckeRemovablePsiCandidate (x + 1/4) =
+    standardGabckeQuarterLocalPsi x`.
+  - Proved
+    `standardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp_of_translation_and_functionEq`,
+    deriving the existing coordinate bridge from those two smaller atoms.
+- Failed routes:
+  - I did not identify derivatives by asserting global raw regularity at the
+    denominator-zero point.
+  - I did not define `D := standardGabckeRawPsiThirdDerivative`.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, or weaken existing statements.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+- Remaining goal shape:
+  prove either
+  `StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp`
+  by a local chain-rule/translation lemma for the third derivative, or prove
+  `StandardGabckeRemovableCandidateQuarterLocalFunctionEqProp` by case
+  splitting the two filled values and the trigonometric identity
+  `rawPsi (x + 1/4) =
+    sin(pi*x - 2*pi*x^2) / sin(2*pi*x)` off the two removable points.
+- Coordinator action requested:
+  run the requested serialized validation command.

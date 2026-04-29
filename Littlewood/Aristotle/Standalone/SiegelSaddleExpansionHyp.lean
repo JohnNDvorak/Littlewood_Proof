@@ -606,6 +606,43 @@ def StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp : 
   standardGabckeRemovableSourceThirdDerivative (1 / 4) =
     deriv (deriv (deriv standardGabckeQuarterLocalPsi)) 0
 
+/-- Translation part of the quarter coordinate bridge: third derivative at
+`p = 1/4` becomes the third derivative at `x = 0` after the coordinate change
+`p = x + 1/4`. This is a local calculus/chain-rule atom and does not identify
+the shifted candidate with the trigonometric quotient. -/
+def StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp : Prop :=
+  standardGabckeRemovableSourceThirdDerivative (1 / 4) =
+    deriv (deriv (deriv (fun x : ℝ =>
+      standardGabckeRemovablePsiCandidate (x + 1 / 4)))) 0
+
+/-- Pointwise local-coordinate identity for the removable candidate after the
+shift `p = x + 1/4`. This is the exact algebraic/trigonometric and removable
+fill statement; it is separate from derivative translation. -/
+def StandardGabckeRemovableCandidateQuarterLocalFunctionEqProp : Prop :=
+  ∀ x : ℝ,
+    standardGabckeRemovablePsiCandidate (x + 1 / 4) =
+      standardGabckeQuarterLocalPsi x
+
+/-- The quarter coordinate bridge follows from the translation derivative atom
+and the pointwise local-coordinate identity. -/
+theorem standardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp_of_translation_and_functionEq
+    (h_translate :
+      StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp)
+    (h_fun : StandardGabckeRemovableCandidateQuarterLocalFunctionEqProp) :
+    StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp := by
+  unfold StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp at h_translate
+  unfold StandardGabckeRemovableCandidateQuarterLocalFunctionEqProp at h_fun
+  unfold StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp
+  have hfun :
+      (fun x : ℝ => standardGabckeRemovablePsiCandidate (x + 1 / 4)) =
+        standardGabckeQuarterLocalPsi := funext h_fun
+  have hderiv :
+      deriv (deriv (deriv (fun x : ℝ =>
+        standardGabckeRemovablePsiCandidate (x + 1 / 4)))) 0 =
+        deriv (deriv (deriv standardGabckeQuarterLocalPsi)) 0 := by
+    rw [hfun]
+  exact h_translate.trans hderiv
+
 /-- Exact one-variable local Taylor value for the quarter removable quotient.
 This is the pure calculus atom for the expansion
 `sin (pi*x - 2*pi*x^2) / sin (2*pi*x)` at `x = 0`. -/
