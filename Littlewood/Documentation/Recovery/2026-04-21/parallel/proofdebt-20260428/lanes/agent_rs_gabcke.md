@@ -1705,3 +1705,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   dslopes from the sine numerator/denominator power series, denominator
   dslope value `2*pi ≠ 0`, and the exact third-derivative value
   `-pi^2`.
+
+### 2026-04-29 Round 35: denominator dslope nonzero closed
+
+- Classification: `PROVED` for the denominator-dslope nonzero clause, and
+  `CONDITIONAL_REDUCTION` for the full dslope bridge.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp`.
+- Banked inputs:
+  - `dslope_same` identifies the denominator dslope at `0` with the ordinary
+    derivative of `standardGabckeQuarterLocalSineDenominator`.
+  - `HasDerivAt.sin` and the derivative of `(2 * Real.pi) * w` give the exact
+    local derivative of `sin (2*pi*w)` at `0`.
+- Proof facts banked:
+  - Added and proved `StandardGabckeQuarterLocalDenominatorDslopeValueProp`:
+    `dslope standardGabckeQuarterLocalSineDenominator 0 0 = 2 * Real.pi`.
+  - Added and proved `StandardGabckeQuarterLocalDenominatorDslopeNonzeroProp`:
+    `dslope standardGabckeQuarterLocalSineDenominator 0 0 ≠ 0`.
+  - Added
+    `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_core`,
+    reducing the bridge to local dslope equality, numerator/denominator
+    dslope analyticity, and the third derivative value.
+- Failed routes:
+  - I did not define the removable derivative candidate by the raw third
+    derivative.
+  - I did not assume global regularity of the original quotient at
+    denominator-zero points.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, provider shortcuts, or weaken the live
+    coefficient target.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - `git diff --check`: passed.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` with the corrected
+    non-self-matching guard.
+- Remaining smallest RS/Gabcke atom:
+  prove one of the remaining core clauses for
+  `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_core`:
+  the local equality to the quotient of dslopes, analyticity of either dslope
+  at `0`, or the third derivative value `-Real.pi ^ 2`.
