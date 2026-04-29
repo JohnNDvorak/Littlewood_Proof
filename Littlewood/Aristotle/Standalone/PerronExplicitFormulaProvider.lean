@@ -55,6 +55,7 @@ open Aristotle.Standalone.ExplicitFormulaPsiB5aRootInfra
 open Aristotle.Standalone.ExplicitFormulaAndOscillationFromSubSorries
 open Aristotle.Standalone.ExternalPort.RHPiExternalTruncatedPiBuilder
 open Aristotle.Standalone.RHPiPerronFromTruncatedPiBridge
+open Aristotle.Standalone.RHPiZeroSumAlignmentBridge
 
 variable [Littlewood.Development.ShiftedRemainderInterface.ShiftedRemainderSegmentBoundLargeTHyp]
 variable [Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp]
@@ -2115,6 +2116,124 @@ class InhomogeneousPhaseFitAbovePerronThresholdPerronHyp
               ‖Real.log x * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
           x ≤ Real.exp (Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Direct fixed-height Perron-error phase-fit boundary.
+
+This is the Perron-only replacement surface that avoids comparing opaque
+`perronThreshold` choices across heights.  Instead of asking for
+`perronThreshold hRH T ≤ x`, it carries the actual fixed-height Perron error
+bound at the selected `x`. -/
+class InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ) (targetPhase : ℂ → ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x|
+          ≤ Real.sqrt x / Real.log x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Existing above-threshold phase fit supplies the direct fixed-height
+Perron-error payload by applying `perronThreshold_spec` once.
+
+This is a one-way theorem, not an instance: the direct-error surface is intended
+as the next refactor target, not as another typeclass route through the current
+opaque threshold chain. -/
+theorem inhomogeneousPhaseFitWithFixedHeightPerronError_of_aboveThreshold_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdPerronHyp] :
+    InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp where
+  witness := by
+    intro hRH X targetPhase
+    rcases InhomogeneousPhaseFitAbovePerronThresholdPerronHyp.witness
+        hRH X targetPhase with
+      ⟨x, hXx, T, hT4, hThreshold, ε, hεpos, hεlt, hphase, hxUpper⟩
+    have hperron := perronThreshold_spec hRH T x hThreshold
+    exact
+      ⟨x, hXx, T, hT4, hperron.1, hperron.2,
+        ε, hεpos, hεlt, hphase, hxUpper⟩
+
+/-- Target approximate-seed payload carrying the actual fixed-height Perron
+error bound instead of a `perronThreshold` inequality. -/
+abbrev TargetTowerExactSeedWithFixedHeightPerronError
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ _hRH : ZetaZeros.RiemannHypothesis, ∀ X : ℝ, ∃ t0 T ε : ℝ,
+    4 ≤ T ∧
+    0 < ε ∧ ε < 1 ∧
+    X < Real.exp t0 ∧
+    1 < Real.exp t0 ∧
+    |piLiErr (Real.exp t0) +
+        piMainFromZeros ((finite_zeros_le T).toFinset) (Real.exp t0)|
+      ≤ Real.sqrt (Real.exp t0) / Real.log (Real.exp t0) ∧
+    (∀ ρ ∈ (finite_zeros_le T).toFinset,
+      ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
+    Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
+      (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Anti-target approximate-seed payload carrying the actual fixed-height
+Perron error bound instead of a `perronThreshold` inequality. -/
+abbrev AntiTargetTowerExactSeedWithFixedHeightPerronError
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ _hRH : ZetaZeros.RiemannHypothesis, ∀ X : ℝ, ∃ t0 T ε : ℝ,
+    4 ≤ T ∧
+    0 < ε ∧ ε < 1 ∧
+    X < Real.exp t0 ∧
+    1 < Real.exp t0 ∧
+    |piLiErr (Real.exp t0) +
+        piMainFromZeros ((finite_zeros_le T).toFinset) (Real.exp t0)|
+      ≤ Real.sqrt (Real.exp t0) / Real.log (Real.exp t0) ∧
+    (∀ ρ ∈ (finite_zeros_le T).toFinset,
+      ∃ m : ℤ,
+        ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) - m • (2 * Real.pi)‖ ≤ ε) ∧
+    Real.exp t0 ≤ Real.exp (Real.exp (Real.exp
+      (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Direct fixed-height Perron-error phase fit gives the positive target
+exact-seed-shaped payload without a threshold comparison. -/
+theorem target_exact_seed_withFixedHeightPerronError_from_phase_fit
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp] :
+    TargetTowerExactSeedWithFixedHeightPerronError := by
+  intro hRH X
+  rcases InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp.witness
+      hRH X Complex.arg with
+    ⟨x, hXx, T, hT4, hx1, herror, ε, hεpos, hεlt, hphase, hxUpper⟩
+  have hx_pos : 0 < x := lt_trans zero_lt_one hx1
+  refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_, ?_⟩
+  · rwa [Real.exp_log hx_pos]
+  · rwa [Real.exp_log hx_pos]
+  · simpa [Real.exp_log hx_pos] using herror
+  · intro ρ hρ
+    rcases hphase ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa using hm⟩
+  · rwa [Real.exp_log hx_pos]
+
+/-- Direct fixed-height Perron-error phase fit gives the anti-target
+exact-seed-shaped payload without a threshold comparison. -/
+theorem antiTarget_exact_seed_withFixedHeightPerronError_from_phase_fit
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp] :
+    AntiTargetTowerExactSeedWithFixedHeightPerronError := by
+  intro hRH X
+  rcases InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp.witness
+      hRH X (fun ρ => Complex.arg ρ + Real.pi) with
+    ⟨x, hXx, T, hT4, hx1, herror, ε, hεpos, hεlt, hphase, hxUpper⟩
+  have hx_pos : 0 < x := lt_trans zero_lt_one hx1
+  refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_, ?_⟩
+  · rwa [Real.exp_log hx_pos]
+  · rwa [Real.exp_log hx_pos]
+  · simpa [Real.exp_log hx_pos] using herror
+  · intro ρ hρ
+    rcases hphase ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa using hm⟩
+  · rwa [Real.exp_log hx_pos]
 
 /-- Same-height Perron-threshold/tower window boundary.
 

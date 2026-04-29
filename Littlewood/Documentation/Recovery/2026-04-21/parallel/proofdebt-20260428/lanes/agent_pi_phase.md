@@ -1713,3 +1713,35 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
 - Smallest next theorem:
   - Prove the selected-threshold residual directly, starting with a genuine bound of `perronThreshold hRH T` by a fixed-height majorant, or refactor the exact-seed/canonical majorant route to carry a fixed-height Perron-error witness instead of the opaque selected threshold.
+
+### 2026-04-29 Round 28: Fixed-Height Perron Error Refactor Surface
+
+- Classification: `CONDITIONAL_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronThresholdTowerExpHalfBudgetSelectedThresholdResidual`.
+- Facts banked:
+  - Direct proof of `PerronThresholdTowerExpHalfBudgetSelectedThresholdResidual` remains blocked by the same missing selected-height threshold bound `perronThreshold hRH T ≤ max X (perronThreshold hRH T0)`.
+  - Added `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp`, a direct Perron-error phase-fit boundary that carries `1 < x` and the actual fixed-height error estimate `|piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x| ≤ Real.sqrt x / Real.log x` instead of `perronThreshold hRH T ≤ x`.
+  - Added `inhomogeneousPhaseFitWithFixedHeightPerronError_of_aboveThreshold_hyp`, proving the old Perron-threshold phase-fit surface implies the direct-error surface by one use of `perronThreshold_spec`.
+  - Added direct target/anti exact-seed-shaped payloads `TargetTowerExactSeedWithFixedHeightPerronError` and `AntiTargetTowerExactSeedWithFixedHeightPerronError`.
+  - Added `target_exact_seed_withFixedHeightPerronError_from_phase_fit` and `antiTarget_exact_seed_withFixedHeightPerronError_from_phase_fit`, which package direct-error phase fit into target/anti seed payloads without any threshold comparison.
+- Remaining goal shape:
+  - To close the current canonical threshold route, still prove `PerronThresholdTowerExpHalfBudgetSelectedThresholdResidual`.
+  - To bypass it, add the next bridge from `TargetTowerExactSeedWithFixedHeightPerronError` and `AntiTargetTowerExactSeedWithFixedHeightPerronError` into the corrected phase-coupling/RH-`pi` endpoint, replacing the need for `TargetTowerExactSeedAbovePerronThresholdPerronHyp` and `AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp` on that route.
+- Failed/circular route:
+  - Did not assert any cross-height monotonicity/minimality for `perronThreshold`.
+  - Did not add provider instances for the new direct-error classes or payloads.
+  - Did not route tower cofinality through a quantity depending on the chosen height.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh` in the new route.
+  - No arbitrary-target Kronecker, independent target/anti heights, constant-1 Perron sqrt-error shortcut, axioms/sorries, reverse-comparison instance, or unproved `Classical.choose` radius control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build, public import probe, `git diff --check`, or other validation command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove a direct-error phase-coupling bridge consuming `TargetTowerExactSeedWithFixedHeightPerronError` and `AntiTargetTowerExactSeedWithFixedHeightPerronError`, or prove the selected-threshold residual with a genuine non-`Classical.choose` growth theorem.
