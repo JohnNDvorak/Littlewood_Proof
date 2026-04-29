@@ -2857,3 +2857,15 @@ Timestamp: 2026-04-28 22:56 CDT.
     (`7903 jobs`).
   - Current Atkinson atoms: normalized vertical multiplier Big-O and the
     eventual principal-log branch identity for that multiplier.
+
+## Overnight 2026-04-29 One-Hundred-Eleventh Pass Status
+
+- Coordinator recovery branch is pushed through `ab8f6cb`.
+- Perron/B5a lane is integrated through `1544f82`:
+  - Transition continuity of `perronVerticalIntegral` is reduced to the
+    fixed-window dominated-convergence inputs on `(-16,16]`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron atoms: transition fixed-window DCT inputs, especially the
+    integrable majorant on the compact `x`/height box; zero-sum transition
+    continuity and eventual normalized asymptotic tail remain separate.
