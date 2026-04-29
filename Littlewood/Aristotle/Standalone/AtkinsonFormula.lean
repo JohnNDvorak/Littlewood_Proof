@@ -13166,7 +13166,6 @@ private theorem atkinson_shifted_quadratic_kernel_integral_eq_mass
     simpa [moment] using
       atkinson_shifted_quadratic_weighted_moment_integer_cell_zero j hj
   rw [hrepr, hmoment_zero, add_zero]
-  rfl
 
 /-- Kernel bound with the elementary weight scale discharged; the remaining
 inputs are exactly the two shifted Fresnel estimates. -/
@@ -13353,17 +13352,22 @@ private theorem atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model
     atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model_and_kernel_bound
       hzeroModel atkinson_shifted_quadratic_kernel_integral_bound
 
+/-- The shifted unweighted mass coefficient after the affine Jacobian moment has
+vanished on an integer cell. -/
+private noncomputable def atkinsonShiftedQuadraticMassCoeff (n j : ℕ) : ℂ :=
+  (((atkinsonModeWeight n : ℝ) : ℂ) *
+    (((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
+      (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+        Aristotle.StationaryPhaseMainMode.quadraticKernel p)))
+
 /-- Scalar target-coefficient matching reduced to the unweighted shifted mass.
 The affine `blockJacobian` moment contributes zero on integer cells. -/
 private theorem atkinson_shifted_quadratic_target_coeff_bound_of_mass_coeff_bound
     (hmassCoeff :
       ∃ C_massCoeff > 0, ∃ N_massCoeff : ℕ, ∀ n : ℕ, N_massCoeff ≤ n → ∀ j : ℕ,
         3 ≤ j → 1 ≤ j → j ≤ n →
-          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
-                ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
-                  ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
-                    Aristotle.StationaryPhaseMainMode.quadraticKernel p)) -
-                atkinsonShiftedQuadraticTargetCoeff n j)‖
+          ‖(atkinsonShiftedQuadraticMassCoeff n j -
+              atkinsonShiftedQuadraticTargetCoeff n j)‖
             ≤ C_massCoeff * (atkinsonModeWeight (n + j) / j)) :
     ∃ C_coeff > 0, ∃ N_coeff : ℕ, ∀ n : ℕ, N_coeff ≤ n → ∀ j : ℕ,
       3 ≤ j → 1 ≤ j → j ≤ n →
@@ -13376,7 +13380,8 @@ private theorem atkinson_shifted_quadratic_target_coeff_bound_of_mass_coeff_boun
   refine ⟨C_massCoeff, hC_massCoeff, N_massCoeff, ?_⟩
   intro n hn j hj3 hj1 hjn
   have hmass_eq := atkinson_shifted_quadratic_kernel_integral_eq_mass n j hj1
-  simpa [hmass_eq, mul_assoc] using hmassCoeff' n hn j hj3 hj1 hjn
+  simpa [atkinsonShiftedQuadraticMassCoeff, hmass_eq, mul_assoc] using
+    hmassCoeff' n hn j hj3 hj1 hjn
 
 /-- Target matching after removing the unit alternating stationary-anchor
 factor.  The remaining analytic atom is a scalar coefficient estimate for the
@@ -13425,8 +13430,10 @@ private theorem atkinson_shifted_quadratic_target_match_of_coeff_bound
     dsimp [unit, raw, atkinsonShiftedQuadraticAnchorModel]
     ring
   have htarget_eq : atkinsonCompleteBlockTargetK (n + j) j = unit * coeff := by
-    dsimp [coeff, atkinsonShiftedQuadraticTargetCoeff, unit]
-    rw [mul_assoc, mul_inv_cancel₀ hunit_ne, one_mul]
+    dsimp [coeff, atkinsonShiftedQuadraticTargetCoeff]
+    change atkinsonCompleteBlockTargetK (n + j) j =
+      unit * (unit⁻¹ * atkinsonCompleteBlockTargetK (n + j) j)
+    rw [← mul_assoc, mul_inv_cancel₀ hunit_ne, one_mul]
   calc
     ‖(atkinsonShiftedQuadraticAnchorModel n j - atkinsonCompleteBlockTargetK (n + j) j)‖
         = ‖unit * (raw - coeff)‖ := by
@@ -13442,11 +13449,8 @@ private theorem atkinson_shifted_quadratic_target_match_of_mass_coeff_bound
     (hmassCoeff :
       ∃ C_massCoeff > 0, ∃ N_massCoeff : ℕ, ∀ n : ℕ, N_massCoeff ≤ n → ∀ j : ℕ,
         3 ≤ j → 1 ≤ j → j ≤ n →
-          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
-                ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
-                  ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
-                    Aristotle.StationaryPhaseMainMode.quadraticKernel p)) -
-                atkinsonShiftedQuadraticTargetCoeff n j)‖
+          ‖(atkinsonShiftedQuadraticMassCoeff n j -
+              atkinsonShiftedQuadraticTargetCoeff n j)‖
             ≤ C_massCoeff * (atkinsonModeWeight (n + j) / j)) :
     ∃ C_target > 0, ∃ N_target : ℕ, ∀ n : ℕ, N_target ≤ n → ∀ j : ℕ,
       3 ≤ j → 1 ≤ j → j ≤ n →
@@ -13675,11 +13679,8 @@ private theorem atkinson_blockMode_stationaryPhase_of_zero_model_and_massCoeff
     (hmassCoeff :
       ∃ C_massCoeff > 0, ∃ N_massCoeff : ℕ, ∀ n : ℕ, N_massCoeff ≤ n → ∀ j : ℕ,
         3 ≤ j → 1 ≤ j → j ≤ n →
-          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
-                ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
-                  ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
-                    Aristotle.StationaryPhaseMainMode.quadraticKernel p)) -
-                atkinsonShiftedQuadraticTargetCoeff n j)‖
+          ‖(atkinsonShiftedQuadraticMassCoeff n j -
+              atkinsonShiftedQuadraticTargetCoeff n j)‖
             ≤ C_massCoeff * (atkinsonModeWeight (n + j) / j)) :
     ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
       ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
@@ -13705,11 +13706,8 @@ private theorem atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_massCo
     (hmassCoeff :
       ∃ C_massCoeff > 0, ∃ N_massCoeff : ℕ, ∀ n : ℕ, N_massCoeff ≤ n → ∀ j : ℕ,
         3 ≤ j → 1 ≤ j → j ≤ n →
-          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
-                ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
-                  ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
-                    Aristotle.StationaryPhaseMainMode.quadraticKernel p)) -
-                atkinsonShiftedQuadraticTargetCoeff n j)‖
+          ‖(atkinsonShiftedQuadraticMassCoeff n j -
+              atkinsonShiftedQuadraticTargetCoeff n j)‖
             ≤ C_massCoeff * (atkinsonModeWeight (n + j) / j))
     (hpatch :
       ∀ J0 : ℕ, ∀ j : ℕ, 1 ≤ j → j < J0 →
