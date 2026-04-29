@@ -3083,3 +3083,61 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `PerronThresholdEventuallyBelowExpHalfBudgetHyp`.
+
+### 2026-04-29 Round 63: Raw Perron Threshold Chooser Residual
+
+- Classification: `DIAGNOSTIC_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronThresholdEventuallyBelowExpHalfBudgetHyp`.
+- Facts banked:
+  - Added `perronThresholdRawEventualChoice`, the exact
+    `Classical.choose` expression used by `perronThreshold`.
+  - Added `perronThreshold_eq_rawEventualChoice`.
+  - Added `PerronSqrtErrorRawChoiceEventuallyBelowExpHalfBudgetResidual`,
+    the exact same-height growth theorem needed for the chosen eventual
+    Perron threshold.
+  - Added `perronThresholdEventuallyBelowExpHalfBudget_of_rawChoiceResidual`.
+  - Added
+    `perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_rawChoiceResidual`.
+  - Added
+    `exactSeedAboveThreshold_perron_of_rawChoicePerronBudgetAndBudgetedRelativelyDense_hyp`.
+- What changed:
+  - Inspected the source of `perronThreshold`; it is not a minimum or an
+    explicitly controlled witness, but a raw `Classical.choose` from
+    `Filter.eventually_atTop.1`.
+  - Therefore an external explicit eventual threshold does not imply
+    `perronThreshold hRH T ≤ B`; the missing theorem must control the exact
+    chosen value or the route must stay on fixed-height explicit Perron-error
+    payloads.
+  - The new residual exposes that exact chooser-growth obligation and wires it
+    back into the canonical Perron residual and explicit budgeted finite-zero
+    exact-seed endpoint.
+- Remaining goal shape:
+  - Prove `PerronSqrtErrorRawChoiceEventuallyBelowExpHalfBudgetResidual`, or
+    refactor the remaining threshold endpoint to consume explicit fixed-height
+    Perron-error windows instead of the opaque `perronThreshold` chooser.
+- Failed/circular route:
+  - Did not claim that an arbitrary eventual witness bound orders
+    `Classical.choose`.
+  - Did not use chooser-radius comparison, arbitrary-budget finite-set
+    Kronecker, cross-height Perron-threshold monotonicity, or a provider
+    instance for the new residual.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-radius route, opaque
+    finite-zero chooser equality, provider cycles, or broad provider was
+    introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation command/result:
+  - `git diff --check`
+  - Result: passed after code and ledger updates.
+  - Under the corrected singleflight lock:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `PerronSqrtErrorRawChoiceEventuallyBelowExpHalfBudgetResidual`.
