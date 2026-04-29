@@ -1696,6 +1696,71 @@ theorem perronKernelWeightedNearDiagonalPuncturedBoundaryError_le_kernelSup_mul_
         intro n _hn
         ring
 
+/-- The near-diagonal punctured boundary set has at most one natural number.
+
+All its elements lie in the closed interval `[x - 1, x]`.  Two distinct
+naturals in this interval would have to be its two endpoints, forcing the upper
+one to equal `x`, which is excluded by the puncturing condition. -/
+theorem perronKernelNearDiagonalPuncturedBoundarySet_card_le_one
+    (x T : ℝ) (hx : 2 ≤ x) :
+    (perronKernelNearDiagonalPuncturedBoundarySet x T).card ≤ 1 := by
+  classical
+  rw [Finset.card_le_one_iff]
+  intro a b ha hb
+  have hx_nonneg : 0 ≤ x := by linarith
+  have ha_unfold := ha
+  have hb_unfold := hb
+  dsimp [perronKernelNearDiagonalPuncturedBoundarySet] at ha_unfold hb_unfold
+  have ha_unit : |x - (a : ℝ)| ≤ 1 := (Finset.mem_filter.mp ha_unfold).2
+  have hb_unit : |x - (b : ℝ)| ≤ 1 := (Finset.mem_filter.mp hb_unfold).2
+  have ha_sp := (Finset.mem_filter.mp ha_unfold).1
+  have hb_sp := (Finset.mem_filter.mp hb_unfold).1
+  have ha_ne : (a : ℝ) ≠ x := (Finset.mem_filter.mp ha_sp).2
+  have hb_ne : (b : ℝ) ≠ x := (Finset.mem_filter.mp hb_sp).2
+  have ha_boundary := (Finset.mem_filter.mp ha_sp).1
+  have hb_boundary := (Finset.mem_filter.mp hb_sp).1
+  have ha_range : a ∈ Finset.range (Nat.floor x + 1) := (Finset.mem_filter.mp ha_boundary).1
+  have hb_range : b ∈ Finset.range (Nat.floor x + 1) := (Finset.mem_filter.mp hb_boundary).1
+  have ha_le_floor : a ≤ Nat.floor x := Nat.lt_succ_iff.mp (Finset.mem_range.mp ha_range)
+  have hb_le_floor : b ≤ Nat.floor x := Nat.lt_succ_iff.mp (Finset.mem_range.mp hb_range)
+  have ha_le_x : (a : ℝ) ≤ x :=
+    le_trans (Nat.cast_le.mpr ha_le_floor) (Nat.floor_le hx_nonneg)
+  have hb_le_x : (b : ℝ) ≤ x :=
+    le_trans (Nat.cast_le.mpr hb_le_floor) (Nat.floor_le hx_nonneg)
+  have hx_le_a_succ : x ≤ (a : ℝ) + 1 := by
+    have h := (abs_le.mp ha_unit).2
+    linarith
+  have hx_le_b_succ : x ≤ (b : ℝ) + 1 := by
+    have h := (abs_le.mp hb_unit).2
+    linarith
+  have ha_le_b_succ : a ≤ b + 1 := by
+    exact_mod_cast (le_trans ha_le_x hx_le_b_succ)
+  have hb_le_a_succ : b ≤ a + 1 := by
+    exact_mod_cast (le_trans hb_le_x hx_le_a_succ)
+  by_cases hab : a = b
+  · exact hab
+  · rcases lt_or_gt_of_ne hab with hlt | hgt
+    · have ha_succ_le_b : a + 1 ≤ b := Nat.succ_le_of_lt hlt
+      have hb_eq : b = a + 1 := le_antisymm hb_le_a_succ ha_succ_le_b
+      have hx_eq_b : x = (b : ℝ) := by
+        apply le_antisymm
+        · calc x ≤ (a : ℝ) + 1 := hx_le_a_succ
+            _ = (b : ℝ) := by
+              rw [hb_eq]
+              norm_num
+        · exact hb_le_x
+      exact False.elim (hb_ne hx_eq_b.symm)
+    · have hb_succ_le_a : b + 1 ≤ a := Nat.succ_le_of_lt hgt
+      have ha_eq : a = b + 1 := le_antisymm ha_le_b_succ hb_succ_le_a
+      have hx_eq_a : x = (a : ℝ) := by
+        apply le_antisymm
+        · calc x ≤ (b : ℝ) + 1 := hx_le_b_succ
+            _ = (a : ℝ) := by
+              rw [ha_eq]
+              norm_num
+        · exact ha_le_x
+      exact False.elim (ha_ne hx_eq_a.symm)
+
 /-- If the near-diagonal punctured boundary set has at most one element, then
 its weighted kernel error is only `O(log x)` under a uniform kernel bound. -/
 theorem perronKernelWeightedNearDiagonalPuncturedBoundaryError_le_kernelSup_mul_log
@@ -2185,6 +2250,21 @@ theorem small_T_nearDiagonal_punctured_boundary_bound_from_cardinality_and_kerne
     _ = Cn * (Real.log x) ^ 2 := by
         dsimp [Cn]
         ring
+
+/-- Near-diagonal punctured weighted error from only the remaining uniform
+bounded-height kernel estimate; the finite-cardinality source atom is already
+closed by `perronKernelNearDiagonalPuncturedBoundarySet_card_le_one`. -/
+theorem small_T_nearDiagonal_punctured_boundary_bound_from_kernel
+    (hkernel : ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelNearDiagonalPuncturedBoundarySet x T →
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤ K) :
+    ∃ Cn > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedNearDiagonalPuncturedBoundaryError x T ≤ Cn * (Real.log x) ^ 2 :=
+  small_T_nearDiagonal_punctured_boundary_bound_from_cardinality_and_kernel
+    (fun x T hx _hT_lo _hT_hi =>
+      perronKernelNearDiagonalPuncturedBoundarySet_card_le_one x T hx)
+    hkernel
 
 /-- Finite Perron-kernel cutoff from a weighted per-term cutoff-error bound.
 

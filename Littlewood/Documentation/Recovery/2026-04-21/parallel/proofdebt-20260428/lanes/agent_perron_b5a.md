@@ -586,3 +586,49 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
       |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| <= K`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 11 - Near-Diagonal Cardinality Closure
+
+- Classification: `FINITE_CARDINALITY_ATOM_CLOSED_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  exact finite-cardinality atom for
+  `perronKernelNearDiagonalPuncturedBoundarySet` in
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Code facts banked:
+  added `perronKernelNearDiagonalPuncturedBoundarySet_card_le_one`:
+  `∀ x T, x >= 2 ->
+    (perronKernelNearDiagonalPuncturedBoundarySet x T).card <= 1`.
+  The proof uses only finite-set membership, `Nat.floor_le`, the unit-band
+  constraint `|x - n| <= 1`, and the puncturing condition `(n : ℝ) != x`.
+  If two natural numbers in the set are distinct, they must be consecutive;
+  the interval constraints then force the larger one to equal `x`, contradicting
+  the puncture.
+  Added `small_T_nearDiagonal_punctured_boundary_bound_from_kernel`, reducing
+  the near-diagonal weighted error to the single remaining source atom: a
+  uniform bounded-height kernel estimate on
+  `perronKernelNearDiagonalPuncturedBoundarySet`.
+- Failed route / scale note:
+  did not retry the decaying-kernel route on the near-diagonal punctured set.
+  That route remains scale-unsafe when real `x` approaches an integer.  The
+  cardinality closure confirms the correct near-diagonal strategy is uniform
+  kernel control plus one logarithmic von Mangoldt weight.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the uniform local kernel atom
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelNearDiagonalPuncturedBoundarySet x T,
+      |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| <= K`.
+  A scale-safe route should use only bounded-height Perron per-term estimates
+  and the facts `1 <= n`, `n <= x`, and `x <= n + 1` from near-diagonal
+  membership; it should not try to prove decay in `x`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
