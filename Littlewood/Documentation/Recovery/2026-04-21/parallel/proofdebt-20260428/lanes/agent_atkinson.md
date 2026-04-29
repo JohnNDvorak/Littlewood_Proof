@@ -2160,3 +2160,47 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   branch-sensitive `Complex.log (Complex.Gamma s)` to Stirling-log comparison
   at `C / t`, Jacobian-integral bound at `1/relativeWeight`, and the shifted
   stationary-phase target remainder.
+
+### 2026-04-29 Round 46 Log-Gamma Multiplier Branch Split
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  branch-sensitive comparison
+  `|(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -`
+  `(atkinsonLogGammaStirlingTerm t).im| ≤ Clog / t` eventually.
+- Facts banked:
+  introduced `atkinsonGammaStirlingMultiplier`, the normalized Gamma residual
+  `Γ(1/4+it/2) / exp(atkinsonLogGammaStirlingTerm t)`. Proved
+  `atkinson_logGamma_to_stirlingTerm_of_multiplier_branch_bound`, reducing the
+  comparison to an eventual branch identity
+  `(Im log Γ) - Im(stirlingTerm) = Im log(multiplier)` plus the multiplier
+  bound `|Im log(multiplier)| ≤ C / t`. Also added the endpoint package
+  `atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_multiplier_branch_bound`
+  so this split feeds the existing corrected endpoint phase route directly.
+- Smallest next theorem:
+  prove the two local multiplier atoms:
+  `∃ Tbranch, ∀ t ≥ Tbranch,`
+  `(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -`
+  `(atkinsonLogGammaStirlingTerm t).im =`
+  `(Complex.log (atkinsonGammaStirlingMultiplier t)).im`, and
+  `∃ Cmult > 0, ∃ Tmult, ∀ t ≥ Tmult,`
+  `|(Complex.log (atkinsonGammaStirlingMultiplier t)).im| ≤ Cmult / t`.
+  The independent Jacobian-integral bound at `1/relativeWeight` and shifted
+  stationary-phase target remainder remain live.
+- Failed routes / guardrails:
+  did not use the existing pointwise `stirling_arg_gamma` theorem because its
+  visible constant is not the uniform eventual constant needed here. Did not
+  add imports, broad analytic providers, axioms, sorries, statement weakening,
+  direct Abel, phase-weight division, circular provider assumptions, or the
+  demoted raw endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  multiplier branch identity and multiplier imaginary-log bound at `C / t`,
+  Jacobian-integral bound at `1/relativeWeight`, and the shifted
+  stationary-phase target remainder.
