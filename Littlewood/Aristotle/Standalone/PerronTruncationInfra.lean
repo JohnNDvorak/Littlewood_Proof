@@ -1472,12 +1472,16 @@ def perronKernelSeparatedDavenportEnvelope (x T : ℝ) : ℝ :=
     ArithmeticFunction.vonMangoldt n *
       perronKernelSeparatedDavenportEnvelopeTerm x T n
 
+/-- Singular summand of the separated Davenport envelope. -/
+def perronKernelSeparatedDavenportSingularTerm (x T : ℝ) (n : ℕ) : ℝ :=
+  ((x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1) /
+    (T * Real.log (x / (n : ℝ)))
+
 /-- Singular `1 / log (x/n)` part of the separated Davenport envelope. -/
 def perronKernelSeparatedDavenportSingularEnvelope (x T : ℝ) : ℝ :=
   ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
     ArithmeticFunction.vonMangoldt n *
-      (((x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1) /
-        (T * Real.log (x / (n : ℝ))))
+      perronKernelSeparatedDavenportSingularTerm x T n
 
 /-- Smooth `1 / T` part of the separated Davenport envelope. -/
 def perronKernelSeparatedDavenportSmoothEnvelope (x T : ℝ) : ℝ :=
@@ -1485,6 +1489,16 @@ def perronKernelSeparatedDavenportSmoothEnvelope (x T : ℝ) : ℝ :=
     ArithmeticFunction.vonMangoldt n *
       (2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
         ((1 + 1 / Real.log x) * T))
+
+/-- Harmonic-distance summand corresponding to the singular Davenport term. -/
+def perronKernelSeparatedLogDistanceTerm (x T : ℝ) (n : ℕ) : ℝ :=
+  x / (T * (x - (n : ℝ)))
+
+/-- Weighted harmonic-distance envelope for the separated boundary window. -/
+def perronKernelSeparatedLogDistanceEnvelope (x T : ℝ) : ℝ :=
+  ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
+    ArithmeticFunction.vonMangoldt n *
+      perronKernelSeparatedLogDistanceTerm x T n
 
 /-- Pure von Mangoldt weight of the near-diagonal punctured boundary set. -/
 def perronKernelNearDiagonalPuncturedVonMangoldtWeight (x T : ℝ) : ℝ :=
@@ -1742,12 +1756,43 @@ theorem perronKernelSeparatedDavenportEnvelope_eq_singular_add_smooth
   classical
   dsimp [perronKernelSeparatedDavenportEnvelope,
     perronKernelSeparatedDavenportEnvelopeTerm,
+    perronKernelSeparatedDavenportSingularTerm,
     perronKernelSeparatedDavenportSingularEnvelope,
     perronKernelSeparatedDavenportSmoothEnvelope]
   rw [← Finset.sum_add_distrib]
   apply Finset.sum_congr rfl
   intro n _hn
   ring
+
+/-- The singular Davenport envelope is controlled by the weighted
+harmonic-distance envelope once the pointwise comparison
+`1 / log (x/n) <= const * x / (x-n)` has been supplied. -/
+theorem perronKernelSeparatedDavenportSingularEnvelope_le_logDistanceEnvelope
+    (x T K : ℝ)
+    (hpoint : ∀ n : ℕ,
+      n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+        perronKernelSeparatedDavenportSingularTerm x T n ≤
+          K * perronKernelSeparatedLogDistanceTerm x T n) :
+    perronKernelSeparatedDavenportSingularEnvelope x T ≤
+      K * perronKernelSeparatedLogDistanceEnvelope x T := by
+  classical
+  calc perronKernelSeparatedDavenportSingularEnvelope x T
+      = ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
+          ArithmeticFunction.vonMangoldt n *
+            perronKernelSeparatedDavenportSingularTerm x T n := by
+        rfl
+    _ ≤ ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
+          ArithmeticFunction.vonMangoldt n *
+            (K * perronKernelSeparatedLogDistanceTerm x T n) := by
+        apply Finset.sum_le_sum
+        intro n hn
+        exact mul_le_mul_of_nonneg_left (hpoint n hn) (vonMangoldt_nonneg n)
+    _ = K * perronKernelSeparatedLogDistanceEnvelope x T := by
+        dsimp [perronKernelSeparatedLogDistanceEnvelope]
+        rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl
+        intro n _hn
+        ring
 
 /-- Membership in the separated punctured boundary set puts the term strictly
 on the large side of the sharp cutoff.  The finite Perron sum only ranges over
@@ -2648,6 +2693,35 @@ theorem small_T_separated_davenport_envelope_linear_bound_from_components
           Cm * (x / T) * (Real.log x) ^ 2 :=
         add_le_add hsingular_x hsmooth_x
     _ = (Cs + Cm) * (x / T) * (Real.log x) ^ 2 := by ring
+
+/-- Singular Davenport-envelope component from the two genuinely smaller
+harmonic-distance atoms: pointwise log-distance comparison and a weighted
+harmonic-distance summation bound. -/
+theorem small_T_separated_singular_envelope_bound_from_logDistance
+    (hpoint : ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+          perronKernelSeparatedDavenportSingularTerm x T n ≤
+            K * perronKernelSeparatedLogDistanceTerm x T n)
+    (hdistance : ∃ Cℓ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedLogDistanceEnvelope x T ≤
+        Cℓ * (x / T) * (Real.log x) ^ 2) :
+    ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedDavenportSingularEnvelope x T ≤
+        Cs * (x / T) * (Real.log x) ^ 2 := by
+  rcases hpoint with ⟨K, hK_pos, hpoint⟩
+  rcases hdistance with ⟨Cℓ, hCℓ_pos, hdistance⟩
+  refine ⟨K * Cℓ, mul_pos hK_pos hCℓ_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hpoint_x := hpoint x T hx hT_lo hT_hi
+  have hdistance_x := hdistance x T hx hT_lo hT_hi
+  calc perronKernelSeparatedDavenportSingularEnvelope x T
+      ≤ K * perronKernelSeparatedLogDistanceEnvelope x T :=
+        perronKernelSeparatedDavenportSingularEnvelope_le_logDistanceEnvelope
+          x T K hpoint_x
+    _ ≤ K * (Cℓ * (x / T) * (Real.log x) ^ 2) :=
+        mul_le_mul_of_nonneg_left hdistance_x hK_pos.le
+    _ = (K * Cℓ) * (x / T) * (Real.log x) ^ 2 := by ring
 
 /-- Scale-correct separated weighted atom from a linear-window Davenport
 envelope bound.  This records the usable consequence of the separated

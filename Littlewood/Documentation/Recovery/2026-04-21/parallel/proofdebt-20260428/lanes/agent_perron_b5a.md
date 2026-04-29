@@ -919,3 +919,58 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `(x - n) / x`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 17 - Singular Envelope Log-Distance Reduction
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the singular weighted harmonic-distance component
+  `∃ Cs > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedDavenportSingularEnvelope x T
+      <= Cs * (x / T) * (Real.log x)^2`.
+- Scale check:
+  kept the `(x / T)` scale from Round 16.  The singular term is now compared
+  to the explicit harmonic-distance weight `x / (T * (x - n))`; no pure
+  `O((log x)^2)` window-weight route is used.
+- Code facts banked:
+  added `perronKernelSeparatedDavenportSingularTerm`, so the singular summand
+  can be targeted pointwise.
+  Added `perronKernelSeparatedLogDistanceTerm` and
+  `perronKernelSeparatedLogDistanceEnvelope`, naming the weighted harmonic
+  distance sum over `perronKernelSeparatedPuncturedBoundarySet`.
+  Added
+  `perronKernelSeparatedDavenportSingularEnvelope_le_logDistanceEnvelope`,
+  reducing the singular envelope to a pointwise comparison with
+  `K * perronKernelSeparatedLogDistanceTerm`.
+  Added
+  `small_T_separated_singular_envelope_bound_from_logDistance`, reducing the
+  singular component to:
+  1. pointwise log-distance comparison of the singular Davenport summand;
+  2. the weighted harmonic-distance summation bound for
+     `perronKernelSeparatedLogDistanceEnvelope`.
+- Failed/demoted routes:
+  did not retry the refuted pure `O((log x)^2)` Davenport-envelope target and
+  did not collapse the separated window to a macroscopic von Mangoldt weight.
+  The `1 / log (x / n)` singularity is preserved through the explicit
+  `x / (x - n)` distance envelope.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the pointwise comparison
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelSeparatedPuncturedBoundarySet x T,
+      perronKernelSeparatedDavenportSingularTerm x T n
+        <= K * perronKernelSeparatedLogDistanceTerm x T n`.
+  This should use the existing large-side membership facts and the elementary
+  comparison `Real.log (x / n) >= (x - n) / x`, plus bounded control of
+  `(x/n)^(1 + 1/log x) + 1` on the boundary window.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
