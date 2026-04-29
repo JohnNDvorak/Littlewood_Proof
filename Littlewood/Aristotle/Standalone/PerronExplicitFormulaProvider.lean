@@ -3655,6 +3655,45 @@ class AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp
         ≤ Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
 
+/-- Anti-target-side selected-radius residual for the canonical zeta
+compatibility proof.
+
+This is the symmetric anti-target analogue of
+`TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual`:
+it only budgets the exact compatibility proof supplied by
+`AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`. -/
+def AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] : Prop :=
+  ∀ (T ε : ℝ)
+    (hT4 : 4 ≤ T)
+    (hεpos : 0 < ε)
+    (hεlt : ε < 1),
+    finiteSetRelationCompatibleKroneckerRadius
+        (finite_zeros_le T).toFinset ε
+        (fun ρ => Complex.arg ρ + Real.pi) hεpos
+        (AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+          T ε hT4 hεpos) + 1
+      ≤ Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- The anti-target-side canonical selected-radius residual supplies the
+current anti-target selected-radius budget class. -/
+theorem antiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_canonicalResidual
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    (h :
+      AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual) :
+    AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt hAntiCompat
+    have hCanon := h T ε hT4 hεpos hεlt
+    have hEq :
+        hAntiCompat =
+          AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+            T ε hT4 hεpos := Subsingleton.elim _ _
+    simpa [hEq] using hCanon
+
 /-- Budget domination for the actual finite-set Kronecker radii chosen from
 the existing relation-compatible finite-dimensional Kronecker source.
 
