@@ -1037,6 +1037,44 @@ def StandardGabckeQuarterLocalDslopeQuotientDivisionCoefficientProp : Prop :=
     StandardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp →
       StandardGabckeQuarterLocalDslopeQuotientPowerSeriesProp
 
+/-- Exact local formal-division source for the quotient of the numerator and
+denominator dslope power series. This is the missing analytic coefficient
+bridge: once a quotient series has coefficients satisfying the product
+convolution through cubic order, the remaining Gabcke coefficient calculation
+is finite algebra. -/
+def StandardGabckeQuarterLocalDslopeQuotientConvolutionProp : Prop :=
+  ∀ {A B : ℕ → ℝ},
+    HasFPowerSeriesAt (dslope standardGabckeQuarterLocalSineNumerator 0)
+      (FormalMultilinearSeries.ofScalars ℝ A) 0 →
+    HasFPowerSeriesAt (dslope standardGabckeQuarterLocalSineDenominator 0)
+      (FormalMultilinearSeries.ofScalars ℝ B) 0 →
+    B 0 ≠ 0 →
+    ∃ Q : ℕ → ℝ,
+      HasFPowerSeriesAt
+        (fun w : ℝ =>
+          dslope standardGabckeQuarterLocalSineNumerator 0 w /
+            dslope standardGabckeQuarterLocalSineDenominator 0 w)
+        (FormalMultilinearSeries.ofScalars ℝ Q) 0 ∧
+      ∀ n ≤ 3, A n = (Finset.range (n + 1)).sum (fun k => B k * Q (n - k))
+
+/-- The finite scalar algebra behind the Gabcke quotient coefficient. Given
+the numerator and denominator coefficients and the formal product recurrence
+for the quotient coefficients, the constant and cubic quotient coefficients
+are forced to be `1/2` and `-pi^2/6`. -/
+def StandardGabckeQuarterLocalDslopeQuotientCoefficientAlgebraProp : Prop :=
+  ∀ {A B Q : ℕ → ℝ},
+    A 0 = Real.pi →
+    A 1 = -2 * Real.pi →
+    A 2 = -Real.pi ^ 3 / 6 →
+    A 3 = Real.pi ^ 3 →
+    B 0 = 2 * Real.pi →
+    B 1 = 0 →
+    B 2 = -(4 * Real.pi ^ 3 / 3) →
+    B 3 = 0 →
+    (∀ n ≤ 3,
+      A n = (Finset.range (n + 1)).sum (fun k => B k * Q (n - k))) →
+    Q 0 = 1 / 2 ∧ Q 3 = -Real.pi ^ 2 / 6
+
 /-- Cubic derivative value for the removable sine quotient at `0`. -/
 def StandardGabckeQuarterLocalRemovableSineQuotientThirdDerivativeProp : Prop :=
   iteratedDeriv 3 standardGabckeQuarterLocalRemovableSineQuotient 0 =
@@ -1978,6 +2016,43 @@ theorem standardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp_of_poi
     (h3 : StandardGabckeQuarterLocalDenominatorDslopeThirdDerivativeProp) :
     StandardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp := by
   exact ⟨standardGabckeQuarterLocalDenominatorDslopeFirstDerivativeProp_proved, h2, h3⟩
+
+/-- The finite coefficient recurrence for quotient series gives the required
+constant and cubic quotient coefficients. -/
+theorem standardGabckeQuarterLocalDslopeQuotientCoefficientAlgebraProp_proved :
+    StandardGabckeQuarterLocalDslopeQuotientCoefficientAlgebraProp := by
+  intro A B Q hA0 hA1 _hA2 hA3 hB0 hB1 hB2 hB3 hconv
+  have h0 := hconv 0 (by norm_num)
+  have h1 := hconv 1 (by norm_num)
+  have h3 := hconv 3 (by norm_num)
+  simp [Finset.sum_range_succ, hA0, hA1, hA3, hB0, hB1, hB2, hB3] at h0 h1 h3
+  have hpi_pos : 0 < Real.pi := Real.pi_pos
+  have hQ0 : Q 0 = 1 / 2 := by
+    nlinarith
+  have hQ1 : Q 1 = -1 := by
+    nlinarith
+  have hQ3 : Q 3 = -Real.pi ^ 2 / 6 := by
+    nlinarith
+  exact ⟨hQ0, hQ3⟩
+
+/-- The quotient coefficient atom is reduced to the exact analytic fact that
+formal division produces quotient coefficients satisfying the cubic
+convolution recurrence. -/
+theorem standardGabckeQuarterLocalDslopeQuotientDivisionCoefficientProp_of_convolution
+    (hconv : StandardGabckeQuarterLocalDslopeQuotientConvolutionProp) :
+    StandardGabckeQuarterLocalDslopeQuotientDivisionCoefficientProp := by
+  intro hnum hden
+  rcases hnum with ⟨A, hA, hA0, hA1, hA2, hA3⟩
+  rcases hden with ⟨B, hB, hB0, hB1, hB2, hB3⟩
+  have hB0_ne : B 0 ≠ 0 := by
+    rw [hB0]
+    positivity
+  rcases hconv hA hB hB0_ne with ⟨Q, hQ, hrec⟩
+  have hcoeff :
+      Q 0 = 1 / 2 ∧ Q 3 = -Real.pi ^ 2 / 6 :=
+    standardGabckeQuarterLocalDslopeQuotientCoefficientAlgebraProp_proved
+      hA0 hA1 hA2 hA3 hB0 hB1 hB2 hB3 hrec
+  exact ⟨Q, hQ, hcoeff.1, hcoeff.2⟩
 
 /-- The quotient series is reduced to explicit numerator/denominator dslope
 coefficient data plus the finite formal-division calculation. -/
