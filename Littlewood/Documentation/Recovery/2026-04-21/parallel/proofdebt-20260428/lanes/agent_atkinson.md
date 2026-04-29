@@ -2076,3 +2076,44 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Remaining goal shape:
   continuous pointwise Hardy theta Stirling remainder, Jacobian-integral bound
   at `1/relativeWeight`, and the shifted stationary-phase target remainder.
+
+### 2026-04-29 Round 44 Theta Normalization Reduction
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  continuous pointwise Hardy theta Stirling remainder
+  `|hardyTheta t - ((t / 2) * Real.log (t / (2 * Real.pi)) - t / 2 - Real.pi / 8)|`
+  `≤ Cθ / t` eventually.
+- Facts banked:
+  proved `atkinson_thetaStirling_of_logGammaStirling`, reducing the Hardy theta
+  atom to the uniform imaginary-log-Gamma Stirling remainder
+  `∃ CΓ > 0, ∃ TΓ, ∀ t ≥ TΓ,`
+  `|(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -`
+  `((t / 2) * Real.log (t / 2) - t / 2 - Real.pi / 8)| ≤ CΓ / t`.
+  The proof is only the Hardy normalization algebra:
+  `hardyTheta t = Im log Γ(1/4+it/2) - (t/2)log π` and
+  `log(t/(2π)) + log π = log(t/2)` for eventual positive `t`. Also packaged
+  the endpoint atom as
+  `atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_logGammaStirling`.
+- Smallest next theorem:
+  prove the uniform imaginary-log-Gamma Stirling remainder above, with the
+  project `Complex.log` branch, or move to the independent Jacobian-integral
+  bound at `1/relativeWeight`. The shifted stationary-phase target remainder
+  remains separate public-path debt.
+- Failed routes / guardrails:
+  did not use the existing `stirling_arg_gamma` pointwise theorem because its
+  constant is chosen from the current `T`, not a uniform eventual constant.
+  Did not add imports, broad analytic providers, axioms, sorries, statement
+  weakening, direct Abel, phase-weight division, or circular provider
+  assumptions.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  uniform imaginary-log-Gamma Stirling remainder at `C / t`,
+  Jacobian-integral bound at `1/relativeWeight`, and the shifted
+  stationary-phase target remainder.

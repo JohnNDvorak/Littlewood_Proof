@@ -1599,6 +1599,51 @@ private lemma atkinsonHardyStartThetaModel_eq_expanded (m : ℕ) :
   rw [hdiv]
   ring
 
+/-- The continuous Hardy-theta Stirling atom is exactly the corresponding
+uniform Stirling remainder for the imaginary part of `log Γ(1/4 + it/2)`,
+after the Hardy normalization `-(t/2)log π` is folded into the logarithm. -/
+private theorem atkinson_thetaStirling_of_logGammaStirling
+    (hgamma :
+      ∃ CΓ > 0, ∃ TΓ : ℝ, ∀ t : ℝ, TΓ ≤ t →
+        |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+            ((t / 2) * Real.log (t / 2) - t / 2 - Real.pi / 8)|
+          ≤ CΓ / t) :
+    ∃ Cθ > 0, ∃ Tθ : ℝ, ∀ t : ℝ, Tθ ≤ t →
+      |hardyTheta t -
+          ((t / 2) * Real.log (t / (2 * Real.pi)) - t / 2 - Real.pi / 8)|
+        ≤ Cθ / t := by
+  obtain ⟨CΓ, hCΓ, TΓ, hgamma'⟩ := hgamma
+  refine ⟨CΓ, hCΓ, max TΓ 1, ?_⟩
+  intro t ht
+  have htΓ : TΓ ≤ t := le_trans (le_max_left _ _) ht
+  have ht1 : 1 ≤ t := le_trans (le_max_right _ _) ht
+  have htpos : 0 < t := lt_of_lt_of_le zero_lt_one ht1
+  have hlog :
+      Real.log (t / (2 * Real.pi)) + Real.log Real.pi = Real.log (t / 2) := by
+    rw [← Real.log_mul (by positivity : t / (2 * Real.pi) ≠ 0) Real.pi_pos.ne']
+    congr 1
+    field_simp [Real.pi_ne_zero]
+  have hrewrite :
+      hardyTheta t -
+          ((t / 2) * Real.log (t / (2 * Real.pi)) - t / 2 - Real.pi / 8) =
+        (Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+          ((t / 2) * Real.log (t / 2) - t / 2 - Real.pi / 8) := by
+    unfold hardyTheta
+    calc
+      (Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+            t / 2 * Real.log Real.pi -
+          (t / 2 * Real.log (t / (2 * Real.pi)) - t / 2 - Real.pi / 8)
+          =
+        (Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+          (t / 2 * (Real.log (t / (2 * Real.pi)) + Real.log Real.pi) -
+            t / 2 - Real.pi / 8) := by
+            ring
+      _ =
+        (Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+          (t / 2 * Real.log (t / 2) - t / 2 - Real.pi / 8) := by
+            rw [hlog]
+  simpa [hrewrite] using hgamma' t htΓ
+
 /-- The discrete Hardy-start theta model atom follows from the standard
 pointwise Stirling remainder for Hardy's theta function.  This isolates the
 remaining branch-sensitive analytic input in its continuous form:
@@ -21448,6 +21493,23 @@ private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_thetaS
   atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_model_residual
     (atkinson_hardyStartThetaModel_bound_of_thetaStirling hstirling)
     atkinson_modelResidual_bound
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+/-- A uniform imaginary-log-Gamma Stirling remainder is enough to close the
+corrected endpoint phase atom through the Hardy theta normalization adapter. -/
+private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_logGammaStirling
+    (hgamma :
+      ∃ CΓ > 0, ∃ TΓ : ℝ, ∀ t : ℝ, TΓ ≤ t →
+        |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+            ((t / 2) * Real.log (t / 2) - t / 2 - Real.pi / 8)|
+          ≤ CΓ / t) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_res > 0, ∃ N_res : ℕ, ∀ n : ℕ, N_res ≤ n →
+        |atkinsonEndpointGapCorrectedPhaseError n j|
+          ≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) :=
+  atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_thetaStirling
+    (atkinson_thetaStirling_of_logGammaStirling hgamma)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Carrier cancellation after reducing the endpoint boundary to the shifted
