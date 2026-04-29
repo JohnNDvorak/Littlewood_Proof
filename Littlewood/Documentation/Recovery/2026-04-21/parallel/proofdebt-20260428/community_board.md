@@ -3164,3 +3164,16 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Current Pi atoms:
     `PerronSqrtErrorRawChoiceEventuallyLeastValidThresholdResidual` and
     `PerronFixedHalfBudgetThresholdEventuallyValidResidual`.
+
+## Overnight 2026-04-29 One-Hundred-Thirty-Third Pass Status
+
+- Coordinator recovery branch is advanced locally through `edd5318`.
+- Pi/Phase lane is integrated through `01fbb2c`:
+  - The fixed-half threshold validity atom is reduced to monotonicity plus a
+    domination residual for the fixed half-budget threshold.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
+  - Current Pi atoms:
+    `PerronFixedHalfBudgetThresholdDominatesValidThresholdResidual` and
+    `PerronSqrtErrorRawChoiceEventuallyLeastValidThresholdResidual`.
