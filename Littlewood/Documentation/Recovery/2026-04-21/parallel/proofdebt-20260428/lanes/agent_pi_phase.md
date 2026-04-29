@@ -1919,3 +1919,39 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
 - Smallest next theorem:
   - Either prove/reduce `PerronThresholdTowerWideDominationHyp` directly, or keep the public target/anti endpoint on the narrower realized-radius/log-budget route and continue the canonical Perron and chosen-radius residuals there.
+
+### 2026-04-29 Round 34: Arbitrary-Radius Log Budget Split
+
+- Classification: `CONDITIONAL_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronThresholdTowerWideDominationHyp`.
+- Facts banked:
+  - Added `PerronThresholdTowerWideLogDominationHyp`, the log-level same-height arbitrary-radius domination source obtained by peeling off the outer monotone `Real.exp`.
+  - Added `PerronThresholdTowerWideLogBudgetHyp`, splitting the arbitrary-radius log source into a Perron lower-endpoint half-budget and a supplied-radius half-budget at the same selected `T, ε`.
+  - Added `perronThresholdTowerWideDomination_of_logDomination_hyp` and `perronThresholdTowerWideLogDomination_of_logBudget_hyp`.
+  - Added corrected-route endpoints `correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideLogDominationRoute`, `correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiWideLogBudgetRoute`, `rhPiWitnessData_of_correctedPerronOnlyTargetAntiWideLogDominationRoute`, and `rhPiWitnessData_of_correctedPerronOnlyTargetAntiWideLogBudgetRoute`.
+- What changed:
+  - The arbitrary-radius fixed-height window route now exposes a strictly log-scale residual before the exponential tower cap.
+  - The next same-height obstruction can be studied as two explicit inequalities: controlling `Real.log (max X (perronThreshold hRH T) + 1)` and controlling `radius T ε + 1` by halves of the same double-exponential tower scale.
+- Remaining goal shape:
+  - Prove or further reduce `PerronThresholdTowerWideLogBudgetHyp`:
+    for every positive supplied radius function, choose one `T, ε` such that both the Perron lower endpoint and that same supplied `radius T ε` fit within half of `Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))`.
+  - This remains an arbitrary-radius fixed-point/cofinality statement; it is stronger than the target/anti realized-radius route.
+- Failed/circular route:
+  - Did not use target/anti realized radii to prove an arbitrary supplied-radius theorem.
+  - Did not assert cofinal tower domination for a height-dependent radius without naming the exact budget leaf.
+  - Did not add provider instances for the new log/log-budget classes.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh` in the new route.
+  - No axioms/sorries, statement weakening, independent target/anti heights, cross-height `perronThreshold` monotonicity, reverse-comparison instance, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build, public import probe, or other validation command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Decide whether `PerronThresholdTowerWideLogBudgetHyp` should remain as the arbitrary-radius source, or route the public endpoint through the already narrower target/anti realized-radius budget leaves and continue the canonical Perron/chosen-radius residuals.
