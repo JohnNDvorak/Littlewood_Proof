@@ -918,3 +918,37 @@ Timestamp: 2026-04-28 22:56 CDT.
     canonical bounds.
   - RS/Gabcke: removable-source bridge and numeric point bounds for
     `standardGabckeRemovableSourceThirdDerivative`.
+
+## Overnight 2026-04-29 Seventeenth Pass Status
+
+- Perron/B5a lane is validated and pushed through `0591d7c`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Reduce Perron reciprocal distance to harmonic floor`.
+  - Validation passed after a coordinator inequality-ordering cleanup:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the reciprocal-distance envelope is reduced to the exact finite
+    harmonic majorant
+    `perronKernelSeparatedReciprocalDistanceEnvelope x T <=
+      (harmonic (Nat.floor x) : ℝ)`.
+  - Halley is redeployed to close the remaining finite reindexing/injection
+    lemma from separated indices to integer distances below `Nat.floor x`.
+- Pi/Phase lane is validated and pushed through `fc19c55`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Name pi canonical budget residuals`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the three Pi canonical budget leaves now have explicit residual
+    predicates and reduction theorems. This makes the remaining obligations
+    inspectable:
+    `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`,
+    `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`, and
+    `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`.
+  - Planck is redeployed to prove one residual directly, with priority on the
+    majorant residual if it avoids chosen-radius control.
+- Current live atoms:
+  - Atkinson: stationary-phase complete-block target remainder and finite
+    fixed-shift inverse-phase cell-prefix patches.
+  - Perron/B5a: finite reindexing/injection into `harmonic (Nat.floor x)`.
+  - Pi/Phase: three named canonical-budget residuals.
+  - RS/Gabcke: removable-source bridge and numeric point bounds for
+    `standardGabckeRemovableSourceThirdDerivative`.
