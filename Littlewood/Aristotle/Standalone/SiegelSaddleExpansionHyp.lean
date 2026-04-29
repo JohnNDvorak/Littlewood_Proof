@@ -56,6 +56,7 @@ import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.Standalone.FresnelSaddlePointInfra
 import Littlewood.Aristotle.Standalone.SaddlePointMethod
 import Littlewood.Aristotle.Standalone.SteepestDescentContour
+import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.Analytic.IteratedFDeriv
 import Mathlib.Analysis.Analytic.OfScalars
 import Mathlib.Analysis.Calculus.Deriv.Shift
@@ -878,6 +879,16 @@ def standardGabckeQuarterLocalRemovableSineQuotient (w : ℝ) : ℝ :=
     Real.sin (Real.pi * w - 2 * Real.pi * w ^ 2) /
       Real.sin (2 * Real.pi * w)
 
+/-- Numerator of the local sine quotient before removing the common zero at
+`w = 0`. -/
+def standardGabckeQuarterLocalSineNumerator (w : ℝ) : ℝ :=
+  Real.sin (Real.pi * w - 2 * Real.pi * w ^ 2)
+
+/-- Denominator of the local sine quotient before removing the common zero at
+`w = 0`. -/
+def standardGabckeQuarterLocalSineDenominator (w : ℝ) : ℝ :=
+  Real.sin (2 * Real.pi * w)
+
 /-- Exact local power-series source for the removable sine quotient at `0`.
 This is the remaining analytic expansion theorem in standard `HasFPowerSeriesAt`
 form, with the two coefficients needed downstream named explicitly. -/
@@ -887,6 +898,44 @@ def StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp : Prop :=
       (FormalMultilinearSeries.ofScalars ℝ a) 0 ∧
       a 0 = 1 / 2 ∧
       a 3 = -Real.pi ^ 2 / 6
+
+/-- Exact removable-division bridge for the sine quotient. The common zero is
+removed by passing to `dslope` for the numerator and denominator; the remaining
+division is ordinary analytic division because the denominator dslope is
+nonzero at `0`. -/
+def StandardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp : Prop :=
+  (standardGabckeQuarterLocalRemovableSineQuotient =ᶠ[𝓝 (0 : ℝ)]
+      fun w : ℝ =>
+        dslope standardGabckeQuarterLocalSineNumerator 0 w /
+          dslope standardGabckeQuarterLocalSineDenominator 0 w) ∧
+    AnalyticAt ℝ (dslope standardGabckeQuarterLocalSineNumerator 0) 0 ∧
+    AnalyticAt ℝ (dslope standardGabckeQuarterLocalSineDenominator 0) 0 ∧
+    dslope standardGabckeQuarterLocalSineDenominator 0 0 ≠ 0 ∧
+    iteratedDeriv 3 standardGabckeQuarterLocalRemovableSineQuotient 0 =
+      -Real.pi ^ 2
+
+/-- The dslope removable-division bridge supplies the canonical Taylor
+power series for the removable sine quotient, with the required constant and
+cubic coefficients. -/
+theorem standardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp_of_dslopeBridge
+    (h_bridge : StandardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp) :
+    StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp := by
+  rcases h_bridge with ⟨heq, hnum, hden, hden0, hthird⟩
+  let f : ℝ → ℝ := standardGabckeQuarterLocalRemovableSineQuotient
+  let a : ℕ → ℝ := fun n => iteratedDeriv n f 0 / (n.factorial : ℝ)
+  refine ⟨a, ?_, ?_, ?_⟩
+  · have hquot :
+        AnalyticAt ℝ
+          (fun w : ℝ =>
+            dslope standardGabckeQuarterLocalSineNumerator 0 w /
+              dslope standardGabckeQuarterLocalSineDenominator 0 w) 0 :=
+      hnum.div hden hden0
+    exact (hquot.congr heq.symm).hasFPowerSeriesAt
+  · dsimp [a, f]
+    simp [iteratedDeriv_zero, standardGabckeQuarterLocalRemovableSineQuotient]
+  · dsimp [a, f]
+    rw [hthird]
+    norm_num
 
 /-- A local power series for the removable sine quotient gives the punctured
 quotient expansion by unfolding `HasFPowerSeriesAt` and ignoring the filled
