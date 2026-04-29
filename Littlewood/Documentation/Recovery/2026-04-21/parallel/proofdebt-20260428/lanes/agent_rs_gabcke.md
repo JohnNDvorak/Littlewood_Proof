@@ -1794,3 +1794,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_reducedCore`:
   the local equality to the quotient of dslopes, numerator dslope analyticity,
   or the third derivative value `-Real.pi ^ 2`.
+
+### 2026-04-29 Round 37: numerator dslope analyticity closed
+
+- Classification: `PROVED` for the numerator-dslope analyticity clause, and
+  `CONDITIONAL_REDUCTION` for the full dslope bridge.
+- Exact theorem attacked:
+  `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_reducedCore`.
+- Banked inputs:
+  - The numerator phase `fun w => Real.pi * w - 2 * Real.pi * w ^ 2` is an
+    analytic polynomial at `0`.
+  - `Real.analyticAt_sin.comp` gives analyticity of
+    `standardGabckeQuarterLocalSineNumerator` at `0`.
+  - `HasFPowerSeriesAt.has_fpower_series_dslope_fslope` transfers that local
+    power series to the numerator dslope.
+- Proof facts banked:
+  - Added and proved
+    `StandardGabckeQuarterLocalNumeratorDslopeAnalyticProp`:
+    `AnalyticAt ℝ (dslope standardGabckeQuarterLocalSineNumerator 0) 0`.
+  - Added
+    `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_equality_and_third`,
+    reducing the bridge to the local dslope quotient equality and the
+    third-derivative value.
+- Failed routes:
+  - I did not define the removable derivative candidate by the raw third
+    derivative.
+  - I did not assume global regularity of the original quotient at
+    denominator-zero points.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, provider shortcuts, or weaken the live
+    coefficient target.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to `origin/recovery/provider-forensics-2026-04-21`
+    at `40569f9` before editing.
+  - `git diff --check`: passed.
+  - Stopped the old RS validation shell using the obsolete `pgrep` guard after
+    coordinator interrupt; no file edits were reverted.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove one of the two remaining clauses for
+  `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_equality_and_third`:
+  the local equality to the quotient of numerator/denominator dslopes, or the
+  third derivative value `-Real.pi ^ 2`.
