@@ -302,6 +302,31 @@ def StandardGabckeTabelleFirstCoefficientBoundProp : Prop :=
     |(-deriv (deriv (deriv standardGabckeRawPsi)) p / (96 * Real.pi ^ 2))| ≤
       fresnelC1Bound
 
+/-- The unscaled third derivative of the raw quotient-normalized standard
+Gabcke `psi`. This is the exact derivative payload behind the first source
+coefficient. -/
+def standardGabckeRawPsiThirdDerivative (p : ℝ) : ℝ :=
+  deriv (deriv (deriv standardGabckeRawPsi)) p
+
+/-- Smaller Tabelle-1 source atom: bound the unscaled third derivative before
+dividing by the explicit positive normalizing factor `96*pi^2`. -/
+def StandardGabckeRawPsiThirdDerivativeBoundProp : Prop :=
+  ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    |standardGabckeRawPsiThirdDerivative p| ≤
+      fresnelC1Bound * (96 * Real.pi ^ 2)
+
+/-- The unscaled third-derivative estimate implies the coefficient-level
+Tabelle-1 bound. -/
+theorem standardGabckeTabelleFirstCoefficientBoundProp_of_rawPsiThirdDerivativeBound
+    (h : StandardGabckeRawPsiThirdDerivativeBoundProp) :
+    StandardGabckeTabelleFirstCoefficientBoundProp := by
+  intro p hp
+  have hden_pos : 0 < 96 * Real.pi ^ 2 := by positivity
+  have hderiv := h p hp
+  unfold standardGabckeRawPsiThirdDerivative at hderiv
+  rw [abs_div, abs_neg, abs_of_pos hden_pos]
+  exact (div_le_iff₀ hden_pos).2 hderiv
+
 /-- The unfolded contour/Taylor source identity supplies the standard
 stationary-phase identity for the concrete raw first coefficient. -/
 theorem standardGabckeStationaryPhaseIdentity_rawFirstCoefficient_of_contourTaylor
@@ -334,6 +359,27 @@ theorem standardGabckeTargets_of_firstCoefficientSource
       StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient :=
   ⟨standardGabckeStationaryPhaseIdentity_rawFirstCoefficient_of_contourTaylor h.1,
     standardGabckeCoefficientBound_rawFirstCoefficient_of_tabelleBound h.2⟩
+
+/-- Source package with the coefficient bound reduced to the unscaled
+third-derivative estimate. -/
+theorem standardGabckeFirstCoefficientSourceProp_of_contourTaylor_and_rawPsiThirdDerivativeBound
+    (h_id : StandardGabckeContourTaylorFirstCoefficientIdentityProp)
+    (h_deriv : StandardGabckeRawPsiThirdDerivativeBoundProp) :
+    StandardGabckeFirstCoefficientSourceProp :=
+  ⟨h_id,
+    standardGabckeTabelleFirstCoefficientBoundProp_of_rawPsiThirdDerivativeBound h_deriv⟩
+
+/-- Direct route from the contour/Taylor identity and the unscaled
+third-derivative estimate to the two standard Gabcke target propositions. -/
+theorem standardGabckeTargets_of_contourTaylor_and_rawPsiThirdDerivativeBound
+    (h_id : StandardGabckeContourTaylorFirstCoefficientIdentityProp)
+    (h_deriv : StandardGabckeRawPsiThirdDerivativeBoundProp) :
+    StandardGabckeStationaryPhaseIdentityProp
+        standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient ∧
+      StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient :=
+  standardGabckeTargets_of_firstCoefficientSource
+    (standardGabckeFirstCoefficientSourceProp_of_contourTaylor_and_rawPsiThirdDerivativeBound
+      h_id h_deriv)
 
 /-- A standard-normalized stationary-phase identity becomes the local
 coefficient identity once the leading coefficient normalization has been

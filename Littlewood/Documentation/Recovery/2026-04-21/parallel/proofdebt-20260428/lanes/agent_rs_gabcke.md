@@ -446,3 +446,51 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   the unfolded coefficient formula.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 9: Tabelle bound reduced to raw third derivative
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Theorem/file attacked:
+  `StandardGabckeTabelleFirstCoefficientBoundProp` and its contribution to
+  `StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Proof facts banked:
+  - Added `standardGabckeRawPsiThirdDerivative p`, the unscaled third
+    derivative `deriv (deriv (deriv standardGabckeRawPsi)) p` behind the
+    raw first Gabcke coefficient.
+  - Added `StandardGabckeRawPsiThirdDerivativeBoundProp`, the smaller source
+    theorem
+    `|standardGabckeRawPsiThirdDerivative p| <=
+      fresnelC1Bound * (96*pi^2)` on `p in Ico 0 1`.
+  - Proved
+    `standardGabckeTabelleFirstCoefficientBoundProp_of_rawPsiThirdDerivativeBound`,
+    reducing the coefficient-level Tabelle atom to the unscaled derivative
+    estimate using positivity of `96*pi^2`.
+  - Added
+    `standardGabckeFirstCoefficientSourceProp_of_contourTaylor_and_rawPsiThirdDerivativeBound`,
+    wiring the original contour/Taylor identity plus the smaller derivative
+    bound into `StandardGabckeFirstCoefficientSourceProp`.
+  - Added
+    `standardGabckeTargets_of_contourTaylor_and_rawPsiThirdDerivativeBound`,
+    giving the two standard target propositions directly from the contour
+    identity and the raw third-derivative bound.
+- Failed routes that should not be retried:
+  - Do not assert raw `standardGabckeRawPsi = rsPsi`.
+  - Do not use block-independence or exact k-independence.
+  - Do not define the coefficient as a defect quotient; the remaining bound is
+    on the unfolded third derivative of the Gabcke source expression.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - `git diff --check`: passed.
+  - No Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+- Smallest next theorem:
+  prove `StandardGabckeRawPsiThirdDerivativeBoundProp` from Gabcke Tabelle 1
+  for the unfolded quotient-normalized `standardGabckeRawPsi`, while separately
+  proving `StandardGabckeContourTaylorFirstCoefficientIdentityProp` from the
+  actual contour/Taylor expansion.
+- Coordinator action requested:
+  run the requested serialized validation command.
