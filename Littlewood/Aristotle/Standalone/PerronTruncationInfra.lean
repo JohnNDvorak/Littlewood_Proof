@@ -1717,6 +1717,65 @@ theorem perronKernelWeightedSeparatedPuncturedBoundaryError_le_davenportEnvelope
     _ = perronKernelSeparatedDavenportEnvelope x T := by
         rfl
 
+/-- Membership in the separated punctured boundary set puts the term strictly
+on the large side of the sharp cutoff.  The finite Perron sum only ranges over
+`n <= floor x`, so no `n > x` branch is present here. -/
+theorem perronKernelSeparatedPuncturedBoundarySet_mem_large_side
+    (x T : ℝ) (hx : 2 ≤ x) {n : ℕ}
+    (hn : n ∈ perronKernelSeparatedPuncturedBoundarySet x T) :
+    1 ≤ n ∧ (n : ℝ) < x ∧ 1 < x / (n : ℝ) := by
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hn_unfold := hn
+  dsimp [perronKernelSeparatedPuncturedBoundarySet] at hn_unfold
+  have hnot_unit : ¬ |x - (n : ℝ)| ≤ 1 := (Finset.mem_filter.mp hn_unfold).2
+  have hsp := (Finset.mem_filter.mp hn_unfold).1
+  have hne : (n : ℝ) ≠ x := (Finset.mem_filter.mp hsp).2
+  have hboundary := (Finset.mem_filter.mp hsp).1
+  have hrange : n ∈ Finset.range (Nat.floor x + 1) := (Finset.mem_filter.mp hboundary).1
+  have hn_le_floor : n ≤ Nat.floor x := Nat.lt_succ_iff.mp (Finset.mem_range.mp hrange)
+  have hn_le_x : (n : ℝ) ≤ x :=
+    le_trans (Nat.cast_le.mpr hn_le_floor) (Nat.floor_le hx_nonneg)
+  have hn_pos_real : (0 : ℝ) < n := by
+    by_contra hn_nonpos
+    have hn_zero : (n : ℝ) = 0 :=
+      le_antisymm (le_of_not_gt hn_nonpos) (Nat.cast_nonneg n)
+    have hunit : |x - (n : ℝ)| ≤ 1 := by
+      rw [hn_zero, sub_zero, abs_of_nonneg hx_nonneg]
+      linarith
+    exact hnot_unit hunit
+  have hn_pos : 1 ≤ n := Nat.succ_le_of_lt (Nat.cast_pos.mp hn_pos_real)
+  have hn_lt_x : (n : ℝ) < x := lt_of_le_of_ne hn_le_x hne
+  have hy_gt_one : 1 < x / (n : ℝ) := by
+    rw [one_lt_div_iff₀ hn_pos_real]
+    simpa using hn_lt_x
+  exact ⟨hn_pos, hn_lt_x, hy_gt_one⟩
+
+/-- Pointwise Davenport-envelope normalization on the separated punctured
+boundary set.  Since all separated finite-sum terms satisfy `n < x`, the
+large-side Perron per-term bound applies directly. -/
+theorem small_T_separated_davenport_kernel_bound :
+    ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤
+            perronKernelSeparatedDavenportEnvelopeTerm x T n := by
+  intro x T hx hT_lo _hT_hi n hn
+  have hT_pos : 0 < T := by linarith
+  rcases perronKernelSeparatedPuncturedBoundarySet_mem_large_side x T hx hn with
+    ⟨_hn_pos, _hn_lt_x, hy_gt_one⟩
+  have hc_pos := c_param_pos x hx
+  calc |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+      = |perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T - 1| :=
+        abs_sub_comm _ _
+    _ ≤ ( (x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1) /
+          (T * Real.log (x / (n : ℝ))) +
+        2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+          ((1 + 1 / Real.log x) * T) :=
+        perron_per_term_large_bound
+          (x / (n : ℝ)) hy_gt_one (1 + 1 / Real.log x) hc_pos T hT_pos
+    _ = perronKernelSeparatedDavenportEnvelopeTerm x T n := by
+        rfl
+
 /-- Near-diagonal punctured boundary weighted error is controlled by a uniform
 kernel bound times the pure near-diagonal von Mangoldt weight. -/
 theorem perronKernelWeightedNearDiagonalPuncturedBoundaryError_le_kernelSup_mul_weight
@@ -2514,6 +2573,17 @@ theorem small_T_separated_weighted_bound_from_davenport_envelope
           x T (hkernel x T hx hT_lo hT_hi)
     _ ≤ Cd * (Real.log x) ^ 2 := henvelope x T hx hT_lo hT_hi
 
+/-- Direct separated weighted atom from only the weighted Davenport-envelope
+summation bound.  The pointwise Davenport normalization is closed by
+`small_T_separated_davenport_kernel_bound`. -/
+theorem small_T_separated_weighted_bound_from_davenport_envelope_bound
+    (henvelope : ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedDavenportEnvelope x T ≤ Cd * (Real.log x) ^ 2) :
+    ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedSeparatedPuncturedBoundaryError x T ≤ Cs * (Real.log x) ^ 2 :=
+  small_T_separated_weighted_bound_from_davenport_envelope
+    small_T_separated_davenport_kernel_bound henvelope
+
 /-- Weighted finite cutoff from the Davenport separated-bound route and the
 off-boundary weighted atom. -/
 theorem small_T_weighted_kernel_cutoff_bound_from_davenport_separated_and_offBoundary
@@ -2531,6 +2601,19 @@ theorem small_T_weighted_kernel_cutoff_bound_from_davenport_separated_and_offBou
   small_T_weighted_kernel_cutoff_bound_from_separated_boundary_and_offBoundary
     (small_T_separated_weighted_bound_from_davenport_envelope hkernel henvelope)
     hoffBoundary
+
+/-- Weighted finite cutoff from the closed Davenport separated-kernel
+normalization, the weighted Davenport-envelope summation bound, and the
+off-boundary weighted atom. -/
+theorem small_T_weighted_kernel_cutoff_bound_from_davenport_envelope_and_offBoundary
+    (henvelope : ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedDavenportEnvelope x T ≤ Cd * (Real.log x) ^ 2)
+    (hoffBoundary : ∃ Co > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedOffBoundaryWindowError x T ≤ Co * (Real.log x) ^ 2) :
+    ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (Real.log x) ^ 2 :=
+  small_T_weighted_kernel_cutoff_bound_from_davenport_separated_and_offBoundary
+    small_T_separated_davenport_kernel_bound henvelope hoffBoundary
 
 /-- Finite Perron-kernel cutoff from a weighted per-term cutoff-error bound.
 

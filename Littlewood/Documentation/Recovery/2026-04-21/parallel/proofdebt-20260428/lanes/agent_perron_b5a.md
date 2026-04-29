@@ -809,3 +809,59 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   apply `perron_per_term_large_bound`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 15 - Separated Davenport Kernel Normalization
+
+- Classification: `PROVED_PENDING_VALIDATION`.
+- Exact theorem attacked:
+  the pointwise Davenport-envelope normalization feeding
+  `small_T_separated_weighted_bound_from_davenport_envelope`:
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelSeparatedPuncturedBoundarySet x T,
+      |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+        <= perronKernelSeparatedDavenportEnvelopeTerm x T n`.
+- Scale check:
+  no two-sided split is needed in the current finite Perron cutoff because
+  `perronKernelSeparatedPuncturedBoundarySet` is still a subset of
+  `range (Nat.floor x + 1)`, hence every member has `(n : ℝ) <= x`.  The exact
+  hit filter plus range bound gives `(n : ℝ) < x`, so the large-side
+  Davenport bound applies with `1 < x / (n : ℝ)`.
+- Code facts banked:
+  added `perronKernelSeparatedPuncturedBoundarySet_mem_large_side`, extracting
+  `1 <= n`, `(n : ℝ) < x`, and `1 < x / (n : ℝ)` from separated-set
+  membership under `x >= 2`.
+  Added `small_T_separated_davenport_kernel_bound`, proving the pointwise
+  Davenport-envelope normalization directly from
+  `perron_per_term_large_bound`.
+  Added `small_T_separated_weighted_bound_from_davenport_envelope_bound`, so
+  the separated weighted atom now depends only on the weighted Davenport
+  envelope summation bound.
+  Added
+  `small_T_weighted_kernel_cutoff_bound_from_davenport_envelope_and_offBoundary`,
+  so the finite weighted cutoff route now depends only on:
+  1. `perronKernelSeparatedDavenportEnvelope x T <= Cd * (Real.log x)^2`;
+  2. the off-boundary weighted atom.
+- Failed/demoted routes:
+  did not retry pointwise decay at
+  `K * (T * (Real.log x)^2 / x)` and did not replace the separated window by a
+  pure macroscopic `O((log x)^2)` von Mangoldt weight.  The Davenport
+  `1 / log (x / n)` singularity remains inside the finite weighted sum.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the weighted Davenport-envelope summation bound
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedDavenportEnvelope x T
+      <= Cd * (Real.log x)^2`.
+  If this is too broad, split the finite set by dyadic distance from `x` while
+  preserving the exact `1 / log (x / n)` weight.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
