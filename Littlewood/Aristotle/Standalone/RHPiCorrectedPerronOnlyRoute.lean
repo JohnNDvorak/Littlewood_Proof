@@ -172,6 +172,22 @@ theorem correctedPhaseCoupling_of_correctedPerronOnlyFixedHeightErrorRoute
     target_exact_seed_withFixedHeightPerronError_from_phase_fit
     antiTarget_exact_seed_withFixedHeightPerronError_from_phase_fit
 
+/-- Relation-compatible target/anti finite-zero data plus the fixed-height
+Perron-error wide-window source supply corrected phase-coupling without the
+arbitrary-target phase-fit class. -/
+theorem correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiFixedHeightErrorRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FixedHeightPerronErrorPhaseWideWindowHyp] :
+    TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  rcases targetAntiFixedHeightPerronErrorPhaseFit_of_relationCompatibleAndWindow_hyp with
+    ⟨hTarget, hAntiTarget⟩
+  letI : TargetPhaseFitWithFixedHeightPerronErrorHyp := hTarget
+  letI : AntiTargetPhaseFitWithFixedHeightPerronErrorHyp := hAntiTarget
+  exact correctedPhaseCoupling_of_targetAntiFixedHeightPerronErrorPhaseFit_hyp
+
 /-- Corrected Perron-only route to the RH-side `pi` witness data. -/
 theorem rhPiWitnessData_of_correctedPerronOnlyRoute
     [PerronSqrtErrorEventuallyAtHeightHyp]
@@ -191,6 +207,21 @@ theorem rhPiWitnessData_of_correctedPerronOnlyFixedHeightErrorRoute
     [InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp] :
     RhPiWitnessData := by
   exact rhPiWitnessData_of_fixedHeightPerronErrorPhaseFit_hyp
+
+/-- Relation-compatible target/anti finite-zero data plus the fixed-height
+Perron-error wide-window source supply the corrected RH-`pi` witness endpoint
+without the arbitrary-target phase-fit class. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyTargetAntiFixedHeightErrorRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FixedHeightPerronErrorPhaseWideWindowHyp] :
+    RhPiWitnessData := by
+  rcases correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiFixedHeightErrorRoute with
+    ⟨hTarget, hAntiTarget⟩
+  letI : TargetTowerPhaseCouplingFamilyHyp_corrected := hTarget
+  letI : AntiTargetTowerPhaseCouplingFamilyHyp_corrected := hAntiTarget
+  exact rhPiWitnessData_of_correctedHyp
 
 /-- Half-budget corrected route to the RH-side `pi` witness data. -/
 theorem rhPiWitnessData_of_correctedPerronOnlyHalfBudgetRoute

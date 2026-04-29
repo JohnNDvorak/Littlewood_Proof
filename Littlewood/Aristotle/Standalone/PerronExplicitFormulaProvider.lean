@@ -2140,6 +2140,47 @@ class InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp
           x ≤ Real.exp (Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
+/-- Target-specific fixed-height Perron-error phase-fit boundary.
+
+This is the threshold-free target-side surface needed by the corrected `pi`
+route.  It avoids the arbitrary `targetPhase` quantifier and carries the actual
+fixed-height Perron error estimate at the selected `x`. -/
+class TargetPhaseFitWithFixedHeightPerronErrorHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x|
+          ≤ Real.sqrt x / Real.log x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Anti-target-specific fixed-height Perron-error phase-fit boundary. -/
+class AntiTargetPhaseFitWithFixedHeightPerronErrorHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x|
+          ≤ Real.sqrt x / Real.log x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - (Complex.arg ρ + Real.pi) -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
 /-- Existing above-threshold phase fit supplies the direct fixed-height
 Perron-error payload by applying `perronThreshold_spec` once.
 
@@ -2235,6 +2276,44 @@ theorem antiTarget_exact_seed_withFixedHeightPerronError_from_phase_fit
     exact ⟨m, by simpa using hm⟩
   · rwa [Real.exp_log hx_pos]
 
+/-- Target-specific fixed-height Perron-error phase fit gives the positive
+exact-seed-shaped payload without the arbitrary phase-fit class. -/
+theorem target_exact_seed_withFixedHeightPerronError_from_target_phase_fit
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetPhaseFitWithFixedHeightPerronErrorHyp] :
+    TargetTowerExactSeedWithFixedHeightPerronError := by
+  intro hRH X
+  rcases TargetPhaseFitWithFixedHeightPerronErrorHyp.witness hRH X with
+    ⟨x, hXx, T, hT4, hx1, herror, ε, hεpos, hεlt, hphase, hxUpper⟩
+  have hx_pos : 0 < x := lt_trans zero_lt_one hx1
+  refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_, ?_⟩
+  · rwa [Real.exp_log hx_pos]
+  · rwa [Real.exp_log hx_pos]
+  · simpa [Real.exp_log hx_pos] using herror
+  · intro ρ hρ
+    rcases hphase ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa using hm⟩
+  · rwa [Real.exp_log hx_pos]
+
+/-- Anti-target-specific fixed-height Perron-error phase fit gives the
+anti-target exact-seed-shaped payload without the arbitrary phase-fit class. -/
+theorem antiTarget_exact_seed_withFixedHeightPerronError_from_antiTarget_phase_fit
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetPhaseFitWithFixedHeightPerronErrorHyp] :
+    AntiTargetTowerExactSeedWithFixedHeightPerronError := by
+  intro hRH X
+  rcases AntiTargetPhaseFitWithFixedHeightPerronErrorHyp.witness hRH X with
+    ⟨x, hXx, T, hT4, hx1, herror, ε, hεpos, hεlt, hphase, hxUpper⟩
+  have hx_pos : 0 < x := lt_trans zero_lt_one hx1
+  refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_, ?_⟩
+  · rwa [Real.exp_log hx_pos]
+  · rwa [Real.exp_log hx_pos]
+  · simpa [Real.exp_log hx_pos] using herror
+  · intro ρ hρ
+    rcases hphase ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa using hm⟩
+  · rwa [Real.exp_log hx_pos]
+
 /-- A positive fixed-height Perron-error seed is already a full target
 arg-approximation family.
 
@@ -2306,6 +2385,33 @@ theorem rhPiWitnessData_of_fixedHeightPerronErrorPhaseFit_hyp
   exact rhPiWitnessData_of_exactSeedWithFixedHeightPerronError
     target_exact_seed_withFixedHeightPerronError_from_phase_fit
     antiTarget_exact_seed_withFixedHeightPerronError_from_phase_fit
+
+/-- Target/anti-specific fixed-height Perron-error phase fits are enough for
+the corrected phase-coupling endpoint, without arbitrary-target phase fitting. -/
+theorem correctedPhaseCoupling_of_targetAntiFixedHeightPerronErrorPhaseFit_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetPhaseFitWithFixedHeightPerronErrorHyp]
+    [AntiTargetPhaseFitWithFixedHeightPerronErrorHyp] :
+    Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  exact correctedPhaseCoupling_of_exactSeedWithFixedHeightPerronError
+    target_exact_seed_withFixedHeightPerronError_from_target_phase_fit
+    antiTarget_exact_seed_withFixedHeightPerronError_from_antiTarget_phase_fit
+
+/-- Target/anti-specific fixed-height Perron-error phase fits imply the
+corrected RH-`pi` witness endpoint. -/
+theorem rhPiWitnessData_of_targetAntiFixedHeightPerronErrorPhaseFit_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetPhaseFitWithFixedHeightPerronErrorHyp]
+    [AntiTargetPhaseFitWithFixedHeightPerronErrorHyp] :
+    Aristotle.Standalone.CombinedAtomsFromDeepBlockers.RhPiWitnessData := by
+  rcases correctedPhaseCoupling_of_targetAntiFixedHeightPerronErrorPhaseFit_hyp with
+    ⟨hTargetPhase, hAntiTargetPhase⟩
+  letI : Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.TargetTowerPhaseCouplingFamilyHyp_corrected :=
+    hTargetPhase
+  letI : Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.AntiTargetTowerPhaseCouplingFamilyHyp_corrected :=
+    hAntiTargetPhase
+  exact Aristotle.Standalone.RHPiCorrectedCanonicalWitnessClasses.rhPiWitnessData_of_correctedHyp
 
 /-- Same-height Perron-threshold/tower window boundary.
 
@@ -4227,6 +4333,124 @@ theorem inhomogeneousPhaseFitWithFixedHeightPerronError_of_wideWindow_relativeDe
       rcases hPhase ρ hρ with ⟨m, hm⟩
       exact ⟨m, by simpa [Real.log_exp] using hm⟩
     · exact le_trans hExpU hUcap
+
+private theorem fixedHeightPerronErrorPhaseFit_of_relative_dense_witness
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FixedHeightPerronErrorPhaseWideWindowHyp]
+    (targetPhase : ℂ → ℝ)
+    (hDense :
+      ∀ (T ε : ℝ),
+        4 ≤ T →
+        0 < ε →
+        ∃ R : ℝ,
+          0 < R ∧
+          ∀ L : ℝ,
+            ∃ t0 : ℝ,
+              L < t0 ∧
+              t0 < L + R ∧
+              ∀ ρ ∈ (finite_zeros_le T).toFinset,
+                ∃ m : ℤ,
+                  ‖t0 * ρ.im - targetPhase ρ -
+                      m • (2 * Real.pi)‖ ≤ ε) :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        1 < x ∧
+        |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x|
+          ≤ Real.sqrt x / Real.log x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - targetPhase ρ -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
+  intro hRH X
+  let radius : ℝ → ℝ → ℝ := fun T ε =>
+    if h : 4 ≤ T ∧ 0 < ε then
+      Classical.choose (hDense T ε h.1 h.2)
+    else 1
+  have hRadius : ∀ T ε : ℝ, 0 < radius T ε := by
+    intro T ε
+    by_cases h : 4 ≤ T ∧ 0 < ε
+    · dsimp [radius]
+      rw [dif_pos h]
+      exact (Classical.choose_spec (hDense T ε h.1 h.2)).1
+    · dsimp [radius]
+      rw [dif_neg h]
+      norm_num
+  rcases FixedHeightPerronErrorPhaseWideWindowHyp.witness
+      hRH X radius hRadius with
+    ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, hErr, hWide, hUcap⟩
+  let hRel := hDense T ε hT4 hεpos
+  let R : ℝ := Classical.choose hRel
+  have hRspec := Classical.choose_spec hRel
+  have hRadius_eq : radius T ε = R := by
+    dsimp [radius, R]
+    rw [dif_pos ⟨hT4, hεpos⟩]
+  rcases hRspec with ⟨_hRpos, hHit⟩
+  rcases hHit L with ⟨t0, hLt, htR, hPhase⟩
+  have htU : t0 < U := by
+    have htRadius : t0 < L + radius T ε := by
+      simpa [hRadius_eq, R] using htR
+    exact lt_trans htRadius hWide
+  have hExpLle : Real.exp L ≤ Real.exp t0 :=
+    le_of_lt (Real.exp_strictMono hLt)
+  have hExpU : Real.exp t0 ≤ Real.exp U :=
+    Real.exp_le_exp.mpr (le_of_lt htU)
+  have hPerron := hErr (Real.exp t0) hExpLle
+  refine
+    ⟨Real.exp t0, ?_, T, hT4, hPerron.1, hPerron.2,
+      ε, hεpos, hεlt, ?_, ?_⟩
+  · exact lt_of_lt_of_le hX hExpLle
+  · intro ρ hρ
+    rcases hPhase ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa [Real.log_exp] using hm⟩
+  · exact le_trans hExpU hUcap
+
+/-- Target-specific finite-zero relative density plus the fixed-height
+Perron-error wide window source gives target fixed-height phase fit. -/
+theorem targetPhaseFitWithFixedHeightPerronError_of_relative_dense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FixedHeightPerronErrorPhaseWideWindowHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    TargetPhaseFitWithFixedHeightPerronErrorHyp where
+  witness :=
+    fixedHeightPerronErrorPhaseFit_of_relative_dense_witness
+      Complex.arg TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+
+/-- Anti-target-specific finite-zero relative density plus the fixed-height
+Perron-error wide window source gives anti-target fixed-height phase fit. -/
+theorem antiTargetPhaseFitWithFixedHeightPerronError_of_relative_dense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FixedHeightPerronErrorPhaseWideWindowHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    AntiTargetPhaseFitWithFixedHeightPerronErrorHyp where
+  witness :=
+    fixedHeightPerronErrorPhaseFit_of_relative_dense_witness
+      (fun ρ => Complex.arg ρ + Real.pi)
+      AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+
+/-- Relation-compatible finite-set Kronecker plus paired target/anti zeta
+compatibility and the fixed-height window source package both target-specific
+fixed-height phase-fit classes. -/
+theorem targetAntiFixedHeightPerronErrorPhaseFit_of_relationCompatibleAndWindow_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FixedHeightPerronErrorPhaseWideWindowHyp] :
+    TargetPhaseFitWithFixedHeightPerronErrorHyp ∧
+      AntiTargetPhaseFitWithFixedHeightPerronErrorHyp := by
+  letI : TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetAntiFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  exact
+    ⟨targetPhaseFitWithFixedHeightPerronError_of_relative_dense_hyp,
+      antiTargetPhaseFitWithFixedHeightPerronError_of_relative_dense_hyp⟩
 
 /-- Target-only Perron phase-fit boundary for `ρ ↦ arg ρ`.
 

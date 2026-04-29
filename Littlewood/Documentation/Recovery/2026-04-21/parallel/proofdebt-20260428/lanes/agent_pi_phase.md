@@ -1815,3 +1815,40 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
 - Smallest next theorem:
   - Prove `FixedHeightPerronErrorPhaseWideWindowHyp` from fixed-height Perron eventuality plus a same-height tower/window cofinality theorem, or introduce target/anti-specific fixed-height phase-fit classes that consume the existing relation-compatible finite-zero payloads without the arbitrary `targetPhase` quantifier.
+
+### 2026-04-29 Round 31: Target/Anti Fixed-Height Route Split
+
+- Classification: `CONDITIONAL_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - Target/anti-specific replacement for the arbitrary `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp` public path.
+- Facts banked:
+  - Added `TargetPhaseFitWithFixedHeightPerronErrorHyp` and `AntiTargetPhaseFitWithFixedHeightPerronErrorHyp`.
+  - Added target/anti exact-seed bridges `target_exact_seed_withFixedHeightPerronError_from_target_phase_fit` and `antiTarget_exact_seed_withFixedHeightPerronError_from_antiTarget_phase_fit`.
+  - Added corrected endpoint bridges `correctedPhaseCoupling_of_targetAntiFixedHeightPerronErrorPhaseFit_hyp` and `rhPiWitnessData_of_targetAntiFixedHeightPerronErrorPhaseFit_hyp`.
+  - Added `targetPhaseFitWithFixedHeightPerronError_of_relative_dense_hyp` and `antiTargetPhaseFitWithFixedHeightPerronError_of_relative_dense_hyp`, both using the common `FixedHeightPerronErrorPhaseWideWindowHyp` plus target/anti-specific finite-zero relative density.
+  - Added `targetAntiFixedHeightPerronErrorPhaseFit_of_relationCompatibleAndWindow_hyp`, packaging the target/anti phase-fit classes from relation-compatible finite-set Kronecker, paired zeta compatibility, and the fixed-height wide-window source.
+  - Added route-file endpoints `correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiFixedHeightErrorRoute` and `rhPiWitnessData_of_correctedPerronOnlyTargetAntiFixedHeightErrorRoute`.
+- What changed:
+  - The corrected public/provider path no longer needs the arbitrary `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp` or arbitrary-target `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp`.
+  - The route consumes the existing relation-compatible target/anti finite-zero payloads and leaves only the common same-height fixed Perron-error/tower window source.
+- Remaining goal shape:
+  - Prove `FixedHeightPerronErrorPhaseWideWindowHyp`: choose one `T, ε, L, U` such that `x ≥ exp L` has the actual fixed-height Perron error estimate at height `T`, `L + radius T ε < U`, and `exp U` fits under the same-height tower cap.
+- Failed/circular route:
+  - Did not use cross-height `perronThreshold` monotonicity or compare `Classical.choose` thresholds.
+  - Did not add provider instances for the new route; all wiring is through explicit theorem endpoints and local `letI` values only.
+  - Did not promote arbitrary-target Kronecker or arbitrary target-phase density into the public path.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, independent target/anti heights, reverse-comparison instance, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build, public import probe, `git diff --check`, or other validation command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove or reduce `FixedHeightPerronErrorPhaseWideWindowHyp` from fixed-height Perron eventuality and a same-height tower/window cofinality theorem for the supplied radius function.
