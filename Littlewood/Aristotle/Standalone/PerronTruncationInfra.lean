@@ -1465,8 +1465,8 @@ def perronKernelSeparatedDavenportEnvelopeTerm (x T : ℝ) (n : ℕ) : ℝ :=
     2 * y ^ (1 + 1 / Real.log x) / ((1 + 1 / Real.log x) * T)
 
 /-- Weighted Davenport envelope over the separated punctured boundary window.
-The remaining analytic summation atom is to show this harmonic-distance sum is
-`O((log x)^2)` uniformly for `2 <= T <= 16`. -/
+The scale-correct summation target retains the linear boundary-window factor
+`x / T`; the pure `O((log x)^2)` target is false on this macroscopic window. -/
 def perronKernelSeparatedDavenportEnvelope (x T : ℝ) : ℝ :=
   ∑ n ∈ perronKernelSeparatedPuncturedBoundarySet x T,
     ArithmeticFunction.vonMangoldt n *
@@ -2857,6 +2857,125 @@ theorem small_T_separated_singular_numerator_bound :
         dsimp [A]
         linarith
 
+/-- The smooth Davenport summand is uniformly bounded on the separated
+boundary window. -/
+theorem small_T_separated_davenport_smooth_pointwise_bound :
+    ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+          2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+              ((1 + 1 / Real.log x) * T) ≤ K := by
+  rcases small_T_separated_singular_numerator_bound with ⟨A, hA_pos, hnum⟩
+  refine ⟨2 * A, mul_pos (by norm_num : (0 : ℝ) < 2) hA_pos, ?_⟩
+  intro x T hx hT_lo hT_hi n hn
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hlog_pos : 0 < Real.log x := Real.log_pos (by linarith)
+  have hc_ge_one : 1 ≤ 1 + 1 / Real.log x := by
+    have hrecip_nonneg : 0 ≤ 1 / Real.log x :=
+      div_nonneg zero_le_one hlog_pos.le
+    linarith
+  have hden_ge_one : 1 ≤ (1 + 1 / Real.log x) * T := by
+    nlinarith [hc_ge_one, hT_lo]
+  rcases perronKernelSeparatedPuncturedBoundarySet_mem_large_side x T hx hT_lo hn with
+    ⟨hn_pos, _hn_lt_x, _hy_gt_one⟩
+  have hn_pos_real : (0 : ℝ) < n := Nat.cast_pos.mpr hn_pos
+  have hy_nonneg : 0 ≤ x / (n : ℝ) := div_nonneg hx_nonneg hn_pos_real.le
+  have hyc_nonneg :
+      0 ≤ (x / (n : ℝ)) ^ (1 + 1 / Real.log x) :=
+    Real.rpow_nonneg hy_nonneg _
+  have hnum_x := hnum x T hx hT_lo hT_hi n hn
+  have hyc_le_A :
+      (x / (n : ℝ)) ^ (1 + 1 / Real.log x) ≤ A := by
+    dsimp [perronKernelSeparatedDavenportSingularNumerator] at hnum_x
+    linarith
+  calc
+    2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+          ((1 + 1 / Real.log x) * T)
+        ≤ 2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) :=
+          div_le_self (mul_nonneg (by norm_num) hyc_nonneg) hden_ge_one
+    _ ≤ 2 * A :=
+        mul_le_mul_of_nonneg_left hyc_le_A (by norm_num)
+
+/-- The smooth Davenport envelope has the honest linear-window scale. -/
+theorem small_T_separated_davenport_smooth_envelope_bound :
+    ∃ Cm > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedDavenportSmoothEnvelope x T ≤
+        Cm * (x / T) * (Real.log x) ^ 2 := by
+  rcases small_T_separated_davenport_smooth_pointwise_bound with
+    ⟨K, hK_pos, hpoint⟩
+  rcases small_T_boundary_window_vonMangoldt_weight_linear_bound with
+    ⟨Cv, hCv_pos, hweight⟩
+  let Clog : ℝ := ((Real.log 2) ^ 2)⁻¹
+  let Cm : ℝ := K * Cv * Clog
+  have hlog2_pos : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hClog_pos : 0 < Clog := by
+    dsimp [Clog]
+    exact inv_pos.mpr (sq_pos_of_pos hlog2_pos)
+  refine ⟨Cm, mul_pos (mul_pos hK_pos hCv_pos) hClog_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  let sp := perronKernelSeparatedPuncturedBoundarySet x T
+  let logSq : ℝ := (Real.log x) ^ 2
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hT_pos : 0 < T := by linarith
+  have hscale_nonneg : 0 ≤ x / T := div_nonneg hx_nonneg hT_pos.le
+  have hbase_nonneg : 0 ≤ (K * Cv) * (x / T) :=
+    mul_nonneg (mul_nonneg hK_pos.le hCv_pos.le) hscale_nonneg
+  have hlog_mono : Real.log (2 : ℝ) ≤ Real.log x :=
+    Real.log_le_log (by norm_num) hx
+  have hlog_sq_le : (Real.log (2 : ℝ)) ^ 2 ≤ logSq := by
+    dsimp [logSq]
+    nlinarith
+  have hone_absorb : 1 ≤ Clog * logSq := by
+    dsimp [Clog]
+    calc (1 : ℝ)
+        = ((Real.log (2 : ℝ)) ^ 2)⁻¹ * (Real.log (2 : ℝ)) ^ 2 := by
+            field_simp [ne_of_gt (sq_pos_of_pos hlog2_pos)]
+      _ ≤ ((Real.log (2 : ℝ)) ^ 2)⁻¹ * logSq :=
+            mul_le_mul_of_nonneg_left hlog_sq_le
+              (inv_nonneg.mpr (sq_nonneg (Real.log (2 : ℝ))))
+  have hsep_weight_le_boundary :
+      ∑ n ∈ sp, ArithmeticFunction.vonMangoldt n ≤
+        perronKernelBoundaryWindowVonMangoldtWeight x T := by
+    dsimp [sp, perronKernelSeparatedPuncturedBoundarySet,
+      perronKernelBoundaryWindowVonMangoldtWeight]
+    exact
+      Finset.sum_le_sum_of_subset_of_nonneg
+        (by
+          intro n hn
+          exact (Finset.filter_subset _ _) ((Finset.filter_subset _ _) hn))
+        (by
+          intro n _hn_boundary _hn_not_sp
+          exact vonMangoldt_nonneg n)
+  calc perronKernelSeparatedDavenportSmoothEnvelope x T
+      = ∑ n ∈ sp,
+          ArithmeticFunction.vonMangoldt n *
+            (2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+              ((1 + 1 / Real.log x) * T)) := by
+        dsimp [sp, perronKernelSeparatedDavenportSmoothEnvelope]
+    _ ≤ ∑ n ∈ sp, ArithmeticFunction.vonMangoldt n * K := by
+        apply Finset.sum_le_sum
+        intro n hn
+        exact
+          mul_le_mul_of_nonneg_left
+            (hpoint x T hx hT_lo hT_hi n hn)
+            (vonMangoldt_nonneg n)
+    _ = K * ∑ n ∈ sp, ArithmeticFunction.vonMangoldt n := by
+        rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl
+        intro n _hn
+        ring
+    _ ≤ K * perronKernelBoundaryWindowVonMangoldtWeight x T :=
+        mul_le_mul_of_nonneg_left hsep_weight_le_boundary hK_pos.le
+    _ ≤ K * (Cv * (x / T)) :=
+        mul_le_mul_of_nonneg_left (hweight x T hx hT_lo hT_hi) hK_pos.le
+    _ = (K * Cv) * (x / T) := by ring
+    _ ≤ (K * Cv) * (x / T) * (Clog * logSq) := by
+        nth_rewrite 1 [← mul_one ((K * Cv) * (x / T))]
+        exact mul_le_mul_of_nonneg_left hone_absorb hbase_nonneg
+    _ = Cm * (x / T) * (Real.log x) ^ 2 := by
+        dsimp [Cm, logSq]
+        ring
+
 /-- Reciprocal-log comparison for separated boundary-window terms.  This is
 the formal `log (x / n) >= (x - n) / x` step, inverted on positive quantities. -/
 theorem small_T_separated_reciprocal_log_distance_bound :
@@ -3255,6 +3374,25 @@ theorem small_T_separated_singular_envelope_bound_from_reciprocal_logDistance
     small_T_separated_singular_pointwise_bound
     (small_T_separated_logDistance_bound_from_reciprocal hreciprocal)
 
+/-- Closed singular Davenport-envelope bound at the honest linear-window
+scale. -/
+theorem small_T_separated_singular_envelope_bound :
+    ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedDavenportSingularEnvelope x T ≤
+        Cs * (x / T) * (Real.log x) ^ 2 :=
+  small_T_separated_singular_envelope_bound_from_reciprocal_logDistance
+    small_T_separated_reciprocalDistance_bound
+
+/-- Closed separated Davenport-envelope bound at the honest linear-window
+scale. -/
+theorem small_T_separated_davenport_envelope_linear_bound :
+    ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelSeparatedDavenportEnvelope x T ≤
+        Cd * (x / T) * (Real.log x) ^ 2 :=
+  small_T_separated_davenport_envelope_linear_bound_from_components
+    small_T_separated_singular_envelope_bound
+    small_T_separated_davenport_smooth_envelope_bound
+
 /-- Scale-correct separated weighted atom from a linear-window Davenport
 envelope bound.  This records the usable consequence of the separated
 Davenport route without claiming the false pure `O((log x)^2)` envelope sum. -/
@@ -3273,6 +3411,16 @@ theorem small_T_separated_weighted_bound_from_linear_davenport_envelope_bound
         perronKernelWeightedSeparatedPuncturedBoundaryError_le_davenportEnvelope
           x T (small_T_separated_davenport_kernel_bound x T hx hT_lo hT_hi)
     _ ≤ Cd * (x / T) * (Real.log x) ^ 2 := henvelope x T hx hT_lo hT_hi
+
+/-- Closed separated weighted boundary-window bound at the honest
+linear-window scale.  This is the usable scale-correct consequence of the
+Davenport separated route. -/
+theorem small_T_separated_weighted_linear_bound :
+    ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedSeparatedPuncturedBoundaryError x T ≤
+        Cs * (x / T) * (Real.log x) ^ 2 :=
+  small_T_separated_weighted_bound_from_linear_davenport_envelope_bound
+    small_T_separated_davenport_envelope_linear_bound
 
 /-- Weighted finite cutoff from the Davenport separated-bound route and the
 off-boundary weighted atom. -/

@@ -1277,3 +1277,51 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   wiring is already sufficient.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 24 - Linear Davenport Separated Route
+
+- Classification: `CANDIDATE_CLOSE`.
+- Exact theorem attacked:
+  the next separated Davenport/public-path surface below the validated
+  reciprocal-distance bound, keeping the honest linear-window scale
+  `x / T`.
+- Code facts banked:
+  updated the `perronKernelSeparatedDavenportEnvelope` doc comment to record
+  that the pure `O((log x)^2)` envelope is false on the macroscopic separated
+  window.
+  Added `small_T_separated_davenport_smooth_pointwise_bound`, bounding the
+  smooth Davenport summand uniformly from the existing numerator bound and
+  `T >= 2`, `1 + 1 / log x >= 1`.
+  Added `small_T_separated_davenport_smooth_envelope_bound`, bounding the
+  smooth envelope by `Cm * (x / T) * (Real.log x)^2` using the already proved
+  linear boundary-window von Mangoldt weight and log-square absorption.
+  Added closed linear-scale consequences
+  `small_T_separated_singular_envelope_bound`,
+  `small_T_separated_davenport_envelope_linear_bound`, and
+  `small_T_separated_weighted_linear_bound`.
+- Scale check:
+  preserved the scale-correct `x / T` factor.  This deliberately does not
+  claim the false pure bounded-height separated Davenport envelope needed by
+  older conditional cutoff lemmas.
+- Failed/demoted routes:
+  did not use the demoted near-integer pointwise
+  `K * T * (log x)^2 / x` route, and did not assert a macroscopic pure
+  `O((log x)^2)` von Mangoldt or Davenport-envelope estimate.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  continue outside the separated Davenport route: either prove a compatible
+  off-boundary weighted cutoff estimate, or decide whether the public
+  small-`T` weighted cutoff theorem must be restated through the existing
+  residue/truncation route because the separated boundary contribution is only
+  available at linear-window scale.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
