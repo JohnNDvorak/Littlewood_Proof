@@ -2376,3 +2376,47 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
       perronVerticalFixedWindowIntegral p.1 p.2`, likely from
   `intervalIntegral.integral_indicator` and the slab inequalities
   `2 <= T <= 16`.
+
+### 2026-04-29 Round 47 - Close Raw/Fixed Perron Window Equality
+
+- Classification: `PROOF_CLOSED_AND_REDUCTION_SHARPENED`.
+- Exact theorem attacked:
+  `∀ p ∈ slab, perronVerticalRawIntegral p.1 p.2 =
+      perronVerticalFixedWindowIntegral p.1 p.2`.
+- Code facts banked:
+  changed `perronVerticalFixedWindowIntegral` from a closed `Set.Icc (-T) T`
+  indicator to the exact `Set.Ioc (-T) T` interval-integral convention used by
+  `intervalIntegral.integral_of_le`.  Proved
+  `small_T_perronVerticalRawIntegral_eq_fixedWindow_on_slab16` by rewriting
+  both interval integrals to set integrals, using
+  `MeasureTheory.integral_indicator measurableSet_Ioc`, and restricting along
+  `Set.Ioc (-T) T ⊆ Set.Ioc (-16) 16`.
+  Added
+  `small_T_perronVerticalRawIntegral_continuousOn_slab16_of_fixedWindow` and
+  `small_T_perronVerticalIntegral_continuousOn_slab16_of_fixedWindow`, so the
+  public vertical Perron slab-continuity route now needs only the fixed-window
+  continuity atom.
+- Shape check:
+  the equality is exact, not an endpoint-a.e. claim, because the fixed-window
+  indicator now matches Lean's half-open interval-integral domain.  The cutoff
+  `2 <= T <= 16` supplies the subset into the ambient `[-16,16]` window.
+- Failed/demoted routes:
+  did not try to prove fixed-window dominated convergence in this pass.  The
+  prior closed-interval indicator route would have required an endpoint
+  null-set argument; using `Ioc` avoids that extra proof debt.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, or `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check`; then
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.  Both passed.
+- Smallest next theorem:
+  prove the remaining fixed-window dominated-convergence atom
+  `ContinuousOn (fun p : ℝ × ℝ =>
+      perronVerticalFixedWindowIntegral p.1 p.2) slab`.
