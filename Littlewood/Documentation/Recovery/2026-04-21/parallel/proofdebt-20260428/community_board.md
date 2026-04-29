@@ -1424,3 +1424,46 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Perron/B5a: singular Davenport-envelope component.
   - Pi/Phase: `FixedHeightPerronErrorPhaseWideWindowHyp`.
   - RS/Gabcke: shifted raw numerator/denominator trig atoms.
+
+## Overnight 2026-04-29 Thirty-Second Pass Status
+
+- Atkinson lane is validated and pushed through `e84388b`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Reduce Atkinson correction atom to pointwise fixed shifts`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the absolute fixed-shift correction-prefix atom now follows from
+    a pointwise fixed-shift correction majorant against `atkinsonModeWeight`.
+    This keeps the shift-dependent constant explicit and avoids any
+    phase-weight-to-unweighted division.
+  - Remaining Atkinson atoms:
+    - shifted-interval stationary-phase target remainder;
+    - pointwise fixed-shift correction majorant:
+      `∀ j ≥ 1, ∃ B_j > 0, ∀ n,
+        ‖atkinsonResonantShiftedCorrectionTerm n j‖
+          ≤ B_j * atkinsonModeWeight (n + j)`.
+- Perron/B5a lane is validated and pushed through amended commit `d96ff88`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Reduce Perron singular envelope to distance weight`.
+  - Coordinator repair: normalized the nonzero branch of the reciprocal-weight
+    nonnegativity proof, fixed the finite-sum distribution direction, aligned
+    the additive inequality order, and moved the singular-distance wrapper
+    below the component helper it calls.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the singular Davenport-envelope component is reduced to a
+    pointwise reciprocal-log comparison plus a finite off-boundary
+    distance-weight summation bound.
+  - Remaining Perron atoms:
+    - distance-weight summation:
+      `perronKernelOffBoundaryDistanceWeight x T ≤ Cd * (Real.log x)^2`
+      for `x ≥ 2`, `2 ≤ T`, `T ≤ 16`;
+    - pointwise reciprocal-log comparison into the split
+      `Λ(n)/n + Λ(n)/(x-n)` term.
+- Current live atoms:
+  - Atkinson: shifted stationary-phase target remainder and pointwise
+    fixed-shift correction majorant.
+  - Perron/B5a: distance-weight summation and pointwise reciprocal-log
+    comparison.
+  - Pi/Phase: `FixedHeightPerronErrorPhaseWideWindowHyp`.
+  - RS/Gabcke: shifted raw numerator/denominator trig atoms.
