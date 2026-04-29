@@ -965,3 +965,54 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
     `TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`, probably
     from an explicit same-height quantitative bound on the paired
     relation-compatible Kronecker search radius.
+
+### 2026-04-29 Round 15: Corrected Perron-Only Packaging Endpoint
+
+- Classification: `HONEST_PACKAGING_ENDPOINT_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - Added `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`.
+  - The sidecar endpoint does not prove
+    `TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp`; it packages the
+    already-bankable corrected route from the four honest classes:
+    `PerronSqrtErrorEventuallyAtHeightHyp`,
+    `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`,
+    `TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`, and
+    `TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp`.
+- Facts banked:
+  - Added `targetAntiDensity_of_relationCompatibleKroneckerAndCompatibility`,
+    forwarding the paired relation-compatible finite-set Kronecker and zeta
+    compatibility inputs to `TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp`.
+  - Added `exactSeed_of_correctedPerronOnlyRoute`, forwarding the four-class
+    corrected route to both Perron-only exact-seed classes.
+  - Added `correctedPhaseCoupling_of_correctedPerronOnlyRoute`, forwarding the
+    exact-seed pair to both corrected canonical phase-coupling classes.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyRoute`, forwarding the same
+    route to `RhPiWitnessData`.
+  - Added `rh_pi_7a_7c_pair_of_correctedPerronOnlyRoute`, forwarding the same
+    route to the concrete RH 7a/7c pair.
+- False-surface audit:
+  - The new endpoint file does not mention `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - It imports the current provider and exact-seed bridge only for existing
+    Perron-only and corrected-canonical wiring; it adds no new analytic axiom.
+  - No sidecar API key or external credential was used, recorded, or exposed.
+- Failed route guardrails:
+  - Do not treat this packaging endpoint as closing the live log-budget atom.
+    The remaining analytic leaves are still
+    `PerronThresholdTowerLogHalfBudgetHyp` and
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`, or an
+    equivalent direct proof of
+    `TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp`.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, `git diff --check`, or other check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Continue with `PerronThresholdTowerLogHalfBudgetHyp`.
+  - Continue with `TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`.
