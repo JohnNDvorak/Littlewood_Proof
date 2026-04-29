@@ -1890,3 +1890,59 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `iteratedDeriv 3 standardGabckeQuarterLocalRemovableSineQuotient 0 =
     -Real.pi ^ 2`, now the only input to
   `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_third`.
+
+### 2026-04-29 Round 39: removable cubic derivative reduced to power series
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `iteratedDeriv 3 standardGabckeQuarterLocalRemovableSineQuotient 0 =
+    -Real.pi ^ 2`, the sole remaining input to
+  `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_third`.
+- Banked inputs:
+  - Existing removable source atom
+    `StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp` already
+    has the exact coefficient data `a 0 = 1 / 2` and
+    `a 3 = -Real.pi ^ 2 / 6`.
+  - Mathlib's
+    `HasFPowerSeriesOnBall.iteratedFDeriv_eq_sum_of_completeSpace` converts
+    a third scalar coefficient into the third iterated derivative; the six
+    permutations of `Fin 3` give the factor `3! = 6`.
+- Proof facts banked:
+  - Added `StandardGabckeQuarterLocalRemovableSineQuotientThirdDerivativeProp`
+    as the named cubic derivative value for the removable sine quotient.
+  - Proved
+    `standardGabckeQuarterLocalRemovableSineQuotientThirdDerivativeProp_of_powerSeries`,
+    deriving the cubic derivative value from
+    `StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp`.
+  - Added
+    `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_powerSeries`,
+    so the reduced dslope bridge is now supplied directly by the removable
+    sine-quotient power-series source.
+- Failed routes:
+  - I did not use the reverse, circular theorem
+    `standardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp_of_dslopeBridge`
+    to feed the derivative required by the same bridge.
+  - I did not define the removable derivative candidate by the raw third
+    derivative.
+  - I did not assume global regularity of the original quotient at
+    denominator-zero points.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, provider shortcuts, or weaken the live
+    coefficient target.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to `origin/recovery/provider-forensics-2026-04-21`
+    at `a9ea406` before editing.
+  - `git diff --check`: passed.
+  - First focused validation passed but reported an unused simp argument in the
+    new theorem; I removed that local warning.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp`, the
+  exact local power-series expansion at `0` for
+  `if w = 0 then 1/2 else sin(pi*w - 2*pi*w^2) / sin(2*pi*w)`, with cubic
+  coefficient `-Real.pi ^ 2 / 6`.
