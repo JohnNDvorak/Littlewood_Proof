@@ -1443,6 +1443,13 @@ theorem standardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp_of_lowOrd
     rw [h3]
     norm_num
 
+/-- The denominator dslope coefficient data is closed from the proved
+low-order derivative values. -/
+theorem standardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp_proved :
+    StandardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp :=
+  standardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp_of_lowOrderDerivatives
+    standardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp_proved
+
 /-- The low-order derivative bundle is reduced to its three point-value atoms.
 The first one is already closed by evenness. -/
 theorem standardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp_of_pointDerivatives
