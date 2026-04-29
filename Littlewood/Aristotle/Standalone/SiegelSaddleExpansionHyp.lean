@@ -276,6 +276,65 @@ def StandardGabckeStationaryPhaseIdentityProp
 def StandardGabckeCoefficientBoundProp (stdCoeff : ℝ → ℝ) : Prop :=
   ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 → |stdCoeff p| ≤ fresnelC1Bound
 
+/-! ## Standard Gabcke source atoms
+
+The phase-normalized leading term is now fixed. The remaining missing source
+input is the actual contour/Taylor theorem identifying the first source
+coefficient with the third-derivative formula below, plus the corresponding
+Tabelle-1 coefficient estimate. These atoms are deliberately stated with the
+unfolded derivative formula so they are tied to Gabcke's coefficient source,
+not to a defect quotient or an abstract local provider. -/
+
+/-- Source-level contour/Taylor identity for Gabcke's first coefficient, in
+the already phase-normalized local leading convention. -/
+def StandardGabckeContourTaylorFirstCoefficientIdentityProp : Prop :=
+  ∀ k : ℕ, ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    ErrorTerm (blockCoord k p)
+      - (-1 : ℝ) ^ k * (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
+        standardGabckePhaseNormalizedLead p =
+      (2 * Real.pi / blockCoord k p) ^ ((1 : ℝ) / 4) *
+        ((-deriv (deriv (deriv standardGabckeRawPsi)) p / (96 * Real.pi ^ 2)) *
+          (blockCoord k p) ^ (-(1 : ℝ) / 2))
+
+/-- Source-level Tabelle-1 bound for Gabcke's explicit first coefficient. -/
+def StandardGabckeTabelleFirstCoefficientBoundProp : Prop :=
+  ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    |(-deriv (deriv (deriv standardGabckeRawPsi)) p / (96 * Real.pi ^ 2))| ≤
+      fresnelC1Bound
+
+/-- The unfolded contour/Taylor source identity supplies the standard
+stationary-phase identity for the concrete raw first coefficient. -/
+theorem standardGabckeStationaryPhaseIdentity_rawFirstCoefficient_of_contourTaylor
+    (h : StandardGabckeContourTaylorFirstCoefficientIdentityProp) :
+    StandardGabckeStationaryPhaseIdentityProp
+      standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient := by
+  intro k p hp
+  simpa [standardGabckeRawFirstCoefficient] using h k p hp
+
+/-- The unfolded Tabelle-1 source bound supplies the standard coefficient bound
+for the concrete raw first coefficient. -/
+theorem standardGabckeCoefficientBound_rawFirstCoefficient_of_tabelleBound
+    (h : StandardGabckeTabelleFirstCoefficientBoundProp) :
+    StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient := by
+  intro p hp
+  simpa [standardGabckeRawFirstCoefficient] using h p hp
+
+/-- Combined source surface for Gabcke's first coefficient after the leading
+phase normalization has been fixed. -/
+def StandardGabckeFirstCoefficientSourceProp : Prop :=
+  StandardGabckeContourTaylorFirstCoefficientIdentityProp ∧
+    StandardGabckeTabelleFirstCoefficientBoundProp
+
+/-- The two concrete standard Gabcke target propositions follow from the two
+source atoms above. -/
+theorem standardGabckeTargets_of_firstCoefficientSource
+    (h : StandardGabckeFirstCoefficientSourceProp) :
+    StandardGabckeStationaryPhaseIdentityProp
+        standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient ∧
+      StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient :=
+  ⟨standardGabckeStationaryPhaseIdentity_rawFirstCoefficient_of_contourTaylor h.1,
+    standardGabckeCoefficientBound_rawFirstCoefficient_of_tabelleBound h.2⟩
+
 /-- A standard-normalized stationary-phase identity becomes the local
 coefficient identity once the leading coefficient normalization has been
 bridged to `rsPsi`. -/

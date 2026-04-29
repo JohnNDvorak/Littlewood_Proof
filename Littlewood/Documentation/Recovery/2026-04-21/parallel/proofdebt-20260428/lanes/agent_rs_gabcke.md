@@ -392,3 +392,57 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   the Tabelle-1 first-coefficient estimate.
 - Coordinator action requested:
   run the requested serialized validation commands.
+
+### 2026-04-29 Round 8: standard first-coefficient source surface
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Theorem/file attacked:
+  `StandardGabckeStationaryPhaseIdentityProp
+    standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient` and
+  `StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Proof facts banked:
+  - Static source search found no existing contour/Taylor theorem giving the
+    phase-normalized stationary-phase identity with the raw Gabcke first
+    coefficient, and no existing Tabelle-1 bound for that exact derivative
+    coefficient.
+  - Added `StandardGabckeContourTaylorFirstCoefficientIdentityProp`, stated
+    with the unfolded source coefficient
+    `-deriv (deriv (deriv standardGabckeRawPsi)) p / (96*pi^2)` and the
+    already proved phase-normalized leading term
+    `standardGabckePhaseNormalizedLead`.
+  - Added `StandardGabckeTabelleFirstCoefficientBoundProp`, the exact
+    Tabelle-1 source bound for the same unfolded first coefficient.
+  - Added
+    `standardGabckeStationaryPhaseIdentity_rawFirstCoefficient_of_contourTaylor`,
+    proving the requested standard stationary-phase identity for
+    `standardGabckeRawFirstCoefficient` from the contour/Taylor source atom.
+  - Added `standardGabckeCoefficientBound_rawFirstCoefficient_of_tabelleBound`,
+    proving the requested standard coefficient bound from the Tabelle-1 source
+    atom.
+  - Added `StandardGabckeFirstCoefficientSourceProp` and
+    `standardGabckeTargets_of_firstCoefficientSource` as the paired source
+    package feeding both standard target propositions.
+- Failed routes that should not be retried:
+  - Do not assert raw `standardGabckeRawPsi = rsPsi`; the leading bridge stays
+    through `standardGabckePhaseNormalizedLead`.
+  - Do not use exact k-independence or block-independence; downstream
+    RS/Gabcke wiring is already proved and this round only targets
+    `SiegelSaddleExpansionHyp`.
+  - Do not define the coefficient as a defect quotient; the new source atoms
+    are tied to the unfolded Gabcke derivative formula.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - `git diff --check`: passed.
+  - No Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+- Smallest next theorem:
+  prove `StandardGabckeContourTaylorFirstCoefficientIdentityProp` from the
+  actual contour/Taylor expansion, and prove
+  `StandardGabckeTabelleFirstCoefficientBoundProp` from Gabcke Tabelle 1 for
+  the unfolded coefficient formula.
+- Coordinator action requested:
+  run the requested serialized validation command.
