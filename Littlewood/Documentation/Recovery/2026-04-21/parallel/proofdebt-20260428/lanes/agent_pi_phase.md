@@ -2404,3 +2404,44 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual` or `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`.
+
+### 2026-04-29 Round 47: Target Budgeted Projection Radius
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`.
+- Facts banked:
+  - Added `targetFiniteZeroBudgetedRelativelyDenseRadius`, the target radius selected directly from `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`.
+  - Added private `targetFiniteZeroBudgetedRelativelyDenseRadius_spec`, carrying positivity, the target hit property, and the exact tower half-budget for that selected radius.
+  - Added `targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyDense_hyp`, projecting the target finite-zero relative-density provider from the paired budgeted payload.
+  - Added `targetFiniteZeroBudgetedRelativelyDenseRadius_halfBudget`.
+  - Added `TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`.
+  - Added `targetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_budgetedProjectionComparison`.
+- What changed:
+  - The target half-budget leaf now reduces to one exact selected-radius comparison: the target-only `Classical.choose` radius from the projected provider must be no larger than the budgeted paired payload's selected target radius.
+  - The budget for the paired payload's selected target radius is proved directly from `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`.
+  - This stays on the canonical chosen-radius route and does not use arbitrary-budget finite-set Kronecker.
+- Remaining goal shape:
+  - `TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`: prove the projected target-only chooser is controlled by the explicit budgeted target radius, or refactor the public target radius to expose this selected radius definitionally.
+  - Symmetric anti-target work remains analogous if the target comparison route is accepted.
+- Failed/circular route:
+  - Directly unfolding `targetFiniteZeroInhomogeneousPhaseRadius` for the projected provider did not close `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`; Lean left an opaque `Classical.choose` goal for the target-only witness.
+  - Did not claim that the budgeted witness controls the target-only chooser without the named comparison predicate.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set Kronecker, arbitrary-radius route, provider cycles, reverse-comparison instances, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed local focused validation under the corrected singleflight rule.
+- Validation command/result:
+  - `git diff --check`
+  - Result: passed.
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - Result: passed.
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`.

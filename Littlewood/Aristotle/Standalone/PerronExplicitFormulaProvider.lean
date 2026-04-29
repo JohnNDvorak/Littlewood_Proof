@@ -3533,6 +3533,107 @@ class TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp : Prop wh
             ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
                 m • (2 * Real.pi)‖ ≤ ε)
 
+/-- The target radius selected from the paired budgeted finite-zero payload.
+
+This keeps the budgeted source's own `Classical.choose` visible, rather than
+switching to a separately chosen target-only relative-density witness. -/
+noncomputable def targetFiniteZeroBudgetedRelativelyDenseRadius
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    (T ε : ℝ) (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1) : ℝ :=
+  Classical.choose
+    (TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp.witness
+      T ε hT4 hεpos hεlt)
+
+/-- Positivity, budget, and target relative-density data for the selected
+target radius from the paired budgeted finite-zero payload. -/
+private theorem targetFiniteZeroBudgetedRelativelyDenseRadius_spec
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    {T ε : ℝ} (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1) :
+    0 < targetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt ∧
+    targetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt + 1
+      ≤ Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+    (∀ L : ℝ,
+      ∃ t0 : ℝ,
+        L < t0 ∧
+        t0 < L + targetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt ∧
+        ∀ ρ ∈ (finite_zeros_le T).toFinset,
+          ∃ m : ℤ,
+            ‖t0 * ρ.im - Complex.arg ρ -
+                m • (2 * Real.pi)‖ ≤ ε) := by
+  dsimp [targetFiniteZeroBudgetedRelativelyDenseRadius]
+  let hW :=
+    TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp.witness
+      T ε hT4 hεpos hεlt
+  let Rt : ℝ := Classical.choose hW
+  have hRtSpec : ∃ Ra : ℝ,
+      0 < Rt ∧
+      0 < Ra ∧
+      Rt + 1
+        ≤ Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+      Ra + 1
+        ≤ Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+      (∀ L : ℝ,
+        ∃ t0 : ℝ,
+          L < t0 ∧
+          t0 < L + Rt ∧
+          ∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖t0 * ρ.im - Complex.arg ρ -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+      (∀ L : ℝ,
+        ∃ t0 : ℝ,
+          L < t0 ∧
+          t0 < L + Ra ∧
+          ∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
+                  m • (2 * Real.pi)‖ ≤ ε) := by
+    simpa [hW, Rt] using Classical.choose_spec hW
+  rcases hRtSpec with
+    ⟨Ra, hRtpos, _hRapos, hRtBudget, _hRaBudget, hTargetHit, _hAntiHit⟩
+  exact ⟨hRtpos, hRtBudget, hTargetHit⟩
+
+/-- The budgeted paired finite-zero relative-density payload supplies the
+target finite-zero relative-density leaf.
+
+For `ε < 1` this projection uses the same target radius returned by the
+budgeted payload.  For large tolerances, it reuses the `ε = min ε (1 / 2)`
+payload, since the unbudgeted relative-density class must be total for all
+positive `ε`. -/
+theorem targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyDense_hyp
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hεpos
+    by_cases hεlt : ε < 1
+    · exact
+        ⟨targetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt,
+          (targetFiniteZeroBudgetedRelativelyDenseRadius_spec
+            hT4 hεpos hεlt).1,
+          (targetFiniteZeroBudgetedRelativelyDenseRadius_spec
+            hT4 hεpos hεlt).2.2⟩
+    · let δ : ℝ := min ε (1 / 2)
+      have hδpos : 0 < δ := by
+        dsimp [δ]
+        exact lt_min hεpos (by norm_num)
+      have hδlt : δ < 1 := by
+        dsimp [δ]
+        exact lt_of_le_of_lt (min_le_right ε (1 / 2 : ℝ)) (by norm_num)
+      have hδle : δ ≤ ε := by
+        dsimp [δ]
+        exact min_le_left ε (1 / 2 : ℝ)
+      rcases TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp.witness
+        T δ hT4 hδpos hδlt with
+        ⟨Rt, _Ra, hRtpos, _hRapos, _hRtBudget, _hRaBudget,
+          hTargetHit, _hAntiHit⟩
+      refine ⟨Rt, hRtpos, ?_⟩
+      intro L
+      rcases hTargetHit L with ⟨t0, hLt, htR, hApprox⟩
+      refine ⟨t0, hLt, htR, ?_⟩
+      intro ρ hρ
+      rcases hApprox ρ hρ with ⟨m, hm⟩
+      exact ⟨m, hm.trans hδle⟩
+
 /-- Relation-compatible quantitative Kronecker source for the paired
 target/anti finite-zero boxes.
 
@@ -3896,6 +3997,44 @@ theorem targetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_residual
     (h : TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
     TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp where
   witness := h
+
+/-- Remaining comparison needed to turn the budgeted paired payload into the
+target canonical phase-radius residual.
+
+The budgeted payload already proves the tower bound for its own selected target
+radius.  What remains is a pure `Classical.choose` comparison: the target-only
+radius chosen from the projected provider must be no larger than that selected
+budgeted radius. -/
+def TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] : Prop :=
+  ∀ (T ε : ℝ) (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1),
+    @targetFiniteZeroInhomogeneousPhaseRadius
+        targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyDense_hyp
+        T ε
+      ≤ targetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt
+
+/-- The selected target radius in the budgeted paired finite-zero payload
+already satisfies the tower half-budget. -/
+theorem targetFiniteZeroBudgetedRelativelyDenseRadius_halfBudget
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    {T ε : ℝ} (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1) :
+    targetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt + 1
+      ≤ Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 :=
+  (targetFiniteZeroBudgetedRelativelyDenseRadius_spec hT4 hεpos hεlt).2.1
+
+/-- If the projected target-only chooser is controlled by the selected radius
+from the budgeted paired payload, the target canonical residual follows. -/
+theorem targetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_budgetedProjectionComparison
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] :
+    TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison →
+    @TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual
+      targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyDense_hyp := by
+  intro hcmp
+  intro T ε hT4 hεpos hεlt
+  have hChoose := hcmp T ε hT4 hεpos hεlt
+  have hBudget :=
+    targetFiniteZeroBudgetedRelativelyDenseRadius_halfBudget hT4 hεpos hεlt
+  linarith
 
 /-- Anti-target-side height-only finite-zero phase-radius majorant source. -/
 class AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp
