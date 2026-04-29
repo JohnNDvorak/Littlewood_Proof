@@ -6762,6 +6762,56 @@ theorem small_T_perronVerticalIntegral_continuousOn_transition
     Xtail
     (small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_transition Xtail)
 
+/-- Transition continuity of the normalized concrete contour defect now only
+needs the zero-sum continuity component; the Perron-integral continuity
+component is closed by the fixed-window DCT route. -/
+theorem small_T_concrete_contour_remainder_normalized_continuousOn_transition_from_zeroSum_continuity
+    (Xtail : ℝ)
+    (hzero : ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalContourRemainderNormalized p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_concrete_contour_remainder_normalized_continuousOn_transition_from_components
+    Xtail (small_T_perronVerticalIntegral_continuousOn_transition Xtail) hzero
+
+/-- The finite transition normalized-defect estimate now only needs zero-sum
+continuity; the vertical Perron-integral continuity is closed. -/
+theorem small_T_concrete_contour_remainder_transition_tail_from_zeroSum_continuity
+    (Xtail : ℝ) (hXtail : 16 ≤ Xtail)
+    (hzero : ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    ∃ Cmid > (0 : ℝ), ∀ x T : ℝ,
+      16 ≤ x → x ≤ Xtail → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cmid :=
+  small_T_concrete_contour_remainder_transition_tail_from_component_continuity
+    Xtail hXtail (small_T_perronVerticalIntegral_continuousOn_transition Xtail) hzero
+
+/-- Tail from `16` reduced to zero-sum continuity on the finite transition
+rectangle and the separate eventual asymptotic tail. -/
+theorem small_T_concrete_contour_remainder_tail16_from_transition_zeroSum_continuity_and_asymptotic_tail
+    (Xtail : ℝ) (hXtail : 16 ≤ Xtail)
+    (hzero : ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (hasymptotic : ∃ Casymp > (0 : ℝ), ∀ x T : ℝ,
+      Xtail ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Casymp) :
+    ∃ Ctail > (0 : ℝ), ∀ x T : ℝ,
+      16 ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Ctail :=
+  small_T_concrete_contour_remainder_tail16_from_transition_component_continuity_and_asymptotic_tail
+    Xtail hXtail (small_T_perronVerticalIntegral_continuousOn_transition Xtail)
+    hzero hasymptotic
+
 /-- Closed fixed-window slab continuity from the local DCT inputs. -/
 theorem small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16 :
     ContinuousOn
@@ -7259,6 +7309,26 @@ theorem small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_trans
     (small_T_concrete_contour_remainder_tail16_from_transition_component_continuity_and_asymptotic_tail
       Xtail hXtail hperron hzero hasymptotic)
 
+/-- Explicit cutoff-`16` normalized supremum from the proved finite-zero slab,
+zero-sum continuity on the finite transition rectangle, and an eventual
+asymptotic tail.  The Perron-integral continuity component is closed. -/
+theorem small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_zeroSum_continuity_and_asymptotic_tail
+    (Xtail : ℝ) (hXtail : 16 ≤ Xtail)
+    (hzero : ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (hasymptotic : ∃ Casymp > (0 : ℝ), ∀ x T : ℝ,
+      Xtail ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Casymp) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cc :=
+  small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_component_continuity_and_asymptotic_tail
+    Xtail hXtail (small_T_perronVerticalIntegral_continuousOn_transition Xtail)
+    hzero hasymptotic
+
 /-- Explicit cutoff-`16` normalized supremum from slab continuity and the
 separate unbounded tail atom. -/
 theorem small_T_concrete_contour_remainder_normalized_sup_from_continuousOn_slab16_and_tail16
@@ -7574,6 +7644,24 @@ theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZe
   small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
     (small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_component_continuity_and_asymptotic_tail
       Xtail hXtail hperron hzero hasymptotic)
+
+/-- Linear-window small-`T` surface from zero-sum continuity on the finite
+transition rectangle and an eventual asymptotic tail.  The vertical
+Perron-integral transition continuity component is already closed. -/
+theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_transition_zeroSum_continuity_and_asymptotic_tail
+    (Xtail : ℝ) (hXtail : 16 ≤ Xtail)
+    (hzero : ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (hasymptotic : ∃ Casymp > (0 : ℝ), ∀ x T : ℝ,
+      Xtail ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Casymp) :
+    SmallTPerronLinearWindowBoundHyp :=
+  small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
+    (small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_zeroSum_continuity_and_asymptotic_tail
+      Xtail hXtail hzero hasymptotic)
 
 /-- Linear-window small-`T` surface from continuity on the compact cutoff-`16`
 slab and the separate unbounded tail atom. -/

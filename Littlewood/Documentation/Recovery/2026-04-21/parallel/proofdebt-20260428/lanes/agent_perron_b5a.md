@@ -3150,3 +3150,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   zero-sum transition boundedness/continuity input needed by
   `perronVerticalContourRemainderNormalized`.  The eventual normalized
   asymptotic tail from `Xtail` remains separate.
+
+### 2026-04-29 Round 63 - Wire Transition Perron Continuity Into Normalized Route
+
+- Classification: `REDUCTION_WIRED`.
+- Exact theorem attacked:
+  transition bounded-image/normalized-defect route below
+  `perronVerticalContourRemainderNormalized`, after
+  `small_T_perronVerticalIntegral_continuousOn_transition` was closed.
+- Code facts banked:
+  added
+  `small_T_concrete_contour_remainder_normalized_continuousOn_transition_from_zeroSum_continuity`,
+  which discharges the Perron-integral component of normalized-defect
+  transition continuity and leaves only transition continuity of
+  `zeroSumRe`.  Added
+  `small_T_concrete_contour_remainder_transition_tail_from_zeroSum_continuity`
+  and
+  `small_T_concrete_contour_remainder_tail16_from_transition_zeroSum_continuity_and_asymptotic_tail`.
+  Added downstream wrappers
+  `small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_zeroSum_continuity_and_asymptotic_tail`
+  and
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_transition_zeroSum_continuity_and_asymptotic_tail`,
+  so the linear-window surface now reduces to exactly zero-sum transition
+  continuity plus the separate eventual normalized asymptotic tail.
+- Shape check:
+  no zero-sum continuity was asserted, and no closed-cutoff zero-set local
+  constancy was reintroduced.  The finite transition slab remains separated
+  from the unbounded asymptotic tail.
+- Failed/demoted routes:
+  did not attack the zero-sum continuity or asymptotic-tail atoms in this pass;
+  this pass only removed the already-closed Perron-integral continuity
+  hypothesis from the downstream route.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, broad providers, dummy witnesses, new axioms, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check` passed.  `lake build
+  Littlewood.Aristotle.Standalone.PerronTruncationInfra` passed under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.
+- Smallest next theorem:
+  close the transition `zeroSumRe` boundedness/continuity input on
+  `16 <= x <= Xtail`, `2 <= T <= 16`, or prove the eventual normalized
+  asymptotic tail from `Xtail`.  The public legacy absorption obligation
+  remains separate and should not be introduced without a real proof.
