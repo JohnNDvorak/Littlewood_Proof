@@ -1101,3 +1101,42 @@ Timestamp: 2026-04-28 22:56 CDT.
     canonical majorant residual, plus target/anti chosen-radius residuals.
   - RS/Gabcke: quarter local Taylor atoms and quarter raw-removable bridge,
     with analogous three-quarter atoms available if easier.
+
+## Overnight 2026-04-29 Twenty-Third Pass Status
+
+- Perron/B5a lane is validated and pushed through `3bfd980`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Close Perron linear Davenport route`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the separated Davenport boundary contribution is now bounded at
+    the scale
+    `C * (x / T) * (Real.log x)^2`.
+  - Guardrail recorded: the pure separated `O((Real.log x)^2)` route is
+    false/demoted. Continue through the off-boundary-compatible assembly or a
+    corrected truncation/residue handoff, not by strengthening the separated
+    boundary term alone.
+  - Halley is redeployed to close the next true B5a public-path leaf under
+    this scale.
+- Pi/Phase lane is validated and pushed through `4a36945`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Name pi selected-threshold residual`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the canonical majorant route now factors through the exact
+    selected-threshold residual
+    `perronThreshold hRH T <= max X (perronThreshold hRH T0)`.
+  - Guardrail recorded: do not pretend cross-height monotonicity follows from
+    the opaque `Classical.choose` threshold definition. Either prove the
+    selected residual directly or refactor the provider around a fixed-height
+    Perron error witness.
+  - Planck is redeployed to this exact residual or the fixed-height refactor.
+- Current live atoms:
+  - Atkinson: shifted-interval stationary-phase target remainder and native
+    fixed-shift correction-prefix leaf.
+  - Perron/B5a: assemble the linear Davenport boundary scale into the public
+    B5a route or adjust the truncation/residue handoff accordingly.
+  - Pi/Phase: selected-threshold/cofinality residual or corrected fixed-height
+    canonical majorant residual, plus target/anti chosen-radius residuals.
+  - RS/Gabcke: quarter local Taylor atoms and quarter raw-removable bridge,
+    with analogous three-quarter atoms available if easier.
