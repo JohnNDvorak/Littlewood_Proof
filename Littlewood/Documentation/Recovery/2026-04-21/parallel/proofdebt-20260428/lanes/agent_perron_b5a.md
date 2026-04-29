@@ -2131,3 +2131,57 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
       perronVerticalContourRemainderNormalized p.1 p.2)
     {p : ℝ × ℝ | 2 <= p.1 /\ p.1 <= 16 /\ 2 <= p.2 /\ p.2 <= 16}`,
   or prove the separate asymptotic tail atom on `16 <= x`.
+
+### 2026-04-29 Round 42 - Normalize Slab Continuity to Components
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the slab continuity hypothesis for
+  `perronVerticalContourRemainderNormalized` on the cutoff box
+  `2 <= x <= 16`, `2 <= T <= 16`.
+- Code facts banked:
+  added
+  `small_T_concrete_contour_remainder_continuousOn_slab16_from_components`,
+  reducing unnormalized concrete-remainder continuity to continuity of the two
+  analytic components
+  `(fun p => perronVerticalIntegral p.1 p.2)` and
+  `(fun p => zeroSumRe p.1 p.2)` on the same box.  Added
+  `small_T_residue_error_shape_continuousOn_slab16` and
+  `small_T_residue_error_shape_ne_zero_on_slab16`, proving the normalization
+  denominator is continuous and nonzero on the cutoff slab using
+  `small_T_residue_error_shape_pos`.  Added
+  `small_T_concrete_contour_remainder_normalized_continuousOn_slab16_from_remainder`
+  and
+  `small_T_concrete_contour_remainder_normalized_continuousOn_slab16_from_components`.
+  Wired the component-continuity route into the normalized slab/tail supremum
+  and `SmallTPerronLinearWindowBoundHyp` via
+  `small_T_concrete_contour_remainder_normalized_sup_from_component_continuity_slab16_and_tail16`
+  and
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder_component_continuity_slab16_and_tail16`.
+- Scale check:
+  all continuity and denominator facts are restricted to the compact cutoff box.
+  The `16 <= x` tail remains a separate unbounded analytic atom.
+- Failed/demoted routes:
+  did not claim continuity of the variable-limit Perron integral or zero sum.
+  Those are now the explicit smaller slab regularity atoms.  Did not introduce
+  a legacy `SmallTPerronBoundHyp` instance or any absorption shortcut.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check`; then
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.  Both passed.
+- Smallest next theorem:
+  prove either
+  `ContinuousOn (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+    {p : ℝ × ℝ | 2 <= p.1 /\ p.1 <= 16 /\ 2 <= p.2 /\ p.2 <= 16}`
+  and
+  `ContinuousOn (fun p : ℝ × ℝ => zeroSumRe p.1 p.2)
+    {p : ℝ × ℝ | 2 <= p.1 /\ p.1 <= 16 /\ 2 <= p.2 /\ p.2 <= 16}`,
+  or prove the separate asymptotic tail atom on `16 <= x`.

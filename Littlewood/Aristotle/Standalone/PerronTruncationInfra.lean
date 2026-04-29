@@ -4976,6 +4976,88 @@ theorem small_T_concrete_contour_remainder_slab16_from_bddAbove_image
     change perronVerticalContourRemainderNormalized x T ≤ max (1 : ℝ) M
     exact le_trans (hM himage) (le_max_right (1 : ℝ) M)
 
+/-- Continuity of the concrete contour remainder on the cutoff-`16` slab from
+continuity of its two analytic components. -/
+theorem small_T_concrete_contour_remainder_continuousOn_slab16_from_components
+    (hperron : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (hzero : ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalContourRemainderRe p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+  unfold perronVerticalContourRemainderRe
+  exact (hperron.sub continuous_fst.continuousOn).add hzero
+
+/-- Continuity of the normalization denominator on the cutoff-`16` slab. -/
+theorem small_T_residue_error_shape_continuousOn_slab16 :
+    ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Real.sqrt p.1 * (Real.log p.2) ^ 2 / Real.sqrt p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+  have hfst : ContinuousOn (fun p : ℝ × ℝ => p.1)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+    continuous_fst.continuousOn
+  have hsnd : ContinuousOn (fun p : ℝ × ℝ => p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+    continuous_snd.continuousOn
+  have hlogT : ContinuousOn (fun p : ℝ × ℝ => Real.log p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+    exact ContinuousOn.log hsnd (fun p hp => by
+      have hpT_pos : 0 < p.2 := by linarith [hp.2.2.1]
+      exact ne_of_gt hpT_pos)
+  have hsqrtx : ContinuousOn (fun p : ℝ × ℝ => Real.sqrt p.1)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+    ContinuousOn.sqrt hfst
+  have hsqrtT : ContinuousOn (fun p : ℝ × ℝ => Real.sqrt p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+    ContinuousOn.sqrt hsnd
+  exact ContinuousOn.div (hsqrtx.mul (hlogT.pow 2)) hsqrtT (fun p hp => by
+    have hpT_pos : 0 < p.2 := by linarith [hp.2.2.1]
+    exact ne_of_gt (Real.sqrt_pos.mpr hpT_pos))
+
+/-- The normalization denominator is nonzero on the cutoff-`16` slab. -/
+theorem small_T_residue_error_shape_ne_zero_on_slab16
+    (p : ℝ × ℝ)
+    (hp : p ∈ {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    Real.sqrt p.1 * (Real.log p.2) ^ 2 / Real.sqrt p.2 ≠ 0 := by
+  exact ne_of_gt
+    (small_T_residue_error_shape_pos p.1 p.2 hp.1 hp.2.2.1 hp.2.2.2)
+
+/-- Continuity of the normalized concrete contour defect on the cutoff-`16`
+slab from continuity of the unnormalized concrete remainder. -/
+theorem small_T_concrete_contour_remainder_normalized_continuousOn_slab16_from_remainder
+    (hrem : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalContourRemainderRe p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalContourRemainderNormalized p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+  unfold perronVerticalContourRemainderNormalized
+  exact ContinuousOn.div (ContinuousOn.abs hrem)
+    small_T_residue_error_shape_continuousOn_slab16
+    small_T_residue_error_shape_ne_zero_on_slab16
+
+/-- Continuity of the normalized concrete contour defect on the cutoff-`16`
+slab from continuity of the vertical Perron integral and zero-sum components. -/
+theorem small_T_concrete_contour_remainder_normalized_continuousOn_slab16_from_components
+    (hperron : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (hzero : ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalContourRemainderNormalized p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_concrete_contour_remainder_normalized_continuousOn_slab16_from_remainder
+    (small_T_concrete_contour_remainder_continuousOn_slab16_from_components
+      hperron hzero)
+
 /-- The compact-slab bounded-image atom follows from continuity on the closed
 box `2 ≤ x ≤ 16`, `2 ≤ T ≤ 16`.
 
@@ -5055,6 +5137,28 @@ theorem small_T_concrete_contour_remainder_normalized_sup_from_continuousOn_slab
           (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cc :=
   small_T_concrete_contour_remainder_normalized_sup_from_slab16_and_tail16
     (small_T_concrete_contour_remainder_slab16_from_continuousOn hslab_cont)
+    htail16
+
+/-- Explicit cutoff-`16` normalized supremum from component continuity on the
+slab and the separate unbounded tail atom. -/
+theorem small_T_concrete_contour_remainder_normalized_sup_from_component_continuity_slab16_and_tail16
+    (hperron : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (hzero : ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (htail16 : ∃ Ctail > (0 : ℝ), ∀ x T : ℝ,
+      16 ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Ctail) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cc :=
+  small_T_concrete_contour_remainder_normalized_sup_from_continuousOn_slab16_and_tail16
+    (small_T_concrete_contour_remainder_normalized_continuousOn_slab16_from_components
+      hperron hzero)
     htail16
 
 /-- Strengthened small-`T` surface matching the closed Perron cutoff route.
@@ -5282,6 +5386,25 @@ theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_continuo
   small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
     (small_T_concrete_contour_remainder_normalized_sup_from_continuousOn_slab16_and_tail16
       hslab_cont htail16)
+
+/-- Linear-window small-`T` surface from component continuity on the compact
+cutoff-`16` slab and the separate unbounded tail atom. -/
+theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_component_continuity_slab16_and_tail16
+    (hperron : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (hzero : ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (htail16 : ∃ Ctail > (0 : ℝ), ∀ x T : ℝ,
+      16 ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Ctail) :
+    SmallTPerronLinearWindowBoundHyp :=
+  small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
+    (small_T_concrete_contour_remainder_normalized_sup_from_component_continuity_slab16_and_tail16
+      hperron hzero htail16)
 
 /-- Legacy public small-`T` provider from the smaller contour-remainder split,
 conditional on the explicit linear-window absorption atom.
