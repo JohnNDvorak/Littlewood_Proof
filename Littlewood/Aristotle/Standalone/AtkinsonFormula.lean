@@ -20756,6 +20756,93 @@ private theorem atkinson_endpointGap_bound_of_correctedPhaseError_bound
   exact (atkinsonNormalizedShiftedCorrectionCarrierEndpointGap_norm_le_correctedPhaseError n j).trans
     (hphase' n hn)
 
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+private lemma atkinson_shifted_inv_scale_le_relativePhase_div_weight
+    (n j : ℕ) (hj : 1 ≤ j) (hn : j ≤ n) :
+    (j : ℝ) / (((n + j : ℕ) : ℝ) + 1)
+      ≤ Real.sqrt 2 *
+          (atkinsonShiftedRelativePhase (n + j) j /
+            atkinsonShiftedRelativeWeight (n + j) j) := by
+  have hjk : j ≤ n + j := by omega
+  have hphase_pos :
+      0 < atkinsonShiftedRelativePhase (n + j) j :=
+    atkinsonShiftedRelativePhase_pos (n + j) j hj hjk
+  have hweight_pos :
+      0 < atkinsonShiftedRelativeWeight (n + j) j := by
+    unfold atkinsonShiftedRelativeWeight
+    exact div_pos (atkinsonModeWeight_pos ((n + j) - j))
+      (atkinsonModeWeight_pos (n + j))
+  have hweight_le :
+      atkinsonShiftedRelativeWeight (n + j) j ≤ Real.sqrt 2 :=
+    atkinsonShiftedRelativeWeight_le_sqrt_two (n + j) j (by omega)
+  have htarget_nonneg :
+      0 ≤ atkinsonShiftedRelativePhase (n + j) j /
+          atkinsonShiftedRelativeWeight (n + j) j :=
+    div_nonneg hphase_pos.le hweight_pos.le
+  have hphase_lower :
+      (j : ℝ) / (((n + j : ℕ) : ℝ) + 1)
+        ≤ atkinsonShiftedRelativePhase (n + j) j :=
+    atkinsonShiftedRelativePhase_lower (n + j) j hj hjk
+  have hphase_le :
+      atkinsonShiftedRelativePhase (n + j) j
+        ≤ Real.sqrt 2 *
+            (atkinsonShiftedRelativePhase (n + j) j /
+              atkinsonShiftedRelativeWeight (n + j) j) := by
+    calc
+      atkinsonShiftedRelativePhase (n + j) j
+          =
+        atkinsonShiftedRelativeWeight (n + j) j *
+          (atkinsonShiftedRelativePhase (n + j) j /
+            atkinsonShiftedRelativeWeight (n + j) j) := by
+            field_simp [ne_of_gt hweight_pos]
+      _ ≤
+        Real.sqrt 2 *
+          (atkinsonShiftedRelativePhase (n + j) j /
+            atkinsonShiftedRelativeWeight (n + j) j) := by
+          exact mul_le_mul_of_nonneg_right hweight_le htarget_nonneg
+  exact le_trans hphase_lower hphase_le
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+/-- The corrected endpoint phase atom is reduced to the natural shifted
+`j/(n+j+1)` residual estimate. This is the Taylor-scale leaf for a fixed
+shift; the comparison back to `relativePhase/relativeWeight` is proved here
+using the local relative phase lower bound and the relative weight bound. -/
+private theorem atkinson_correctedEndpointPhaseError_bound_of_shifted_inv_bound
+    (hresidual :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ C_res > 0, ∃ N_res : ℕ, ∀ n : ℕ, N_res ≤ n →
+          |atkinsonEndpointGapCorrectedPhaseError n j|
+            ≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ A_phase > 0, ∃ N_phase : ℕ, ∀ n : ℕ, N_phase ≤ n →
+        |atkinsonEndpointGapCorrectedPhaseError n j|
+          ≤ A_phase *
+              (atkinsonShiftedRelativePhase (n + j) j /
+                atkinsonShiftedRelativeWeight (n + j) j) := by
+  intro j hj
+  obtain ⟨C_res, hC_res, N_res, hresidual'⟩ := hresidual j hj
+  refine ⟨C_res * Real.sqrt 2, mul_pos hC_res (by positivity), max N_res j, ?_⟩
+  intro n hn
+  have hn_res : N_res ≤ n := le_trans (Nat.le_max_left _ _) hn
+  have hn_shift : j ≤ n := le_trans (Nat.le_max_right _ _) hn
+  have hscale :=
+    atkinson_shifted_inv_scale_le_relativePhase_div_weight n j hj hn_shift
+  calc
+    |atkinsonEndpointGapCorrectedPhaseError n j|
+        ≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := hresidual' n hn_res
+    _ ≤ C_res *
+        (Real.sqrt 2 *
+          (atkinsonShiftedRelativePhase (n + j) j /
+            atkinsonShiftedRelativeWeight (n + j) j)) := by
+          exact mul_le_mul_of_nonneg_left hscale hC_res.le
+    _ =
+        (C_res * Real.sqrt 2) *
+          (atkinsonShiftedRelativePhase (n + j) j /
+            atkinsonShiftedRelativeWeight (n + j) j) := by
+          ring
+
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Carrier cancellation after reducing the endpoint boundary to the shifted
 Hardy endpoint-gap atom. -/
