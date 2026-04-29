@@ -2626,3 +2626,51 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   standard Atkinson multiplier Big-O at `O(1/t)`, principal-log branch identity
   for the vertical multiplier, Jacobian-integral bound at `1/relativeWeight`,
   and the shifted stationary-phase target remainder.
+
+### 2026-04-29 Round 56 Vertical Branch Period Correction
+
+- Classification: `VALIDATED_BRANCH_OBSTRUCTION_REDUCTION`.
+- Exact theorem attacked:
+  eventual principal-log branch identity for
+  `atkinsonVerticalGammaStirlingMultiplier`:
+  `Complex.log (Gamma(1/4 + i*y)) - stirlingTerm(1/4 + i*y) =`
+  `Complex.log (atkinsonVerticalGammaStirlingMultiplier y)` eventually.
+- Facts banked:
+  added and proved
+  `atkinson_vertical_multiplier_branch_with_period_correction`, the exact
+  principal-log identity with Mathlib's `toIocDiv` correction:
+  `Complex.log Gamma - S = Complex.log M -`
+  `toIocDiv Real.two_pi_pos (-Real.pi) (S + Complex.log M).im *`
+  `(2 * Real.pi * Complex.I)`.
+  Added and proved
+  `atkinson_vertical_multiplier_branch_of_period_correction_zero`, reducing
+  the old branch identity to eventual vanishing of this period correction.
+- Smallest next theorem:
+  prove or replace the period-correction atom
+  `∃ Yzero, ∀ y ≥ Yzero,`
+  `toIocDiv Real.two_pi_pos (-Real.pi)`
+  `(StationaryPhaseStartValue.stirlingTerm (1/4 + i*y) +`
+  `Complex.log (atkinsonVerticalGammaStirlingMultiplier y)).im = 0`,
+  or avoid the exact principal-log identity by supplying the complex
+  logarithmic Stirling remainder directly.
+- Failed routes / guardrails:
+  multiplier Big-O/closeness to `1` controls `Complex.log M` but does not
+  determine the principal branch of `Complex.log (Complex.exp S * M)` while
+  `S.im` is large; exact branch additivity needs the period correction to
+  vanish or a direct principal-log Stirling theorem. Did not add imports,
+  analytic providers, axioms, sorries, statement weakening, direct Abel
+  shortcuts, phase-weight division, circular provider assumptions, or the
+  demoted raw endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; first attempt exposed the
+  namespace typo `Complex.toIocDiv`; after correcting to `toIocDiv`, result:
+  passed, `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  standard Atkinson multiplier Big-O at `O(1/t)`, vertical branch
+  period-correction/alternate direct principal-log Stirling input,
+  Jacobian-integral bound at `1/relativeWeight`, and the shifted
+  stationary-phase target remainder.
