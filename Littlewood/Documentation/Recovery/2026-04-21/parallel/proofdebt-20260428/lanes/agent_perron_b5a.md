@@ -378,3 +378,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
       <= K * (T * (Real.log x)^2 / x)`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-28 Round 8 - Exact-Hit Boundary Error Closure
+
+- Classification: `ATOM_CLOSED_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  exact-hit weighted boundary error
+  `perronKernelWeightedExactHitBoundaryError` in
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Code facts banked:
+  added `log_le_const_mul_log_sq_of_ge_two`, absorbing `Real.log x` into
+  `(Real.log x)^2` uniformly for `x >= 2`.
+  Added `perronKernelWeightedExactHitBoundaryError_le_kernelSup_mul_log`, which
+  uses the fact that the exact-hit filter `(n : ℝ) = x` has cardinal at most
+  one and `vonMangoldt_le_log` gives `Λ(n) <= Real.log x`.
+  Added `small_T_exactHit_kernel_uniform_bound`, a direct bounded-height
+  Perron-kernel estimate at the exact hit.  It uses only
+  `perron_per_term_abs_bound_general`, `T <= 16`, and `c_param_gt_one`; no tail
+  theorem is used.
+  Proved `small_T_exactHit_boundary_error_bound`:
+  `∃ Ce > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelWeightedExactHitBoundaryError x T
+      <= Ce * (Real.log x)^2`.
+- Scale check:
+  the exact-hit kernel error is only uniformly bounded, not decaying.  This is
+  sufficient because the exact-hit set has at most one term and its
+  von Mangoldt weight is `O(log x)`, then absorbed into `O((log x)^2)`.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports, or any
+  theorem consuming `SmallTPerronBoundHyp`.  Did not use or modify
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
+  followed by strict public import probes for `Littlewood.Main.LittlewoodPsi`
+  and `Littlewood.Main.LittlewoodPi` if the focused build passes.
+- Smallest next theorem:
+  prove the punctured-window decaying kernel estimate, with `n = x` excluded:
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈ puncturedBoundary(x,T),
+    |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T|
+      <= K * (T * (Real.log x)^2 / x)`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

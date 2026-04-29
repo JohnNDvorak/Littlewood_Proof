@@ -1567,6 +1567,152 @@ theorem perronKernelWeightedPuncturedBoundaryWindowError_le_kernelSup_mul_vonMan
               intro n _hn_s _hn_not_sp
               exact vonMangoldt_nonneg n)
 
+/-- For `x >= 2`, one logarithm is absorbed by a constant multiple of
+`(log x)^2`. -/
+theorem log_le_const_mul_log_sq_of_ge_two (x : ℝ) (hx : 2 ≤ x) :
+    Real.log x ≤ (1 / Real.log 2) * (Real.log x) ^ 2 := by
+  have hlog2_pos : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  have hlog2_le : Real.log (2 : ℝ) ≤ Real.log x :=
+    Real.log_le_log (by norm_num) hx
+  have hlogx_nonneg : 0 ≤ Real.log x := le_trans hlog2_pos.le hlog2_le
+  rw [div_mul_eq_mul_div, one_mul, le_div_iff₀ hlog2_pos]
+  calc Real.log x * Real.log 2
+      ≤ Real.log x * Real.log x :=
+        mul_le_mul_of_nonneg_left hlog2_le hlogx_nonneg
+    _ = (Real.log x) ^ 2 := by ring
+
+/-- Exact-hit boundary weighted error is controlled by a uniform exact-hit
+kernel bound times `log x`.  The exact-hit set has at most one natural number. -/
+theorem perronKernelWeightedExactHitBoundaryError_le_kernelSup_mul_log
+    (x T K : ℝ) (hx : 2 ≤ x) (hK_nonneg : 0 ≤ K)
+    (hkernel : ∀ n : ℕ,
+      n ∈ ((Finset.range (Nat.floor x + 1)).filter
+          (fun n : ℕ => |x - (n : ℝ)| ≤ x / T)).filter
+            (fun n : ℕ => (n : ℝ) = x) →
+        |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤ K) :
+    perronKernelWeightedExactHitBoundaryError x T ≤ K * Real.log x := by
+  classical
+  let s := ((Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => |x - (n : ℝ)| ≤ x / T)).filter
+        (fun n : ℕ => (n : ℝ) = x)
+  have hlogx_nonneg : 0 ≤ Real.log x := Real.log_nonneg (by linarith)
+  have hB_nonneg : 0 ≤ K * Real.log x := mul_nonneg hK_nonneg hlogx_nonneg
+  have hcard : s.card ≤ 1 := by
+    rw [Finset.card_le_one_iff]
+    intro a ha b hb
+    have ha_eq : (a : ℝ) = x := (Finset.mem_filter.mp ha).2
+    have hb_eq : (b : ℝ) = x := (Finset.mem_filter.mp hb).2
+    exact_mod_cast ha_eq.trans hb_eq.symm
+  have hterm :
+      ∀ n ∈ s,
+        ArithmeticFunction.vonMangoldt n *
+            |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤
+          K * Real.log x := by
+    intro n hn
+    have hn_eq : (n : ℝ) = x := (Finset.mem_filter.mp hn).2
+    have hn_pos_real : (0 : ℝ) < n := by linarith
+    have hn_pos : 1 ≤ n := Nat.succ_le_of_lt (Nat.cast_pos.mp hn_pos_real)
+    have hΛ_le_logx : ArithmeticFunction.vonMangoldt n ≤ Real.log x := by
+      calc ArithmeticFunction.vonMangoldt n
+          ≤ Real.log (n : ℝ) := vonMangoldt_le_log n hn_pos
+        _ = Real.log x := by rw [hn_eq]
+    calc ArithmeticFunction.vonMangoldt n *
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+        ≤ Real.log x * K :=
+          mul_le_mul hΛ_le_logx (hkernel n hn) (abs_nonneg _)
+            (vonMangoldt_nonneg n)
+      _ = K * Real.log x := by ring
+  calc perronKernelWeightedExactHitBoundaryError x T
+      = ∑ n ∈ s,
+          ArithmeticFunction.vonMangoldt n *
+            |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| := by
+        rfl
+    _ ≤ s.card • (K * Real.log x) :=
+        Finset.sum_le_card_nsmul s
+          (fun n =>
+            ArithmeticFunction.vonMangoldt n *
+              |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|)
+          (K * Real.log x) hterm
+    _ ≤ 1 • (K * Real.log x) := nsmul_le_nsmul_left hB_nonneg hcard
+    _ = K * Real.log x := by simp
+
+/-- The exact integer hit has a uniform bounded-height Perron-kernel error. -/
+theorem small_T_exactHit_kernel_uniform_bound :
+    ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ ((Finset.range (Nat.floor x + 1)).filter
+            (fun n : ℕ => |x - (n : ℝ)| ≤ x / T)).filter
+              (fun n : ℕ => (n : ℝ) = x) →
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤ K := by
+  let K : ℝ := 1 + 16 * Real.exp 1
+  refine ⟨K, by positivity, ?_⟩
+  intro x T hx hT_lo hT_hi n hn
+  have hT_pos : 0 < T := by linarith
+  have hn_eq : (n : ℝ) = x := (Finset.mem_filter.mp hn).2
+  have hn_pos_real : (0 : ℝ) < n := by linarith
+  have hn_pos : 1 ≤ n := Nat.succ_le_of_lt (Nat.cast_pos.mp hn_pos_real)
+  have hxn_eq : x / (n : ℝ) = 1 := by
+    rw [← hn_eq]
+    exact div_self (ne_of_gt hn_pos_real)
+  have hrpow_eq :
+      (x / (n : ℝ)) ^ (1 + 1 / Real.log x) = 1 := by
+    rw [hxn_eq, one_rpow]
+  have hden_ge_one :
+      (1 : ℝ) ≤ Real.pi * (1 + 1 / Real.log x) := by
+    have hpi_ge_one : (1 : ℝ) ≤ Real.pi := by linarith [Real.pi_gt_three]
+    have hc_ge_one : (1 : ℝ) ≤ 1 + 1 / Real.log x :=
+      le_of_lt (c_param_gt_one x hx)
+    calc (1 : ℝ) = 1 * 1 := by ring
+      _ ≤ Real.pi * (1 + 1 / Real.log x) :=
+          mul_le_mul hpi_ge_one hc_ge_one zero_le_one (by linarith [Real.pi_gt_three])
+  have hP_abs_le_T :
+      |perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤ T := by
+    calc |perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+        ≤ T * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+            (Real.pi * (1 + 1 / Real.log x)) :=
+          perron_per_term_abs_bound_general x hx T hT_pos n hn_pos
+      _ = T * 1 / (Real.pi * (1 + 1 / Real.log x)) := by rw [hrpow_eq]
+      _ ≤ T := by
+          simpa using div_le_self hT_pos.le hden_ge_one
+  have hexp_ge_one : (1 : ℝ) ≤ Real.exp 1 := by
+    calc (1 : ℝ) = Real.exp 0 := by rw [Real.exp_zero]
+      _ ≤ Real.exp 1 := Real.exp_monotone (by norm_num)
+  have hT_le_exp : T ≤ 16 * Real.exp 1 := by
+    calc T ≤ 16 := hT_hi
+      _ ≤ 16 * Real.exp 1 := by nlinarith
+  have hP_abs_le : |perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤
+      16 * Real.exp 1 :=
+    le_trans hP_abs_le_T hT_le_exp
+  calc |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+      ≤ |(1 : ℝ)| + |perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| :=
+        abs_sub _ _
+    _ ≤ K := by
+        dsimp [K]
+        simpa using add_le_add_left hP_abs_le (1 : ℝ)
+
+/-- The exact-hit weighted boundary error is harmless: the exact-hit set has at
+most one term, `Λ(n) <= log n = log x`, and the kernel error is uniformly
+bounded on `2 <= T <= 16`. -/
+theorem small_T_exactHit_boundary_error_bound :
+    ∃ Ce > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedExactHitBoundaryError x T ≤ Ce * (Real.log x) ^ 2 := by
+  rcases small_T_exactHit_kernel_uniform_bound with ⟨K, hK_pos, hkernel⟩
+  let Ce : ℝ := K / Real.log 2
+  have hlog2_pos : 0 < Real.log (2 : ℝ) := Real.log_pos (by norm_num)
+  refine ⟨Ce, div_pos hK_pos hlog2_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hlog_absorb := log_le_const_mul_log_sq_of_ge_two x hx
+  have hhit :=
+    perronKernelWeightedExactHitBoundaryError_le_kernelSup_mul_log
+      x T K hx hK_pos.le (hkernel x T hx hT_lo hT_hi)
+  calc perronKernelWeightedExactHitBoundaryError x T
+      ≤ K * Real.log x := hhit
+    _ ≤ K * ((1 / Real.log 2) * (Real.log x) ^ 2) :=
+        mul_le_mul_of_nonneg_left hlog_absorb hK_pos.le
+    _ = Ce * (Real.log x) ^ 2 := by
+        dsimp [Ce]
+        ring
+
 /-- The concrete `DirichletPhaseAlignment.chebyshevPsi` finite-range
 definition agrees with Mathlib's Chebyshev `psi`. -/
 theorem dirichletPhase_chebyshevPsi_eq_chebyshev_psi (x : ℝ) :
