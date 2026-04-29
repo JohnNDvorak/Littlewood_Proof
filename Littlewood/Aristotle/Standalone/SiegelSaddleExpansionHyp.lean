@@ -56,6 +56,7 @@ import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.Standalone.FresnelSaddlePointInfra
 import Littlewood.Aristotle.Standalone.SaddlePointMethod
 import Littlewood.Aristotle.Standalone.SteepestDescentContour
+import Mathlib.Analysis.Calculus.Deriv.Shift
 
 set_option relaxedAutoImplicit false
 set_option autoImplicit false
@@ -615,6 +616,30 @@ def StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp : Prop
     deriv (deriv (deriv (fun x : ℝ =>
       standardGabckeRemovablePsiCandidate (x + 1 / 4)))) 0
 
+/-- The third derivative commutes with the coordinate translation
+`p = x + 1/4`; this is repeated use of Mathlib's derivative-shift lemma. -/
+theorem standardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp_proved :
+    StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp := by
+  unfold StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp
+  unfold standardGabckeRemovableSourceThirdDerivative
+  let f : ℝ → ℝ := standardGabckeRemovablePsiCandidate
+  let a : ℝ := 1 / 4
+  change deriv (deriv (deriv f)) a =
+    deriv (deriv (deriv (fun x : ℝ => f (x + a)))) 0
+  have h1 :
+      deriv (fun x : ℝ => f (x + a)) =
+        fun x : ℝ => deriv f (x + a) := by
+    funext x
+    exact deriv_comp_add_const f a x
+  have h2 :
+      deriv (fun x : ℝ => deriv f (x + a)) =
+        fun x : ℝ => deriv (deriv f) (x + a) := by
+    funext x
+    exact deriv_comp_add_const (deriv f) a x
+  rw [h1, h2]
+  rw [deriv_comp_add_const]
+  norm_num [a]
+
 /-- Pointwise local-coordinate identity for the removable candidate after the
 shift `p = x + 1/4`. This is the exact algebraic/trigonometric and removable
 fill statement; it is separate from derivative translation. -/
@@ -783,6 +808,14 @@ theorem standardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativePro
         deriv (deriv (deriv standardGabckeQuarterLocalPsi)) 0 := by
     rw [hfun]
   exact h_translate.trans hderiv
+
+/-- The quarter coordinate bridge is now closed from the translation derivative
+lemma and the already-closed pointwise local-function identity. -/
+theorem standardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp_proved :
+    StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp :=
+  standardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp_of_translation_and_functionEq
+    standardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp_proved
+    standardGabckeRemovableCandidateQuarterLocalFunctionEqProp_proved
 
 /-- Exact one-variable local Taylor value for the quarter removable quotient.
 This is the pure calculus atom for the expansion
