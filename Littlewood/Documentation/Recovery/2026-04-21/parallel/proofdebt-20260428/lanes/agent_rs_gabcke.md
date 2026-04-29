@@ -2492,3 +2492,39 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   prove `StandardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp`, the
   finite Taylor coefficient calculation for
   `sin (Real.pi*w - 2*Real.pi*w^2)` through fourth order.
+
+### 2026-04-29 Round 53: numerator raw coefficient derivative reduction
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp`.
+- Banked inputs:
+  - `AnalyticAt.hasFPowerSeriesAt` supplies the Taylor series with scalar
+    coefficients `iteratedDeriv n f 0 / n!`.
+  - The requested raw coefficients are exactly equivalent to the first through
+    fourth derivative values of `sin (pi*w - 2*pi*w^2)` at zero:
+    `pi`, `-4*pi`, `-pi^3`, and `24*pi^3`.
+- Proof facts banked:
+  - Added
+    `StandardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp`, the
+    exact four derivative-value source for the raw numerator sine.
+  - Proved
+    `standardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp_of_lowOrderDerivatives`,
+    reducing the raw coefficient data to those derivative values.
+- Failed routes:
+  - No all-order numerator series or analytic provider was introduced.
+  - I did not use quotient regularity; this stays inside the raw numerator
+    Taylor coefficient calculation.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to coordinator baseline `39166e2` before editing.
+  - `git diff --check`: passed before this ledger append.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp`,
+  the four explicit derivative values for
+  `sin (Real.pi*w - 2*Real.pi*w^2)` at zero.
