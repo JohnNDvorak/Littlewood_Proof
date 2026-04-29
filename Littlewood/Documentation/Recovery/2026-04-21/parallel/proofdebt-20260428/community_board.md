@@ -1042,3 +1042,37 @@ Timestamp: 2026-04-28 22:56 CDT.
     canonical residuals.
   - RS/Gabcke: quarter value formula and quarter raw-removable bridge, with
     analogous three-quarter atoms still available if that route proves easier.
+
+## Overnight 2026-04-29 Twenty-First Pass Status
+
+- Pi/Phase lane is validated and pushed through `0f1ac51`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Analyze pi Perron transfer bound`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the cross-height Perron transfer is now factored into an exact
+    selected-threshold bound. The same-height case is proved, and the earlier
+    naive monotonicity route is demoted because the `Classical.choose`
+    threshold definition does not provide the needed cross-height inequality.
+  - Planck is redeployed to either add the missing selected-threshold/cofinality
+    bound or revise the canonical majorant statement to a true fixed-height
+    residual.
+- RS/Gabcke lane is validated and pushed through `fcb17f5`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Reduce Gabcke quarter value to local Taylor atom`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`.
+  - Result: the quarter numeric point-bound route is reduced to local Taylor
+    coordinate third-derivative atoms, while the raw removable-source bridge
+    remains separate and non-circular.
+  - Hume is redeployed to close one of the local Taylor atoms or the raw
+    quarter removable-source bridge.
+- Current live atoms:
+  - Atkinson: stationary-phase complete-block target remainder and finite
+    fixed-shift correction-prefix patches.
+  - Perron/B5a: inspect whether the small-`T` harmonic/log path discharges the
+    public provider; otherwise close the next explicit B5a public-path leaf.
+  - Pi/Phase: selected-threshold/cofinality bound or corrected fixed-height
+    canonical majorant residual, plus target/anti chosen-radius residuals.
+  - RS/Gabcke: quarter local Taylor atoms and quarter raw-removable bridge,
+    with analogous three-quarter atoms available if easier.
