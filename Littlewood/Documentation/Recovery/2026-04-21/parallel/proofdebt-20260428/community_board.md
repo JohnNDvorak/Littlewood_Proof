@@ -3038,3 +3038,20 @@ Timestamp: 2026-04-28 22:56 CDT.
       Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
   - Current Pi atom:
     `PerronSqrtErrorRawChoiceEventuallyBelowFixedHalfBudgetMinusOneResidual`.
+
+## Overnight 2026-04-29 One-Hundred-Twenty-Fourth Pass Status
+
+- Coordinator recovery branch is advanced locally through `72c6934`.
+- Atkinson lane is integrated through `4742e72`:
+  - The direct pointwise principal-log Stirling bound is reduced to a vertical
+    Big-O statement for
+    `log Γ(1/4 + i*y) - stirlingTerm (1/4 + i*y)`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`
+    (`7903 jobs`).
+  - Current Atkinson atom:
+    `Asymptotics.IsBigO Filter.atTop
+      (fun y : ℝ => Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y))
+        - Aristotle.StationaryPhaseStartValue.stirlingTerm
+          ((1 / 4 : ℂ) + Complex.I * y))
+      (fun y : ℝ => ((1 / y : ℝ) : ℂ))`.
