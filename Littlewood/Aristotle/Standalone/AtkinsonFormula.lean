@@ -19285,6 +19285,232 @@ private theorem atkinson_weighted_shifted_completeBlock_prefix_bound_of_eventual
               (mul_le_mul_of_nonneg_right hC_le hlog_nonneg) htarget_nonneg
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- A fixed-shift inverse-phase cell-prefix patch implies the corresponding
+fixed-shift weighted complete-block tail patch. The proof is only the exact
+row-integral identity plus taking a tail slice of the fixed-shift prefix. -/
+private theorem atkinson_weighted_shifted_completeBlock_fixedShift_patch_of_inversePhaseCellPrefix
+    (j : ℕ) (hj3 : 3 ≤ j) (hj1 : 1 ≤ j)
+    (hcell :
+      ∃ C_cell > 0, ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+              atkinsonResonantShiftedPhaseWeightedCell n j)‖
+          ≤ C_cell * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    ∃ C_block > 0, ∀ M : ℕ,
+      ‖∑ n ∈ Finset.range M,
+          (if j ≤ n then
+            (((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                HardyCosSmooth.hardyCosExp n t)
+          else 0)‖
+        ≤ C_block * Real.log (↑j + 1) *
+            (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+  obtain ⟨C_cell, hC_cell, hcell'⟩ := hcell
+  let C_block : ℝ := (2 * C_cell) / Real.log 4
+  have hlog4_pos : (0 : ℝ) < Real.log 4 := Real.log_pos (by norm_num)
+  refine ⟨C_block, by
+    dsimp [C_block]
+    positivity, ?_⟩
+  intro M
+  let target : ℝ := Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j
+  let cellFn : ℕ → ℂ := fun n =>
+    ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+      atkinsonResonantShiftedPhaseWeightedCell n j)
+  have htarget_nonneg : 0 ≤ target := by
+    dsimp [target]
+    positivity
+  have hlog4_le : Real.log 4 ≤ Real.log (↑j + 1) :=
+    Real.log_le_log (by norm_num) (by exact_mod_cast show 4 ≤ j + 1 by omega)
+  have hlog_nonneg : 0 ≤ Real.log (↑j + 1) := le_trans hlog4_pos.le hlog4_le
+  have hconst :
+      2 * C_cell ≤ C_block * Real.log (↑j + 1) := by
+    calc
+      2 * C_cell = ((2 * C_cell) / Real.log 4) * Real.log 4 := by
+        field_simp [hlog4_pos.ne']
+      _ ≤ ((2 * C_cell) / Real.log 4) * Real.log (↑j + 1) := by
+        exact mul_le_mul_of_nonneg_left hlog4_le
+          (div_nonneg (by positivity : 0 ≤ 2 * C_cell) hlog4_pos.le)
+      _ = C_block * Real.log (↑j + 1) := by rfl
+  have hblock_eq :
+      ∑ n ∈ Finset.range M,
+          (if j ≤ n then
+            (((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                HardyCosSmooth.hardyCosExp n t)
+          else 0)
+        =
+      ∑ n ∈ Finset.range M, (if j ≤ n then cellFn n else 0) := by
+    refine Finset.sum_congr rfl ?_
+    intro n hn
+    by_cases hjn : j ≤ n
+    · simp [hjn, cellFn]
+      calc
+        (((atkinsonModeWeight n : ℝ) : ℂ) *
+          ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+            HardyCosSmooth.hardyCosExp n t)
+            =
+          ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u := by
+            exact atkinsonWeightedShiftedCompleteBlockComplex_eq_rowIntegral n j hj1
+        _ =
+          ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+            atkinsonResonantShiftedPhaseWeightedCell n j) := by
+            exact (atkinson_inverse_phase_mul_phaseWeightedCell_eq_rowIntegral n j hj1).symm
+        _ =
+          (((atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)⁻¹ *
+            atkinsonResonantShiftedPhaseWeightedCell n j) := by
+            simp [one_div]
+    · simp [hjn]
+  by_cases hJM : j ≤ M
+  · have hsum :
+        ∑ n ∈ Finset.range M, (if j ≤ n then cellFn n else 0)
+          =
+        ∑ n ∈ Finset.Ico j M, cellFn n := by
+      calc
+        ∑ n ∈ Finset.range M, (if j ≤ n then cellFn n else 0)
+          =
+        (∑ n ∈ Finset.range j, (if j ≤ n then cellFn n else 0))
+          +
+        ∑ n ∈ Finset.Ico j M, (if j ≤ n then cellFn n else 0) := by
+            simpa using
+              (Finset.sum_range_add_sum_Ico
+                (fun n => if j ≤ n then cellFn n else 0) hJM).symm
+        _ = ∑ n ∈ Finset.Ico j M, (if j ≤ n then cellFn n else 0) := by
+            have hprefix_zero :
+                ∑ n ∈ Finset.range j, (if j ≤ n then cellFn n else 0) = 0 := by
+              apply Finset.sum_eq_zero
+              intro n hn
+              simp [(Finset.mem_range.mp hn).not_ge]
+            rw [hprefix_zero, zero_add]
+        _ = ∑ n ∈ Finset.Ico j M, cellFn n := by
+            refine Finset.sum_congr rfl ?_
+            intro n hn
+            simp [(Finset.mem_Ico.mp hn).1]
+    have hsplit :
+        ∑ n ∈ Finset.Ico j M, cellFn n
+          =
+        (∑ n ∈ Finset.Ico (j - 1) M, cellFn n)
+          - ∑ n ∈ Finset.Ico (j - 1) j, cellFn n := by
+      calc
+        ∑ n ∈ Finset.Ico j M, cellFn n
+            =
+        (∑ n ∈ Finset.range M, cellFn n)
+          - ∑ n ∈ Finset.range j, cellFn n := by
+            rw [Finset.sum_Ico_eq_sub _ hJM]
+        _ =
+        ((∑ n ∈ Finset.range M, cellFn n)
+            - ∑ n ∈ Finset.range (j - 1), cellFn n)
+          -
+        ((∑ n ∈ Finset.range j, cellFn n)
+            - ∑ n ∈ Finset.range (j - 1), cellFn n) := by
+            ring
+        _ =
+        (∑ n ∈ Finset.Ico (j - 1) M, cellFn n)
+          - ∑ n ∈ Finset.Ico (j - 1) j, cellFn n := by
+            rw [← Finset.sum_Ico_eq_sub _ (by omega : j - 1 ≤ M)]
+            rw [← Finset.sum_Ico_eq_sub _ (by omega : j - 1 ≤ j)]
+    have hmain :
+        ‖∑ n ∈ Finset.Ico (j - 1) M, cellFn n‖
+          ≤ C_cell * target := by
+      have hraw := hcell' (M - 1)
+      calc
+        ‖∑ n ∈ Finset.Ico (j - 1) M, cellFn n‖
+            ≤ C_cell * (Real.sqrt (((M - 1 + j : ℕ) : ℝ) + 1) / j) := by
+              simpa [cellFn, show M - 1 + 1 = M by omega, Nat.add_assoc,
+                add_left_comm, add_comm] using hraw
+        _ = C_cell * (Real.sqrt ((M + j : ℕ) : ℝ) / j) := by
+              have hM : (M - 1 + j : ℕ) + 1 = M + j := by omega
+              have hM' : (((M - 1 + j : ℕ) : ℝ) + 1) = ((M + j : ℕ) : ℝ) := by
+                exact_mod_cast hM
+              rw [hM']
+        _ ≤ C_cell * target := by
+              refine mul_le_mul_of_nonneg_left ?_ (le_of_lt hC_cell)
+              exact div_le_div_of_nonneg_right
+                (Real.sqrt_le_sqrt (by
+                  exact_mod_cast (by omega : M + j ≤ M + j + 1)))
+                (by positivity : (0 : ℝ) ≤ j)
+    have hhead :
+        ‖∑ n ∈ Finset.Ico (j - 1) j, cellFn n‖
+          ≤ C_cell * target := by
+      have hraw := hcell' (j - 1)
+      have hj_le : ((j - 1 + j : ℕ) : ℝ) + 1 ≤ (((M + j : ℕ) : ℝ) + 1) := by
+        exact_mod_cast (by omega : (j - 1 + j) + 1 ≤ M + j + 1)
+      calc
+        ‖∑ n ∈ Finset.Ico (j - 1) j, cellFn n‖
+            ≤ C_cell * (Real.sqrt (((j - 1 + j : ℕ) : ℝ) + 1) / j) := by
+              simpa [cellFn, show j - 1 + 1 = j by omega, Nat.add_assoc,
+                add_left_comm, add_comm] using hraw
+        _ ≤ C_cell * target := by
+              refine mul_le_mul_of_nonneg_left ?_ (le_of_lt hC_cell)
+              exact div_le_div_of_nonneg_right
+                (Real.sqrt_le_sqrt hj_le)
+                (by positivity : (0 : ℝ) ≤ j)
+    calc
+      ‖∑ n ∈ Finset.range M,
+          (if j ≤ n then
+            (((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                HardyCosSmooth.hardyCosExp n t)
+          else 0)‖
+          =
+        ‖∑ n ∈ Finset.range M, (if j ≤ n then cellFn n else 0)‖ := by
+            rw [hblock_eq]
+      _ = ‖∑ n ∈ Finset.Ico j M, cellFn n‖ := by
+            rw [hsum]
+      _ = ‖(∑ n ∈ Finset.Ico (j - 1) M, cellFn n)
+              - (∑ n ∈ Finset.Ico (j - 1) j, cellFn n)‖ := by
+            rw [hsplit]
+      _ ≤ ‖∑ n ∈ Finset.Ico (j - 1) M, cellFn n‖
+            + ‖∑ n ∈ Finset.Ico (j - 1) j, cellFn n‖ := by
+            exact norm_sub_le _ _
+      _ ≤ C_cell * target + C_cell * target := by
+            exact add_le_add hmain hhead
+      _ = (2 * C_cell) * target := by
+            ring
+      _ ≤ C_block * Real.log (↑j + 1) * target := by
+            exact mul_le_mul_of_nonneg_right hconst htarget_nonneg
+  · have hzero :
+        ∑ n ∈ Finset.range M,
+          (if j ≤ n then
+            (((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                HardyCosSmooth.hardyCosExp n t)
+          else 0) = 0 := by
+      apply Finset.sum_eq_zero
+      intro n hn
+      have hnlt : n < j := lt_of_lt_of_le (Finset.mem_range.mp hn) (le_of_not_ge hJM)
+      simp [hnlt.not_ge]
+    rw [hzero, norm_zero]
+    exact mul_nonneg
+      (mul_nonneg (le_of_lt (by dsimp [C_block]; positivity)) hlog_nonneg)
+      htarget_nonneg
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Finite weighted complete-block patches reduce to finite fixed-shift
+inverse-phase cell-prefix patches. -/
+private theorem atkinson_weighted_shifted_completeBlock_finite_patch_of_inversePhaseCell_finite_patch
+    (hcellPatch :
+      ∀ J0 : ℕ, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → j < J0 →
+        ∃ Cj > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+                atkinsonResonantShiftedPhaseWeightedCell n j)‖
+            ≤ Cj * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+      ∀ J0 : ℕ, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → j < J0 →
+        ∃ Cj > 0, ∀ M : ℕ,
+          ‖∑ n ∈ Finset.range M,
+              (if j ≤ n then
+                (((atkinsonModeWeight n : ℝ) : ℂ) *
+                  ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                    HardyCosSmooth.hardyCosExp n t)
+              else 0)‖
+            ≤ Cj * Real.log (↑j + 1) *
+                (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j) := by
+  intro J0 j hj3 hj1 hjlt
+  exact
+    atkinson_weighted_shifted_completeBlock_fixedShift_patch_of_inversePhaseCellPrefix
+      j hj3 hj1 (hcellPatch J0 j hj3 hj1 hjlt)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Eventual weighted complete-block prefix from a cancellative target in
 native block coordinates and a pointwise `modeWeight / j` remainder. -/
 private theorem atkinson_weighted_shifted_completeBlock_prefix_bound_of_kTarget_and_modeWeight_remainder
@@ -19398,6 +19624,35 @@ private theorem atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockTarge
       (atkinson_weighted_shifted_completeBlock_prefix_bound_of_eventual_and_finite_patch
         (atkinson_weighted_shifted_completeBlock_prefix_bound_of_completeBlockTargetK_remainder herr)
         hpatch)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Row-prefix handoff where the finite weighted complete-block patches are
+supplied by native fixed-shift inverse-phase cell-prefix patches. -/
+private theorem
+    atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockTargetK_remainder_and_finite_inversePhaseCell_patch
+    (herr :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),
+                HardyCosSmooth.hardyCosExp (k - j) t) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hcellPatch :
+      ∀ J0 : ℕ, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → j < J0 →
+        ∃ Cj > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+                atkinsonResonantShiftedPhaseWeightedCell n j)‖
+            ≤ Cj * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    ∃ C_row > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ,
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+        ≤ C_row * Real.log (↑j + 1) *
+            (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  exact
+    atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockTargetK_remainder_and_finite_block_patch
+      herr
+      (atkinson_weighted_shifted_completeBlock_finite_patch_of_inversePhaseCell_finite_patch
+        hcellPatch)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem

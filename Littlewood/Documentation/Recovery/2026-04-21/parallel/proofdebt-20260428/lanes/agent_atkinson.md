@@ -1035,3 +1035,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 20 Finite Block Patch to Fixed-Shift Cell Patch
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  the finite fixed-shift weighted complete-block tail patches left by
+  `atkinson_weighted_shifted_completeBlock_prefix_bound_of_eventual_and_finite_patch`.
+- Facts banked:
+  `atkinson_weighted_shifted_completeBlock_fixedShift_patch_of_inversePhaseCellPrefix`
+  proves that a fixed-shift inverse-phase cell-prefix bound gives the
+  corresponding fixed weighted complete-block tail patch. The proof uses only
+  `atkinsonWeightedShiftedCompleteBlockComplex_eq_rowIntegral`,
+  `atkinson_inverse_phase_mul_phaseWeightedCell_eq_rowIntegral`, and a tail
+  slice of the fixed prefix.
+  `atkinson_weighted_shifted_completeBlock_finite_patch_of_inversePhaseCell_finite_patch`
+  lifts this pointwise bridge to the finite-patch family below an eventual
+  cutoff.
+  `atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockTargetK_remainder_and_finite_inversePhaseCell_patch`
+  wires the complete-block target remainder plus finite fixed-shift
+  inverse-phase cell patches through the row-prefix route.
+- Failed routes / guardrails:
+  no boundary/correction provider decomposition was used for the weighted
+  complete-block tail, because using `AtkinsonShiftedCorrectionPrefixBoundHyp`
+  here would be circular. No direct Abel, zero-model, mass-coefficient,
+  Fourier-corrected target, compensated-carrier, circular provider, or diffuse
+  deweighting route was used.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local proof engineering in
+  `atkinson_weighted_shifted_completeBlock_fixedShift_patch_of_inversePhaseCellPrefix`,
+  especially the fixed-tail slice
+  `Ico j M = Ico (j - 1) M - Ico (j - 1) j` and the block-to-cell sum
+  conversion.
+- Remaining goal shape:
+  prove the stationary-phase complete-block target remainder
+  `∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j -> 3 ≤ j -> 1 ≤ j ->`
+  `∀ k : ℕ, 2 * j ≤ k ->`
+  `‖(((atkinsonModeWeight (k - j) : ℝ) : ℂ) *`
+  `∫ t in Ioc (hardyStart k) (hardyStart (k + 1)),`
+  `HardyCosSmooth.hardyCosExp (k - j) t) - atkinsonCompleteBlockTargetK k j‖`
+  `≤ C_err * (atkinsonModeWeight k / j)`,
+  and prove finite fixed-shift inverse-phase cell-prefix patches below the
+  eventual cutoff by native fixed-shift boundary/correction leaves rather than
+  by the global provider class.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
