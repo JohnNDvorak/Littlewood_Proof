@@ -2370,3 +2370,37 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual` or `AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual`.
+
+### 2026-04-29 Round 46: Canonical Relation Radius to Phase Radius Residuals
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual`.
+  - `AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual`.
+- Facts banked:
+  - Added `targetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual_of_phaseRadiusResidual`.
+  - Added `antiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual_of_phaseRadiusResidual`.
+- What changed:
+  - The target and anti-target canonical relation-compatible selected-radius residuals now reduce to the existing target/anti chosen phase-radius canonical residual predicates.
+  - The comparison unfolds the relation-compatible finite-zero provider: both routes choose the same finite-set Kronecker radius from the same canonical zeta compatibility proof.
+  - This keeps the selected-radius route explicit and does not introduce a provider instance.
+- Remaining goal shape:
+  - Prove `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual` and `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`, or prove a genuine quantitative theorem bounding the `Classical.choose` radii returned by the relation-compatible finite-dimensional Kronecker source.
+- Failed/circular route:
+  - Did not revive `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`, which remains false as stated.
+  - Did not use a separately chosen bounded witness to control the selected radius.
+  - Did not add a reverse-comparison instance or a typeclass edge from relation-compatible residuals back into phase-radius residuals.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set Kronecker, arbitrary-radius route, provider cycles, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed local focused validation under the corrected singleflight rule.
+- Validation command/result:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual` or `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`.
