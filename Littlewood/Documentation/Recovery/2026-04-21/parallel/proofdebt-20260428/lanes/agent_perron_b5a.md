@@ -1433,3 +1433,58 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   harmonic-distance or dyadic bands below `x - x / T`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 27 - Off-Boundary Envelope Components
+
+- Classification: `CANDIDATE_REDUCTION`.
+- Exact theorem attacked:
+  the closed off-boundary Davenport-envelope summation bound
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDavenportEnvelope x T
+      <= Cd * (x / T) * (Real.log x)^2`.
+- Code facts banked:
+  split `perronKernelOffBoundaryDavenportEnvelope` into exact component
+  definitions:
+  `perronKernelOffBoundaryDavenportSingularTerm`,
+  `perronKernelOffBoundaryDavenportSmoothTerm`,
+  `perronKernelOffBoundaryDavenportSingularEnvelope`, and
+  `perronKernelOffBoundaryDavenportSmoothEnvelope`.
+  Proved the exact finite-sum identity
+  `perronKernelOffBoundaryDavenportEnvelope_eq_singular_add_smooth`.
+  Added
+  `small_T_offBoundary_davenportEnvelope_linear_bound_from_components`,
+  reducing the closed envelope target to separate singular and smooth
+  summation bounds at the same scale.
+  Added
+  `small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_davenport_components`
+  to wire those two component bounds through the already validated
+  linear-scale cutoff assembly.
+- Scale check:
+  preserved the linear-window target
+  `C * (x / T) * (Real.log x)^2`; no pure
+  `O((Real.log x)^2)` off-boundary or boundary-window bound was introduced.
+- Failed/demoted routes:
+  did not use a constant kernel supremum.  The smooth component still needs
+  the weighted reciprocal sum `Σ Λ(n)/n`, and the singular component still
+  needs the reciprocal-log/distance summation away from
+  `|x - n| <= x / T`.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  close the smooth component first:
+  `∃ Cm > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDavenportSmoothEnvelope x T
+      <= Cm * (x / T) * (Real.log x)^2`.
+  A local route should use `per_term_rpow_bound`, `c >= 1`, and the finite
+  weighted reciprocal estimate
+  `Σ_{1 <= n <= floor x} Λ(n) / n = O((Real.log x)^2)`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

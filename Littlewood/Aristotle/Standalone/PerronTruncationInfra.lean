@@ -1564,6 +1564,32 @@ def perronKernelOffBoundaryDavenportEnvelope (x T : ℝ) : ℝ :=
       (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T),
     perronKernelOffBoundaryDavenportEnvelopeTerm x T n
 
+/-- Singular `1 / log (x / n)` part of the off-boundary Davenport envelope. -/
+def perronKernelOffBoundaryDavenportSingularTerm (x T : ℝ) (n : ℕ) : ℝ :=
+  if n = 0 then 0 else
+    ArithmeticFunction.vonMangoldt n *
+      (((x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1) /
+        (T * Real.log (x / (n : ℝ))))
+
+/-- Smooth `1 / T` part of the off-boundary Davenport envelope. -/
+def perronKernelOffBoundaryDavenportSmoothTerm (x T : ℝ) (n : ℕ) : ℝ :=
+  if n = 0 then 0 else
+    ArithmeticFunction.vonMangoldt n *
+      (2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+        ((1 + 1 / Real.log x) * T))
+
+/-- Singular off-boundary Davenport envelope. -/
+def perronKernelOffBoundaryDavenportSingularEnvelope (x T : ℝ) : ℝ :=
+  ∑ n ∈ (Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T),
+    perronKernelOffBoundaryDavenportSingularTerm x T n
+
+/-- Smooth off-boundary Davenport envelope. -/
+def perronKernelOffBoundaryDavenportSmoothEnvelope (x T : ℝ) : ℝ :=
+  ∑ n ∈ (Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T),
+    perronKernelOffBoundaryDavenportSmoothTerm x T n
+
 /-- Exact finite-sum split of the weighted cutoff error into the sharp boundary
 window and its complement. -/
 theorem perronKernelWeightedCutoffError_eq_boundary_add_offBoundary
@@ -3673,6 +3699,71 @@ theorem small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_davenportEn
       perronKernelWeightedCutoffError x T ≤ Cw * (x / T) * (Real.log x) ^ 2 :=
   small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary
     (small_T_offBoundary_weighted_linear_bound_from_davenportEnvelope henvelope)
+
+/-- Exact split of the off-boundary Davenport envelope into its singular and
+smooth components. -/
+theorem perronKernelOffBoundaryDavenportEnvelope_eq_singular_add_smooth
+    (x T : ℝ) :
+    perronKernelOffBoundaryDavenportEnvelope x T =
+      perronKernelOffBoundaryDavenportSingularEnvelope x T +
+        perronKernelOffBoundaryDavenportSmoothEnvelope x T := by
+  classical
+  dsimp [perronKernelOffBoundaryDavenportEnvelope,
+    perronKernelOffBoundaryDavenportSingularEnvelope,
+    perronKernelOffBoundaryDavenportSmoothEnvelope]
+  rw [← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro n _hn
+  by_cases hn_zero : n = 0
+  · simp [perronKernelOffBoundaryDavenportEnvelopeTerm,
+      perronKernelOffBoundaryDavenportSingularTerm,
+      perronKernelOffBoundaryDavenportSmoothTerm, hn_zero]
+  · simp [perronKernelOffBoundaryDavenportEnvelopeTerm,
+      perronKernelOffBoundaryDavenportSingularTerm,
+      perronKernelOffBoundaryDavenportSmoothTerm, hn_zero]
+    ring
+
+/-- Off-boundary Davenport-envelope bound from separate singular and smooth
+summation bounds. -/
+theorem small_T_offBoundary_davenportEnvelope_linear_bound_from_components
+    (hsingular : ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDavenportSingularEnvelope x T ≤
+        Cs * (x / T) * (Real.log x) ^ 2)
+    (hsmooth : ∃ Cm > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDavenportSmoothEnvelope x T ≤
+        Cm * (x / T) * (Real.log x) ^ 2) :
+    ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDavenportEnvelope x T ≤
+        Cd * (x / T) * (Real.log x) ^ 2 := by
+  rcases hsingular with ⟨Cs, hCs_pos, hsingular⟩
+  rcases hsmooth with ⟨Cm, hCm_pos, hsmooth⟩
+  refine ⟨Cs + Cm, add_pos hCs_pos hCm_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hsingular_x := hsingular x T hx hT_lo hT_hi
+  have hsmooth_x := hsmooth x T hx hT_lo hT_hi
+  calc perronKernelOffBoundaryDavenportEnvelope x T
+      = perronKernelOffBoundaryDavenportSingularEnvelope x T +
+          perronKernelOffBoundaryDavenportSmoothEnvelope x T :=
+        perronKernelOffBoundaryDavenportEnvelope_eq_singular_add_smooth x T
+    _ ≤ Cs * (x / T) * (Real.log x) ^ 2 +
+          Cm * (x / T) * (Real.log x) ^ 2 :=
+        add_le_add hsingular_x hsmooth_x
+    _ = (Cs + Cm) * (x / T) * (Real.log x) ^ 2 := by ring
+
+/-- Scale-correct weighted cutoff from separate singular and smooth
+off-boundary Davenport-envelope bounds. -/
+theorem small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_davenport_components
+    (hsingular : ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDavenportSingularEnvelope x T ≤
+        Cs * (x / T) * (Real.log x) ^ 2)
+    (hsmooth : ∃ Cm > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDavenportSmoothEnvelope x T ≤
+        Cm * (x / T) * (Real.log x) ^ 2) :
+    ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (x / T) * (Real.log x) ^ 2 :=
+  small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_davenportEnvelope
+    (small_T_offBoundary_davenportEnvelope_linear_bound_from_components
+      hsingular hsmooth)
 
 /-- Weighted finite cutoff from the Davenport separated-bound route and the
 off-boundary weighted atom. -/
