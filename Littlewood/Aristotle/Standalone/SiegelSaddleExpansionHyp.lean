@@ -315,6 +315,41 @@ def StandardGabckeRawPsiThirdDerivativeBoundProp : Prop :=
     |standardGabckeRawPsiThirdDerivative p| ≤
       fresnelC1Bound * (96 * Real.pi ^ 2)
 
+/-- The denominator-zero locus of the raw quotient-normalized standard
+Gabcke `psi`. These are the removable singular points that must be handled
+separately before the unfolded derivative bound can be sourced from the
+standard coefficient table. -/
+def standardGabckeRawPsiDenominatorZero (p : ℝ) : Prop :=
+  Real.cos (2 * Real.pi * p) = 0
+
+/-- Regular-point part of the unscaled third-derivative Tabelle bound, away
+from the denominator-zero locus of the raw quotient normalization. -/
+def StandardGabckeRawPsiRegularThirdDerivativeBoundProp : Prop :=
+  ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    ¬ standardGabckeRawPsiDenominatorZero p →
+      |standardGabckeRawPsiThirdDerivative p| ≤
+        fresnelC1Bound * (96 * Real.pi ^ 2)
+
+/-- Removable-singularity part of the unscaled third-derivative Tabelle bound.
+This is the exact missing normalization bridge at the raw quotient's
+denominator-zero points. -/
+def StandardGabckeRawPsiRemovableThirdDerivativeBoundProp : Prop :=
+  ∀ p : ℝ, p ∈ Ico (0 : ℝ) 1 →
+    standardGabckeRawPsiDenominatorZero p →
+      |standardGabckeRawPsiThirdDerivative p| ≤
+        fresnelC1Bound * (96 * Real.pi ^ 2)
+
+/-- The global raw third-derivative bound follows from its regular-point
+estimate plus the removable-singularity bridge. -/
+theorem standardGabckeRawPsiThirdDerivativeBoundProp_of_regular_and_removable
+    (h_regular : StandardGabckeRawPsiRegularThirdDerivativeBoundProp)
+    (h_removable : StandardGabckeRawPsiRemovableThirdDerivativeBoundProp) :
+    StandardGabckeRawPsiThirdDerivativeBoundProp := by
+  intro p hp
+  by_cases hsing : standardGabckeRawPsiDenominatorZero p
+  · exact h_removable p hp hsing
+  · exact h_regular p hp hsing
+
 /-- The unscaled third-derivative estimate implies the coefficient-level
 Tabelle-1 bound. -/
 theorem standardGabckeTabelleFirstCoefficientBoundProp_of_rawPsiThirdDerivativeBound
@@ -380,6 +415,20 @@ theorem standardGabckeTargets_of_contourTaylor_and_rawPsiThirdDerivativeBound
   standardGabckeTargets_of_firstCoefficientSource
     (standardGabckeFirstCoefficientSourceProp_of_contourTaylor_and_rawPsiThirdDerivativeBound
       h_id h_deriv)
+
+/-- Direct route to the two standard Gabcke target propositions when the raw
+third-derivative estimate has been split into regular and removable-singularity
+pieces. -/
+theorem standardGabckeTargets_of_contourTaylor_and_rawPsiThirdDerivativeSplit
+    (h_id : StandardGabckeContourTaylorFirstCoefficientIdentityProp)
+    (h_regular : StandardGabckeRawPsiRegularThirdDerivativeBoundProp)
+    (h_removable : StandardGabckeRawPsiRemovableThirdDerivativeBoundProp) :
+    StandardGabckeStationaryPhaseIdentityProp
+        standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient ∧
+      StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient :=
+  standardGabckeTargets_of_contourTaylor_and_rawPsiThirdDerivativeBound h_id
+    (standardGabckeRawPsiThirdDerivativeBoundProp_of_regular_and_removable
+      h_regular h_removable)
 
 /-- A standard-normalized stationary-phase identity becomes the local
 coefficient identity once the leading coefficient normalization has been

@@ -494,3 +494,55 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   actual contour/Taylor expansion.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 10: raw derivative bound split at removable singularities
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeRawPsiThirdDerivativeBoundProp` in
+  `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`.
+- Banked inputs:
+  - `standardGabckeRawPsiThirdDerivative` is the unfolded third derivative of
+    the quotient-normalized source expression `standardGabckeRawPsi`.
+  - Round 9 already proved that
+    `StandardGabckeRawPsiThirdDerivativeBoundProp` implies the
+    coefficient-level `StandardGabckeTabelleFirstCoefficientBoundProp`, and
+    then the requested `StandardGabckeCoefficientBoundProp
+      standardGabckeRawFirstCoefficient`.
+- Proof facts banked:
+  - Added `standardGabckeRawPsiDenominatorZero p`, the exact denominator-zero
+    locus `cos(2*pi*p) = 0` for the raw quotient normalization.
+  - Added `StandardGabckeRawPsiRegularThirdDerivativeBoundProp`, the raw
+    third-derivative bound away from that locus.
+  - Added `StandardGabckeRawPsiRemovableThirdDerivativeBoundProp`, the precise
+    missing bridge at the removable singular points of the raw quotient.
+  - Proved
+    `standardGabckeRawPsiThirdDerivativeBoundProp_of_regular_and_removable`,
+    recombining the regular estimate and removable-singularity bridge into the
+    global raw third-derivative bound.
+  - Added
+    `standardGabckeTargets_of_contourTaylor_and_rawPsiThirdDerivativeSplit`,
+    wiring the contour/Taylor identity plus the split derivative bounds all
+    the way back to the two standard Gabcke target propositions.
+- Failed routes:
+  - Do not treat the raw quotient as an everywhere-regular formula; its
+    denominator-zero locus must be bridged explicitly.
+  - Do not assert raw `standardGabckeRawPsi = rsPsi`.
+  - Do not use block-independence or exact k-independence.
+  - Do not define the coefficient as a defect quotient.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - `git diff --check`: passed.
+  - No Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+- Smallest next theorem:
+  prove `StandardGabckeRawPsiRegularThirdDerivativeBoundProp` from the explicit
+  differentiated quotient formula on `cos(2*pi*p) != 0`, and prove
+  `StandardGabckeRawPsiRemovableThirdDerivativeBoundProp` by replacing the raw
+  quotient at `cos(2*pi*p) = 0` with the smooth removable extension used by
+  Gabcke's coefficient table.
+- Coordinator action requested:
+  run the requested serialized validation command.
