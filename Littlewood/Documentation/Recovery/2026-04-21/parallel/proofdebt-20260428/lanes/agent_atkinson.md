@@ -37,3 +37,26 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Baseline: `acdc136`.
 - Initial target: `atkinson_inversePhaseCorePrefix_bound_large_j`.
 - Coordinator action: initial agent dispatched; Aristotle sidecar planned.
+
+### 2026-04-28 Aristotle Harvest Integration
+
+- Job: `b895c2cb-ccbc-4edc-b13a-8076b5be5eb6`.
+- Classification: `AUDIT_REDUCTION`.
+- Target audited:
+  `atkinson_inversePhaseCorePrefix_bound_large_j`.
+- Result:
+  no direct proof was delivered. The target remains a real oscillatory prefix
+  estimate.
+- Failed or demoted routes:
+  direct Abel decomposition is circular; the existing successor-tail Abel
+  contraction has factor `8`, so it cannot prove a contraction with factor
+  `< 1` without new multiplicative structure; automated search is not
+  credible at this depth.
+- Smallest contraction-route leaves:
+  prove a log-free boundary row bound
+  `||sum_{n<M} boundary_term(n,j)|| <= C * sqrt(M+j+1) / j`, and prove a
+  successor tail contraction with a genuine `gamma < 1`.
+- Current lane guidance:
+  prioritize the no-log complete-block route and its shifted-interval
+  stationary-phase atoms unless a concrete proof route for both contraction
+  leaves appears.

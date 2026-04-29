@@ -40,3 +40,24 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Baseline: `acdc136`.
 - Initial target: `shifted_remainder_bound_leaf`.
 - Coordinator action: initial agent dispatched; Aristotle sidecar planned.
+
+### 2026-04-28 Aristotle Harvest Integration
+
+- Job: `43160ae0-78e7-4d7e-b8af-76332fd6c59f`.
+- Classification: `NON_CIRCULAR_REDUCTION`.
+- Target audited:
+  `shifted_remainder_bound_leaf` and its small-T provider route.
+- Result:
+  the clean public-path shape is a reduction to two independent classes,
+  `ShiftedRemainderSegmentBoundLargeTHyp` and
+  `HadamardProductZeta.SmallTPerronBoundHyp`.
+- Guardrail:
+  do not derive small-T Perron from `shifted_remainder_bound_atomic`, because
+  that route consumes the shifted-remainder provider class through the
+  skeleton namespace and is circular.
+- Failed route:
+  do not prove or depend on `perron_tail_bound_core` as stated.
+- Current lane guidance:
+  the lane has already validated the exact-hit split. Continue on the
+  punctured-window decaying kernel estimate, then off-boundary and compact
+  residue extraction.

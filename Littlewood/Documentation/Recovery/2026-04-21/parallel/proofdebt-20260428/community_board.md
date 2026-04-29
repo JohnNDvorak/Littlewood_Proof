@@ -110,6 +110,14 @@ Each agent report must state:
     the false `TruncatedExplicitFormulaPiHyp` path.
   - RS/Gabcke: audit-only; downstream wiring is proved, so the live content is
     the normalized coefficient identity/bound/adjacent monotonicity.
+- Aristotle harvest integrated on 2026-04-28:
+  durable findings from all four finished sidecars were moved into tracked
+  coordination docs and lane ledgers. See
+  `aristotle_harvest_integration.md`. Raw result zips, full-repo snapshots,
+  prompt payloads, and runtime logs remain ignored under `self_drive/`.
+  The delivered Pi reduction Lean file was checked once with `lake env lean`;
+  it failed on a current-branch `RiemannHypothesis` namespace ambiguity and
+  remains documentation-only to avoid adding active-source sorry debt.
 - Validation completed and pushed:
   - Atkinson `4e2e825`: `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`
     passed; reduced shifted `blockMode` remainder to two quadratic-anchor atoms.

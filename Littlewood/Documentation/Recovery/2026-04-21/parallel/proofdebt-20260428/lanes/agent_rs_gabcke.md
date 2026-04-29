@@ -38,3 +38,25 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Baseline: `acdc136`.
 - Initial target: `SiegelSaddleExpansionHyp` / Gabcke adjacent atoms.
 - Coordinator action: initial agent dispatched; Aristotle sidecar planned.
+
+### 2026-04-28 Aristotle Harvest Integration
+
+- Job: `381b8764-543a-4024-a84f-9a9f91be9eba`.
+- Classification: `AUDIT_REDUCTION`.
+- Target audited:
+  `SiegelSaddleExpansionHyp`, `GabckePhaseCouplingHyp`, and the Hardy
+  first-moment bridge.
+- Result:
+  downstream RS/Gabcke wiring is already proved. The open work is the analytic
+  content of `SiegelSaddleExpansionHyp`.
+- Key reduction:
+  `GabckePhaseCouplingHyp` only needs the signed Satz 4 fields, equivalent to
+  nonnegativity and adjacent antitonicity of the normalized signed profile.
+  The Satz 1 weighted-profile bound is needed for the full Siegel saddle
+  expansion, not for the phase-coupling wrapper alone.
+- Failed route:
+  exact k-independence is mathematically false; use adjacent antitonicity.
+- Current lane guidance:
+  continue the standard Gabcke normalization bridge: define the correctly
+  phase/parameter-normalized `stdLead` and prove
+  `StandardGabckeLocalLeadingNormalizationProp stdLead`.

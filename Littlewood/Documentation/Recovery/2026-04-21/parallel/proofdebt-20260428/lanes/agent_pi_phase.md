@@ -38,3 +38,29 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Baseline: `acdc136`.
 - Initial target: Perron-only replacement for false `pi_approx` usage.
 - Coordinator action: initial agent dispatched; Aristotle sidecar planned.
+
+### 2026-04-28 Aristotle Harvest Integration
+
+- Job: `32a1df6a-be94-4cc2-81c3-05623533b222`.
+- Classification: `INTERFACE_REDUCTION`.
+- Target audited:
+  Perron-only replacement for the false `TruncatedExplicitFormulaPiHyp`
+  route.
+- Result:
+  the delivered `PerronPhaseCouplingReduction.lean` is a useful reduction but
+  is not integrated as active source. It is sorry-backed and failed a
+  standalone Lean check on the current branch because `RiemannHypothesis` is
+  ambiguous between root and `ZetaZeros` namespaces.
+- Guardrail:
+  avoid `PerronPiApproxCompatibilityHyp`, `TruncatedExplicitFormulaPiHyp`,
+  and the constant-1 `PerronSqrtErrorEventuallyAtHeightHyp` route.
+- Honest route:
+  work at `piScale x = sqrt(x) / log(x) * lll(x)`, where fixed Perron
+  constants can be absorbed by `lll(x)`.
+- Smallest honest inputs:
+  a T-parameterized pi-level Perron O-bound, bounded-window Kronecker for the
+  finite zero set, and tower/lll absorption.
+- Current lane guidance:
+  continue the already-validated target/anti realized phase-radius geometry
+  and zeta finite-zero compatibility route. Do not add the harvested reduction
+  module until it compiles and closes a provider.
