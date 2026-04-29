@@ -2002,6 +2002,62 @@ private theorem atkinson_logGammaStirlingRemainder_isBigO_of_vertical_line_stirl
           rw [hnorm_t]
           ring
 
+/-- The exact remaining vertical-line input can be supplied as a principal
+`Complex.log` pointwise Stirling bound against the local `stirlingTerm`.  This
+keeps the branch issue explicit: the bound is for
+`Complex.log (Complex.Gamma (1/4 + i y))` itself, not just for an auxiliary
+holomorphic logarithm. -/
+private theorem atkinson_vertical_line_stirling_isBigO_of_principal_log_bound
+    (hbound :
+      ∃ C > 0, ∃ Y0 : ℝ, ∀ y : ℝ, Y0 ≤ y →
+        ‖Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+            Aristotle.StationaryPhaseStartValue.stirlingTerm
+              ((1 / 4 : ℂ) + Complex.I * y)‖ ≤ C / y) :
+    Asymptotics.IsBigO Filter.atTop
+      (fun y : ℝ =>
+        Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+          ((((1 / 4 : ℂ) + Complex.I * y) - 1 / 2) *
+              Complex.log ((1 / 4 : ℂ) + Complex.I * y) -
+            ((1 / 4 : ℂ) + Complex.I * y) +
+            1 / 2 * Complex.log (2 * Real.pi)))
+      (fun y : ℝ => ((1 / y : ℝ) : ℂ)) := by
+  obtain ⟨C, _hC, Y0, hY0⟩ := hbound
+  rw [Asymptotics.isBigO_iff]
+  refine ⟨C, ?_⟩
+  filter_upwards [Filter.eventually_ge_atTop (max Y0 1)] with y hy
+  have hyY0 : Y0 ≤ y := le_trans (le_max_left _ _) hy
+  have hy1 : (1 : ℝ) ≤ y := le_trans (le_max_right _ _) hy
+  have hypos : 0 < y := lt_of_lt_of_le zero_lt_one hy1
+  have hnorm_inv : ‖((1 / y : ℝ) : ℂ)‖ = 1 / y := by
+    rw [Complex.norm_real, Real.norm_eq_abs,
+      abs_of_pos (one_div_pos.mpr hypos)]
+  have hbound_y := hY0 y hyY0
+  have hrewrite :
+      Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+          ((((1 / 4 : ℂ) + Complex.I * y) - 1 / 2) *
+              Complex.log ((1 / 4 : ℂ) + Complex.I * y) -
+            ((1 / 4 : ℂ) + Complex.I * y) +
+            1 / 2 * Complex.log (2 * Real.pi))
+        =
+      Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+        Aristotle.StationaryPhaseStartValue.stirlingTerm
+          ((1 / 4 : ℂ) + Complex.I * y) := by
+    rw [Aristotle.StationaryPhaseStartValue.stirlingTerm]
+  calc
+    ‖Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+        ((((1 / 4 : ℂ) + Complex.I * y) - 1 / 2) *
+            Complex.log ((1 / 4 : ℂ) + Complex.I * y) -
+          ((1 / 4 : ℂ) + Complex.I * y) +
+          1 / 2 * Complex.log (2 * Real.pi))‖
+        = ‖Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+            Aristotle.StationaryPhaseStartValue.stirlingTerm
+              ((1 / 4 : ℂ) + Complex.I * y)‖ := by
+          rw [hrewrite]
+    _ ≤ C / y := hbound_y
+    _ = C * ‖((1 / y : ℝ) : ℂ)‖ := by
+          rw [hnorm_inv]
+          ring
+
 /-- A complex logarithmic Stirling remainder controls the normalized
 Stirling multiplier after exponentiation. -/
 private theorem atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO
