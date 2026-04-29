@@ -2117,3 +2117,46 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   uniform imaginary-log-Gamma Stirling remainder at `C / t`,
   Jacobian-integral bound at `1/relativeWeight`, and the shifted
   stationary-phase target remainder.
+
+### 2026-04-29 Round 45 Log-Gamma Stirling-Term Split
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  uniform imaginary-log-Gamma Stirling remainder
+  `|(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -`
+  `((t / 2) * Real.log (t / 2) - t / 2 - Real.pi / 8)| ≤ CΓ / t`
+  eventually.
+- Facts banked:
+  introduced the local Stirling logarithm model
+  `atkinsonLogGammaStirlingTerm` and scalar model
+  `atkinsonLogGammaStirlingApprox`. Proved the generic adapter
+  `atkinson_eventual_abs_bound_of_isBigO_one_div`, the Stirling-term adapter
+  `atkinson_logGammaStirlingTerm_im_bound_of_isBigO`, and the split theorem
+  `atkinson_logGammaStirling_of_term_bounds`. Also added the packaged endpoint
+  handoff
+  `atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_log_to_stirlingTerm`.
+- Smallest next theorem:
+  prove the branch-sensitive log-Gamma-to-Stirling-term comparison
+  `∃ Clog > 0, ∃ Tlog, ∀ t ≥ Tlog,`
+  `|(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -`
+  `(atkinsonLogGammaStirlingTerm t).im| ≤ Clog / t`. The elementary
+  Stirling-term side can be supplied as the standard big-O statement
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun t => (atkinsonLogGammaStirlingTerm t).im - atkinsonLogGammaStirlingApprox t)`
+  `(fun t => 1 / t)`.
+- Failed routes / guardrails:
+  did not use the existing pointwise `stirling_arg_gamma` theorem because its
+  constant is non-uniform in `T`. Did not add imports, broad analytic
+  providers, axioms, sorries, statement weakening, direct Abel, phase-weight
+  division, or circular provider assumptions.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  branch-sensitive `Complex.log (Complex.Gamma s)` to Stirling-log comparison
+  at `C / t`, Jacobian-integral bound at `1/relativeWeight`, and the shifted
+  stationary-phase target remainder.
