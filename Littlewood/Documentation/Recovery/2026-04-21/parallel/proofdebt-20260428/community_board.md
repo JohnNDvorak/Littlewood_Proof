@@ -1180,3 +1180,42 @@ Timestamp: 2026-04-28 22:56 CDT.
   - RS/Gabcke: quarter local second-derivative `HasDerivAt`, removable
     candidate local-coordinate third derivative, and raw quarter removable
     bridge.
+
+## Overnight 2026-04-29 Twenty-Fifth Pass Status
+
+- Perron/B5a lane is validated and pushed through `db18924`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Route Perron cutoff at linear scale`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the small-`T` weighted-kernel cutoff path is routed at the true
+    linear scale `C * (x / T) * (Real.log x)^2`, with boundary handling now
+    separated from the off-boundary atom.
+  - Remaining Perron atom: prove the compatible off-boundary estimate
+    `perronKernelWeightedOffBoundaryWindowError x T <=
+      Co * (x / T) * (Real.log x)^2` for `x >= 2`, `2 <= T`, `T <= 16`, or
+    replace it with a non-circular truncation/residue handoff.
+  - Halley is redeployed to that off-boundary atom.
+- Pi/Phase lane is validated and pushed through `17b955a`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Expose pi fixed-height Perron error seeds`.
+  - Coordinator repair: opened `RHPiZeroSumAlignmentBridge` so the direct
+    `piLiErr` / `piMainFromZeros` payload names are in scope.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the route now has fixed-height Perron-error target and anti-target
+    exact-seed payloads, avoiding the opaque cross-height
+    `Classical.choose` threshold comparison.
+  - Remaining Pi atom: connect the fixed-height Perron-error payloads into the
+    corrected phase-coupling/provider route, or isolate the smallest remaining
+    phase/cofinality payload needed.
+  - Planck is redeployed to that fixed-height route.
+- Current live atoms:
+  - Atkinson: close or further reduce `AtkinsonShiftedInversePhaseCellPrefixBoundHyp`
+    using the packaged correction provider.
+  - Perron/B5a: compatible off-boundary window bound at linear `x / T` scale.
+  - Pi/Phase: wire fixed-height Perron-error exact seeds into the corrected
+    provider route, avoiding cross-height threshold monotonicity.
+  - RS/Gabcke: quarter local second-derivative `HasDerivAt`, removable
+    candidate local-coordinate third derivative, and raw quarter removable
+    bridge.
