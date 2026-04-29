@@ -1874,3 +1874,47 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   prove the concrete bounded-height contour-remainder identity for
   `perronVerticalIntegral`, or the bounded-height estimate for that concrete
   `contourRemainderRe`, whichever is locally reachable first.
+
+### 2026-04-29 Round 36 - Concrete Vertical Contour Remainder
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the concrete contour-remainder identity for `perronVerticalIntegral` feeding
+  `SmallTPerronLinearWindowBoundHyp`.
+- Code facts banked:
+  added the concrete local definition `perronVerticalContourRemainderRe` as
+  `perronVerticalIntegral x T - x + zeroSumRe x T`.  Proved
+  `perronVerticalIntegral_residue_identity`, so the actual vertical integral
+  now has the residue decomposition
+  `perronVerticalIntegral x T = x - zeroSumRe x T +
+    perronVerticalContourRemainderRe x T` by algebra.  Added
+  `small_T_perronVerticalIntegral_residue_bound_from_concrete_contour_remainder`,
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder`, and
+  `small_T_perron_bound_hyp_from_concrete_contour_remainder_and_absorption`,
+  wiring the concrete identity into the linear-window surface and the existing
+  explicit absorption bridge.
+- Scale check:
+  no bounded-height estimate was asserted for free.  The remaining analytic
+  atom is exactly the small-`T` bound for the concrete defect
+  `perronVerticalContourRemainderRe`, with the legacy absorption obligation
+  still separate and explicit.
+- Failed/demoted routes:
+  did not use placeholder shifted-remainder witnesses, did not route through
+  contour provider classes, and did not install a `SmallTPerronBoundHyp`
+  instance.  The theorem only names the concrete residue defect and closes the
+  algebraic identity side.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  Passed under `/tmp/littlewood-lean-singleflight.lock`.
+- Smallest next theorem:
+  prove
+  `∃ Cc > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    |perronVerticalContourRemainderRe x T| <=
+      Cc * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
