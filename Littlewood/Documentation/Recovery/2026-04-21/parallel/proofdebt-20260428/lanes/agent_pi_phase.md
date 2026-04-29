@@ -842,3 +842,66 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Run the requested validation commands and report the first compile risk,
     likely around the `Real.exp_le_exp.mpr` adapter from log-level geometry to
     paired geometry.
+
+### 2026-04-29 Round 13: Budgeted Paired Log Geometry
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp`.
+- Target choice:
+  - Attacked the paired log-scale tower domination source. The live log
+    geometry still combines the Perron lower endpoint and the paired phase
+    radius in a single inequality, so this round split it into two same-height
+    half-budget estimates.
+- Banked inputs:
+  - The existing paired phase radius is
+    `max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+      (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε)`.
+  - The existing log tower scale is
+    `Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))`.
+- Facts banked:
+  - Added `TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp`.
+    This asks for one height/tolerance where:
+    `log (max X (perronThreshold hRH T) + 1)` is at most half the log tower
+    scale, and the paired chosen phase radius plus `1` is at most the other
+    half.
+  - Added
+    `targetAntiPerronThresholdTowerLogGeometryForPhaseRadii_of_budget_hyp`,
+    deriving `TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp` by
+    adding the two half-budget inequalities.
+  - Added
+    `exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndBudgetGeometry_hyp`,
+    packaging both repaired Perron-only exact-seed classes from paired
+    finite-zero relative density plus the budgeted log geometry leaf.
+- False-surface audit:
+  - No new declaration uses `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No arbitrary-target Kronecker theorem was introduced.
+  - No constant-1 `PerronSqrtErrorEventuallyAtHeightHyp` shortcut or
+    harvested sorry-backed file was used.
+- Failed routes:
+  - Do not replace this paired budget leaf with ambient all-radius domination
+    unless the exact implication back to the paired budget scale is proved.
+  - Do not split target and anti-target geometry into independent heights; the
+    corrected phase route needs a coupled same-height/tolerance package.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, `git diff --check`, or other check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove/source
+    `TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp`.
+  - Then prove/source the two analytic inputs it encodes: same-height Perron
+    threshold logarithmic growth and a bound for the paired chosen
+    relation-compatible Kronecker phase radius.
+- Coordinator action requested:
+  - Run the requested validation commands and report the first compile risk,
+    likely around the `linarith` step adding the two half-budget inequalities.
