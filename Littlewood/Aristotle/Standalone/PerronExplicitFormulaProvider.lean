@@ -2671,6 +2671,31 @@ theorem perronThresholdTowerWideLogDomination_of_logBudget_hyp
     refine ⟨T, ε, hT4, hεpos, hεlt, ?_⟩
     linarith
 
+/-- The arbitrary-radius log half-budget source is too strong on any RH
+branch.
+
+Choose the supplied radius to be exactly the proposed half-budget at each
+height and tolerance.  The radius is positive, but the required inequality
+would read `B + 1 ≤ B` at the selected height. -/
+theorem not_perronThresholdTowerWideLogBudgetHyp_of_rh
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hRH : ZetaZeros.RiemannHypothesis) :
+    ¬ PerronThresholdTowerWideLogBudgetHyp := by
+  intro hBudget
+  letI : PerronThresholdTowerWideLogBudgetHyp := hBudget
+  let radius : ℝ → ℝ → ℝ := fun T ε =>
+    Real.exp (Real.exp
+      (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+  have hRadius : ∀ T ε : ℝ, 0 < radius T ε := by
+    intro T ε
+    dsimp [radius]
+    positivity
+  rcases PerronThresholdTowerWideLogBudgetHyp.witness
+      hRH 0 radius hRadius with
+    ⟨T, ε, _hT4, _hεpos, _hεlt, _hLower, hRadiusBudget⟩
+  dsimp [radius] at hRadiusBudget
+  linarith
+
 /-- The wide domination boundary implies the wide logarithmic phase-window
 boundary. -/
 theorem perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp

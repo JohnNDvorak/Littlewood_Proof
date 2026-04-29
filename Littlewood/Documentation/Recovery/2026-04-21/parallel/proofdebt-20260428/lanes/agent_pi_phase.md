@@ -1955,3 +1955,38 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
 - Smallest next theorem:
   - Decide whether `PerronThresholdTowerWideLogBudgetHyp` should remain as the arbitrary-radius source, or route the public endpoint through the already narrower target/anti realized-radius budget leaves and continue the canonical Perron/chosen-radius residuals.
+
+### 2026-04-29 Round 35: Arbitrary-Radius Budget Refutation
+
+- Classification: `REFUTED`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronThresholdTowerWideLogBudgetHyp`.
+- Facts banked:
+  - Added `not_perronThresholdTowerWideLogBudgetHyp_of_rh`.
+  - On any supplied RH branch, choose `radius T ε` to be exactly `Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2`.
+  - This radius is positive for every `T, ε`, but the second half-budget conjunct becomes `B + 1 ≤ B` at the selected height, contradiction.
+- What changed:
+  - The arbitrary-radius half-budget source is now diagnosed as false on the RH side and should not remain a public-path blocker.
+  - The earlier arbitrary-radius `PerronThresholdTowerWideDominationHyp`/`PerronThresholdTowerWideLogDominationHyp` route is demoted for public provider synthesis; the viable public route should stay with target/anti realized radii and the canonical Perron/chosen-radius residuals.
+- Remaining goal shape:
+  - Continue the narrower target/anti route rather than arbitrary supplied radii:
+    `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp`,
+    `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp`, and
+    `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp` remain the honest quantitative atoms already feeding the corrected route.
+- Failed/circular route:
+  - Arbitrary positive radius functions cannot be controlled by a same-height tower budget without an envelope/growth hypothesis on the supplied radius.
+  - Did not infer global `¬ PerronThresholdTowerWideLogBudgetHyp` without an RH branch; the class quantifies over RH, so the precise refutation is conditional on a supplied `hRH`.
+  - Did not weaken the class statement or introduce an envelope replacement in this patch.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, provider instances, independent target/anti heights, cross-height `perronThreshold` monotonicity, reverse-comparison instance, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build, public import probe, or other validation command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Return to the narrower target/anti realized-radius route and attack one of the residual canonical leaves directly, preferably `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual` if the Perron selected-height issue can be avoided, otherwise the target/anti chosen-radius residuals.
