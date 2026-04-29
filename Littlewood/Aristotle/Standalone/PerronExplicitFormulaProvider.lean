@@ -2723,6 +2723,21 @@ class PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp
             (Real.exp (Real.exp
               (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
 
+/-- The earlier two-sided growth source implies the canonical max-majorant
+form by recombining the two same-height inequalities with `max_le`.
+
+This is deliberately not an instance, to avoid a typeclass loop with the
+canonical-to-majorant route below. -/
+theorem perronThresholdTowerExpHalfBudgetCanonicalMajorant_of_growth_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetGrowthHyp] :
+    PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp where
+  witness := by
+    intro hRH X
+    rcases PerronThresholdTowerExpHalfBudgetGrowthHyp.witness hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hX, hPerron⟩
+    exact ⟨T, ε, hT4, hεpos, hεlt, max_le hX hPerron⟩
+
 /-- Phase-radius half of the paired log tower budget at a Perron-selected
 height/tolerance.
 
@@ -2842,6 +2857,54 @@ class AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp
       antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1
         ≤ Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- The paired radius-growth source implies the target-side canonical radius
+leaf by projecting the target radius through the paired max.
+
+This comparison theorem is non-instance-only to keep the canonical leaves as
+the current explicit atoms. -/
+theorem targetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_pairedGrowth_hyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    have hPair :=
+      TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp.witness
+        T ε hT4 hεpos hεlt
+    have hTarget :
+        targetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤
+          max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+              (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1 := by
+      linarith [le_max_left
+        (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+        (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε)]
+    exact hTarget.trans hPair
+
+/-- The paired radius-growth source implies the anti-target-side canonical
+radius leaf by projecting the anti-target radius through the paired max.
+
+This comparison theorem is non-instance-only to keep the canonical leaves as
+the current explicit atoms. -/
+theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_pairedGrowth_hyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    have hPair :=
+      TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp.witness
+        T ε hT4 hεpos hεlt
+    have hAnti :
+        antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤
+          max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+              (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1 := by
+      linarith [le_max_right
+        (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+        (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε)]
+    exact hAnti.trans hPair
 
 /-- Target-specific same-height Perron/tower domination by the realized
 relative-density phase radius.

@@ -1323,3 +1323,55 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Prove/source `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp`.
   - Prove/source `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp`.
   - Prove/source `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp`.
+
+### 2026-04-29 Round 21: Canonical Leaf Comparison Reductions
+
+- Classification: `HONEST_COMPARISON_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp`
+  - `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp`
+  - `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp`
+- Facts banked:
+  - Added `perronThresholdTowerExpHalfBudgetCanonicalMajorant_of_growth_hyp`,
+    a non-instance comparison theorem deriving the canonical Perron
+    max-majorant leaf from the older same-height two-inequality growth source
+    `PerronThresholdTowerExpHalfBudgetGrowthHyp` by `max_le`.
+  - Added `targetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_pairedGrowth_hyp`,
+    a non-instance projection from paired radius growth to the target-side
+    canonical radius leaf.
+  - Added
+    `antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_pairedGrowth_hyp`,
+    the analogous non-instance projection for the anti-target side.
+- Failed routes and guardrails:
+  - These are intentionally not typeclass instances: the current validated
+    provider chain already has canonical-to-majorant-to-growth edges, so
+    installing the reverse implications as instances would risk a typeclass
+    loop.
+  - The comparison theorems do not close the analytic debt from public/deep
+    inputs. They record exact equivalence/projection structure and keep the
+    remaining atoms honest.
+  - No use of `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No arbitrary-target Kronecker, independent target/anti heights,
+    `tower_cap_unbounded_with_eps` fixed-point shortcut, or constant-1 Perron
+    sqrt-error shortcut was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, `git diff --check`, or other check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Source a true fixed-height growth provider for
+    `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp` from a bound on
+    `perronThreshold hRH T` at the same selected `T`.
+  - Source a quantitative Kronecker-radius provider for
+    `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp` and
+    `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp`; bounding a
+    different existential radius is insufficient unless the chosen-radius
+    definition is changed or a direct bounded witness route is added.
