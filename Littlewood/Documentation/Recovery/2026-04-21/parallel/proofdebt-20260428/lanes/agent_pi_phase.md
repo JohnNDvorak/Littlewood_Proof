@@ -2220,3 +2220,43 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`.
+
+### 2026-04-29 Round 42: Budgeted Pair Source Demoted to Chosen-Radius Budget
+
+- Classification: `FALSE_SURFACE_DIAGNOSTIC_AND_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`.
+- Facts banked:
+  - Added `not_finiteSetRelationCompatibleBudgetedPairKroneckerHyp`.
+  - Added `finiteSetRelationCompatibleKroneckerRadius`.
+  - Added `finiteSetRelationCompatibleKroneckerRadius_spec`.
+  - Added `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+  - Added `targetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKronecker_of_relationCompatibleKronecker_radiusBudget_hyp`.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyRelationCompatibleKroneckerRadiusBudgetRoute`.
+- What changed:
+  - The Round 41 generic source is now explicitly diagnosed as false as stated: with empty `S` and `B = 0`, positive radii cannot satisfy `R + 1 ≤ B`.
+  - The viable route now reuses the existing honest `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp` infrastructure and only asks for the same-height tower half-budget to dominate the actual selected target/anti Kronecker radii.
+  - The corrected endpoint is packaged without depending on the false generic external-budget class.
+- Remaining goal shape:
+  - Prove `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`: for the zeta finite-zero set at the same `T, ε`, the target and anti-target radii selected from the honest relation-compatible finite-set Kronecker theorem are both bounded by
+    `Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 - 1`.
+- Failed/circular route:
+  - The arbitrary external budget theorem cannot be proved; `B = 0` is an immediate contradiction.
+  - Existing `KroneckerEquidistribution.lean` and `DirichletApproximation.lean` provide 1D, some 2D, and homogeneous/incomplete infrastructure, but the file comments still mark full finite-dimensional inhomogeneous Kronecker as missing.
+  - Did not claim a separately chosen radius bounds the existing `Classical.choose` radius; the new budget class names the exact selected radii it must bound.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-radius route, provider cycles, reverse-comparison instances, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed focused validation under the coordinator singleflight rule.
+- Validation command/result:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
