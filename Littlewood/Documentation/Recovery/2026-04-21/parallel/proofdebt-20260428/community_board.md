@@ -2265,3 +2265,16 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Current Atkinson atoms: Hardy-start theta-model asymptotic at
     `O((m+1)^-2)`, plus the separate Jacobian-integral bound at
     `1/relativeWeight` and shifted stationary-phase target remainder.
+
+## Overnight 2026-04-29 Sixty-Seventh Pass Status
+
+- Coordinator recovery branch is pushed through `5ba8a01`.
+- Perron/B5a lane is integrated through `d874288`:
+  - Raw-integral continuity is reduced to a fixed-window integral plus
+    raw/fixed equality on the cutoff slab.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron atoms: prove fixed-window continuity for
+    `perronVerticalFixedWindowIntegral`, or prove
+    `perronVerticalRawIntegral = perronVerticalFixedWindowIntegral` on the
+    slab.
