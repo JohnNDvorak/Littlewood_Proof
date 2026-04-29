@@ -5714,6 +5714,34 @@ theorem small_T_perronVerticalFixedWindowIntegrand_aestronglyMeasurable_slab16 :
   exact (small_T_perronVerticalIntegrand_aestronglyMeasurable_slab16 q hq).indicator
     measurableSet_Ioc
 
+/-- On a transition rectangle, the unwindowed Perron integrand is strongly
+measurable on the fixed height window. -/
+theorem small_T_perronVerticalIntegrand_aestronglyMeasurable_transition
+    (Xtail : ℝ) (q : ℝ × ℝ)
+    (hq : q ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    AEStronglyMeasurable
+      (fun t : ℝ => perronVerticalIntegrand q.1 t)
+      (volume.restrict (Set.Ioc (-16 : ℝ) 16)) :=
+  (small_T_perronVerticalIntegrand_continuous_height q.1 (by linarith [hq.1])).aestronglyMeasurable.restrict
+
+/-- Closed fixed-window DCT measurability input on a finite transition
+rectangle. -/
+theorem small_T_perronVerticalFixedWindowIntegrand_aestronglyMeasurable_transition
+    (Xtail : ℝ) :
+    ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᶠ q in 𝓝[
+        {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        AEStronglyMeasurable
+          (fun t : ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (volume.restrict (Set.Ioc (-16 : ℝ) 16)) := by
+  intro p hp
+  filter_upwards [eventually_mem_nhdsWithin] with q hq
+  unfold perronVerticalFixedWindowIntegrandParam
+  exact (small_T_perronVerticalIntegrand_aestronglyMeasurable_transition Xtail q hq).indicator
+    measurableSet_Ioc
+
 /-- For fixed height, the unwindowed Perron integrand is continuous on the
 cutoff slab as a function of the `x` parameter. -/
 theorem small_T_perronVerticalIntegrand_continuousWithinAt_slab16_fixed_height
@@ -6409,6 +6437,47 @@ theorem small_T_perronVerticalIntegral_continuousOn_transition_from_dominated_co
   small_T_perronVerticalIntegral_continuousOn_transition_of_fixedWindow Xtail
     (small_T_perronVerticalFixedWindowIntegral_continuousOn_transition_from_dominated_convergence
       Xtail hmeas hbound hlim)
+
+/-- Fixed-window transition continuity now reduces to the remaining a.e.
+pointwise convergence input; transition measurability and the local majorant
+are closed. -/
+theorem small_T_perronVerticalFixedWindowIntegral_continuousOn_transition_from_tendsto_ae
+    (Xtail : ℝ)
+    (hlim : ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (𝓝[
+            {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalFixedWindowIntegrandParam p t))) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalFixedWindowIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_perronVerticalFixedWindowIntegral_continuousOn_transition_from_dominated_convergence
+    Xtail
+    (small_T_perronVerticalFixedWindowIntegrand_aestronglyMeasurable_transition Xtail)
+    (small_T_perronVerticalFixedWindowIntegrand_integrable_majorant_transition Xtail)
+    hlim
+
+/-- Public vertical Perron transition continuity now reduces to the remaining
+a.e. pointwise convergence input for the fixed-window integrand. -/
+theorem small_T_perronVerticalIntegral_continuousOn_transition_from_tendsto_ae
+    (Xtail : ℝ)
+    (hlim : ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (𝓝[
+            {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalFixedWindowIntegrandParam p t))) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_perronVerticalIntegral_continuousOn_transition_of_fixedWindow Xtail
+    (small_T_perronVerticalFixedWindowIntegral_continuousOn_transition_from_tendsto_ae
+      Xtail hlim)
 
 /-- Closed fixed-window slab continuity from the local DCT inputs. -/
 theorem small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16 :

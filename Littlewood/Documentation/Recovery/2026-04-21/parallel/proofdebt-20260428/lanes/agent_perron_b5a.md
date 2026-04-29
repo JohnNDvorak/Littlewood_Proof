@@ -3052,3 +3052,49 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   pointwise convergence/membership stability input.  Zero-sum transition
   continuity and the eventual normalized asymptotic tail remain separate open
   atoms.
+
+### 2026-04-29 Round 61 - Close Transition Fixed-Window Measurability
+
+- Classification: `PROOF_CLOSED`.
+- Exact theorem attacked:
+  transition `AEStronglyMeasurable` input for
+  `perronVerticalFixedWindowIntegrandParam` on
+  `16 <= x <= Xtail`, `2 <= T <= 16`, with measure restricted to
+  `Set.Ioc (-16) 16`.
+- Code facts banked:
+  added `small_T_perronVerticalIntegrand_aestronglyMeasurable_transition`,
+  using `small_T_perronVerticalIntegrand_continuous_height` and `16 <= x`.
+  Added `small_T_perronVerticalFixedWindowIntegrand_aestronglyMeasurable_transition`.
+  Wired closed transition measurability plus the already closed transition
+  majorant into
+  `small_T_perronVerticalFixedWindowIntegral_continuousOn_transition_from_tendsto_ae`
+  and
+  `small_T_perronVerticalIntegral_continuousOn_transition_from_tendsto_ae`,
+  so transition Perron-integral continuity now has only the a.e. pointwise
+  convergence/tendsto fixed-window input remaining.
+- Shape check:
+  no zero-sum continuity, asymptotic tail, public small-`T` provider, or
+  closed zero-set local constancy was asserted.  The transition route remains
+  inside the finite fixed-window DCT handoff.
+- Failed/demoted routes:
+  did not attack endpoint membership stability or the eventual normalized
+  asymptotic tail in this pass.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, broad providers, dummy witnesses, new axioms, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check` passed.  `lake build
+  Littlewood.Aristotle.Standalone.PerronTruncationInfra` passed under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.
+- Smallest next theorem:
+  prove transition a.e. pointwise convergence/tendsto for
+  `perronVerticalFixedWindowIntegrandParam`, likely by mirroring slab16:
+  first transition fixed-height integrand convergence, then endpoint-exclusion
+  membership stability for `Set.Ioc (-T) T`.  Zero-sum transition continuity
+  and eventual normalized asymptotic tail remain separate open atoms.
