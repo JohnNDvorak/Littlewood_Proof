@@ -3612,7 +3612,8 @@ theorem targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyD
             hT4 hεpos hεlt).1,
           (targetFiniteZeroBudgetedRelativelyDenseRadius_spec
             hT4 hεpos hεlt).2.2⟩
-    · let δ : ℝ := min ε (1 / 2)
+    ·
+      let δ : ℝ := min ε (1 / 2)
       have hδpos : 0 < δ := by
         dsimp [δ]
         exact lt_min hεpos (by norm_num)
@@ -4110,6 +4111,29 @@ def TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison
         T ε
       ≤ targetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt
 
+/-- Exact chooser identity missing from the target budgeted projection route.
+
+The existing relative-density specs prove that both radii are valid witnesses,
+and the budgeted radius has the tower bound.  They do not identify the
+`Classical.choose` radius used by `targetFiniteZeroInhomogeneousPhaseRadius`
+with the radius selected by the paired budgeted payload. -/
+def TargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] : Prop :=
+  ∀ (T ε : ℝ) (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1),
+    @targetFiniteZeroInhomogeneousPhaseRadius
+        targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyDense_hyp
+        T ε
+      = targetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt
+
+/-- The missing target chooser identity is sufficient for the target projection
+comparison. -/
+theorem targetFiniteZeroPhaseRadiusBudgetedProjectionComparison_of_choiceSpec
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    (h : TargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec) :
+    TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison := by
+  intro T ε hT4 hεpos hεlt
+  exact le_of_eq (h T ε hT4 hεpos hεlt)
+
 /-- The selected target radius in the budgeted paired finite-zero payload
 already satisfies the tower half-budget. -/
 theorem targetFiniteZeroBudgetedRelativelyDenseRadius_halfBudget
@@ -4132,6 +4156,17 @@ theorem targetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_budgetedProjec
   have hBudget :=
     targetFiniteZeroBudgetedRelativelyDenseRadius_halfBudget hT4 hεpos hεlt
   linarith
+
+/-- Diagnostic replacement for the failed direct target projection route:
+the target residual follows from the exact chooser identity, together with the
+already-proved budget for the paired payload's selected target radius. -/
+theorem targetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_budgetedProjectionChoiceSpec
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    (h : TargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec) :
+    @TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual
+      targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyDense_hyp :=
+  targetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_budgetedProjectionComparison
+    (targetFiniteZeroPhaseRadiusBudgetedProjectionComparison_of_choiceSpec h)
 
 /-- Anti-target-side height-only finite-zero phase-radius majorant source. -/
 class AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp
@@ -4190,6 +4225,25 @@ def AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison
         T ε
       ≤ antiTargetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt
 
+/-- Exact chooser identity missing from the anti-target budgeted projection
+route. -/
+def AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] : Prop :=
+  ∀ (T ε : ℝ) (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1),
+    @antiTargetFiniteZeroInhomogeneousPhaseRadius
+        antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyDense_hyp
+        T ε
+      = antiTargetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt
+
+/-- The missing anti-target chooser identity is sufficient for the anti-target
+projection comparison. -/
+theorem antiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison_of_choiceSpec
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    (h : AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec) :
+    AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison := by
+  intro T ε hT4 hεpos hεlt
+  exact le_of_eq (h T ε hT4 hεpos hεlt)
+
 /-- The selected anti-target radius in the budgeted paired finite-zero payload
 already satisfies the tower half-budget. -/
 theorem antiTargetFiniteZeroBudgetedRelativelyDenseRadius_halfBudget
@@ -4212,6 +4266,18 @@ theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_budgetedPr
   have hBudget :=
     antiTargetFiniteZeroBudgetedRelativelyDenseRadius_halfBudget hT4 hεpos hεlt
   linarith
+
+/-- Diagnostic replacement for the failed direct anti-target projection route:
+the anti-target residual follows from the exact chooser identity, together with
+the already-proved budget for the paired payload's selected anti-target radius.
+-/
+theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_budgetedProjectionChoiceSpec
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    (h : AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionChoiceSpec) :
+    @AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual
+      antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyDense_hyp :=
+  antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_budgetedProjectionComparison
+    (antiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison_of_choiceSpec h)
 
 /-- The paired radius-growth source implies the target-side canonical radius
 leaf by projecting the target radius through the paired max.
