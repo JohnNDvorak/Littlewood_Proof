@@ -3253,3 +3253,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
     |perronVerticalContourRemainderRe x T| /
       (Real.sqrt x * (Real.log T)^2 / Real.sqrt T) <= Casymp`.
   The public legacy absorption obligation remains separate.
+
+### 2026-04-29 Round 65 - Reduce Eventual Tail to Residue Extraction
+
+- Classification: `REDUCTION_WIRED`.
+- Exact theorem attacked:
+  eventual normalized asymptotic tail from `Xtail` for
+  `perronVerticalContourRemainderRe`, feeding the finite-transition
+  linear-window route.
+- Code facts banked:
+  added
+  `small_T_concrete_contour_remainder_normalized_asymptotic_tail_from_eventual_residue_bound`,
+  which converts an eventual bounded-height residue estimate for the concrete
+  vertical Perron integral into the required normalized asymptotic tail using
+  only the definition of `perronVerticalContourRemainderRe` and
+  `small_T_residue_error_shape_pos`.  Added
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_transition_bddAbove_and_eventual_residue_bound`,
+  wiring the new tail adapter through the already-closed finite-zero
+  transition boundedness route.
+- Search result:
+  no existing proved concrete normalized asymptotic-tail theorem was found in
+  the local Perron/Hadamard surfaces.  Existing downstream routes still took
+  `hasymptotic` as an explicit hypothesis, so this pass replaced that quotient
+  atom with the smaller unnormalized residue-extraction atom.
+- Shape check:
+  the new wrapper requires `16 <= Xtail`, preserving the cutoff-16 split and
+  providing `x >= 2` on the tail.  It does not assert compactness in `x` and
+  does not install a legacy `SmallTPerronBoundHyp` instance.
+- Failed/demoted routes:
+  no direct proved asymptotic estimate for
+  `perronVerticalContourRemainderRe` was available to wire in this pass.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, broad providers, dummy witnesses, new axioms, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check` passed.  `lake build
+  Littlewood.Aristotle.Standalone.PerronTruncationInfra` passed under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.
+- Smallest next theorem:
+  prove the eventual bounded-height residue extraction on the unbounded tail:
+  `∃ Cᵣ > 0, ∀ x T, Xtail <= x -> 2 <= T -> T <= 16 ->
+    |perronVerticalIntegral x T -
+      (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| <=
+      Cᵣ * (Real.sqrt x * (Real.log T)^2 / Real.sqrt T)`.
+  The public legacy absorption obligation remains separate.

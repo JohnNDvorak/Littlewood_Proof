@@ -7501,6 +7501,41 @@ theorem small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_trans
     (small_T_concrete_contour_remainder_transition_bddAbove_image_from_finiteZeros Xtail)
     hasymptotic
 
+/-- Eventual normalized asymptotic tail from an eventual bounded-height
+residue extraction for the concrete vertical Perron integral.
+
+This is the exact algebraic/positivity adapter for the remaining unbounded
+tail: it does not use the legacy small-`T` provider or a contour-provider
+shortcut, and it keeps the analytic work in the unnormalized residue estimate
+for `perronVerticalIntegral x T - (x - zeroSumRe x T)`. -/
+theorem small_T_concrete_contour_remainder_normalized_asymptotic_tail_from_eventual_residue_bound
+    (Xtail : ℝ) (hXtail : 16 ≤ Xtail)
+    (hresidue : ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ,
+      Xtail ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalIntegral x T -
+            (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+          Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    ∃ Casymp > (0 : ℝ), ∀ x T : ℝ,
+      Xtail ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Casymp := by
+  rcases hresidue with ⟨Cᵣ, hCᵣ_pos, hresidue⟩
+  refine ⟨Cᵣ, hCᵣ_pos, ?_⟩
+  intro x T hx_tail hT_lo hT_hi
+  have hx : x ≥ 2 := by linarith [hXtail, hx_tail]
+  have hshape_pos :
+      0 < Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T :=
+    small_T_residue_error_shape_pos x T hx hT_lo hT_hi
+  have hrem_eq :
+      perronVerticalContourRemainderRe x T =
+        perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T) := by
+    unfold perronVerticalContourRemainderRe
+    ring
+  rw [hrem_eq]
+  exact (div_le_iff₀ hshape_pos).mpr
+    (hresidue x T hx_tail hT_lo hT_hi)
+
 /-- Explicit cutoff-`16` normalized supremum from the proved finite-zero slab,
 transition-slab continuity, and an eventual asymptotic tail. -/
 theorem small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_continuousOn_and_asymptotic_tail
@@ -7853,6 +7888,22 @@ theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZe
   small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
     (small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_bddAbove_and_asymptotic_tail
       Xtail hasymptotic)
+
+/-- Linear-window small-`T` surface from the proved finite-zero transition
+boundedness route and an eventual bounded-height residue extraction on the
+unbounded tail. -/
+theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_transition_bddAbove_and_eventual_residue_bound
+    (Xtail : ℝ) (hXtail : 16 ≤ Xtail)
+    (hresidue : ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ,
+      Xtail ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalIntegral x T -
+            (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+          Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    SmallTPerronLinearWindowBoundHyp :=
+  small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_transition_bddAbove_and_asymptotic_tail
+    Xtail
+    (small_T_concrete_contour_remainder_normalized_asymptotic_tail_from_eventual_residue_bound
+      Xtail hXtail hresidue)
 
 /-- Linear-window small-`T` surface from the proved finite-zero slab,
 transition-slab continuity, and an eventual asymptotic tail. -/
