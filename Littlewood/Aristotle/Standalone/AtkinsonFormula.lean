@@ -1599,6 +1599,124 @@ private lemma atkinsonHardyStartThetaModel_eq_expanded (m : ℕ) :
   rw [hdiv]
   ring
 
+private noncomputable def atkinsonLogGammaStirlingTerm (t : ℝ) : ℂ :=
+  let s : ℂ := 1 / 4 + Complex.I * (t / 2)
+  (s - 1 / 2) * Complex.log s - s + 1 / 2 * Complex.log (2 * Real.pi)
+
+private noncomputable def atkinsonLogGammaStirlingApprox (t : ℝ) : ℝ :=
+  (t / 2) * Real.log (t / 2) - t / 2 - Real.pi / 8
+
+/-- Convert an `atTop` big-O estimate against `1/t` into the eventual
+pointwise inequality shape used by the Atkinson endpoint atoms. -/
+private theorem atkinson_eventual_abs_bound_of_isBigO_one_div
+    (f : ℝ → ℝ)
+    (hf : Asymptotics.IsBigO Filter.atTop f (fun t : ℝ => 1 / t)) :
+    ∃ C > 0, ∃ T : ℝ, ∀ t : ℝ, T ≤ t → |f t| ≤ C / t := by
+  rw [Asymptotics.isBigO_iff] at hf
+  obtain ⟨C0, hC0⟩ := hf
+  obtain ⟨T0, hT0⟩ := Filter.eventually_atTop.mp hC0
+  refine ⟨max C0 0 + 1, by positivity, max T0 1, ?_⟩
+  intro t ht
+  have htT0 : T0 ≤ t := le_trans (le_max_left _ _) ht
+  have ht1 : 1 ≤ t := le_trans (le_max_right _ _) ht
+  have htpos : 0 < t := lt_of_lt_of_le zero_lt_one ht1
+  have hbound := hT0 t htT0
+  have hinv_nonneg : 0 ≤ 1 / t := by positivity
+  have hC0_le : C0 ≤ max C0 0 + 1 := by
+    linarith [le_max_left C0 0]
+  have hbound' : |f t| ≤ C0 * (1 / t) := by
+    have hbound'' : |f t| ≤ C0 * |t|⁻¹ := by
+      simpa [Real.norm_eq_abs] using hbound
+    simpa [abs_of_pos htpos, one_div] using hbound''
+  calc
+    |f t| ≤ C0 * (1 / t) := hbound'
+    _ ≤ (max C0 0 + 1) * (1 / t) :=
+          mul_le_mul_of_nonneg_right hC0_le hinv_nonneg
+    _ = (max C0 0 + 1) / t := by ring
+
+/-- The elementary Stirling-term imaginary-part estimate may be supplied as a
+standard big-O statement; this adapter gives the endpoint-friendly pointwise
+form. -/
+private theorem atkinson_logGammaStirlingTerm_im_bound_of_isBigO
+    (hterm :
+      Asymptotics.IsBigO Filter.atTop
+        (fun t : ℝ =>
+          (atkinsonLogGammaStirlingTerm t).im - atkinsonLogGammaStirlingApprox t)
+        (fun t : ℝ => 1 / t)) :
+    ∃ Cterm > 0, ∃ Tterm : ℝ, ∀ t : ℝ, Tterm ≤ t →
+      |(atkinsonLogGammaStirlingTerm t).im - atkinsonLogGammaStirlingApprox t|
+        ≤ Cterm / t :=
+  atkinson_eventual_abs_bound_of_isBigO_one_div
+    (fun t : ℝ =>
+      (atkinsonLogGammaStirlingTerm t).im - atkinsonLogGammaStirlingApprox t)
+    hterm
+
+/-- Split the uniform `Im log Γ` Stirling remainder into the branch-sensitive
+comparison with the Stirling logarithm plus the elementary imaginary-part
+asymptotic of that Stirling logarithm. -/
+private theorem atkinson_logGammaStirling_of_term_bounds
+    (hlog :
+      ∃ Clog > 0, ∃ Tlog : ℝ, ∀ t : ℝ, Tlog ≤ t →
+        |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+            (atkinsonLogGammaStirlingTerm t).im| ≤ Clog / t)
+    (hterm :
+      ∃ Cterm > 0, ∃ Tterm : ℝ, ∀ t : ℝ, Tterm ≤ t →
+        |(atkinsonLogGammaStirlingTerm t).im - atkinsonLogGammaStirlingApprox t|
+          ≤ Cterm / t) :
+    ∃ CΓ > 0, ∃ TΓ : ℝ, ∀ t : ℝ, TΓ ≤ t →
+      |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+          atkinsonLogGammaStirlingApprox t| ≤ CΓ / t := by
+  obtain ⟨Clog, hClog, Tlog, hlog'⟩ := hlog
+  obtain ⟨Cterm, hCterm, Tterm, hterm'⟩ := hterm
+  refine ⟨Clog + Cterm, by positivity, max Tlog Tterm, ?_⟩
+  intro t ht
+  have htlog : Tlog ≤ t := le_trans (le_max_left _ _) ht
+  have htterm : Tterm ≤ t := le_trans (le_max_right _ _) ht
+  have hlog_bound := hlog' t htlog
+  have hterm_bound := hterm' t htterm
+  have hsplit :
+      (Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+          atkinsonLogGammaStirlingApprox t =
+        ((Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+            (atkinsonLogGammaStirlingTerm t).im) +
+          ((atkinsonLogGammaStirlingTerm t).im -
+            atkinsonLogGammaStirlingApprox t) := by
+    ring
+  calc
+    |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+        atkinsonLogGammaStirlingApprox t|
+        =
+      |((Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+          (atkinsonLogGammaStirlingTerm t).im) +
+        ((atkinsonLogGammaStirlingTerm t).im -
+          atkinsonLogGammaStirlingApprox t)| := by
+          rw [hsplit]
+    _ ≤
+        |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+          (atkinsonLogGammaStirlingTerm t).im| +
+        |(atkinsonLogGammaStirlingTerm t).im -
+          atkinsonLogGammaStirlingApprox t| := abs_add_le _ _
+    _ ≤ Clog / t + Cterm / t := add_le_add hlog_bound hterm_bound
+    _ = (Clog + Cterm) / t := by ring
+
+/-- Version of the preceding split where the elementary Stirling-term part is
+available as a standard big-O estimate. -/
+private theorem atkinson_logGammaStirling_of_log_to_stirlingTerm_and_stirlingTerm_isBigO
+    (hlog :
+      ∃ Clog > 0, ∃ Tlog : ℝ, ∀ t : ℝ, Tlog ≤ t →
+        |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+            (atkinsonLogGammaStirlingTerm t).im| ≤ Clog / t)
+    (hterm :
+      Asymptotics.IsBigO Filter.atTop
+        (fun t : ℝ =>
+          (atkinsonLogGammaStirlingTerm t).im - atkinsonLogGammaStirlingApprox t)
+        (fun t : ℝ => 1 / t)) :
+    ∃ CΓ > 0, ∃ TΓ : ℝ, ∀ t : ℝ, TΓ ≤ t →
+      |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+          atkinsonLogGammaStirlingApprox t| ≤ CΓ / t :=
+  atkinson_logGammaStirling_of_term_bounds hlog
+    (atkinson_logGammaStirlingTerm_im_bound_of_isBigO hterm)
+
 /-- The continuous Hardy-theta Stirling atom is exactly the corresponding
 uniform Stirling remainder for the imaginary part of `log Γ(1/4 + it/2)`,
 after the Hardy normalization `-(t/2)log π` is folded into the logarithm. -/
@@ -21510,6 +21628,33 @@ private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_logGam
           ≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) :=
   atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_thetaStirling
     (atkinson_thetaStirling_of_logGammaStirling hgamma)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+/-- Endpoint phase package after splitting the remaining uniform log-Gamma
+Stirling input into the branch-sensitive log-to-Stirling-term comparison and
+the elementary Stirling-term big-O estimate. -/
+private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_log_to_stirlingTerm
+    (hlog :
+      ∃ Clog > 0, ∃ Tlog : ℝ, ∀ t : ℝ, Tlog ≤ t →
+        |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+            (atkinsonLogGammaStirlingTerm t).im| ≤ Clog / t)
+    (hterm :
+      Asymptotics.IsBigO Filter.atTop
+        (fun t : ℝ =>
+          (atkinsonLogGammaStirlingTerm t).im - atkinsonLogGammaStirlingApprox t)
+        (fun t : ℝ => 1 / t)) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_res > 0, ∃ N_res : ℕ, ∀ n : ℕ, N_res ≤ n →
+        |atkinsonEndpointGapCorrectedPhaseError n j|
+          ≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) := by
+  refine atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_logGammaStirling ?_
+  obtain ⟨CΓ, hCΓ, TΓ, hΓ⟩ :=
+    atkinson_logGammaStirling_of_log_to_stirlingTerm_and_stirlingTerm_isBigO
+      hlog hterm
+  refine ⟨CΓ, hCΓ, TΓ, ?_⟩
+  intro t ht
+  simpa [atkinsonLogGammaStirlingApprox] using hΓ t ht
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Carrier cancellation after reducing the endpoint boundary to the shifted
