@@ -4669,6 +4669,44 @@ theorem antiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudget
     antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp,
     hT4, hεpos] using h T ε hT4 hεpos hεlt
 
+/-- The target chosen phase-radius residual is definitionally the target
+relation-compatible selected Kronecker-radius residual under the
+relation-compatible finite-zero provider.
+
+This is the inverse direction to
+`targetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual_of_phaseRadiusResidual`
+and keeps the route on the actual selected finite-set radius. -/
+theorem targetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_relationCompatibleCanonicalKroneckerRadiusResidual
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    (h : TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual) :
+    @TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual
+      targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp := by
+  intro T ε hT4 hεpos hεlt
+  simpa [TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual,
+    TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual,
+    targetFiniteZeroInhomogeneousPhaseRadius,
+    finiteSetRelationCompatibleKroneckerRadius,
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp,
+    hT4, hεpos] using h T ε hT4 hεpos hεlt
+
+/-- The anti-target chosen phase-radius residual is definitionally the
+anti-target relation-compatible selected Kronecker-radius residual under the
+relation-compatible finite-zero provider. -/
+theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_relationCompatibleCanonicalKroneckerRadiusResidual
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    (h : AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual) :
+    @AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual
+      antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp := by
+  intro T ε hT4 hεpos hεlt
+  simpa [AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual,
+    AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual,
+    antiTargetFiniteZeroInhomogeneousPhaseRadius,
+    finiteSetRelationCompatibleKroneckerRadius,
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp,
+    hT4, hεpos] using h T ε hT4 hεpos hεlt
+
 /-- The two phase-radius canonical residuals supply the two
 relation-compatible selected Kronecker-radius residuals.
 
@@ -5096,6 +5134,37 @@ instance (priority := 95)
     [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
     AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
   antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+
+/-- The paired phase-radius growth leaf follows from the two canonical
+relation-compatible selected-radius residuals.
+
+This is the current exact reduction for
+`TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`: the only remaining
+finite-zero quantitative inputs are the two same-height bounds for the actual
+target and anti-target selected finite-set Kronecker radii. -/
+theorem targetAntiFiniteZeroPhaseRadiusHalfBudgetGrowth_of_relationCompatibleCanonicalRadiusResiduals
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    (hTarget :
+      TargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual)
+    (hAnti :
+      AntiTargetFiniteZeroRelationCompatibleCanonicalKroneckerRadiusHalfBudgetResidual) :
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp := by
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+  have hTargetPhase :
+      TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual :=
+    targetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_relationCompatibleCanonicalKroneckerRadiusResidual
+      hTarget
+  have hAntiPhase :
+      AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual :=
+    antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_relationCompatibleCanonicalKroneckerRadiusResidual
+      hAnti
+  exact
+    targetAntiFiniteZeroPhaseRadiusHalfBudgetGrowth_of_canonicalResiduals
+      hTargetPhase hAntiPhase
 
 /-- Paired target/anti tower geometry supplies the target-side geometry leaf by
 bounding the target radius by the maximum of the two chosen radii. -/
