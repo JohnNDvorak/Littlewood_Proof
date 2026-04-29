@@ -2806,3 +2806,44 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   direct standard complex principal-log Gamma/Stirling Big-O, or the two
   branch-route atoms above. Independent debts remain the Jacobian-integral
   bound at `1/relativeWeight` and shifted stationary-phase target remainder.
+
+### 2026-04-29 Round 60 Period-Correction Range Handoff
+
+- Classification: `VALIDATED_BRANCH_RANGE_REDUCTION`.
+- Exact theorem attacked:
+  period-correction zero for
+  `toIocDiv Real.two_pi_pos (-Real.pi)
+    (stirlingTerm (1/4+i*y) + log verticalMultiplier y).im = 0`.
+- Facts banked:
+  added and proved `atkinson_vertical_period_correction_zero_of_im_mem_Ioc`,
+  reducing the period-correction-zero atom to eventual membership of
+  `(stirlingTerm (1/4+i*y) + log verticalMultiplier y).im` in
+  `Set.Ioc (-Real.pi) Real.pi`.  Added and proved
+  `atkinson_vertical_principal_log_isBigO_of_period_range_and_multiplier_isBigO`,
+  feeding that concrete range statement plus standard multiplier Big-O into
+  the vertical principal-log Big-O.
+- Smallest next theorem:
+  prove the eventual branch range
+  `∃ Yrange, ∀ y ≥ Yrange,
+    (stirlingTerm (1/4+i*y) + log verticalMultiplier y).im ∈
+      Set.Ioc (-Real.pi) Real.pi`,
+  or prove standard multiplier Big-O
+  `(fun t => atkinsonGammaStirlingMultiplier t - 1) =O[atTop]
+    (fun t => ((1 / t : ℝ) : ℂ))`.
+- Failed routes / guardrails:
+  standard multiplier Big-O still is not available from local definitions
+  without the direct principal-log Gamma/Stirling input.  Did not add imports,
+  analytic providers, axioms, sorries, statement weakening, direct Abel
+  shortcuts, phase-weight division, circular provider assumptions, or the
+  demoted raw endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  branch range atom, standard multiplier Big-O, or direct principal-log
+  Gamma/Stirling theorem. Independent debts remain the Jacobian-integral bound
+  at `1/relativeWeight` and shifted stationary-phase target remainder.
