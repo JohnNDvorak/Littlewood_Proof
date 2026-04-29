@@ -1008,3 +1008,37 @@ Timestamp: 2026-04-28 22:56 CDT.
     canonical residuals.
   - RS/Gabcke: quarter value formula and quarter raw-removable bridge, with
     analogous three-quarter atoms still available if that route proves easier.
+
+## Overnight 2026-04-29 Twentieth Pass Status
+
+- Perron/B5a lane is validated and pushed through `21528cd`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Close Perron harmonic floor reindexing`.
+  - Validation passed after a coordinator injectivity cleanup:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the reciprocal-distance envelope is now bounded by the usual
+    finite harmonic sum through the exact floor-distance reindexing. The
+    branch has the pure small-`T` reciprocal-distance bound down to the
+    harmonic/log layer.
+  - Halley is redeployed to continue Perron/B5a public-path debt without
+    touching the contour-provider duplicate-class route or false tail
+    placeholders.
+- Atkinson lane is validated and pushed through `4e1ddfb`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Close Atkinson finite boundary patch`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the finite fixed-shift boundary-prefix patch is closed. The native
+    shifted inverse-phase/cell-prefix path is now concentrated on the
+    stationary-phase complete-block target remainder and finite correction
+    prefix patches.
+  - Hooke is redeployed to attack the next exact Atkinson leaf directly.
+- Current live atoms:
+  - Atkinson: stationary-phase complete-block target remainder and finite
+    fixed-shift correction-prefix patches.
+  - Perron/B5a: inspect whether the small-`T` harmonic/log path discharges the
+    public provider; otherwise close the next explicit B5a public-path leaf.
+  - Pi/Phase: Perron transfer inequality plus target/anti chosen-radius
+    canonical residuals.
+  - RS/Gabcke: quarter value formula and quarter raw-removable bridge, with
+    analogous three-quarter atoms still available if that route proves easier.
