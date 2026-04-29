@@ -2318,3 +2318,17 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Current Perron atom: prove fixed-window dominated-continuity
     `ContinuousOn (fun p : ℝ × ℝ =>
       perronVerticalFixedWindowIntegral p.1 p.2) slab`.
+
+## Overnight 2026-04-29 Seventy-First Pass Status
+
+- Coordinator recovery branch is pushed through `1869389`.
+- Atkinson lane is integrated through `efdf8a7`:
+  - Hardy-start theta-model control is reduced to a continuous Hardy-theta
+    Stirling remainder:
+    `|hardyTheta t - ((t / 2) * log (t / (2*pi)) - t / 2 - pi / 8)| <= C/t`
+    eventually.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`
+    (`7903 jobs`).
+  - Current Atkinson atoms: prove that Hardy-theta Stirling remainder, or
+    continue on the Jacobian-integral / shifted stationary-phase atoms.
