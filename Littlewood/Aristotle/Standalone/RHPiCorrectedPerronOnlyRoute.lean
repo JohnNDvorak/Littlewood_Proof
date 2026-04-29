@@ -131,6 +131,30 @@ theorem exactSeed_of_correctedPerronOnlyHalfBudgetRoute
     targetAntiPerronThresholdTowerGeometryForPhaseRadii_of_logGeometry_hyp
   exact exactSeed_of_correctedPerronOnlyRoute
 
+/-- Budgeted-radius variant of the corrected route.
+
+This route consumes an explicitly budgeted target/anti finite-zero
+relative-density theorem, so it does not need to bound the old unconstrained
+`Classical.choose` phase radii. -/
+theorem exactSeed_of_correctedPerronOnlyBudgetedRadiusRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  rcases
+    targetAntiPerronThresholdTowerWideDominationWithPhaseRadius_of_logHalfBudget_budgetedRelativelyDense_hyp with
+    ⟨hTargetDom, hAntiDom⟩
+  letI : TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp := hTargetDom
+  letI : AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp := hAntiDom
+  letI : TargetPhaseFitAbovePerronThresholdPerronHyp :=
+    targetPhaseFitAbovePerronThresholdPerron_of_realizedRadiusDomination_hyp
+  letI : AntiTargetPhaseFitAbovePerronThresholdPerronHyp :=
+    antiTargetPhaseFitAbovePerronThresholdPerron_of_realizedRadiusDomination_hyp
+  exact
+    ⟨{ witness := target_exactSeedAboveThreshold_perron_from_targetPhaseFit_noTrunc },
+      { witness := antiTarget_exactSeedAboveThreshold_perron_from_targetPhaseFit_noTrunc }⟩
+
 /-- The four honest corrected-route classes package both corrected canonical
 phase-coupling payload classes. -/
 theorem correctedPhaseCoupling_of_correctedPerronOnlyRoute
@@ -156,6 +180,20 @@ theorem correctedPhaseCoupling_of_correctedPerronOnlyHalfBudgetRoute
     TargetTowerPhaseCouplingFamilyHyp_corrected ∧
       AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
   rcases exactSeed_of_correctedPerronOnlyHalfBudgetRoute with
+    ⟨hTarget, hAntiTarget⟩
+  letI : TargetTowerExactSeedAbovePerronThresholdPerronHyp := hTarget
+  letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
+  exact correctedPhaseCoupling_of_exactSeedAboveThreshold_perron_hyp
+
+/-- Budgeted-radius corrected route to the corrected canonical phase-coupling
+payload classes. -/
+theorem correctedPhaseCoupling_of_correctedPerronOnlyBudgetedRadiusRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] :
+    TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  rcases exactSeed_of_correctedPerronOnlyBudgetedRadiusRoute with
     ⟨hTarget, hAntiTarget⟩
   letI : TargetTowerExactSeedAbovePerronThresholdPerronHyp := hTarget
   letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
@@ -340,6 +378,19 @@ theorem rhPiWitnessData_of_correctedPerronOnlyHalfBudgetRoute
     [TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp] :
     RhPiWitnessData := by
   rcases exactSeed_of_correctedPerronOnlyHalfBudgetRoute with
+    ⟨hTarget, hAntiTarget⟩
+  letI : TargetTowerExactSeedAbovePerronThresholdPerronHyp := hTarget
+  letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
+  exact rhPiWitnessData_of_exactSeedAboveThreshold_perron_corrected_hyp
+
+/-- Corrected RH-`pi` witness endpoint from the Perron log half-budget and an
+explicitly budgeted target/anti finite-zero relative-density theorem. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyBudgetedRadiusRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] :
+    RhPiWitnessData := by
+  rcases exactSeed_of_correctedPerronOnlyBudgetedRadiusRoute with
     ⟨hTarget, hAntiTarget⟩
   letI : TargetTowerExactSeedAbovePerronThresholdPerronHyp := hTarget
   letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget

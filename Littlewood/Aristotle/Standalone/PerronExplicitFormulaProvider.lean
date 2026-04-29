@@ -3402,6 +3402,44 @@ class TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp
         ≤ Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
 
+/-- Budgeted target/anti finite-zero relative-density theorem.
+
+This is the quantitative Kronecker-radius source that avoids the old
+unconstrained `Classical.choose` radii.  It asks the finite-zero
+relative-density theorem to return explicit target and anti-target search
+radii already below the half-budget at the same height and tolerance. -/
+class TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
+      ∃ Rt Ra : ℝ,
+        0 < Rt ∧
+        0 < Ra ∧
+        Rt + 1
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+        Ra + 1
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+        (∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + Rt ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - Complex.arg ρ -
+                    m • (2 * Real.pi)‖ ≤ ε) ∧
+        (∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + Ra ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
+                    m • (2 * Real.pi)‖ ≤ ε)
+
 /-- Majorant form of the paired finite-zero phase-radius growth source.
 
 This is the quantitative Kronecker-radius split below
@@ -3697,6 +3735,54 @@ class AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp
           (Real.log (max X (perronThreshold _hRH T) + 1) + R + 1)
           ≤ Real.exp (Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- A Perron log half-budget plus explicitly budgeted target/anti finite-zero
+Kronecker radii supplies the two realized-radius domination leaves.
+
+This bypasses the old unconstrained `Classical.choose` radii: the radii used by
+the phase-fit route are the bounded radii returned by the quantitative
+Kronecker payload itself. -/
+theorem targetAntiPerronThresholdTowerWideDominationWithPhaseRadius_of_logHalfBudget_budgetedRelativelyDense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] :
+    TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp ∧
+      AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp := by
+  constructor
+  · refine ⟨?_⟩
+    intro hRH X
+    rcases PerronThresholdTowerLogHalfBudgetHyp.witness hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hLower⟩
+    rcases TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp.witness
+        T ε hT4 hεpos hεlt with
+      ⟨Rt, Ra, hRtpos, _hRapos, hRtBudget, _hRaBudget,
+        hTargetHit, _hAntiHit⟩
+    refine ⟨T, ε, Rt, hT4, hεpos, hεlt, hRtpos, hTargetHit, ?_⟩
+    let C : ℝ :=
+      Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))
+    have hLower' :
+        Real.log (max X (perronThreshold hRH T) + 1) ≤ C / 2 := by
+      simpa [C] using hLower
+    have hRtBudget' : Rt + 1 ≤ C / 2 := by
+      simpa [C] using hRtBudget
+    exact Real.exp_le_exp.mpr (by linarith)
+  · refine ⟨?_⟩
+    intro hRH X
+    rcases PerronThresholdTowerLogHalfBudgetHyp.witness hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hLower⟩
+    rcases TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp.witness
+        T ε hT4 hεpos hεlt with
+      ⟨Rt, Ra, _hRtpos, hRapos, _hRtBudget, hRaBudget,
+        _hTargetHit, hAntiHit⟩
+    refine ⟨T, ε, Ra, hT4, hεpos, hεlt, hRapos, hAntiHit, ?_⟩
+    let C : ℝ :=
+      Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))
+    have hLower' :
+        Real.log (max X (perronThreshold hRH T) + 1) ≤ C / 2 := by
+      simpa [C] using hLower
+    have hRaBudget' : Ra + 1 ≤ C / 2 := by
+      simpa [C] using hRaBudget
+    exact Real.exp_le_exp.mpr (by linarith)
 
 /-- The concrete finite-set Kronecker relative-density boundary supplies the
 project finite-zero relative-density leaf. -/

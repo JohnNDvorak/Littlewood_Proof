@@ -2108,3 +2108,41 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - Prove the Perron canonical residual from a real same-height growth bound on `perronThreshold hRH T`; if that remains blocked, prove a quantitative Kronecker-radius theorem that bounds the actual chosen target/anti finite-zero radii.
+
+### 2026-04-29 Round 39: Budgeted Kronecker Radius Route
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - The phase-radius side of the canonical residual obstruction.
+- Facts banked:
+  - Added `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`.
+  - Added `targetAntiPerronThresholdTowerWideDominationWithPhaseRadius_of_logHalfBudget_budgetedRelativelyDense_hyp`.
+  - Added `exactSeed_of_correctedPerronOnlyBudgetedRadiusRoute`.
+  - Added `correctedPhaseCoupling_of_correctedPerronOnlyBudgetedRadiusRoute`.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyBudgetedRadiusRoute`.
+- What changed:
+  - The corrected route can now consume explicit target/anti Kronecker search radii already bounded by the same-height tower half-budget.
+  - This bypasses the old chosen-radius obstruction: the route uses the budgeted radii returned by the quantitative Kronecker theorem itself, rather than trying to prove a bound for an unconstrained `Classical.choose` from the unbudgeted relative-density class.
+  - The Perron side is still supplied by `PerronThresholdTowerLogHalfBudgetHyp`; no cross-height `perronThreshold` transfer is used.
+- Remaining goal shape:
+  - Prove `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp` from quantitative relation-compatible Kronecker with explicit radius estimates, or continue the Perron side by proving `PerronThresholdTowerLogHalfBudgetHyp`/the canonical Perron residual from a real same-height growth bound on `perronThreshold hRH T`.
+- Failed/circular route:
+  - Did not add an instance from the new budgeted class into the old chosen-radius residual classes.
+  - Did not claim that the old `targetFiniteZeroInhomogeneousPhaseRadius` or `antiTargetFiniteZeroInhomogeneousPhaseRadius` choices are bounded; those remain blocked because their existence predicates carry no upper bound.
+  - Did not use arbitrary supplied radii, cross-height `perronThreshold` monotonicity, selected-threshold transfer, or independently selected target/anti heights.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, provider cycles, reverse-comparison instances, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed focused validation under the coordinator singleflight rule.
+- Validation command/result:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`, with a proof route through quantitative relation-compatible Kronecker radius bounds for the target and anti-target finite-zero phase boxes at the same `T, ε`.
