@@ -565,3 +565,35 @@ Timestamp: 2026-04-28 22:56 CDT.
     Perron-only Pi route.
   - RS/Gabcke: quarter-lattice zero atom, then any remaining removable/regular
     raw derivative cleanup needed for the public Gabcke provider.
+
+## Overnight 2026-04-29 Sixth Pass Status
+
+- Perron/B5a lane is validated and pushed through `f66d994`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Split Perron Davenport envelope by components`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: Halley split the Davenport envelope into singular and smooth
+    components and banked the scale-correct linear-envelope route.
+  - Important guardrail: the pure bounded-height `O((log x)^2)` envelope target
+    is scale-incorrect here. The live path keeps the `(x / T)` factor and now
+    attacks the singular harmonic-distance component.
+- Pi/Phase lane is validated and pushed through `b9e701a`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Split pi growth budgets by majorants`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: Planck split the remaining Pi half-budget growth providers into
+    the two majorant classes
+    `PerronThresholdTowerExpHalfBudgetMajorantHyp` and
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp`, with a corrected
+    Perron-only majorant-budget route to `RhPiWitnessData`.
+- Current live atoms:
+  - Perron/B5a: singular harmonic-distance component for the scale-correct
+    Davenport envelope route.
+  - Pi/Phase: close either majorant class exactly, preferably via a small
+    monotonicity/growth provider.
+  - Atkinson: Hooke remains assigned to the large-shift raw correction-prefix
+    atom for `3 <= j`.
+  - RS/Gabcke: Hume remains assigned to
+    `StandardGabckeRawPsiDenominatorZeroQuarterLatticeProp`.
