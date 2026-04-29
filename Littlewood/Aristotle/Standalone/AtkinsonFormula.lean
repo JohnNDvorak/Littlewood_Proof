@@ -13476,7 +13476,7 @@ private theorem atkinson_shifted_quadratic_fourier_corrected_coeff_match :
   refine ⟨1, by norm_num, 0, ?_⟩
   intro n hn j hj3 hj1 hjn
   have hscale_nonneg : 0 ≤ atkinsonModeWeight (n + j) / j := by
-    positivity
+    exact div_nonneg (atkinsonModeWeight_nonneg (n + j)) (Nat.cast_nonneg j)
   simpa using hscale_nonneg
 
 /-- The mass-coefficient target is equivalently a fixed-interval Fourier
