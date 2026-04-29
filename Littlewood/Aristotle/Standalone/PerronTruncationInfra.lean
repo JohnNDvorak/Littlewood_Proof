@@ -5332,6 +5332,95 @@ theorem small_T_perronVerticalFixedWindowIntegrand_tendsto_ae_from_integrand_and
           {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
         (𝓝 (0 : ℝ))).congr' hcongr
 
+/-- Away from the two moving endpoints, membership in `(-T,T]` is locally
+stable as the height parameter varies. -/
+theorem small_T_perronVerticalFixedWindow_membership_eventually_of_ne_endpoints
+    (p : ℝ × ℝ) (t : ℝ) (ht_pos : t ≠ p.2) (ht_neg : t ≠ -p.2) :
+    ∀ᶠ q in 𝓝[
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+      (t ∈ Set.Ioc (-q.2) q.2 ↔ t ∈ Set.Ioc (-p.2) p.2) := by
+  have hsnd :
+      Tendsto (fun q : ℝ × ℝ => q.2)
+        (𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+        (𝓝 p.2) :=
+    continuous_snd.continuousWithinAt
+  by_cases htmem : t ∈ Set.Ioc (-p.2) p.2
+  · have ht_lt : t < p.2 := by
+      rcases htmem with ⟨_, ht_le⟩
+      exact lt_of_le_of_ne ht_le ht_pos
+    have hneg_lt : -t < p.2 := by
+      rcases htmem with ⟨hleft, _⟩
+      linarith
+    have h_event_t : ∀ᶠ q in
+        𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        t < q.2 :=
+      hsnd.eventually (Ioi_mem_nhds ht_lt)
+    have h_event_neg : ∀ᶠ q in
+        𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        -t < q.2 :=
+      hsnd.eventually (Ioi_mem_nhds hneg_lt)
+    filter_upwards [h_event_t, h_event_neg] with q hqt hqneg
+    constructor
+    · intro _
+      exact htmem
+    · intro _
+      exact ⟨by linarith, le_of_lt hqt⟩
+  · by_cases hleft : -p.2 < t
+    · have hp_lt : p.2 < t := by
+        by_contra hnot
+        have ht_le : t ≤ p.2 := le_of_not_gt hnot
+        exact htmem ⟨hleft, ht_le⟩
+      have h_event : ∀ᶠ q in
+          𝓝[
+            {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          q.2 < t :=
+        hsnd.eventually (Iio_mem_nhds hp_lt)
+      filter_upwards [h_event] with q hqt
+      constructor
+      · intro hqmem
+        exact False.elim (not_le_of_gt hqt hqmem.2)
+      · intro hpmem
+        exact False.elim (htmem hpmem)
+    · have ht_le_neg : t ≤ -p.2 := le_of_not_gt hleft
+      have ht_lt_neg : t < -p.2 := by
+        rcases lt_or_eq_of_le ht_le_neg with ht_lt | ht_eq
+        · exact ht_lt
+        · exact False.elim (ht_neg ht_eq)
+      have hp_lt_neg_t : p.2 < -t := by
+        linarith
+      have h_event : ∀ᶠ q in
+          𝓝[
+            {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          q.2 < -t :=
+        hsnd.eventually (Iio_mem_nhds hp_lt_neg_t)
+      filter_upwards [h_event] with q hq
+      constructor
+      · intro hqmem
+        exact False.elim (not_lt_of_ge (by linarith : t ≤ -q.2) hqmem.1)
+      · intro hpmem
+        exact False.elim (htmem hpmem)
+
+/-- The endpoint-exclusion moving-window stability needed by the fixed-window
+DCT handoff.  The two bad heights are singletons, hence null for volume and
+for the restricted fixed-window measure. -/
+theorem small_T_perronVerticalFixedWindow_membership_eventually_ae_slab16 :
+    ∀ p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        ∀ᶠ q in 𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          (t ∈ Set.Ioc (-q.2) q.2 ↔ t ∈ Set.Ioc (-p.2) p.2) := by
+  intro p hp
+  have hpos : ∀ᵐ t : ℝ ∂volume, t ≠ p.2 := by
+    simp [ae_iff, measure_singleton]
+  have hneg : ∀ᵐ t : ℝ ∂volume, t ≠ -p.2 := by
+    simp [ae_iff, measure_singleton]
+  filter_upwards [ae_restrict_of_ae hpos, ae_restrict_of_ae hneg] with t ht_pos ht_neg
+  exact small_T_perronVerticalFixedWindow_membership_eventually_of_ne_endpoints p t ht_pos ht_neg
+
 /-- Fixed-window slab continuity reduced to the exact local dominated
 convergence inputs on the fixed window `(-16,16]`.  The remaining analytic
 work is local eventual measurability, a local integrable majorant, and a.e.
