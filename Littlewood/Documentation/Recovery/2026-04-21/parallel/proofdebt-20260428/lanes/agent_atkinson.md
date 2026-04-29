@@ -1400,3 +1400,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 28 Pointwise Fixed-Shift Correction Atom
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  the all-positive absolute fixed-shift correction-prefix atom
+  `∑ n ∈ Ico (j - 1) (m + 1), ‖atkinsonResonantShiftedCorrectionTerm n j‖`
+  `≤ A_j * sqrt(m + j + 1)`.
+- Facts banked:
+  `atkinson_absoluteFixedShiftCorrectionPrefix_of_pointwise_modeWeight`
+  reduces the absolute prefix atom to the pointwise fixed-shift majorant
+  `∀ j ≥ 1, ∃ B_j > 0, ∀ n, ‖atkinsonResonantShiftedCorrectionTerm n j‖`
+  `≤ B_j * atkinsonModeWeight (n + j)`. The summation proof uses
+  `Finset.sum_Ico_add`, embeds the shifted interval into
+  `Finset.range (m + j + 1)`, and applies
+  `Aristotle.ErrorTermExpansion.sum_rpow_neg_half_le`.
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_pointwise_fixedShift_correction`
+  and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_pointwise_fixedShift_correction`
+  wire that pointwise atom into the existing non-circular correction/inverse
+  provider route.
+- Failed routes / guardrails:
+  no direct Abel shortcut, no phase-weighted-to-unweighted division, no
+  circular provider instance, no zero-model/mass-coefficient/Fourier-corrected
+  or compensated-carrier route, no diffuse deweighting, and no
+  axiom/sorry/weakening. Constants are fixed-shift constants depending on `j`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  arithmetic/coercion normalization around `Finset.sum_Ico_add`, the range
+  subset endpoint `r < m + j + 1`, or the final
+  `sqrt ((m + j + 1 : ℕ) : ℝ)` cast rewrite.
+- Remaining goal shape:
+  prove the shifted-interval stationary-phase target remainder and prove the
+  pointwise fixed-shift correction majorant
+  `∀ j ≥ 1, ∃ B_j > 0, ∀ n, ‖atkinsonResonantShiftedCorrectionTerm n j‖`
+  `≤ B_j * atkinsonModeWeight (n + j)`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

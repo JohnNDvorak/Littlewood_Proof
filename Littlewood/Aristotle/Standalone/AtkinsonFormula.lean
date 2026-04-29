@@ -19919,6 +19919,68 @@ private theorem atkinson_fixedShiftCorrectionPrefix_of_absolute_prefix
           simp [scale]
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- The absolute fixed-shift correction-prefix atom follows from a pointwise
+`modeWeight (n+j)` correction bound. This is the smallest fixed-shift analytic
+surface left by the current route: the summation is just the standard
+inverse-square-root partial-sum estimate. -/
+private theorem atkinson_absoluteFixedShiftCorrectionPrefix_of_pointwise_modeWeight
+    (hpoint :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_corr > 0, ∀ n : ℕ,
+          ‖atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ B_corr * atkinsonModeWeight (n + j)) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ A_corr > 0, ∀ m : ℕ,
+        ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            ‖atkinsonResonantShiftedCorrectionTerm n j‖
+          ≤ A_corr * Real.sqrt (((m + j : ℕ) : ℝ) + 1) := by
+  intro j hj
+  obtain ⟨B_corr, hB_corr, hpoint'⟩ := hpoint j hj
+  refine ⟨2 * B_corr, by positivity, ?_⟩
+  intro m
+  calc
+    ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+        ‖atkinsonResonantShiftedCorrectionTerm n j‖
+        ≤ ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            B_corr * atkinsonModeWeight (n + j) := by
+          refine Finset.sum_le_sum ?_
+          intro n hn
+          exact hpoint' n
+    _ = B_corr * ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          atkinsonModeWeight (n + j) := by
+          rw [Finset.mul_sum]
+    _ = B_corr * ∑ r ∈ Finset.Ico (j - 1 + j) (m + 1 + j),
+          atkinsonModeWeight r := by
+          congr 1
+          simpa [add_assoc, add_left_comm, add_comm] using
+            (Finset.sum_Ico_add (f := fun r => atkinsonModeWeight r) (j - 1) (m + 1) j)
+    _ ≤ B_corr * ∑ r ∈ Finset.range (m + j + 1), atkinsonModeWeight r := by
+          refine mul_le_mul_of_nonneg_left ?_ hB_corr.le
+          exact Finset.sum_le_sum_of_subset_of_nonneg
+            (by
+              intro r hr
+              exact Finset.mem_range.mpr <| by
+                simpa [Nat.add_assoc, add_left_comm, add_comm] using (Finset.mem_Ico.mp hr).2)
+            (by
+              intro r hr hmem
+              exact atkinsonModeWeight_nonneg r)
+    _ = B_corr * ∑ r ∈ Finset.range (m + j + 1), ((r + 1 : ℝ) ^ (-1 / 2 : ℝ)) := by
+          congr 1
+          refine Finset.sum_congr rfl ?_
+          intro r hr
+          rw [atkinsonModeWeight]
+          congr 1
+          norm_num
+    _ ≤ B_corr * (2 * Real.sqrt ((m + j + 1 : ℕ) : ℝ)) := by
+          exact mul_le_mul_of_nonneg_left
+            (Aristotle.ErrorTermExpansion.sum_rpow_neg_half_le (m + j + 1)) hB_corr.le
+    _ = (2 * B_corr) * Real.sqrt ((m + j + 1 : ℕ) : ℝ) := by
+          ring
+    _ = (2 * B_corr) * Real.sqrt (((m + j : ℕ) : ℝ) + 1) := by
+          congr 1
+          norm_num [Nat.cast_add, add_assoc, add_left_comm, add_comm]
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Correction-prefix provider package from the stationary-phase remainder and
 the scale-safe absolute fixed-shift correction-prefix atom. -/
 private theorem
@@ -19941,6 +20003,29 @@ private theorem
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_fixedShift_correction_all
       hmode
       (atkinson_fixedShiftCorrectionPrefix_of_absolute_prefix habsolute)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Correction-prefix provider package from the stationary-phase remainder and
+the pointwise fixed-shift correction-term atom. -/
+private theorem
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_pointwise_fixedShift_correction
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hpoint :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_corr > 0, ∀ n : ℕ,
+          ‖atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ B_corr * atkinsonModeWeight (n + j)) :
+    AtkinsonShiftedCorrectionPrefixBoundHyp := by
+  exact
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_absolute_fixedShift_correction
+      hmode
+      (atkinson_absoluteFixedShiftCorrectionPrefix_of_pointwise_modeWeight hpoint)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
@@ -20535,6 +20620,29 @@ private theorem
   letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_absolute_fixedShift_correction
       hmode habsolute
+  exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Public inverse-phase provider package from the stationary-phase remainder
+and the pointwise fixed-shift correction-term atom. -/
+private theorem
+    atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_pointwise_fixedShift_correction
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hpoint :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ B_corr > 0, ∀ n : ℕ,
+          ‖atkinsonResonantShiftedCorrectionTerm n j‖
+            ≤ B_corr * atkinsonModeWeight (n + j)) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_pointwise_fixedShift_correction
+      hmode hpoint
   exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
