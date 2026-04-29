@@ -104,6 +104,33 @@ theorem exactSeed_of_correctedPerronOnlyRoute
     ⟨{ witness := target_exactSeedAboveThreshold_perron_from_targetPhaseFit_noTrunc },
       { witness := antiTarget_exactSeedAboveThreshold_perron_from_targetPhaseFit_noTrunc }⟩
 
+/-- Half-budget variant of the corrected route.
+
+This exposes the current smallest tower geometry leaves below
+`TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp` while preserving the
+same corrected Perron-only endpoint. -/
+theorem exactSeed_of_correctedPerronOnlyHalfBudgetRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetAntiDensity_of_relationCompatibleKroneckerAndCompatibility
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp :=
+    targetAntiPerronThresholdTowerLogBudgetForPhaseRadii_of_halfBudgets_hyp
+  letI : TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp :=
+    targetAntiPerronThresholdTowerLogGeometryForPhaseRadii_of_budget_hyp
+  letI : TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp :=
+    targetAntiPerronThresholdTowerGeometryForPhaseRadii_of_logGeometry_hyp
+  exact exactSeed_of_correctedPerronOnlyRoute
+
 /-- The four honest corrected-route classes package both corrected canonical
 phase-coupling payload classes. -/
 theorem correctedPhaseCoupling_of_correctedPerronOnlyRoute
@@ -118,6 +145,22 @@ theorem correctedPhaseCoupling_of_correctedPerronOnlyRoute
   letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
   exact correctedPhaseCoupling_of_exactSeedAboveThreshold_perron_hyp
 
+/-- Half-budget corrected route to the corrected canonical phase-coupling
+payload classes. -/
+theorem correctedPhaseCoupling_of_correctedPerronOnlyHalfBudgetRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp] :
+    TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  rcases exactSeed_of_correctedPerronOnlyHalfBudgetRoute with
+    ⟨hTarget, hAntiTarget⟩
+  letI : TargetTowerExactSeedAbovePerronThresholdPerronHyp := hTarget
+  letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
+  exact correctedPhaseCoupling_of_exactSeedAboveThreshold_perron_hyp
+
 /-- Corrected Perron-only route to the RH-side `pi` witness data. -/
 theorem rhPiWitnessData_of_correctedPerronOnlyRoute
     [PerronSqrtErrorEventuallyAtHeightHyp]
@@ -126,6 +169,20 @@ theorem rhPiWitnessData_of_correctedPerronOnlyRoute
     [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
     RhPiWitnessData := by
   rcases exactSeed_of_correctedPerronOnlyRoute with ⟨hTarget, hAntiTarget⟩
+  letI : TargetTowerExactSeedAbovePerronThresholdPerronHyp := hTarget
+  letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
+  exact rhPiWitnessData_of_exactSeedAboveThreshold_perron_corrected_hyp
+
+/-- Half-budget corrected route to the RH-side `pi` witness data. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyHalfBudgetRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp] :
+    RhPiWitnessData := by
+  rcases exactSeed_of_correctedPerronOnlyHalfBudgetRoute with
+    ⟨hTarget, hAntiTarget⟩
   letI : TargetTowerExactSeedAbovePerronThresholdPerronHyp := hTarget
   letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
   exact rhPiWitnessData_of_exactSeedAboveThreshold_perron_corrected_hyp
@@ -153,6 +210,35 @@ theorem rh_pi_7a_7c_pair_of_correctedPerronOnlyRoute
         ((Nat.primeCounting (Nat.floor x) : ℝ) -
           LogarithmicIntegral.logarithmicIntegral x))) := by
   rcases exactSeed_of_correctedPerronOnlyRoute with ⟨hTarget, hAntiTarget⟩
+  letI : TargetTowerExactSeedAbovePerronThresholdPerronHyp := hTarget
+  letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
+  exact rh_pi_7a_7c_pair_of_exactSeedAboveThreshold_perron_hyp hRH
+
+/-- Half-budget corrected route to the concrete RH 7a/7c pair. -/
+theorem rh_pi_7a_7c_pair_of_correctedPerronOnlyHalfBudgetRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp]
+    (hRH : ZetaZeros.RiemannHypothesis) :
+    (∃ piMain : ℝ → ℝ,
+      (∀ᶠ x in atTop,
+        |((Nat.primeCounting (Nat.floor x) : ℝ) -
+            LogarithmicIntegral.logarithmicIntegral x) + piMain x|
+          ≤ Real.sqrt x / Real.log x * lll x))
+    ∧
+    ((∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      ((Nat.primeCounting (Nat.floor x) : ℝ) -
+          LogarithmicIntegral.logarithmicIntegral x)
+        ≤ -(3 * (Real.sqrt x / Real.log x * lll x)))
+    ∧
+    (∀ X : ℝ, ∃ x : ℝ, X < x ∧
+      3 * (Real.sqrt x / Real.log x * lll x) ≤
+        ((Nat.primeCounting (Nat.floor x) : ℝ) -
+          LogarithmicIntegral.logarithmicIntegral x))) := by
+  rcases exactSeed_of_correctedPerronOnlyHalfBudgetRoute with
+    ⟨hTarget, hAntiTarget⟩
   letI : TargetTowerExactSeedAbovePerronThresholdPerronHyp := hTarget
   letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
   exact rh_pi_7a_7c_pair_of_exactSeedAboveThreshold_perron_hyp hRH

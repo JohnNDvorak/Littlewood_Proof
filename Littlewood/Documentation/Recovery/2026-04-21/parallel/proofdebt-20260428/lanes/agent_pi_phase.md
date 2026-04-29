@@ -1016,3 +1016,57 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Smallest next theorem:
   - Continue with `PerronThresholdTowerLogHalfBudgetHyp`.
   - Continue with `TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`.
+
+### 2026-04-29 Round 16: Corrected Route From Half-Budget Leaves
+
+- Classification: `HONEST_PACKAGING_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - Exposed the corrected Perron-only route directly from the two current
+    half-budget leaves below
+    `TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp`.
+- Facts banked:
+  - Added `exactSeed_of_correctedPerronOnlyHalfBudgetRoute`, which packages
+    both Perron-only exact-seed classes from:
+    `PerronSqrtErrorEventuallyAtHeightHyp`,
+    `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`,
+    `TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`,
+    `PerronThresholdTowerLogHalfBudgetHyp`, and
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`.
+  - Added `correctedPhaseCoupling_of_correctedPerronOnlyHalfBudgetRoute`,
+    forwarding the same half-budget route to the corrected canonical
+    phase-coupling classes.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyHalfBudgetRoute`, forwarding
+    the same half-budget route to `RhPiWitnessData`.
+  - Added `rh_pi_7a_7c_pair_of_correctedPerronOnlyHalfBudgetRoute`,
+    forwarding the same half-budget route to the concrete RH 7a/7c pair.
+- Guardrails:
+  - This is a packaging reduction, not a proof of the two half-budget leaves.
+  - The half-budget route preserves the paired same-height `T, ε` structure:
+    paired finite-zero relative density feeds target/anti relative density;
+    half budgets feed budgeted log geometry; budgeted log geometry feeds
+    paired phase-radius geometry; the repaired corrected route then builds
+    exact seeds without `TruncatedExplicitFormulaPiHyp`.
+  - Static forbidden-name scan of the edited endpoint found no references to
+    `TruncatedExplicitFormulaPiHyp`, `pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+- Failed route guardrails:
+  - Do not collapse the paired half-budget leaves into independent target and
+    anti-target heights.
+  - Do not use `tower_cap_unbounded_with_eps` directly on same-height opaque
+    quantities depending on the selected `T, ε`.
+  - Do not revive arbitrary-target Kronecker or the constant-1 Perron
+    sqrt-error shortcut.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, `git diff --check`, or other check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove/source `PerronThresholdTowerLogHalfBudgetHyp`.
+  - Prove/source
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`.
