@@ -1321,6 +1321,20 @@ theorem standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_of_r
     exact hA.has_fpower_series_dslope_fslope
   · simpa using hA3
 
+/-- The denominator dslope quadratic coefficient follows from the now-proved
+raw sine cubic coefficient and the `dslope`/`fslope` coefficient transfer. -/
+theorem standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_proved :
+    StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp :=
+  standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_of_rawSineCubicCoefficient
+    standardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp_proved
+
+/-- The exact second derivative value for the denominator dslope follows from
+the proved quadratic coefficient by uniqueness of Taylor coefficients. -/
+theorem standardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp_proved :
+    StandardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp :=
+  standardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp_of_quadraticCoefficient
+    standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_proved
+
 /-- The finite denominator coefficient data follows from the low-order
 derivative values of the removable sine quotient, using Mathlib's Taylor
 coefficient power series for analytic one-variable real functions. -/

@@ -2341,3 +2341,41 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   to close `StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp`,
   then feed
   `standardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp_of_quadraticCoefficient`.
+
+### 2026-04-29 Round 49: denominator quadratic coefficient and second derivative
+
+- Classification: `PROVED`.
+- Exact theorems attacked:
+  `StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp` and
+  `StandardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp`.
+- Banked inputs:
+  - `standardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp_proved`
+    closes the raw `sin (2*pi*w)` cubic coefficient source.
+  - `standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_of_rawSineCubicCoefficient`
+    shifts that cubic coefficient to the denominator dslope quadratic
+    coefficient by the proved `fslope` transfer.
+  - `standardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp_of_quadraticCoefficient`
+    extracts the second derivative value by Taylor coefficient uniqueness.
+- Proof facts banked:
+  - Proved
+    `standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_proved`.
+  - Proved
+    `standardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp_proved`.
+- Failed routes:
+  - No new analytic source or provider was added.
+  - No quotient regularity shortcut was used; this stayed inside the
+    denominator coefficient/derivative chain.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to coordinator baseline `0b23dab` before editing.
+  - `git diff --check`: passed before this ledger append.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalDenominatorDslopeThirdDerivativeProp`, the
+  denominator dslope third derivative zero, then use
+  `standardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp_of_pointDerivatives`
+  to close the low-order derivative bundle.
