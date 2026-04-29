@@ -454,3 +454,60 @@ Timestamp: 2026-04-28 22:56 CDT.
   `exactSeed_of_correctedPerronOnlyRoute`,
   `correctedPhaseCoupling_of_correctedPerronOnlyRoute`, and
   `rh_pi_7a_7c_pair_of_correctedPerronOnlyRoute`.
+
+## Overnight 2026-04-29 Fourth Pass Status
+
+- The coordinator preserved the one-build rule for this pass. Each focused
+  Lean/Lake validation completed before the next one started.
+- Aristotle sidecar results were harvested from the ignored temp area
+  `/tmp/littlewood_aristotle_20260429`; no raw prompts, logs, downloaded
+  archives, or API key material were moved into tracked files.
+- Perron/B5a lane validated and pushed through `3a0d351`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Reduce separated Perron error to Davenport envelope`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Aristotle confirmed the old separated pointwise bounded-height decay route
+    is scale-unsafe; the current Davenport-envelope finite weighted-sum route
+    is the live route.
+  - Halley redeployed to prove or honestly split the pointwise
+    Davenport-envelope normalization below
+    `small_T_separated_weighted_bound_from_davenport_envelope`.
+- Pi/Phase lane validated and pushed through `19d419b`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Expose corrected pi half-budget route`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Planck redeployed to the two honest half-budget leaves:
+    `PerronThresholdTowerLogHalfBudgetHyp` and
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`.
+- RS/Gabcke lane validated and pushed through `bd40a4c`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Split Gabcke denominator zeros into lattice and range`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`.
+  - Hume redeployed to the quarter-lattice denominator-zero leaves
+    `StandardGabckeRawPsiDenominatorZeroQuarterLatticeProp` and
+    `StandardGabckeRawPsiDenominatorZeroQuarterLatticeRangeProp`.
+- Atkinson lane was not pushed at local head `6571bfd`
+  (`Reduce Atkinson phase error to carrier defect`):
+  - The Aristotle Atkinson sidecar proved the two live zero-model route leaves
+    scale-false: the mass-coefficient matching leaf has the wrong
+    `sqrt(n)/j` versus `sqrt(n)/j^2` scale, and the shifted zero-model
+    approximation has too large a carrier phase error on `Ioc j (j+1)`.
+  - Hooke was redirected away from the zero-model / mass-coefficient /
+    Fourier-corrected / compensated-carrier route.
+  - Live Atkinson route is now through `AtkinsonShiftedCorrectionPrefixBoundHyp`
+    and the existing
+    `atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix`
+    handoff. The next useful output is a correction-term prefix bound or a
+    clean reduction to the smallest fixed-shift correction atom.
+- Current live atoms after this pass:
+  - Atkinson: correction-prefix provider path for
+    `AtkinsonShiftedInversePhaseCellPrefixBoundHyp`; zero-model route demoted.
+  - Perron/B5a: Davenport-envelope pointwise normalization, then weighted
+    envelope summation/off-boundary/residue atoms.
+  - Pi/Phase: paired same-height Perron-threshold half budget and paired
+    finite-zero phase-radius half budget.
+  - RS/Gabcke: quarter-lattice denominator-zero classification/range, then
+    removable point bounds and the regular raw derivative estimate.
