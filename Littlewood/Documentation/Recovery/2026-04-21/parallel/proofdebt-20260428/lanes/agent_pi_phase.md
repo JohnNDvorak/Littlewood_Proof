@@ -3026,3 +3026,60 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Smallest next theorem:
   - `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`, or
     `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`.
+
+### 2026-04-29 Round 62: Perron Half-Budget Cofinality Split
+
+- Classification: `PARTIAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`.
+- Facts banked:
+  - Added private arithmetic helpers `piHalfBudgetTower_mono` and
+    `piHalfBudgetTower_unbounded`.
+  - Added `zero_count_div_unbounded_with_floor`: a cofinal lower-height version
+    of distinct zero-count growth from `ZeroCountingLowerBoundHyp`.
+  - Added `perron_halfBudgetTower_unbounded_with_eps_and_floor`: the exact
+    Perron half-budget tower can dominate any external bound above any floor.
+  - Added `PerronThresholdEventuallyBelowExpHalfBudgetHyp`, isolating the pure
+    same-height Perron-threshold growth theorem still missing below the
+    canonical residual.
+  - Added
+    `perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_eventualThresholdBudget_hyp`.
+  - Added
+    `exactSeedAboveThreshold_perron_of_eventualPerronBudgetAndBudgetedRelativelyDense_hyp`.
+- What changed:
+  - Proved the tower/cofinality part of the Perron majorant route for the
+    distinct zero count `N`, including an explicit lower-height floor.
+  - Reduced the canonical Perron residual to a single non-circular analytic
+    statement: eventually, at the same selected height `T, ε`,
+    `perronThreshold hRH T + 1` is below the half-budget tower.
+  - Wired the explicit budgeted finite-zero endpoint through this reduced
+    Perron atom.
+- Remaining goal shape:
+  - Perron side: prove `PerronThresholdEventuallyBelowExpHalfBudgetHyp`.
+  - Finite-zero side: prove `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`
+    or a relation-compatible explicit-radius source implying it.
+- Failed/circular route:
+  - Did not use cross-height monotonicity or fixed-height transfer for
+    `perronThreshold`.
+  - Did not claim cofinal tower growth alone controls the opaque
+    `perronThreshold hRH T` chosen at the new height.
+  - Did not add a provider instance for the new Perron threshold budget class.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set Kronecker,
+    arbitrary-radius route, opaque chooser equality, provider cycles, or broad
+    provider was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation command/result:
+  - `git diff --check`
+  - Result: passed after code and ledger updates.
+  - Under the corrected singleflight lock:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `PerronThresholdEventuallyBelowExpHalfBudgetHyp`.
