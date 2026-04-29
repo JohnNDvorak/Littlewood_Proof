@@ -592,3 +592,57 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 11 Fourier-Corrected Target Surface
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Theorem/file attacked:
+  the fixed-interval Fourier matching atom
+  `atkinsonShiftedQuadraticFourierMassCoeff n j` versus
+  `atkinsonShiftedQuadraticTargetCoeff n j`.
+- Facts banked:
+  `atkinsonFourierCorrectedCompleteBlockTargetK` defines the complete-block
+  target obtained by keeping the shifted Fourier mass coefficient instead of
+  reusing the first-block coefficient.
+  `atkinsonShiftedQuadraticAnchorModel_eq_fourierCorrectedTarget` proves the
+  shifted quadratic anchor model agrees exactly with that corrected target.
+  `atkinson_shifted_quadratic_fourier_corrected_coeff_match` records the
+  corrected coefficient self-match at the required scale.
+  `atkinson_mode_eventual_shifted_interval_remainder_of_zero_model_and_fourierCorrectedTarget`
+  reduces the corrected-target shifted-interval statement to the zero-model
+  approximation only.
+  `atkinson_blockMode_stationaryPhase_of_zero_model_and_fourierCorrectedTarget`
+  wires that corrected target through the complete-block mode coordinates.
+- Failed routes / guardrails:
+  no Abel/gamma-8 route, circular public provider, stale imports, broad
+  analytic axiom, or generic absolute mass estimate was used. The old
+  first-block target remains unproved: the Fourier-corrected target closes the
+  target-matching part exactly, while the old atom still requires a genuine
+  bound for the gap
+  `atkinsonShiftedQuadraticFourierMassCoeff n j -
+   atkinsonShiftedQuadraticTargetCoeff n j`.
+  This is the current scale obstruction, not a proof-engineering artifact.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  Strict public import probes for `Littlewood.Main.LittlewoodPsi` and
+  `Littlewood.Main.LittlewoodPi` if the focused module passes.
+- Likely first validation failure, if any:
+  local algebra in
+  `atkinsonShiftedQuadraticAnchorModel_eq_fourierCorrectedTarget`, especially
+  rewriting through `atkinsonShiftedQuadraticMassCoeff_eq_fourierMassCoeff` and
+  `atkinson_shifted_quadratic_kernel_integral_eq_mass`; otherwise the
+  corrected-target handoffs mirror already-validated mode-coordinate wrappers.
+- Next smallest theorem:
+  either prove/refute the old-target Fourier gap bound
+  `∃ C_gap > 0, ∃ N_gap : ℕ, ∀ n : ℕ, N_gap ≤ n → ∀ j : ℕ,`
+  `3 ≤ j → 1 ≤ j → j ≤ n →`
+  `‖(atkinsonShiftedQuadraticFourierMassCoeff n j -`
+  `atkinsonShiftedQuadraticTargetCoeff n j)‖`
+  `≤ C_gap * (atkinsonModeWeight (n + j) / j)`,
+  or replace the public complete-block target path with
+  `atkinsonFourierCorrectedCompleteBlockTargetK` and prove its prefix bound.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

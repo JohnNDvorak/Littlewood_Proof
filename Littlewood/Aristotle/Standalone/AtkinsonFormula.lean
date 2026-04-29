@@ -13370,6 +13370,15 @@ private noncomputable def atkinsonShiftedQuadraticFourierMassCoeff (n j : ℕ) :
         Complex.exp (Complex.I * (((4 * Real.pi * (j : ℝ) * u : ℝ) : ℂ))) *
           Aristotle.StationaryPhaseMainMode.quadraticKernel u)))
 
+/-- The complete-block target compatible with the shifted Fourier mass
+normalization. Unlike `atkinsonCompleteBlockTargetK`, this target keeps the
+integer-shifted quadratic cell instead of importing the first-block coefficient
+unchanged. -/
+private noncomputable def atkinsonFourierCorrectedCompleteBlockTargetK (k j : ℕ) : ℂ :=
+  (((((-1 : ℝ) ^ ((k - j) + 1) : ℝ) : ℂ) *
+      Aristotle.StationaryPhaseStartValue.hardyStationaryAnchor) *
+    atkinsonShiftedQuadraticFourierMassCoeff (k - j) j)
+
 /-- Integer-cell shift for the quadratic kernel.  The natural endpoint factor is
 one, leaving the shifted mass as a true Fourier coefficient on `[0,1]`. -/
 private lemma atkinson_quadraticKernel_nat_add (j : ℕ) (u : ℝ) :
@@ -13439,6 +13448,36 @@ private theorem atkinsonShiftedQuadraticMassCoeff_eq_fourierMassCoeff (n j : ℕ
     exact atkinson_quadraticKernel_nat_add j u
   unfold atkinsonShiftedQuadraticMassCoeff atkinsonShiftedQuadraticFourierMassCoeff
   rw [hshift, hkernel]
+
+/-- The shifted quadratic-anchor model agrees exactly with the Fourier-corrected
+complete-block target. This is the exact target-model correction exposed by the
+integer-cell endpoint cancellation. -/
+private theorem atkinsonShiftedQuadraticAnchorModel_eq_fourierCorrectedTarget
+    (n j : ℕ) (hj : 1 ≤ j) :
+    atkinsonShiftedQuadraticAnchorModel n j =
+      atkinsonFourierCorrectedCompleteBlockTargetK (n + j) j := by
+  have hmass_eq := atkinson_shifted_quadratic_kernel_integral_eq_mass n j hj
+  have hcoeff_eq := atkinsonShiftedQuadraticMassCoeff_eq_fourierMassCoeff n j
+  unfold atkinsonShiftedQuadraticAnchorModel atkinsonFourierCorrectedCompleteBlockTargetK
+  rw [Nat.add_sub_cancel_right, ← hcoeff_eq]
+  unfold atkinsonShiftedQuadraticMassCoeff
+  rw [hmass_eq]
+  ring
+
+/-- The Fourier-corrected coefficient matches itself exactly at the target
+scale. This records the corrected target surface separately from the old
+first-block coefficient. -/
+private theorem atkinson_shifted_quadratic_fourier_corrected_coeff_match :
+    ∃ C_fourier > 0, ∃ N_fourier : ℕ, ∀ n : ℕ, N_fourier ≤ n → ∀ j : ℕ,
+      3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖(atkinsonShiftedQuadraticFourierMassCoeff n j -
+            atkinsonShiftedQuadraticFourierMassCoeff n j)‖
+          ≤ C_fourier * (atkinsonModeWeight (n + j) / j) := by
+  refine ⟨1, by norm_num, 0, ?_⟩
+  intro n hn j hj3 hj1 hjn
+  have hscale_nonneg : 0 ≤ atkinsonModeWeight (n + j) / j := by
+    positivity
+  simpa using hscale_nonneg
 
 /-- The mass-coefficient target is equivalently a fixed-interval Fourier
 coefficient matching statement. This keeps the no-log complete-block route but
@@ -13646,6 +13685,63 @@ private theorem atkinson_mode_eventual_shifted_interval_remainder_of_zero_model_
     atkinson_mode_eventual_shifted_interval_remainder_of_quadratic_anchor_model
       (atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model hzeroModel)
       htarget
+
+/-- Mode-eventual shifted-interval remainder against the Fourier-corrected
+target. The only remaining analytic input is the zero-model approximation; the
+target matching is exact by
+`atkinsonShiftedQuadraticAnchorModel_eq_fourierCorrectedTarget`. -/
+private theorem atkinson_mode_eventual_shifted_interval_remainder_of_zero_model_and_fourierCorrectedTarget
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_err > 0, ∃ N_err : ℕ, ∀ n : ℕ, N_err ≤ n → ∀ j : ℕ,
+      3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode n p *
+                  blockJacobian n p) - atkinsonFourierCorrectedCompleteBlockTargetK (n + j) j)‖
+          ≤ (C_err * (atkinsonModeWeight (n + j) / j)) := by
+  obtain ⟨C_quad, hC_quad, N_quad, hquad⟩ :=
+    atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model hzeroModel
+  refine ⟨C_quad, hC_quad, N_quad, ?_⟩
+  intro n hn j hj3 hj1 hjn
+  have hanchor := atkinsonShiftedQuadraticAnchorModel_eq_fourierCorrectedTarget n j hj1
+  simpa [hanchor] using hquad n hn j hj3 hj1 hjn
+
+/-- Complete-block stationary-phase handoff for the Fourier-corrected target.
+This is the corrected-target analogue of
+`atkinson_blockMode_stationaryPhase_of_zero_model_and_massCoeff`. -/
+private theorem atkinson_blockMode_stationaryPhase_of_zero_model_and_fourierCorrectedTarget
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+            ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+              Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                blockJacobian (k - j) p) - atkinsonFourierCorrectedCompleteBlockTargetK k j)‖
+        ≤ C_err * (atkinsonModeWeight k / j) := by
+  obtain ⟨C_err, hC_err, N_err, hmode⟩ :=
+    atkinson_mode_eventual_shifted_interval_remainder_of_zero_model_and_fourierCorrectedTarget
+      hzeroModel
+  refine ⟨C_err, hC_err, N_err, ?_⟩
+  intro j hJ hj3 hj1 k hjk
+  have hkn : j ≤ k - j := by
+    omega
+  have hn_large : N_err ≤ k - j := le_trans hJ hkn
+  have hkj : (k - j) + j = k := by
+    omega
+  simpa [hkj] using hmode (k - j) hn_large j hj3 hj1 hkn
 
 /-- Complete-block-target stationary-phase handoff after discharging the
 shifted quadratic-kernel estimates. This is the narrowed interface directly
