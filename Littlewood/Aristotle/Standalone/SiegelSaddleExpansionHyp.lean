@@ -56,6 +56,7 @@ import Littlewood.Aristotle.HardyZFirstMoment
 import Littlewood.Aristotle.Standalone.FresnelSaddlePointInfra
 import Littlewood.Aristotle.Standalone.SaddlePointMethod
 import Littlewood.Aristotle.Standalone.SteepestDescentContour
+import Mathlib.Analysis.Analytic.IteratedFDeriv
 import Mathlib.Analysis.Calculus.Deriv.Shift
 
 set_option relaxedAutoImplicit false
@@ -823,6 +824,54 @@ This is the pure calculus atom for the expansion
 def StandardGabckeQuarterLocalThirdDerivativeFormulaProp : Prop :=
   deriv (deriv (deriv standardGabckeQuarterLocalPsi)) 0 = -Real.pi ^ 2
 
+/-- Exact local power-series source for the cubic Taylor coefficient of the
+filled quotient `standardGabckeQuarterLocalPsi` at `0`.
+
+The coefficient statement is deliberately local and coefficient-shaped:
+`-pi^2 / 6` is the cubic Taylor coefficient, hence the third derivative is
+`3! * (-pi^2 / 6) = -pi^2`. -/
+def StandardGabckeQuarterLocalCubicTaylorCoefficientProp : Prop :=
+  ∃ P : FormalMultilinearSeries ℝ ℝ ℝ,
+    HasFPowerSeriesAt standardGabckeQuarterLocalPsi P 0 ∧
+      P 3 (fun _ : Fin 3 => (1 : ℝ)) = -Real.pi ^ 2 / 6
+
+/-- The exact cubic Taylor coefficient of the local quotient gives the
+third-derivative value used by the Gabcke removable-source route. -/
+theorem standardGabckeQuarterLocalThirdDerivativeFormulaProp_of_cubicTaylorCoefficient
+    (h_coeff : StandardGabckeQuarterLocalCubicTaylorCoefficientProp) :
+    StandardGabckeQuarterLocalThirdDerivativeFormulaProp := by
+  rcases h_coeff with ⟨P, hP, hP3⟩
+  rcases hP with ⟨_r, hPball⟩
+  unfold StandardGabckeQuarterLocalThirdDerivativeFormulaProp
+  have hF :
+      iteratedFDeriv ℝ 3 standardGabckeQuarterLocalPsi 0
+          (fun _ : Fin 3 => (1 : ℝ)) =
+        ∑ σ : Equiv.Perm (Fin 3),
+          P 3 (fun i : Fin 3 => (fun _ : Fin 3 => (1 : ℝ)) (σ i)) := by
+    exact hPball.iteratedFDeriv_eq_sum_of_completeSpace
+      (n := 3) (v := fun _ : Fin 3 => (1 : ℝ))
+  have h_iter :
+      iteratedDeriv 3 standardGabckeQuarterLocalPsi 0 = -Real.pi ^ 2 := by
+    unfold iteratedDeriv
+    refine hF.trans ?_
+    calc
+      (∑ σ : Equiv.Perm (Fin 3),
+          P 3 (fun i : Fin 3 => (fun _ : Fin 3 => (1 : ℝ)) (σ i))) =
+          ∑ _σ : Equiv.Perm (Fin 3), (-Real.pi ^ 2 / 6) := by
+        simp [hP3]
+      _ = (6 : ℝ) * (-Real.pi ^ 2 / 6) := by
+        simp [Fintype.card_perm]
+      _ = -Real.pi ^ 2 := by
+        ring
+  have h_nested :
+      deriv (deriv (deriv standardGabckeQuarterLocalPsi)) 0 =
+        iteratedDeriv 3 standardGabckeQuarterLocalPsi 0 := by
+    rw [show (3 : ℕ) = 2 + 1 by norm_num, iteratedDeriv_succ,
+      show (2 : ℕ) = 1 + 1 by norm_num, iteratedDeriv_succ,
+      show (1 : ℕ) = 0 + 1 by norm_num, iteratedDeriv_succ,
+      iteratedDeriv_zero]
+  exact h_nested.trans h_iter
+
 /-- `HasDerivAt` form of the local Taylor atom: the second derivative of the
 quarter local quotient has derivative `-pi^2` at `x = 0`. This is the smallest
 calculus statement needed to identify the third derivative value. -/
@@ -894,6 +943,26 @@ theorem standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_localTay
   standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_candidateValueFormula
     (standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_localTaylor
       h_coord h_local)
+
+/-- The quarter-point candidate value formula follows from the already-closed
+coordinate bridge plus the local cubic Taylor coefficient source. -/
+theorem standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_cubicTaylorCoefficient
+    (h_coeff : StandardGabckeQuarterLocalCubicTaylorCoefficientProp) :
+    StandardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp :=
+  standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_localTaylor
+    standardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp_proved
+    (standardGabckeQuarterLocalThirdDerivativeFormulaProp_of_cubicTaylorCoefficient
+      h_coeff)
+
+/-- The quarter-point numeric Tabelle bound follows from the local cubic Taylor
+coefficient source. -/
+theorem standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_cubicTaylorCoefficient
+    (h_coeff : StandardGabckeQuarterLocalCubicTaylorCoefficientProp) :
+    StandardGabckeRemovableSourceQuarterThirdDerivativeBoundProp
+      standardGabckeRemovableSourceThirdDerivative :=
+  standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_candidateValueFormula
+    (standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_cubicTaylorCoefficient
+      h_coeff)
 
 /-- The quarter-point numeric Tabelle bound follows from the coordinate bridge
 plus the `HasDerivAt` form of the local Taylor atom. -/
