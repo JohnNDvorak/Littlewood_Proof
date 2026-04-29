@@ -2178,9 +2178,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
   - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
 - Validation status:
-  - Focused validation attempted under the coordinator singleflight rule, but the required `pgrep` guard reported `LEAN_BUSY`.
+  - Passed focused validation under the coordinator singleflight rule.
 - Validation command/result:
   - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
-  - Result: not run; guard output included active worker command line and `LEAN_BUSY`.
+  - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp`.
+
+### 2026-04-29 Round 41: Finite-Set Budgeted Pair Kronecker Source
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp`.
+- Facts banked:
+  - Added `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`.
+  - Added `targetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKronecker_of_finiteSetBudgetedPairKronecker_hyp`.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyFiniteSetBudgetedKroneckerRoute`.
+- What changed:
+  - The zeta-specialized relation-compatible budgeted Kronecker leaf now reduces to a generic finite-set pair theorem with an externally supplied budget.
+  - The reduction preserves one finite set, the same tolerance `ε`, both target/anti relation-compatibility predicates, and the same half-budget radius bound for both returned relative-density radii.
+  - The corrected route can now be packaged from `PerronThresholdTowerLogHalfBudgetHyp`, paired zeta compatibility, and this generic finite-set budgeted pair Kronecker source.
+- Remaining goal shape:
+  - Prove `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`: quantitative finite-dimensional Kronecker for two relation-compatible phase functions on the same finite set, with target and anti-target relative-density radii both bounded by the supplied budget `B`.
+- Failed/circular route:
+  - Did not use or bound the old unconstrained `Classical.choose` radii.
+  - Did not split target and anti-target into independent finite sets, heights, or tolerances.
+  - Did not add provider instances for the new source.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-radius route, provider cycles, reverse-comparison instances, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed focused validation under the coordinator singleflight rule.
+- Validation command/result:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`.
