@@ -644,6 +644,22 @@ def StandardGabckeQuarterShiftedRawNumeratorTrigProp : Prop :=
     Real.cos (2 * Real.pi * ((x + 1 / 4) ^ 2 - (x + 1 / 4) - 1 / 16)) =
       -Real.sin (Real.pi * x - 2 * Real.pi * x ^ 2)
 
+/-- The numerator quarter-shift identity after normalizing the shifted
+quadratic phase to `-(y + pi/2)`. -/
+theorem standardGabckeQuarterShiftedRawNumeratorTrigProp_proved :
+    StandardGabckeQuarterShiftedRawNumeratorTrigProp := by
+  intro x
+  let y : ℝ := Real.pi * x - 2 * Real.pi * x ^ 2
+  have hangle :
+      2 * Real.pi * ((x + 1 / 4) ^ 2 - (x + 1 / 4) - 1 / 16) =
+        -(y + Real.pi / 2) := by
+    dsimp [y]
+    ring
+  rw [hangle, Real.cos_neg, Real.cos_add, Real.cos_pi_div_two,
+    Real.sin_pi_div_two]
+  dsimp [y]
+  ring
+
 /-- Denominator trigonometric shift for the raw quotient at `p = x + 1/4`. -/
 def StandardGabckeQuarterShiftedRawDenominatorTrigProp : Prop :=
   ∀ x : ℝ,
@@ -687,6 +703,14 @@ theorem standardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp_of_num
   unfold standardGabckeRawPsi
   rw [h_num x, h_den x]
   exact standardGabckeQuarterShiftedRawTrigSignCancellationProp_proved x
+
+/-- The shifted raw quotient trigonometric identity is now closed from the
+two quarter-shift identities and the algebraic sign cancellation. -/
+theorem standardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp_proved :
+    StandardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp :=
+  standardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp_of_num_den
+    standardGabckeQuarterShiftedRawNumeratorTrigProp_proved
+    standardGabckeQuarterShiftedRawDenominatorTrigProp_proved
 
 /-- The filled removable values are exactly `x = 0` and `x = 1/2` in the
 quarter-point coordinate. -/
@@ -732,6 +756,13 @@ theorem standardGabckeRemovableCandidateQuarterLocalFunctionEqProp_of_shiftedRaw
       exact hx (Or.inr h)
     rw [if_neg hshift, if_neg hx]
     exact h_trig x hx_zero hx_half
+
+/-- The pointwise quarter-local removable candidate identity follows from the
+closed shifted raw quotient identity and the filled-point equivalence. -/
+theorem standardGabckeRemovableCandidateQuarterLocalFunctionEqProp_proved :
+    StandardGabckeRemovableCandidateQuarterLocalFunctionEqProp :=
+  standardGabckeRemovableCandidateQuarterLocalFunctionEqProp_of_shiftedRawTrigIdentity
+    standardGabckeRemovableCandidateQuarterShiftedRawTrigIdentityProp_proved
 
 /-- The quarter coordinate bridge follows from the translation derivative atom
 and the pointwise local-coordinate identity. -/
