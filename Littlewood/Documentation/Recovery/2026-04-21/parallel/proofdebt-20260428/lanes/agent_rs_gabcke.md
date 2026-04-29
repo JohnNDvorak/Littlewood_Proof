@@ -2124,3 +2124,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   stronger all-order source
   `StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp` if the Mathlib
   sine-series/fslope route is made explicit.
+
+### 2026-04-29 Round 44: denominator first derivative closed by evenness
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp`.
+- Banked inputs:
+  - The denominator dslope is even:
+    `dslope standardGabckeQuarterLocalSineDenominator 0 (-w) =
+      dslope standardGabckeQuarterLocalSineDenominator 0 w`.
+  - The denominator dslope is already analytic at `0`, hence differentiable
+    there.
+- Proof facts banked:
+  - Added point atoms
+    `StandardGabckeQuarterLocalDenominatorDslopeFirstDerivativeProp`,
+    `StandardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp`, and
+    `StandardGabckeQuarterLocalDenominatorDslopeThirdDerivativeProp`.
+  - Added local helper `deriv_zero_of_eventually_even_at_zero`: a
+    differentiable function locally even at the origin has derivative zero.
+  - Proved
+    `standardGabckeQuarterLocalDenominatorDslopeFirstDerivativeProp_proved`
+    from evenness and analyticity.
+  - Added
+    `standardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp_of_pointDerivatives`,
+    reducing the low-order bundle to the remaining second and third derivative
+    point values.
+- Failed routes:
+  - I did not assert a global quotient regularity theorem.
+  - I did not use the all-order sine-series claim as an unproved shortcut.
+  - Direct quotient differentiation at the removable point was avoided for the
+    first derivative; the proof uses symmetry plus differentiability.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to `origin/recovery/provider-forensics-2026-04-21`
+    at `64dba74` before editing.
+  - `git diff --check`: passed.
+  - Initial focused builds exposed two local proof-shape issues: composition
+    at `-0`, and redundant algebra tactics after simplification.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed after repairs under `/tmp/littlewood-lean-singleflight.lock` using
+    the corrected `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp`,
+  the exact second derivative value
+  `iteratedDeriv 2 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 =
+    -(8 * Real.pi ^ 3 / 3)`. The third derivative zero should then follow
+  from the same evenness/Taylor-parity route or from the local sine quotient
+  expansion.

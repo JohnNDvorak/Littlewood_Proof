@@ -962,6 +962,19 @@ def StandardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp : Prop :=
       -(8 * Real.pi ^ 3 / 3) ∧
     iteratedDeriv 3 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 = 0
 
+/-- First derivative value for the denominator dslope at the removable point. -/
+def StandardGabckeQuarterLocalDenominatorDslopeFirstDerivativeProp : Prop :=
+  iteratedDeriv 1 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 = 0
+
+/-- Second derivative value for the denominator dslope at the removable point. -/
+def StandardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp : Prop :=
+  iteratedDeriv 2 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 =
+    -(8 * Real.pi ^ 3 / 3)
+
+/-- Third derivative value for the denominator dslope at the removable point. -/
+def StandardGabckeQuarterLocalDenominatorDslopeThirdDerivativeProp : Prop :=
+  iteratedDeriv 3 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 = 0
+
 /-- Formal division/coefficient step from the numerator and denominator dslope
 series data to the quotient series coefficient `-pi^2/6`. -/
 def StandardGabckeQuarterLocalDslopeQuotientDivisionCoefficientProp : Prop :=
@@ -1041,6 +1054,21 @@ theorem standardGabckeQuarterLocalDenominatorDslopeNonzeroProp_proved :
   rw [standardGabckeQuarterLocalDenominatorDslopeValueProp_proved]
   exact mul_ne_zero (by norm_num) Real.pi_ne_zero
 
+/-- A differentiable function that is locally even at the origin has zero first
+derivative there. -/
+private theorem deriv_zero_of_eventually_even_at_zero {f : ℝ → ℝ}
+    (hf : DifferentiableAt ℝ f 0) (heven : (fun x : ℝ => f (-x)) =ᶠ[𝓝 0] f) :
+    deriv f 0 = 0 := by
+  have hderiv : HasDerivAt f (deriv f 0) 0 := hf.hasDerivAt
+  have hneg : HasDerivAt (fun x : ℝ => f (-x)) (-(deriv f 0)) 0 := by
+    have hderiv_neg_zero : HasDerivAt f (deriv f 0) (-0) := by
+      simpa using hderiv
+    simpa using hderiv_neg_zero.comp (0 : ℝ) (hasDerivAt_neg (0 : ℝ))
+  have hsame : HasDerivAt f (-(deriv f 0)) 0 :=
+    hneg.congr_of_eventuallyEq heven.symm
+  have h_eq : deriv f 0 = -(deriv f 0) := hsame.deriv
+  linarith
+
 /-- Analyticity of the denominator dslope follows from the power series of
 `sin (2*pi*w)` and the Mathlib `dslope` power-series transfer. -/
 theorem standardGabckeQuarterLocalDenominatorDslopeAnalyticProp_proved :
@@ -1053,6 +1081,33 @@ theorem standardGabckeQuarterLocalDenominatorDslopeAnalyticProp_proved :
       (Real.analyticAt_sin.comp hlin)
   obtain ⟨p, hp⟩ := hden
   exact ⟨p.fslope, hp.has_fpower_series_dslope_fslope⟩
+
+/-- The denominator dslope is an even function. -/
+private theorem standardGabckeQuarterLocalDenominatorDslope_even :
+    (fun w : ℝ => dslope standardGabckeQuarterLocalSineDenominator 0 (-w)) =
+      fun w : ℝ => dslope standardGabckeQuarterLocalSineDenominator 0 w := by
+  funext w
+  by_cases hw : w = 0
+  · subst w
+    simp
+  · have hn : -w ≠ 0 := neg_ne_zero.mpr hw
+    rw [dslope_of_ne standardGabckeQuarterLocalSineDenominator hn,
+      dslope_of_ne standardGabckeQuarterLocalSineDenominator hw]
+    simp [slope_def_field, standardGabckeQuarterLocalSineDenominator]
+
+/-- The first derivative of the denominator dslope vanishes at the removable
+point by evenness. -/
+theorem standardGabckeQuarterLocalDenominatorDslopeFirstDerivativeProp_proved :
+    StandardGabckeQuarterLocalDenominatorDslopeFirstDerivativeProp := by
+  unfold StandardGabckeQuarterLocalDenominatorDslopeFirstDerivativeProp
+  rw [iteratedDeriv_one]
+  have hf : DifferentiableAt ℝ (dslope standardGabckeQuarterLocalSineDenominator 0) 0 :=
+    standardGabckeQuarterLocalDenominatorDslopeAnalyticProp_proved.differentiableAt
+  have heven :
+      (fun w : ℝ => dslope standardGabckeQuarterLocalSineDenominator 0 (-w)) =ᶠ[𝓝 0]
+        dslope standardGabckeQuarterLocalSineDenominator 0 :=
+    Filter.Eventually.of_forall (congrFun standardGabckeQuarterLocalDenominatorDslope_even)
+  exact deriv_zero_of_eventually_even_at_zero hf heven
 
 /-- Analyticity of the numerator dslope follows from the analytic polynomial
 phase `pi*w - 2*pi*w^2` and the Mathlib `dslope` power-series transfer. -/
@@ -1172,6 +1227,14 @@ theorem standardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp_of_lowOrd
   · dsimp [B, f]
     rw [h3]
     norm_num
+
+/-- The low-order derivative bundle is reduced to its three point-value atoms.
+The first one is already closed by evenness. -/
+theorem standardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp_of_pointDerivatives
+    (h2 : StandardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp)
+    (h3 : StandardGabckeQuarterLocalDenominatorDslopeThirdDerivativeProp) :
+    StandardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp := by
+  exact ⟨standardGabckeQuarterLocalDenominatorDslopeFirstDerivativeProp_proved, h2, h3⟩
 
 /-- The quotient series is reduced to explicit numerator/denominator dslope
 coefficient data plus the finite formal-division calculation. -/
