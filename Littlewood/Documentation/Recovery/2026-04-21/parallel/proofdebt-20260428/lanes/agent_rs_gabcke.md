@@ -2296,3 +2296,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   prove `StandardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp`,
   preferably by a local sine-composition power-series coefficient lemma for
   `sin ((2 * Real.pi) * w)` at index `3`.
+
+### 2026-04-29 Round 48: denominator raw sine cubic coefficient
+
+- Classification: `PROVED`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp`.
+- Banked inputs:
+  - Mathlib's `iteratedDeriv_comp_const_mul` gives the third derivative of
+    `sin ((2 * Real.pi) * w)` from the third derivative of `sin`.
+  - Mathlib's `Real.iteratedDeriv_odd_sin` gives
+    `iteratedDeriv 3 Real.sin 0 = -1`.
+  - `AnalyticAt.hasFPowerSeriesAt` supplies the local Taylor power series with
+    scalar coefficients `iteratedDeriv n f 0 / n!`.
+- Proof facts banked:
+  - Added private derivative computation
+    `standardGabckeQuarterLocalDenominatorRawSine_thirdDerivative`:
+    `iteratedDeriv 3 standardGabckeQuarterLocalSineDenominator 0 =
+      -(8 * Real.pi ^ 3)`.
+  - Proved
+    `standardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp_proved`,
+    closing the raw cubic coefficient source
+    `A 3 = -(4 * Real.pi ^ 3 / 3)`.
+- Failed routes:
+  - No all-order sine-series assumption was introduced.
+  - No global quotient regularity or shortcut provider was used.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to coordinator baseline `40290c9` before editing.
+  - Initial focused builds exposed two local proof-shape issues in the new
+    derivative lemma: definitional unfolding by `rw`, then the unreduced
+    argument `(2 * Real.pi) * 0`; both were repaired locally.
+  - `git diff --check`: passed.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  combine the now-proved
+  `standardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp_proved`
+  with
+  `standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_of_rawSineCubicCoefficient`
+  to close `StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp`,
+  then feed
+  `standardGabckeQuarterLocalDenominatorDslopeSecondDerivativeProp_of_quadraticCoefficient`.
