@@ -782,3 +782,63 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
     likely around typeclass synthesis from
     `TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp` to the
     one-sided radius classes.
+
+### 2026-04-29 Round 12: Log-Level Paired Tower Geometry
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp`.
+- Target choice:
+  - Attacked the paired tower geometry leaf. The existing geometry statement
+    still has an outer `Real.exp` on both sides, so this round peeled off that
+    final monotone exponential and isolated the smaller log-scale tower
+    domination atom.
+- Facts banked:
+  - Added `TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp`.
+    This asks for one height/tolerance where
+    `log (max X (perronThreshold hRH T) + 1)` plus the larger chosen
+    target/anti phase radius is bounded by the double-exponential tower scale
+    `exp (exp (((1 - ε) * (N T / (T + 1))) / 2))`.
+  - Added
+    `targetAntiPerronThresholdTowerGeometryForPhaseRadii_of_logGeometry_hyp`,
+    deriving the previous paired geometry leaf from the log-level leaf by
+    monotonicity of `Real.exp`.
+  - Added
+    `exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndLogGeometry_hyp`,
+    packaging both repaired Perron-only exact-seed classes from paired
+    finite-zero relative density plus the log-level paired tower geometry.
+- False-surface audit:
+  - No new declaration uses `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No arbitrary-target Kronecker theorem was introduced.
+  - No constant-1 `PerronSqrtErrorEventuallyAtHeightHyp` shortcut or
+    harvested sorry-backed file was used.
+- Failed routes that must not be retried:
+  - Do not attack the all-radius tower domination leaf as the primary route.
+    The live geometry route is paired, target/anti-specific, and now
+    log-level.
+  - Do not replace relation-compatible finite-set Kronecker with an
+    arbitrary-target Kronecker theorem.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, or compilation command was run.
+  - `git diff --check` passed.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+  - `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem/interface:
+  - Prove/source
+    `TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp` from
+    same-height Perron-threshold growth and the paired chosen phase radius.
+  - Prove/source `TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp`
+    and `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`.
+- Coordinator action requested:
+  - Run the requested validation commands and report the first compile risk,
+    likely around the `Real.exp_le_exp.mpr` adapter from log-level geometry to
+    paired geometry.

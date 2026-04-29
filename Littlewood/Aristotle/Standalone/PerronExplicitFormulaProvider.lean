@@ -2604,6 +2604,28 @@ class TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp
           ≤ Real.exp (Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
+/-- Log-level paired target/anti-target Perron/tower geometry.
+
+This peels off the final monotone `Real.exp` from
+`TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp`: the remaining
+same-height growth obligation is a direct domination of the Perron lower
+endpoint plus the larger chosen phase radius by the double-exponential tower
+scale. -/
+class TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.log (max X (perronThreshold _hRH T) + 1) +
+            max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+              (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))
+
 /-- Target-specific same-height Perron/tower domination by the realized
 relative-density phase radius.
 
@@ -2802,6 +2824,32 @@ instance (priority := 95)
     [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
     AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
   antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+
+/-- Log-level paired tower geometry implies the paired tower geometry leaf by
+monotonicity of the outer exponential. -/
+theorem targetAntiPerronThresholdTowerGeometryForPhaseRadii_of_logGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp] :
+    TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp where
+  witness := by
+    intro hRH X
+    rcases TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp.witness
+        hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hlogDom⟩
+    refine ⟨T, ε, hT4, hεpos, hεlt, ?_⟩
+    exact Real.exp_le_exp.mpr hlogDom
+
+/-- Instance form of
+`targetAntiPerronThresholdTowerGeometryForPhaseRadii_of_logGeometry_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp] :
+    TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp :=
+  targetAntiPerronThresholdTowerGeometryForPhaseRadii_of_logGeometry_hyp
 
 /-- Paired target/anti finite-zero compatibility supplies the target
 compatibility leaf. -/
@@ -3846,6 +3894,16 @@ theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndGeometry_hyp
     [PerronSqrtErrorEventuallyAtHeightHyp]
     [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
     [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact ⟨inferInstance, inferInstance⟩
+
+/-- Paired finite-zero relative density plus log-level paired phase-radius
+geometry packages both Perron-only exact-seed classes. -/
+theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndLogGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerLogGeometryForPhaseRadiiHyp] :
     TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
       AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
   exact ⟨inferInstance, inferInstance⟩
