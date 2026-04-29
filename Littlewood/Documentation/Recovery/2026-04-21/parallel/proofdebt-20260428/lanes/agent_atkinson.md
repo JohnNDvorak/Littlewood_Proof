@@ -1801,3 +1801,40 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `atkinsonShiftedRelativeWeight (n+j) j)`, prove the Jacobian-integral bound
   at `1/relativeWeight`, and keep the shifted stationary-phase target remainder
   separate.
+
+### 2026-04-29 Round 37 Corrected Residual Scale Reduction
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  corrected scalar endpoint phase residual bound
+  `|atkinsonEndpointGapCorrectedPhaseError n j|`
+  `≤ A_phase * (relativePhase / relativeWeight)`.
+- Facts banked:
+  added `atkinson_shifted_inv_scale_le_relativePhase_div_weight`, proving the
+  local scale comparison
+  `j / (n+j+1) ≤ sqrt 2 * (relativePhase / relativeWeight)` for `1 ≤ j`
+  and `j ≤ n`; added
+  `atkinson_correctedEndpointPhaseError_bound_of_shifted_inv_bound`, reducing
+  the corrected endpoint phase atom to a fixed-shift Taylor-scale residual
+  estimate.
+- Smallest next theorem:
+  prove, for every fixed `j ≥ 1`,
+  `∃ C_res > 0, ∃ N_res, ∀ n ≥ N_res,`
+  `|atkinsonEndpointGapCorrectedPhaseError n j|`
+  `≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1))`.
+  This is the remaining endpoint-gap Taylor residual, now separated from the
+  relative phase/weight comparison.
+- Failed routes / guardrails:
+  the raw uncorrected phase-error route remains demoted as scale-incompatible.
+  Did not use direct Abel, phase-weight division, circular provider instances,
+  absolute primitive bounds, axioms, sorries, or statement weakening.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected singleflight lock; result: passed, `Build completed successfully
+  (7903 jobs)`. Also ran `git diff --check`; result: passed.
+- Remaining goal shape:
+  endpoint-gap Taylor residual at `j/(n+j+1)`, Jacobian-integral bound at
+  `1/relativeWeight`, and the shifted stationary-phase target remainder.
