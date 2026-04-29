@@ -899,6 +899,11 @@ def StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp : Prop :=
       a 0 = 1 / 2 ∧
       a 3 = -Real.pi ^ 2 / 6
 
+/-- Cubic derivative value for the removable sine quotient at `0`. -/
+def StandardGabckeQuarterLocalRemovableSineQuotientThirdDerivativeProp : Prop :=
+  iteratedDeriv 3 standardGabckeQuarterLocalRemovableSineQuotient 0 =
+    -Real.pi ^ 2
+
 /-- Exact removable-division bridge for the sine quotient. The common zero is
 removed by passing to `dslope` for the numerator and denominator; the remaining
 division is ordinary analytic division because the denominator dslope is
@@ -1107,6 +1112,43 @@ theorem standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_third
     StandardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp := by
   exact standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_equality_and_third
     standardGabckeQuarterLocalRemovableSineQuotientDslopeEqualityProp_proved hthird
+
+/-- A removable sine-quotient power series with cubic coefficient `-pi^2/6`
+gives the cubic derivative value `-pi^2`. -/
+theorem standardGabckeQuarterLocalRemovableSineQuotientThirdDerivativeProp_of_powerSeries
+    (h_series : StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp) :
+    StandardGabckeQuarterLocalRemovableSineQuotientThirdDerivativeProp := by
+  rcases h_series with ⟨a, hseries, _ha0, ha3⟩
+  rcases hseries with ⟨_r, hball⟩
+  unfold StandardGabckeQuarterLocalRemovableSineQuotientThirdDerivativeProp
+  rw [iteratedDeriv_eq_iteratedFDeriv]
+  have hF :
+      iteratedFDeriv ℝ 3 standardGabckeQuarterLocalRemovableSineQuotient 0
+          (fun _ : Fin 3 => (1 : ℝ)) =
+        ∑ σ : Equiv.Perm (Fin 3),
+          (FormalMultilinearSeries.ofScalars ℝ a) 3
+            (fun i : Fin 3 => (fun _ : Fin 3 => (1 : ℝ)) (σ i)) := by
+    exact hball.iteratedFDeriv_eq_sum_of_completeSpace
+      (n := 3) (v := fun _ : Fin 3 => (1 : ℝ))
+  refine hF.trans ?_
+  calc
+    (∑ σ : Equiv.Perm (Fin 3),
+        (FormalMultilinearSeries.ofScalars ℝ a) 3
+          (fun i : Fin 3 => (fun _ : Fin 3 => (1 : ℝ)) (σ i))) =
+        ∑ _σ : Equiv.Perm (Fin 3), (-Real.pi ^ 2 / 6) := by
+      simp [ha3]
+    _ = (6 : ℝ) * (-Real.pi ^ 2 / 6) := by
+      norm_num [Fintype.card_perm]
+    _ = -Real.pi ^ 2 := by
+      ring
+
+/-- The removable sine-quotient power-series atom supplies the remaining
+cubic derivative input to the dslope bridge. -/
+theorem standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_powerSeries
+    (h_series : StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp) :
+    StandardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp := by
+  exact standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_third
+    (standardGabckeQuarterLocalRemovableSineQuotientThirdDerivativeProp_of_powerSeries h_series)
 
 /-- The dslope removable-division bridge supplies the canonical Taylor
 power series for the removable sine quotient, with the required constant and
