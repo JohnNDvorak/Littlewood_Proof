@@ -12614,6 +12614,53 @@ private noncomputable def atkinsonShiftedQuadraticZeroModelResidual (n j : ℕ) 
             Aristotle.StationaryPhaseMainMode.quadraticKernel p) *
         blockJacobian n p)
 
+/-- The explicit Hardy-exponential phase error after substituting the shifted
+block coordinate and subtracting the frozen quadratic phase model. -/
+private noncomputable def atkinsonShiftedCompensatedPhaseError (n : ℕ) (p : ℝ) : ℂ :=
+  HardyCosSmooth.hardyCosExp n (blockCoord n p) -
+    HardyCosSmooth.hardyCosExp n (hardyStart n) *
+      Complex.exp (Complex.I * (((2 * Real.pi * p ^ 2 : ℝ)) : ℂ))
+
+/-- The shifted zero-model residual written with `blockMode` and
+`quadraticKernel` fully unfolded.  This is the smallest shifted Taylor/Fourier
+atom: an oscillatory integral of the compensated Hardy phase error on
+`p ∈ Ioc j (j + 1)`. -/
+private noncomputable def atkinsonShiftedCompensatedPhaseErrorIntegral (n j : ℕ) : ℂ :=
+  (((atkinsonModeWeight n : ℝ) : ℂ) *
+    ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+      atkinsonShiftedCompensatedPhaseError n p * blockJacobian n p)
+
+/-- Exact unfolding of the residual atom into the shifted compensated
+Hardy-phase error integral. -/
+private theorem atkinson_shifted_zeroModelResidual_eq_compensatedPhaseErrorIntegral
+    (n j : ℕ) :
+    atkinsonShiftedQuadraticZeroModelResidual n j =
+      atkinsonShiftedCompensatedPhaseErrorIntegral n j := by
+  unfold atkinsonShiftedQuadraticZeroModelResidual
+  unfold atkinsonShiftedCompensatedPhaseErrorIntegral
+  unfold atkinsonShiftedCompensatedPhaseError
+  simp [Aristotle.StationaryPhaseMainMode.blockMode,
+    Aristotle.StationaryPhaseMainMode.quadraticKernel, blockCoord_zero]
+
+/-- Residual bound reduced to the explicit compensated Hardy-phase error
+integral.  The missing analytic input is now the shifted-cell Taylor/Fourier
+estimate at the exact no-log scale. -/
+private theorem atkinson_shifted_zeroModelResidual_bound_of_compensatedPhaseError_bound
+    (hphase :
+      ∃ C_phase > 0, ∃ N_phase : ℕ, ∀ n : ℕ, N_phase ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖atkinsonShiftedCompensatedPhaseErrorIntegral n j‖
+            ≤ C_phase * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_res > 0, ∃ N_res : ℕ, ∀ n : ℕ, N_res ≤ n → ∀ j : ℕ,
+      3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖atkinsonShiftedQuadraticZeroModelResidual n j‖
+          ≤ C_res * (atkinsonModeWeight (n + j) / j) := by
+  obtain ⟨C_phase, hC_phase, N_phase, hphase'⟩ := hphase
+  refine ⟨C_phase, hC_phase, N_phase, ?_⟩
+  intro n hn j hj3 hj1 hjn
+  rw [atkinson_shifted_zeroModelResidual_eq_compensatedPhaseErrorIntegral n j]
+  exact hphase' n hn j hj3 hj1 hjn
+
 /-- The zero-model difference is exactly the residual integral.  This separates
 proof engineering from the remaining analytic input: the next theorem should
 bound this compensated oscillatory residual directly on shifted cells. -/
@@ -13873,6 +13920,24 @@ private theorem atkinson_blockMode_stationaryPhase_of_residual_and_fourierCorrec
   exact
     atkinson_blockMode_stationaryPhase_of_zero_model_and_fourierCorrectedTarget
       (atkinson_shifted_quadratic_zeroModel_bound_of_residual_bound hresidual)
+
+/-- Corrected-target handoff reduced to the explicit compensated Hardy-phase
+error integral. -/
+private theorem atkinson_blockMode_stationaryPhase_of_compensatedPhaseError_and_fourierCorrectedTarget
+    (hphase :
+      ∃ C_phase > 0, ∃ N_phase : ℕ, ∀ n : ℕ, N_phase ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖atkinsonShiftedCompensatedPhaseErrorIntegral n j‖
+            ≤ C_phase * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+            ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+              Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                blockJacobian (k - j) p) - atkinsonFourierCorrectedCompleteBlockTargetK k j)‖
+        ≤ C_err * (atkinsonModeWeight k / j) := by
+  exact
+    atkinson_blockMode_stationaryPhase_of_residual_and_fourierCorrectedTarget
+      (atkinson_shifted_zeroModelResidual_bound_of_compensatedPhaseError_bound hphase)
 
 /-- Complete-block-target stationary-phase handoff after discharging the
 shifted quadratic-kernel estimates. This is the narrowed interface directly

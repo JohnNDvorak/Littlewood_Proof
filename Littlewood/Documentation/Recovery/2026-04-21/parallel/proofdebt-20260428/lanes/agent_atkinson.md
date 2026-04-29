@@ -693,3 +693,51 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 13 Compensated Phase Error Integral
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  the residual atom
+  `atkinsonShiftedQuadraticZeroModelResidual n j` at scale
+  `atkinsonModeWeight (n + j) / j`, feeding
+  `atkinson_blockMode_stationaryPhase_of_residual_and_fourierCorrectedTarget`.
+- Facts banked:
+  `atkinsonShiftedCompensatedPhaseError` unfolds the residual integrand to the
+  explicit Hardy-exponential expression
+  `hardyCosExp n (blockCoord n p) -
+   hardyCosExp n (hardyStart n) * exp(i * 2πp^2)`.
+  `atkinsonShiftedCompensatedPhaseErrorIntegral` names the shifted-cell
+  oscillatory integral of that error against `blockJacobian n p`.
+  `atkinson_shifted_zeroModelResidual_eq_compensatedPhaseErrorIntegral`
+  proves the old residual atom is exactly this unfolded compensated phase
+  error integral.
+  `atkinson_shifted_zeroModelResidual_bound_of_compensatedPhaseError_bound`
+  reduces the residual bound to the explicit phase-error integral bound.
+  `atkinson_blockMode_stationaryPhase_of_compensatedPhaseError_and_fourierCorrectedTarget`
+  wires that atom through the corrected Fourier-target complete-block handoff.
+- Failed routes / guardrails:
+  no Abel/gamma-8 route, circular provider assumption, stale import, generic
+  absolute mass/norm bound, or first-block-only Taylor theorem was used. The
+  available `StationaryPhaseMainMode.blockMode_quadratic_model_eventually`
+  controls only `p ∈ Icc 0 1`; applying it directly on
+  `Ioc j (j + 1)` would not be theorem-correct and would miss the required
+  shifted cancellation.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local simplification in
+  `atkinson_shifted_zeroModelResidual_eq_compensatedPhaseErrorIntegral`,
+  specifically unfolding `StationaryPhaseMainMode.blockMode`,
+  `StationaryPhaseMainMode.quadraticKernel`, and `blockCoord_zero`.
+- Smallest next theorem:
+  prove the explicit shifted compensated phase-error integral bound
+  `∃ C_phase > 0, ∃ N_phase : ℕ, ∀ n : ℕ, N_phase ≤ n → ∀ j : ℕ,`
+  `3 ≤ j → 1 ≤ j → j ≤ n →`
+  `‖atkinsonShiftedCompensatedPhaseErrorIntegral n j‖`
+  `≤ C_phase * (atkinsonModeWeight (n + j) / j)`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
