@@ -1747,3 +1747,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_core`:
   the local equality to the quotient of dslopes, analyticity of either dslope
   at `0`, or the third derivative value `-Real.pi ^ 2`.
+
+### 2026-04-29 Round 36: denominator dslope analyticity closed
+
+- Classification: `PROVED` for the denominator-dslope analyticity clause, and
+  `CONDITIONAL_REDUCTION` for the full dslope bridge.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp`.
+- Banked inputs:
+  - `Real.analyticAt_sin` composed with the analytic linear map
+    `fun w : ℝ => (2 * Real.pi) * w` gives analyticity of
+    `standardGabckeQuarterLocalSineDenominator` at `0`.
+  - `HasFPowerSeriesAt.has_fpower_series_dslope_fslope` transfers that local
+    power series to the denominator dslope.
+- Proof facts banked:
+  - Added and proved
+    `StandardGabckeQuarterLocalDenominatorDslopeAnalyticProp`:
+    `AnalyticAt ℝ (dslope standardGabckeQuarterLocalSineDenominator 0) 0`.
+  - Added
+    `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_reducedCore`,
+    reducing the bridge to local dslope equality, numerator dslope analyticity,
+    and the third-derivative value.
+- Failed routes:
+  - I did not define the removable derivative candidate by the raw third
+    derivative.
+  - I did not assume global regularity of the original quotient at
+    denominator-zero points.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, provider shortcuts, or weaken the live
+    coefficient target.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - `git diff --check`: passed.
+  - First guarded validation attempt for
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+    returned `LEAN_BUSY`; Lake did not run.
+  - Two later guarded attempts also returned `LEAN_BUSY` because another
+    worker guard/wait shell was visible to the required `pgrep` check; Lake did
+    not run.
+  - Requested coordinator validation:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`
+- Remaining smallest RS/Gabcke atom:
+  prove one remaining core clause for
+  `standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_reducedCore`:
+  the local equality to the quotient of dslopes, numerator dslope analyticity,
+  or the third derivative value `-Real.pi ^ 2`.
