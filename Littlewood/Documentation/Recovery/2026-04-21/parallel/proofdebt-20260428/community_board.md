@@ -39,6 +39,31 @@ Launch ID: `proofdebt-20260428`
 | Pi/Phase | Planck | `proofdebt/20260428-pi-phase` | `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20260428/pi-phase` | `lanes/agent_pi_phase.md` |
 | RS/Gabcke | Hume | `proofdebt/20260428-rs-gabcke` | `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20260428/rs-gabcke` | `lanes/agent_rs_gabcke.md` |
 
+## Overnight 2026-04-29 Launch
+
+- Coordinator launch commit: `6103c17`.
+- Fresh branches and worktrees:
+  - Atkinson / Hooke:
+    `proofdebt/20260429-atkinson-provider`,
+    `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20260429/atkinson`
+  - Perron/B5a / Halley:
+    `proofdebt/20260429-perron-b5a`,
+    `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20260429/perron-b5a`
+  - Pi/Phase / Planck:
+    `proofdebt/20260429-pi-phase`,
+    `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20260429/pi-phase`
+  - RS/Gabcke / Hume:
+    `proofdebt/20260429-rs-gabcke`,
+    `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20260429/rs-gabcke`
+- All four overnight branches were pushed at their initial `6103c17`
+  checkpoint.
+- Hard rule remains:
+  only the coordinator may run `lake`, `lake env lean`, `lean`, or any focused
+  validation; only one such process may run across the machine.
+- Aristotle CLI is installed, but `ARISTOTLE_API_KEY` is not set in the
+  coordinator shell at launch. Do not put keys in tracked files, shell-visible
+  commands, prompts, or ledgers.
+
 All active worktrees symlink `.lake` to the coordinator tree cache.
 
 ## Current Targets
