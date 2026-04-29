@@ -458,6 +458,18 @@ def StandardGabckeRawPsiRemovablePointValueBoundsProp (C14 C34 : ℝ) : Prop :=
   |C14| ≤ fresnelC1Bound * (96 * Real.pi ^ 2) ∧
     |C34| ≤ fresnelC1Bound * (96 * Real.pi ^ 2)
 
+/-- First-point bridge from the smooth removable quotient normalization to the
+raw totalized quotient derivative. -/
+def StandardGabckeRawPsiQuarterRemovableSourceBridgeProp
+    (D : ℝ → ℝ) : Prop :=
+  standardGabckeRawPsiThirdDerivative (1 / 4 : ℝ) = D (1 / 4)
+
+/-- Second-point bridge from the smooth removable quotient normalization to the
+raw totalized quotient derivative. -/
+def StandardGabckeRawPsiThreeQuarterRemovableSourceBridgeProp
+    (D : ℝ → ℝ) : Prop :=
+  standardGabckeRawPsiThirdDerivative (3 / 4 : ℝ) = D (3 / 4)
+
 /-- Pointwise bridge from Gabcke's smooth removable quotient normalization to
 the raw totalized quotient derivative at the two denominator-zero points.
 This is deliberately only a two-point statement; it does not assert global
@@ -466,11 +478,44 @@ def StandardGabckeRawPsiRemovableSourceBridgeProp (D : ℝ → ℝ) : Prop :=
   standardGabckeRawPsiThirdDerivative (1 / 4 : ℝ) = D (1 / 4) ∧
     standardGabckeRawPsiThirdDerivative (3 / 4 : ℝ) = D (3 / 4)
 
+/-- The paired removable-source bridge follows from its two independent
+quarter-point bridge atoms. -/
+theorem standardGabckeRawPsiRemovableSourceBridgeProp_of_pointBridges
+    {D : ℝ → ℝ}
+    (h_quarter : StandardGabckeRawPsiQuarterRemovableSourceBridgeProp D)
+    (h_threeQuarter :
+      StandardGabckeRawPsiThreeQuarterRemovableSourceBridgeProp D) :
+    StandardGabckeRawPsiRemovableSourceBridgeProp D :=
+  ⟨h_quarter, h_threeQuarter⟩
+
+/-- Tabelle/source value for the smooth removable third-derivative payload at
+the first denominator-zero point. -/
+def StandardGabckeRemovableSourceQuarterThirdDerivativeValueProp
+    (D : ℝ → ℝ) (C14 : ℝ) : Prop :=
+  D (1 / 4) = C14
+
+/-- Tabelle/source value for the smooth removable third-derivative payload at
+the second denominator-zero point. -/
+def StandardGabckeRemovableSourceThreeQuarterThirdDerivativeValueProp
+    (D : ℝ → ℝ) (C34 : ℝ) : Prop :=
+  D (3 / 4) = C34
+
 /-- Tabelle/source values for the smooth removable third-derivative payload at
 the two denominator-zero points. -/
 def StandardGabckeRemovableSourceThirdDerivativeValueProp
     (D : ℝ → ℝ) (C14 C34 : ℝ) : Prop :=
   D (1 / 4) = C14 ∧ D (3 / 4) = C34
+
+/-- The paired Tabelle/source value atom follows from its two point-value
+atoms. -/
+theorem standardGabckeRemovableSourceThirdDerivativeValueProp_of_pointValues
+    {D : ℝ → ℝ} {C14 C34 : ℝ}
+    (h_quarter :
+      StandardGabckeRemovableSourceQuarterThirdDerivativeValueProp D C14)
+    (h_threeQuarter :
+      StandardGabckeRemovableSourceThreeQuarterThirdDerivativeValueProp D C34) :
+    StandardGabckeRemovableSourceThirdDerivativeValueProp D C14 C34 :=
+  ⟨h_quarter, h_threeQuarter⟩
 
 /-- Exact raw point-value atoms follow from a two-point bridge to the smooth
 removable source derivative plus the sourced Tabelle values. -/
@@ -738,6 +783,32 @@ theorem standardGabckeTargets_of_contourTaylor_regular_and_removableSourceBridge
     h_id h_regular
     (standardGabckeRawPsiRemovablePointBoundsProp_of_sourceBridge
       h_bridge h_values h_bounds)
+
+/-- Direct target route when the smooth removable-source bridge and source
+values are supplied point-by-point at `1/4` and `3/4`. -/
+theorem standardGabckeTargets_of_contourTaylor_regular_and_removableSourcePointData
+    {D : ℝ → ℝ} {C14 C34 : ℝ}
+    (h_id : StandardGabckeContourTaylorFirstCoefficientIdentityProp)
+    (h_regular : StandardGabckeRawPsiRegularThirdDerivativeBoundProp)
+    (h_bridge_quarter :
+      StandardGabckeRawPsiQuarterRemovableSourceBridgeProp D)
+    (h_bridge_threeQuarter :
+      StandardGabckeRawPsiThreeQuarterRemovableSourceBridgeProp D)
+    (h_value_quarter :
+      StandardGabckeRemovableSourceQuarterThirdDerivativeValueProp D C14)
+    (h_value_threeQuarter :
+      StandardGabckeRemovableSourceThreeQuarterThirdDerivativeValueProp D C34)
+    (h_bounds : StandardGabckeRawPsiRemovablePointValueBoundsProp C14 C34) :
+    StandardGabckeStationaryPhaseIdentityProp
+        standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient ∧
+      StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient :=
+  standardGabckeTargets_of_contourTaylor_regular_and_removableSourceBridge
+    h_id h_regular
+    (standardGabckeRawPsiRemovableSourceBridgeProp_of_pointBridges
+      h_bridge_quarter h_bridge_threeQuarter)
+    (standardGabckeRemovableSourceThirdDerivativeValueProp_of_pointValues
+      h_value_quarter h_value_threeQuarter)
+    h_bounds
 
 /-- A standard-normalized stationary-phase identity becomes the local
 coefficient identity once the leading coefficient normalization has been

@@ -836,3 +836,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   with `StandardGabckeRawPsiRemovablePointValueBoundsProp C14 C34`.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 17: removable source point atoms split
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeRawPsiRemovableSourceBridgeProp` and
+  `StandardGabckeRemovableSourceThirdDerivativeValueProp`.
+- Banked inputs:
+  - Round 16 exposed the missing smooth removable-source derivative `D` and
+    preserved the downstream route
+    `standardGabckeTargets_of_contourTaylor_regular_and_removableSourceBridge`.
+  - Denominator-zero classification remains closed, so only the two quarter
+    points are live on the removable branch.
+- Proof facts banked:
+  - Added `StandardGabckeRawPsiQuarterRemovableSourceBridgeProp D` and
+    `StandardGabckeRawPsiThreeQuarterRemovableSourceBridgeProp D`, splitting
+    the raw/removable bridge into two independent point atoms.
+  - Proved `standardGabckeRawPsiRemovableSourceBridgeProp_of_pointBridges`,
+    reconstructing the paired bridge from those point atoms.
+  - Added `StandardGabckeRemovableSourceQuarterThirdDerivativeValueProp D C14`
+    and
+    `StandardGabckeRemovableSourceThreeQuarterThirdDerivativeValueProp D C34`,
+    splitting the Tabelle/source value atom into its two point values.
+  - Proved
+    `standardGabckeRemovableSourceThirdDerivativeValueProp_of_pointValues`,
+    reconstructing the paired source-value atom from the two point-value atoms.
+  - Added
+    `standardGabckeTargets_of_contourTaylor_regular_and_removableSourcePointData`,
+    preserving the direct route through
+    `standardGabckeTargets_of_contourTaylor_regular_and_removableSourceBridge`
+    while letting the next proof source one quarter point at a time.
+- Failed routes:
+  - Do not infer the point bridges by treating `standardGabckeRawPsi` as
+    globally regular at denominator-zero points.
+  - Do not assert raw `standardGabckeRawPsi = rsPsi`.
+  - Do not use block-independence or a defect-quotient coefficient.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+- Smallest next theorem:
+  instantiate the smooth removable-source derivative `D` and prove either
+  `StandardGabckeRawPsiQuarterRemovableSourceBridgeProp D` or
+  `StandardGabckeRawPsiThreeQuarterRemovableSourceBridgeProp D`, then source
+  the corresponding Tabelle value atom at that same quarter point.
+- Coordinator action requested:
+  run the requested serialized validation command.
