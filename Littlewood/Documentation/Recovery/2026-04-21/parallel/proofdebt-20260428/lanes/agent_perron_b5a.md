@@ -1325,3 +1325,60 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   available at linear-window scale.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 25 - Linear Cutoff Assembly
+
+- Classification: `CANDIDATE_REDUCTION`.
+- Exact theorem attacked:
+  the weighted cutoff/public-path surface after the validated separated
+  Davenport route, under the scale-correct target
+  `C * (x / T) * (Real.log x)^2`.
+- Code facts banked:
+  added the private absorption helper
+  `small_T_logSq_le_eight_linear_logSq`, using `x >= 2` and `T <= 16` to
+  embed pure `log^2` exact-hit and near-diagonal contributions into the
+  linear-window scale.
+  Added
+  `small_T_boundary_window_linear_bound_from_separated_linear` and closed
+  `small_T_boundary_window_linear_bound`, assembling the exact-hit,
+  near-diagonal, and separated boundary-window errors without using the old
+  pure Davenport target.
+  Added
+  `small_T_weighted_kernel_cutoff_linear_bound_from_boundary_and_offBoundary`
+  and `small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary`, reducing
+  the scale-correct weighted cutoff to the remaining off-boundary estimate at
+  the same linear-window scale.
+  Added
+  `small_T_perronKernelFiniteSum_cutoff_linear_bound_from_weighted_error`,
+  carrying a linear weighted cutoff bound to the finite Perron-kernel cutoff
+  error.
+- Scale check:
+  the separated Davenport boundary contribution remains at
+  `C * (x / T) * (Real.log x)^2`.  This round intentionally does not claim the
+  false pure `O((Real.log x)^2)` weighted cutoff needed by the older
+  `SmallTPerronBoundHyp` handoff.
+- Failed/demoted routes:
+  did not force the macroscopic separated boundary contribution into a pure
+  bounded-height estimate.  The existing public small-`T` provider route still
+  requires either a different cancellation/residue route or a modified
+  handoff, because the linear-window cutoff alone is too large for the pure
+  small-`T` target.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the compatible off-boundary weighted cutoff estimate
+  `∃ Co > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelWeightedOffBoundaryWindowError x T
+      <= Co * (x / T) * (Real.log x)^2`,
+  or introduce a non-circular truncation/residue handoff that explicitly
+  bypasses the false pure weighted cutoff target.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

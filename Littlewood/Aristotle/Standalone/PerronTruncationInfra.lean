@@ -3422,6 +3422,129 @@ theorem small_T_separated_weighted_linear_bound :
   small_T_separated_weighted_bound_from_linear_davenport_envelope_bound
     small_T_separated_davenport_envelope_linear_bound
 
+private theorem small_T_logSq_le_eight_linear_logSq
+    (x T : ℝ) (hx : 2 ≤ x) (hT_lo : 2 ≤ T) (hT_hi : T ≤ 16) :
+    (Real.log x) ^ 2 ≤ 8 * (x / T) * (Real.log x) ^ 2 := by
+  have hT_pos : 0 < T := by linarith
+  have hscale_ge_one : (1 : ℝ) ≤ 8 * (x / T) := by
+    rw [← mul_div_assoc]
+    rw [le_div_iff₀ hT_pos]
+    nlinarith
+  calc (Real.log x) ^ 2
+      = 1 * (Real.log x) ^ 2 := by ring
+    _ ≤ (8 * (x / T)) * (Real.log x) ^ 2 :=
+        mul_le_mul_of_nonneg_right hscale_ge_one (sq_nonneg (Real.log x))
+    _ = 8 * (x / T) * (Real.log x) ^ 2 := by ring
+
+/-- Boundary-window weighted error at the honest linear scale from the closed
+exact-hit, near-diagonal, and separated linear atoms. -/
+theorem small_T_boundary_window_linear_bound_from_separated_linear
+    (hseparated : ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedSeparatedPuncturedBoundaryError x T ≤
+        Cs * (x / T) * (Real.log x) ^ 2) :
+    ∃ Cb > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedBoundaryWindowError x T ≤
+        Cb * (x / T) * (Real.log x) ^ 2 := by
+  rcases small_T_exactHit_boundary_error_bound with ⟨Ce, hCe_pos, hexact⟩
+  rcases small_T_nearDiagonal_punctured_boundary_bound with ⟨Cn, hCn_pos, hnear⟩
+  rcases hseparated with ⟨Cs, hCs_pos, hseparated⟩
+  refine ⟨8 * Ce + (8 * Cn + Cs),
+    add_pos (mul_pos (by norm_num : (0 : ℝ) < 8) hCe_pos)
+      (add_pos (mul_pos (by norm_num : (0 : ℝ) < 8) hCn_pos) hCs_pos), ?_⟩
+  intro x T hx hT_lo hT_hi
+  let linScale : ℝ := (x / T) * (Real.log x) ^ 2
+  have hlog_absorb := small_T_logSq_le_eight_linear_logSq x T hx hT_lo hT_hi
+  have hexact_x := hexact x T hx hT_lo hT_hi
+  have hnear_x := hnear x T hx hT_lo hT_hi
+  have hseparated_x := hseparated x T hx hT_lo hT_hi
+  have hseparated_linear :
+      perronKernelWeightedSeparatedPuncturedBoundaryError x T ≤ Cs * linScale := by
+    simpa [linScale, mul_assoc] using hseparated_x
+  have hexact_linear :
+      perronKernelWeightedExactHitBoundaryError x T ≤ 8 * Ce * linScale := by
+    calc perronKernelWeightedExactHitBoundaryError x T
+        ≤ Ce * (Real.log x) ^ 2 := hexact_x
+      _ ≤ Ce * (8 * (x / T) * (Real.log x) ^ 2) :=
+          mul_le_mul_of_nonneg_left hlog_absorb hCe_pos.le
+      _ = 8 * Ce * linScale := by
+          dsimp [linScale]
+          ring
+  have hnear_linear :
+      perronKernelWeightedNearDiagonalPuncturedBoundaryError x T ≤
+        8 * Cn * linScale := by
+    calc perronKernelWeightedNearDiagonalPuncturedBoundaryError x T
+        ≤ Cn * (Real.log x) ^ 2 := hnear_x
+      _ ≤ Cn * (8 * (x / T) * (Real.log x) ^ 2) :=
+          mul_le_mul_of_nonneg_left hlog_absorb hCn_pos.le
+      _ = 8 * Cn * linScale := by
+          dsimp [linScale]
+          ring
+  have hpunctured_linear :
+      perronKernelWeightedPuncturedBoundaryWindowError x T ≤
+        (8 * Cn + Cs) * linScale := by
+    calc perronKernelWeightedPuncturedBoundaryWindowError x T
+        = perronKernelWeightedNearDiagonalPuncturedBoundaryError x T +
+            perronKernelWeightedSeparatedPuncturedBoundaryError x T :=
+          perronKernelWeightedPuncturedBoundaryWindowError_eq_nearDiagonal_add_separated x T
+      _ ≤ 8 * Cn * linScale + Cs * linScale :=
+          add_le_add hnear_linear hseparated_linear
+      _ = (8 * Cn + Cs) * linScale := by ring
+  calc perronKernelWeightedBoundaryWindowError x T
+      = perronKernelWeightedExactHitBoundaryError x T +
+          perronKernelWeightedPuncturedBoundaryWindowError x T :=
+        perronKernelWeightedBoundaryWindowError_eq_exactHit_add_punctured x T
+    _ ≤ 8 * Ce * linScale + (8 * Cn + Cs) * linScale :=
+        add_le_add hexact_linear hpunctured_linear
+    _ = (8 * Ce + (8 * Cn + Cs)) * (x / T) * (Real.log x) ^ 2 := by
+        dsimp [linScale]
+        ring
+
+/-- Closed boundary-window weighted error at the honest linear scale. -/
+theorem small_T_boundary_window_linear_bound :
+    ∃ Cb > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedBoundaryWindowError x T ≤
+        Cb * (x / T) * (Real.log x) ^ 2 :=
+  small_T_boundary_window_linear_bound_from_separated_linear
+    small_T_separated_weighted_linear_bound
+
+/-- Scale-correct finite weighted cutoff assembly.  This keeps the boundary
+and off-boundary terms at the linear-window scale instead of forcing the false
+pure bounded-height target. -/
+theorem small_T_weighted_kernel_cutoff_linear_bound_from_boundary_and_offBoundary
+    (hboundary : ∃ Cb > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedBoundaryWindowError x T ≤
+        Cb * (x / T) * (Real.log x) ^ 2)
+    (hoffBoundary : ∃ Co > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedOffBoundaryWindowError x T ≤
+        Co * (x / T) * (Real.log x) ^ 2) :
+    ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (x / T) * (Real.log x) ^ 2 := by
+  rcases hboundary with ⟨Cb, hCb_pos, hboundary⟩
+  rcases hoffBoundary with ⟨Co, hCo_pos, hoffBoundary⟩
+  refine ⟨Cb + Co, add_pos hCb_pos hCo_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hboundary_x := hboundary x T hx hT_lo hT_hi
+  have hoffBoundary_x := hoffBoundary x T hx hT_lo hT_hi
+  calc perronKernelWeightedCutoffError x T
+      = perronKernelWeightedBoundaryWindowError x T +
+          perronKernelWeightedOffBoundaryWindowError x T :=
+        perronKernelWeightedCutoffError_eq_boundary_add_offBoundary x T
+    _ ≤ Cb * (x / T) * (Real.log x) ^ 2 +
+          Co * (x / T) * (Real.log x) ^ 2 :=
+        add_le_add hboundary_x hoffBoundary_x
+    _ = (Cb + Co) * (x / T) * (Real.log x) ^ 2 := by ring
+
+/-- Scale-correct finite weighted cutoff from the closed boundary-window
+linear route and a compatible off-boundary linear estimate. -/
+theorem small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary
+    (hoffBoundary : ∃ Co > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedOffBoundaryWindowError x T ≤
+        Co * (x / T) * (Real.log x) ^ 2) :
+    ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (x / T) * (Real.log x) ^ 2 :=
+  small_T_weighted_kernel_cutoff_linear_bound_from_boundary_and_offBoundary
+    small_T_boundary_window_linear_bound hoffBoundary
+
 /-- Weighted finite cutoff from the Davenport separated-bound route and the
 off-boundary weighted atom. -/
 theorem small_T_weighted_kernel_cutoff_bound_from_davenport_separated_and_offBoundary
@@ -3500,6 +3623,49 @@ theorem small_T_perronKernelFiniteSum_cutoff_bound_from_weighted_error
             intro n _hn
             rw [abs_mul, abs_of_nonneg (vonMangoldt_nonneg n)]
     _ ≤ Cw * (Real.log x) ^ 2 := hweighted x T hx hT_lo hT_hi
+
+/-- Scale-correct finite Perron-kernel cutoff from a weighted per-term
+cutoff-error bound at the honest linear-window scale. -/
+theorem small_T_perronKernelFiniteSum_cutoff_linear_bound_from_weighted_error
+    (hweighted : ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (x / T) * (Real.log x) ^ 2) :
+    ∃ Ck > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T| ≤
+        Ck * (x / T) * (Real.log x) ^ 2 := by
+  rcases hweighted with ⟨Cw, hCw_pos, hweighted⟩
+  refine ⟨Cw, hCw_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  have hrewrite :
+      Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T =
+        ∑ n ∈ Finset.range (Nat.floor x + 1),
+          ArithmeticFunction.vonMangoldt n *
+            (1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T) := by
+    dsimp [Aristotle.DirichletPhaseAlignment.chebyshevPsi, perronKernelFiniteSum]
+    rw [← Finset.sum_sub_distrib]
+    apply Finset.sum_congr rfl
+    intro n _hn
+    ring
+  calc |Aristotle.DirichletPhaseAlignment.chebyshevPsi x -
+          perronKernelFiniteSum x T|
+      = |∑ n ∈ Finset.range (Nat.floor x + 1),
+          ArithmeticFunction.vonMangoldt n *
+            (1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T)| := by
+            rw [hrewrite]
+    _ ≤ ∑ n ∈ Finset.range (Nat.floor x + 1),
+          |ArithmeticFunction.vonMangoldt n *
+            (1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T)| := by
+            exact Finset.abs_sum_le_sum_abs
+              (fun n ↦ ArithmeticFunction.vonMangoldt n *
+                (1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T))
+              (Finset.range (Nat.floor x + 1))
+    _ = perronKernelWeightedCutoffError x T := by
+            dsimp [perronKernelWeightedCutoffError]
+            apply Finset.sum_congr rfl
+            intro n _hn
+            rw [abs_mul, abs_of_nonneg (vonMangoldt_nonneg n)]
+    _ ≤ Cw * (x / T) * (Real.log x) ^ 2 := hweighted x T hx hT_lo hT_hi
 
 /-- Small-`T` truncation for the concrete vertical integral from the finite
 Perron-kernel cutoff estimate.
