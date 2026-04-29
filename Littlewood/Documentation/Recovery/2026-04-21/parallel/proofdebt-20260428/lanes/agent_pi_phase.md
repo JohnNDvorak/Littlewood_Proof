@@ -2069,3 +2069,42 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
 - Smallest next theorem:
   - Attack `PerronThresholdTowerExpHalfBudgetGrowthHyp` if a same-height Perron threshold growth theorem is available; otherwise attack `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp` by proving a bound for the actual paired target/anti finite-zero phase radii.
+
+### 2026-04-29 Round 38: Growth Leaves Are Canonical Residuals
+
+- Classification: `EXACT_IDENTITY`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronThresholdTowerExpHalfBudgetGrowthHyp`
+  - `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`
+- Facts banked:
+  - Added `perronThresholdTowerExpHalfBudgetGrowth_of_canonicalMajorantResidual`.
+  - Added `targetAntiFiniteZeroPhaseRadiusHalfBudgetGrowth_of_canonicalResiduals`.
+- What changed:
+  - The Perron growth leaf now has an explicit non-instance reverse reduction from the exact canonical selected-height residual.
+  - The paired finite-zero radius growth leaf now has an explicit non-instance reverse reduction from the two one-sided chosen-radius canonical residuals.
+  - Together with Round 37's growth-to-residual reductions, this shows the current growth leaves are not smaller than the canonical residual inequalities; they are the same selected-height quantitative content in class form.
+- Remaining goal shape:
+  - The Perron side still needs a genuine same-height proof of
+    `max (X + 1) (perronThreshold hRH T + 1) ≤ exp (exp (exp A / 2))`
+    at a selected `T, ε`.
+  - The phase-radius side still needs direct bounds for the actual chosen
+    `targetFiniteZeroInhomogeneousPhaseRadius T ε` and
+    `antiTargetFiniteZeroInhomogeneousPhaseRadius T ε`, not a separately chosen Kronecker radius.
+- Failed/circular route:
+  - Did not add typeclass instances for either reverse reduction.
+  - Did not use canonical residuals to claim analytic closure; the new theorems are exact equivalence diagnostics, not new analytic inputs.
+  - Did not use arbitrary supplied radii, cross-height `perronThreshold` monotonicity, selected-threshold transfer, or independently selected target/anti heights.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, provider cycles, reverse-comparison instances, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed focused validation under the coordinator singleflight rule.
+- Validation command/result:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - Prove the Perron canonical residual from a real same-height growth bound on `perronThreshold hRH T`; if that remains blocked, prove a quantitative Kronecker-radius theorem that bounds the actual chosen target/anti finite-zero radii.

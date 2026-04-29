@@ -3337,6 +3337,26 @@ theorem perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_growth_hyp
     ⟨T, ε, hT4, hεpos, hεlt, hX, hPerron⟩
   exact ⟨T, ε, hT4, hεpos, hεlt, max_le hX hPerron⟩
 
+/-- The exact canonical Perron residual is also sufficient for the two-sided
+same-height Perron growth class.
+
+This is deliberately non-instance-only: together with
+`perronThresholdTowerExpHalfBudgetCanonicalMajorantResidual_of_growth_hyp`, it
+records that the live Perron growth leaf is exactly the selected-height
+canonical residual, without adding another edge to typeclass search. -/
+theorem perronThresholdTowerExpHalfBudgetGrowth_of_canonicalMajorantResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (h :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual) :
+    PerronThresholdTowerExpHalfBudgetGrowthHyp where
+  witness := by
+    intro hRH X
+    rcases h hRH X with ⟨T, ε, hT4, hεpos, hεlt, hBudget⟩
+    exact
+      ⟨T, ε, hT4, hεpos, hεlt,
+        (le_max_left (X + 1) (perronThreshold hRH T + 1)).trans hBudget,
+        (le_max_right (X + 1) (perronThreshold hRH T + 1)).trans hBudget⟩
+
 /-- Phase-radius half of the paired log tower budget at a Perron-selected
 height/tolerance.
 
@@ -3589,6 +3609,44 @@ theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_pairedGrow
       (targetFiniteZeroInhomogeneousPhaseRadius T ε)
       (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε)]
   exact hAnti.trans hPair
+
+/-- The two exact one-sided chosen-radius residuals recombine into the paired
+same-height phase-radius growth class.
+
+This is non-instance-only to avoid a reverse canonical/residual edge in the
+provider graph; it records that the paired radius growth leaf is not smaller
+than direct control of the actual target and anti-target chosen radii. -/
+theorem targetAntiFiniteZeroPhaseRadiusHalfBudgetGrowth_of_canonicalResiduals
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    (hTarget :
+      TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual)
+    (hAnti :
+      AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp where
+  witness := by
+    intro T ε hT4 hεpos hεlt
+    let B : ℝ :=
+      Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+    have hTargetBudget :
+        targetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤ B := by
+      simpa [B] using hTarget T ε hT4 hεpos hεlt
+    have hAntiBudget :
+        antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1 ≤ B := by
+      simpa [B] using hAnti T ε hT4 hεpos hεlt
+    have hTargetLe :
+        targetFiniteZeroInhomogeneousPhaseRadius T ε ≤ B - 1 := by
+      linarith
+    have hAntiLe :
+        antiTargetFiniteZeroInhomogeneousPhaseRadius T ε ≤ B - 1 := by
+      linarith
+    have hMaxLe :
+        max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+            (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) ≤ B - 1 :=
+      max_le hTargetLe hAntiLe
+    dsimp [B] at hMaxLe ⊢
+    linarith
 
 /-- Target-specific same-height Perron/tower domination by the realized
 relative-density phase radius.
