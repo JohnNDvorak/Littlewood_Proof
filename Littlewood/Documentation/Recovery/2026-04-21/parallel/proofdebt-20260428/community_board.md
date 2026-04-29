@@ -280,3 +280,35 @@ Each agent report must state:
   `16865be`, validate returning commits serially, and only run public import
   probes after a lane closes a public-path provider rather than another
   conditional reduction.
+
+## Overnight 2026-04-29 First Pass Status
+
+- All four fresh 20260429 lane branches were validated serially by the
+  coordinator and pushed:
+  - Atkinson `9d55fa6`: `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`
+    passed; reduced the shifted quadratic mass/target surface to the fixed
+    Fourier matching atom
+    `atkinsonShiftedQuadraticFourierMassCoeff n j` versus
+    `atkinsonShiftedQuadraticTargetCoeff n j`.
+  - Perron/B5a `08ea602`: `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
+    passed; reduced the near-diagonal punctured boundary estimate to a
+    cardinality/kernel-supremum route and recorded the scale-unsafety of the
+    decaying-kernel route near integer `x`.
+  - Pi/Phase `b75d132`:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+    and
+    `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+    passed; paired target/anti finite-zero inhomogeneous relative-density
+    providers through relation-compatible Kronecker source atoms.
+  - RS/Gabcke `c6daa97`: focused build set
+    `SiegelSaddleExpansionHyp GabckePhaseCouplingInfra GabckePhaseCouplingHyp HardyZFirstMomentBridge`
+    passed; reduced the standard Gabcke targets to contour-Taylor and
+    Tabelle-1 first-coefficient source atoms.
+- Second-pass assignments are active on the same four 20260429 branches.
+  Agents remain barred from all Lean/Lake invocations; coordinator keeps the
+  one-build-at-a-time rule.
+- Current 20260429 Aristotle sidecars remain queued:
+  - Atkinson: `57447356-4c39-4c20-8da2-6096b6243dfe`
+  - Perron/B5a: `ee5694b1-8a5d-4b26-926a-16a38549bfb4`
+  - Pi/Phase: `730f40bc-99a7-49bd-89fa-46039f150c23`
+  - RS/Gabcke: `55d45e98-54c8-435a-9dde-c7fc59926147`
