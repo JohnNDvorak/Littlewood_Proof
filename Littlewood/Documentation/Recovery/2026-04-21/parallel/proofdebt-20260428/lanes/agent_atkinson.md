@@ -2252,3 +2252,49 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   near-one multiplier residual estimate at `C / t`, multiplier branch identity,
   Jacobian-integral bound at `1/relativeWeight`, and the shifted
   stationary-phase target remainder.
+
+### 2026-04-29 Round 48 Multiplier Residual to Relative Stirling
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  near-one multiplier residual
+  `∃ Cres > 0, ∃ Tres, ∀ t ≥ Tres,`
+  `‖atkinsonGammaStirlingMultiplier t - 1‖ ≤ Cres / t`.
+- Facts banked:
+  proved `atkinson_multiplier_norm_sub_one_of_relative_gamma_stirling`,
+  reducing the near-one multiplier residual to the standard relative Stirling
+  residual
+  `∃ Crel > 0, ∃ Trel, ∀ t ≥ Trel,`
+  `‖Complex.Gamma (1 / 4 + Complex.I * (t / 2)) -`
+  `Complex.exp (atkinsonLogGammaStirlingTerm t)‖ ≤`
+  `(Crel / t) * ‖Complex.exp (atkinsonLogGammaStirlingTerm t)‖`.
+  Also added `atkinson_logGamma_to_stirlingTerm_of_relative_gamma_stirling`
+  and
+  `atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_relative_gamma_stirling`
+  so the relative Stirling atom feeds the existing log-Gamma and corrected
+  endpoint packages.
+- Smallest next theorem:
+  prove the relative Gamma Stirling residual above, together with the separate
+  multiplier branch identity
+  `∃ Tbranch, ∀ t ≥ Tbranch,`
+  `(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -`
+  `(atkinsonLogGammaStirlingTerm t).im =`
+  `(Complex.log (atkinsonGammaStirlingMultiplier t)).im`. The independent
+  Jacobian-integral bound at `1/relativeWeight` and shifted stationary-phase
+  target remainder remain live.
+- Failed routes / guardrails:
+  inspected local Stirling material but did not add imports, broad analytic
+  providers, axioms, sorries, statement weakening, direct Abel shortcuts,
+  phase-weight division, circular provider assumptions, or the demoted raw
+  endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  relative Gamma Stirling residual, multiplier branch identity,
+  Jacobian-integral bound at `1/relativeWeight`, and the shifted
+  stationary-phase target remainder.
