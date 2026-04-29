@@ -19035,6 +19035,85 @@ private theorem atkinson_largeShiftRowIntegralHead_bound_of_finite_patch
               (mul_le_mul_of_nonneg_right hC_le hlog_nonneg) htarget_nonneg
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- The finite head patch below the eventual cutoff is automatic: for each
+fixed shift `j`, the head row integral is a constant and the log-weighted
+target scale has a positive lower bound for all `m ≥ j - 1`. -/
+private theorem atkinson_largeShiftRowIntegralHead_finite_patch :
+    ∀ J0 : ℕ, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → j < J0 →
+      ∃ Cj > 0, ∀ m : ℕ, j - 1 ≤ m →
+        ‖∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand (j - 1) j u‖
+          ≤ Cj * Real.log (↑j + 1) *
+              (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  intro J0 j hj3 hj1 hj_lt
+  let A : ℝ :=
+    ‖∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand (j - 1) j u‖
+  let L : ℝ := Real.log ((j : ℝ) + 1)
+  let base : ℝ :=
+    L * (Real.sqrt ((((j - 1 + j : ℕ) : ℝ) + 1)) / j)
+  have hA_nonneg : 0 ≤ A := by
+    dsimp [A]
+    exact norm_nonneg _
+  have hlog_pos : 0 < L := by
+    dsimp [L]
+    exact Real.log_pos (by exact_mod_cast (by omega : 1 < j + 1))
+  have hbase_pos : 0 < base := by
+    dsimp [base]
+    exact mul_pos hlog_pos (by positivity)
+  let Cj : ℝ := A / base + 1
+  have hCj_pos : 0 < Cj := by
+    dsimp [Cj]
+    have hdiv_nonneg : 0 ≤ A / base := div_nonneg hA_nonneg hbase_pos.le
+    nlinarith
+  refine ⟨Cj, hCj_pos, ?_⟩
+  intro m hm
+  let target : ℝ := Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j
+  have htarget_base : base ≤ L * target := by
+    have hle_nat : (j - 1 + j) + 1 ≤ m + j + 1 := by
+      omega
+    have hle :
+        (((j - 1 + j : ℕ) : ℝ) + 1) ≤ (((m + j : ℕ) : ℝ) + 1) := by
+      exact_mod_cast hle_nat
+    have hfrac :
+        Real.sqrt ((((j - 1 + j : ℕ) : ℝ) + 1)) / j ≤ target := by
+      dsimp [target]
+      exact div_le_div_of_nonneg_right (Real.sqrt_le_sqrt hle)
+        (by positivity : (0 : ℝ) ≤ j)
+    dsimp [base]
+    exact mul_le_mul_of_nonneg_left hfrac hlog_pos.le
+  have hbase_step : A ≤ Cj * base := by
+    dsimp [Cj]
+    have hmul : (A / base + 1) * base = A + base := by
+      calc
+        (A / base + 1) * base = A / base * base + 1 * base := by ring
+        _ = A + base := by
+              rw [div_mul_cancel₀ A hbase_pos.ne']
+              ring
+    rw [hmul]
+    exact le_add_of_nonneg_right hbase_pos.le
+  calc
+    ‖∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand (j - 1) j u‖
+        = A := by rfl
+    _ ≤ Cj * base := hbase_step
+    _ ≤ Cj * (L * target) := by
+          exact mul_le_mul_of_nonneg_left htarget_base hCj_pos.le
+    _ = Cj * Real.log (↑j + 1) *
+          (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+          simp [L, target]
+          ring
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Unconditional packaged head-row bound obtained by combining the eventual
+head estimate with the automatic finite patch. -/
+private theorem atkinson_largeShiftRowIntegralHead_bound :
+    ∃ C_head > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ, j - 1 ≤ m →
+      ‖∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand (j - 1) j u‖
+        ≤ C_head * Real.log (↑j + 1) *
+            (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  exact
+    atkinson_largeShiftRowIntegralHead_bound_of_finite_patch
+      atkinson_largeShiftRowIntegralHead_finite_patch
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Complete-block handoff for the raw row-prefix atom with the isolated head
 reduced to a finite patch below the eventual head estimate. -/
 private theorem atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefix_and_finite_head
@@ -19063,6 +19142,30 @@ private theorem atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefi
     atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefix_and_head
       hblock
       (atkinson_largeShiftRowIntegralHead_bound_of_finite_patch hheadPatch)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Final row-prefix handoff after closing the finite head patch: the only
+remaining analytic input is the weighted complete-block tail prefix. -/
+private theorem atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefix
+    (hblock :
+      ∃ C_block > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ M : ℕ,
+        ‖∑ n ∈ Finset.range M,
+            (if j ≤ n then
+              (((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),
+                  HardyCosSmooth.hardyCosExp n t)
+            else 0)‖
+          ≤ C_block * Real.log (↑j + 1) *
+              (Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)) :
+    ∃ C_row > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ,
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+        ≤ C_row * Real.log (↑j + 1) *
+            (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  exact
+    atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefix_and_head
+      hblock
+      atkinson_largeShiftRowIntegralHead_bound
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem

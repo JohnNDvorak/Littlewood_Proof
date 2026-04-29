@@ -941,3 +941,46 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 18 Finite Head Patch Closed
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  the finite head patch below the eventual cutoff introduced by
+  `atkinson_largeShiftRowIntegralHead_bound_of_finite_patch`.
+- Facts banked:
+  `atkinson_largeShiftRowIntegralHead_finite_patch` proves the fixed-shift
+  patch directly: for each finite `j`, the head row integral is a constant,
+  while the log-weighted target scale is bounded below by its positive value
+  at `m = j - 1`.
+  `atkinson_largeShiftRowIntegralHead_bound` packages this finite patch with
+  `atkinson_shiftedInversePhaseCell_head_no_log_eventually`.
+  `atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefix` removes
+  the head hypothesis from the row-prefix handoff, leaving only the weighted
+  complete-block tail prefix as the analytic input.
+- Failed routes / guardrails:
+  no zero-model, mass-coefficient, Fourier-corrected target, compensated
+  carrier route, circular provider, or diffuse deweighting estimate was used.
+  This is a fixed-`j` compactness-style bound for the isolated head cell only;
+  it does not touch or weaken the coupled complete-block tail scale.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local proof engineering in `atkinson_largeShiftRowIntegralHead_finite_patch`,
+  especially the algebraic normalization
+  `(A / base + 1) * base = A + base` or the monotonicity comparison from
+  `m = j - 1` to general `m`.
+- Smallest next theorem:
+  prove the weighted complete-block tail prefix
+  `∃ C_block > 0, ∀ j : ℕ, 3 ≤ j -> 1 ≤ j -> ∀ M : ℕ,`
+  `‖∑ n ∈ Finset.range M, if j ≤ n then`
+  `(((atkinsonModeWeight n : ℝ) : ℂ) *`
+  `∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),`
+  `HardyCosSmooth.hardyCosExp n t) else 0‖`
+  `≤ C_block * Real.log (↑j + 1) *`
+  `(Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
