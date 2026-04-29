@@ -2436,6 +2436,32 @@ class PerronThresholdTowerPhaseWideWindowHyp
         Real.exp U ≤ Real.exp (Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
+/-- Fixed-height Perron-error wide window boundary.
+
+This is the threshold-free analogue of
+`PerronThresholdTowerPhaseWideWindowHyp`: after fixing the selected height `T`,
+the lower logarithmic endpoint is already far enough that every
+`x ≥ exp L` has the actual fixed-height Perron error estimate.  It avoids any
+comparison between `perronThreshold` choices at different heights. -/
+class FixedHeightPerronErrorPhaseWideWindowHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
+      (radius : ℝ → ℝ → ℝ),
+      (∀ T ε : ℝ, 0 < radius T ε) →
+      ∃ T ε L U : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        X < Real.exp L ∧
+        (∀ x : ℝ,
+          Real.exp L ≤ x →
+            1 < x ∧
+            |piLiErr x + piMainFromZeros ((finite_zeros_le T).toFinset) x|
+              ≤ Real.sqrt x / Real.log x) ∧
+        L + radius T ε < U ∧
+        Real.exp U ≤ Real.exp (Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
 /-- Same-height wide Perron-threshold/tower domination boundary.
 
 This is the exact tower-growth leaf below
@@ -4140,6 +4166,67 @@ instance (priority := 90)
     [FiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
     InhomogeneousPhaseFitAbovePerronThresholdPerronHyp :=
   inhomogeneousPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+
+/-- Fixed-height Perron-error wide windows plus finite-zero relative density
+give the direct fixed-height Perron-error phase-fit payload.
+
+This is deliberately not an instance.  It isolates the exact remaining
+cofinality/window theorem needed for the threshold-free route while making the
+arbitrary-target finite-zero requirement explicit. -/
+theorem inhomogeneousPhaseFitWithFixedHeightPerronError_of_wideWindow_relativeDense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FixedHeightPerronErrorPhaseWideWindowHyp]
+    [FiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp where
+  witness := by
+    intro hRH X targetPhase
+    let radius : ℝ → ℝ → ℝ := fun T ε =>
+      if h : 4 ≤ T ∧ 0 < ε then
+        Classical.choose
+          (FiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+            T ε targetPhase h.1 h.2)
+      else 1
+    have hRadius : ∀ T ε : ℝ, 0 < radius T ε := by
+      intro T ε
+      by_cases h : 4 ≤ T ∧ 0 < ε
+      · dsimp [radius]
+        rw [dif_pos h]
+        exact (Classical.choose_spec
+          (FiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+            T ε targetPhase h.1 h.2)).1
+      · dsimp [radius]
+        rw [dif_neg h]
+        norm_num
+    rcases FixedHeightPerronErrorPhaseWideWindowHyp.witness
+        hRH X radius hRadius with
+      ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, hErr, hWide, hUcap⟩
+    let hRel :=
+      FiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+        T ε targetPhase hT4 hεpos
+    let R : ℝ := Classical.choose hRel
+    have hRspec := Classical.choose_spec hRel
+    have hRadius_eq : radius T ε = R := by
+      dsimp [radius, R]
+      rw [dif_pos ⟨hT4, hεpos⟩]
+    rcases hRspec with ⟨_hRpos, hHit⟩
+    rcases hHit L with ⟨t0, hLt, htR, hPhase⟩
+    have htU : t0 < U := by
+      have htRadius : t0 < L + radius T ε := by
+        simpa [hRadius_eq, R] using htR
+      exact lt_trans htRadius hWide
+    have hExpLle : Real.exp L ≤ Real.exp t0 :=
+      le_of_lt (Real.exp_strictMono hLt)
+    have hExpU : Real.exp t0 ≤ Real.exp U :=
+      Real.exp_le_exp.mpr (le_of_lt htU)
+    have hPerron := hErr (Real.exp t0) hExpLle
+    refine
+      ⟨Real.exp t0, ?_, T, hT4, hPerron.1, hPerron.2,
+        ε, hεpos, hεlt, ?_, ?_⟩
+    · exact lt_of_lt_of_le hX hExpLle
+    · intro ρ hρ
+      rcases hPhase ρ hρ with ⟨m, hm⟩
+      exact ⟨m, by simpa [Real.log_exp] using hm⟩
+    · exact le_trans hExpU hUcap
 
 /-- Target-only Perron phase-fit boundary for `ρ ↦ arg ρ`.
 

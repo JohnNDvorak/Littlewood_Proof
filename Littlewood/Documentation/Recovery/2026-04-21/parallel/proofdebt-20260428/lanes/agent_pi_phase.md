@@ -1783,3 +1783,35 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
 - Smallest next theorem:
   - Prove or reduce `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp`, likely by combining fixed-height Perron eventuality, relation-compatible finite-zero phase approximation, and same-height tower cofinality around the chosen `x` rather than a `perronThreshold` comparison.
+
+### 2026-04-29 Round 30: Fixed-Height Phase-Fit Window Reduction
+
+- Classification: `CONDITIONAL_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp`.
+- Facts banked:
+  - Direct proof of `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp` is not available from the honest target/anti relation-compatible inputs because the class quantifies over arbitrary `targetPhase`.
+  - Added `FixedHeightPerronErrorPhaseWideWindowHyp`, the threshold-free same-height window/cofinality source: for a selected `T, ε, L, U`, every `x ≥ exp L` has the actual fixed-height Perron error estimate, the logarithmic window is wide enough for the phase search radius, and `exp U` is below the tower cap.
+  - Added `inhomogeneousPhaseFitWithFixedHeightPerronError_of_wideWindow_relativeDense_hyp`, proving the fixed-height phase-fit payload from `FixedHeightPerronErrorPhaseWideWindowHyp` plus the existing explicit `FiniteZeroInhomogeneousPhaseRelativelyDenseHyp` wrapper.
+- Remaining goal shape:
+  - For the arbitrary `InhomogeneousPhaseFitWithFixedHeightPerronErrorHyp` class, the remaining inputs are exactly:
+    1. `FixedHeightPerronErrorPhaseWideWindowHyp`, a same-height fixed Perron-error/tower window theorem; and
+    2. an arbitrary-target finite-zero relative-density theorem (`FiniteZeroInhomogeneousPhaseRelativelyDenseHyp`).
+  - The public honest route should avoid promoting this arbitrary-target wrapper and instead continue with target/anti-specific relation-compatible variants if the coordinator wants provider synthesis from current deep inputs.
+- Failed/circular route:
+  - Did not use cross-height `perronThreshold` monotonicity or compare `Classical.choose` thresholds.
+  - Did not add any provider instance for the new fixed-height window reduction.
+  - Did not turn arbitrary-target Kronecker into a public provider; the theorem is explicit and conditional.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, independent target/anti heights, reverse-comparison instance, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build, public import probe, `git diff --check`, or other validation command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove `FixedHeightPerronErrorPhaseWideWindowHyp` from fixed-height Perron eventuality plus a same-height tower/window cofinality theorem, or introduce target/anti-specific fixed-height phase-fit classes that consume the existing relation-compatible finite-zero payloads without the arbitrary `targetPhase` quantifier.
