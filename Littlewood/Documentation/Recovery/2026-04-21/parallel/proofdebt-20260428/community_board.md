@@ -787,3 +787,33 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Pi/Phase: remaining canonical majorant/growth leaves.
   - RS/Gabcke: quarter/three-quarter removable source bridge and sourced
     third-derivative value atoms.
+
+## Overnight 2026-04-29 Thirteenth Pass Status
+
+- Perron/B5a lane is validated and pushed through `4dfce73`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Reduce Perron harmonic distance to unweighted sum`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the weighted harmonic-distance summation is reduced to an
+    unweighted finite harmonic-distance bound while keeping the scale-correct
+    `(x / T)` factor.
+  - Halley is redeployed to prove that unweighted finite bound. The false
+    pure bounded-height envelope, public typeclass shortcuts, contour
+    providers, and `perron_tail_bound_core` remain forbidden.
+- Pi/Phase lane is validated and pushed through `076c424`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Package pi canonical budget exact seeds`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: exact seed packaging is in place for paired relative density plus
+    canonical budgets.
+  - Planck is redeployed to close one canonical budget leaf. Typeclass loops,
+    reverse-comparison cycles, and unproved `Classical.choose` radius control
+    remain forbidden.
+- Current live atoms:
+  - Atkinson: weighted complete-block tail prefix.
+  - Perron/B5a: unweighted finite harmonic-distance bound.
+  - Pi/Phase: three canonical budget leaves.
+  - RS/Gabcke: quarter/three-quarter removable source bridge and sourced
+    third-derivative value atoms.
