@@ -2537,6 +2537,27 @@ class AntiTargetPerronThresholdTowerGeometryForPhaseRadiusHyp
           ≤ Real.exp (Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
+/-- Paired target/anti-target Perron/tower geometry for the chosen phase radii.
+
+This is the common geometry atom needed by the corrected phase-coupling
+provider route: the tower cap at one height/tolerance dominates the larger of
+the two realized target and anti-target phase radii. -/
+class TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.exp
+          (Real.log (max X (perronThreshold _hRH T) + 1) +
+            max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+              (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1)
+          ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
 /-- Target-specific same-height Perron/tower domination by the realized
 relative-density phase radius.
 
@@ -2673,6 +2694,78 @@ instance (priority := 90)
     [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
     AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
   antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+
+/-- Paired target/anti tower geometry supplies the target-side geometry leaf by
+bounding the target radius by the maximum of the two chosen radii. -/
+theorem targetPerronThresholdTowerGeometryForPhaseRadius_of_pairedGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    TargetPerronThresholdTowerGeometryForPhaseRadiusHyp where
+  witness := by
+    intro hRH X
+    rcases TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp.witness
+        hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hdom⟩
+    let Rt : ℝ := targetFiniteZeroInhomogeneousPhaseRadius T ε
+    let Ra : ℝ := antiTargetFiniteZeroInhomogeneousPhaseRadius T ε
+    refine ⟨T, ε, hT4, hεpos, hεlt, ?_⟩
+    have hstep :
+        Real.exp
+          (Real.log (max X (perronThreshold hRH T) + 1) + Rt + 1)
+          ≤ Real.exp
+            (Real.log (max X (perronThreshold hRH T) + 1) +
+              max Rt Ra + 1) := by
+      exact Real.exp_le_exp.mpr (by linarith [le_max_left Rt Ra])
+    exact le_trans hstep (by simpa [Rt, Ra] using hdom)
+
+/-- Instance form of
+`targetPerronThresholdTowerGeometryForPhaseRadius_of_pairedGeometry_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    TargetPerronThresholdTowerGeometryForPhaseRadiusHyp :=
+  targetPerronThresholdTowerGeometryForPhaseRadius_of_pairedGeometry_hyp
+
+/-- Paired target/anti tower geometry supplies the anti-target-side geometry
+leaf by bounding the anti-target radius by the maximum of the two chosen
+radii. -/
+theorem antiTargetPerronThresholdTowerGeometryForPhaseRadius_of_pairedGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    AntiTargetPerronThresholdTowerGeometryForPhaseRadiusHyp where
+  witness := by
+    intro hRH X
+    rcases TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp.witness
+        hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hdom⟩
+    let Rt : ℝ := targetFiniteZeroInhomogeneousPhaseRadius T ε
+    let Ra : ℝ := antiTargetFiniteZeroInhomogeneousPhaseRadius T ε
+    refine ⟨T, ε, hT4, hεpos, hεlt, ?_⟩
+    have hstep :
+        Real.exp
+          (Real.log (max X (perronThreshold hRH T) + 1) + Ra + 1)
+          ≤ Real.exp
+            (Real.log (max X (perronThreshold hRH T) + 1) +
+              max Rt Ra + 1) := by
+      exact Real.exp_le_exp.mpr (by linarith [le_max_right Rt Ra])
+    exact le_trans hstep (by simpa [Rt, Ra] using hdom)
+
+/-- Instance form of
+`antiTargetPerronThresholdTowerGeometryForPhaseRadius_of_pairedGeometry_hyp`.
+-/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    AntiTargetPerronThresholdTowerGeometryForPhaseRadiusHyp :=
+  antiTargetPerronThresholdTowerGeometryForPhaseRadius_of_pairedGeometry_hyp
 
 /-- Target finite-zero relative density plus tower geometry for its chosen
 radius supplies the target realized-radius domination leaf. -/
@@ -3577,6 +3670,19 @@ instance (priority := 90)
     [AntiTargetPhaseFitAbovePerronThresholdPerronHyp] :
     AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp where
   witness := anti_target_exact_seed_above_threshold_perron_from_target_phase_fit
+
+/-- Paired finite-zero compatibility plus paired phase-radius tower geometry
+packages both Perron-only exact-seed classes for the corrected phase-coupling
+route. -/
+theorem exactSeedAboveThreshold_perron_of_pairedPhaseRadiusGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact ⟨inferInstance, inferInstance⟩
 
 /-- Target approximate-seed phase alignment above the Perron threshold.
 
