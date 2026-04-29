@@ -20031,6 +20031,58 @@ private theorem atkinson_pointwiseFixedShiftCorrection_of_normalized_bound
           ring
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Fixed-shift compactness reduction for the normalized correction atom. Since
+the constant may depend on the fixed shift, it is enough to prove an eventual
+uniform-in-`n` bound; the finitely many small `n` are absorbed into the
+constant by summing their norms. -/
+private theorem atkinson_normalizedFixedShiftCorrection_bound_of_eventual
+    (hevent :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ D_event > 0, ∃ N_event : ℕ, ∀ n : ℕ, N_event ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_event) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ D_corr > 0, ∀ n : ℕ,
+        ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_corr := by
+  intro j hj
+  obtain ⟨D_event, hD_event, N_event, hevent'⟩ := hevent j hj
+  let finiteBound : ℝ :=
+    ∑ n ∈ Finset.range N_event, ‖atkinsonNormalizedShiftedCorrectionTerm n j‖
+  have hfinite_nonneg : 0 ≤ finiteBound := by
+    dsimp [finiteBound]
+    exact Finset.sum_nonneg (by
+      intro n hn
+      exact norm_nonneg _)
+  refine ⟨D_event + finiteBound + 1, by nlinarith [hD_event, hfinite_nonneg], ?_⟩
+  intro n
+  by_cases hn_large : N_event ≤ n
+  · have hraw := hevent' n hn_large
+    nlinarith [hraw, hfinite_nonneg]
+  · have hn_small : n < N_event := Nat.lt_of_not_ge hn_large
+    have hsum :
+        ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ finiteBound := by
+      dsimp [finiteBound]
+      exact Finset.single_le_sum
+        (fun m hm => norm_nonneg (atkinsonNormalizedShiftedCorrectionTerm m j))
+        (Finset.mem_range.mpr hn_small)
+    nlinarith [hsum, hD_event]
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Pointwise correction majorant from the eventual normalized fixed-shift
+bound, with finite initial modes absorbed by the previous compactness lemma. -/
+private theorem atkinson_pointwiseFixedShiftCorrection_of_eventual_normalized_bound
+    (hevent :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ D_event > 0, ∃ N_event : ℕ, ∀ n : ℕ, N_event ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_event) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ B_corr > 0, ∀ n : ℕ,
+        ‖atkinsonResonantShiftedCorrectionTerm n j‖
+          ≤ B_corr * atkinsonModeWeight (n + j) := by
+  exact
+    atkinson_pointwiseFixedShiftCorrection_of_normalized_bound
+      (atkinson_normalizedFixedShiftCorrection_bound_of_eventual hevent)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Correction-prefix provider package from the stationary-phase remainder and
 the scale-safe absolute fixed-shift correction-prefix atom. -/
 private theorem
@@ -20098,6 +20150,28 @@ private theorem
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_pointwise_fixedShift_correction
       hmode
       (atkinson_pointwiseFixedShiftCorrection_of_normalized_bound hnorm)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Correction-prefix provider package from the stationary-phase remainder and
+an eventual normalized fixed-shift correction integral bound. -/
+private theorem
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_eventual_normalized_fixedShift_correction
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hevent :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ D_event > 0, ∃ N_event : ℕ, ∀ n : ℕ, N_event ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_event) :
+    AtkinsonShiftedCorrectionPrefixBoundHyp := by
+  exact
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_pointwise_fixedShift_correction
+      hmode
+      (atkinson_pointwiseFixedShiftCorrection_of_eventual_normalized_bound hevent)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
@@ -20737,6 +20811,28 @@ private theorem
   letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_normalized_fixedShift_correction
       hmode hnorm
+  exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Public inverse-phase provider package from the stationary-phase remainder
+and an eventual normalized fixed-shift correction integral bound. -/
+private theorem
+    atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_eventual_normalized_fixedShift_correction
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hevent :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ D_event > 0, ∃ N_event : ℕ, ∀ n : ℕ, N_event ≤ n →
+          ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_event) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_eventual_normalized_fixedShift_correction
+      hmode hevent
   exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in

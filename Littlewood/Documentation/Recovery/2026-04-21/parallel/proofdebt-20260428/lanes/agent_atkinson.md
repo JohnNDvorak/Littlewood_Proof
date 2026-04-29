@@ -1489,3 +1489,44 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 30 Eventual Normalized Correction Atom
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  normalized fixed-shift correction atom
+  `∀ j ≥ 1, ∃ D_j > 0, ∀ n, ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_j`.
+- Facts banked:
+  `atkinson_normalizedFixedShiftCorrection_bound_of_eventual` proves the
+  fixed-shift compactness reduction: because constants may depend on `j`, an
+  eventual uniform-in-`n` bound plus the finite initial segment gives the full
+  all-`n` normalized atom. The finite segment is absorbed by
+  `∑ n ∈ range N_j, ‖atkinsonNormalizedShiftedCorrectionTerm n j‖`.
+  `atkinson_pointwiseFixedShiftCorrection_of_eventual_normalized_bound`
+  composes this with the previous pointwise majorant reduction.
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_eventual_normalized_fixedShift_correction`
+  and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_eventual_normalized_fixedShift_correction`
+  wire the eventual normalized atom into the correction and inverse provider
+  path.
+- Failed routes / guardrails:
+  still no direct absolute primitive route: it loses `(n+j+1)/j` and cannot
+  prove the normalized fixed-shift atom. No phase-weighted-to-unweighted
+  division, direct Abel shortcut, circular provider, axioms, sorries, or
+  statement weakening were used.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  `Finset.single_le_sum` argument order in
+  `atkinson_normalizedFixedShiftCorrection_bound_of_eventual`; the intended
+  proof is the standard finite-range maximum/sum domination.
+- Remaining goal shape:
+  prove the shifted-interval stationary-phase target remainder, and prove the
+  eventual normalized fixed-shift correction atom
+  `∀ j ≥ 1, ∃ D_j > 0, ∃ N_j, ∀ n ≥ N_j,`
+  `‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_j`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
