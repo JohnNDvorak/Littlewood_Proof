@@ -92,11 +92,12 @@ def perronVerticalRawIntegral (x T : ℝ) : ℝ :=
   ∫ t in (-T)..T, perronVerticalIntegrand x t
 
 /-- Fixed-window form of the raw vertical Perron integral on the small-`T`
-slab.  The moving interval `[-T,T]` is encoded by an indicator inside the fixed
+slab.  The moving interval `(-T,T]` used by interval integrals is encoded by an
+indicator inside the fixed
 ambient window `[-16,16]`. -/
 def perronVerticalFixedWindowIntegral (x T : ℝ) : ℝ :=
   ∫ t in (-16 : ℝ)..(16 : ℝ),
-    (Set.Icc (-T) T).indicator (fun u : ℝ => perronVerticalIntegrand x u) t
+    (Set.Ioc (-T) T).indicator (fun u : ℝ => perronVerticalIntegrand x u) t
 
 /-- The public vertical Perron integral is the constant Perron prefactor times
 the raw variable-height integral. -/
@@ -5172,6 +5173,27 @@ theorem small_T_perronVerticalRawIntegral_continuousOn_slab16_from_fixedWindow
       {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
   exact hfixed.congr heq
 
+/-- On the cutoff-`16` slab, the raw moving interval integral is exactly the
+fixed-window indicator integral.  This uses the `Ioc` convention underlying
+`intervalIntegral.integral_of_le`, so there is no endpoint null-set obligation. -/
+theorem small_T_perronVerticalRawIntegral_eq_fixedWindow_on_slab16
+    (p : ℝ × ℝ)
+    (hp : p ∈
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    perronVerticalRawIntegral p.1 p.2 =
+      perronVerticalFixedWindowIntegral p.1 p.2 := by
+  rcases hp with ⟨_hx2, _hx16, _hT2, hT16⟩
+  have hraw : -p.2 ≤ p.2 := by linarith
+  have hwin : (-16 : ℝ) ≤ 16 := by norm_num
+  have hleft : (-16 : ℝ) ≤ -p.2 := by linarith
+  have hsubset : Set.Ioc (-p.2) p.2 ⊆ Set.Ioc (-16 : ℝ) 16 := by
+    intro t ht
+    exact ⟨lt_of_le_of_lt hleft ht.1, le_trans ht.2 hT16⟩
+  unfold perronVerticalRawIntegral perronVerticalFixedWindowIntegral
+  rw [intervalIntegral.integral_of_le hraw, intervalIntegral.integral_of_le hwin]
+  rw [MeasureTheory.integral_indicator measurableSet_Ioc]
+  rw [Measure.restrict_restrict_of_subset hsubset]
+
 /-- Direct handoff from the fixed-window indicator formulation to slab
 continuity of the public vertical Perron integral. -/
 theorem small_T_perronVerticalIntegral_continuousOn_slab16_from_fixedWindow
@@ -5188,6 +5210,31 @@ theorem small_T_perronVerticalIntegral_continuousOn_slab16_from_fixedWindow
   small_T_perronVerticalIntegral_continuousOn_slab16_from_rawIntegral
     (small_T_perronVerticalRawIntegral_continuousOn_slab16_from_fixedWindow
       hfixed heq)
+
+/-- Raw vertical Perron integral slab continuity follows from fixed-window
+continuity alone, using the slab equality with the raw moving interval. -/
+theorem small_T_perronVerticalRawIntegral_continuousOn_slab16_of_fixedWindow
+    (hfixed : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalFixedWindowIntegral p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalRawIntegral p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_perronVerticalRawIntegral_continuousOn_slab16_from_fixedWindow
+    hfixed
+    (fun p hp => small_T_perronVerticalRawIntegral_eq_fixedWindow_on_slab16 p hp)
+
+/-- Public vertical Perron slab continuity now reduces to the fixed-window
+indicator continuity atom alone. -/
+theorem small_T_perronVerticalIntegral_continuousOn_slab16_of_fixedWindow
+    (hfixed : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalFixedWindowIntegral p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_perronVerticalIntegral_continuousOn_slab16_from_rawIntegral
+    (small_T_perronVerticalRawIntegral_continuousOn_slab16_of_fixedWindow hfixed)
 
 /-- Continuity of the normalization denominator on the cutoff-`16` slab. -/
 theorem small_T_residue_error_shape_continuousOn_slab16 :
