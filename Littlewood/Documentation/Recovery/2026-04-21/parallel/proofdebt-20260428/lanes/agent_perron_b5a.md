@@ -1587,3 +1587,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
     perronKernelOffBoundaryDistanceWeight x T <= Cd * (Real.log x)^2`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 30 - Singular Pointwise Log Split
+
+- Classification: `CANDIDATE_CLOSE`.
+- Exact theorem attacked:
+  the pointwise reciprocal-log comparison feeding the singular off-boundary
+  reduction.
+- Code facts banked:
+  proved `small_T_offBoundary_davenportSingular_pointwise_bound`.  For
+  positive off-boundary terms, the finite range gives `n <= floor x <= x`;
+  the off-boundary predicate rules out `n = x`, so `n < x` and
+  `1 < x / n`.  The proof uses
+  `Real.one_sub_inv_le_log_of_pos` to obtain
+  `(log (x / n))⁻¹ <= x / (x - n)`, and `per_term_rpow_bound` plus
+  `1 <= exp(1) * x / n` to bound the numerator by
+  `2 * exp(1) * x / n`.  Algebra then splits
+  `x / (n * (x - n))` as `1 / n + 1 / (x - n)`.
+  Added
+  `small_T_offBoundary_davenportSingularEnvelope_bound_from_distance`, so the
+  singular envelope now depends only on the distance-weight summation.
+  Added
+  `small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_distance`,
+  wiring the complete linear cutoff route from that single remaining atom.
+- Scale check:
+  the proof keeps the `x / T` factor explicit and does not replace the
+  reciprocal-log singularity by a constant supremum.
+- Failed/demoted routes:
+  did not attempt a pure `O((Real.log x)^2)` cutoff route and did not use the
+  false global tail statement.  The only remaining analytic atom is the finite
+  weighted distance sum.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the finite off-boundary distance-weight summation
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDistanceWeight x T <= Cd * (Real.log x)^2`.
+  The likely proof should reindex by the integer distance below `floor x` or
+  use dyadic bands below `x - x / T`, with the existing
+  `vonMangoldt_le_log` and harmonic-sum infrastructure.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

@@ -3939,6 +3939,128 @@ theorem small_T_offBoundary_davenportSmoothEnvelope_bound :
         dsimp [Cm]
         ring
 
+/-- Pointwise reciprocal-log comparison for the off-boundary singular
+Davenport term.  The finite Perron range keeps every positive term on the
+large side `n < x`; the off-boundary singularity is then split into the two
+natural reciprocal weights `1 / n` and `1 / (x - n)`. -/
+theorem small_T_offBoundary_davenportSingular_pointwise_bound :
+    ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ (Finset.range (Nat.floor x + 1)).filter
+          (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T) →
+          perronKernelOffBoundaryDavenportSingularTerm x T n ≤
+            K * (x / T) *
+              ((if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)) +
+                (if n = 0 then 0 else
+                  ArithmeticFunction.vonMangoldt n / (x - (n : ℝ)))) := by
+  let K : ℝ := 2 * Real.exp 1
+  refine ⟨K, by positivity, ?_⟩
+  intro x T hx hT_lo _hT_hi n hn
+  by_cases hn_zero : n = 0
+  · simp [perronKernelOffBoundaryDavenportSingularTerm, hn_zero]
+  · have hx_nonneg : 0 ≤ x := by linarith
+    have hx_pos : 0 < x := by linarith
+    have hT_pos : 0 < T := by linarith
+    have hn_pos : 1 ≤ n := Nat.pos_of_ne_zero hn_zero
+    have hn_pos_real : (0 : ℝ) < n := Nat.cast_pos.mpr hn_pos
+    have hrange : n ∈ Finset.range (Nat.floor x + 1) :=
+      (Finset.mem_filter.mp hn).1
+    have hoff : ¬ |x - (n : ℝ)| ≤ x / T :=
+      (Finset.mem_filter.mp hn).2
+    have hn_le_floor : n ≤ Nat.floor x :=
+      Nat.lt_succ_iff.mp (Finset.mem_range.mp hrange)
+    have hn_le_x : (n : ℝ) ≤ x :=
+      le_trans (Nat.cast_le.mpr hn_le_floor) (Nat.floor_le hx_nonneg)
+    have hx_over_T_pos : 0 < x / T := div_pos hx_pos hT_pos
+    have hn_ne_x : (n : ℝ) ≠ x := by
+      intro hn_eq
+      have hboundary : |x - (n : ℝ)| ≤ x / T := by
+        rw [hn_eq, sub_self, abs_zero]
+        exact hx_over_T_pos.le
+      exact hoff hboundary
+    have hn_lt_x : (n : ℝ) < x := lt_of_le_of_ne hn_le_x hn_ne_x
+    have hdist_pos : 0 < x - (n : ℝ) := sub_pos.mpr hn_lt_x
+    have hy_gt_one : 1 < x / (n : ℝ) := by
+      rw [one_lt_div hn_pos_real]
+      exact hn_lt_x
+    have hy_pos : 0 < x / (n : ℝ) := div_pos hx_pos hn_pos_real
+    have hy_ge_one : 1 ≤ x / (n : ℝ) := le_of_lt hy_gt_one
+    have hlog_pos : 0 < Real.log (x / (n : ℝ)) := Real.log_pos hy_gt_one
+    have hratio_pos : 0 < (x - (n : ℝ)) / x := div_pos hdist_pos hx_pos
+    have hrecip_log :
+        (Real.log (x / (n : ℝ)))⁻¹ ≤ x / (x - (n : ℝ)) := by
+      have hbase := Real.one_sub_inv_le_log_of_pos hy_pos
+      have hbase' :
+          1 - (x / (n : ℝ))⁻¹ ≤ Real.log (x / (n : ℝ)) := by
+        linarith [hbase]
+      have hrewrite : 1 - (x / (n : ℝ))⁻¹ = (x - (n : ℝ)) / x := by
+        field_simp [hx_pos.ne', hn_pos_real.ne']
+      have hlog_lower :
+          (x - (n : ℝ)) / x ≤ Real.log (x / (n : ℝ)) := by
+        rw [← hrewrite]
+        exact hbase'
+      calc (Real.log (x / (n : ℝ)))⁻¹
+          ≤ ((x - (n : ℝ)) / x)⁻¹ :=
+            (inv_le_inv₀ hlog_pos hratio_pos).2 hlog_lower
+        _ = x / (x - (n : ℝ)) := by
+            field_simp [hx_pos.ne', hdist_pos.ne']
+    have hrpow :
+        (x / (n : ℝ)) ^ (1 + 1 / Real.log x) ≤
+          Real.exp 1 * (x / (n : ℝ)) :=
+      per_term_rpow_bound x hx n hn_pos hn_le_x
+    have hexp_ge_one : (1 : ℝ) ≤ Real.exp 1 := by
+      calc (1 : ℝ) = Real.exp 0 := by rw [Real.exp_zero]
+        _ ≤ Real.exp 1 := Real.exp_monotone (by norm_num)
+    have hone_le_exp_y : (1 : ℝ) ≤ Real.exp 1 * (x / (n : ℝ)) := by
+      calc (1 : ℝ) = 1 * 1 := by ring
+        _ ≤ Real.exp 1 * (x / (n : ℝ)) :=
+          mul_le_mul hexp_ge_one hy_ge_one zero_le_one (Real.exp_pos 1).le
+    have hnum :
+        (x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1 ≤
+          2 * Real.exp 1 * (x / (n : ℝ)) := by
+      calc (x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1
+          ≤ Real.exp 1 * (x / (n : ℝ)) +
+              Real.exp 1 * (x / (n : ℝ)) :=
+            add_le_add hrpow hone_le_exp_y
+        _ = 2 * Real.exp 1 * (x / (n : ℝ)) := by ring
+    have hTlog_pos : 0 < T * Real.log (x / (n : ℝ)) := mul_pos hT_pos hlog_pos
+    have hkernel :
+        ((x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1) /
+            (T * Real.log (x / (n : ℝ))) ≤
+          (2 * Real.exp 1 * (x / (n : ℝ)) / T) *
+            (x / (x - (n : ℝ))) := by
+      calc ((x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1) /
+            (T * Real.log (x / (n : ℝ)))
+          ≤ (2 * Real.exp 1 * (x / (n : ℝ))) /
+              (T * Real.log (x / (n : ℝ))) :=
+            div_le_div_of_nonneg_right hnum hTlog_pos.le
+        _ = (2 * Real.exp 1 * (x / (n : ℝ)) / T) *
+              (Real.log (x / (n : ℝ)))⁻¹ := by
+            field_simp [hT_pos.ne', hlog_pos.ne']
+        _ ≤ (2 * Real.exp 1 * (x / (n : ℝ)) / T) *
+              (x / (x - (n : ℝ))) :=
+            mul_le_mul_of_nonneg_left hrecip_log (by positivity)
+    calc perronKernelOffBoundaryDavenportSingularTerm x T n
+        = ArithmeticFunction.vonMangoldt n *
+            (((x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1) /
+              (T * Real.log (x / (n : ℝ)))) := by
+            simp [perronKernelOffBoundaryDavenportSingularTerm, hn_zero]
+      _ ≤ ArithmeticFunction.vonMangoldt n *
+            ((2 * Real.exp 1 * (x / (n : ℝ)) / T) *
+              (x / (x - (n : ℝ)))) :=
+            mul_le_mul_of_nonneg_left hkernel (vonMangoldt_nonneg n)
+      _ = K * (x / T) *
+            (ArithmeticFunction.vonMangoldt n / (n : ℝ) +
+              ArithmeticFunction.vonMangoldt n / (x - (n : ℝ))) := by
+            dsimp [K]
+            field_simp [hT_pos.ne', hn_pos_real.ne', hdist_pos.ne']
+            ring
+      _ = K * (x / T) *
+            ((if n = 0 then 0 else ArithmeticFunction.vonMangoldt n / (n : ℝ)) +
+              (if n = 0 then 0 else
+                ArithmeticFunction.vonMangoldt n / (x - (n : ℝ)))) := by
+            simp [hn_zero]
+
 /-- Conditional singular off-boundary Davenport bound from the pointwise
 reciprocal-log comparison and the remaining distance-weight summation atom. -/
 theorem small_T_offBoundary_davenportSingularEnvelope_bound_from_pointwise_and_distance
@@ -4010,6 +4132,18 @@ theorem small_T_offBoundary_davenportSingularEnvelope_bound_from_pointwise_and_d
           (add_le_add hrecip_x hdistance_x) hscale_nonneg
     _ = K * (Cr + Cd) * (x / T) * (Real.log x) ^ 2 := by ring
 
+/-- Singular off-boundary Davenport bound from only the remaining
+distance-weight summation atom; the pointwise reciprocal-log comparison is
+closed by `small_T_offBoundary_davenportSingular_pointwise_bound`. -/
+theorem small_T_offBoundary_davenportSingularEnvelope_bound_from_distance
+    (hdistance : ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDistanceWeight x T ≤ Cd * (Real.log x) ^ 2) :
+    ∃ Cs > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDavenportSingularEnvelope x T ≤
+        Cs * (x / T) * (Real.log x) ^ 2 :=
+  small_T_offBoundary_davenportSingularEnvelope_bound_from_pointwise_and_distance
+    small_T_offBoundary_davenportSingular_pointwise_bound hdistance
+
 /-- Off-boundary Davenport-envelope bound from separate singular and smooth
 summation bounds. -/
 theorem small_T_offBoundary_davenportEnvelope_linear_bound_from_components
@@ -4073,6 +4207,16 @@ theorem small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_singularDis
     (small_T_offBoundary_davenportSingularEnvelope_bound_from_pointwise_and_distance
       hpoint hdistance)
     small_T_offBoundary_davenportSmoothEnvelope_bound
+
+/-- Scale-correct weighted cutoff from the sole remaining off-boundary
+distance-weight summation atom. -/
+theorem small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_distance
+    (hdistance : ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDistanceWeight x T ≤ Cd * (Real.log x) ^ 2) :
+    ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (x / T) * (Real.log x) ^ 2 :=
+  small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_singularDistance
+    small_T_offBoundary_davenportSingular_pointwise_bound hdistance
 
 /-- Weighted finite cutoff from the Davenport separated-bound route and the
 off-boundary weighted atom. -/
