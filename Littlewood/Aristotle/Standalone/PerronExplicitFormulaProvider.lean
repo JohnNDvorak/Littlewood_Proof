@@ -2225,6 +2225,750 @@ class FiniteZeroInhomogeneousPhaseWindowHyp : Prop where
         ∀ ρ ∈ (finite_zeros_le T).toFinset,
           ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
 
+/-- Wide same-height Perron-threshold/tower window boundary.
+
+This is the tower-side companion to relative-density Kronecker input. It asks
+for a logarithmic interval whose length dominates an externally supplied
+search radius for the same chosen height and tolerance. -/
+class PerronThresholdTowerPhaseWideWindowHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
+      (radius : ℝ → ℝ → ℝ),
+      (∀ T ε : ℝ, 0 < radius T ε) →
+      ∃ T ε L U : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        X < Real.exp L ∧
+        perronThreshold _hRH T ≤ Real.exp L ∧
+        L + radius T ε < U ∧
+        Real.exp U ≤ Real.exp (Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Same-height wide Perron-threshold/tower domination boundary.
+
+This is the exact tower-growth leaf below
+`PerronThresholdTowerPhaseWideWindowHyp`: the tower cap must dominate the
+logged lower endpoint together with the externally supplied relative-density
+search radius at the same height. -/
+class PerronThresholdTowerWideDominationHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ)
+      (radius : ℝ → ℝ → ℝ),
+      (∀ T ε : ℝ, 0 < radius T ε) →
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.exp
+          (Real.log (max X (perronThreshold _hRH T) + 1) + radius T ε + 1)
+          ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- The wide domination boundary implies the wide logarithmic phase-window
+boundary. -/
+theorem perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerWideDominationHyp] :
+    PerronThresholdTowerPhaseWideWindowHyp where
+  witness := by
+    intro hRH X radius hRadius
+    rcases PerronThresholdTowerWideDominationHyp.witness
+        hRH X radius hRadius with
+      ⟨T, ε, hT4, hεpos, hεlt, hdom⟩
+    let B : ℝ := max X (perronThreshold hRH T) + 1
+    let L : ℝ := Real.log B
+    let U : ℝ := L + radius T ε + 1
+    have hPgt1 : 1 < perronThreshold hRH T :=
+      perronThreshold_gt_one_perron hRH T
+    have hBpos : 0 < B := by
+      dsimp [B]
+      linarith [le_max_right X (perronThreshold hRH T)]
+    refine ⟨T, ε, L, U, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_⟩
+    · dsimp [L]
+      rw [Real.exp_log hBpos]
+      dsimp [B]
+      linarith [le_max_left X (perronThreshold hRH T)]
+    · dsimp [L]
+      rw [Real.exp_log hBpos]
+      dsimp [B]
+      linarith [le_max_right X (perronThreshold hRH T)]
+    · dsimp [U]
+      linarith
+    · simpa [U, L, B] using hdom
+
+/-- Instance form of
+`perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp`. -/
+instance (priority := 100)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerWideDominationHyp] :
+    PerronThresholdTowerPhaseWideWindowHyp :=
+  perronThresholdTowerPhaseWideWindow_of_wide_domination_hyp
+
+/-- Relative-density finite inhomogeneous phase approximation boundary.
+
+For each fixed finite zero cutoff and tolerance, the orbit hits the requested
+phase box within a bounded logarithmic search radius from every starting point.
+This is the honest Kronecker/Dirichlet replacement for demanding a hit inside
+an arbitrary preselected nonempty interval. -/
+class FiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ) (targetPhase : ℂ → ℝ),
+      4 ≤ T →
+      0 < ε →
+      ∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
+
+/-- Ideal finite-set inhomogeneous Kronecker relative-density boundary.
+
+This removes zeta-specific bookkeeping from
+`FiniteZeroInhomogeneousPhaseRelativelyDenseHyp`: for any finite set of complex
+frequencies, arbitrary target phases, and positive tolerance, the one-parameter
+orbit in the corresponding finite torus hits the target box within a bounded
+search radius from every starting point.
+
+This is retained as a compatibility wrapper. The honest theorem-shaped source
+below includes the necessary integer-relation compatibility condition. -/
+class FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp : Prop where
+  witness :
+    ∀ (S : Finset ℂ) (ε : ℝ) (targetPhase : ℂ → ℝ),
+      0 < ε →
+      ∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ S,
+              ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
+
+/-- Relation-compatibility predicate for one-parameter inhomogeneous phase
+approximation on a finite frequency set.
+
+Every integer relation among the selected ordinates must impose the matching
+target-phase congruence modulo `2π`. This is the standard obstruction missing
+from the ideal arbitrary-target finite-set boundary. -/
+def finiteSetInhomogeneousPhaseRelationCompatible
+    (S : Finset ℂ) (ε : ℝ) (targetPhase : ℂ → ℝ) : Prop :=
+  ∀ m : {ρ // ρ ∈ S} → ℤ,
+    (∑ i, (m i : ℝ) * i.1.im = 0) →
+      ∃ k : ℤ,
+        ‖(∑ i, (m i : ℝ) * targetPhase i.1) +
+            (k : ℝ) * (2 * Real.pi)‖
+          ≤ (ε / 2) * (∑ i, |(m i : ℝ)|)
+
+/-- Honest finite-set inhomogeneous Kronecker relative-density boundary.
+
+This is the theorem shape expected from finite-dimensional Kronecker on the
+closure of a one-parameter torus orbit: arbitrary targets are allowed only after
+supplying the necessary integer-relation compatibility condition. -/
+class FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp :
+    Prop where
+  witness :
+    ∀ (S : Finset ℂ) (ε : ℝ) (targetPhase : ℂ → ℝ),
+      0 < ε →
+      finiteSetInhomogeneousPhaseRelationCompatible S ε targetPhase →
+      ∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ S,
+              ∃ m : ℤ, ‖t0 * ρ.im - targetPhase ρ - m • (2 * Real.pi)‖ ≤ ε
+
+/-- Zeta finite-zero relation-compatibility leaf for the target phase function
+used by the Perron-only phase-fit boundary. -/
+class FiniteZeroInhomogeneousPhaseRelationCompatibleHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ) (targetPhase : ℂ → ℝ),
+      4 ≤ T →
+      0 < ε →
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε targetPhase
+
+/-- Target-specific zeta finite-zero relation-compatibility leaf.
+
+This is the honest compatibility atom needed for the positive `pi` phase
+target `ρ ↦ arg ρ`; unlike `FiniteZeroInhomogeneousPhaseRelationCompatibleHyp`,
+it does not assert compatibility for arbitrary target functions. -/
+class TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε Complex.arg
+
+/-- Anti-target zeta finite-zero relation-compatibility leaf for
+`ρ ↦ arg ρ + π`. -/
+class AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε (fun ρ => Complex.arg ρ + Real.pi)
+
+/-- Paired target/anti-target finite-zero relation-compatibility leaf.
+
+This is the zeta finite-zero compatibility atom for the corrected `pi` route:
+the target and anti-target phases are handled together, while still avoiding
+the false arbitrary-target compatibility surface. -/
+class TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε Complex.arg ∧
+      finiteSetInhomogeneousPhaseRelationCompatible
+        (finite_zeros_le T).toFinset ε (fun ρ => Complex.arg ρ + Real.pi)
+
+/-- Target-specific finite-zero relative-density phase approximation. -/
+class TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ, ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε
+
+/-- Anti-target finite-zero relative-density phase approximation. -/
+class AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ∃ R : ℝ,
+        0 < R ∧
+        ∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
+                    m • (2 * Real.pi)‖ ≤ ε
+
+/-- Chosen target finite-zero relative-density radius. Outside the meaningful
+`4 ≤ T`, `0 < ε` range it is set to `1` so it is total. -/
+noncomputable def targetFiniteZeroInhomogeneousPhaseRadius
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    (T ε : ℝ) : ℝ :=
+  if h : 4 ≤ T ∧ 0 < ε then
+    Classical.choose
+      (TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+        T ε h.1 h.2)
+  else 1
+
+/-- Chosen anti-target finite-zero relative-density radius. -/
+noncomputable def antiTargetFiniteZeroInhomogeneousPhaseRadius
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    (T ε : ℝ) : ℝ :=
+  if h : 4 ≤ T ∧ 0 < ε then
+    Classical.choose
+      (AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+        T ε h.1 h.2)
+  else 1
+
+private lemma targetFiniteZeroInhomogeneousPhaseRadius_spec
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    {T ε : ℝ} (hT4 : 4 ≤ T) (hε : 0 < ε) :
+    0 < targetFiniteZeroInhomogeneousPhaseRadius T ε ∧
+      ∀ L : ℝ,
+        ∃ t0 : ℝ,
+          L < t0 ∧
+          t0 < L + targetFiniteZeroInhomogeneousPhaseRadius T ε ∧
+          ∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖t0 * ρ.im - Complex.arg ρ - m • (2 * Real.pi)‖ ≤ ε := by
+  dsimp [targetFiniteZeroInhomogeneousPhaseRadius]
+  rw [dif_pos ⟨hT4, hε⟩]
+  exact Classical.choose_spec
+    (TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+      T ε hT4 hε)
+
+private lemma antiTargetFiniteZeroInhomogeneousPhaseRadius_spec
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    {T ε : ℝ} (hT4 : 4 ≤ T) (hε : 0 < ε) :
+    0 < antiTargetFiniteZeroInhomogeneousPhaseRadius T ε ∧
+      ∀ L : ℝ,
+        ∃ t0 : ℝ,
+          L < t0 ∧
+          t0 < L + antiTargetFiniteZeroInhomogeneousPhaseRadius T ε ∧
+          ∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
+                  m • (2 * Real.pi)‖ ≤ ε := by
+  dsimp [antiTargetFiniteZeroInhomogeneousPhaseRadius]
+  rw [dif_pos ⟨hT4, hε⟩]
+  exact Classical.choose_spec
+    (AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+      T ε hT4 hε)
+
+/-- Target-side Perron/tower geometry for the chosen phase radius.
+
+This is the tower-only leaf after finite-zero Kronecker has supplied a concrete
+relative-density radius. -/
+class TargetPerronThresholdTowerGeometryForPhaseRadiusHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.exp
+          (Real.log (max X (perronThreshold _hRH T) + 1) +
+            targetFiniteZeroInhomogeneousPhaseRadius T ε + 1)
+          ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Anti-target-side Perron/tower geometry for the chosen phase radius. -/
+class AntiTargetPerronThresholdTowerGeometryForPhaseRadiusHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.exp
+          (Real.log (max X (perronThreshold _hRH T) + 1) +
+            antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1)
+          ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Paired target/anti-target Perron/tower geometry for the chosen phase radii.
+
+This is the common geometry atom needed by the corrected phase-coupling
+provider route: the tower cap at one height/tolerance dominates the larger of
+the two realized target and anti-target phase radii. -/
+class TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        Real.exp
+          (Real.log (max X (perronThreshold _hRH T) + 1) +
+            max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+              (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1)
+          ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Target-specific same-height Perron/tower domination by the realized
+relative-density phase radius.
+
+This is smaller than `PerronThresholdTowerWideDominationHyp`: it does not ask
+the tower cap to beat every positive radius function, only the concrete radius
+that comes with the target finite-zero phase approximation payload. -/
+class TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε R : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        0 < R ∧
+        (∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - Complex.arg ρ -
+                    m • (2 * Real.pi)‖ ≤ ε) ∧
+        Real.exp
+          (Real.log (max X (perronThreshold _hRH T) + 1) + R + 1)
+          ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Anti-target same-height Perron/tower domination by the realized
+relative-density phase radius. -/
+class AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε R : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        0 < R ∧
+        (∀ L : ℝ,
+          ∃ t0 : ℝ,
+            L < t0 ∧
+            t0 < L + R ∧
+            ∀ ρ ∈ (finite_zeros_le T).toFinset,
+              ∃ m : ℤ,
+                ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
+                    m • (2 * Real.pi)‖ ≤ ε) ∧
+        Real.exp
+          (Real.log (max X (perronThreshold _hRH T) + 1) + R + 1)
+          ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- The concrete finite-set Kronecker relative-density boundary supplies the
+project finite-zero relative-density leaf. -/
+theorem finiteZeroInhomogeneousPhaseRelativelyDense_of_finiteSetKronecker_hyp
+    [FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp] :
+    FiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε targetPhase _hT4 hε
+    exact FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp.witness
+      (finite_zeros_le T).toFinset ε targetPhase hε
+
+/-- Instance form of
+`finiteZeroInhomogeneousPhaseRelativelyDense_of_finiteSetKronecker_hyp`. -/
+instance (priority := 100)
+    [FiniteSetInhomogeneousPhaseRelativelyDenseKroneckerHyp] :
+    FiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  finiteZeroInhomogeneousPhaseRelativelyDense_of_finiteSetKronecker_hyp
+
+/-- A relation-compatible finite-set Kronecker theorem plus the zeta finite-zero
+compatibility leaf supplies the project finite-zero relative-density leaf. -/
+theorem finiteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [FiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    FiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε targetPhase hT4 hε
+    exact
+      FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp.witness
+        (finite_zeros_le T).toFinset ε targetPhase hε
+        (FiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+          T ε targetPhase hT4 hε)
+
+/-- Instance form of
+`finiteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp`.
+-/
+instance (priority := 90)
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [FiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    FiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  finiteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+
+/-- The relation-compatible finite-set Kronecker source plus target-specific
+compatibility supplies positive target finite-zero relative density. -/
+theorem targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hε
+    exact
+      FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp.witness
+        (finite_zeros_le T).toFinset ε Complex.arg hε
+        (TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+          T ε hT4 hε)
+
+/-- Instance form of
+`targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp`.
+-/
+instance (priority := 90)
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+
+/-- The relation-compatible finite-set Kronecker source plus anti-target
+compatibility supplies negative target finite-zero relative density. -/
+theorem antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hε
+    exact
+      FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp.witness
+        (finite_zeros_le T).toFinset ε
+        (fun ρ => Complex.arg ρ + Real.pi) hε
+        (AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+          T ε hT4 hε)
+
+/-- Instance form of
+`antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp`.
+-/
+instance (priority := 90)
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+  antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+
+/-- Paired target/anti finite-zero compatibility supplies the target
+compatibility leaf. -/
+theorem targetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp where
+  witness := by
+    intro T ε hT4 hε
+    exact (TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+      T ε hT4 hε).1
+
+/-- Instance form of
+`targetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp`. -/
+instance (priority := 95)
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+  targetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+
+/-- Paired target/anti finite-zero compatibility supplies the anti-target
+compatibility leaf. -/
+theorem antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp where
+  witness := by
+    intro T ε hT4 hε
+    exact (TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp.witness
+      T ε hT4 hε).2
+
+/-- Instance form of
+`antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp`. -/
+instance (priority := 95)
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+  antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+
+/-- Paired target/anti tower geometry supplies the target-side geometry leaf by
+bounding the target radius by the maximum of the two chosen radii. -/
+theorem targetPerronThresholdTowerGeometryForPhaseRadius_of_pairedGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    TargetPerronThresholdTowerGeometryForPhaseRadiusHyp where
+  witness := by
+    intro hRH X
+    rcases TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp.witness
+        hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hdom⟩
+    let Rt : ℝ := targetFiniteZeroInhomogeneousPhaseRadius T ε
+    let Ra : ℝ := antiTargetFiniteZeroInhomogeneousPhaseRadius T ε
+    refine ⟨T, ε, hT4, hεpos, hεlt, ?_⟩
+    have hstep :
+        Real.exp
+          (Real.log (max X (perronThreshold hRH T) + 1) + Rt + 1)
+          ≤ Real.exp
+            (Real.log (max X (perronThreshold hRH T) + 1) +
+              max Rt Ra + 1) := by
+      exact Real.exp_le_exp.mpr (by linarith [le_max_left Rt Ra])
+    exact le_trans hstep (by simpa [Rt, Ra] using hdom)
+
+/-- Instance form of
+`targetPerronThresholdTowerGeometryForPhaseRadius_of_pairedGeometry_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    TargetPerronThresholdTowerGeometryForPhaseRadiusHyp :=
+  targetPerronThresholdTowerGeometryForPhaseRadius_of_pairedGeometry_hyp
+
+/-- Paired target/anti tower geometry supplies the anti-target-side geometry
+leaf by bounding the anti-target radius by the maximum of the two chosen
+radii. -/
+theorem antiTargetPerronThresholdTowerGeometryForPhaseRadius_of_pairedGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    AntiTargetPerronThresholdTowerGeometryForPhaseRadiusHyp where
+  witness := by
+    intro hRH X
+    rcases TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp.witness
+        hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hdom⟩
+    let Rt : ℝ := targetFiniteZeroInhomogeneousPhaseRadius T ε
+    let Ra : ℝ := antiTargetFiniteZeroInhomogeneousPhaseRadius T ε
+    refine ⟨T, ε, hT4, hεpos, hεlt, ?_⟩
+    have hstep :
+        Real.exp
+          (Real.log (max X (perronThreshold hRH T) + 1) + Ra + 1)
+          ≤ Real.exp
+            (Real.log (max X (perronThreshold hRH T) + 1) +
+              max Rt Ra + 1) := by
+      exact Real.exp_le_exp.mpr (by linarith [le_max_right Rt Ra])
+    exact le_trans hstep (by simpa [Rt, Ra] using hdom)
+
+/-- Instance form of
+`antiTargetPerronThresholdTowerGeometryForPhaseRadius_of_pairedGeometry_hyp`.
+-/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    AntiTargetPerronThresholdTowerGeometryForPhaseRadiusHyp :=
+  antiTargetPerronThresholdTowerGeometryForPhaseRadius_of_pairedGeometry_hyp
+
+/-- Target finite-zero relative density plus tower geometry for its chosen
+radius supplies the target realized-radius domination leaf. -/
+theorem targetPerronThresholdTowerWideDominationWithPhaseRadius_of_geometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetPerronThresholdTowerGeometryForPhaseRadiusHyp] :
+    TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp where
+  witness := by
+    intro hRH X
+    rcases TargetPerronThresholdTowerGeometryForPhaseRadiusHyp.witness hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hdom⟩
+    let R : ℝ := targetFiniteZeroInhomogeneousPhaseRadius T ε
+    have hRspec := targetFiniteZeroInhomogeneousPhaseRadius_spec hT4 hεpos
+    refine ⟨T, ε, R, hT4, hεpos, hεlt, hRspec.1, ?_, ?_⟩
+    · simpa [R] using hRspec.2
+    · simpa [R] using hdom
+
+/-- Instance form of
+`targetPerronThresholdTowerWideDominationWithPhaseRadius_of_geometry_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetPerronThresholdTowerGeometryForPhaseRadiusHyp] :
+    TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp :=
+  targetPerronThresholdTowerWideDominationWithPhaseRadius_of_geometry_hyp
+
+/-- Anti-target finite-zero relative density plus tower geometry for its chosen
+radius supplies the anti-target realized-radius domination leaf. -/
+theorem antiTargetPerronThresholdTowerWideDominationWithPhaseRadius_of_geometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetPerronThresholdTowerGeometryForPhaseRadiusHyp] :
+    AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp where
+  witness := by
+    intro hRH X
+    rcases AntiTargetPerronThresholdTowerGeometryForPhaseRadiusHyp.witness hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hdom⟩
+    let R : ℝ := antiTargetFiniteZeroInhomogeneousPhaseRadius T ε
+    have hRspec := antiTargetFiniteZeroInhomogeneousPhaseRadius_spec hT4 hεpos
+    refine ⟨T, ε, R, hT4, hεpos, hεlt, hRspec.1, ?_, ?_⟩
+    · simpa [R] using hRspec.2
+    · simpa [R] using hdom
+
+/-- Instance form of
+`antiTargetPerronThresholdTowerWideDominationWithPhaseRadius_of_geometry_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetPerronThresholdTowerGeometryForPhaseRadiusHyp] :
+    AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp :=
+  antiTargetPerronThresholdTowerWideDominationWithPhaseRadius_of_geometry_hyp
+
+/-- The generic arbitrary-radius tower domination leaf plus target finite-zero
+relative density supplies the target realized-radius domination leaf. -/
+theorem targetPerronThresholdTowerWideDominationWithPhaseRadius_of_wideDomination_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerWideDominationHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp where
+  witness := by
+    intro hRH X
+    let radius : ℝ → ℝ → ℝ := fun T ε =>
+      if h : 4 ≤ T ∧ 0 < ε then
+        Classical.choose
+          (TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+            T ε h.1 h.2)
+      else 1
+    have hRadius : ∀ T ε : ℝ, 0 < radius T ε := by
+      intro T ε
+      by_cases h : 4 ≤ T ∧ 0 < ε
+      · dsimp [radius]
+        rw [dif_pos h]
+        exact (Classical.choose_spec
+          (TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+            T ε h.1 h.2)).1
+      · dsimp [radius]
+        rw [dif_neg h]
+        norm_num
+    rcases PerronThresholdTowerWideDominationHyp.witness
+        hRH X radius hRadius with
+      ⟨T, ε, hT4, hεpos, hεlt, hdom⟩
+    let hRel :=
+      TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+        T ε hT4 hεpos
+    let R : ℝ := Classical.choose hRel
+    have hRspec := Classical.choose_spec hRel
+    have hRadius_eq : radius T ε = R := by
+      dsimp [radius, R]
+      rw [dif_pos ⟨hT4, hεpos⟩]
+    refine ⟨T, ε, R, hT4, hεpos, hεlt, hRspec.1, hRspec.2, ?_⟩
+    simpa [hRadius_eq, R] using hdom
+
+/-- Instance form of
+`targetPerronThresholdTowerWideDominationWithPhaseRadius_of_wideDomination_hyp`.
+-/
+instance (priority := 90)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerWideDominationHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp :=
+  targetPerronThresholdTowerWideDominationWithPhaseRadius_of_wideDomination_hyp
+
+/-- The generic arbitrary-radius tower domination leaf plus anti-target
+finite-zero relative density supplies the anti-target realized-radius
+domination leaf. -/
+theorem antiTargetPerronThresholdTowerWideDominationWithPhaseRadius_of_wideDomination_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerWideDominationHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp where
+  witness := by
+    intro hRH X
+    let radius : ℝ → ℝ → ℝ := fun T ε =>
+      if h : 4 ≤ T ∧ 0 < ε then
+        Classical.choose
+          (AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+            T ε h.1 h.2)
+      else 1
+    have hRadius : ∀ T ε : ℝ, 0 < radius T ε := by
+      intro T ε
+      by_cases h : 4 ≤ T ∧ 0 < ε
+      · dsimp [radius]
+        rw [dif_pos h]
+        exact (Classical.choose_spec
+          (AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+            T ε h.1 h.2)).1
+      · dsimp [radius]
+        rw [dif_neg h]
+        norm_num
+    rcases PerronThresholdTowerWideDominationHyp.witness
+        hRH X radius hRadius with
+      ⟨T, ε, hT4, hεpos, hεlt, hdom⟩
+    let hRel :=
+      AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+        T ε hT4 hεpos
+    let R : ℝ := Classical.choose hRel
+    have hRspec := Classical.choose_spec hRel
+    have hRadius_eq : radius T ε = R := by
+      dsimp [radius, R]
+      rw [dif_pos ⟨hT4, hεpos⟩]
+    refine ⟨T, ε, R, hT4, hεpos, hεlt, hRspec.1, hRspec.2, ?_⟩
+    simpa [hRadius_eq, R] using hdom
+
+/-- Instance form of
+`antiTargetPerronThresholdTowerWideDominationWithPhaseRadius_of_wideDomination_hyp`.
+-/
+instance (priority := 90)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerWideDominationHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp :=
+  antiTargetPerronThresholdTowerWideDominationWithPhaseRadius_of_wideDomination_hyp
+
 /-- The two lower-level honest boundaries imply the Perron-only phase-fit
 provider boundary. -/
 theorem inhomogeneousPhaseFitAbovePerronThresholdPerron_of_window_hyp
@@ -2259,6 +3003,354 @@ instance (priority := 100)
     [FiniteZeroInhomogeneousPhaseWindowHyp] :
     InhomogeneousPhaseFitAbovePerronThresholdPerronHyp :=
   inhomogeneousPhaseFitAbovePerronThresholdPerron_of_window_hyp
+
+/-- Relative-density Kronecker plus a sufficiently wide tower window imply the
+Perron-only phase-fit provider boundary without using the arbitrary-window
+finite phase leaf. -/
+theorem inhomogeneousPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    [FiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    InhomogeneousPhaseFitAbovePerronThresholdPerronHyp where
+  witness := by
+    intro hRH X targetPhase
+    let radius : ℝ → ℝ → ℝ := fun T ε =>
+      if h : 4 ≤ T ∧ 0 < ε then
+        Classical.choose
+          (FiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+            T ε targetPhase h.1 h.2)
+      else 1
+    have hRadius : ∀ T ε : ℝ, 0 < radius T ε := by
+      intro T ε
+      by_cases h : 4 ≤ T ∧ 0 < ε
+      · dsimp [radius]
+        rw [dif_pos h]
+        exact (Classical.choose_spec
+          (FiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+            T ε targetPhase h.1 h.2)).1
+      · dsimp [radius]
+        rw [dif_neg h]
+        norm_num
+    rcases PerronThresholdTowerPhaseWideWindowHyp.witness
+        hRH X radius hRadius with
+      ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, hThreshold, hWide, hUcap⟩
+    let hRel :=
+      FiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+        T ε targetPhase hT4 hεpos
+    let R : ℝ := Classical.choose hRel
+    have hRspec := Classical.choose_spec hRel
+    have hRadius_eq : radius T ε = R := by
+      dsimp [radius, R]
+      rw [dif_pos ⟨hT4, hεpos⟩]
+    rcases hRspec with ⟨_hRpos, hHit⟩
+    rcases hHit L with ⟨t0, hLt, htR, hPhase⟩
+    have htU : t0 < U := by
+      have htRadius : t0 < L + radius T ε := by
+        simpa [hRadius_eq, R] using htR
+      exact lt_trans htRadius hWide
+    have hExpLle : Real.exp L ≤ Real.exp t0 :=
+      le_of_lt (Real.exp_strictMono hLt)
+    have hExpU : Real.exp t0 ≤ Real.exp U :=
+      Real.exp_le_exp.mpr (le_of_lt htU)
+    refine ⟨Real.exp t0, ?_, T, hT4, ?_, ε, hεpos, hεlt, ?_, ?_⟩
+    · exact lt_of_lt_of_le hX hExpLle
+    · exact le_trans hThreshold hExpLle
+    · intro ρ hρ
+      rcases hPhase ρ hρ with ⟨m, hm⟩
+      exact ⟨m, by simpa [Real.log_exp] using hm⟩
+    · exact le_trans hExpU hUcap
+
+/-- Instance form of
+`inhomogeneousPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp`. -/
+instance (priority := 90)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    [FiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    InhomogeneousPhaseFitAbovePerronThresholdPerronHyp :=
+  inhomogeneousPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+
+/-- Target-only Perron phase-fit boundary for `ρ ↦ arg ρ`.
+
+This is the narrower surface actually needed for the positive exact-seed
+provider. It avoids the arbitrary-target quantifier in
+`InhomogeneousPhaseFitAbovePerronThresholdPerronHyp`. -/
+class TargetPhaseFitAbovePerronThresholdPerronHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        perronThreshold _hRH T ≤ x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - Complex.arg ρ -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+/-- Anti-target-only Perron phase-fit boundary for `ρ ↦ arg ρ + π`. -/
+class AntiTargetPhaseFitAbovePerronThresholdPerronHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        perronThreshold _hRH T ≤ x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - (Complex.arg ρ + Real.pi) -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
+
+private theorem phaseFitAbovePerronThresholdPerron_of_relative_dense_witness
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    (targetPhase : ℂ → ℝ)
+    (hDense :
+      ∀ (T ε : ℝ),
+        4 ≤ T →
+        0 < ε →
+        ∃ R : ℝ,
+          0 < R ∧
+          ∀ L : ℝ,
+            ∃ t0 : ℝ,
+              L < t0 ∧
+              t0 < L + R ∧
+              ∀ ρ ∈ (finite_zeros_le T).toFinset,
+                ∃ m : ℤ,
+                  ‖t0 * ρ.im - targetPhase ρ -
+                      m • (2 * Real.pi)‖ ≤ ε) :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ x : ℝ, X < x ∧ ∃ T : ℝ,
+        4 ≤ T ∧
+        perronThreshold _hRH T ≤ x ∧
+        ∃ ε : ℝ,
+          0 < ε ∧ ε < 1 ∧
+          (∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖Real.log x * ρ.im - targetPhase ρ -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+          x ≤ Real.exp (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
+  intro hRH X
+  let radius : ℝ → ℝ → ℝ := fun T ε =>
+    if h : 4 ≤ T ∧ 0 < ε then
+      Classical.choose (hDense T ε h.1 h.2)
+    else 1
+  have hRadius : ∀ T ε : ℝ, 0 < radius T ε := by
+    intro T ε
+    by_cases h : 4 ≤ T ∧ 0 < ε
+    · dsimp [radius]
+      rw [dif_pos h]
+      exact (Classical.choose_spec (hDense T ε h.1 h.2)).1
+    · dsimp [radius]
+      rw [dif_neg h]
+      norm_num
+  rcases PerronThresholdTowerPhaseWideWindowHyp.witness
+      hRH X radius hRadius with
+    ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, hThreshold, hWide, hUcap⟩
+  let hRel := hDense T ε hT4 hεpos
+  let R : ℝ := Classical.choose hRel
+  have hRspec := Classical.choose_spec hRel
+  have hRadius_eq : radius T ε = R := by
+    dsimp [radius, R]
+    rw [dif_pos ⟨hT4, hεpos⟩]
+  rcases hRspec with ⟨_hRpos, hHit⟩
+  rcases hHit L with ⟨t0, hLt, htR, hPhase⟩
+  have htU : t0 < U := by
+    have htRadius : t0 < L + radius T ε := by
+      simpa [hRadius_eq, R] using htR
+    exact lt_trans htRadius hWide
+  have hExpLle : Real.exp L ≤ Real.exp t0 :=
+    le_of_lt (Real.exp_strictMono hLt)
+  have hExpU : Real.exp t0 ≤ Real.exp U :=
+    Real.exp_le_exp.mpr (le_of_lt htU)
+  refine ⟨Real.exp t0, ?_, T, hT4, ?_, ε, hεpos, hεlt, ?_, ?_⟩
+  · exact lt_of_lt_of_le hX hExpLle
+  · exact le_trans hThreshold hExpLle
+  · intro ρ hρ
+    rcases hPhase ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa [Real.log_exp] using hm⟩
+  · exact le_trans hExpU hUcap
+
+/-- Target-specific relative density plus a wide Perron/tower window gives the
+positive target-only Perron phase-fit boundary. -/
+theorem targetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    TargetPhaseFitAbovePerronThresholdPerronHyp where
+  witness :=
+    phaseFitAbovePerronThresholdPerron_of_relative_dense_witness
+      Complex.arg TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+
+/-- Instance form of
+`targetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp`. -/
+instance (priority := 90)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    TargetPhaseFitAbovePerronThresholdPerronHyp :=
+  targetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+
+/-- Anti-target-specific relative density plus a wide Perron/tower window gives
+the negative target-only Perron phase-fit boundary. -/
+theorem antiTargetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    AntiTargetPhaseFitAbovePerronThresholdPerronHyp where
+  witness :=
+    phaseFitAbovePerronThresholdPerron_of_relative_dense_witness
+      (fun ρ => Complex.arg ρ + Real.pi)
+      AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp.witness
+
+/-- Instance form of
+`antiTargetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp`. -/
+instance (priority := 90)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] :
+    AntiTargetPhaseFitAbovePerronThresholdPerronHyp :=
+  antiTargetPhaseFitAbovePerronThresholdPerron_of_relative_dense_hyp
+
+/-- Target realized-radius domination directly gives the positive target-only
+Perron phase-fit boundary. -/
+theorem targetPhaseFitAbovePerronThresholdPerron_of_realizedRadiusDomination_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp] :
+    TargetPhaseFitAbovePerronThresholdPerronHyp where
+  witness := by
+    intro hRH X
+    rcases TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp.witness
+        hRH X with
+      ⟨T, ε, R, hT4, hεpos, hεlt, _hRpos, hHit, hdom⟩
+    let B : ℝ := max X (perronThreshold hRH T) + 1
+    let L : ℝ := Real.log B
+    let U : ℝ := L + R + 1
+    have hPgt1 : 1 < perronThreshold hRH T :=
+      perronThreshold_gt_one_perron hRH T
+    have hBpos : 0 < B := by
+      dsimp [B]
+      linarith [le_max_right X (perronThreshold hRH T)]
+    rcases hHit L with ⟨t0, hLt, htR, hPhase⟩
+    have htU : t0 < U := by
+      dsimp [U]
+      linarith
+    have hExpLle : Real.exp L ≤ Real.exp t0 :=
+      le_of_lt (Real.exp_strictMono hLt)
+    have hExpU : Real.exp t0 ≤ Real.exp U :=
+      Real.exp_le_exp.mpr (le_of_lt htU)
+    have hUcap : Real.exp U ≤ Real.exp (Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
+      simpa [U, L, B] using hdom
+    refine ⟨Real.exp t0, ?_, T, hT4, ?_, ε, hεpos, hεlt, ?_, ?_⟩
+    · dsimp [L] at hExpLle
+      rw [Real.exp_log hBpos] at hExpLle
+      exact lt_of_lt_of_le (by
+        dsimp [B]
+        linarith [le_max_left X (perronThreshold hRH T)]) hExpLle
+    · dsimp [L] at hExpLle
+      rw [Real.exp_log hBpos] at hExpLle
+      exact le_trans (by
+        dsimp [B]
+        linarith [le_max_right X (perronThreshold hRH T)]) hExpLle
+    · intro ρ hρ
+      rcases hPhase ρ hρ with ⟨m, hm⟩
+      exact ⟨m, by simpa [Real.log_exp] using hm⟩
+    · exact le_trans hExpU hUcap
+
+/-- Instance form of
+`targetPhaseFitAbovePerronThresholdPerron_of_realizedRadiusDomination_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp] :
+    TargetPhaseFitAbovePerronThresholdPerronHyp :=
+  targetPhaseFitAbovePerronThresholdPerron_of_realizedRadiusDomination_hyp
+
+/-- Anti-target realized-radius domination directly gives the anti-target-only
+Perron phase-fit boundary. -/
+theorem antiTargetPhaseFitAbovePerronThresholdPerron_of_realizedRadiusDomination_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp] :
+    AntiTargetPhaseFitAbovePerronThresholdPerronHyp where
+  witness := by
+    intro hRH X
+    rcases AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp.witness
+        hRH X with
+      ⟨T, ε, R, hT4, hεpos, hεlt, _hRpos, hHit, hdom⟩
+    let B : ℝ := max X (perronThreshold hRH T) + 1
+    let L : ℝ := Real.log B
+    let U : ℝ := L + R + 1
+    have hPgt1 : 1 < perronThreshold hRH T :=
+      perronThreshold_gt_one_perron hRH T
+    have hBpos : 0 < B := by
+      dsimp [B]
+      linarith [le_max_right X (perronThreshold hRH T)]
+    rcases hHit L with ⟨t0, hLt, htR, hPhase⟩
+    have htU : t0 < U := by
+      dsimp [U]
+      linarith
+    have hExpLle : Real.exp L ≤ Real.exp t0 :=
+      le_of_lt (Real.exp_strictMono hLt)
+    have hExpU : Real.exp t0 ≤ Real.exp U :=
+      Real.exp_le_exp.mpr (le_of_lt htU)
+    have hUcap : Real.exp U ≤ Real.exp (Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2))) := by
+      simpa [U, L, B] using hdom
+    refine ⟨Real.exp t0, ?_, T, hT4, ?_, ε, hεpos, hεlt, ?_, ?_⟩
+    · dsimp [L] at hExpLle
+      rw [Real.exp_log hBpos] at hExpLle
+      exact lt_of_lt_of_le (by
+        dsimp [B]
+        linarith [le_max_left X (perronThreshold hRH T)]) hExpLle
+    · dsimp [L] at hExpLle
+      rw [Real.exp_log hBpos] at hExpLle
+      exact le_trans (by
+        dsimp [B]
+        linarith [le_max_right X (perronThreshold hRH T)]) hExpLle
+    · intro ρ hρ
+      rcases hPhase ρ hρ with ⟨m, hm⟩
+      exact ⟨m, by simpa [Real.log_exp] using hm⟩
+    · exact le_trans hExpU hUcap
+
+/-- Instance form of
+`antiTargetPhaseFitAbovePerronThresholdPerron_of_realizedRadiusDomination_hyp`.
+-/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp] :
+    AntiTargetPhaseFitAbovePerronThresholdPerronHyp :=
+  antiTargetPhaseFitAbovePerronThresholdPerron_of_realizedRadiusDomination_hyp
+
+/-- Compatibility adapter from the broader arbitrary-target Perron phase-fit
+boundary to the positive target-only boundary. -/
+instance (priority := 80)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdPerronHyp] :
+    TargetPhaseFitAbovePerronThresholdPerronHyp where
+  witness := by
+    intro hRH X
+    simpa using
+      (InhomogeneousPhaseFitAbovePerronThresholdPerronHyp.witness
+        hRH X Complex.arg)
+
+/-- Compatibility adapter from the broader arbitrary-target Perron phase-fit
+boundary to the anti-target-only boundary. -/
+instance (priority := 80)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [InhomogeneousPhaseFitAbovePerronThresholdPerronHyp] :
+    AntiTargetPhaseFitAbovePerronThresholdPerronHyp where
+  witness := by
+    intro hRH X
+    simpa using
+      (InhomogeneousPhaseFitAbovePerronThresholdPerronHyp.witness
+        hRH X (fun ρ => Complex.arg ρ + Real.pi))
 
 variable [TruncatedExplicitFormulaPiHyp]
 
@@ -2558,6 +3650,44 @@ theorem anti_target_exact_seed_above_threshold_perron_from_phase_fit
   intro hRH X
   exact (exact_seed_pair_from_perron_only_core hRH X).2
 
+/-- Perron-only target exact seed from the narrower target-only phase-fit
+boundary. -/
+theorem target_exact_seed_above_threshold_perron_from_target_phase_fit
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetPhaseFitAbovePerronThresholdPerronHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerron := by
+  intro hRH X
+  rcases TargetPhaseFitAbovePerronThresholdPerronHyp.witness hRH X with
+    ⟨x, hXx, T, hT4, hThreshold, ε, hεpos, hεlt, harg, hxUpper⟩
+  have hperron := perronThreshold_spec hRH T x hThreshold
+  have hx_pos : 0 < x := lt_trans zero_lt_one hperron.1
+  refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_⟩
+  · rwa [Real.exp_log hx_pos]
+  · rwa [Real.exp_log hx_pos]
+  · intro ρ hρ
+    rcases harg ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa using hm⟩
+  · rwa [Real.exp_log hx_pos]
+
+/-- Perron-only anti-target exact seed from the narrower anti-target-only
+phase-fit boundary. -/
+theorem anti_target_exact_seed_above_threshold_perron_from_target_phase_fit
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetPhaseFitAbovePerronThresholdPerronHyp] :
+    AntiTargetTowerExactSeedAbovePerronThresholdPerron := by
+  intro hRH X
+  rcases AntiTargetPhaseFitAbovePerronThresholdPerronHyp.witness hRH X with
+    ⟨x, hXx, T, hT4, hThreshold, ε, hεpos, hεlt, harg, hxUpper⟩
+  have hperron := perronThreshold_spec hRH T x hThreshold
+  have hx_pos : 0 < x := lt_trans zero_lt_one hperron.1
+  refine ⟨Real.log x, T, ε, hT4, hεpos, hεlt, ?_, ?_, ?_, ?_⟩
+  · rwa [Real.exp_log hx_pos]
+  · rwa [Real.exp_log hx_pos]
+  · intro ρ hρ
+    rcases harg ρ hρ with ⟨m, hm⟩
+    exact ⟨m, by simpa using hm⟩
+  · rwa [Real.exp_log hx_pos]
+
 /-- Route the repaired positive exact-seed interface through the Perron-only
 provider theorem. -/
 instance (priority := 100)
@@ -2573,6 +3703,47 @@ instance (priority := 100)
     [InhomogeneousPhaseFitAbovePerronThresholdPerronHyp] :
     AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp where
   witness := anti_target_exact_seed_above_threshold_perron_from_phase_fit
+
+/-- Route the repaired positive exact-seed interface through the target-only
+Perron phase-fit provider. -/
+instance (priority := 90)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetPhaseFitAbovePerronThresholdPerronHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp where
+  witness := target_exact_seed_above_threshold_perron_from_target_phase_fit
+
+/-- Route the repaired anti-target exact-seed interface through the
+anti-target-only Perron phase-fit provider. -/
+instance (priority := 90)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [AntiTargetPhaseFitAbovePerronThresholdPerronHyp] :
+    AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp where
+  witness := anti_target_exact_seed_above_threshold_perron_from_target_phase_fit
+
+/-- Paired finite-zero compatibility plus paired phase-radius tower geometry
+packages both Perron-only exact-seed classes for the corrected phase-coupling
+route. -/
+theorem exactSeedAboveThreshold_perron_of_pairedPhaseRadiusGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact ⟨inferInstance, inferInstance⟩
+
+/-- Fully paired corrected-route endpoint: finite-set relation-compatible
+Kronecker, paired target/anti zeta compatibility, and paired phase-radius tower
+geometry package both Perron-only exact-seed classes. -/
+theorem exactSeedAboveThreshold_perron_of_pairedCompatibilityAndGeometry_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [TargetAntiPerronThresholdTowerGeometryForPhaseRadiiHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  exact ⟨inferInstance, inferInstance⟩
 
 /-- Target approximate-seed phase alignment above the Perron threshold.
 
