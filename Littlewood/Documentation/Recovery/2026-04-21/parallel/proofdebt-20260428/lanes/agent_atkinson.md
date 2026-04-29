@@ -646,3 +646,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 12 Shifted Zero-Model Residual Reduction
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  the shifted zero-model approximation consumed by
+  `atkinson_blockMode_stationaryPhase_of_zero_model_and_fourierCorrectedTarget`
+  and the corrected Fourier-target complete-block handoff.
+- Facts banked:
+  `atkinsonShiftedQuadraticZeroModelResidual` names the exact compensated
+  shifted-cell residual
+  `((atkinsonModeWeight n : ℝ) : ℂ) * ∫ ((blockMode n p -
+   blockMode n 0 * quadraticKernel p) * blockJacobian n p)`.
+  `atkinson_shifted_quadratic_zeroModel_residual_eq` proves the raw
+  zero-model difference is exactly that residual integral.
+  `atkinson_shifted_quadratic_zeroModel_bound_of_residual_bound` reduces the
+  old zero-model approximation hypothesis to a bound for the named residual.
+  `atkinson_blockMode_stationaryPhase_of_residual_and_fourierCorrectedTarget`
+  wires that residual atom through the corrected Fourier-target stationary
+  phase handoff.
+- Failed routes / guardrails:
+  did not reuse the direct Abel/gamma-8 predecessor-tail route, did not use
+  `AtkinsonShiftedInversePhaseCellPrefixBoundHyp` circularly, and did not
+  apply generic absolute mass/norm bounds. I also did not try to extend
+  `StationaryPhaseMainMode.blockMode_quadratic_model_eventually` from
+  `p ∈ Icc 0 1` to `p ∈ Ioc j (j + 1)`; without a shifted compensated phase
+  estimate that would be the wrong theorem and would hide the actual scale
+  problem.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local proof engineering in
+  `atkinson_shifted_quadratic_zeroModel_residual_eq`, especially the
+  `MeasureTheory.integral_sub` direction or scalar-pulling rewrite for the
+  frozen model integral. The theorem statement itself is an exact algebraic
+  identity.
+- Smallest next theorem:
+  prove the residual atom
+  `∃ C_res > 0, ∃ N_res : ℕ, ∀ n : ℕ, N_res ≤ n → ∀ j : ℕ,`
+  `3 ≤ j → 1 ≤ j → j ≤ n →`
+  `‖atkinsonShiftedQuadraticZeroModelResidual n j‖`
+  `≤ C_res * (atkinsonModeWeight (n + j) / j)`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

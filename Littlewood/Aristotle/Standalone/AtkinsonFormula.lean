@@ -12602,6 +12602,119 @@ private noncomputable def atkinsonShiftedQuadraticBlockModeZeroModel (n j : ℕ)
     ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
       Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p)
 
+/-- The exact shifted zero-model residual.  This is the concrete oscillatory
+atom behind the zero-model approximation: it measures the compensated
+difference between `blockMode n p` and the frozen quadratic kernel on the
+shifted cell. -/
+private noncomputable def atkinsonShiftedQuadraticZeroModelResidual (n j : ℕ) : ℂ :=
+  (((atkinsonModeWeight n : ℝ) : ℂ) *
+    ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+      (Aristotle.StationaryPhaseMainMode.blockMode n p -
+          Aristotle.StationaryPhaseMainMode.blockMode n 0 *
+            Aristotle.StationaryPhaseMainMode.quadraticKernel p) *
+        blockJacobian n p)
+
+/-- The zero-model difference is exactly the residual integral.  This separates
+proof engineering from the remaining analytic input: the next theorem should
+bound this compensated oscillatory residual directly on shifted cells. -/
+private theorem atkinson_shifted_quadratic_zeroModel_residual_eq (n j : ℕ) :
+    ((((atkinsonModeWeight n : ℝ) : ℂ) *
+        ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.blockMode n p *
+            blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)
+      =
+    atkinsonShiftedQuadraticZeroModelResidual n j := by
+  let w : ℂ := ((atkinsonModeWeight n : ℝ) : ℂ)
+  let actual : ℝ → ℂ :=
+    fun p => Aristotle.StationaryPhaseMainMode.blockMode n p * blockJacobian n p
+  let model : ℝ → ℂ :=
+    fun p => Aristotle.StationaryPhaseMainMode.blockMode n 0 *
+      Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p
+  let kernelModel : ℝ → ℂ :=
+    fun p => Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p
+  let residual : ℝ → ℂ :=
+    fun p => (Aristotle.StationaryPhaseMainMode.blockMode n p -
+      Aristotle.StationaryPhaseMainMode.blockMode n 0 *
+        Aristotle.StationaryPhaseMainMode.quadraticKernel p) * blockJacobian n p
+  have hIntActual :
+      IntegrableOn actual (Ioc (j : ℝ) ((j : ℝ) + 1)) := by
+    have hcont : Continuous actual := by
+      exact ((HardyCosSmooth.continuous_hardyCosExp_complex n).comp
+        (blockCoord_continuous n)).mul
+        (Complex.continuous_ofReal.comp (blockJacobian_continuous n))
+    simpa [actual, Aristotle.StationaryPhaseMainMode.blockMode] using
+      hcont.integrableOn_Ioc
+  have hcont_kernel :
+      Continuous Aristotle.StationaryPhaseMainMode.quadraticKernel := by
+    unfold Aristotle.StationaryPhaseMainMode.quadraticKernel
+    continuity
+  have hIntModel :
+      IntegrableOn model (Ioc (j : ℝ) ((j : ℝ) + 1)) := by
+    have hcont : Continuous model := by
+      exact ((continuous_const.mul hcont_kernel).mul
+        (Complex.continuous_ofReal.comp (blockJacobian_continuous n)))
+    simpa [model] using hcont.integrableOn_Ioc
+  have hmodel_repr :
+      (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1), model p)
+        =
+      Aristotle.StationaryPhaseMainMode.blockMode n 0 *
+        ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1), kernelModel p := by
+    calc
+      ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1), model p
+          =
+        ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.blockMode n 0 * kernelModel p := by
+            refine MeasureTheory.integral_congr_ae ?_
+            filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioc] with p hp
+            simp [model, kernelModel]
+            ring
+      _ =
+        Aristotle.StationaryPhaseMainMode.blockMode n 0 *
+          ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1), kernelModel p := by
+            rw [MeasureTheory.integral_const_mul]
+  unfold atkinsonShiftedQuadraticBlockModeZeroModel
+  unfold atkinsonShiftedQuadraticZeroModelResidual
+  calc
+    w * (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1), actual p) -
+        w * Aristotle.StationaryPhaseMainMode.blockMode n 0 *
+          (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1), kernelModel p)
+        =
+      w * ((∫ p in Ioc (j : ℝ) ((j : ℝ) + 1), actual p) -
+        (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1), model p)) := by
+          rw [hmodel_repr]
+          ring
+    _ =
+      w * (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1), actual p - model p) := by
+        rw [← MeasureTheory.integral_sub hIntActual hIntModel]
+    _ =
+      w * (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1), residual p) := by
+        congr 1
+        refine MeasureTheory.integral_congr_ae ?_
+        filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioc] with p hp
+        simp [actual, model, residual]
+        ring
+
+/-- The zero-model approximation follows from the residual bound.  This is the
+narrow replacement surface for the shifted zero-model leaf. -/
+private theorem atkinson_shifted_quadratic_zeroModel_bound_of_residual_bound
+    (hresidual :
+      ∃ C_res > 0, ∃ N_res : ℕ, ∀ n : ℕ, N_res ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖atkinsonShiftedQuadraticZeroModelResidual n j‖
+            ≤ C_res * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+      3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode n p *
+                  blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+          ≤ C_model * (atkinsonModeWeight (n + j) / j) := by
+  obtain ⟨C_res, hC_res, N_res, hresidual'⟩ := hresidual
+  refine ⟨C_res, hC_res, N_res, ?_⟩
+  intro n hn j hj3 hj1 hjn
+  rw [atkinson_shifted_quadratic_zeroModel_residual_eq n j]
+  exact hresidual' n hn j hj3 hj1 hjn
+
 /-- The scalar coefficient left after removing the known alternating
 stationary-anchor factor from the explicit complete-block target.  This is a
 smaller target-matching surface than the full anchored complex expression. -/
@@ -13742,6 +13855,24 @@ private theorem atkinson_blockMode_stationaryPhase_of_zero_model_and_fourierCorr
   have hkj : (k - j) + j = k := by
     omega
   simpa [hkj] using hmode (k - j) hn_large j hj3 hj1 hkn
+
+/-- Corrected-target complete-block handoff reduced directly to the exact
+shifted zero-model residual. -/
+private theorem atkinson_blockMode_stationaryPhase_of_residual_and_fourierCorrectedTarget
+    (hresidual :
+      ∃ C_res > 0, ∃ N_res : ℕ, ∀ n : ℕ, N_res ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖atkinsonShiftedQuadraticZeroModelResidual n j‖
+            ≤ C_res * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+            ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+              Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                blockJacobian (k - j) p) - atkinsonFourierCorrectedCompleteBlockTargetK k j)‖
+        ≤ C_err * (atkinsonModeWeight k / j) := by
+  exact
+    atkinson_blockMode_stationaryPhase_of_zero_model_and_fourierCorrectedTarget
+      (atkinson_shifted_quadratic_zeroModel_bound_of_residual_bound hresidual)
 
 /-- Complete-block-target stationary-phase handoff after discharging the
 shifted quadratic-kernel estimates. This is the narrowed interface directly
