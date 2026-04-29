@@ -1442,3 +1442,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 29 Normalized Fixed-Shift Correction Atom
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  pointwise fixed-shift correction majorant
+  `∀ j ≥ 1, ∃ B_j > 0, ∀ n, ‖atkinsonResonantShiftedCorrectionTerm n j‖`
+  `≤ B_j * atkinsonModeWeight (n + j)`.
+- Facts banked:
+  `atkinsonNormalizedShiftedCorrectionTerm` factors the weight out of the raw
+  correction term, and
+  `atkinsonResonantShiftedCorrectionTerm_eq_modeWeight_mul_normalized`
+  proves
+  `correction n j = atkinsonModeWeight (n+j) * normalizedCorrection n j`.
+  `atkinson_pointwiseFixedShiftCorrection_of_normalized_bound` reduces the
+  pointwise majorant to the fixed-shift oscillatory atom
+  `∀ j ≥ 1, ∃ D_j > 0, ∀ n, ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_j`.
+  The correction and inverse provider wrappers
+  `atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_normalized_fixedShift_correction`
+  and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_normalized_fixedShift_correction`
+  wire this atom into the existing public path together with the shifted
+  stationary-phase target remainder.
+- Failed routes / guardrails:
+  the direct absolute estimate using
+  `atkinsonShiftedSinglePrimitive_norm_bound` loses a factor `(n+j+1)/j`,
+  giving only `O(sqrt(n+j)/j)` after the mode weight, so it cannot prove the
+  pointwise `modeWeight (n+j)` majorant. No direct Abel shortcut, no
+  phase-weighted-to-unweighted division, no circular provider instance, no
+  zero-model/mass-coefficient/Fourier-corrected/compensated-carrier route, no
+  diffuse deweighting, and no axiom/sorry/weakening were used.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  algebra normalization in
+  `atkinsonResonantShiftedCorrectionTerm_eq_modeWeight_mul_normalized`, after
+  `intervalIntegral.integral_const_mul`; the intended identity is just the
+  definition of `atkinsonWeightedResonantBlockMode`.
+- Remaining goal shape:
+  prove the shifted-interval stationary-phase target remainder, and prove the
+  normalized fixed-shift correction atom
+  `∀ j ≥ 1, ∃ D_j > 0, ∀ n, ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_j`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

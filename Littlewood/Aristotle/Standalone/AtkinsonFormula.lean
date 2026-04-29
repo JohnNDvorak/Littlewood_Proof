@@ -1340,6 +1340,24 @@ private noncomputable def atkinsonResonantShiftedCorrectionTerm (n j : ℕ) : �
       atkinsonWeightedResonantBlockMode (n + j) u) *
         atkinsonShiftedSinglePrimitive (n + j) j u
 
+private noncomputable def atkinsonNormalizedShiftedCorrectionTerm (n j : ℕ) : ℂ :=
+  ∫ u in (0 : ℝ)..1,
+    (Complex.I * ((Aristotle.StationaryPhaseMainMode.blockOmega (n + j) u : ℝ) : ℂ) *
+      Aristotle.StationaryPhaseMainMode.blockMode (n + j) u) *
+        atkinsonShiftedSinglePrimitive (n + j) j u
+
+private theorem atkinsonResonantShiftedCorrectionTerm_eq_modeWeight_mul_normalized
+    (n j : ℕ) :
+    atkinsonResonantShiftedCorrectionTerm n j =
+      (((atkinsonModeWeight (n + j) : ℝ) : ℂ)) *
+        atkinsonNormalizedShiftedCorrectionTerm n j := by
+  unfold atkinsonResonantShiftedCorrectionTerm atkinsonNormalizedShiftedCorrectionTerm
+  rw [← intervalIntegral.integral_const_mul]
+  refine intervalIntegral.integral_congr ?_
+  intro u hu
+  unfold atkinsonWeightedResonantBlockMode
+  ring
+
 private theorem atkinsonResonantShiftedCell_eq_boundary_minus_correction (n j : ℕ) (hj : 1 ≤ j) :
     ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u
       =
@@ -19981,6 +19999,38 @@ private theorem atkinson_absoluteFixedShiftCorrectionPrefix_of_pointwise_modeWei
           norm_num [Nat.cast_add, add_assoc, add_left_comm, add_comm]
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- The pointwise fixed-shift correction majorant is reduced to the genuinely
+oscillatory normalized correction integral. A direct absolute bound for
+`atkinsonShiftedSinglePrimitive` loses a factor of `(n+j) / j`; the remaining
+atom must prove cancellation in this normalized integral instead. -/
+private theorem atkinson_pointwiseFixedShiftCorrection_of_normalized_bound
+    (hnorm :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ D_corr > 0, ∀ n : ℕ,
+          ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_corr) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ B_corr > 0, ∀ n : ℕ,
+        ‖atkinsonResonantShiftedCorrectionTerm n j‖
+          ≤ B_corr * atkinsonModeWeight (n + j) := by
+  intro j hj
+  obtain ⟨D_corr, hD_corr, hnorm'⟩ := hnorm j hj
+  refine ⟨D_corr, hD_corr, ?_⟩
+  intro n
+  rw [atkinsonResonantShiftedCorrectionTerm_eq_modeWeight_mul_normalized n j]
+  calc
+    ‖(((atkinsonModeWeight (n + j) : ℝ) : ℂ)) *
+        atkinsonNormalizedShiftedCorrectionTerm n j‖
+        = atkinsonModeWeight (n + j) *
+            ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ := by
+          rw [norm_mul, Complex.norm_real, Real.norm_eq_abs,
+            abs_of_nonneg (atkinsonModeWeight_nonneg (n + j))]
+    _ ≤ atkinsonModeWeight (n + j) * D_corr := by
+          exact mul_le_mul_of_nonneg_left (hnorm' n)
+            (atkinsonModeWeight_nonneg (n + j))
+    _ = D_corr * atkinsonModeWeight (n + j) := by
+          ring
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Correction-prefix provider package from the stationary-phase remainder and
 the scale-safe absolute fixed-shift correction-prefix atom. -/
 private theorem
@@ -20026,6 +20076,28 @@ private theorem
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_absolute_fixedShift_correction
       hmode
       (atkinson_absoluteFixedShiftCorrectionPrefix_of_pointwise_modeWeight hpoint)
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Correction-prefix provider package from the stationary-phase remainder and
+the normalized fixed-shift correction integral atom. -/
+private theorem
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_normalized_fixedShift_correction
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hnorm :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ D_corr > 0, ∀ n : ℕ,
+          ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_corr) :
+    AtkinsonShiftedCorrectionPrefixBoundHyp := by
+  exact
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_pointwise_fixedShift_correction
+      hmode
+      (atkinson_pointwiseFixedShiftCorrection_of_normalized_bound hnorm)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
@@ -20643,6 +20715,28 @@ private theorem
   letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
     atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_pointwise_fixedShift_correction
       hmode hpoint
+  exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Public inverse-phase provider package from the stationary-phase remainder
+and the normalized fixed-shift correction integral atom. -/
+private theorem
+    atkinson_shiftedInversePhaseCellPrefixBound_of_blockMode_stationaryPhase_and_normalized_fixedShift_correction
+    (hmode :
+      ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+        ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                  blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+          ≤ C_err * (atkinsonModeWeight k / j))
+    (hnorm :
+      ∀ j : ℕ, 1 ≤ j →
+        ∃ D_corr > 0, ∀ n : ℕ,
+          ‖atkinsonNormalizedShiftedCorrectionTerm n j‖ ≤ D_corr) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  letI : AtkinsonShiftedCorrectionPrefixBoundHyp :=
+    atkinson_shiftedCorrectionPrefixBound_of_blockMode_stationaryPhase_and_normalized_fixedShift_correction
+      hmode hnorm
   exact atkinson_shiftedInversePhaseCellPrefixBound_of_shiftedCorrectionPrefix
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
