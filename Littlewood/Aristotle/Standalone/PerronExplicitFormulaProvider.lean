@@ -4391,6 +4391,21 @@ theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_pairedGrow
       (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε)]
   exact hAnti.trans hPair
 
+/-- The paired phase-radius growth leaf closes both one-sided canonical
+phase-radius residuals.
+
+This is the exact current reduction for the target and anti-target chosen-radius
+residuals: both one-sided bounds are just projections of the same same-height
+paired max-radius estimate. -/
+theorem targetAntiFiniteZeroPhaseRadiusHalfBudgetCanonicalResiduals_of_pairedGrowth_hyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual ∧
+      AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual :=
+  ⟨targetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_pairedGrowth_hyp,
+    antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_pairedGrowth_hyp⟩
+
 /-- The two exact one-sided chosen-radius residuals recombine into the paired
 same-height phase-radius growth class.
 
@@ -6450,6 +6465,35 @@ theorem exactSeedAboveThreshold_perron_of_canonicalPerronAndPhaseRadiusResiduals
   exact
     exactSeedAboveThreshold_perron_of_canonicalPerronAndRelationCompatibleRadiusResiduals_hyp
       hPerron hTargetRelation hAntiRelation
+
+/-- Exact-seed endpoint from the Perron canonical residual and the paired
+same-height phase-radius growth leaf.
+
+This packages the current reduction one step below the one-sided phase-radius
+residuals: under the relation-compatible finite-zero route, the two residuals
+are obtained by projecting the paired max-radius growth estimate. -/
+theorem exactSeedAboveThreshold_perron_of_canonicalPerronAndPairedPhaseRadiusGrowth_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp]
+    (hPerron :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : TargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelationCompatibleHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelationCompatible_of_paired_hyp
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_relationCompatibleKronecker_hyp
+  rcases targetAntiFiniteZeroPhaseRadiusHalfBudgetCanonicalResiduals_of_pairedGrowth_hyp
+    with ⟨hTarget, hAnti⟩
+  exact
+    exactSeedAboveThreshold_perron_of_canonicalPerronAndPhaseRadiusResiduals_hyp
+      hPerron hTarget hAnti
 
 /-- Paired finite-zero relative density plus the two same-height half-budget
 inputs packages both Perron-only exact-seed classes. -/
