@@ -2750,3 +2750,46 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   local one-variable formal power-series division theorem specialized to the
   numerator and denominator dslope series and its coefficient convolution
   through order three.
+
+### 2026-04-29 Round 60: quotient convolution analytic split
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalDslopeQuotientConvolutionProp`.
+- Banked inputs:
+  - Any `HasFPowerSeriesAt` witness for the denominator dslope gives the
+    denominator value at zero from its scalar coefficient `B 0`.
+  - If `B 0 ≠ 0`, analytic division produces a local quotient power series.
+  - One-dimensional real formal multilinear series can be recast as scalar
+    `FormalMultilinearSeries.ofScalars` using their `coeff` sequence.
+- New source surface:
+  - `StandardGabckeQuarterLocalDslopeQuotientProductCoefficientProp`: the exact
+    finite Taylor coefficient identity for the local equality
+    numerator dslope = denominator dslope * quotient dslope through order three.
+- Proof facts banked:
+  - `formalMultilinearSeries_eq_ofScalars_coeff`, local helper converting an
+    arbitrary real one-variable formal multilinear series to scalar
+    `ofScalars` form.
+  - `standardGabckeQuarterLocalDslopeQuotientConvolutionProp_of_productCoefficient`,
+    proving the analytic division/nonzero-neighborhood part and reducing
+    `StandardGabckeQuarterLocalDslopeQuotientConvolutionProp` to
+    `StandardGabckeQuarterLocalDslopeQuotientProductCoefficientProp`.
+- Failed routes:
+  - Direct Mathlib extraction of the product convolution coefficients was not
+    found in the imported API.
+  - No shortcut provider, broad analytic axiom, or global quotient regularity
+    assumption was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Started from coordinator baseline `8f8c287`.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+  - `git diff --check`: passed.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalDslopeQuotientProductCoefficientProp`, the
+  finite local Taylor coefficient identity that converts the product equality
+  of scalar power series into the convolution recurrence for coefficients
+  `0,1,2,3`.
