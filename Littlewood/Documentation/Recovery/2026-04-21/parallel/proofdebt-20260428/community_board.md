@@ -1760,3 +1760,38 @@ Timestamp: 2026-04-28 22:56 CDT.
     feeding the new corrected Perron-only route.
   - RS/Gabcke: prove `StandardGabckeQuarterLocalCubicTaylorCoefficientProp`
     by expanding the filled local quotient at `x = 0`.
+
+## Overnight 2026-04-29 Forty-Second Pass Status
+
+- Perron/B5a lane is validated and pushed through `262ddcd`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Add Perron linear-window small-T surface`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the honest linear-window estimate now has its own separate
+    theorem surface, without creating an automatic instance for the legacy
+    `SmallTPerronBoundHyp` and without asserting the false full-domain
+    absorption.
+  - Remaining Perron choice: either prove a sharper pure-log cutoff/cancellation
+    route, prove valid absorption under a stronger regime, or route downstream
+    consumers through the new linear-window surface.
+- Pi/Phase lane is validated and pushed through `673bb2b`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Reduce pi canonical residuals to growth`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute
+      Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the canonical Perron/chosen-radius residual route is reduced to
+    the two growth hypotheses
+    `PerronThresholdTowerExpHalfBudgetGrowthHyp` and
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`.
+- Current live atoms:
+  - Atkinson: shifted stationary-phase target remainder; carrier FTC
+    decomposition; endpoint boundary bound; Jacobian-integral bound.
+  - Perron/B5a: choose and close the bridge from linear-window small-T to the
+    actual public/downstream small-T requirement.
+  - Pi/Phase: prove `PerronThresholdTowerExpHalfBudgetGrowthHyp` and
+    `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`.
+  - RS/Gabcke: prove `StandardGabckeQuarterLocalCubicTaylorCoefficientProp`
+    by expanding the filled local quotient at `x = 0`.
