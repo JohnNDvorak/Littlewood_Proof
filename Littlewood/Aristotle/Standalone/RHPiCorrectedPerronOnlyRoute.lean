@@ -411,6 +411,54 @@ theorem rhPiWitnessData_of_correctedPerronOnlyCanonicalRadiusRoute
     antiTargetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
   exact rhPiWitnessData_of_correctedPerronOnlyCanonicalRadiusMajorantRoute
 
+/-- Corrected Perron-only phase-coupling from the exact residual predicates
+for the canonical Perron budget and the actual target/anti chosen radii. -/
+theorem correctedPhaseCoupling_of_correctedPerronOnlyCanonicalResidualRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    (hPerron :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual)
+    (hTarget :
+      TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual)
+    (hAnti :
+      AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
+    TargetTowerPhaseCouplingFamilyHyp_corrected ∧
+      AntiTargetTowerPhaseCouplingFamilyHyp_corrected := by
+  letI : TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetAntiDensity_of_relationCompatibleKroneckerAndCompatibility
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp :=
+    perronThresholdTowerExpHalfBudgetCanonicalMajorant_of_residual hPerron
+  letI : TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp :=
+    targetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_residual hTarget
+  letI : AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp :=
+    antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_residual hAnti
+  exact correctedPhaseCoupling_of_correctedPerronOnlyHalfBudgetRoute
+
+/-- Corrected Perron-only RH-`pi` endpoint from the exact residual predicates
+for the canonical Perron budget and the actual target/anti chosen radii. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyCanonicalResidualRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    (hPerron :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual)
+    (hTarget :
+      TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual)
+    (hAnti :
+      AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
+    RhPiWitnessData := by
+  rcases correctedPhaseCoupling_of_correctedPerronOnlyCanonicalResidualRoute
+      hPerron hTarget hAnti with
+    ⟨hTargetPhase, hAntiTargetPhase⟩
+  letI : TargetTowerPhaseCouplingFamilyHyp_corrected := hTargetPhase
+  letI : AntiTargetTowerPhaseCouplingFamilyHyp_corrected := hAntiTargetPhase
+  exact rhPiWitnessData_of_correctedHyp
+
 /-- Corrected Perron-only route to the concrete RH 7a/7c pair. -/
 theorem rh_pi_7a_7c_pair_of_correctedPerronOnlyRoute
     [PerronSqrtErrorEventuallyAtHeightHyp]

@@ -1990,3 +1990,43 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
 - Smallest next theorem:
   - Return to the narrower target/anti realized-radius route and attack one of the residual canonical leaves directly, preferably `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual` if the Perron selected-height issue can be avoided, otherwise the target/anti chosen-radius residuals.
+
+### 2026-04-29 Round 36: Canonical Residual Route Packaging
+
+- Classification: `CONDITIONAL_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - Public/provider packaging below the target/anti realized-radius route after the arbitrary-radius budget refutation.
+- Facts banked:
+  - Added `correctedPhaseCoupling_of_correctedPerronOnlyCanonicalResidualRoute`.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyCanonicalResidualRoute`.
+  - These endpoints consume the exact residual predicates:
+    `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`,
+    `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`, and
+    `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`.
+  - The route locally packages the residuals into the existing canonical classes using `perronThresholdTowerExpHalfBudgetCanonicalMajorant_of_residual`, `targetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_residual`, and `antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_residual`.
+- What changed:
+  - The public corrected Perron-only endpoint now has a direct theorem-shaped route from the actual target/anti chosen-radius residuals, not the false arbitrary external-radius budget.
+  - The arbitrary-radius `PerronThresholdTowerWideLogBudgetHyp` remains demoted after Round 35; it is not used by the new route.
+- Remaining goal shape:
+  - Prove the three residual predicates directly:
+    1. `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`;
+    2. `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`;
+    3. `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`.
+  - The target/anti residuals must bound the actual `Classical.choose` radii, not a separately chosen Kronecker radius.
+- Failed/circular route:
+  - Did not add provider instances for residuals or canonical classes.
+  - Did not revive arbitrary supplied radii, arbitrary-target Kronecker, or the false truncated-π route.
+  - Did not assert cross-height `perronThreshold` monotonicity or selected-threshold transfer.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, independent target/anti heights, reverse-comparison instance, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build, public import probe, or other validation command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Attack `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual` only if the same-height selected threshold can be controlled without the already-demoted transfer; otherwise attack `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual` or `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual` by proving bounds for the actual chosen finite-zero phase radii.
