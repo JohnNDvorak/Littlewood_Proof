@@ -2568,6 +2568,24 @@ class FixedHeightPerronErrorPhaseWideWindowHyp
         Real.exp U ≤ Real.exp (Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)))
 
+/-- Same-height threshold windows supply fixed-height Perron-error windows.
+
+This adapter only uses `perronThreshold_spec` at the selected height `T`; it
+does not compare thresholds at different heights or introduce a provider
+instance. -/
+theorem fixedHeightPerronErrorPhaseWideWindow_of_perronThresholdWideWindow_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerPhaseWideWindowHyp] :
+    FixedHeightPerronErrorPhaseWideWindowHyp where
+  witness := by
+    intro hRH X radius hRadius
+    rcases PerronThresholdTowerPhaseWideWindowHyp.witness
+        hRH X radius hRadius with
+      ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, hThreshold, hWide, hUcap⟩
+    refine ⟨T, ε, L, U, hT4, hεpos, hεlt, hX, ?_, hWide, hUcap⟩
+    intro x hx
+    exact perronThreshold_spec hRH T x (le_trans hThreshold hx)
+
 /-- Same-height wide Perron-threshold/tower domination boundary.
 
 This is the exact tower-growth leaf below

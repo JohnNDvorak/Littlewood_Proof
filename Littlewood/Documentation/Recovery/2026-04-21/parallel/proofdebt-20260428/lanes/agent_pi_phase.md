@@ -1852,3 +1852,36 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
 - Smallest next theorem:
   - Prove or reduce `FixedHeightPerronErrorPhaseWideWindowHyp` from fixed-height Perron eventuality and a same-height tower/window cofinality theorem for the supplied radius function.
+
+### 2026-04-29 Round 32: Same-Height Threshold Window Adapter
+
+- Classification: `CONDITIONAL_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `FixedHeightPerronErrorPhaseWideWindowHyp`.
+- Facts banked:
+  - Added `fixedHeightPerronErrorPhaseWideWindow_of_perronThresholdWideWindow_hyp`.
+  - The adapter proves the fixed-height Perron-error wide window from `PerronThresholdTowerPhaseWideWindowHyp` by applying `perronThreshold_spec` only at the selected same height `T`.
+  - Added corrected-route endpoints `correctedPhaseCoupling_of_correctedPerronOnlyTargetAntiThresholdWindowRoute` and `rhPiWitnessData_of_correctedPerronOnlyTargetAntiThresholdWindowRoute`, using the target/anti-specific fixed-height route with a local fixed-height-window value.
+- What changed:
+  - `FixedHeightPerronErrorPhaseWideWindowHyp` is no longer an isolated payload when a same-height Perron-threshold wide window is available.
+  - The target/anti-specific corrected route can be validated directly from relation-compatible finite-zero data plus `PerronThresholdTowerPhaseWideWindowHyp`.
+- Remaining goal shape:
+  - The analytic tower source is still `PerronThresholdTowerPhaseWideWindowHyp`, equivalently its same-height domination/growth leaves. This round does not prove tower cofinality against a height-dependent threshold; it only removes the extra fixed-height-error wrapper above the already-selected same-height threshold window.
+- Failed/circular route:
+  - Did not add a global provider instance for `FixedHeightPerronErrorPhaseWideWindowHyp`.
+  - Did not compare `perronThreshold hRH T` across two heights.
+  - Did not use the arbitrary-target fixed-height route as the preferred public endpoint.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh` in the new route.
+  - No axioms/sorries, statement weakening, independent target/anti heights, reverse-comparison instance, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build, public import probe, or other validation command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove or further reduce `PerronThresholdTowerPhaseWideWindowHyp`, preferably through the existing same-height `PerronThresholdTowerWideDominationHyp`/log-budget leaves without cross-height threshold monotonicity.
