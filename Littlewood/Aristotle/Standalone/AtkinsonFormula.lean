@@ -1603,6 +1603,10 @@ private noncomputable def atkinsonLogGammaStirlingTerm (t : ℝ) : ℂ :=
   let s : ℂ := 1 / 4 + Complex.I * (t / 2)
   (s - 1 / 2) * Complex.log s - s + 1 / 2 * Complex.log (2 * Real.pi)
 
+private noncomputable def atkinsonGammaStirlingMultiplier (t : ℝ) : ℂ :=
+  Complex.Gamma (1 / 4 + Complex.I * (t / 2)) /
+    Complex.exp (atkinsonLogGammaStirlingTerm t)
+
 private noncomputable def atkinsonLogGammaStirlingApprox (t : ℝ) : ℝ :=
   (t / 2) * Real.log (t / 2) - t / 2 - Real.pi / 8
 
@@ -1716,6 +1720,30 @@ private theorem atkinson_logGammaStirling_of_log_to_stirlingTerm_and_stirlingTer
           atkinsonLogGammaStirlingApprox t| ≤ CΓ / t :=
   atkinson_logGammaStirling_of_term_bounds hlog
     (atkinson_logGammaStirlingTerm_im_bound_of_isBigO hterm)
+
+/-- The remaining branch-sensitive log-to-Stirling comparison is reduced to
+the branch identity for the Stirling multiplier and a small imaginary-log
+bound for that multiplier. -/
+private theorem atkinson_logGamma_to_stirlingTerm_of_multiplier_branch_bound
+    (hbranch :
+      ∃ Tbranch : ℝ, ∀ t : ℝ, Tbranch ≤ t →
+        (Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+            (atkinsonLogGammaStirlingTerm t).im =
+          (Complex.log (atkinsonGammaStirlingMultiplier t)).im)
+    (hmult :
+      ∃ Cmult > 0, ∃ Tmult : ℝ, ∀ t : ℝ, Tmult ≤ t →
+        |(Complex.log (atkinsonGammaStirlingMultiplier t)).im| ≤ Cmult / t) :
+    ∃ Clog > 0, ∃ Tlog : ℝ, ∀ t : ℝ, Tlog ≤ t →
+      |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+          (atkinsonLogGammaStirlingTerm t).im| ≤ Clog / t := by
+  obtain ⟨Tbranch, hbranch'⟩ := hbranch
+  obtain ⟨Cmult, hCmult, Tmult, hmult'⟩ := hmult
+  refine ⟨Cmult, hCmult, max Tbranch Tmult, ?_⟩
+  intro t ht
+  have htbranch : Tbranch ≤ t := le_trans (le_max_left _ _) ht
+  have htmult : Tmult ≤ t := le_trans (le_max_right _ _) ht
+  rw [hbranch' t htbranch]
+  exact hmult' t htmult
 
 /-- The continuous Hardy-theta Stirling atom is exactly the corresponding
 uniform Stirling remainder for the imaginary part of `log Γ(1/4 + it/2)`,
@@ -21655,6 +21683,32 @@ private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_log_to
   refine ⟨CΓ, hCΓ, TΓ, ?_⟩
   intro t ht
   simpa [atkinsonLogGammaStirlingApprox] using hΓ t ht
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+/-- Endpoint phase package after reducing the branch-sensitive log-to-Stirling
+comparison to a Stirling-multiplier branch identity and multiplier bound. -/
+private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_multiplier_branch_bound
+    (hbranch :
+      ∃ Tbranch : ℝ, ∀ t : ℝ, Tbranch ≤ t →
+        (Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+            (atkinsonLogGammaStirlingTerm t).im =
+          (Complex.log (atkinsonGammaStirlingMultiplier t)).im)
+    (hmult :
+      ∃ Cmult > 0, ∃ Tmult : ℝ, ∀ t : ℝ, Tmult ≤ t →
+        |(Complex.log (atkinsonGammaStirlingMultiplier t)).im| ≤ Cmult / t)
+    (hterm :
+      Asymptotics.IsBigO Filter.atTop
+        (fun t : ℝ =>
+          (atkinsonLogGammaStirlingTerm t).im - atkinsonLogGammaStirlingApprox t)
+        (fun t : ℝ => 1 / t)) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_res > 0, ∃ N_res : ℕ, ∀ n : ℕ, N_res ≤ n →
+        |atkinsonEndpointGapCorrectedPhaseError n j|
+          ≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) :=
+  atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_log_to_stirlingTerm
+    (atkinson_logGamma_to_stirlingTerm_of_multiplier_branch_bound hbranch hmult)
+    hterm
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 /-- Carrier cancellation after reducing the endpoint boundary to the shifted
