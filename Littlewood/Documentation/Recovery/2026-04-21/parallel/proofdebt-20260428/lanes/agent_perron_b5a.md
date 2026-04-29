@@ -2038,3 +2038,47 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `∃ Ctail > 0, ∀ x T, 16 <= x -> 2 <= T -> T <= 16 ->
     |perronVerticalContourRemainderRe x T| /
       (Real.sqrt x * (Real.log T)^2 / Real.sqrt T) <= Ctail`.
+
+### 2026-04-29 Round 40 - Compact Slab Bounded Image
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the cutoff-`16` compact slab normalized contour-defect estimate.
+- Code facts banked:
+  named the normalized defect as
+  `perronVerticalContourRemainderNormalized`.  Added
+  `small_T_concrete_contour_remainder_slab16_from_bddAbove_image`, proving
+  that boundedness above of the normalized defect image over the closed
+  rectangle `2 <= x <= 16`, `2 <= T <= 16` yields the required slab estimate.
+  Added
+  `small_T_concrete_contour_remainder_normalized_sup_from_bddAbove_slab16_and_tail16`
+  and
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder_bddAbove_slab16_and_tail16`
+  to wire this compact-slab atom into the existing tail split and
+  `SmallTPerronLinearWindowBoundHyp`.
+- Scale check:
+  this is only a bounded-slab statement.  No compactness is claimed for the
+  unbounded `x >= 2` domain; the `16 <= x` tail atom remains separate.
+- Failed/demoted routes:
+  did not assert a full-domain absorption of `(x / T) * (log x)^2`, did not
+  use a constant off-boundary supremum, and did not introduce a legacy
+  `SmallTPerronBoundHyp` instance.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock`.  First attempt failed because the
+  local `BddAbove` witness is an `upperBounds` predicate with implicit set
+  element argument; corrected `hM _ himage` to `hM himage`.  Second focused
+  build passed.
+- Smallest next theorem:
+  prove the compactness/continuity input
+  `BddAbove (((fun p : ℝ × ℝ =>
+      perronVerticalContourRemainderNormalized p.1 p.2) '')
+    {p : ℝ × ℝ | 2 <= p.1 /\ p.1 <= 16 /\ 2 <= p.2 /\ p.2 <= 16})`,
+  or prove the separate asymptotic tail atom on `16 <= x`.
