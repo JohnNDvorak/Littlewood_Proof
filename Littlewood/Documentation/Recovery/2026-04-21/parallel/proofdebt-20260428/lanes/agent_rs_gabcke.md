@@ -2254,3 +2254,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `dslope standardGabckeQuarterLocalSineDenominator 0`, or split it into the
   Mathlib sine-composition power series plus the `dslope`/`fslope` coefficient
   transfer at index `2`.
+
+### 2026-04-29 Round 47: denominator fslope coefficient transfer
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp`.
+- Banked inputs:
+  - The relevant smaller source is the raw cubic coefficient of
+    `standardGabckeQuarterLocalSineDenominator = sin (2*pi*w)`.
+  - Mathlib's `HasFPowerSeriesAt.has_fpower_series_dslope_fslope` transfers a
+    raw sine power series to the `dslope` power series.
+  - The formal `fslope` operation shifts scalar coefficients down by one:
+    the raw coefficient at index `3` becomes the denominator dslope coefficient
+    at index `2`.
+- Proof facts banked:
+  - Added
+    `StandardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp`, the
+    exact sine-composition coefficient source
+    `A 3 = -(4 * Real.pi ^ 3 / 3)`.
+  - Proved the local scalar transfer helper
+    `standardGabckeQuarterLocalDenominatorDslope_fslope_ofScalars`.
+  - Proved
+    `standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_of_rawSineCubicCoefficient`,
+    reducing the denominator dslope quadratic coefficient to that raw cubic
+    sine coefficient without using the all-order denominator sine-series prop.
+- Failed routes:
+  - I did not reduce back to
+    `StandardGabckeQuarterLocalDenominatorDslopeSineSeriesProp`.
+  - I did not assert global quotient regularity or introduce a provider.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to coordinator baseline `844de0e` before editing.
+  - `git diff --check`: passed before the ledger append.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp`,
+  preferably by a local sine-composition power-series coefficient lemma for
+  `sin ((2 * Real.pi) * w)` at index `3`.

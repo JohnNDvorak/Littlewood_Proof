@@ -980,6 +980,15 @@ def StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp : Prop :
       (FormalMultilinearSeries.ofScalars ℝ B) 0 ∧
       B 2 = -(4 * Real.pi ^ 3 / 3)
 
+/-- Exact cubic coefficient source for the raw denominator sine
+`sin (2*pi*w)`. The `dslope`/`fslope` transfer shifts this cubic coefficient
+to the quadratic coefficient of `sin (2*pi*w) / w`. -/
+def StandardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp : Prop :=
+  ∃ A : ℕ → ℝ,
+    HasFPowerSeriesAt standardGabckeQuarterLocalSineDenominator
+      (FormalMultilinearSeries.ofScalars ℝ A) 0 ∧
+      A 3 = -(4 * Real.pi ^ 3 / 3)
+
 /-- Third derivative value for the denominator dslope at the removable point. -/
 def StandardGabckeQuarterLocalDenominatorDslopeThirdDerivativeProp : Prop :=
   iteratedDeriv 3 (dslope standardGabckeQuarterLocalSineDenominator 0) 0 = 0
@@ -1251,6 +1260,31 @@ theorem standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_of_s
   refine ⟨standardGabckeQuarterLocalDenominatorDslopeCoeff, h_series, ?_⟩
   norm_num [standardGabckeQuarterLocalDenominatorDslopeCoeff]
   ring
+
+/-- For one-variable scalar power series, `fslope` shifts the scalar
+coefficients down by one. This is the local coefficient-transfer step from the
+raw sine series to the denominator dslope series. -/
+private theorem standardGabckeQuarterLocalDenominatorDslope_fslope_ofScalars
+    (A : ℕ → ℝ) :
+    (FormalMultilinearSeries.ofScalars ℝ A).fslope =
+      FormalMultilinearSeries.ofScalars ℝ (fun n : ℕ => A (n + 1)) := by
+  simp_rw [FormalMultilinearSeries.ext_iff, FormalMultilinearSeries.fslope,
+    FormalMultilinearSeries.ofScalars, ContinuousMultilinearMap.ext_iff,
+    ContinuousMultilinearMap.curryLeft_apply, ContinuousMultilinearMap.smul_apply]
+  intro n v
+  simp [ContinuousMultilinearMap.mkPiAlgebraFin_apply]
+
+/-- A raw cubic coefficient for `sin (2*pi*w)` gives the quadratic coefficient
+of the removable quotient `sin (2*pi*w) / w` via the Mathlib `dslope`/`fslope`
+transfer. -/
+theorem standardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp_of_rawSineCubicCoefficient
+    (h_raw : StandardGabckeQuarterLocalDenominatorRawSineCubicCoefficientProp) :
+    StandardGabckeQuarterLocalDenominatorDslopeQuadraticCoefficientProp := by
+  rcases h_raw with ⟨A, hA, hA3⟩
+  refine ⟨fun n : ℕ => A (n + 1), ?_, ?_⟩
+  · rw [← standardGabckeQuarterLocalDenominatorDslope_fslope_ofScalars A]
+    exact hA.has_fpower_series_dslope_fslope
+  · simpa using hA3
 
 /-- The finite denominator coefficient data follows from the low-order
 derivative values of the removable sine quotient, using Mathlib's Taylor
