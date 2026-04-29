@@ -308,6 +308,23 @@ coefficient. -/
 def standardGabckeRawPsiThirdDerivative (p : ℝ) : ℝ :=
   deriv (deriv (deriv standardGabckeRawPsi)) p
 
+/-- Candidate smooth-removable standard quotient: away from the denominator
+zeros it is the raw quotient, while the two removable values are filled by
+the common l'Hopital value `1/2`. The remaining bridge atoms must still prove
+that this is the actual smooth Gabcke/Tabelle normalization at derivative
+level; this definition does not assert regularity of the raw quotient. -/
+def standardGabckeRemovablePsiCandidate (p : ℝ) : ℝ :=
+  if p = (1 / 4 : ℝ) ∨ p = (3 / 4 : ℝ) then
+    1 / 2
+  else
+    standardGabckeRawPsi p
+
+/-- The instantiated smooth-removable source derivative candidate for the
+two denominator-zero point atoms. This is intentionally not definitionally the
+raw totalized derivative. -/
+def standardGabckeRemovableSourceThirdDerivative (p : ℝ) : ℝ :=
+  deriv (deriv (deriv standardGabckeRemovablePsiCandidate)) p
+
 /-- Smaller Tabelle-1 source atom: bound the unscaled third derivative before
 dividing by the explicit positive normalizing factor `96*pi^2`. -/
 def StandardGabckeRawPsiThirdDerivativeBoundProp : Prop :=
@@ -513,6 +530,24 @@ theorem standardGabckeRemovableSourceThreeQuarterThirdDerivativeValueProp_self
     (D : ℝ → ℝ) :
     StandardGabckeRemovableSourceThreeQuarterThirdDerivativeValueProp D (D (3 / 4)) :=
   rfl
+
+/-- The quarter source-value atom for the instantiated removable candidate,
+with the constant fixed to the candidate's actual source value. -/
+theorem standardGabckeRemovableSourceQuarterThirdDerivativeValueProp_candidate :
+    StandardGabckeRemovableSourceQuarterThirdDerivativeValueProp
+      standardGabckeRemovableSourceThirdDerivative
+      (standardGabckeRemovableSourceThirdDerivative (1 / 4)) :=
+  standardGabckeRemovableSourceQuarterThirdDerivativeValueProp_self
+    standardGabckeRemovableSourceThirdDerivative
+
+/-- The three-quarter source-value atom for the instantiated removable
+candidate, with the constant fixed to the candidate's actual source value. -/
+theorem standardGabckeRemovableSourceThreeQuarterThirdDerivativeValueProp_candidate :
+    StandardGabckeRemovableSourceThreeQuarterThirdDerivativeValueProp
+      standardGabckeRemovableSourceThirdDerivative
+      (standardGabckeRemovableSourceThirdDerivative (3 / 4)) :=
+  standardGabckeRemovableSourceThreeQuarterThirdDerivativeValueProp_self
+    standardGabckeRemovableSourceThirdDerivative
 
 /-- Tabelle/source values for the smooth removable third-derivative payload at
 the two denominator-zero points. -/
@@ -884,6 +919,27 @@ theorem standardGabckeTargets_of_contourTaylor_regular_and_removableSourcePointB
     (standardGabckeRemovableSourceThreeQuarterThirdDerivativeValueProp_self D)
     (show StandardGabckeRawPsiRemovablePointValueBoundsProp
         (D (1 / 4)) (D (3 / 4)) from h_bounds)
+
+/-- Direct route specialized to the instantiated removable quotient candidate.
+The remaining source inputs are the two raw/candidate derivative bridge
+equalities and the Tabelle bound for the candidate's two point values. -/
+theorem standardGabckeTargets_of_contourTaylor_regular_and_removableCandidatePointBounds
+    (h_id : StandardGabckeContourTaylorFirstCoefficientIdentityProp)
+    (h_regular : StandardGabckeRawPsiRegularThirdDerivativeBoundProp)
+    (h_bridge_quarter :
+      StandardGabckeRawPsiQuarterRemovableSourceBridgeProp
+        standardGabckeRemovableSourceThirdDerivative)
+    (h_bridge_threeQuarter :
+      StandardGabckeRawPsiThreeQuarterRemovableSourceBridgeProp
+        standardGabckeRemovableSourceThirdDerivative)
+    (h_bounds :
+      StandardGabckeRemovableSourcePointBoundsProp
+        standardGabckeRemovableSourceThirdDerivative) :
+    StandardGabckeStationaryPhaseIdentityProp
+        standardGabckePhaseNormalizedLead standardGabckeRawFirstCoefficient ∧
+      StandardGabckeCoefficientBoundProp standardGabckeRawFirstCoefficient :=
+  standardGabckeTargets_of_contourTaylor_regular_and_removableSourcePointBounds
+    h_id h_regular h_bridge_quarter h_bridge_threeQuarter h_bounds
 
 /-- A standard-normalized stationary-phase identity becomes the local
 coefficient identity once the leading coefficient normalization has been

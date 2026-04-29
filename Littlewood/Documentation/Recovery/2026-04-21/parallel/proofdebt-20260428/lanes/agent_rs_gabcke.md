@@ -945,3 +945,61 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `StandardGabckeRemovableSourceThreeQuarterThirdDerivativeBoundProp D`.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 19: removable candidate source derivative instantiated
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  instantiate the smooth removable-source derivative `D` and close one of the
+  point-value atoms without using the raw totalized derivative as `D`.
+- Banked inputs:
+  - Round 18 closed the generic source-value atoms once the constants are
+    chosen as actual source values.
+  - The direct route through
+    `standardGabckeTargets_of_contourTaylor_regular_and_removableSourceBridge`
+    remains preserved.
+- Proof facts banked:
+  - Added `standardGabckeRemovablePsiCandidate`, the removable quotient
+    candidate that agrees with `standardGabckeRawPsi` away from `1/4`, `3/4`
+    and fills both removable quotient values with the common l'Hopital value
+    `1/2`.
+  - Added `standardGabckeRemovableSourceThirdDerivative`, the third derivative
+    of that removable quotient candidate. This is the instantiated `D`; it is
+    deliberately not definitionally `standardGabckeRawPsiThirdDerivative`.
+  - Proved
+    `standardGabckeRemovableSourceQuarterThirdDerivativeValueProp_candidate`,
+    closing the quarter source-value atom for the instantiated `D` with
+    constant
+    `standardGabckeRemovableSourceThirdDerivative (1/4)`.
+  - Proved
+    `standardGabckeRemovableSourceThreeQuarterThirdDerivativeValueProp_candidate`,
+    closing the three-quarter source-value atom for the instantiated `D`.
+  - Added
+    `standardGabckeTargets_of_contourTaylor_regular_and_removableCandidatePointBounds`,
+    specializing the direct route to the instantiated removable candidate.
+- Failed routes:
+  - Do not define `D := standardGabckeRawPsiThirdDerivative`; that would make
+    the bridge tautological but circular and would bypass the smooth
+    removable/Tabelle normalization.
+  - Do not infer the raw/candidate bridge from global regularity of the raw
+    quotient at denominator-zero points.
+  - Do not assert raw `standardGabckeRawPsi = rsPsi`.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+- Remaining goal shape:
+  prove one raw/candidate point bridge,
+  `StandardGabckeRawPsiQuarterRemovableSourceBridgeProp
+    standardGabckeRemovableSourceThirdDerivative` or
+  `StandardGabckeRawPsiThreeQuarterRemovableSourceBridgeProp
+    standardGabckeRemovableSourceThirdDerivative`, and prove the corresponding
+  numeric bound
+  `StandardGabckeRemovableSourceQuarterThirdDerivativeBoundProp
+    standardGabckeRemovableSourceThirdDerivative` or its three-quarter
+  analogue.
+- Coordinator action requested:
+  run the requested serialized validation command.
