@@ -2569,3 +2569,36 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Remaining smallest RS/Gabcke atom:
   prove `StandardGabckeQuarterLocalNumeratorRawSineSecondDerivativeProp`, i.e.
   `iteratedDeriv 2 standardGabckeQuarterLocalSineNumerator 0 = -4 * Real.pi`.
+
+### 2026-04-29 Round 55: numerator raw second derivative
+
+- Classification: `PROVED`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalNumeratorRawSineSecondDerivativeProp`.
+- Banked inputs:
+  - The raw numerator phase is the explicit polynomial
+    `Real.pi*w - 2*Real.pi*w^2`.
+  - The pointwise derivative of the raw numerator sine is
+    `cos (Real.pi*w - 2*Real.pi*w^2) * (Real.pi - 4*Real.pi*w)`.
+- Proof facts banked:
+  - Added private local derivative formula
+    `standardGabckeQuarterLocalSineNumerator_deriv_eq`.
+  - Proved
+    `standardGabckeQuarterLocalNumeratorRawSineSecondDerivativeProp_proved`
+    by differentiating that pointwise derivative formula at zero.
+- Failed routes:
+  - No broad sine-series provider was introduced.
+  - No quotient regularity or raw quotient identity was used; the proof stays
+    in the explicit numerator sine derivative calculation.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Started from coordinator baseline `2c248ea`.
+  - `git diff --check`: passed before this ledger append.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalNumeratorRawSineThirdDerivativeProp`, i.e.
+  `iteratedDeriv 3 standardGabckeQuarterLocalSineNumerator 0 = -Real.pi ^ 3`.
