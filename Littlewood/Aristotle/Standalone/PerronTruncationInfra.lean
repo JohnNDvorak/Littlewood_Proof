@@ -4992,6 +4992,68 @@ theorem small_T_concrete_contour_remainder_continuousOn_slab16_from_components
   unfold perronVerticalContourRemainderRe
   exact (hperron.sub continuous_fst.continuousOn).add hzero
 
+/-- A fixed finite zero-set contribution is continuous in `x` on the cutoff
+slab.  This is the non-moving part of the `zeroSumRe` continuity problem. -/
+theorem small_T_zeroSumRe_fixedZeros_continuousOn_slab16 (T0 : ℝ) :
+    ContinuousOn
+      (fun p : ℝ × ℝ =>
+        (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow T0,
+          ((p.1 : ℂ) ^ ρ) / ρ).re)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+  classical
+  refine Complex.continuous_re.comp_continuousOn ?_
+  refine continuousOn_finset_sum
+    (Aristotle.DirichletPhaseAlignment.ZerosBelow T0) ?_
+  intro ρ _hρ
+  have hbase : ContinuousOn
+      (fun p : ℝ × ℝ => (p.1 : ℂ))
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+    Complex.continuous_ofReal.comp_continuousOn continuous_fst.continuousOn
+  exact (hbase.cpow_const (fun p hp => by
+    exact Complex.ofReal_mem_slitPlane.mpr (by linarith [hp.1]))).div_const ρ
+
+/-- Continuity of `zeroSumRe` on the cutoff slab from local agreement with a
+fixed finite zero-set sum at each slab point.  The remaining atom is the
+local constancy of `ZerosBelow T` near the chosen height. -/
+theorem small_T_zeroSumRe_continuousOn_slab16_from_fixedZeros_local_agreement
+    (hlocal : ∀ p ∈
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      (fun q : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe q.1 q.2) =ᶠ[𝓝[
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p]
+      (fun q : ℝ × ℝ =>
+        (∑ ρ ∈ Aristotle.DirichletPhaseAlignment.ZerosBelow p.2,
+          ((q.1 : ℂ) ^ ρ) / ρ).re)) :
+    ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+  intro p hp
+  exact
+    (small_T_zeroSumRe_fixedZeros_continuousOn_slab16 p.2 p hp).congr_of_eventuallyEq_of_mem
+      (hlocal p hp) hp
+
+/-- The zero-sum slab continuity atom is reduced to local constancy of the
+finite set `ZerosBelow T` in the slab topology. -/
+theorem small_T_zeroSumRe_continuousOn_slab16_from_zerosBelow_eventually_eq
+    (hzeros : ∀ p ∈
+        {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᶠ q in
+        𝓝[
+          {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        Aristotle.DirichletPhaseAlignment.ZerosBelow q.2 =
+          Aristotle.DirichletPhaseAlignment.ZerosBelow p.2) :
+    ContinuousOn
+      (fun p : ℝ × ℝ =>
+        Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+      {p : ℝ × ℝ | 2 ≤ p.1 ∧ p.1 ≤ 16 ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+  refine small_T_zeroSumRe_continuousOn_slab16_from_fixedZeros_local_agreement ?_
+  intro p hp
+  filter_upwards [hzeros p hp] with q hq
+  unfold Littlewood.Development.HadamardProductZeta.zeroSumRe
+  unfold Littlewood.Development.ShiftedRemainderInterface.zeroSumRe
+  rw [hq]
+
 /-- Continuity of the normalization denominator on the cutoff-`16` slab. -/
 theorem small_T_residue_error_shape_continuousOn_slab16 :
     ContinuousOn
