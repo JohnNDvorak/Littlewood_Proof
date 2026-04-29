@@ -1052,3 +1052,58 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   regularity of the raw quotient.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 21: quarter value reduced to local coordinate Taylor atom
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp`.
+- Banked inputs:
+  - Round 20 reduced the quarter numeric bound to the candidate value formula.
+  - The removable-source candidate remains
+    `standardGabckeRemovableSourceThirdDerivative`, not the raw totalized
+    derivative.
+- Proof facts banked:
+  - Added `standardGabckeQuarterLocalPsi`, the exact local coordinate quotient
+    at `p = 1/4 + x`:
+    `if x = 0 or x = 1/2 then 1/2 else
+    sin(pi*x - 2*pi*x^2) / sin(2*pi*x)`.
+  - Added
+    `StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp`,
+    the exact coordinate bridge
+    `standardGabckeRemovableSourceThirdDerivative (1/4) =
+    deriv (deriv (deriv standardGabckeQuarterLocalPsi)) 0`.
+  - Added `StandardGabckeQuarterLocalThirdDerivativeFormulaProp`, the pure
+    one-variable calculus atom
+    `deriv (deriv (deriv standardGabckeQuarterLocalPsi)) 0 = -Real.pi^2`.
+  - Proved
+    `standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_localTaylor`,
+    deriving the candidate value formula from the coordinate bridge and local
+    Taylor atom.
+  - Proved
+    `standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_localTaylor`,
+    deriving the quarter numeric bound from the same two local atoms.
+- Failed routes:
+  - I did not compute the derivative of the filled quotient directly inside
+    the raw `p` coordinate; that route hides both the coordinate shift and the
+    removable fill.
+  - I did not prove the raw/candidate point bridge by global raw regularity.
+  - I did not define `D := standardGabckeRawPsiThirdDerivative` or assert raw
+    `standardGabckeRawPsi = rsPsi`.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+- Remaining goal shape:
+  prove the exact local coordinate bridge
+  `StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp`
+  and the pure one-variable Taylor atom
+  `StandardGabckeQuarterLocalThirdDerivativeFormulaProp`; separately prove
+  `StandardGabckeRawPsiQuarterRemovableSourceBridgeProp
+  standardGabckeRemovableSourceThirdDerivative` without treating the raw
+  quotient as globally regular at the removable point.
+- Coordinator action requested:
+  run the requested serialized validation command.

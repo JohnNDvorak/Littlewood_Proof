@@ -325,6 +325,17 @@ raw totalized derivative. -/
 def standardGabckeRemovableSourceThirdDerivative (p : ℝ) : ℝ :=
   deriv (deriv (deriv standardGabckeRemovablePsiCandidate)) p
 
+/-- Local coordinate form of the removable quotient near the first
+denominator-zero point, with `x = p - 1/4`. The two filled values correspond
+to `x = 0` and `x = 1/2`; the first one is the local atom needed for the
+quarter-point derivative formula. -/
+def standardGabckeQuarterLocalPsi (x : ℝ) : ℝ :=
+  if x = 0 ∨ x = (1 / 2 : ℝ) then
+    1 / 2
+  else
+    Real.sin (Real.pi * x - 2 * Real.pi * x ^ 2) /
+      Real.sin (2 * Real.pi * x)
+
 /-- Smaller Tabelle-1 source atom: bound the unscaled third derivative before
 dividing by the explicit positive normalizing factor `96*pi^2`. -/
 def StandardGabckeRawPsiThirdDerivativeBoundProp : Prop :=
@@ -588,6 +599,31 @@ quotient has cubic coefficient `-pi^2/6`, hence third derivative `-pi^2`. -/
 def StandardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp : Prop :=
   standardGabckeRemovableSourceThirdDerivative (1 / 4) = -Real.pi ^ 2
 
+/-- Exact coordinate bridge for the third derivative at the first removable
+point, reducing the candidate derivative at `p = 1/4` to the local coordinate
+function `standardGabckeQuarterLocalPsi` at `x = 0`. -/
+def StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp : Prop :=
+  standardGabckeRemovableSourceThirdDerivative (1 / 4) =
+    deriv (deriv (deriv standardGabckeQuarterLocalPsi)) 0
+
+/-- Exact one-variable local Taylor value for the quarter removable quotient.
+This is the pure calculus atom for the expansion
+`sin (pi*x - 2*pi*x^2) / sin (2*pi*x)` at `x = 0`. -/
+def StandardGabckeQuarterLocalThirdDerivativeFormulaProp : Prop :=
+  deriv (deriv (deriv standardGabckeQuarterLocalPsi)) 0 = -Real.pi ^ 2
+
+/-- The candidate quarter-point value formula follows from the exact local
+coordinate bridge and the one-variable local Taylor calculation. -/
+theorem standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_localTaylor
+    (h_coord :
+      StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp)
+    (h_local : StandardGabckeQuarterLocalThirdDerivativeFormulaProp) :
+    StandardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp := by
+  unfold StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp at h_coord
+  unfold StandardGabckeQuarterLocalThirdDerivativeFormulaProp at h_local
+  unfold StandardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp
+  exact h_coord.trans h_local
+
 /-- The quarter-point numeric Tabelle bound follows from the exact local
 Taylor value of the instantiated removable candidate. -/
 theorem standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_candidateValueFormula
@@ -608,6 +644,18 @@ theorem standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_candidat
     _ ≤ (fresnelC1Bound * 96) * Real.pi ^ 2 :=
       mul_le_mul_of_nonneg_right hcoef hpi2_nonneg
     _ = fresnelC1Bound * (96 * Real.pi ^ 2) := by ring
+
+/-- The quarter-point numeric Tabelle bound follows from the local coordinate
+bridge plus the one-variable local Taylor calculation. -/
+theorem standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_localTaylor
+    (h_coord :
+      StandardGabckeRemovableCandidateQuarterLocalCoordinateThirdDerivativeProp)
+    (h_local : StandardGabckeQuarterLocalThirdDerivativeFormulaProp) :
+    StandardGabckeRemovableSourceQuarterThirdDerivativeBoundProp
+      standardGabckeRemovableSourceThirdDerivative :=
+  standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_candidateValueFormula
+    (standardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp_of_localTaylor
+      h_coord h_local)
 
 /-- Numeric Tabelle bound for the smooth removable-source derivative at the
 second denominator-zero point. -/
