@@ -930,6 +930,18 @@ def StandardGabckeQuarterLocalDenominatorDslopeAnalyticProp : Prop :=
 def StandardGabckeQuarterLocalNumeratorDslopeAnalyticProp : Prop :=
   AnalyticAt ℝ (dslope standardGabckeQuarterLocalSineNumerator 0) 0
 
+/-- Exact value of the numerator dslope at the removable point. -/
+def StandardGabckeQuarterLocalNumeratorDslopeValueProp : Prop :=
+  dslope standardGabckeQuarterLocalSineNumerator 0 0 = Real.pi
+
+/-- The removable quotient is locally the quotient of numerator and
+denominator dslopes. -/
+def StandardGabckeQuarterLocalRemovableSineQuotientDslopeEqualityProp : Prop :=
+  standardGabckeQuarterLocalRemovableSineQuotient =ᶠ[𝓝 (0 : ℝ)]
+    fun w : ℝ =>
+      dslope standardGabckeQuarterLocalSineNumerator 0 w /
+        dslope standardGabckeQuarterLocalSineDenominator 0 w
+
 /-- The denominator dslope is the derivative of `sin (2*pi*w)` at `0`, hence
 `2*pi`. -/
 theorem standardGabckeQuarterLocalDenominatorDslopeValueProp_proved :
@@ -982,6 +994,62 @@ theorem standardGabckeQuarterLocalNumeratorDslopeAnalyticProp_proved :
   obtain ⟨p, hp⟩ := hnum
   exact ⟨p.fslope, hp.has_fpower_series_dslope_fslope⟩
 
+/-- The numerator dslope is the derivative of
+`sin (pi*w - 2*pi*w^2)` at `0`, hence `pi`. -/
+theorem standardGabckeQuarterLocalNumeratorDslopeValueProp_proved :
+    StandardGabckeQuarterLocalNumeratorDslopeValueProp := by
+  unfold StandardGabckeQuarterLocalNumeratorDslopeValueProp
+  rw [dslope_same]
+  have hphase :
+      HasDerivAt (fun w : ℝ => Real.pi * w - 2 * Real.pi * w ^ 2) Real.pi 0 := by
+    have hlin : HasDerivAt (fun w : ℝ => Real.pi * w) Real.pi 0 := by
+      simpa using (hasDerivAt_const_mul (x := (0 : ℝ)) Real.pi)
+    have hquad : HasDerivAt (fun w : ℝ => 2 * Real.pi * w ^ 2) 0 0 := by
+      have hquad' : HasDerivAt (fun w : ℝ => (2 * Real.pi * w) * w) 0 0 := by
+        simpa using
+        ((hasDerivAt_const_mul (x := (0 : ℝ)) (2 * Real.pi)).mul
+          (hasDerivAt_id (x := (0 : ℝ))))
+      convert hquad' using 1
+      · ext w
+        ring
+    simpa using hlin.sub hquad
+  have hsin :
+      HasDerivAt (fun w : ℝ => Real.sin (Real.pi * w - 2 * Real.pi * w ^ 2))
+        Real.pi 0 := by
+    simpa using hphase.sin
+  have hderiv :
+      deriv (fun w : ℝ => Real.sin (Real.pi * w - 2 * Real.pi * w ^ 2)) 0 =
+        Real.pi := hsin.deriv
+  simpa [standardGabckeQuarterLocalSineNumerator] using hderiv
+
+/-- Pointwise form of the local removable-division identity. At `w = 0` this
+uses the just-proved numerator and denominator dslope values; away from `0` it
+is the quotient identity for the two slopes. -/
+theorem standardGabckeQuarterLocalRemovableSineQuotient_eq_dslope_quotient
+    (w : ℝ) :
+    standardGabckeQuarterLocalRemovableSineQuotient w =
+      dslope standardGabckeQuarterLocalSineNumerator 0 w /
+        dslope standardGabckeQuarterLocalSineDenominator 0 w := by
+  by_cases hw : w = 0
+  · subst w
+    rw [standardGabckeQuarterLocalNumeratorDslopeValueProp_proved,
+      standardGabckeQuarterLocalDenominatorDslopeValueProp_proved]
+    simp [standardGabckeQuarterLocalRemovableSineQuotient]
+    field_simp [Real.pi_ne_zero]
+  · have hw0 : w ≠ 0 := hw
+    rw [standardGabckeQuarterLocalRemovableSineQuotient, if_neg hw0]
+    rw [dslope_of_ne standardGabckeQuarterLocalSineNumerator hw0,
+      dslope_of_ne standardGabckeQuarterLocalSineDenominator hw0]
+    simp [slope, standardGabckeQuarterLocalSineNumerator,
+      standardGabckeQuarterLocalSineDenominator]
+    rw [mul_div_mul_left _ _ (inv_ne_zero hw0)]
+
+/-- The local equality clause of the dslope bridge is now pointwise true. -/
+theorem standardGabckeQuarterLocalRemovableSineQuotientDslopeEqualityProp_proved :
+    StandardGabckeQuarterLocalRemovableSineQuotientDslopeEqualityProp := by
+  exact Filter.Eventually.of_forall
+    standardGabckeQuarterLocalRemovableSineQuotient_eq_dslope_quotient
+
 /-- With the denominator nonzero clause closed, the dslope bridge reduces to
 local equality, dslope analyticity, and the third-derivative value. -/
 theorem standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_core
@@ -1029,6 +1097,16 @@ theorem standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_equal
     StandardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp := by
   exact standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_reducedCore heq
     standardGabckeQuarterLocalNumeratorDslopeAnalyticProp_proved hthird
+
+/-- With all dslope bridge clauses except the cubic derivative closed, the
+bridge reduces to the third-derivative value. -/
+theorem standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_third
+    (hthird :
+      iteratedDeriv 3 standardGabckeQuarterLocalRemovableSineQuotient 0 =
+        -Real.pi ^ 2) :
+    StandardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp := by
+  exact standardGabckeQuarterLocalRemovableSineQuotientDslopeBridgeProp_of_equality_and_third
+    standardGabckeQuarterLocalRemovableSineQuotientDslopeEqualityProp_proved hthird
 
 /-- The dslope removable-division bridge supplies the canonical Taylor
 power series for the removable sine quotient, with the required constant and
