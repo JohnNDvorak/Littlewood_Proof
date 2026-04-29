@@ -1939,6 +1939,69 @@ private theorem atkinson_logGamma_to_stirlingTerm_of_multiplier_isBigO
   atkinson_logGamma_to_stirlingTerm_of_relative_gamma_stirling hbranch
     (atkinson_relative_gamma_stirling_of_multiplier_isBigO hmult)
 
+/-- The Atkinson log-Gamma remainder is the specialization `y = t/2` of the
+standard vertical-line complex Stirling logarithm for `Γ(1/4 + i y)`. -/
+private theorem atkinson_logGammaStirlingRemainder_isBigO_of_vertical_line_stirling
+    (hvertical :
+      Asymptotics.IsBigO Filter.atTop
+        (fun y : ℝ =>
+          Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+            ((((1 / 4 : ℂ) + Complex.I * y) - 1 / 2) *
+                Complex.log ((1 / 4 : ℂ) + Complex.I * y) -
+              ((1 / 4 : ℂ) + Complex.I * y) +
+              1 / 2 * Complex.log (2 * Real.pi)))
+        (fun y : ℝ => ((1 / y : ℝ) : ℂ))) :
+    Asymptotics.IsBigO Filter.atTop
+      (fun t : ℝ =>
+        Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2))) -
+          atkinsonLogGammaStirlingTerm t)
+      (fun t : ℝ => ((1 / t : ℝ) : ℂ)) := by
+  rw [Asymptotics.isBigO_iff] at hvertical ⊢
+  obtain ⟨C0, hC0eventual⟩ := hvertical
+  obtain ⟨T0, hT0⟩ := Filter.eventually_atTop.mp hC0eventual
+  set K : ℝ := max C0 0 + 1
+  refine ⟨2 * K, ?_⟩
+  filter_upwards [Filter.eventually_ge_atTop (max (2 * T0) 1)] with t ht
+  have ht_twoT : 2 * T0 ≤ t := le_trans (le_max_left _ _) ht
+  have ht1 : (1 : ℝ) ≤ t := le_trans (le_max_right _ _) ht
+  have htpos : 0 < t := lt_of_lt_of_le zero_lt_one ht1
+  have hyT : T0 ≤ t / 2 := by nlinarith
+  have hypos : 0 < t / 2 := by positivity
+  have hnorm_y : ‖((1 / (t / 2) : ℝ) : ℂ)‖ = 1 / (t / 2) := by
+    rw [Complex.norm_real, Real.norm_eq_abs,
+      abs_of_pos (one_div_pos.mpr hypos)]
+  have hnorm_t : ‖((1 / t : ℝ) : ℂ)‖ = 1 / t := by
+    rw [Complex.norm_real, Real.norm_eq_abs,
+      abs_of_pos (one_div_pos.mpr htpos)]
+  have hraw := hT0 (t / 2) hyT
+  have hR_le_C0 :
+      ‖Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2))) -
+          atkinsonLogGammaStirlingTerm t‖ ≤ C0 * (2 / |t|) := by
+    simpa [atkinsonLogGammaStirlingTerm, hnorm_y, abs_of_pos hypos, one_div]
+      using hraw
+  have hC0_le_K : C0 ≤ K := by
+    dsimp [K]
+    linarith [le_max_left C0 0]
+  have hscale_nonneg : 0 ≤ 2 / |t| := by positivity
+  have hR_le_K :
+      ‖Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2))) -
+          atkinsonLogGammaStirlingTerm t‖ ≤ K * (2 / t) := by
+    calc
+      ‖Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2))) -
+          atkinsonLogGammaStirlingTerm t‖
+          ≤ C0 * (2 / |t|) := hR_le_C0
+      _ ≤ K * (2 / |t|) :=
+            mul_le_mul_of_nonneg_right hC0_le_K hscale_nonneg
+      _ = K * (2 / t) := by
+            rw [abs_of_pos htpos]
+  calc
+    ‖Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2))) -
+        atkinsonLogGammaStirlingTerm t‖
+        ≤ K * (2 / t) := hR_le_K
+    _ = (2 * K) * ‖((1 / t : ℝ) : ℂ)‖ := by
+          rw [hnorm_t]
+          ring
+
 /-- A complex logarithmic Stirling remainder controls the normalized
 Stirling multiplier after exponentiation. -/
 private theorem atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO
