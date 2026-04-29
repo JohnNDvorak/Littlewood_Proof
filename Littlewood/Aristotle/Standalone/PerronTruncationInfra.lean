@@ -5522,6 +5522,100 @@ theorem small_T_perronVerticalIntegral_continuousOn_slab16_of_fixedWindow
   small_T_perronVerticalIntegral_continuousOn_slab16_from_rawIntegral
     (small_T_perronVerticalRawIntegral_continuousOn_slab16_of_fixedWindow hfixed)
 
+/-- Transition continuity of the public vertical Perron integral reduced to
+the raw variable-height integral on the same finite rectangle. -/
+theorem small_T_perronVerticalIntegral_continuousOn_transition_from_rawIntegral
+    (Xtail : ℝ)
+    (hraw : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalRawIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+  simpa [perronVerticalIntegral_eq_rawIntegral] using
+    (continuousOn_const.mul hraw)
+
+/-- Raw vertical Perron integral transition continuity reduced to the
+fixed-window indicator formulation. -/
+theorem small_T_perronVerticalRawIntegral_continuousOn_transition_from_fixedWindow
+    (Xtail : ℝ)
+    (hfixed : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalFixedWindowIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (heq : ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      perronVerticalRawIntegral p.1 p.2 =
+        perronVerticalFixedWindowIntegral p.1 p.2) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalRawIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+  exact hfixed.congr heq
+
+/-- On any finite transition rectangle with `T <= 16`, the raw moving interval
+integral is exactly the fixed-window indicator integral. -/
+theorem small_T_perronVerticalRawIntegral_eq_fixedWindow_on_transition
+    (Xtail : ℝ) (p : ℝ × ℝ)
+    (hp : p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    perronVerticalRawIntegral p.1 p.2 =
+      perronVerticalFixedWindowIntegral p.1 p.2 := by
+  rcases hp with ⟨_hx16, _hx_tail, _hT2, hT16⟩
+  have hraw : -p.2 ≤ p.2 := by linarith
+  have hwin : (-16 : ℝ) ≤ 16 := by norm_num
+  have hleft : (-16 : ℝ) ≤ -p.2 := by linarith
+  have hsubset : Set.Ioc (-p.2) p.2 ⊆ Set.Ioc (-16 : ℝ) 16 := by
+    intro t ht
+    exact ⟨lt_of_le_of_lt hleft ht.1, le_trans ht.2 hT16⟩
+  unfold perronVerticalRawIntegral perronVerticalFixedWindowIntegral
+  rw [intervalIntegral.integral_of_le hraw, intervalIntegral.integral_of_le hwin]
+  rw [MeasureTheory.integral_indicator measurableSet_Ioc]
+  rw [Measure.restrict_restrict_of_subset hsubset]
+
+/-- Direct transition handoff from fixed-window continuity to continuity of
+the public vertical Perron integral. -/
+theorem small_T_perronVerticalIntegral_continuousOn_transition_from_fixedWindow
+    (Xtail : ℝ)
+    (hfixed : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalFixedWindowIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (heq : ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      perronVerticalRawIntegral p.1 p.2 =
+        perronVerticalFixedWindowIntegral p.1 p.2) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_perronVerticalIntegral_continuousOn_transition_from_rawIntegral Xtail
+    (small_T_perronVerticalRawIntegral_continuousOn_transition_from_fixedWindow
+      Xtail hfixed heq)
+
+/-- Raw transition continuity follows from fixed-window continuity alone,
+using the transition equality with the raw moving interval. -/
+theorem small_T_perronVerticalRawIntegral_continuousOn_transition_of_fixedWindow
+    (Xtail : ℝ)
+    (hfixed : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalFixedWindowIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalRawIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_perronVerticalRawIntegral_continuousOn_transition_from_fixedWindow
+    Xtail hfixed
+    (fun p hp => small_T_perronVerticalRawIntegral_eq_fixedWindow_on_transition Xtail p hp)
+
+/-- Public vertical Perron transition continuity now reduces to the
+fixed-window continuity atom alone. -/
+theorem small_T_perronVerticalIntegral_continuousOn_transition_of_fixedWindow
+    (Xtail : ℝ)
+    (hfixed : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalFixedWindowIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_perronVerticalIntegral_continuousOn_transition_from_rawIntegral Xtail
+    (small_T_perronVerticalRawIntegral_continuousOn_transition_of_fixedWindow Xtail hfixed)
+
 /-- For fixed `x >= 2`, the unwindowed vertical Perron integrand is continuous
 as a function of the vertical height.  The line has real part `> 1`, so both
 the zeta denominator and the linear denominator stay nonzero. -/
@@ -6075,6 +6169,86 @@ theorem small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16_from_domin
       hbound_int
       (hlim p hp)
   simpa [perronVerticalFixedWindowIntegral_eq_setIntegral] using htend
+
+/-- Fixed-window transition continuity reduced to the exact local dominated
+convergence inputs on the fixed window `(-16,16]`. -/
+theorem small_T_perronVerticalFixedWindowIntegral_continuousOn_transition_from_dominated_convergence
+    (Xtail : ℝ)
+    (hmeas : ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᶠ q in 𝓝[
+        {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        AEStronglyMeasurable
+          (fun t : ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (volume.restrict (Set.Ioc (-16 : ℝ) 16)))
+    (hbound : ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∃ bound : ℝ → ℝ,
+        Integrable bound (volume.restrict (Set.Ioc (-16 : ℝ) 16)) ∧
+        ∀ᶠ q in 𝓝[
+          {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+            ‖perronVerticalFixedWindowIntegrandParam q t‖ ≤ bound t)
+    (hlim : ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (𝓝[
+            {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalFixedWindowIntegrandParam p t))) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalFixedWindowIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+  intro p hp
+  rcases hbound p hp with ⟨bound, hbound_int, hbound_event⟩
+  have htend :=
+    MeasureTheory.tendsto_integral_filter_of_dominated_convergence
+      (μ := volume.restrict (Set.Ioc (-16 : ℝ) 16))
+      (l := 𝓝[
+        {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+      (F := fun q t => perronVerticalFixedWindowIntegrandParam q t)
+      (f := fun t => perronVerticalFixedWindowIntegrandParam p t)
+      bound
+      (hmeas p hp)
+      hbound_event
+      hbound_int
+      (hlim p hp)
+  simpa [perronVerticalFixedWindowIntegral_eq_setIntegral] using htend
+
+/-- Public vertical Perron transition continuity from the fixed-window DCT
+inputs on the transition rectangle. -/
+theorem small_T_perronVerticalIntegral_continuousOn_transition_from_dominated_convergence
+    (Xtail : ℝ)
+    (hmeas : ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᶠ q in 𝓝[
+        {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+        AEStronglyMeasurable
+          (fun t : ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (volume.restrict (Set.Ioc (-16 : ℝ) 16)))
+    (hbound : ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∃ bound : ℝ → ℝ,
+        Integrable bound (volume.restrict (Set.Ioc (-16 : ℝ) 16)) ∧
+        ∀ᶠ q in 𝓝[
+          {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p,
+          ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+            ‖perronVerticalFixedWindowIntegrandParam q t‖ ≤ bound t)
+    (hlim : ∀ p ∈
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16},
+      ∀ᵐ t ∂volume.restrict (Set.Ioc (-16 : ℝ) 16),
+        Tendsto
+          (fun q : ℝ × ℝ => perronVerticalFixedWindowIntegrandParam q t)
+          (𝓝[
+            {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}] p)
+          (𝓝 (perronVerticalFixedWindowIntegrandParam p t))) :
+    ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} :=
+  small_T_perronVerticalIntegral_continuousOn_transition_of_fixedWindow Xtail
+    (small_T_perronVerticalFixedWindowIntegral_continuousOn_transition_from_dominated_convergence
+      Xtail hmeas hbound hlim)
 
 /-- Closed fixed-window slab continuity from the local DCT inputs. -/
 theorem small_T_perronVerticalFixedWindowIntegral_continuousOn_slab16 :
