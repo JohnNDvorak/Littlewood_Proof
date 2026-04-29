@@ -4763,6 +4763,38 @@ theorem small_T_direct_linear_bound_from_residue
   small_T_direct_linear_bound_from_perronVerticalIntegral_components
     small_T_perronVerticalIntegral_truncation_linear_bound hresidue
 
+/-- Strengthened small-`T` surface matching the closed Perron cutoff route.
+
+This class is intentionally separate from
+`HadamardProductZeta.SmallTPerronBoundHyp`: it carries the honest
+linear-window term `(x / T) * (log x)^2` and therefore should not be used as an
+automatic provider for the legacy public surface. -/
+class SmallTPerronLinearWindowBoundHyp : Prop where
+  bound : ∃ C₂ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+    |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+      C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+        (x / T) * (Real.log x) ^ 2)
+
+/-- Constructor for the strengthened linear-window small-`T` surface from the
+closed Perron cutoff route and the remaining bounded-height residue atom. -/
+theorem small_T_linear_window_bound_hyp_from_residue
+    (hresidue : ∃ Cᵣ > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalIntegral x T -
+          (x - Littlewood.Development.HadamardProductZeta.zeroSumRe x T)| ≤
+        Cᵣ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T)) :
+    SmallTPerronLinearWindowBoundHyp :=
+  ⟨small_T_direct_linear_bound_from_residue hresidue⟩
+
+/-- Use the strengthened linear-window small-`T` surface directly, without
+crossing into the legacy `SmallTPerronBoundHyp` target. -/
+theorem small_T_direct_linear_bound_from_linear_window_hyp
+    [SmallTPerronLinearWindowBoundHyp] :
+    ∃ C₂ > (0:ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |Littlewood.Development.HadamardProductZeta.shiftedRemainderRe x T| ≤
+        C₂ * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+          (x / T) * (Real.log x) ^ 2) :=
+  SmallTPerronLinearWindowBoundHyp.bound
+
 /-- Adapter from the honest linear-window direct bound to the public small-`T`
 target, isolating the exact missing absorption statement.
 
@@ -4836,6 +4868,24 @@ theorem small_T_perron_bound_hyp_from_linear_residue_and_absorption
   Littlewood.Development.HadamardProductZeta.small_T_perron_bound_hyp_of_direct_bound
     (small_T_direct_bound_from_linear_bound_and_absorption
       (small_T_direct_linear_bound_from_residue hresidue) habsorb)
+
+/-- Bridge from the strengthened linear-window small-`T` surface to the legacy
+public small-`T` surface, conditional on the explicit absorption atom.
+
+This is deliberately a theorem, not an instance: crossing from the
+linear-window surface to `SmallTPerronBoundHyp` must stay visible because the
+absorption statement is false on the full current domain unless additional
+analytic input changes the scale. -/
+theorem small_T_perron_bound_hyp_from_linear_window_hyp_and_absorption
+    [SmallTPerronLinearWindowBoundHyp]
+    (habsorb : ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      (x / T) * (Real.log x) ^ 2 ≤
+        A * (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T +
+          (Real.log x) ^ 2)) :
+    Littlewood.Development.HadamardProductZeta.SmallTPerronBoundHyp :=
+  Littlewood.Development.HadamardProductZeta.small_T_perron_bound_hyp_of_direct_bound
+    (small_T_direct_bound_from_linear_bound_and_absorption
+      small_T_direct_linear_bound_from_linear_window_hyp habsorb)
 
 /-- Concrete small-`T` provider target from the finite weighted Perron-kernel
 cutoff atom plus the bounded-height residue extraction atom.
