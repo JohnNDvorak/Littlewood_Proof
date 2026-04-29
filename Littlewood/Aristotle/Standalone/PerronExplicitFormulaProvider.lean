@@ -6235,6 +6235,42 @@ theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndBudgetGeometry
       AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
   exact ⟨inferInstance, inferInstance⟩
 
+/-- Explicit budgeted finite-zero radii plus the Perron log half-budget package
+both target-specific Perron phase-fit classes.
+
+This bypasses the opaque projected `Classical.choose` radii: the realized-radius
+domination leaves are built from the radii returned by
+`TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp` itself. -/
+theorem targetAntiPhaseFitAbovePerronThresholdPerron_of_logHalfBudget_budgetedRelativelyDense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] :
+    TargetPhaseFitAbovePerronThresholdPerronHyp ∧
+      AntiTargetPhaseFitAbovePerronThresholdPerronHyp := by
+  have hDom :=
+    targetAntiPerronThresholdTowerWideDominationWithPhaseRadius_of_logHalfBudget_budgetedRelativelyDense_hyp
+  letI : TargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp := hDom.1
+  letI : AntiTargetPerronThresholdTowerWideDominationWithPhaseRadiusHyp := hDom.2
+  exact ⟨inferInstance, inferInstance⟩
+
+/-- Exact-seed packaging endpoint for the explicit budgeted finite-zero radius
+route.
+
+Unlike the canonical phase-radius residual route, this endpoint does not need
+`TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison` or its anti-target
+analogue. -/
+theorem exactSeedAboveThreshold_perron_of_logHalfBudget_budgetedRelativelyDense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  have hFit :=
+    targetAntiPhaseFitAbovePerronThresholdPerron_of_logHalfBudget_budgetedRelativelyDense_hyp
+  letI : TargetPhaseFitAbovePerronThresholdPerronHyp := hFit.1
+  letI : AntiTargetPhaseFitAbovePerronThresholdPerronHyp := hFit.2
+  exact ⟨inferInstance, inferInstance⟩
+
 /-- Paired finite-zero relative density plus the two same-height half-budget
 inputs packages both Perron-only exact-seed classes. -/
 theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndHalfBudgets_hyp
