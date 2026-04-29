@@ -2185,3 +2185,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `ContinuousOn (fun p : ℝ × ℝ => zeroSumRe p.1 p.2)
     {p : ℝ × ℝ | 2 <= p.1 /\ p.1 <= 16 /\ 2 <= p.2 /\ p.2 <= 16}`,
   or prove the separate asymptotic tail atom on `16 <= x`.
+
+### 2026-04-29 Round 43 - Reduce Zero-Sum Slab Continuity to Local Zero-Set Constancy
+
+- Classification: `THEOREM_LEVEL_REDUCTION`.
+- Exact theorem attacked:
+  `ContinuousOn (fun p : ℝ × ℝ =>
+      Littlewood.Development.HadamardProductZeta.zeroSumRe p.1 p.2)
+    {p : ℝ × ℝ | 2 <= p.1 /\ p.1 <= 16 /\ 2 <= p.2 /\ p.2 <= 16}`.
+- Code facts banked:
+  added `small_T_zeroSumRe_fixedZeros_continuousOn_slab16`, proving
+  continuity on the slab for a fixed finite set
+  `ZerosBelow T0`.  Added
+  `small_T_zeroSumRe_continuousOn_slab16_from_fixedZeros_local_agreement`,
+  reducing moving zero-sum continuity to local agreement with the fixed finite
+  zero sum at each slab point.  Added
+  `small_T_zeroSumRe_continuousOn_slab16_from_zerosBelow_eventually_eq`,
+  reducing that local agreement to the exact atom
+  `∀ᶠ q in 𝓝[slab] p, ZerosBelow q.2 = ZerosBelow p.2`.
+- Scale/shape check:
+  the proof is restricted to the cutoff slab and does not claim compactness in
+  unbounded `x`.  It also does not assert global continuity of the moving
+  finite zero set across zero ordinates.
+- Failed/demoted routes:
+  did not force direct global zero-sum continuity in `T`; the moving
+  `Finset` can jump at zero heights, so local zero-set constancy is now the
+  precise smaller atom.  Did not touch the separate Perron-integral
+  continuity atom or the `16 <= x` tail atom.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, or `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check`; then
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard.  The first two focused attempts exposed Lean notation issues in the
+  new theorem statement (`∑ ... in` and a split `=ᶠ[...]` token); after
+  changing to the local `∑ ρ ∈ S` syntax and keeping `=ᶠ[...]` contiguous,
+  the focused build passed.
+- Smallest next theorem:
+  prove the local zero-set constancy atom
+  `∀ p ∈ slab, ∀ᶠ q in 𝓝[slab] p,
+      ZerosBelow q.2 = ZerosBelow p.2`,
+  or separately prove
+  `ContinuousOn (fun p : ℝ × ℝ => perronVerticalIntegral p.1 p.2) slab`,
+  or the normalized asymptotic tail atom on `16 <= x`.
