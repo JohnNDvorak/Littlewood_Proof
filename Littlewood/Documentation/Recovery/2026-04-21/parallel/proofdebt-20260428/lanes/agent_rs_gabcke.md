@@ -1518,3 +1518,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   and showing the scalar cubic coefficient is `-pi^2 / 6`.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 31: scalar Taylor atom reduced to local HasSum expansion
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalScalarTaylorSeriesProp`.
+- Banked inputs:
+  - Round 30 reduced the formal multilinear cubic coefficient atom to a
+    one-variable scalar `ofScalars` Taylor source.
+  - Mathlib's `hasFPowerSeriesAt_iff` identifies a one-dimensional
+    `ofScalars` power series with the corresponding local scalar `HasSum`
+    identity.
+- Proof facts banked:
+  - Added `StandardGabckeQuarterLocalScalarHasSumExpansionProp`, the exact
+    scalar source atom:
+    there are coefficients `a : ℕ → ℝ` such that locally near `0`,
+    `HasSum (fun n => w^n * a n) (standardGabckeQuarterLocalPsi w)`, and
+    `a 3 = -Real.pi ^ 2 / 6`.
+  - Proved
+    `standardGabckeQuarterLocalScalarTaylorSeriesProp_of_hasSumExpansion`,
+    converting that local scalar `HasSum` expansion into
+    `StandardGabckeQuarterLocalScalarTaylorSeriesProp`.
+  - Replaced a prior `simpa` in
+    `standardGabckeQuarterLocalCubicTaylorCoefficientProp_of_scalarTaylorSeries`
+    with an explicit `rw`/`norm_num` close after the linter suggested `simp`.
+- Failed routes:
+  - I did not define the removable derivative candidate by the raw third
+    derivative.
+  - I did not assume global regularity of the raw quotient at denominator-zero
+    points.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+  - I did not add axioms, sorries, provider shortcuts, or weaken the live
+    coefficient target.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - `git diff --check`: passed.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock`.
+  - One intermediate focused build failed after an invalid cleanup syntax
+    (`simp ... using`); the proof was repaired and the focused build passed.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalScalarHasSumExpansionProp` by deriving the
+  local scalar series expansion of the filled quotient
+  `sin(pi*x - 2*pi*x^2) / sin(2*pi*x)` at `x = 0` and showing the cubic
+  coefficient is `-pi^2 / 6`.

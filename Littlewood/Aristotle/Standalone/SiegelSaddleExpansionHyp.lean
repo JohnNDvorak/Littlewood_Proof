@@ -846,6 +846,27 @@ def StandardGabckeQuarterLocalScalarTaylorSeriesProp : Prop :=
       (FormalMultilinearSeries.ofScalars ℝ a) 0 ∧
       a 3 = -Real.pi ^ 2 / 6
 
+/-- One-variable scalar source for the filled local quotient expansion at
+`0`. This removes the formal multilinear layer from the remaining work:
+prove the usual local scalar series sum and its cubic coefficient. -/
+def StandardGabckeQuarterLocalScalarHasSumExpansionProp : Prop :=
+  ∃ a : ℕ → ℝ,
+    (∀ᶠ w in 𝓝 (0 : ℝ),
+      HasSum (fun n : ℕ => w ^ n * a n) (standardGabckeQuarterLocalPsi w)) ∧
+      a 3 = -Real.pi ^ 2 / 6
+
+/-- A scalar local `HasSum` expansion is exactly the one-dimensional
+`ofScalars` power-series source required by the scalar Taylor atom. -/
+theorem standardGabckeQuarterLocalScalarTaylorSeriesProp_of_hasSumExpansion
+    (h_series : StandardGabckeQuarterLocalScalarHasSumExpansionProp) :
+    StandardGabckeQuarterLocalScalarTaylorSeriesProp := by
+  rcases h_series with ⟨a, hsum, ha3⟩
+  refine ⟨a, ?_, ha3⟩
+  rw [hasFPowerSeriesAt_iff]
+  refine hsum.mono ?_
+  intro w hw
+  simpa [FormalMultilinearSeries.coeff_ofScalars, smul_eq_mul] using hw
+
 /-- A scalar Taylor series with cubic coefficient `-pi^2 / 6` supplies the
 formal multilinear witness required by the cubic-coefficient atom. -/
 theorem standardGabckeQuarterLocalCubicTaylorCoefficientProp_of_scalarTaylorSeries
@@ -853,9 +874,8 @@ theorem standardGabckeQuarterLocalCubicTaylorCoefficientProp_of_scalarTaylorSeri
     StandardGabckeQuarterLocalCubicTaylorCoefficientProp := by
   rcases h_series with ⟨a, hseries, ha3⟩
   refine ⟨FormalMultilinearSeries.ofScalars ℝ a, hseries, ?_⟩
-  simpa [ha3] using
-    (FormalMultilinearSeries.ofScalars_apply_eq (E := ℝ) (c := a)
-      (x := (1 : ℝ)) (n := 3))
+  rw [FormalMultilinearSeries.ofScalars_apply_eq, ha3]
+  norm_num
 
 /-- The exact cubic Taylor coefficient of the local quotient gives the
 third-derivative value used by the Gabcke removable-source route. -/
