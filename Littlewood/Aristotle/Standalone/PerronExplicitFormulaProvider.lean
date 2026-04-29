@@ -3634,6 +3634,103 @@ theorem targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyD
       rcases hApprox ρ hρ with ⟨m, hm⟩
       exact ⟨m, hm.trans hδle⟩
 
+/-- The anti-target radius selected from the paired budgeted finite-zero
+payload. -/
+noncomputable def antiTargetFiniteZeroBudgetedRelativelyDenseRadius
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    (T ε : ℝ) (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1) : ℝ :=
+  let hW :=
+    TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp.witness
+      T ε hT4 hεpos hεlt
+  Classical.choose (Classical.choose_spec hW)
+
+/-- Positivity, budget, and anti-target relative-density data for the selected
+anti-target radius from the paired budgeted finite-zero payload. -/
+private theorem antiTargetFiniteZeroBudgetedRelativelyDenseRadius_spec
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    {T ε : ℝ} (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1) :
+    0 < antiTargetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt ∧
+    antiTargetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt + 1
+      ≤ Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+    (∀ L : ℝ,
+      ∃ t0 : ℝ,
+        L < t0 ∧
+        t0 < L + antiTargetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt ∧
+        ∀ ρ ∈ (finite_zeros_le T).toFinset,
+          ∃ m : ℤ,
+            ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
+                m • (2 * Real.pi)‖ ≤ ε) := by
+  dsimp [antiTargetFiniteZeroBudgetedRelativelyDenseRadius]
+  let hW :=
+    TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp.witness
+      T ε hT4 hεpos hεlt
+  let Rt : ℝ := Classical.choose hW
+  let hRtSpec := Classical.choose_spec hW
+  let Ra : ℝ := Classical.choose hRtSpec
+  have hSpec :
+      0 < Rt ∧
+      0 < Ra ∧
+      Rt + 1
+        ≤ Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+      Ra + 1
+        ≤ Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 ∧
+      (∀ L : ℝ,
+        ∃ t0 : ℝ,
+          L < t0 ∧
+          t0 < L + Rt ∧
+          ∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖t0 * ρ.im - Complex.arg ρ -
+                  m • (2 * Real.pi)‖ ≤ ε) ∧
+      (∀ L : ℝ,
+        ∃ t0 : ℝ,
+          L < t0 ∧
+          t0 < L + Ra ∧
+          ∀ ρ ∈ (finite_zeros_le T).toFinset,
+            ∃ m : ℤ,
+              ‖t0 * ρ.im - (Complex.arg ρ + Real.pi) -
+                  m • (2 * Real.pi)‖ ≤ ε) := by
+    simpa [hW, hRtSpec, Rt, Ra] using Classical.choose_spec hRtSpec
+  rcases hSpec with
+    ⟨_hRtpos, hRapos, _hRtBudget, hRaBudget, _hTargetHit, hAntiHit⟩
+  exact ⟨hRapos, hRaBudget, hAntiHit⟩
+
+/-- The budgeted paired finite-zero relative-density payload supplies the
+anti-target finite-zero relative-density leaf. -/
+theorem antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyDense_hyp
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] :
+    AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp where
+  witness := by
+    intro T ε hT4 hεpos
+    by_cases hεlt : ε < 1
+    · exact
+        ⟨antiTargetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt,
+          (antiTargetFiniteZeroBudgetedRelativelyDenseRadius_spec
+            hT4 hεpos hεlt).1,
+          (antiTargetFiniteZeroBudgetedRelativelyDenseRadius_spec
+            hT4 hεpos hεlt).2.2⟩
+    · let δ : ℝ := min ε (1 / 2)
+      have hδpos : 0 < δ := by
+        dsimp [δ]
+        exact lt_min hεpos (by norm_num)
+      have hδlt : δ < 1 := by
+        dsimp [δ]
+        exact lt_of_le_of_lt (min_le_right ε (1 / 2 : ℝ)) (by norm_num)
+      have hδle : δ ≤ ε := by
+        dsimp [δ]
+        exact min_le_left ε (1 / 2 : ℝ)
+      rcases TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp.witness
+        T δ hT4 hδpos hδlt with
+        ⟨_Rt, Ra, _hRtpos, hRapos, _hRtBudget, _hRaBudget,
+          _hTargetHit, hAntiHit⟩
+      refine ⟨Ra, hRapos, ?_⟩
+      intro L
+      rcases hAntiHit L with ⟨t0, hLt, htR, hApprox⟩
+      refine ⟨t0, hLt, htR, ?_⟩
+      intro ρ hρ
+      rcases hApprox ρ hρ with ⟨m, hm⟩
+      exact ⟨m, hm.trans hδle⟩
+
 /-- Relation-compatible quantitative Kronecker source for the paired
 target/anti finite-zero boxes.
 
@@ -4082,6 +4179,39 @@ theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_residual
     (h : AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
     AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp where
   witness := h
+
+/-- Remaining comparison needed to turn the budgeted paired payload into the
+anti-target canonical phase-radius residual. -/
+def AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] : Prop :=
+  ∀ (T ε : ℝ) (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1),
+    @antiTargetFiniteZeroInhomogeneousPhaseRadius
+        antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyDense_hyp
+        T ε
+      ≤ antiTargetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt
+
+/-- The selected anti-target radius in the budgeted paired finite-zero payload
+already satisfies the tower half-budget. -/
+theorem antiTargetFiniteZeroBudgetedRelativelyDenseRadius_halfBudget
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    {T ε : ℝ} (hT4 : 4 ≤ T) (hεpos : 0 < ε) (hεlt : ε < 1) :
+    antiTargetFiniteZeroBudgetedRelativelyDenseRadius T ε hT4 hεpos hεlt + 1
+      ≤ Real.exp (Real.exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 :=
+  (antiTargetFiniteZeroBudgetedRelativelyDenseRadius_spec hT4 hεpos hεlt).2.1
+
+/-- If the projected anti-target chooser is controlled by the selected radius
+from the budgeted paired payload, the anti-target canonical residual follows. -/
+theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_budgetedProjectionComparison
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] :
+    AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison →
+    @AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual
+      antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyDense_hyp := by
+  intro hcmp
+  intro T ε hT4 hεpos hεlt
+  have hChoose := hcmp T ε hT4 hεpos hεlt
+  have hBudget :=
+    antiTargetFiniteZeroBudgetedRelativelyDenseRadius_halfBudget hT4 hεpos hεlt
+  linarith
 
 /-- The paired radius-growth source implies the target-side canonical radius
 leaf by projecting the target radius through the paired max.
