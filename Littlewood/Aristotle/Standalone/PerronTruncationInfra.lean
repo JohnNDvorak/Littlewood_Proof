@@ -2838,6 +2838,50 @@ theorem small_T_separated_singular_numerator_bound :
         dsimp [A]
         linarith
 
+/-- Reciprocal-log comparison for separated boundary-window terms.  This is
+the formal `log (x / n) >= (x - n) / x` step, inverted on positive quantities. -/
+theorem small_T_separated_reciprocal_log_distance_bound :
+    ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+          (Real.log (x / (n : ℝ)))⁻¹ ≤ x / (x - (n : ℝ)) := by
+  intro x T hx hT_lo _hT_hi n hn
+  rcases perronKernelSeparatedPuncturedBoundarySet_mem_large_side x T hx hT_lo hn with
+    ⟨hn_pos, hn_lt_x, hy_gt_one⟩
+  have hx_pos : 0 < x := by linarith
+  have hn_pos_real : (0 : ℝ) < n := Nat.cast_pos.mpr hn_pos
+  have hy_pos : 0 < x / (n : ℝ) := div_pos hx_pos hn_pos_real
+  have hdist_pos : 0 < x - (n : ℝ) := sub_pos.mpr hn_lt_x
+  have hratio_pos : 0 < (x - (n : ℝ)) / x := div_pos hdist_pos hx_pos
+  have hlog_pos : 0 < Real.log (x / (n : ℝ)) := Real.log_pos hy_gt_one
+  have hlog_lower :
+      (x - (n : ℝ)) / x ≤ Real.log (x / (n : ℝ)) := by
+    have hbase := Real.one_sub_inv_le_log_of_pos hy_pos
+    have hbase' :
+        1 - (x / (n : ℝ))⁻¹ ≤ Real.log (x / (n : ℝ)) := by
+      linarith [hbase]
+    have hrewrite : 1 - (x / (n : ℝ))⁻¹ = (x - (n : ℝ)) / x := by
+      field_simp [hx_pos.ne', hn_pos_real.ne']
+    rw [← hrewrite]
+    exact hbase'
+  calc (Real.log (x / (n : ℝ)))⁻¹
+      ≤ ((x - (n : ℝ)) / x)⁻¹ :=
+        (inv_le_inv₀ hlog_pos hratio_pos).2 hlog_lower
+    _ = x / (x - (n : ℝ)) := by
+        field_simp [hx_pos.ne', hdist_pos.ne']
+
+/-- The separated singular Davenport summand has the required pointwise
+log-distance envelope. -/
+theorem small_T_separated_singular_pointwise_bound :
+    ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+          perronKernelSeparatedDavenportSingularTerm x T n ≤
+            K * perronKernelSeparatedLogDistanceTerm x T n :=
+  small_T_separated_singular_pointwise_bound_from_num_and_recip
+    small_T_separated_singular_numerator_bound
+    small_T_separated_reciprocal_log_distance_bound
+
 /-- Scale-correct separated weighted atom from a linear-window Davenport
 envelope bound.  This records the usable consequence of the separated
 Davenport route without claiming the false pure `O((log x)^2)` envelope sum. -/

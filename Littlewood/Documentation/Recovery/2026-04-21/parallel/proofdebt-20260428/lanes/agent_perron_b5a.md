@@ -1025,3 +1025,50 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `1 - (x / n)⁻¹` as `(x - n) / x` using separated-set large-side membership.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 19 - Singular Reciprocal-Log Closure
+
+- Classification: `PROOF_REDUCTION_CLOSURE`.
+- Exact theorem attacked:
+  the reciprocal-log distance comparison feeding
+  `perronKernelSeparatedDavenportSingularTerm_le_logDistanceTerm_of_num_and_recip`:
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelSeparatedPuncturedBoundarySet x T,
+      (Real.log (x / (n : ℝ)))⁻¹ <= x / (x - (n : ℝ))`.
+- Code facts banked:
+  proved `small_T_separated_reciprocal_log_distance_bound`.  The proof uses
+  `perronKernelSeparatedPuncturedBoundarySet_mem_large_side` to obtain
+  `1 <= n`, `(n : ℝ) < x`, and `1 < x / n`, then applies
+  `Real.one_sub_inv_le_log_of_pos` to `x / (n : ℝ)` and rewrites
+  `1 - (x / n)⁻¹` as `(x - n) / x`.  Positivity of both sides permits
+  inversion by `inv_le_inv₀`.
+  Added `small_T_separated_singular_pointwise_bound`, combining the new
+  reciprocal-log comparison with the previously validated numerator bound
+  `small_T_separated_singular_numerator_bound`.
+- Scale check:
+  preserved the `(x / T)` harmonic-distance route.  The singularity remains in
+  `perronKernelSeparatedLogDistanceTerm`; this round does not replace the
+  separated window by a pure bounded-height `O((Real.log x)^2)` weight.
+- Failed/demoted routes:
+  did not use the refuted pointwise `K * T * (Real.log x)^2 / x` decay route
+  near integer `x`, and did not revive the false pure macroscopic window-weight
+  estimate.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the weighted harmonic-distance summation bound
+  `∃ Cℓ > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelSeparatedLogDistanceEnvelope x T
+      <= Cℓ * (x / T) * (Real.log x)^2`.
+  This is now the remaining input to
+  `small_T_separated_singular_envelope_bound_from_logDistance`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
