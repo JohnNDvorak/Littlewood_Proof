@@ -649,6 +649,17 @@ def StandardGabckeQuarterShiftedRawDenominatorTrigProp : Prop :=
   ∀ x : ℝ,
     Real.cos (2 * Real.pi * (x + 1 / 4)) = -Real.sin (2 * Real.pi * x)
 
+/-- The denominator quarter-shift identity follows from angle normalization
+`2*pi*(x+1/4) = 2*pi*x + pi/2` and the standard addition formula. -/
+theorem standardGabckeQuarterShiftedRawDenominatorTrigProp_proved :
+    StandardGabckeQuarterShiftedRawDenominatorTrigProp := by
+  intro x
+  have hangle :
+      2 * Real.pi * (x + 1 / 4) = 2 * Real.pi * x + Real.pi / 2 := by
+    ring
+  rw [hangle, Real.cos_add, Real.cos_pi_div_two, Real.sin_pi_div_two]
+  ring
+
 /-- The quotient signs introduced by the two quarter-shift trig identities
 cancel algebraically. -/
 def StandardGabckeQuarterShiftedRawTrigSignCancellationProp : Prop :=
