@@ -3832,6 +3832,53 @@ theorem targetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKronecker_o
       ⟨R, hRpos, hRbudget, hTarget, hAnti⟩
     exact ⟨R, R, hRpos, hRpos, hRbudget, hRbudget, hTarget, hAnti⟩
 
+/-- The paired explicit budgeted finite-zero payload supplies the same-radius
+budgeted Kronecker residual by taking the maximum of its target and anti-target
+radii.
+
+This is a chooser-free reduction: the radii come directly from
+`TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp.witness`, not
+from `finiteSetRelationCompatibleKroneckerRadius`. -/
+theorem targetAntiFiniteZeroRelationCompatibleBudgetedSameRadiusKroneckerResidual_of_budgetedRelativelyDense_hyp
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp] :
+    TargetAntiFiniteZeroRelationCompatibleBudgetedSameRadiusKroneckerResidual := by
+  intro T ε hT4 hεpos hεlt _hTargetCompat _hAntiCompat
+  rcases TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp.witness
+      T ε hT4 hεpos hεlt with
+    ⟨Rt, Ra, hRtpos, _hRapos, hRtBudget, hRaBudget, hTargetHit, hAntiHit⟩
+  let R : ℝ := max Rt Ra
+  have hRpos : 0 < R :=
+    hRtpos.trans_le (le_max_left Rt Ra)
+  have hRbudget :
+      R + 1
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 := by
+    have hRt_le :
+        Rt
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 - 1 := by
+      linarith
+    have hRa_le :
+        Ra
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 - 1 := by
+      linarith
+    have hR_le :
+        R
+          ≤ Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 - 1 :=
+      max_le hRt_le hRa_le
+    linarith
+  refine ⟨R, hRpos, hRbudget, ?_, ?_⟩
+  · intro L
+    rcases hTargetHit L with ⟨t0, hLt, htRt, hApprox⟩
+    refine ⟨t0, hLt, ?_, hApprox⟩
+    exact htRt.trans_le (add_le_add_right (le_max_left Rt Ra) L)
+  · intro L
+    rcases hAntiHit L with ⟨t0, hLt, htRa, hApprox⟩
+    refine ⟨t0, hLt, ?_, hApprox⟩
+    exact htRa.trans_le (add_le_add_right (le_max_right Rt Ra) L)
+
 /-- Target-side budget domination for the actual finite-set Kronecker radius
 chosen from the existing relation-compatible finite-dimensional Kronecker
 source. -/
@@ -6564,6 +6611,22 @@ theorem exactSeedAboveThreshold_perron_of_logHalfBudget_budgetedRelativelyDense_
   letI : TargetPhaseFitAbovePerronThresholdPerronHyp := hFit.1
   letI : AntiTargetPhaseFitAbovePerronThresholdPerronHyp := hFit.2
   exact ⟨inferInstance, inferInstance⟩
+
+/-- Perron canonical residual plus explicit budgeted finite-zero radii package
+both Perron-only exact-seed classes.
+
+This is the direct chooser-free endpoint for the explicit-radius finite-zero
+route; it does not pass through relation-compatible selected Kronecker radii. -/
+theorem exactSeedAboveThreshold_perron_of_canonicalPerronAndBudgetedRelativelyDense_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp]
+    (hPerron :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : PerronThresholdTowerLogHalfBudgetHyp :=
+    perronThresholdTowerLogHalfBudget_of_canonicalMajorantResidual hPerron
+  exact exactSeedAboveThreshold_perron_of_logHalfBudget_budgetedRelativelyDense_hyp
 
 /-- Relation-compatible budgeted finite-zero Kronecker plus the Perron log
 half-budget packages both target-specific Perron phase-fit classes through the
