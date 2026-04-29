@@ -852,3 +852,36 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Pi/Phase: three canonical budget leaves.
   - RS/Gabcke: smooth removable-source derivative instantiation, point
     bridges, and numeric point bounds.
+
+## Overnight 2026-04-29 Fifteenth Pass Status
+
+- Perron/B5a lane is validated and pushed through `1329939`
+  (`proofdebt/20260429-perron-b5a`):
+  - Commit: `Factor Perron unweighted harmonic distance`.
+  - Validation passed after a coordinator tactic cleanup:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Result: the unweighted finite harmonic-distance bound is factored to the
+    pure reciprocal-distance envelope. The remaining atom is now the clean
+    bounded-height finite harmonic sum:
+    `∃ Ch > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+      perronKernelSeparatedReciprocalDistanceEnvelope x T <= Ch * Real.log x`.
+  - Halley is redeployed to prove that reciprocal-distance envelope directly.
+- Pi/Phase lane is validated and pushed through `7d4b121`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Expose pi growth budget exact seeds`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: exact growth-budget seed packaging is exposed for the Pi phase
+    route. The remaining Pi work is the same-height `T, ε` domination for the
+    canonical majorant and the target/anti-target chosen-radius canonical
+    bounds.
+  - Planck is redeployed to those canonical-budget leaves. Growth-to-canonical
+    cycles and unproved `Classical.choose` control remain forbidden.
+- Current live atoms:
+  - Atkinson: stationary-phase complete-block target remainder and finite
+    fixed-shift tail patches.
+  - Perron/B5a: pure reciprocal-distance finite harmonic sum.
+  - Pi/Phase: same-height canonical majorant plus target/anti chosen-radius
+    canonical bounds.
+  - RS/Gabcke: smooth removable-source derivative instantiation, point
+    bridges, and numeric point bounds.
