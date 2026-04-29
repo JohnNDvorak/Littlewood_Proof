@@ -582,6 +582,33 @@ def StandardGabckeRemovableSourceQuarterThirdDerivativeBoundProp
     (D : ℝ → ℝ) : Prop :=
   |D (1 / 4)| ≤ fresnelC1Bound * (96 * Real.pi ^ 2)
 
+/-- Exact local Taylor value of the instantiated removable quotient candidate
+at the first removable point. In local coordinate `x = p - 1/4`, the smooth
+quotient has cubic coefficient `-pi^2/6`, hence third derivative `-pi^2`. -/
+def StandardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp : Prop :=
+  standardGabckeRemovableSourceThirdDerivative (1 / 4) = -Real.pi ^ 2
+
+/-- The quarter-point numeric Tabelle bound follows from the exact local
+Taylor value of the instantiated removable candidate. -/
+theorem standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_candidateValueFormula
+    (h_value :
+      StandardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp) :
+    StandardGabckeRemovableSourceQuarterThirdDerivativeBoundProp
+      standardGabckeRemovableSourceThirdDerivative := by
+  unfold StandardGabckeRemovableSourceQuarterThirdDerivativeBoundProp
+  rw [h_value]
+  have hpi2_nonneg : 0 ≤ Real.pi ^ 2 := sq_nonneg Real.pi
+  have hcoef : (1 : ℝ) ≤ fresnelC1Bound * 96 := by
+    unfold fresnelC1Bound
+    norm_num
+  calc
+    |(-Real.pi ^ 2)| = Real.pi ^ 2 := by
+      rw [abs_neg, abs_of_nonneg hpi2_nonneg]
+    _ = 1 * Real.pi ^ 2 := by ring
+    _ ≤ (fresnelC1Bound * 96) * Real.pi ^ 2 :=
+      mul_le_mul_of_nonneg_right hcoef hpi2_nonneg
+    _ = fresnelC1Bound * (96 * Real.pi ^ 2) := by ring
+
 /-- Numeric Tabelle bound for the smooth removable-source derivative at the
 second denominator-zero point. -/
 def StandardGabckeRemovableSourceThreeQuarterThirdDerivativeBoundProp

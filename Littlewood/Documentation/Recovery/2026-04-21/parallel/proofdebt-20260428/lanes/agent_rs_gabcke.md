@@ -1003,3 +1003,52 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   analogue.
 - Coordinator action requested:
   run the requested serialized validation command.
+
+### 2026-04-29 Round 20: quarter removable bound reduced to Taylor value
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeRemovableSourceQuarterThirdDerivativeBoundProp
+  standardGabckeRemovableSourceThirdDerivative`.
+- Banked inputs:
+  - Round 19 instantiated the smooth removable candidate route via
+    `standardGabckeRemovablePsiCandidate` and
+    `standardGabckeRemovableSourceThirdDerivative`.
+  - The candidate `D` is not `standardGabckeRawPsiThirdDerivative`, and the
+    raw/candidate bridge remains a separate source obligation.
+- Proof facts banked:
+  - Added
+    `StandardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp`,
+    the exact local Taylor value
+    `standardGabckeRemovableSourceThirdDerivative (1/4) = -Real.pi^2`.
+  - Proved
+    `standardGabckeRemovableSourceQuarterThirdDerivativeBoundProp_of_candidateValueFormula`:
+    this Taylor value implies
+    `StandardGabckeRemovableSourceQuarterThirdDerivativeBoundProp
+    standardGabckeRemovableSourceThirdDerivative`, since
+    `|-pi^2| <= fresnelC1Bound * (96*pi^2)` follows from
+    `fresnelC1Bound = 0.083`.
+- Failed routes:
+  - I did not prove the raw/candidate point bridge by treating the raw quotient
+    as globally regular at `1/4`.
+  - I did not define `D := standardGabckeRawPsiThirdDerivative`.
+  - I did not assert raw `standardGabckeRawPsi = rsPsi`.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Static command results:
+  - Static reads/diffs only; no Lean/Lake/build/check commands were run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`
+- Remaining goal shape:
+  prove the local analytic/calculus atom
+  `StandardGabckeRemovableCandidateQuarterThirdDerivativeValueFormulaProp`.
+  In the coordinate `x = p - 1/4`, this is the third derivative at zero of
+  `sin (pi*x - 2*pi*x^2) / sin (2*pi*x)`, whose Taylor expansion starts
+  `1/2 - x + (pi^2/4)*x^2 - (pi^2/6)*x^3 + ...`.
+  Separately, prove the raw/candidate bridge
+  `StandardGabckeRawPsiQuarterRemovableSourceBridgeProp
+  standardGabckeRemovableSourceThirdDerivative` without using global
+  regularity of the raw quotient.
+- Coordinator action requested:
+  run the requested serialized validation command.
