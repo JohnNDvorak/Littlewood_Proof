@@ -1761,6 +1761,100 @@ theorem perronKernelNearDiagonalPuncturedBoundarySet_card_le_one
         · exact ha_le_x
       exact False.elim (ha_ne hx_eq_a.symm)
 
+/-- Membership in the near-diagonal punctured boundary set gives the elementary
+size facts needed for bounded-height Perron estimates. -/
+theorem perronKernelNearDiagonalPuncturedBoundarySet_mem_bounds
+    (x T : ℝ) (hx : 2 ≤ x) {n : ℕ}
+    (hn : n ∈ perronKernelNearDiagonalPuncturedBoundarySet x T) :
+    1 ≤ n ∧ (n : ℝ) ≤ x ∧ x ≤ (n : ℝ) + 1 := by
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hn_unfold := hn
+  dsimp [perronKernelNearDiagonalPuncturedBoundarySet] at hn_unfold
+  have hunit : |x - (n : ℝ)| ≤ 1 := (Finset.mem_filter.mp hn_unfold).2
+  have hsp := (Finset.mem_filter.mp hn_unfold).1
+  have hboundary := (Finset.mem_filter.mp hsp).1
+  have hrange : n ∈ Finset.range (Nat.floor x + 1) := (Finset.mem_filter.mp hboundary).1
+  have hn_le_floor : n ≤ Nat.floor x := Nat.lt_succ_iff.mp (Finset.mem_range.mp hrange)
+  have hn_le_x : (n : ℝ) ≤ x :=
+    le_trans (Nat.cast_le.mpr hn_le_floor) (Nat.floor_le hx_nonneg)
+  have hx_le_n_add_one : x ≤ (n : ℝ) + 1 := by
+    have h := (abs_le.mp hunit).2
+    linarith
+  have hn_pos_real : (0 : ℝ) < n := by
+    by_contra hn_nonpos
+    have hn_zero : (n : ℝ) = 0 :=
+      le_antisymm (le_of_not_gt hn_nonpos) (Nat.cast_nonneg n)
+    have hx_le_one : x ≤ 1 := by
+      calc x ≤ (n : ℝ) + 1 := hx_le_n_add_one
+        _ = 1 := by rw [hn_zero]; ring
+    linarith
+  exact ⟨Nat.succ_le_of_lt (Nat.cast_pos.mp hn_pos_real), hn_le_x, hx_le_n_add_one⟩
+
+/-- Uniform bounded-height Perron-kernel estimate on the near-diagonal
+punctured set.
+
+This deliberately uses only the absolute bounded-height per-term estimate.  It
+does not assert any decay in `x`, which would be false near integer hits. -/
+theorem small_T_nearDiagonal_punctured_kernel_uniform_bound :
+    ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelNearDiagonalPuncturedBoundarySet x T →
+          |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤ K := by
+  let K : ℝ := 1 + 32 * Real.exp 1
+  refine ⟨K, by positivity, ?_⟩
+  intro x T hx hT_lo hT_hi n hn
+  have hT_pos : 0 < T := by linarith
+  rcases perronKernelNearDiagonalPuncturedBoundarySet_mem_bounds x T hx hn with
+    ⟨hn_pos, hn_le_x, hx_le_n_add_one⟩
+  have hn_pos_real : (0 : ℝ) < n := Nat.cast_pos.mpr hn_pos
+  have hc_pos := c_param_pos x hx
+  have hden_ge_one :
+      (1 : ℝ) ≤ Real.pi * (1 + 1 / Real.log x) := by
+    have hpi_ge_one : (1 : ℝ) ≤ Real.pi := by linarith [Real.pi_gt_three]
+    have hc_ge_one : (1 : ℝ) ≤ 1 + 1 / Real.log x :=
+      le_of_lt (c_param_gt_one x hx)
+    calc (1 : ℝ) = 1 * 1 := by ring
+      _ ≤ Real.pi * (1 + 1 / Real.log x) :=
+          mul_le_mul hpi_ge_one hc_ge_one zero_le_one (by linarith [Real.pi_gt_three])
+  have hxn_le_two : x / (n : ℝ) ≤ 2 := by
+    rw [div_le_iff₀ hn_pos_real]
+    have hn_one_le : (1 : ℝ) ≤ n := by exact_mod_cast hn_pos
+    calc x ≤ (n : ℝ) + 1 := hx_le_n_add_one
+      _ ≤ 2 * (n : ℝ) := by linarith
+  have hrpow_le_two_exp :
+      (x / (n : ℝ)) ^ (1 + 1 / Real.log x) ≤ 2 * Real.exp 1 := by
+    calc (x / (n : ℝ)) ^ (1 + 1 / Real.log x)
+        ≤ Real.exp 1 * (x / (n : ℝ)) :=
+          per_term_rpow_bound x hx n hn_pos hn_le_x
+      _ ≤ Real.exp 1 * 2 :=
+          mul_le_mul_of_nonneg_left hxn_le_two (Real.exp_pos 1).le
+      _ = 2 * Real.exp 1 := by ring
+  have hP_abs_le :
+      |perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| ≤
+        32 * Real.exp 1 := by
+    have hden_pos : 0 < Real.pi * (1 + 1 / Real.log x) :=
+      mul_pos Real.pi_pos hc_pos
+    calc |perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+        ≤ T * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+            (Real.pi * (1 + 1 / Real.log x)) :=
+          perron_per_term_abs_bound_general x hx T hT_pos n hn_pos
+      _ ≤ T * (2 * Real.exp 1) / (Real.pi * (1 + 1 / Real.log x)) := by
+          exact
+            div_le_div_of_nonneg_right
+              (mul_le_mul_of_nonneg_left hrpow_le_two_exp hT_pos.le)
+              hden_pos.le
+      _ ≤ T * (2 * Real.exp 1) := by
+          exact div_le_self (by positivity : 0 ≤ T * (2 * Real.exp 1)) hden_ge_one
+      _ ≤ 16 * (2 * Real.exp 1) := by
+          exact mul_le_mul_of_nonneg_right hT_hi (by positivity)
+      _ = 32 * Real.exp 1 := by ring
+  calc |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
+      ≤ |(1 : ℝ)| + |perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| :=
+        abs_sub _ _
+    _ ≤ K := by
+        dsimp [K]
+        simpa using add_le_add_left hP_abs_le (1 : ℝ)
+
 /-- If the near-diagonal punctured boundary set has at most one element, then
 its weighted kernel error is only `O(log x)` under a uniform kernel bound. -/
 theorem perronKernelWeightedNearDiagonalPuncturedBoundaryError_le_kernelSup_mul_log
@@ -2265,6 +2359,14 @@ theorem small_T_nearDiagonal_punctured_boundary_bound_from_kernel
     (fun x T hx _hT_lo _hT_hi =>
       perronKernelNearDiagonalPuncturedBoundarySet_card_le_one x T hx)
     hkernel
+
+/-- The near-diagonal punctured weighted boundary atom is closed by the
+finite-cardinality theorem and the uniform bounded-height kernel estimate. -/
+theorem small_T_nearDiagonal_punctured_boundary_bound :
+    ∃ Cn > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedNearDiagonalPuncturedBoundaryError x T ≤ Cn * (Real.log x) ^ 2 :=
+  small_T_nearDiagonal_punctured_boundary_bound_from_kernel
+    small_T_nearDiagonal_punctured_kernel_uniform_bound
 
 /-- Finite Perron-kernel cutoff from a weighted per-term cutoff-error bound.
 

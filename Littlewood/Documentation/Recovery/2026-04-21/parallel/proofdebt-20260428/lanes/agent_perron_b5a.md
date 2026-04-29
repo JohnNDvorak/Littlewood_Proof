@@ -632,3 +632,55 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   membership; it should not try to prove decay in `x`.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 12 - Near-Diagonal Kernel Closure
+
+- Classification: `PROVED_PENDING_VALIDATION`.
+- Exact theorem attacked:
+  uniform local Perron-kernel bound feeding
+  `small_T_nearDiagonal_punctured_boundary_bound_from_kernel` in
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`.
+- Banked inputs:
+  `perron_per_term_abs_bound_general`, `per_term_rpow_bound`,
+  `c_param_pos`, `c_param_gt_one`, `Real.pi_gt_three`, and the validated
+  finite-cardinality theorem
+  `perronKernelNearDiagonalPuncturedBoundarySet_card_le_one`.
+- Code facts banked:
+  added `perronKernelNearDiagonalPuncturedBoundarySet_mem_bounds`, extracting
+  from near-diagonal membership the scale-safe facts
+  `1 <= n`, `(n : ℝ) <= x`, and `x <= (n : ℝ) + 1`.
+  Proved `small_T_nearDiagonal_punctured_kernel_uniform_bound`:
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelNearDiagonalPuncturedBoundarySet x T,
+      |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T| <= K`.
+  The proof uses only the absolute bounded-height per-term estimate, `T <= 16`,
+  and the local consequence `x / n <= 2`; it does not assert any decay in `x`.
+  Added `small_T_nearDiagonal_punctured_boundary_bound`, closing
+  `∃ Cn > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelWeightedNearDiagonalPuncturedBoundaryError x T
+      <= Cn * (Real.log x)^2`.
+- Failed routes:
+  did not use the decaying near-integer kernel route.  It remains forbidden
+  because real `x` can approach an integer while the requested decaying right
+  side tends to zero.
+- Circular/failed routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  return to the separated punctured boundary-window pointwise estimate:
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    (((range (floor x + 1)).filter boundary).filter (fun n => (n : ℝ) != x)).filter
+      (fun n => ¬ |x - (n : ℝ)| <= 1),
+    |1 - perronPerTermIntegral (x / n) (1 + 1 / Real.log x) T|
+      <= K * (T * (Real.log x)^2 / x)`.
+  This is the first remaining place where decay is scale-safe after removing
+  exact hits and the unit near-diagonal band.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
