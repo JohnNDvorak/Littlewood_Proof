@@ -3083,3 +3083,17 @@ Timestamp: 2026-04-28 22:56 CDT.
     `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
   - Current Perron atom: prove the eventual normalized asymptotic tail from
     `Xtail`; the legacy absorption obligation remains separate.
+
+## Overnight 2026-04-29 One-Hundred-Twenty-Seventh Pass Status
+
+- Coordinator recovery branch is advanced locally through `280215a`.
+- Atkinson lane is integrated through `87a3520`:
+  - The vertical principal-log Stirling Big-O now has a branch-route reduction
+    from the period-correction zero atom plus the standard multiplier Big-O.
+  - Local Gamma/Stirling/Binet infrastructure was searched; no direct theorem
+    was found that already states the needed principal-log Big-O.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`
+    (`7903 jobs`).
+  - Current Atkinson atoms: period-correction zero, standard multiplier Big-O,
+    or a direct standard complex principal-log Gamma/Stirling Big-O theorem.
