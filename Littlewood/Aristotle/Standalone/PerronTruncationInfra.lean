@@ -5056,6 +5056,54 @@ theorem small_T_concrete_contour_remainder_transition_tail_from_bddAbove_image
     change perronVerticalContourRemainderNormalized x T ≤ max (1 : ℝ) M
     exact le_trans (hM himage) (le_max_right (1 : ℝ) M)
 
+/-- The finite transition bounded-image atom follows from continuity on the
+closed rectangle `16 <= x <= Xtail`, `2 <= T <= 16`.
+
+This is the transition-slab analogue of the cutoff-`16` compactness bridge.
+The hypothesis `16 <= Xtail` records the intended nonempty transition range;
+the compactness proof itself is the closed rectangle in `ℝ × ℝ`. -/
+theorem small_T_concrete_contour_remainder_transition_bddAbove_image_from_continuousOn
+    (Xtail : ℝ) (_hXtail : 16 ≤ Xtail)
+    (hcont : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalContourRemainderNormalized p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    BddAbove
+      ((fun p : ℝ × ℝ =>
+          perronVerticalContourRemainderNormalized p.1 p.2) ''
+        {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) := by
+  have hcompact :
+      IsCompact {p : ℝ × ℝ |
+        16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16} := by
+    convert
+      (isCompact_Icc :
+        IsCompact (Set.Icc ((16 : ℝ), (2 : ℝ)) ((Xtail : ℝ), (16 : ℝ)))) using 1
+    ext p
+    constructor
+    · intro hp
+      exact
+        ⟨Prod.le_def.2 ⟨hp.1, hp.2.2.1⟩,
+          Prod.le_def.2 ⟨hp.2.1, hp.2.2.2⟩⟩
+    · intro hp
+      exact
+        ⟨(Prod.le_def.1 hp.1).1, (Prod.le_def.1 hp.2).1,
+          (Prod.le_def.1 hp.1).2, (Prod.le_def.1 hp.2).2⟩
+  exact hcompact.bddAbove_image hcont
+
+/-- Transition estimate from continuity of the normalized concrete defect on
+the finite transition slab. -/
+theorem small_T_concrete_contour_remainder_transition_tail_from_continuousOn
+    (Xtail : ℝ) (hXtail : 16 ≤ Xtail)
+    (hcont : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalContourRemainderNormalized p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16}) :
+    ∃ Cmid > (0 : ℝ), ∀ x T : ℝ,
+      16 ≤ x → x ≤ Xtail → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cmid :=
+  small_T_concrete_contour_remainder_transition_tail_from_bddAbove_image Xtail
+    (small_T_concrete_contour_remainder_transition_bddAbove_image_from_continuousOn
+      Xtail hXtail hcont)
+
 /-- Tail from `16` follows from a bounded finite transition slab and an
 eventual normalized asymptotic tail from `Xtail` onward. -/
 theorem small_T_concrete_contour_remainder_tail16_from_transition_bddAbove_and_asymptotic_tail
@@ -5084,6 +5132,27 @@ theorem small_T_concrete_contour_remainder_tail16_from_transition_bddAbove_and_a
       (le_max_left Cmid Casymp)
   · exact le_trans (hasymptotic x T hx_asymp hT_lo hT_hi)
       (le_max_right Cmid Casymp)
+
+/-- Tail from `16` follows from transition-slab continuity and an eventual
+normalized asymptotic tail from `Xtail` onward. -/
+theorem small_T_concrete_contour_remainder_tail16_from_transition_continuousOn_and_asymptotic_tail
+    (Xtail : ℝ) (hXtail : 16 ≤ Xtail)
+    (htransition_cont : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalContourRemainderNormalized p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (hasymptotic : ∃ Casymp > (0 : ℝ), ∀ x T : ℝ,
+      Xtail ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Casymp) :
+    ∃ Ctail > (0 : ℝ), ∀ x T : ℝ,
+      16 ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Ctail :=
+  small_T_concrete_contour_remainder_tail16_from_transition_bddAbove_and_asymptotic_tail
+    Xtail
+    (small_T_concrete_contour_remainder_transition_bddAbove_image_from_continuousOn
+      Xtail hXtail htransition_cont)
+    hasymptotic
 
 /-- Continuity of the concrete contour remainder on the cutoff-`16` slab from
 continuity of its two analytic components. -/
@@ -6327,6 +6396,24 @@ theorem small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_trans
     (small_T_concrete_contour_remainder_tail16_from_transition_bddAbove_and_asymptotic_tail
       Xtail htransition_bdd hasymptotic)
 
+/-- Explicit cutoff-`16` normalized supremum from the proved finite-zero slab,
+transition-slab continuity, and an eventual asymptotic tail. -/
+theorem small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_continuousOn_and_asymptotic_tail
+    (Xtail : ℝ) (hXtail : 16 ≤ Xtail)
+    (htransition_cont : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalContourRemainderNormalized p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (hasymptotic : ∃ Casymp > (0 : ℝ), ∀ x T : ℝ,
+      Xtail ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Casymp) :
+    ∃ Cc > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Cc :=
+  small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_slab16_and_tail16
+    (small_T_concrete_contour_remainder_tail16_from_transition_continuousOn_and_asymptotic_tail
+      Xtail hXtail htransition_cont hasymptotic)
+
 /-- Explicit cutoff-`16` normalized supremum from slab continuity and the
 separate unbounded tail atom. -/
 theorem small_T_concrete_contour_remainder_normalized_sup_from_continuousOn_slab16_and_tail16
@@ -6605,6 +6692,22 @@ theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZe
   small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
     (small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_and_asymptotic_tail
       Xtail htransition_bdd hasymptotic)
+
+/-- Linear-window small-`T` surface from the proved finite-zero slab,
+transition-slab continuity, and an eventual asymptotic tail. -/
+theorem small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_transition_continuousOn_and_asymptotic_tail
+    (Xtail : ℝ) (hXtail : 16 ≤ Xtail)
+    (htransition_cont : ContinuousOn
+      (fun p : ℝ × ℝ => perronVerticalContourRemainderNormalized p.1 p.2)
+      {p : ℝ × ℝ | 16 ≤ p.1 ∧ p.1 ≤ Xtail ∧ 2 ≤ p.2 ∧ p.2 ≤ 16})
+    (hasymptotic : ∃ Casymp > (0 : ℝ), ∀ x T : ℝ,
+      Xtail ≤ x → 2 ≤ T → T ≤ 16 →
+        |perronVerticalContourRemainderRe x T| /
+          (Real.sqrt x * (Real.log T) ^ 2 / Real.sqrt T) ≤ Casymp) :
+    SmallTPerronLinearWindowBoundHyp :=
+  small_T_linear_window_bound_hyp_from_concrete_contour_remainder_normalized_sup
+    (small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_transition_continuousOn_and_asymptotic_tail
+      Xtail hXtail htransition_cont hasymptotic)
 
 /-- Linear-window small-`T` surface from continuity on the compact cutoff-`16`
 slab and the separate unbounded tail atom. -/
