@@ -2438,3 +2438,54 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   vertical-line complex Stirling logarithm at `O(1/y)`,
   Jacobian-integral bound at `1/relativeWeight`, and the shifted
   stationary-phase target remainder.
+
+### 2026-04-29 Round 52 Vertical Stirling to Principal-Log Pointwise Bound
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  vertical-line complex Stirling logarithm
+  `Asymptotics.IsBigO Filter.atTop`
+  `(fun y => Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -`
+  `((((1 / 4 : ℂ) + Complex.I * y) - 1 / 2) *`
+  `Complex.log ((1 / 4 : ℂ) + Complex.I * y) -`
+  `((1 / 4 : ℂ) + Complex.I * y) +`
+  `1 / 2 * Complex.log (2 * Real.pi)))`
+  `(fun y => ((1 / y : ℝ) : ℂ))`.
+- Facts banked:
+  inspected Mathlib and local recovered infrastructure. Mathlib only exposes
+  real/factorial Stirling material in this checkout. Locally,
+  `Littlewood/Aristotle/StationaryPhaseStartValue.lean` has the relevant
+  derivative machinery for `gammaLog - stirlingTerm`, including
+  `deriv_gammaLog_sub_stirlingTerm_bound`, but `gammaLog` and the derivative
+  theorem are private and currently only feed the Hardy start-value phase
+  theorem. Added and proved
+  `atkinson_vertical_line_stirling_isBigO_of_principal_log_bound`, reducing the
+  vertical-line `IsBigO` atom to the exact eventual pointwise principal-branch
+  estimate against the public
+  `Aristotle.StationaryPhaseStartValue.stirlingTerm`.
+- Smallest next theorem:
+  prove the principal-branch vertical-line pointwise Stirling bound
+  `∃ C > 0, ∃ Y0, ∀ y ≥ Y0,`
+  `‖Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -`
+  `Aristotle.StationaryPhaseStartValue.stirlingTerm`
+  `((1 / 4 : ℂ) + Complex.I * y)‖ ≤ C / y`.
+  A likely source is to expose or replicate the private
+  `StationaryPhaseStartValue` `gammaLog - stirlingTerm` derivative bound with a
+  branch comparison for the principal `Complex.log (Complex.Gamma _)` along
+  the vertical line.
+- Failed routes / guardrails:
+  no public Mathlib/local theorem currently provides the complex log-Gamma
+  `O(1/y)` remainder. Did not add imports, analytic providers, axioms, sorries,
+  statement weakening, direct Abel shortcuts, phase-weight division, circular
+  provider assumptions, or the demoted raw endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  principal-branch vertical-line pointwise log-Gamma Stirling bound at
+  `C / y`, Jacobian-integral bound at `1/relativeWeight`, and the shifted
+  stationary-phase target remainder.
