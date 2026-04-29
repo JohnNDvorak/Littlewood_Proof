@@ -2723,6 +2723,32 @@ class PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp
             (Real.exp (Real.exp
               (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
 
+/-- Exact residual inequality for the canonical Perron same-height budget.
+
+This is theorem-shaped rather than an instance source: proving this predicate
+is exactly the remaining fixed-height growth problem for
+`PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp`. -/
+def PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop :=
+  ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+    ∃ T ε : ℝ,
+      4 ≤ T ∧
+      0 < ε ∧ ε < 1 ∧
+      max (X + 1) (perronThreshold _hRH T + 1) ≤
+        Real.exp
+          (Real.exp (Real.exp
+            (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
+
+/-- The exact residual Perron inequality supplies the canonical Perron budget
+leaf.  This is not an instance, to avoid a reverse edge into the
+canonical/majorant/growth provider chain. -/
+theorem perronThresholdTowerExpHalfBudgetCanonicalMajorant_of_residual
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (h :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual) :
+    PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp where
+  witness := h
+
 /-- The earlier two-sided growth source implies the canonical max-majorant
 form by recombining the two same-height inequalities with `max_le`.
 
@@ -2833,6 +2859,29 @@ class TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp
         ≤ Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
 
+/-- Exact residual inequality for the target chosen-radius budget.
+
+This names the direct bound on the actual `Classical.choose` radius used by
+`targetFiniteZeroInhomogeneousPhaseRadius`; a separately bounded existential
+Kronecker radius is not enough to prove this predicate. -/
+def TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop :=
+  ∀ (T ε : ℝ),
+    4 ≤ T →
+    0 < ε →
+    ε < 1 →
+    targetFiniteZeroInhomogeneousPhaseRadius T ε + 1
+      ≤ Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- The exact target chosen-radius residual supplies the canonical target
+radius budget leaf.  This is deliberately non-instance-only. -/
+theorem targetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_residual
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    (h : TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
+    TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp where
+  witness := h
+
 /-- Anti-target-side height-only finite-zero phase-radius majorant source. -/
 class AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp
     [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
@@ -2857,6 +2906,28 @@ class AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp
       antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1
         ≤ Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Exact residual inequality for the anti-target chosen-radius budget.
+
+This names the direct bound on the actual `Classical.choose` radius used by
+`antiTargetFiniteZeroInhomogeneousPhaseRadius`. -/
+def AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop :=
+  ∀ (T ε : ℝ),
+    4 ≤ T →
+    0 < ε →
+    ε < 1 →
+    antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1
+      ≤ Real.exp (Real.exp
+        (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- The exact anti-target chosen-radius residual supplies the canonical
+anti-target radius budget leaf.  This is deliberately non-instance-only. -/
+theorem antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_residual
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    (h : AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual) :
+    AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp where
+  witness := h
 
 /-- The paired radius-growth source implies the target-side canonical radius
 leaf by projecting the target radius through the paired max.

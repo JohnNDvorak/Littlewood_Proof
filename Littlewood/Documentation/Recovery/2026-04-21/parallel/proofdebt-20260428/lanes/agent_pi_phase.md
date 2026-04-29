@@ -1499,3 +1499,74 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - For the radius side, introduce a direct bounded-radius exact-seed route if
     the project wants to avoid bounding the existing `Classical.choose`
     radius definitions.
+
+### 2026-04-29 Round 24: Canonical Budget Residual Predicates
+
+- Classification: `HONEST_RESIDUAL_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp`
+  - `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp`
+  - `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp`
+- Facts banked:
+  - Added
+    `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`, naming the
+    exact same-height fixed Perron-threshold inequality needed for the
+    canonical Perron budget leaf.
+  - Added
+    `perronThresholdTowerExpHalfBudgetCanonicalMajorant_of_residual`, a
+    non-instance constructor from that residual predicate to
+    `PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp`.
+  - Added `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`, naming
+    the exact direct bound on
+    `targetFiniteZeroInhomogeneousPhaseRadius T ε + 1`.
+  - Added `targetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_residual`, a
+    non-instance constructor to the target canonical radius leaf.
+  - Added `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`,
+    naming the exact direct bound on
+    `antiTargetFiniteZeroInhomogeneousPhaseRadius T ε + 1`.
+  - Added `antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonical_of_residual`,
+    a non-instance constructor to the anti-target canonical radius leaf.
+- Remaining goal shape:
+  - Prove
+    `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`: for every
+    `hRH, X`, choose a shared `T, ε` with `4 ≤ T`, `0 < ε`, `ε < 1`, and
+    `max (X + 1) (perronThreshold hRH T + 1)` below
+    `exp (exp (exp (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)`.
+  - Prove `TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`: for every
+    valid `T, ε`, bound the chosen target radius by the half double-exp
+    budget.
+  - Prove `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`: same
+    bound for the chosen anti-target radius.
+- Failed/circular route:
+  - No closure from existing local facts was found. The only local facts about
+    `targetFiniteZeroInhomogeneousPhaseRadius` and
+    `antiTargetFiniteZeroInhomogeneousPhaseRadius` are positivity and the
+    relative-density property from `Classical.choose_spec`; they do not bound
+    the chosen values.
+  - Did not install residual constructors as instances, so no new
+    canonical/majorant/growth reverse cycle is introduced.
+  - Did not claim a bounded existential Kronecker witness controls
+    `Classical.choose`; the residual names make that remaining requirement
+    explicit.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No arbitrary-target Kronecker, independent target/anti heights,
+    `tower_cap_unbounded_with_eps` fixed-point shortcut, or constant-1 Perron
+    sqrt-error shortcut was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, `git diff --check`, or other check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Close one residual predicate directly, or replace the radius route with a
+    direct bounded-radius exact-seed interface that carries the bounded
+    Kronecker witness instead of requiring a bound on the current chosen
+    radius definitions.
