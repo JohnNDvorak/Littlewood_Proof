@@ -1656,3 +1656,42 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Pi/Phase: `PerronThresholdTowerWideLogBudgetHyp`.
   - RS/Gabcke: local second-derivative differentiability / third-derivative
     formula at `x = 0`.
+
+## Overnight 2026-04-29 Thirty-Ninth Pass Status
+
+- Pi/Phase lane is validated and pushed through `c713155`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Refute pi arbitrary-radius log budget`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute
+      Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: `PerronThresholdTowerWideLogBudgetHyp` is refuted on an RH branch
+    for arbitrary supplied radii. The proof chooses the proposed half-budget
+    as the radius, forcing `B + 1 ≤ B`.
+  - Route change: arbitrary-radius domination is demoted; the viable route
+    must use the realized target/anti radii and canonical Perron/chosen-radius
+    residuals.
+- Atkinson lane is validated and pushed through amended commit `7a3063e`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Reduce Atkinson normalized correction to carrier cancellation`.
+  - Coordinator repair: removed a redundant final `ring` after `field_simp`
+    had already closed the local equality.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the eventual normalized fixed-shift correction atom is reduced to
+    the carrier-cancellation atom
+    `∀ j ≥ 1, ∃ E_j > 0, ∃ N_j, ∀ n ≥ N_j,
+      ‖atkinsonNormalizedShiftedCorrectionCarrierIntegral n j‖
+        ≤ E_j *
+          (atkinsonShiftedRelativePhase (n+j) j /
+            atkinsonShiftedRelativeWeight (n+j) j)`.
+- Current live atoms:
+  - Atkinson: carrier-cancellation atom above and shifted stationary-phase
+    target remainder.
+  - Perron/B5a: resolve the public/provider scale mismatch for the
+    `(x / T) * (Real.log x)^2` linear-window term.
+  - Pi/Phase: realized-radius Perron/chosen-radius route after refuting the
+    arbitrary-radius budget.
+  - RS/Gabcke: local second-derivative differentiability / third-derivative
+    formula at `x = 0`.
