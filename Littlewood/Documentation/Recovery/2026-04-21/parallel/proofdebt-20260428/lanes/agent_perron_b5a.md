@@ -1785,3 +1785,49 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   use the linear-window shape.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 34 - Linear Window Surface
+
+- Classification: `CANDIDATE_SURFACE_SPLIT`.
+- Exact theorem attacked:
+  the public/provider mismatch between the validated linear-window small-`T`
+  route and the legacy `SmallTPerronBoundHyp` target.
+- Code facts banked:
+  added `SmallTPerronLinearWindowBoundHyp`, a separate strengthened small-`T`
+  surface whose bound keeps the honest term
+  `(x / T) * (Real.log x)^2`.  Added
+  `small_T_linear_window_bound_hyp_from_residue`, which constructs this
+  surface from the closed linear Perron cutoff route plus the remaining
+  bounded-height residue atom.  Added
+  `small_T_direct_linear_bound_from_linear_window_hyp`, a direct consumer
+  theorem for code that can use the linear-window shape.  Added
+  `small_T_perron_bound_hyp_from_linear_window_hyp_and_absorption`, a
+  no-instance bridge to the legacy public class only when the explicit
+  absorption atom is supplied.
+- Scale check:
+  did not assert the false full-domain absorption and did not bridge the new
+  surface to `SmallTPerronBoundHyp` automatically.  The linear-window class is
+  a proof-facing surface for the scale currently supported by the Perron
+  cutoff route.
+- Failed/demoted routes:
+  did not weaken the existing public class, did not add a dummy witness, and
+  did not create a hidden instance.  The legacy public target still requires a
+  sharper cutoff/cancellation theorem or an explicit absorption theorem under
+  a genuinely stronger parameter regime.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, contour providers,
+  `general_formula_accessible`, public main imports, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  either prove the bounded-height residue atom for
+  `perronVerticalIntegral`, which would close the new linear-window surface,
+  or prove a sharper finite cutoff/cancellation theorem that removes the
+  `(x / T)` factor and can feed the legacy public `SmallTPerronBoundHyp`
+  target.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
