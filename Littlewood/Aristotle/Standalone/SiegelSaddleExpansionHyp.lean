@@ -912,6 +912,37 @@ def StandardGabckeQuarterLocalDslopeQuotientPowerSeriesProp : Prop :=
       a 0 = 1 / 2 ∧
       a 3 = -Real.pi ^ 2 / 6
 
+/-- Exact coefficient data for the numerator dslope through cubic order.
+For `sin(pi*w - 2*pi*w^2) / w`, the coefficients are
+`pi, -2*pi, -pi^3/6, pi^3`. -/
+def StandardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp : Prop :=
+  ∃ A : ℕ → ℝ,
+    HasFPowerSeriesAt (dslope standardGabckeQuarterLocalSineNumerator 0)
+      (FormalMultilinearSeries.ofScalars ℝ A) 0 ∧
+      A 0 = Real.pi ∧
+      A 1 = -2 * Real.pi ∧
+      A 2 = -Real.pi ^ 3 / 6 ∧
+      A 3 = Real.pi ^ 3
+
+/-- Exact coefficient data for the denominator dslope through cubic order.
+For `sin(2*pi*w) / w`, the coefficients are
+`2*pi, 0, -4*pi^3/3, 0`. -/
+def StandardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp : Prop :=
+  ∃ B : ℕ → ℝ,
+    HasFPowerSeriesAt (dslope standardGabckeQuarterLocalSineDenominator 0)
+      (FormalMultilinearSeries.ofScalars ℝ B) 0 ∧
+      B 0 = 2 * Real.pi ∧
+      B 1 = 0 ∧
+      B 2 = -(4 * Real.pi ^ 3 / 3) ∧
+      B 3 = 0
+
+/-- Formal division/coefficient step from the numerator and denominator dslope
+series data to the quotient series coefficient `-pi^2/6`. -/
+def StandardGabckeQuarterLocalDslopeQuotientDivisionCoefficientProp : Prop :=
+  StandardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp →
+    StandardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp →
+      StandardGabckeQuarterLocalDslopeQuotientPowerSeriesProp
+
 /-- Cubic derivative value for the removable sine quotient at `0`. -/
 def StandardGabckeQuarterLocalRemovableSineQuotientThirdDerivativeProp : Prop :=
   iteratedDeriv 3 standardGabckeQuarterLocalRemovableSineQuotient 0 =
@@ -1077,6 +1108,15 @@ theorem standardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp_of_dslope
   refine ⟨a, ?_, ha0, ha3⟩
   exact hseries.congr
     standardGabckeQuarterLocalRemovableSineQuotientDslopeEqualityProp_proved.symm
+
+/-- The quotient series is reduced to explicit numerator/denominator dslope
+coefficient data plus the finite formal-division calculation. -/
+theorem standardGabckeQuarterLocalDslopeQuotientPowerSeriesProp_of_coefficientData
+    (hnum : StandardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp)
+    (hden : StandardGabckeQuarterLocalDenominatorDslopeCoefficientDataProp)
+    (hdiv : StandardGabckeQuarterLocalDslopeQuotientDivisionCoefficientProp) :
+    StandardGabckeQuarterLocalDslopeQuotientPowerSeriesProp :=
+  hdiv hnum hden
 
 /-- With the denominator nonzero clause closed, the dslope bridge reduces to
 local equality, dslope analyticity, and the third-derivative value. -/
