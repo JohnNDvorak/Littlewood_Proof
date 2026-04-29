@@ -1686,3 +1686,54 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `SmallTPerronBoundHyp` route.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 32 - Linear Cutoff Handoff
+
+- Classification: `CANDIDATE_REDUCTION`.
+- Exact theorem attacked:
+  route the closed `small_T_weighted_kernel_cutoff_linear_bound` through the
+  finite Perron-kernel handoff and test the downstream small-`T` shape.
+- Code facts banked:
+  added the closed wrapper
+  `small_T_perronKernelFiniteSum_cutoff_linear_bound`, which applies
+  `small_T_perronKernelFiniteSum_cutoff_linear_bound_from_weighted_error` to
+  the validated weighted cutoff theorem.  Added
+  `small_T_perronVerticalIntegral_truncation_linear_bound_from_kernel_sum_bound`
+  and the closed
+  `small_T_perronVerticalIntegral_truncation_linear_bound`; the exchange
+  error `O(1)` is absorbed into the linear-window scale using
+  `x / T >= 1 / 8` on `x >= 2`, `2 <= T <= 16`.  Added the honest downstream
+  handoff `small_T_direct_linear_bound_from_perronVerticalIntegral_components`
+  and its closed-cutoff specialization `small_T_direct_linear_bound_from_residue`.
+- Scale check:
+  the downstream theorem now has final shape
+  `sqrt x * (log T)^2 / sqrt T + (x / T) * (log x)^2`.  This is the strongest
+  statement supported by the current validated cutoff route.  It cannot be
+  passed to `SmallTPerronBoundHyp`, whose public target allows only
+  `sqrt x * (log T)^2 / sqrt T + (log x)^2`; for fixed bounded `T`, the
+  extra `(x / T)` factor grows linearly in `x` and is not absorbable by a
+  uniform constant.
+- Failed/demoted routes:
+  did not coerce the linear cutoff into the false pure `(Real.log x)^2`
+  truncation target and did not create a provider instance from this theorem.
+  The pure provider route remains blocked unless a sharper cutoff/truncation
+  theorem removes the macroscopic `x / T` factor or a different residue
+  cancellation handoff consumes it.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  either prove a sharper finite Perron-kernel cutoff/truncation bound that
+  removes the macroscopic `(x / T)` factor before the vertical-integral
+  handoff, or introduce a residue/cancellation theorem that consumes the
+  linear-window truncation term without routing through the public
+  `SmallTPerronBoundHyp` target.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.
