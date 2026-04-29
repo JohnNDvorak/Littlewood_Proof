@@ -1057,6 +1057,27 @@ def StandardGabckeQuarterLocalDslopeQuotientConvolutionProp : Prop :=
         (FormalMultilinearSeries.ofScalars ℝ Q) 0 ∧
       ∀ n ≤ 3, A n = (Finset.range (n + 1)).sum (fun k => B k * Q (n - k))
 
+/-- Exact finite coefficient identity for the product of the denominator dslope
+series with the quotient dslope series. This is the remaining local
+one-variable Taylor algebra below `StandardGabckeQuarterLocalDslopeQuotientConvolutionProp`. -/
+def StandardGabckeQuarterLocalDslopeQuotientProductCoefficientProp : Prop :=
+  ∀ {A B Q : ℕ → ℝ},
+    HasFPowerSeriesAt (dslope standardGabckeQuarterLocalSineNumerator 0)
+      (FormalMultilinearSeries.ofScalars ℝ A) 0 →
+    HasFPowerSeriesAt (dslope standardGabckeQuarterLocalSineDenominator 0)
+      (FormalMultilinearSeries.ofScalars ℝ B) 0 →
+    HasFPowerSeriesAt
+      (fun w : ℝ =>
+        dslope standardGabckeQuarterLocalSineNumerator 0 w /
+          dslope standardGabckeQuarterLocalSineDenominator 0 w)
+      (FormalMultilinearSeries.ofScalars ℝ Q) 0 →
+    (∀ᶠ w in 𝓝 (0 : ℝ),
+      dslope standardGabckeQuarterLocalSineNumerator 0 w =
+        dslope standardGabckeQuarterLocalSineDenominator 0 w *
+          (dslope standardGabckeQuarterLocalSineNumerator 0 w /
+            dslope standardGabckeQuarterLocalSineDenominator 0 w)) →
+    ∀ n ≤ 3, A n = (Finset.range (n + 1)).sum (fun k => B k * Q (n - k))
+
 /-- The finite scalar algebra behind the Gabcke quotient coefficient. Given
 the numerator and denominator coefficients and the formal product recurrence
 for the quotient coefficients, the constant and cubic quotient coefficients
@@ -2016,6 +2037,64 @@ theorem standardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp_of_poi
     (h3 : StandardGabckeQuarterLocalDenominatorDslopeThirdDerivativeProp) :
     StandardGabckeQuarterLocalDenominatorDslopeLowOrderDerivativeProp := by
   exact ⟨standardGabckeQuarterLocalDenominatorDslopeFirstDerivativeProp_proved, h2, h3⟩
+
+/-- In one real variable with real values, every formal multilinear series is
+the scalar series built from its coefficients. -/
+private theorem formalMultilinearSeries_eq_ofScalars_coeff
+    (p : FormalMultilinearSeries ℝ ℝ ℝ) :
+    p = FormalMultilinearSeries.ofScalars ℝ (fun n : ℕ => p.coeff n) := by
+  ext n
+  rw [← FormalMultilinearSeries.mkPiRing_coeff_eq p n]
+  simp [FormalMultilinearSeries.ofScalars, ContinuousMultilinearMap.mkPiRing_apply,
+    ContinuousMultilinearMap.mkPiAlgebraFin_apply, smul_eq_mul, mul_comm]
+
+/-- The convolution atom is reduced to the finite Taylor coefficient identity
+for the local product of the denominator dslope and the quotient dslope. -/
+theorem standardGabckeQuarterLocalDslopeQuotientConvolutionProp_of_productCoefficient
+    (hprodCoeff : StandardGabckeQuarterLocalDslopeQuotientProductCoefficientProp) :
+    StandardGabckeQuarterLocalDslopeQuotientConvolutionProp := by
+  intro A B hA hB hB0_ne
+  have hden0_eq :
+      dslope standardGabckeQuarterLocalSineDenominator 0 0 = B 0 := by
+    have h := hB.coeff_zero (fun _ : Fin 0 => (0 : ℝ))
+    simpa [FormalMultilinearSeries.ofScalars] using h.symm
+  have hden0_ne :
+      dslope standardGabckeQuarterLocalSineDenominator 0 0 ≠ 0 := by
+    rw [hden0_eq]
+    exact hB0_ne
+  have hquot_analytic :
+      AnalyticAt ℝ
+        (fun w : ℝ =>
+          dslope standardGabckeQuarterLocalSineNumerator 0 w /
+            dslope standardGabckeQuarterLocalSineDenominator 0 w) 0 :=
+    hA.analyticAt.div hB.analyticAt hden0_ne
+  rcases hquot_analytic with ⟨P, hP⟩
+  let Q : ℕ → ℝ := fun n => P.coeff n
+  have hQ :
+      HasFPowerSeriesAt
+        (fun w : ℝ =>
+          dslope standardGabckeQuarterLocalSineNumerator 0 w /
+            dslope standardGabckeQuarterLocalSineDenominator 0 w)
+        (FormalMultilinearSeries.ofScalars ℝ Q) 0 := by
+    have hP_eq : P = FormalMultilinearSeries.ofScalars ℝ Q := by
+      simpa [Q] using formalMultilinearSeries_eq_ofScalars_coeff P
+    rwa [← hP_eq]
+  have hden_ne :
+      ∀ᶠ w in 𝓝 (0 : ℝ),
+        dslope standardGabckeQuarterLocalSineDenominator 0 w ≠ 0 := by
+    simpa [Set.preimage, Set.mem_compl_iff, Set.mem_singleton_iff] using
+      hB.continuousAt.preimage_mem_nhds
+        (compl_singleton_mem_nhds_iff.mpr hden0_ne)
+  have heq :
+      ∀ᶠ w in 𝓝 (0 : ℝ),
+        dslope standardGabckeQuarterLocalSineNumerator 0 w =
+          dslope standardGabckeQuarterLocalSineDenominator 0 w *
+            (dslope standardGabckeQuarterLocalSineNumerator 0 w /
+              dslope standardGabckeQuarterLocalSineDenominator 0 w) := by
+    filter_upwards [hden_ne] with w hw
+    field_simp [hw]
+  refine ⟨Q, hQ, ?_⟩
+  exact hprodCoeff hA hB hQ heq
 
 /-- The finite coefficient recurrence for quotient series gives the required
 constant and cubic quotient coefficients. -/
