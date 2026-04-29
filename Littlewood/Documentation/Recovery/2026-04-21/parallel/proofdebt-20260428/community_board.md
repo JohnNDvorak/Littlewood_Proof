@@ -2920,3 +2920,16 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Current Atkinson atoms: standard `atkinsonGammaStirlingMultiplier t - 1 =
     O(1/t)` and the eventual principal-log branch identity for the vertical
     multiplier.
+
+## Overnight 2026-04-29 One-Hundred-Sixteenth Pass Status
+
+- Coordinator recovery branch is advanced locally through `be827b7`.
+- Pi/Phase lane is integrated through `ec9d03a`:
+  - The selected Perron threshold is exposed as a raw eventual choice, with the
+    corrected Pi route now reduced to a single residual asserting that the raw
+    choice eventually satisfies the exponential half-budget.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider
+      Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`.
+  - Current Pi atom:
+    `PerronSqrtErrorRawChoiceEventuallyBelowExpHalfBudgetResidual`.
