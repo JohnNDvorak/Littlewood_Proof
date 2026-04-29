@@ -2749,3 +2749,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `(Aristotle.DirichletPhaseAlignment.CriticalZeros ∩ {ρ : ℂ | |ρ.im| <= 16}).Finite`,
   then combine the slab bounded-image theorem with the already isolated
   normalized tail atom for the cutoff-`16` concrete defect supremum.
+
+### 2026-04-29 Round 55 - Wire Finite Zeros Into Cutoff-16 Slab Route
+
+- Classification: `PROOF_REDUCTION`.
+- Exact theorem attacked:
+  the finite closed zero-set fact at height `16`, then the cutoff-`16`
+  normalized concrete-defect assembly from the finite-zero slab route plus the
+  separate normalized tail atom.
+- Code facts banked:
+  imported `Littlewood.Aristotle.ZetaZeroInfrastructure` and added
+  `small_T_criticalZeros_height_sixteen_finite`, proved by unfolding
+  `Aristotle.DirichletPhaseAlignment.CriticalZeros` to the existing
+  `zetaZerosUpTo` surface and applying `finite_zeros 16`.  Added
+  `small_T_concrete_contour_remainder_slab16_bddAbove_image_from_finiteZeros`,
+  removing the explicit finite-zero hypothesis from the slab bounded-image
+  route.  Added
+  `small_T_concrete_contour_remainder_normalized_sup_from_finiteZeros_slab16_and_tail16`
+  and
+  `small_T_linear_window_bound_hyp_from_concrete_contour_remainder_finiteZeros_slab16_and_tail16`,
+  so the slab side is now closed and the only remaining input is the
+  unbounded `16 <= x` normalized tail estimate.
+- Shape check:
+  this does not assert closed-cutoff zero-sum continuity or local constancy at
+  zero heights.  The finite-zero fact is used only for boundedness by the
+  fixed height-`16` envelope.
+- Failed/demoted routes:
+  first focused build exposed only a set-shape mismatch between
+  `CriticalZeros ∩ {|im| <= 16}` and `zetaZerosUpTo 16`; fixed by an explicit
+  set equality before applying `finite_zeros 16`.
+- Circular/forbidden routes avoided:
+  no use of shifted remainder atoms, public main imports,
+  `general_formula_accessible`, `ContourRemainderBoundHyp.bound`,
+  `SmallTPerronBoundHyp`, broad providers, dummy witnesses, new axioms, or
+  `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Validation:
+  `git diff --check` passed.  The first focused
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra` under
+  `/tmp/littlewood-lean-singleflight.lock` with the corrected `ps -axo comm=`
+  guard failed on the set-shape mismatch above; after the explicit equality
+  fix, the same focused build passed.
+- Smallest next theorem:
+  prove the normalized asymptotic tail estimate
+  `∃ Ctail > 0, ∀ x T, 16 <= x -> 2 <= T -> T <= 16 ->
+    |perronVerticalContourRemainderRe x T| /
+      (Real.sqrt x * (Real.log T)^2 / Real.sqrt T) <= Ctail`.
+  This is now the only remaining atom for the cutoff-`16` normalized concrete
+  defect supremum and the linear-window small-`T` surface.
