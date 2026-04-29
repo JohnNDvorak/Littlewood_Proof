@@ -2445,3 +2445,45 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`.
+
+### 2026-04-29 Round 48: Anti Budgeted Projection Radius
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`.
+  - `AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual`.
+- Facts banked:
+  - Added `antiTargetFiniteZeroBudgetedRelativelyDenseRadius`, the anti-target radius selected directly from the second component of `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`.
+  - Added private `antiTargetFiniteZeroBudgetedRelativelyDenseRadius_spec`, carrying positivity, the anti-target hit property, and the exact tower half-budget for that selected radius.
+  - Added `antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_budgetedRelativelyDense_hyp`, projecting the anti-target finite-zero relative-density provider from the paired budgeted payload.
+  - Added `antiTargetFiniteZeroBudgetedRelativelyDenseRadius_halfBudget`.
+  - Added `AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`.
+  - Added `antiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalResidual_of_budgetedProjectionComparison`.
+- What changed:
+  - The anti-target half-budget leaf now has the same exact reduction as the target side: it follows once the anti-target-only `Classical.choose` radius from the projected provider is controlled by the budgeted paired payload's selected anti-target radius.
+  - The anti-target selected radius from the paired budgeted payload is proved to satisfy the tower half-budget directly.
+  - The target comparison was tested by making the projection transparent, but Lean still left an opaque `Classical.choose` goal; that attempted direct theorem was not kept.
+- Remaining goal shape:
+  - `TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`.
+  - `AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`.
+  - Equivalently, refactor the public target/anti radius definitions or provider interfaces so the canonical route uses the explicit budgeted selected radii rather than separately chosen projected witnesses.
+- Failed/circular route:
+  - Did not prove `TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`; direct unfolding still requires unproved control of `Classical.choose`.
+  - Did not claim a separately exhibited bounded witness controls the canonical chosen radius.
+  - Did not revive arbitrary-budget finite-set Kronecker.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set Kronecker, arbitrary-radius route, provider cycles, reverse-comparison instances, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed local focused validation under the corrected singleflight rule.
+- Validation command/result:
+  - `git diff --check`
+  - Result: passed.
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `TargetFiniteZeroPhaseRadiusBudgetedProjectionComparison` or `AntiTargetFiniteZeroPhaseRadiusBudgetedProjectionComparison`; if these remain blocked by choice opacity, the smallest interface change is to expose canonical budgeted target/anti radii directly in the phase-radius route.
