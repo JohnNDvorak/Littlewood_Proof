@@ -1946,3 +1946,49 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   exact local power-series expansion at `0` for
   `if w = 0 then 1/2 else sin(pi*w - 2*pi*w^2) / sin(2*pi*w)`, with cubic
   coefficient `-Real.pi ^ 2 / 6`.
+
+### 2026-04-29 Round 40: removable series reduced to dslope quotient series
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp`.
+- Banked inputs:
+  - The local equality
+    `standardGabckeQuarterLocalRemovableSineQuotient =
+      dslope standardGabckeQuarterLocalSineNumerator 0 /
+        dslope standardGabckeQuarterLocalSineDenominator 0`
+    is already proved pointwise, hence eventually at `𝓝 0`.
+  - `HasFPowerSeriesAt.congr` transfers a power series across that eventual
+    equality without changing coefficients.
+- Proof facts banked:
+  - Added
+    `StandardGabckeQuarterLocalDslopeQuotientPowerSeriesProp`, the exact
+    remaining source theorem for the quotient of the two dslopes, with
+    coefficient requirements `a 0 = 1 / 2` and
+    `a 3 = -Real.pi ^ 2 / 6`.
+  - Proved
+    `standardGabckeQuarterLocalRemovableSineQuotientPowerSeriesProp_of_dslopeQuotient`,
+    reducing the removable quotient power series to that dslope quotient
+    power series.
+- Failed routes:
+  - I did not use the circular route from the dslope bridge back to the
+    removable quotient power series.
+  - I did not introduce an analytic axiom or provider shortcut.
+  - I kept the remaining source at the local sine-composition/division
+    coefficient level, with the removable `if` wrapper removed.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to `origin/recovery/provider-forensics-2026-04-21`
+    at `e53a7f7` before editing.
+  - `git diff --check`: passed.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalDslopeQuotientPowerSeriesProp`, the exact
+  local power series for
+  `dslope standardGabckeQuarterLocalSineNumerator 0 w /
+    dslope standardGabckeQuarterLocalSineDenominator 0 w`
+  with cubic coefficient `-Real.pi ^ 2 / 6`.
