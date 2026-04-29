@@ -2260,3 +2260,40 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+
+### 2026-04-29 Round 43: One-Sided Selected Kronecker Radius Budgets
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+- Facts banked:
+  - Added `TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+  - Added `AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+  - Added `targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_oneSided_hyp`.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyOneSidedKroneckerRadiusBudgetRoute`.
+- What changed:
+  - The paired selected-radius half-budget atom now reduces to two one-sided atoms, one for the target chosen finite-set Kronecker radius and one for the anti-target chosen radius.
+  - Both one-sided atoms preserve the same finite zeta zero set, height `T`, tolerance `ε`, and relation-compatibility payload.
+  - The corrected endpoint is packaged from the one-sided leaves without adding instances or reviving the arbitrary-budget finite-set source.
+- Remaining goal shape:
+  - Prove `TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp` and `AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`: each is a direct tower half-budget bound for the actual radius selected by `FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp`.
+- Failed/circular route:
+  - Did not use `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`, which remains false as stated.
+  - Did not claim that a separately bounded Kronecker witness controls the existing selected radius.
+  - Did not split target and anti-target into independent heights or tolerances.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-radius route, provider cycles, reverse-comparison instances, or unproved `Classical.choose` control was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed focused validation under the coordinator singleflight rule.
+- Validation command/result:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp` or `AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.

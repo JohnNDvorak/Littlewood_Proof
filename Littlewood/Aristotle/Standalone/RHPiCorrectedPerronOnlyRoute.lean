@@ -423,6 +423,21 @@ theorem rhPiWitnessData_of_correctedPerronOnlyRelationCompatibleKroneckerRadiusB
     targetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKronecker_of_relationCompatibleKronecker_radiusBudget_hyp
   exact rhPiWitnessData_of_correctedPerronOnlyRelationCompatibleBudgetedRadiusRoute
 
+/-- Corrected RH-`pi` witness endpoint from the existing relation-compatible
+finite-set Kronecker source plus one-sided target and anti-target bounds for
+the actual selected Kronecker radii. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyOneSidedKroneckerRadiusBudgetRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp]
+    [AntiTargetFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp] :
+    RhPiWitnessData := by
+  letI : TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp :=
+    targetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudget_of_oneSided_hyp
+  exact rhPiWitnessData_of_correctedPerronOnlyRelationCompatibleKroneckerRadiusBudgetRoute
+
 /-- Corrected RH-`pi` witness endpoint from paired zeta compatibility and a
 generic finite-set pair Kronecker theorem with explicit same-budget target and
 anti-target radii. -/
