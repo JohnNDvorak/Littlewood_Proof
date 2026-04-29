@@ -1745,6 +1745,71 @@ private theorem atkinson_logGamma_to_stirlingTerm_of_multiplier_branch_bound
   rw [hbranch' t htbranch]
   exact hmult' t htmult
 
+/-- A near-one estimate for the Stirling multiplier gives the required
+imaginary-log multiplier bound. The separate branch identity remains the only
+logarithmic branch atom. -/
+private theorem atkinson_multiplier_log_im_bound_of_norm_sub_one
+    (hclose :
+      ∃ Cres > 0, ∃ Tres : ℝ, ∀ t : ℝ, Tres ≤ t →
+        ‖atkinsonGammaStirlingMultiplier t - 1‖ ≤ Cres / t) :
+    ∃ Cmult > 0, ∃ Tmult : ℝ, ∀ t : ℝ, Tmult ≤ t →
+      |(Complex.log (atkinsonGammaStirlingMultiplier t)).im| ≤ Cmult / t := by
+  obtain ⟨Cres, hCres, Tres, hclose'⟩ := hclose
+  refine ⟨(3 / 2) * Cres, by positivity, max Tres (max 1 (2 * Cres)), ?_⟩
+  intro t ht
+  have htres : Tres ≤ t := le_trans (le_max_left _ _) ht
+  have htmax : max (1 : ℝ) (2 * Cres) ≤ t :=
+    le_trans (le_max_right _ _) ht
+  have ht1 : (1 : ℝ) ≤ t := le_trans (le_max_left _ _) htmax
+  have htpos : 0 < t := lt_of_lt_of_le zero_lt_one ht1
+  have htwoC : 2 * Cres ≤ t := le_trans (le_max_right _ _) htmax
+  have hclose_t := hclose' t htres
+  have hCdiv_half : Cres / t ≤ 1 / 2 := by
+    have hC_le : Cres ≤ t / 2 := by linarith
+    have hdiv := div_le_div_of_nonneg_right hC_le htpos.le
+    have hhalf : (t / 2) / t = (1 : ℝ) / 2 := by
+      field_simp [htpos.ne']
+    simpa [hhalf] using hdiv
+  have hsmall : ‖atkinsonGammaStirlingMultiplier t - 1‖ ≤ 1 / 2 :=
+    le_trans hclose_t hCdiv_half
+  have hlog :=
+    Complex.norm_log_one_add_half_le_self
+      (z := atkinsonGammaStirlingMultiplier t - 1) hsmall
+  have hlogM :
+      ‖Complex.log (atkinsonGammaStirlingMultiplier t)‖ ≤
+        (3 / 2) * ‖atkinsonGammaStirlingMultiplier t - 1‖ := by
+    have hadd :
+        (1 : ℂ) + (atkinsonGammaStirlingMultiplier t - 1) =
+          atkinsonGammaStirlingMultiplier t := by
+      ring
+    simpa [hadd] using hlog
+  calc
+    |(Complex.log (atkinsonGammaStirlingMultiplier t)).im|
+        ≤ ‖Complex.log (atkinsonGammaStirlingMultiplier t)‖ :=
+          Complex.abs_im_le_norm _
+    _ ≤ (3 / 2) * ‖atkinsonGammaStirlingMultiplier t - 1‖ := hlogM
+    _ ≤ (3 / 2) * (Cres / t) := by
+          exact mul_le_mul_of_nonneg_left hclose_t (by norm_num)
+    _ = ((3 / 2) * Cres) / t := by
+          ring
+
+/-- Log-to-Stirling comparison with the multiplier imaginary-log atom reduced
+further to a near-one residual estimate for the Stirling multiplier. -/
+private theorem atkinson_logGamma_to_stirlingTerm_of_multiplier_residual_bound
+    (hbranch :
+      ∃ Tbranch : ℝ, ∀ t : ℝ, Tbranch ≤ t →
+        (Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+            (atkinsonLogGammaStirlingTerm t).im =
+          (Complex.log (atkinsonGammaStirlingMultiplier t)).im)
+    (hclose :
+      ∃ Cres > 0, ∃ Tres : ℝ, ∀ t : ℝ, Tres ≤ t →
+        ‖atkinsonGammaStirlingMultiplier t - 1‖ ≤ Cres / t) :
+    ∃ Clog > 0, ∃ Tlog : ℝ, ∀ t : ℝ, Tlog ≤ t →
+      |(Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+          (atkinsonLogGammaStirlingTerm t).im| ≤ Clog / t :=
+  atkinson_logGamma_to_stirlingTerm_of_multiplier_branch_bound hbranch
+    (atkinson_multiplier_log_im_bound_of_norm_sub_one hclose)
+
 /-- The continuous Hardy-theta Stirling atom is exactly the corresponding
 uniform Stirling remainder for the imaginary part of `log Γ(1/4 + it/2)`,
 after the Hardy normalization `-(t/2)log π` is folded into the logarithm. -/
@@ -21708,6 +21773,32 @@ private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_multip
           ≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) :=
   atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_log_to_stirlingTerm
     (atkinson_logGamma_to_stirlingTerm_of_multiplier_branch_bound hbranch hmult)
+    hterm
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] [AtkinsonSmallShiftPrefixBoundHyp]
+  [AtkinsonLargeShiftPrefixBoundHyp] in
+/-- Endpoint phase package after reducing the multiplier imaginary-log bound
+to a near-one residual estimate for the Stirling multiplier. -/
+private theorem atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_multiplier_residual_bound
+    (hbranch :
+      ∃ Tbranch : ℝ, ∀ t : ℝ, Tbranch ≤ t →
+        (Complex.log (Complex.Gamma (1 / 4 + Complex.I * (t / 2)))).im -
+            (atkinsonLogGammaStirlingTerm t).im =
+          (Complex.log (atkinsonGammaStirlingMultiplier t)).im)
+    (hclose :
+      ∃ Cres > 0, ∃ Tres : ℝ, ∀ t : ℝ, Tres ≤ t →
+        ‖atkinsonGammaStirlingMultiplier t - 1‖ ≤ Cres / t)
+    (hterm :
+      Asymptotics.IsBigO Filter.atTop
+        (fun t : ℝ =>
+          (atkinsonLogGammaStirlingTerm t).im - atkinsonLogGammaStirlingApprox t)
+        (fun t : ℝ => 1 / t)) :
+    ∀ j : ℕ, 1 ≤ j →
+      ∃ C_res > 0, ∃ N_res : ℕ, ∀ n : ℕ, N_res ≤ n →
+        |atkinsonEndpointGapCorrectedPhaseError n j|
+          ≤ C_res * ((j : ℝ) / (((n + j : ℕ) : ℝ) + 1)) :=
+  atkinson_correctedEndpointPhaseError_shifted_inv_bound_of_log_to_stirlingTerm
+    (atkinson_logGamma_to_stirlingTerm_of_multiplier_residual_bound hbranch hclose)
     hterm
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
