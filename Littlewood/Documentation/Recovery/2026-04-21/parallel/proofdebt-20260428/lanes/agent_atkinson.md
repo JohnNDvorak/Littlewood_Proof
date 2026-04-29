@@ -896,3 +896,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 17 Head Row Cell to Finite Patch
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  the isolated `j - 1` head row-cell leaf feeding
+  `atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefix_and_head`.
+- Facts banked:
+  `atkinson_largeShiftRowIntegralHead_bound_of_finite_patch` uses the existing
+  eventual no-log head estimate
+  `atkinson_shiftedInversePhaseCell_head_no_log_eventually` and the exact
+  inverse-phase/row-integral identity to reduce the global log-weighted head
+  row-cell bound to a finite patch below the eventual cutoff.
+  `atkinson_largeShiftRowIntegralPrefix_bound_of_completeBlockPrefix_and_finite_head`
+  packages the current row-prefix route from the weighted complete-block tail
+  prefix plus that finite head patch.
+- Failed routes / guardrails:
+  no zero-model, mass-coefficient, Fourier-corrected target, compensated
+  carrier route, circular provider, or diffuse absolute/deweighting estimate
+  was used. The head estimate keeps the same `sqrt(m+j) / j` scale and only
+  pays the existing harmless `log(j+1)` factor.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local proof engineering in
+  `atkinson_largeShiftRowIntegralHead_bound_of_finite_patch`, especially the
+  finite-patch `Cpatch` proof irrelevance/simplification. The large-shift part
+  reuses an already-validated head theorem.
+- Smallest next theorem:
+  prove the weighted complete-block tail prefix
+  `∃ C_block > 0, ∀ j : ℕ, 3 ≤ j -> 1 ≤ j -> ∀ M : ℕ,`
+  `‖∑ n ∈ Finset.range M, if j ≤ n then`
+  `(((atkinsonModeWeight n : ℝ) : ℂ) *`
+  `∫ t in Ioc (hardyStart (n + j)) (hardyStart (n + j + 1)),`
+  `HardyCosSmooth.hardyCosExp n t) else 0‖`
+  `≤ C_block * Real.log (↑j + 1) *`
+  `(Real.sqrt (((M + j : ℕ) : ℝ) + 1) / j)`,
+  and separately supply the finite head patch requested by
+  `atkinson_largeShiftRowIntegralHead_bound_of_finite_patch` if the weighted
+  tail closes first.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
