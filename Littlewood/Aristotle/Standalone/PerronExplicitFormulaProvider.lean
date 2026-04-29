@@ -4480,6 +4480,42 @@ theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndHalfBudgets_hy
       AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
   exact ⟨inferInstance, inferInstance⟩
 
+/-- Paired finite-zero relative density plus the current canonical Perron and
+one-sided radius budget leaves packages both Perron-only exact-seed classes.
+
+This is a non-instance endpoint: it records the explicit canonical-leaf route
+without asking typeclass search to traverse both directions of the
+canonical/majorant/growth comparison graph. -/
+theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndCanonicalBudgets_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [PerronThresholdTowerExpHalfBudgetCanonicalMajorantHyp]
+    [TargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp]
+    [AntiTargetFiniteZeroPhaseRadiusHalfBudgetCanonicalHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    targetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp :=
+    antiTargetFiniteZeroInhomogeneousPhaseRelativelyDense_of_paired_hyp
+  letI : PerronThresholdTowerExpHalfBudgetMajorantHyp :=
+    perronThresholdTowerExpHalfBudgetMajorant_of_canonical_hyp
+  letI : PerronThresholdTowerExpHalfBudgetGrowthHyp :=
+    perronThresholdTowerExpHalfBudgetGrowth_of_majorant_hyp
+  letI : PerronThresholdTowerLogHalfBudgetHyp :=
+    perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp
+  letI : TargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+    targetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+  letI : AntiTargetFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+    antiTargetFiniteZeroPhaseRadiusHalfBudgetMajorant_of_canonical_hyp
+  letI : TargetAntiFiniteZeroPhaseRadiusHalfBudgetMajorantHyp :=
+    targetAntiFiniteZeroPhaseRadiusHalfBudgetMajorant_of_targetAnti_hyp
+  letI : TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp :=
+    targetAntiFiniteZeroPhaseRadiusHalfBudgetGrowth_of_majorant_hyp
+  letI : TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp :=
+    targetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThreshold_of_growth_hyp
+  exact exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndHalfBudgets_hyp
+
 /-- Target approximate-seed phase alignment above the Perron threshold.
 
     LIVENESS (C33-D): LIVE — consumed by B7 chain via
