@@ -539,3 +539,56 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 10 Fourier-Normalized Mass Coefficient
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Theorem/file attacked:
+  the shifted unweighted mass-coefficient matching leaf feeding
+  `atkinson_blockMode_stationaryPhase_of_zero_model_and_massCoeff`.
+- Facts banked:
+  `atkinsonShiftedQuadraticFourierMassCoeff` rewrites the moving-cell shifted
+  mass coefficient on `Ioc j (j + 1)` as a fixed `[0,1]` Fourier coefficient.
+  `atkinson_quadraticKernel_nat_add` proves the exact integer-cell phase shift
+  `quadraticKernel (u + j) =
+   exp(i * 4πju) * quadraticKernel u`.
+  `atkinsonShiftedQuadraticMassCoeff_eq_fourierMassCoeff` combines the
+  interval translation with that phase identity.
+  `atkinson_shifted_quadratic_massCoeff_bound_of_fourier_bound` reduces the
+  mass-coefficient leaf to the fixed-interval Fourier matching atom.
+  `atkinson_blockMode_stationaryPhase_of_zero_model_and_fourierMassCoeff` and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_fourierMassCoeff_and_finite_patch`
+  wire the normalized atom through the complete-block and public-provider
+  handoffs.
+- Failed routes / guardrails:
+  no direct Abel decomposition, `gamma = 8` predecessor-tail route, circular
+  provider use, stale imports, or generic mass/norm estimate was used. The
+  Fourier form makes the scale obstruction sharper: endpoint cancellation in
+  the fixed-interval Fourier coefficient suggests the current first-block
+  target coefficient may be too large unless an exact oscillatory identity or
+  a corrected target model supplies the missing main term. The generic
+  `O(1 / j)` mass bound remains demoted because it cannot establish matching
+  at scale `atkinsonModeWeight (n + j) / j`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  Strict public import probes for `Littlewood.Main.LittlewoodPsi` and
+  `Littlewood.Main.LittlewoodPi` if the focused module passes.
+- Likely first validation failure, if any:
+  local proof-engineering around `Complex.exp_add` associativity in
+  `atkinson_quadraticKernel_nat_add`, or the interval translation via
+  `intervalIntegral.integral_comp_add_right` inside
+  `atkinsonShiftedQuadraticMassCoeff_eq_fourierMassCoeff`.
+- Next smallest theorem:
+  prove or refute the fixed-interval Fourier matching atom
+  `∃ C_fourier > 0, ∃ N_fourier : ℕ, ∀ n : ℕ, N_fourier ≤ n → ∀ j : ℕ,`
+  `3 ≤ j → 1 ≤ j → j ≤ n →`
+  `‖(atkinsonShiftedQuadraticFourierMassCoeff n j -`
+  `atkinsonShiftedQuadraticTargetCoeff n j)‖`
+  `≤ C_fourier * (atkinsonModeWeight (n + j) / j)`,
+  or replace `atkinsonCompleteBlockTargetK` with a target compatible with the
+  Fourier-normalized shifted cell.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

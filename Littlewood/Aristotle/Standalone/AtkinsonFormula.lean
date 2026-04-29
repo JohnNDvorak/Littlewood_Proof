@@ -13360,6 +13360,107 @@ private noncomputable def atkinsonShiftedQuadraticMassCoeff (n j : ℕ) : ℂ :=
       (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
         Aristotle.StationaryPhaseMainMode.quadraticKernel p)))
 
+/-- Fixed-unit-interval form of the shifted quadratic mass coefficient.  This
+exposes the live target as a Fourier coefficient of the first-block quadratic
+kernel rather than as a moving-cell integral. -/
+private noncomputable def atkinsonShiftedQuadraticFourierMassCoeff (n j : ℕ) : ℂ :=
+  (((atkinsonModeWeight n : ℝ) : ℂ) *
+    (((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
+      (∫ u in Ioc (0 : ℝ) 1,
+        Complex.exp (Complex.I * (((4 * Real.pi * (j : ℝ) * u : ℝ) : ℂ))) *
+          Aristotle.StationaryPhaseMainMode.quadraticKernel u)))
+
+/-- Integer-cell shift for the quadratic kernel.  The natural endpoint factor is
+one, leaving the shifted mass as a true Fourier coefficient on `[0,1]`. -/
+private lemma atkinson_quadraticKernel_nat_add (j : ℕ) (u : ℝ) :
+    Aristotle.StationaryPhaseMainMode.quadraticKernel (u + (j : ℝ))
+      =
+    Complex.exp (Complex.I * (((4 * Real.pi * (j : ℝ) * u : ℝ) : ℂ))) *
+      Aristotle.StationaryPhaseMainMode.quadraticKernel u := by
+  unfold Aristotle.StationaryPhaseMainMode.quadraticKernel
+  have hsplit :
+      Complex.I * (((2 * Real.pi * (u + (j : ℝ)) ^ 2 : ℝ) : ℂ))
+        =
+      Complex.I * (((2 * Real.pi * (j : ℝ) ^ 2 : ℝ) : ℂ))
+        + Complex.I * (((4 * Real.pi * (j : ℝ) * u : ℝ) : ℂ))
+        + Complex.I * (((2 * Real.pi * u ^ 2 : ℝ) : ℂ)) := by
+    push_cast
+    ring
+  rw [hsplit, Complex.exp_add, Complex.exp_add]
+  have hendpoint :
+      Complex.exp (Complex.I * (((2 * Real.pi * (j : ℝ) ^ 2 : ℝ) : ℂ))) = 1 := by
+    simpa [Aristotle.StationaryPhaseMainMode.quadraticKernel] using
+      atkinson_quadraticKernel_nat j
+  rw [hendpoint]
+  ring
+
+/-- Exact fixed-interval Fourier form of
+`atkinsonShiftedQuadraticMassCoeff`. This is the smallest honest replacement
+for the failed generic-mass route: the next target is cancellation in this
+Fourier coefficient, not another `O(1 / j)` norm estimate. -/
+private theorem atkinsonShiftedQuadraticMassCoeff_eq_fourierMassCoeff (n j : ℕ) :
+    atkinsonShiftedQuadraticMassCoeff n j =
+      atkinsonShiftedQuadraticFourierMassCoeff n j := by
+  have hshift :
+      (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p)
+        =
+      ∫ u in Ioc (0 : ℝ) 1,
+        Aristotle.StationaryPhaseMainMode.quadraticKernel (u + (j : ℝ)) := by
+    calc
+      ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p
+          =
+        ∫ p in (j : ℝ)..((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p := by
+            rw [← intervalIntegral.integral_of_le
+              (by linarith : (j : ℝ) ≤ (j : ℝ) + 1)]
+      _ =
+        ∫ u in (0 : ℝ)..1,
+          Aristotle.StationaryPhaseMainMode.quadraticKernel (u + (j : ℝ)) := by
+            symm
+            simpa [add_assoc, add_comm, add_left_comm] using
+              (intervalIntegral.integral_comp_add_right
+                (f := Aristotle.StationaryPhaseMainMode.quadraticKernel)
+                (a := (0 : ℝ)) (b := 1) (d := (j : ℝ)))
+      _ =
+        ∫ u in Ioc (0 : ℝ) 1,
+          Aristotle.StationaryPhaseMainMode.quadraticKernel (u + (j : ℝ)) := by
+            rw [← intervalIntegral.integral_of_le (by norm_num : (0 : ℝ) ≤ 1)]
+  have hkernel :
+      (∫ u in Ioc (0 : ℝ) 1,
+          Aristotle.StationaryPhaseMainMode.quadraticKernel (u + (j : ℝ)))
+        =
+      ∫ u in Ioc (0 : ℝ) 1,
+        Complex.exp (Complex.I * (((4 * Real.pi * (j : ℝ) * u : ℝ) : ℂ))) *
+          Aristotle.StationaryPhaseMainMode.quadraticKernel u := by
+    refine MeasureTheory.integral_congr_ae ?_
+    filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioc] with u hu
+    exact atkinson_quadraticKernel_nat_add j u
+  unfold atkinsonShiftedQuadraticMassCoeff atkinsonShiftedQuadraticFourierMassCoeff
+  rw [hshift, hkernel]
+
+/-- The mass-coefficient target is equivalently a fixed-interval Fourier
+coefficient matching statement. This keeps the no-log complete-block route but
+removes the moving-cell normalization from the live leaf. -/
+private theorem atkinson_shifted_quadratic_massCoeff_bound_of_fourier_bound
+    (hfourier :
+      ∃ C_fourier > 0, ∃ N_fourier : ℕ, ∀ n : ℕ, N_fourier ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖(atkinsonShiftedQuadraticFourierMassCoeff n j -
+              atkinsonShiftedQuadraticTargetCoeff n j)‖
+            ≤ C_fourier * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_massCoeff > 0, ∃ N_massCoeff : ℕ, ∀ n : ℕ, N_massCoeff ≤ n → ∀ j : ℕ,
+      3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖(atkinsonShiftedQuadraticMassCoeff n j -
+            atkinsonShiftedQuadraticTargetCoeff n j)‖
+          ≤ C_massCoeff * (atkinsonModeWeight (n + j) / j) := by
+  obtain ⟨C_fourier, hC_fourier, N_fourier, hfourier'⟩ := hfourier
+  refine ⟨C_fourier, hC_fourier, N_fourier, ?_⟩
+  intro n hn j hj3 hj1 hjn
+  rw [atkinsonShiftedQuadraticMassCoeff_eq_fourierMassCoeff n j]
+  exact hfourier' n hn j hj3 hj1 hjn
+
 /-- Scalar target-coefficient matching reduced to the unweighted shifted mass.
 The affine `blockJacobian` moment contributes zero on integer cells. -/
 private theorem atkinson_shifted_quadratic_target_coeff_bound_of_mass_coeff_bound
@@ -13692,6 +13793,33 @@ private theorem atkinson_blockMode_stationaryPhase_of_zero_model_and_massCoeff
     atkinson_blockMode_stationaryPhase_of_zero_model_and_target hzeroModel
       (atkinson_shifted_quadratic_target_match_of_mass_coeff_bound hmassCoeff)
 
+/-- Complete-block-target stationary-phase handoff with the mass coefficient
+written as a fixed-unit-interval Fourier coefficient. -/
+private theorem atkinson_blockMode_stationaryPhase_of_zero_model_and_fourierMassCoeff
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j))
+    (hfourier :
+      ∃ C_fourier > 0, ∃ N_fourier : ℕ, ∀ n : ℕ, N_fourier ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖(atkinsonShiftedQuadraticFourierMassCoeff n j -
+              atkinsonShiftedQuadraticTargetCoeff n j)‖
+            ≤ C_fourier * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+            ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+              Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+        ≤ C_err * (atkinsonModeWeight k / j) := by
+  exact
+    atkinson_blockMode_stationaryPhase_of_zero_model_and_massCoeff hzeroModel
+      (atkinson_shifted_quadratic_massCoeff_bound_of_fourier_bound hfourier)
+
 /-- Public provider packaging once the zero-model approximation, shifted mass
 coefficient match, and finite patch are supplied. -/
 private theorem atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_massCoeff_and_finite_patch
@@ -13721,6 +13849,37 @@ private theorem atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_massCo
     atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_targetCoeff_and_finite_patch
       hzeroModel
       (atkinson_shifted_quadratic_target_coeff_bound_of_mass_coeff_bound hmassCoeff)
+      hpatch
+
+/-- Public provider packaging with the shifted mass leaf normalized as a
+fixed-unit-interval Fourier coefficient. -/
+private theorem atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_fourierMassCoeff_and_finite_patch
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j))
+    (hfourier :
+      ∃ C_fourier > 0, ∃ N_fourier : ℕ, ∀ n : ℕ, N_fourier ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖(atkinsonShiftedQuadraticFourierMassCoeff n j -
+              atkinsonShiftedQuadraticTargetCoeff n j)‖
+            ≤ C_fourier * (atkinsonModeWeight (n + j) / j))
+    (hpatch :
+      ∀ J0 : ℕ, ∀ j : ℕ, 1 ≤ j → j < J0 →
+        ∃ Cj > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+                atkinsonResonantShiftedPhaseWeightedCell n j)‖
+            ≤ Cj * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  exact
+    atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_massCoeff_and_finite_patch
+      hzeroModel
+      (atkinson_shifted_quadratic_massCoeff_bound_of_fourier_bound hfourier)
       hpatch
 
 /-- Equivalent concrete public-leaf reduction in the shifted block-parameter
