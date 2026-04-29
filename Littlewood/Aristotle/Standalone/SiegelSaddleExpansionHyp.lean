@@ -1832,6 +1832,20 @@ theorem standardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp_proved 
     standardGabckeQuarterLocalNumeratorRawSineThirdDerivativeProp_proved
     standardGabckeQuarterLocalNumeratorRawSineFourthDerivativeProp_proved
 
+/-- The raw numerator Taylor coefficient data is closed from the proved
+low-order derivative bundle. -/
+theorem standardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp_proved :
+    StandardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp :=
+  standardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp_of_lowOrderDerivatives
+    standardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp_proved
+
+/-- The numerator dslope coefficient data is closed from the raw numerator
+Taylor coefficient data and the `dslope`/`fslope` transfer. -/
+theorem standardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp_proved :
+    StandardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp :=
+  standardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp_of_rawSineCoefficientData
+    standardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp_proved
+
 /-- A raw cubic coefficient for `sin (2*pi*w)` gives the quadratic coefficient
 of the removable quotient `sin (2*pi*w) / w` via the Mathlib `dslope`/`fslope`
 transfer. -/

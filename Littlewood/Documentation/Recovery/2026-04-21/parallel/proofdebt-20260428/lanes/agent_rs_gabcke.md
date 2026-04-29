@@ -2669,3 +2669,39 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Remaining smallest RS/Gabcke atom:
   prove the numerator raw coefficient bundle through
   `standardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp_of_lowOrderDerivatives`.
+
+### 2026-04-29 Round 58: numerator raw coefficient bundle
+
+- Classification: `PROVED`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp`.
+- Banked inputs:
+  - `standardGabckeQuarterLocalNumeratorRawSineLowOrderDerivativeProp_proved`
+    supplies the four derivative values for
+    `sin (Real.pi*w - 2*Real.pi*w^2)`.
+  - `standardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp_of_lowOrderDerivatives`
+    converts those values to the finite raw Taylor coefficient bundle.
+  - `standardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp_of_rawSineCoefficientData`
+    transfers raw coefficients through the local `dslope`/`fslope` shift.
+- Proof facts banked:
+  - Added
+    `standardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp_proved`.
+  - Added
+    `standardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp_proved`.
+- Failed routes:
+  - No quotient/Fresnel refactor or broad series provider was introduced.
+  - The proof stays within the existing finite derivative-to-coefficient and
+    `dslope` transfer lemmas.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Started from coordinator baseline `3da0ef5`.
+  - `git diff --check`: passed before this ledger append.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  use the proved numerator and denominator coefficient data to attack
+  `StandardGabckeQuarterLocalDslopeQuotientDivisionCoefficientProp`, the finite
+  formal-division calculation for the quotient coefficient.
