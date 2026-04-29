@@ -187,6 +187,17 @@ theorem rhPiWitnessData_of_correctedPerronOnlyHalfBudgetRoute
   letI : AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := hAntiTarget
   exact rhPiWitnessData_of_exactSeedAboveThreshold_perron_corrected_hyp
 
+/-- Corrected Perron-only route from the explicit same-height growth sources
+below the two half-budget leaves. -/
+theorem rhPiWitnessData_of_correctedPerronOnlyGrowthBudgetRoute
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [PerronThresholdTowerExpHalfBudgetGrowthHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    RhPiWitnessData := by
+  exact rhPiWitnessData_of_correctedPerronOnlyHalfBudgetRoute
+
 /-- Corrected Perron-only route to the concrete RH 7a/7c pair. -/
 theorem rh_pi_7a_7c_pair_of_correctedPerronOnlyRoute
     [PerronSqrtErrorEventuallyAtHeightHyp]

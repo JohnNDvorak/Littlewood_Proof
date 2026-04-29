@@ -1070,3 +1070,69 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Prove/source `PerronThresholdTowerLogHalfBudgetHyp`.
   - Prove/source
     `TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`.
+
+### 2026-04-29 Round 17: Explicit Growth Sources Below Half-Budgets
+
+- Classification: `HONEST_PROVIDER_REDUCTION_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `PerronThresholdTowerLogHalfBudgetHyp`
+  - `TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`
+- Target choice:
+  - Attacked the Perron log half-budget first. No existing same-height growth
+    theorem for `perronThreshold hRH T` was present; existing
+    `tower_cap_unbounded_with_eps` remains a fixed-budget unboundedness lemma
+    and cannot be applied directly to `perronThreshold hRH T` after `T` is
+    selected.
+  - Also isolated the paired phase-radius half-budget into a height-only
+    quantitative radius growth source.
+- Facts banked:
+  - Added `PerronThresholdTowerExpHalfBudgetGrowthHyp`. This is a pre-log
+    same-height fixed-point growth source: for each `hRH, X`, it selects one
+    `T, ε` where both `X + 1` and `perronThreshold hRH T + 1` are below
+    `exp((exp(expArg)) / 2)`, i.e. the exponential of the required log
+    half-budget.
+  - Added `perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp`,
+    deriving `PerronThresholdTowerLogHalfBudgetHyp` by combining the two
+    pre-log bounds under `max` and applying `Real.log_le_iff_le_exp`.
+  - Added `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`. This is the
+    narrower quantitative Kronecker-radius growth source: for each same
+    `T, ε`, the larger chosen target/anti relative-density radius plus `1`
+    fits below half the double-exponential log budget. It drops `hRH`, `X`,
+    and the Perron lower-endpoint half-budget proof from the premise.
+  - Added
+    `targetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThreshold_of_growth_hyp`,
+    deriving the existing Perron-selected phase-radius half-budget leaf from
+    the height-only growth source.
+  - Added `rhPiWitnessData_of_correctedPerronOnlyGrowthBudgetRoute`, exposing
+    the corrected Perron-only packaging route directly from the two new growth
+    source classes plus the relation-compatible finite-zero inputs.
+- Guardrails:
+  - The new Perron growth class is still a genuine same-height fixed-point
+    growth leaf; it does not pretend that zero-count tower unboundedness alone
+    controls `perronThreshold hRH T`.
+  - The new phase-radius growth class preserves one shared `T, ε` for target
+    and anti-target radii.
+  - No new route uses `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No arbitrary-target Kronecker or constant-1 Perron sqrt-error shortcut was
+    introduced.
+- Failed route guardrails:
+  - Do not split target and anti-target phase radii into independent heights.
+  - Do not use `tower_cap_unbounded_with_eps` directly on same-height opaque
+    quantities depending on the selected `T, ε`; an actual fixed-point/growth
+    lemma is still needed.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Aristotle/Standalone/RHPiCorrectedPerronOnlyRoute.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, `git diff --check`, or other check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Prove/source `PerronThresholdTowerExpHalfBudgetGrowthHyp`.
+  - Prove/source `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`.

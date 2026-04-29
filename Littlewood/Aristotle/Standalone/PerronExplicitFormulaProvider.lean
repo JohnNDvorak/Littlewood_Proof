@@ -2664,6 +2664,28 @@ class PerronThresholdTowerLogHalfBudgetHyp
           ≤ Real.exp (Real.exp
             (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
 
+/-- Pre-log same-height Perron threshold growth source.
+
+This is the explicit fixed-point growth input below
+`PerronThresholdTowerLogHalfBudgetHyp`: at one selected height/tolerance, both
+the external lower bound `X` and the opaque Perron threshold at that same
+height fit below `exp(half the double-exponential log budget)`. -/
+class PerronThresholdTowerExpHalfBudgetGrowthHyp
+    [PerronSqrtErrorEventuallyAtHeightHyp] : Prop where
+  witness :
+    ∀ (_hRH : ZetaZeros.RiemannHypothesis) (X : ℝ),
+      ∃ T ε : ℝ,
+        4 ≤ T ∧
+        0 < ε ∧ ε < 1 ∧
+        X + 1
+          ≤ Real.exp
+            (Real.exp (Real.exp
+              (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2) ∧
+        perronThreshold _hRH T + 1
+          ≤ Real.exp
+            (Real.exp (Real.exp
+              (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
+
 /-- Phase-radius half of the paired log tower budget at a Perron-selected
 height/tolerance.
 
@@ -2684,6 +2706,26 @@ class TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp
       Real.log (max X (perronThreshold _hRH T) + 1)
         ≤ Real.exp (Real.exp
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2 →
+      max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
+          (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1
+        ≤ Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2
+
+/-- Height-only paired finite-zero phase-radius growth source.
+
+This isolates the quantitative Kronecker-radius growth input below
+`TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp`.  It no longer
+mentions the RH branch, the external lower bound, or the Perron lower-endpoint
+half-budget proof; it only controls the realized paired target/anti radius at
+the same selected `T, ε`. -/
+class TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp] : Prop where
+  witness :
+    ∀ (T ε : ℝ),
+      4 ≤ T →
+      0 < ε →
+      ε < 1 →
       max (targetFiniteZeroInhomogeneousPhaseRadius T ε)
           (antiTargetFiniteZeroInhomogeneousPhaseRadius T ε) + 1
         ≤ Real.exp (Real.exp
@@ -2968,6 +3010,67 @@ instance (priority := 95)
     [TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp] :
     TargetAntiPerronThresholdTowerLogBudgetForPhaseRadiiHyp :=
   targetAntiPerronThresholdTowerLogBudgetForPhaseRadii_of_halfBudgets_hyp
+
+/-- A pre-log same-height growth source implies the Perron log half-budget. -/
+theorem perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetGrowthHyp] :
+    PerronThresholdTowerLogHalfBudgetHyp where
+  witness := by
+    intro hRH X
+    rcases PerronThresholdTowerExpHalfBudgetGrowthHyp.witness hRH X with
+      ⟨T, ε, hT4, hεpos, hεlt, hX, hPerron⟩
+    refine ⟨T, ε, hT4, hεpos, hεlt, ?_⟩
+    let C : ℝ :=
+      Real.exp
+        (Real.exp (Real.exp
+          (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2)
+    have hCmax : max X (perronThreshold hRH T) + 1 ≤ C := by
+      have hX' : X ≤ C - 1 := by
+        dsimp [C]
+        linarith [hX]
+      have hP' : perronThreshold hRH T ≤ C - 1 := by
+        dsimp [C]
+        linarith [hPerron]
+      have hmax' : max X (perronThreshold hRH T) ≤ C - 1 :=
+        max_le hX' hP'
+      linarith
+    have hApos : 0 < max X (perronThreshold hRH T) + 1 := by
+      have hPgt1 := perronThreshold_gt_one_perron hRH T
+      linarith [le_max_right X (perronThreshold hRH T)]
+    rw [Real.log_le_iff_le_exp hApos]
+    simpa [C] using hCmax
+
+/-- Instance form of
+`perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerExpHalfBudgetGrowthHyp] :
+    PerronThresholdTowerLogHalfBudgetHyp :=
+  perronThresholdTowerLogHalfBudget_of_expHalfBudgetGrowth_hyp
+
+/-- A height-only paired phase-radius growth source implies the Perron-selected
+phase-radius half-budget leaf. -/
+theorem targetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThreshold_of_growth_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp where
+  witness := by
+    intro _hRH _X T ε hT4 hεpos hεlt _hLower
+    exact TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp.witness
+      T ε hT4 hεpos hεlt
+
+/-- Instance form of
+`targetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThreshold_of_growth_hyp`. -/
+instance (priority := 95)
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [AntiTargetFiniteZeroInhomogeneousPhaseRelativelyDenseHyp]
+    [TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp] :
+    TargetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThresholdHyp :=
+  targetAntiFiniteZeroPhaseRadiusHalfBudgetAtPerronThreshold_of_growth_hyp
 
 /-- Paired target/anti finite-zero compatibility supplies the target
 compatibility leaf. -/
