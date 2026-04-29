@@ -2489,3 +2489,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   principal-branch vertical-line pointwise log-Gamma Stirling bound at
   `C / y`, Jacobian-integral bound at `1/relativeWeight`, and the shifted
   stationary-phase target remainder.
+
+### 2026-04-29 Round 53 Principal-Log Bound to Vertical Multiplier Atoms
+
+- Classification: `VALIDATED_CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  principal-branch vertical-line pointwise log-Gamma Stirling bound
+  `∃ C > 0, ∃ Y0, ∀ y ≥ Y0,`
+  `‖Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -`
+  `Aristotle.StationaryPhaseStartValue.stirlingTerm`
+  `((1 / 4 : ℂ) + Complex.I * y)‖ ≤ C / y`.
+- Facts banked:
+  added `atkinsonVerticalGammaStirlingMultiplier` for the normalized vertical
+  Gamma/Stirling ratio
+  `Gamma(1/4 + i y) / exp(stirlingTerm (1/4 + i y))`. Proved
+  `atkinson_principal_log_bound_of_vertical_relative_and_branch`, reducing the
+  pointwise principal-log bound to two smaller atoms: a vertical-line relative
+  Stirling residual for this multiplier, and the exact principal `Complex.log`
+  branch identity
+  `Complex.log (Gamma(1/4 + i y)) - stirlingTerm(1/4 + i y) =`
+  `Complex.log (atkinsonVerticalGammaStirlingMultiplier y)` eventually.
+  The proof uses the existing `Complex.norm_log_one_add_half_le_self` once the
+  relative residual makes the multiplier eventually within `1/2` of `1`.
+- Smallest next theorem:
+  prove either
+  `∃ Crel > 0, ∃ Yrel, ∀ y ≥ Yrel,`
+  `‖Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y) -`
+  `Complex.exp (Aristotle.StationaryPhaseStartValue.stirlingTerm`
+  `((1 / 4 : ℂ) + Complex.I * y))‖ ≤`
+  `(Crel / y) * ‖Complex.exp (Aristotle.StationaryPhaseStartValue.stirlingTerm`
+  `((1 / 4 : ℂ) + Complex.I * y))‖`,
+  or the eventual principal-log branch identity for
+  `atkinsonVerticalGammaStirlingMultiplier`. The local private
+  `StationaryPhaseStartValue.gammaLog` derivative route still looks like the
+  closest source, but it is not exposed from the Atkinson write scope.
+- Failed routes / guardrails:
+  no public local theorem yet exposes the full complex vertical-line log-Gamma
+  Stirling bound. Did not add imports, analytic providers, axioms, sorries,
+  statement weakening, direct Abel shortcuts, phase-weight division, circular
+  provider assumptions, or the demoted raw endpoint phase-error route.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Validation:
+  ran `git diff --check`; result: passed. Ran
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` under the
+  corrected `ps -axo comm=` singleflight guard; result: passed,
+  `Build completed successfully (7903 jobs)`.
+- Remaining goal shape:
+  vertical relative Gamma/Stirling residual at `O(1/y)`, principal-log branch
+  identity for the vertical multiplier, Jacobian-integral bound at
+  `1/relativeWeight`, and the shifted stationary-phase target remainder.

@@ -2058,6 +2058,110 @@ private theorem atkinson_vertical_line_stirling_isBigO_of_principal_log_bound
           rw [hnorm_inv]
           ring
 
+/-- The normalized vertical-line Gamma/Stirling multiplier.  Keeping this
+separate makes the remaining principal-log branch identity explicit. -/
+private noncomputable def atkinsonVerticalGammaStirlingMultiplier (y : ℝ) : ℂ :=
+  Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y) /
+    Complex.exp
+      (Aristotle.StationaryPhaseStartValue.stirlingTerm
+        ((1 / 4 : ℂ) + Complex.I * y))
+
+/-- The principal-log pointwise Stirling bound follows from the usual relative
+Stirling residual and the exact branch identity for the normalized vertical
+multiplier. -/
+private theorem atkinson_principal_log_bound_of_vertical_relative_and_branch
+    (hbranch :
+      ∃ Ybranch : ℝ, ∀ y : ℝ, Ybranch ≤ y →
+        Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+            Aristotle.StationaryPhaseStartValue.stirlingTerm
+              ((1 / 4 : ℂ) + Complex.I * y)
+          =
+        Complex.log (atkinsonVerticalGammaStirlingMultiplier y))
+    (hrel :
+      ∃ Crel > 0, ∃ Yrel : ℝ, ∀ y : ℝ, Yrel ≤ y →
+        ‖Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y) -
+            Complex.exp
+              (Aristotle.StationaryPhaseStartValue.stirlingTerm
+                ((1 / 4 : ℂ) + Complex.I * y))‖
+          ≤
+        (Crel / y) *
+          ‖Complex.exp
+            (Aristotle.StationaryPhaseStartValue.stirlingTerm
+              ((1 / 4 : ℂ) + Complex.I * y))‖) :
+    ∃ C > 0, ∃ Y0 : ℝ, ∀ y : ℝ, Y0 ≤ y →
+      ‖Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+          Aristotle.StationaryPhaseStartValue.stirlingTerm
+            ((1 / 4 : ℂ) + Complex.I * y)‖ ≤ C / y := by
+  obtain ⟨Ybranch, hbranch'⟩ := hbranch
+  obtain ⟨Crel, hCrel, Yrel, hrel'⟩ := hrel
+  refine ⟨(3 / 2) * Crel, by positivity,
+    max Ybranch (max Yrel (max 1 (2 * Crel))), ?_⟩
+  intro y hy
+  have hybranch : Ybranch ≤ y := le_trans (le_max_left _ _) hy
+  have hy_tail : max Yrel (max (1 : ℝ) (2 * Crel)) ≤ y :=
+    le_trans (le_max_right _ _) hy
+  have hyrel : Yrel ≤ y := le_trans (le_max_left _ _) hy_tail
+  have hy_scale : max (1 : ℝ) (2 * Crel) ≤ y :=
+    le_trans (le_max_right _ _) hy_tail
+  have hy1 : (1 : ℝ) ≤ y := le_trans (le_max_left _ _) hy_scale
+  have hypos : 0 < y := lt_of_lt_of_le zero_lt_one hy1
+  have htwoC : 2 * Crel ≤ y := le_trans (le_max_right _ _) hy_scale
+  let G : ℂ := Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)
+  let E : ℂ :=
+    Complex.exp
+      (Aristotle.StationaryPhaseStartValue.stirlingTerm
+        ((1 / 4 : ℂ) + Complex.I * y))
+  have hE_ne : E ≠ 0 := by
+    dsimp [E]
+    exact Complex.exp_ne_zero _
+  have hE_norm_pos : 0 < ‖E‖ := norm_pos_iff.mpr hE_ne
+  have hrel_y : ‖G - E‖ ≤ (Crel / y) * ‖E‖ := by
+    simpa [G, E] using hrel' y hyrel
+  have hmult_sub :
+      atkinsonVerticalGammaStirlingMultiplier y - 1 = (G - E) / E := by
+    dsimp [G, E, atkinsonVerticalGammaStirlingMultiplier]
+    field_simp [hE_ne]
+  have hclose :
+      ‖atkinsonVerticalGammaStirlingMultiplier y - 1‖ ≤ Crel / y := by
+    calc
+      ‖atkinsonVerticalGammaStirlingMultiplier y - 1‖
+          = ‖(G - E) / E‖ := by rw [hmult_sub]
+      _ = ‖G - E‖ / ‖E‖ := by rw [norm_div]
+      _ ≤ ((Crel / y) * ‖E‖) / ‖E‖ := by
+            exact div_le_div_of_nonneg_right hrel_y hE_norm_pos.le
+      _ = Crel / y := by
+            field_simp [ne_of_gt hE_norm_pos]
+  have hCdiv_half : Crel / y ≤ 1 / 2 := by
+    have hC_le : Crel ≤ y / 2 := by linarith
+    have hdiv := div_le_div_of_nonneg_right hC_le hypos.le
+    have hhalf : (y / 2) / y = (1 : ℝ) / 2 := by
+      field_simp [hypos.ne']
+    simpa [hhalf] using hdiv
+  have hsmall : ‖atkinsonVerticalGammaStirlingMultiplier y - 1‖ ≤ 1 / 2 :=
+    le_trans hclose hCdiv_half
+  have hlog :=
+    Complex.norm_log_one_add_half_le_self
+      (z := atkinsonVerticalGammaStirlingMultiplier y - 1) hsmall
+  have hlogM :
+      ‖Complex.log (atkinsonVerticalGammaStirlingMultiplier y)‖ ≤
+        (3 / 2) * ‖atkinsonVerticalGammaStirlingMultiplier y - 1‖ := by
+    have hadd :
+        (1 : ℂ) + (atkinsonVerticalGammaStirlingMultiplier y - 1) =
+          atkinsonVerticalGammaStirlingMultiplier y := by
+      ring
+    simpa [hadd] using hlog
+  calc
+    ‖Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+        Aristotle.StationaryPhaseStartValue.stirlingTerm
+          ((1 / 4 : ℂ) + Complex.I * y)‖
+        = ‖Complex.log (atkinsonVerticalGammaStirlingMultiplier y)‖ := by
+          rw [hbranch' y hybranch]
+    _ ≤ (3 / 2) * ‖atkinsonVerticalGammaStirlingMultiplier y - 1‖ := hlogM
+    _ ≤ (3 / 2) * (Crel / y) := by
+          exact mul_le_mul_of_nonneg_left hclose (by norm_num)
+    _ = ((3 / 2) * Crel) / y := by
+          ring
+
 /-- A complex logarithmic Stirling remainder controls the normalized
 Stirling multiplier after exponentiation. -/
 private theorem atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO
