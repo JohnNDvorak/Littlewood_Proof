@@ -702,3 +702,30 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Pi/Phase: one of the three canonical majorant leaves.
   - RS/Gabcke: exact removable point values or regular raw third-derivative
     bound.
+
+## Overnight 2026-04-29 Tenth Pass Status
+
+- Atkinson lane is validated and pushed through `af5eb80`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Reduce Atkinson head row cell to finite patch`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the isolated `j - 1` head row-cell side is reduced to a finite
+    patch below the eventual cutoff. The main remaining Atkinson obstruction is
+    the weighted complete-block tail prefix, plus that finite patch.
+  - Hooke is redeployed to the complete-block tail prefix or finite-head patch.
+- RS/Gabcke lane is validated and pushed through `127780c`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Split Gabcke removable source bridge`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp Littlewood.Aristotle.Standalone.GabckePhaseCouplingInfra Littlewood.Aristotle.Standalone.GabckePhaseCouplingHyp Littlewood.Aristotle.Standalone.HardyZFirstMomentBridge`.
+  - Result: the removable point-value source is reduced to a raw/removable
+    bridge plus sourced Tabelle third-derivative values.
+  - Hume is redeployed to close the removable source bridge or sourced value
+    property.
+- Current live atoms:
+  - Atkinson: weighted complete-block tail prefix and finite head patch.
+  - Perron/B5a: reciprocal-log distance inequality or weighted harmonic
+    distance summation.
+  - Pi/Phase: one of the three canonical majorant leaves.
+  - RS/Gabcke: removable source bridge or sourced Tabelle value property.
