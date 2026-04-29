@@ -453,3 +453,66 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-28 Round 9 Target-Coefficient Mass Reduction
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Theorem/file attacked:
+  the scalar target-coefficient atom feeding
+  `atkinson_shifted_quadratic_target_match_of_coeff_bound`, hence the
+  complete-block no-log Atkinson path below
+  `atkinson_blockMode_stationaryPhase_of_zero_model_and_targetCoeff`.
+- Facts banked:
+  `atkinson_quadraticKernel_nat` proves the shifted quadratic kernel is `1`
+  at every natural endpoint.
+  `atkinson_shifted_quadratic_weighted_moment_integer_cell_zero` sharpens the
+  previous weighted-moment boundary identity to an exact zero on
+  `Ioc j (j + 1)`.
+  `atkinson_shifted_quadratic_kernel_integral_eq_mass` proves the exact affine
+  decomposition
+  `∫ quadraticKernel p * blockJacobian n p =
+   (4π(n+1)) * ∫ quadraticKernel p`
+  on integer shifted cells, because the `4πp` moment vanishes.
+  `atkinson_shifted_quadratic_target_coeff_bound_of_mass_coeff_bound` reduces
+  the scalar coefficient target to a shifted unweighted mass-coefficient
+  matching estimate.
+  `atkinson_shifted_quadratic_target_match_of_mass_coeff_bound`,
+  `atkinson_blockMode_stationaryPhase_of_zero_model_and_massCoeff`, and
+  `atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_massCoeff_and_finite_patch`
+  package that reduced target surface through the no-log complete-block route.
+- Failed routes / guardrails:
+  no direct Abel decomposition, predecessor-tail `gamma = 8`, or contracting
+  induction route was used. The new reduction exposes the precise remaining
+  oscillatory matching problem: the explicit first-block target coefficient
+  must be matched by the shifted unweighted quadratic mass after multiplication
+  by `4π(n+1) * atkinsonModeWeight n`. A generic mass bound alone is too weak
+  for the `atkinsonModeWeight (n + j) / j` error scale; the next step needs an
+  asymptotic/identity for the shifted mass coefficient, or a correction to the
+  target model.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  Strict public import probes for `Littlewood.Main.LittlewoodPsi` and
+  `Littlewood.Main.LittlewoodPi` if the focused module passes.
+- Likely first validation failure, if any:
+  local proof-engineering around
+  `Complex.exp_nat_mul_two_pi_mul_I` in `atkinson_quadraticKernel_nat`, the
+  cast rewrite from `(j : ℝ) + 1` to `((j + 1 : ℕ) : ℝ)`, or rewriting
+  `atkinson_shifted_quadratic_kernel_integral_eq_mass` under scalar
+  multiplication in the coefficient handoff.
+- Next smallest theorem:
+  prove the shifted unweighted mass-coefficient matching atom
+  `∃ C_massCoeff > 0, ∃ N_massCoeff : ℕ, ∀ n : ℕ, N_massCoeff ≤ n → ∀ j : ℕ,`
+  `3 ≤ j → 1 ≤ j → j ≤ n →`
+  `‖((((atkinsonModeWeight n : ℝ) : ℂ) *`
+  `((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *`
+  `∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `Aristotle.StationaryPhaseMainMode.quadraticKernel p)) -`
+  `atkinsonShiftedQuadraticTargetCoeff n j)‖`
+  `≤ C_massCoeff * (atkinsonModeWeight (n + j) / j)`,
+  and separately resolve the shifted zero-model approximation on
+  `p ∈ Ioc j (j + 1)`.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.

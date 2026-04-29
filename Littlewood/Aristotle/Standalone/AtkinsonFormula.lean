@@ -12953,6 +12953,17 @@ private lemma atkinson_quadraticKernel_hasDerivAt (p : ℝ) :
   simpa [Aristotle.StationaryPhaseMainMode.quadraticKernel, mul_assoc, mul_left_comm, mul_comm]
     using harg.cexp
 
+/-- The shifted quadratic kernel has unit value at every integer endpoint. -/
+private lemma atkinson_quadraticKernel_nat (m : ℕ) :
+    Aristotle.StationaryPhaseMainMode.quadraticKernel (m : ℝ) = 1 := by
+  unfold Aristotle.StationaryPhaseMainMode.quadraticKernel
+  rw [show
+      Complex.I * (((2 * Real.pi * (m : ℝ) ^ 2 : ℝ) : ℂ))
+        = ((m * m : ℕ) : ℂ) * (2 * Real.pi * Complex.I) by
+        push_cast
+        ring]
+  exact Complex.exp_nat_mul_two_pi_mul_I (m * m)
+
 /-- Exact FTC boundary identity for the `4πp`-weighted shifted quadratic
 moment. This closes the uniform weighted moment atom; the only remaining
 oscillatory input for the shifted quadratic kernel is the unweighted mass
@@ -13014,6 +13025,22 @@ private theorem atkinson_shifted_quadratic_weighted_moment_boundary_identity :
           Aristotle.StationaryPhaseMainMode.quadraticKernel (j : ℝ)) := by
           rfl
 
+/-- On an integer shifted cell the `4πp` quadratic moment has zero endpoint
+contribution. This is a sharper diagnostic than the uniform bound: the shifted
+quadratic coefficient is controlled entirely by the unweighted mass term. -/
+private theorem atkinson_shifted_quadratic_weighted_moment_integer_cell_zero :
+    ∀ j : ℕ, 1 ≤ j →
+      (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          (((4 * Real.pi * p : ℝ) : ℂ) *
+            Aristotle.StationaryPhaseMainMode.quadraticKernel p)) = 0 := by
+  intro j hj
+  rw [atkinson_shifted_quadratic_weighted_moment_boundary_identity j hj]
+  rw [show Aristotle.StationaryPhaseMainMode.quadraticKernel ((j : ℝ) + 1)
+      = Aristotle.StationaryPhaseMainMode.quadraticKernel ((j + 1 : ℕ) : ℝ) by
+        norm_num]
+  rw [atkinson_quadraticKernel_nat (j + 1), atkinson_quadraticKernel_nat j]
+  ring
+
 /-- The weighted shifted quadratic moment is uniformly bounded once the exact
 FTC boundary identity for the quadratic kernel is available. This isolates the
 remaining analytic step to proving that
@@ -13070,6 +13097,76 @@ private theorem atkinson_shifted_quadratic_weighted_moment_bound :
   exact
     atkinson_shifted_quadratic_weighted_moment_bound_of_boundary_identity
       atkinson_shifted_quadratic_weighted_moment_boundary_identity
+
+/-- Exact decomposition of the shifted quadratic-kernel integral on an integer
+cell. The affine Jacobian moment term vanishes, so only the unweighted shifted
+mass remains. -/
+private theorem atkinson_shifted_quadratic_kernel_integral_eq_mass
+    (n j : ℕ) (hj : 1 ≤ j) :
+    (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+        Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p)
+      =
+    (((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
+      ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+        Aristotle.StationaryPhaseMainMode.quadraticKernel p) := by
+  let mass : ℂ :=
+    ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+      Aristotle.StationaryPhaseMainMode.quadraticKernel p
+  let moment : ℂ :=
+    ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+      (((4 * Real.pi * p : ℝ) : ℂ) *
+        Aristotle.StationaryPhaseMainMode.quadraticKernel p)
+  have hcont_kernel :
+      Continuous Aristotle.StationaryPhaseMainMode.quadraticKernel := by
+    unfold Aristotle.StationaryPhaseMainMode.quadraticKernel
+    continuity
+  have hIntMass :
+      IntegrableOn Aristotle.StationaryPhaseMainMode.quadraticKernel
+        (Ioc (j : ℝ) ((j : ℝ) + 1)) := by
+    exact hcont_kernel.integrableOn_Ioc
+  have hIntMoment :
+      IntegrableOn
+        (fun p : ℝ =>
+          (((4 * Real.pi * p : ℝ) : ℂ) *
+            Aristotle.StationaryPhaseMainMode.quadraticKernel p))
+        (Ioc (j : ℝ) ((j : ℝ) + 1)) := by
+    have hcont :
+        Continuous
+          (fun p : ℝ =>
+            (((4 * Real.pi * p : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseMainMode.quadraticKernel p)) := by
+      exact (Complex.continuous_ofReal.comp
+        (((continuous_const.mul continuous_const).mul continuous_id))).mul hcont_kernel
+    exact hcont.integrableOn_Ioc
+  have hrepr :
+      (∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p)
+        =
+      ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) * mass) + moment) := by
+    calc
+      ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          Aristotle.StationaryPhaseMainMode.quadraticKernel p * blockJacobian n p
+          =
+        ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+          ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseMainMode.quadraticKernel p)
+            +
+            (((4 * Real.pi * p : ℝ) : ℂ) *
+              Aristotle.StationaryPhaseMainMode.quadraticKernel p)) := by
+            refine MeasureTheory.integral_congr_ae ?_
+            filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioc] with p hp
+            rw [Aristotle.StationaryPhaseMainMode.blockJacobian_eq_affine]
+            push_cast
+            ring
+      _ =
+        ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) * mass) + moment) := by
+          rw [MeasureTheory.integral_add (hIntMass.const_mul _) hIntMoment,
+            MeasureTheory.integral_const_mul]
+  have hmoment_zero : moment = 0 := by
+    simpa [moment] using
+      atkinson_shifted_quadratic_weighted_moment_integer_cell_zero j hj
+  rw [hrepr, hmoment_zero, add_zero]
+  rfl
 
 /-- Kernel bound with the elementary weight scale discharged; the remaining
 inputs are exactly the two shifted Fresnel estimates. -/
@@ -13256,6 +13353,31 @@ private theorem atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model
     atkinson_shifted_interval_quadratic_anchor_approx_of_zero_model_and_kernel_bound
       hzeroModel atkinson_shifted_quadratic_kernel_integral_bound
 
+/-- Scalar target-coefficient matching reduced to the unweighted shifted mass.
+The affine `blockJacobian` moment contributes zero on integer cells. -/
+private theorem atkinson_shifted_quadratic_target_coeff_bound_of_mass_coeff_bound
+    (hmassCoeff :
+      ∃ C_massCoeff > 0, ∃ N_massCoeff : ℕ, ∀ n : ℕ, N_massCoeff ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
+                  ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                    Aristotle.StationaryPhaseMainMode.quadraticKernel p)) -
+                atkinsonShiftedQuadraticTargetCoeff n j)‖
+            ≤ C_massCoeff * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_coeff > 0, ∃ N_coeff : ℕ, ∀ n : ℕ, N_coeff ≤ n → ∀ j : ℕ,
+      3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+              ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                Aristotle.StationaryPhaseMainMode.quadraticKernel p *
+                  blockJacobian n p) - atkinsonShiftedQuadraticTargetCoeff n j)‖
+          ≤ C_coeff * (atkinsonModeWeight (n + j) / j) := by
+  obtain ⟨C_massCoeff, hC_massCoeff, N_massCoeff, hmassCoeff'⟩ := hmassCoeff
+  refine ⟨C_massCoeff, hC_massCoeff, N_massCoeff, ?_⟩
+  intro n hn j hj3 hj1 hjn
+  have hmass_eq := atkinson_shifted_quadratic_kernel_integral_eq_mass n j hj1
+  simpa [hmass_eq, mul_assoc] using hmassCoeff' n hn j hj3 hj1 hjn
+
 /-- Target matching after removing the unit alternating stationary-anchor
 factor.  The remaining analytic atom is a scalar coefficient estimate for the
 shifted quadratic integral. -/
@@ -13313,6 +13435,26 @@ private theorem atkinson_shifted_quadratic_target_match_of_coeff_bound
     _ = ‖unit‖ * ‖raw - coeff‖ := norm_mul _ _
     _ = ‖raw - coeff‖ := by rw [hunit_norm, one_mul]
     _ ≤ C_coeff * scale := hcoeff_bound
+
+/-- Target matching reduced all the way to the shifted unweighted mass
+coefficient. -/
+private theorem atkinson_shifted_quadratic_target_match_of_mass_coeff_bound
+    (hmassCoeff :
+      ∃ C_massCoeff > 0, ∃ N_massCoeff : ℕ, ∀ n : ℕ, N_massCoeff ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
+                  ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                    Aristotle.StationaryPhaseMainMode.quadraticKernel p)) -
+                atkinsonShiftedQuadraticTargetCoeff n j)‖
+            ≤ C_massCoeff * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_target > 0, ∃ N_target : ℕ, ∀ n : ℕ, N_target ≤ n → ∀ j : ℕ,
+      3 ≤ j → 1 ≤ j → j ≤ n →
+        ‖(atkinsonShiftedQuadraticAnchorModel n j - atkinsonCompleteBlockTargetK (n + j) j)‖
+          ≤ C_target * (atkinsonModeWeight (n + j) / j) := by
+  exact
+    atkinson_shifted_quadratic_target_match_of_coeff_bound
+      (atkinson_shifted_quadratic_target_coeff_bound_of_mass_coeff_bound hmassCoeff)
 
 /-- The mode-eventual shifted-interval `blockMode` remainder follows once the
 native integral is close to the quadratic-anchor model and that model matches
@@ -13517,6 +13659,70 @@ private theorem atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_target
     atkinson_shiftedInversePhaseCellPrefixBound_of_completeBlockTargetK_remainder_and_finite_patch
       (atkinson_completeBlockTargetK_remainder_of_zero_model_and_targetCoeff
         hzeroModel hcoeff)
+      hpatch
+
+/-- Complete-block-target stationary-phase handoff with target matching reduced
+to the shifted unweighted mass coefficient. -/
+private theorem atkinson_blockMode_stationaryPhase_of_zero_model_and_massCoeff
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j))
+    (hmassCoeff :
+      ∃ C_massCoeff > 0, ∃ N_massCoeff : ℕ, ∀ n : ℕ, N_massCoeff ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
+                  ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                    Aristotle.StationaryPhaseMainMode.quadraticKernel p)) -
+                atkinsonShiftedQuadraticTargetCoeff n j)‖
+            ≤ C_massCoeff * (atkinsonModeWeight (n + j) / j)) :
+    ∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j → 3 ≤ j → 1 ≤ j → ∀ k : ℕ, 2 * j ≤ k →
+      ‖((((atkinsonModeWeight (k - j) : ℝ) : ℂ) *
+            ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+              Aristotle.StationaryPhaseMainMode.blockMode (k - j) p *
+                blockJacobian (k - j) p) - atkinsonCompleteBlockTargetK k j)‖
+        ≤ C_err * (atkinsonModeWeight k / j) := by
+  exact
+    atkinson_blockMode_stationaryPhase_of_zero_model_and_target hzeroModel
+      (atkinson_shifted_quadratic_target_match_of_mass_coeff_bound hmassCoeff)
+
+/-- Public provider packaging once the zero-model approximation, shifted mass
+coefficient match, and finite patch are supplied. -/
+private theorem atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_massCoeff_and_finite_patch
+    (hzeroModel :
+      ∃ C_model > 0, ∃ N_model : ℕ, ∀ n : ℕ, N_model ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                  Aristotle.StationaryPhaseMainMode.blockMode n p *
+                    blockJacobian n p) - atkinsonShiftedQuadraticBlockModeZeroModel n j)‖
+            ≤ C_model * (atkinsonModeWeight (n + j) / j))
+    (hmassCoeff :
+      ∃ C_massCoeff > 0, ∃ N_massCoeff : ℕ, ∀ n : ℕ, N_massCoeff ≤ n → ∀ j : ℕ,
+        3 ≤ j → 1 ≤ j → j ≤ n →
+          ‖((((atkinsonModeWeight n : ℝ) : ℂ) *
+                ((((4 * Real.pi * ((n : ℝ) + 1) : ℝ) : ℂ) *
+                  ∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),
+                    Aristotle.StationaryPhaseMainMode.quadraticKernel p)) -
+                atkinsonShiftedQuadraticTargetCoeff n j)‖
+            ≤ C_massCoeff * (atkinsonModeWeight (n + j) / j))
+    (hpatch :
+      ∀ J0 : ℕ, ∀ j : ℕ, 1 ≤ j → j < J0 →
+        ∃ Cj > 0, ∀ m : ℕ,
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              ((((1 / atkinsonShiftedRelativePhase (n + j) j : ℝ) : ℂ)) *
+                atkinsonResonantShiftedPhaseWeightedCell n j)‖
+            ≤ Cj * (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    AtkinsonShiftedInversePhaseCellPrefixBoundHyp := by
+  exact
+    atkinson_shiftedInversePhaseCellPrefixBound_of_zero_model_targetCoeff_and_finite_patch
+      hzeroModel
+      (atkinson_shifted_quadratic_target_coeff_bound_of_mass_coeff_bound hmassCoeff)
       hpatch
 
 /-- Equivalent concrete public-leaf reduction in the shifted block-parameter
