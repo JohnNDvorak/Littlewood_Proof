@@ -18378,6 +18378,279 @@ private theorem atkinson_shiftedCorrectionPrefixBound_of_eventual_j3_and_correct
               exact mul_le_mul_of_nonneg_right hC2_le_log3 (by positivity)
 
 omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Boundary side of the raw shifted-correction prefix, extracted from the
+already-proved boundary-row machinery. The remaining correction-prefix content
+is therefore the matching row-integral prefix. -/
+private theorem atkinsonResonantShiftedBoundaryPrefix_bound :
+    ∃ C_bdry > 0, ∀ j : ℕ, 1 ≤ j → ∀ m : ℕ,
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          atkinsonResonantShiftedBoundaryTerm n j‖
+        ≤ C_bdry * Real.log (↑j + 1) *
+            (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  obtain ⟨C_bdry, hC_bdry, hbdry⟩ :=
+    atkinson_large_modes_complete_resonant_packet_row_boundary_sum_bound_atomic
+  let C : ℝ := 2 * C_bdry + 2 / (Real.log 2) ^ 2
+  refine ⟨C, by
+    dsimp [C]
+    positivity, ?_⟩
+  intro j hj m
+  set target : ℝ := Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j
+  have hlog_j_nonneg : 0 ≤ Real.log (↑j + 1) :=
+    Real.log_nonneg (by exact_mod_cast show 1 ≤ j + 1 by omega)
+  have hlog2_le : Real.log 2 ≤ Real.log (↑j + 1) :=
+    Real.log_le_log (by norm_num) (by exact_mod_cast show 2 ≤ j + 1 by omega)
+  have hboundaryPrefix :
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          atkinsonResonantShiftedBoundaryTerm n j‖
+        ≤ (2 * C_bdry * Real.log (↑j + 1) + 2 / Real.log 2) * target := by
+    by_cases hsmall : m + 1 ≤ j
+    · by_cases hnonempty : j - 1 < m + 1
+      · have hIco_single : Finset.Ico (j - 1) (m + 1) = {j - 1} := by
+          ext x
+          constructor <;> intro hx
+          · rcases Finset.mem_Ico.mp hx with ⟨hx1, hx2⟩
+            have hxj : x = j - 1 := by omega
+            simp [hxj]
+          · simp at hx
+            subst hx
+            exact Finset.mem_Ico.mpr (by omega)
+        rw [hIco_single, Finset.sum_singleton]
+        have hfirst := atkinsonBoundary_jMinusOne_le_clean j hj m
+        have htarget_nonneg : 0 ≤ target := by
+          positivity
+        nlinarith [hfirst, hC_bdry, hlog_j_nonneg, htarget_nonneg,
+          mul_nonneg (mul_nonneg (le_of_lt hC_bdry) hlog_j_nonneg) htarget_nonneg]
+      · have hIco_empty : Finset.Ico (j - 1) (m + 1) = ∅ := by
+          ext x
+          constructor <;> intro hx
+          · rcases Finset.mem_Ico.mp hx with ⟨hx1, hx2⟩
+            omega
+          · simp at hx
+        rw [hIco_empty, Finset.sum_empty, norm_zero]
+        positivity
+    · have hjm : j < m + 1 := by
+        omega
+      have hsplit :
+          ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+              atkinsonResonantShiftedBoundaryTerm n j
+            =
+          atkinsonResonantShiftedBoundaryTerm (j - 1) j
+            + ∑ n ∈ Finset.Ico j (m + 1),
+                atkinsonResonantShiftedBoundaryTerm n j := by
+        have hset :
+            Finset.Ico (j - 1) (m + 1) =
+              ({j - 1} : Finset ℕ) ∪ Finset.Ico j (m + 1) := by
+          ext x
+          constructor <;> intro hx
+          · rcases Finset.mem_Ico.mp hx with ⟨hx1, hx2⟩
+            by_cases hxj : x = j - 1
+            · exact Finset.mem_union.mpr <| Or.inl (by simpa [hxj])
+            · exact Finset.mem_union.mpr <| Or.inr <| Finset.mem_Ico.mpr (by omega)
+          · rcases Finset.mem_union.mp hx with hx | hx
+            · simp at hx
+              subst hx
+              exact Finset.mem_Ico.mpr (by omega)
+            · rcases Finset.mem_Ico.mp hx with ⟨hx1, hx2⟩
+              exact Finset.mem_Ico.mpr (by omega)
+        have hdisj :
+            Disjoint ({j - 1} : Finset ℕ) (Finset.Ico j (m + 1)) := by
+          refine Finset.disjoint_left.mpr ?_
+          intro x hx1 hx2
+          simp at hx1
+          subst hx1
+          rcases Finset.mem_Ico.mp hx2 with ⟨hx2l, hx2r⟩
+          omega
+        rw [hset, Finset.sum_union hdisj, Finset.sum_singleton]
+      have hconv :
+          ∑ n ∈ Finset.Ico j (m + 1), atkinsonResonantShiftedBoundaryTerm n j
+            =
+          ∑ n ∈ Finset.range (m + 1),
+            (if j ≤ n then atkinsonResonantShiftedBoundaryTerm n j else 0) := by
+        rw [← Finset.sum_filter]
+        congr 1
+        ext x
+        constructor <;> intro hx <;>
+          simp [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico] at hx ⊢ <;> omega
+      have htail1 :
+          ‖∑ n ∈ Finset.Ico j (m + 1), atkinsonResonantShiftedBoundaryTerm n j‖
+            ≤ C_bdry * Real.log (↑j + 1) *
+                (Real.sqrt (((m + 1 + j : ℕ) : ℝ) + 1) / j) := by
+        rw [hconv]
+        exact hbdry j hj (m + 1)
+      have htail :
+          ‖∑ n ∈ Finset.Ico j (m + 1), atkinsonResonantShiftedBoundaryTerm n j‖
+            ≤ 2 * C_bdry * Real.log (↑j + 1) * target := by
+        let A : ℝ := (((m + j : ℕ) : ℝ) + 1)
+        have hsqrt4 :
+            Real.sqrt (4 * A) = 2 * Real.sqrt A := by
+          have hA_nonneg : 0 ≤ A := by
+            dsimp [A]
+            positivity
+          have hsq : 4 * A = (2 * Real.sqrt A)^2 := by
+            calc
+              4 * A = 4 * (Real.sqrt A)^2 := by rw [Real.sq_sqrt hA_nonneg]
+              _ = (2 * Real.sqrt A)^2 := by ring
+          rw [hsq, Real.sqrt_sq_eq_abs]
+          rw [abs_of_nonneg]
+          positivity
+        have hsqrt_mono :
+            Real.sqrt (((m + 1 + j : ℕ) : ℝ) + 1) / j ≤ Real.sqrt (4 * A) / j := by
+          have hsqrt_raw :
+              Real.sqrt (((m + 1 + j : ℕ) : ℝ) + 1) ≤ Real.sqrt (4 * A) := by
+            have hraw_nat : m + 1 + j + 1 ≤ 4 * (m + j + 1) := by
+              omega
+            apply Real.sqrt_le_sqrt
+            dsimp [A]
+            exact_mod_cast hraw_nat
+          have hinv_nonneg : 0 ≤ (1 / (j : ℝ)) := by
+            positivity
+          simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using
+            mul_le_mul_of_nonneg_right hsqrt_raw hinv_nonneg
+        calc
+          ‖∑ n ∈ Finset.Ico j (m + 1), atkinsonResonantShiftedBoundaryTerm n j‖
+              ≤ C_bdry * Real.log (↑j + 1) *
+                  (Real.sqrt (((m + 1 + j : ℕ) : ℝ) + 1) / j) := htail1
+          _ ≤ C_bdry * Real.log (↑j + 1) * (Real.sqrt (4 * A) / j) := by
+                exact mul_le_mul_of_nonneg_left hsqrt_mono
+                  (mul_nonneg (le_of_lt hC_bdry) hlog_j_nonneg)
+          _ = C_bdry * Real.log (↑j + 1) * (2 * Real.sqrt A / j) := by
+                rw [hsqrt4]
+          _ = 2 * C_bdry * Real.log (↑j + 1) * target := by
+                simp [target, A]
+                ring
+      rw [hsplit]
+      have hfirst := atkinsonBoundary_jMinusOne_le_clean j hj m
+      have htri :
+          ‖atkinsonResonantShiftedBoundaryTerm (j - 1) j
+              + ∑ n ∈ Finset.Ico j (m + 1),
+                  atkinsonResonantShiftedBoundaryTerm n j‖
+            ≤ ‖atkinsonResonantShiftedBoundaryTerm (j - 1) j‖
+                + ‖∑ n ∈ Finset.Ico j (m + 1),
+                    atkinsonResonantShiftedBoundaryTerm n j‖ := by
+        exact norm_add_le _ _
+      nlinarith [htri, hfirst, htail]
+  have hlog2_pos : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have htarget_nonneg : 0 ≤ target := by
+    positivity
+  have habs : 2 / Real.log 2 ≤ 2 / (Real.log 2) ^ 2 * Real.log (↑j + 1) := by
+    rw [div_mul_eq_mul_div,
+      div_le_div_iff₀ hlog2_pos (by positivity : (0 : ℝ) < (Real.log 2) ^ 2)]
+    nlinarith [hlog2_le, sq_nonneg (Real.log 2)]
+  have hcoef :
+      2 * C_bdry * Real.log (↑j + 1) + 2 / Real.log 2
+        ≤ C * Real.log (↑j + 1) := by
+    dsimp [C]
+    nlinarith
+  calc
+    ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+        atkinsonResonantShiftedBoundaryTerm n j‖
+        ≤ (2 * C_bdry * Real.log (↑j + 1) + 2 / Real.log 2) * target :=
+          hboundaryPrefix
+    _ ≤ (C * Real.log (↑j + 1)) * target := by
+          exact mul_le_mul_of_nonneg_right hcoef htarget_nonneg
+    _ = C * Real.log (↑j + 1) * target := by ring
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- The large-shift raw correction prefix follows from the corresponding
+row-integral prefix. This is the current honest atom below
+`AtkinsonShiftedCorrectionPrefixBoundHyp`: the boundary side is already
+available, and `cell = boundary - correction` leaves only the row-cell prefix. -/
+private theorem atkinson_largeShiftCorrectionPrefix_bound_of_rowIntegralPrefix
+    (hrow :
+      ∃ C_row > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+          ≤ C_row * Real.log (↑j + 1) *
+              (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)) :
+    ∃ Cevent > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ,
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          atkinsonResonantShiftedCorrectionTerm n j‖
+        ≤ Cevent * Real.log (↑j + 1) *
+            (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j) := by
+  obtain ⟨C_bdry, hC_bdry, hbdry⟩ := atkinsonResonantShiftedBoundaryPrefix_bound
+  obtain ⟨C_row, hC_row, hrow'⟩ := hrow
+  refine ⟨C_bdry + C_row, by positivity, ?_⟩
+  intro j hj3 hj1 m
+  let target : ℝ := Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j
+  have hcell_eq :
+      ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u
+        =
+      ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          (atkinsonResonantShiftedBoundaryTerm n j -
+            atkinsonResonantShiftedCorrectionTerm n j) := by
+    refine Finset.sum_congr rfl ?_
+    intro n hn
+    exact atkinsonResonantShiftedCell_eq_boundary_minus_correction n j hj1
+  have hcorr_eq :
+      ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          atkinsonResonantShiftedCorrectionTerm n j
+        =
+      ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          atkinsonResonantShiftedBoundaryTerm n j
+        -
+      ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u := by
+    rw [hcell_eq, Finset.sum_sub_distrib]
+    ring
+  have hboundary :
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          atkinsonResonantShiftedBoundaryTerm n j‖
+        ≤ C_bdry * Real.log (↑j + 1) * target := by
+    simpa [target] using hbdry j hj1 m
+  have hrow_bound :
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+        ≤ C_row * Real.log (↑j + 1) * target := by
+    simpa [target] using hrow' j hj3 hj1 m
+  calc
+    ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+        atkinsonResonantShiftedCorrectionTerm n j‖
+        =
+      ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          atkinsonResonantShiftedBoundaryTerm n j
+        -
+        ∑ n ∈ Finset.Ico (j - 1) (m + 1),
+          ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖ := by
+          rw [hcorr_eq]
+    _ ≤ ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            atkinsonResonantShiftedBoundaryTerm n j‖
+          +
+          ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖ := by
+          exact norm_sub_le _ _
+    _ ≤ C_bdry * Real.log (↑j + 1) * target +
+          C_row * Real.log (↑j + 1) * target := by
+          exact add_le_add hboundary hrow_bound
+    _ = (C_bdry + C_row) * Real.log (↑j + 1) * target := by ring
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
+/-- Correction-prefix provider surface with the large-shift atom stated as the
+remaining row-integral prefix, plus the two finite raw correction patches. -/
+private theorem atkinson_shiftedCorrectionPrefixBound_of_rowIntegralPrefix_and_correction_j1_j2
+    (hrow :
+      ∃ C_row > 0, ∀ j : ℕ, 3 ≤ j → 1 ≤ j → ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico (j - 1) (m + 1),
+            ∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖
+          ≤ C_row * Real.log (↑j + 1) *
+              (Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j))
+    (hcorr1 :
+      ∃ C1 > 0, ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico ((1 : ℕ) - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n (1 : ℕ)‖
+          ≤ C1 * (Real.sqrt (((m + (1 : ℕ) : ℕ) : ℝ) + 1) / ((1 : ℕ) : ℝ)))
+    (hcorr2 :
+      ∃ C2 > 0, ∀ m : ℕ,
+        ‖∑ n ∈ Finset.Ico ((2 : ℕ) - 1) (m + 1),
+            atkinsonResonantShiftedCorrectionTerm n (2 : ℕ)‖
+          ≤ C2 * (Real.sqrt (((m + (2 : ℕ) : ℕ) : ℝ) + 1) / ((2 : ℕ) : ℝ))) :
+    AtkinsonShiftedCorrectionPrefixBoundHyp := by
+  exact
+    atkinson_shiftedCorrectionPrefixBound_of_eventual_j3_and_correction_j1_j2
+      (atkinson_largeShiftCorrectionPrefix_bound_of_rowIntegralPrefix hrow)
+      hcorr1 hcorr2
+
+omit [AtkinsonShiftedInversePhaseCorePrefixBoundHyp] in
 private theorem
     atkinson_large_modes_complete_resonant_packet_row_correction_sum_bound_atomic_of_shifted_correction_prefix
     [AtkinsonShiftedCorrectionPrefixBoundHyp] :

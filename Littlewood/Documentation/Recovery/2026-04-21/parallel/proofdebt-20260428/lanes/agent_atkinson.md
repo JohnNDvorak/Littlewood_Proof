@@ -797,3 +797,53 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 15 Raw Correction Prefix to Row Prefix
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  the large-shift raw correction-prefix atom feeding
+  `atkinson_shiftedCorrectionPrefixBound_of_eventual_j3_and_correction_j1_j2`.
+- Facts banked:
+  `atkinsonResonantShiftedBoundaryPrefix_bound` extracts the boundary side of
+  the `Ico (j - 1) (m + 1)` prefix from the existing boundary-row machinery,
+  including the isolated `j - 1` head term.
+  `atkinson_largeShiftCorrectionPrefix_bound_of_rowIntegralPrefix` uses the
+  exact identity
+  `cell = boundary - correction`, via
+  `atkinsonResonantShiftedCell_eq_boundary_minus_correction`, to reduce the
+  large-shift raw correction prefix to the corresponding raw row-integral
+  prefix.
+  `atkinson_shiftedCorrectionPrefixBound_of_rowIntegralPrefix_and_correction_j1_j2`
+  wires that row-prefix atom plus the finite `j = 1,2` correction patches into
+  `AtkinsonShiftedCorrectionPrefixBoundHyp`.
+- Failed routes / guardrails:
+  no zero-model, mass-coefficient, Fourier-corrected target, compensated
+  carrier route, circular
+  `AtkinsonShiftedInversePhaseCellPrefixBoundHyp`, or diffuse absolute
+  correction-mass estimate was used. Naive deweighting of the existing
+  phase-weighted correction prefix remains demoted: it gives only
+  `O(sqrt(m+j))` and does not supply the required `1 / j` scale.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local algebra/proof-engineering in
+  `atkinsonResonantShiftedBoundaryPrefix_bound`, since it extracts a previously
+  inline boundary-prefix estimate into a named theorem; the row-prefix
+  reduction itself is just triangle inequality plus
+  `cell = boundary - correction`.
+- Smallest next theorem:
+  prove the large-shift raw row-integral prefix atom
+  `∃ C_row > 0, ∀ j : ℕ, 3 ≤ j -> 1 ≤ j -> ∀ m : ℕ,`
+  `‖∑ n ∈ Finset.Ico (j - 1) (m + 1),`
+  `∫ u in Ioc (0 : ℝ) 1, atkinsonResonantShiftedRowSummand n j u‖`
+  `≤ C_row * Real.log (↑j + 1) *`
+  `(Real.sqrt (((m + j : ℕ) : ℝ) + 1) / j)`.
+  This should be attacked through complete-block prefix cancellation or Abel
+  summation on the row cells, not through the demoted quadratic zero-model
+  path.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
