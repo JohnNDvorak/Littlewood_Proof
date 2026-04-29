@@ -6538,6 +6538,26 @@ theorem exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleBudget
     targetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDense_of_relationCompatibleBudgetedKronecker_hyp
   exact exactSeedAboveThreshold_perron_of_logHalfBudget_budgetedRelativelyDense_hyp
 
+/-- Perron canonical residual plus the explicit relation-compatible budgeted
+Kronecker payload packages both Perron-only exact-seed classes.
+
+This is the chooser-free finite-zero endpoint: it avoids proving any bound on
+the opaque `finiteSetRelationCompatibleKroneckerRadius` selected by
+`Classical.choose`, and instead consumes radii that are returned already inside
+the same-height tower half-budget. -/
+theorem exactSeedAboveThreshold_perron_of_canonicalPerronAndRelationCompatibleBudgetedKronecker_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp]
+    (hPerron :
+      PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual) :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : PerronThresholdTowerLogHalfBudgetHyp :=
+    perronThresholdTowerLogHalfBudget_of_canonicalMajorantResidual hPerron
+  exact
+    exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleBudgetedKronecker_hyp
+
 /-- Existing relation-compatible finite-set Kronecker plus explicit selected
 radius half-budgets supplies the corrected exact-seed endpoint through the
 explicit budgeted-radius route. -/
