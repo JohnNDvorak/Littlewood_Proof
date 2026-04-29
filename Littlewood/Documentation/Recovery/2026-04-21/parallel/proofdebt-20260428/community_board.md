@@ -312,3 +312,43 @@ Each agent report must state:
   - Perron/B5a: `ee5694b1-8a5d-4b26-926a-16a38549bfb4`
   - Pi/Phase: `730f40bc-99a7-49bd-89fa-46039f150c23`
   - RS/Gabcke: `55d45e98-54c8-435a-9dde-c7fc59926147`
+
+## Overnight 2026-04-29 Second Pass Status
+
+- All four second-pass lane commits were validated serially by the
+  coordinator and pushed:
+  - Atkinson `ccfe50b` plus coordinator fix `8ff5a67`:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula` passed;
+    exposed the corrected Fourier target route and replaced one fragile
+    positivity proof with the explicit
+    `atkinsonModeWeight_nonneg`/`div_nonneg` argument.
+  - Perron/B5a `d499131`:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`
+    passed; closed the near-diagonal punctured boundary cardinality atom and
+    reduced the estimate to the remaining uniform local kernel bound.
+  - Pi/Phase `243e1d9`:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider`
+    and
+    `lake build Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+    passed; reduced paired tower geometry to the log-scale domination atom
+    using `Real.exp` monotonicity.
+  - RS/Gabcke `5d29dbc`: focused build set
+    `SiegelSaddleExpansionHyp GabckePhaseCouplingInfra GabckePhaseCouplingHyp HardyZFirstMomentBridge`
+    passed; reduced the Tabelle first-coefficient bound to the raw
+    `standardGabckeRawPsiThirdDerivative` bound on `Ico 0 1`.
+- Fresh Aristotle poll shows all four current sidecars in progress:
+  - Atkinson `57447356-4c39-4c20-8da2-6096b6243dfe`: in progress.
+  - Perron/B5a `ee5694b1-8a5d-4b26-926a-16a38549bfb4`: in progress.
+  - Pi/Phase `730f40bc-99a7-49bd-89fa-46039f150c23`: in progress.
+  - RS/Gabcke `55d45e98-54c8-435a-9dde-c7fc59926147`: in progress.
+- Third-pass live targets:
+  - Atkinson: attack the shifted zero-model approximation feeding the
+    corrected Fourier-target route, and keep the old target Fourier mismatch
+    documented as a genuine coefficient gap unless an exact bridge is found.
+  - Perron/B5a: prove the uniform local kernel bound for the near-diagonal
+    punctured boundary route; do not reuse the decaying-kernel near-integer
+    route.
+  - Pi/Phase: prove the paired log-scale tower domination source for target
+    and anti-target phase radii.
+  - RS/Gabcke: prove either the contour-Taylor first-coefficient identity or
+    the raw third-derivative bound that feeds the Tabelle coefficient bound.
