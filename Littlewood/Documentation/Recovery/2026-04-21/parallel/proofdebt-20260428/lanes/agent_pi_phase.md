@@ -1624,3 +1624,60 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
     for a tower-selected `T`, or replace the threshold route with a direct
     fixed-height Perron error payload that avoids comparing opaque
     `Classical.choose` thresholds across heights.
+
+### 2026-04-29 Round 26: Transfer Equivalence Analysis
+
+- Classification: `HONEST_TRANSFER_ANALYSIS_PENDING_VALIDATION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - transfer condition for `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual`
+- Facts banked:
+  - Added `perronThreshold_fixedHeightTransfer_iff_selectedThreshold_bound`.
+    This proves the transfer condition
+    `perronThreshold hRH T + 1 ≤ max (X + 1) (perronThreshold hRH T0 + 1)`
+    is exactly equivalent to the cleaner bound
+    `perronThreshold hRH T ≤ max X (perronThreshold hRH T0)`.
+  - Added `perronThreshold_fixedHeightTransfer_sameHeight`, proving the
+    transfer is tautological when `T = T0`.
+- Sharp analysis:
+  - The transfer is not false in all cases: it is true for the same height.
+  - The cross-height transfer needed after using tower cofinality is not
+    available from the current definition. `perronThreshold hRH T` is a
+    `Classical.choose` lower endpoint for an eventual statement at each
+    separate height, and no monotonicity/minimality/boundedness theorem relates
+    the chosen thresholds at `T0` and `T`.
+  - Tower cofinality can select a height `T` that dominates a fixed real, but
+    it does not itself prove the selected-height threshold bound above.
+- Remaining goal shape:
+  - Prove `perronThreshold hRH T ≤ max X (perronThreshold hRH T0)` for the
+    tower-selected `T`, or avoid the cross-height threshold comparison by
+    carrying the fixed-height Perron error witness directly through a corrected
+    residual/interface.
+  - Radius residuals remain unchanged and still require direct bounds on the
+    existing chosen radii.
+- Failed/circular route:
+  - No monotonicity or minimal-threshold property for `perronThreshold` was
+    found in the local provider path.
+  - Did not add reverse-comparison instances, growth-to-canonical cycles,
+    axioms/sorries, or `Classical.choose` radius control.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`,
+    `TruncatedExplicitFormulaPiHyp.pi_approx`,
+    `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or
+    `truncatedPiHyp_contradicts_rh`.
+  - No arbitrary-target Kronecker, independent target/anti heights,
+    `tower_cap_unbounded_with_eps` fixed-point shortcut, or constant-1 Perron
+    sqrt-error shortcut was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Static-only lane pass; no `lean`, `lake`, `lake env lean`, focused build,
+    public import probe, `git diff --check`, or other check command was run.
+- Requested coordinator validation:
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`
+- Smallest next theorem:
+  - Replace the threshold residual with a direct fixed-height Perron error
+    payload/interface, or add a genuine growth/monotonicity theorem for the
+    selected thresholds. The latter is stronger than current local facts and
+    should not be assumed from `Classical.choose`.

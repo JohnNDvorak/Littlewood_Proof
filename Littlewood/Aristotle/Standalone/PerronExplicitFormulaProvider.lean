@@ -2773,6 +2773,55 @@ theorem perronThresholdTowerExpHalfBudgetCanonicalMajorant_bound_of_fixedHeightT
           (((1 - ε) * ((N T : ℝ) / (T + 1))) / 2)) / 2) := by
   exact (max_le (le_max_left _ _) hTransfer).trans hFixed
 
+/-- The fixed-height transfer condition is exactly a selected-height threshold
+bound, with the `+1` and `max` bookkeeping stripped away.
+
+Thus the transfer is not a consequence of tower cofinality; it requires
+control of the opaque chosen threshold at the selected height `T`. -/
+theorem perronThreshold_fixedHeightTransfer_iff_selectedThreshold_bound
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    {hRH : ZetaZeros.RiemannHypothesis} {X T0 T : ℝ} :
+    perronThreshold hRH T + 1 ≤
+        max (X + 1) (perronThreshold hRH T0 + 1) ↔
+      perronThreshold hRH T ≤ max X (perronThreshold hRH T0) := by
+  constructor
+  · intro h
+    have hX :
+        X + 1 ≤ max X (perronThreshold hRH T0) + 1 := by
+      linarith [le_max_left X (perronThreshold hRH T0)]
+    have hT0 :
+        perronThreshold hRH T0 + 1 ≤
+          max X (perronThreshold hRH T0) + 1 := by
+      linarith [le_max_right X (perronThreshold hRH T0)]
+    have hMax :
+        max (X + 1) (perronThreshold hRH T0 + 1) ≤
+          max X (perronThreshold hRH T0) + 1 :=
+      max_le hX hT0
+    linarith
+  · intro h
+    have hX :
+        X ≤ max (X + 1) (perronThreshold hRH T0 + 1) - 1 := by
+      linarith [le_max_left (X + 1) (perronThreshold hRH T0 + 1)]
+    have hT0 :
+        perronThreshold hRH T0 ≤
+          max (X + 1) (perronThreshold hRH T0 + 1) - 1 := by
+      linarith [le_max_right (X + 1) (perronThreshold hRH T0 + 1)]
+    have hMax :
+        max X (perronThreshold hRH T0) ≤
+          max (X + 1) (perronThreshold hRH T0 + 1) - 1 :=
+      max_le hX hT0
+    linarith
+
+/-- The transfer bound is tautological if the tower-selected height is the same
+height used to form the fixed majorant.  The obstruction is precisely changing
+from `T0` to a new tower-selected height `T`. -/
+theorem perronThreshold_fixedHeightTransfer_sameHeight
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    (hRH : ZetaZeros.RiemannHypothesis) (X T0 : ℝ) :
+    perronThreshold hRH T0 + 1 ≤
+      max (X + 1) (perronThreshold hRH T0 + 1) :=
+  le_max_right _ _
+
 /-- The earlier two-sided growth source implies the canonical max-majorant
 form by recombining the two same-height inequalities with `max_le`.
 
