@@ -2558,3 +2558,39 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   - Result: passed; existing upstream linter warnings only.
 - Smallest next theorem:
   - Close or further reduce `PerronThresholdTowerLogHalfBudgetHyp`, or source `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp` from the relation-compatible finite-zero/Kronecker payloads already named in the route.
+
+### 2026-04-29 Round 51: Relation-Compatible Budgeted Radius Endpoint
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem/file attacked:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp`.
+- Facts banked:
+  - Added `targetAntiPhaseFitAbovePerronThresholdPerron_of_logHalfBudget_relationCompatibleBudgetedKronecker_hyp`.
+  - Added `exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleBudgetedKronecker_hyp`.
+  - Added `exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleKroneckerRadiusBudget_hyp`.
+- What changed:
+  - The explicit-radius exact-seed endpoint can now be sourced from paired zeta relation compatibility plus `TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp`.
+  - A further endpoint packages the existing finite-set relation-compatible Kronecker source plus `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.
+  - This keeps the route away from projected `Classical.choose` radii and away from arbitrary-budget finite-set Kronecker.
+- Remaining goal shape:
+  - Prove `PerronThresholdTowerLogHalfBudgetHyp`.
+  - Prove or further reduce `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`, the same-height quantitative bound on the actual finite-set relation-compatible Kronecker radii.
+- Failed/circular route:
+  - Did not use `FiniteSetRelationCompatibleBudgetedPairKroneckerHyp`, which remains false in the arbitrary-budget form.
+  - Did not add provider instances or a reverse edge from exact-seed packaging back into the budget leaves.
+- Guardrails:
+  - No use of `TruncatedExplicitFormulaPiHyp`, `TruncatedExplicitFormulaPiHyp.pi_approx`, `PerronPiApproxCompatibilityHyp`, `pi_explicit_formula_from_perron`, or `truncatedPiHyp_contradicts_rh`.
+  - No axioms/sorries, statement weakening, arbitrary-budget finite-set Kronecker, arbitrary-radius route, provider cycles, reverse-comparison instances, or choice-control assumption was introduced.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/PerronExplicitFormulaProvider.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_pi_phase.md`
+- Validation status:
+  - Passed local focused validation under the corrected singleflight rule.
+- Validation command/result:
+  - `git diff --check`
+  - Result: passed.
+  - `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute`
+  - Result: passed; existing upstream linter warnings only.
+- Smallest next theorem:
+  - `PerronThresholdTowerLogHalfBudgetHyp` or `TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp`.

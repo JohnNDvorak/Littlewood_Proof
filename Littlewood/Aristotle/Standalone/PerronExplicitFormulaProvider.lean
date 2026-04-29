@@ -6271,6 +6271,51 @@ theorem exactSeedAboveThreshold_perron_of_logHalfBudget_budgetedRelativelyDense_
   letI : AntiTargetPhaseFitAbovePerronThresholdPerronHyp := hFit.2
   exact ⟨inferInstance, inferInstance⟩
 
+/-- Relation-compatible budgeted finite-zero Kronecker plus the Perron log
+half-budget packages both target-specific Perron phase-fit classes through the
+explicit-radius route. -/
+theorem targetAntiPhaseFitAbovePerronThresholdPerron_of_logHalfBudget_relationCompatibleBudgetedKronecker_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp] :
+    TargetPhaseFitAbovePerronThresholdPerronHyp ∧
+      AntiTargetPhaseFitAbovePerronThresholdPerronHyp := by
+  letI : TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp :=
+    targetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDense_of_relationCompatibleBudgetedKronecker_hyp
+  exact
+    targetAntiPhaseFitAbovePerronThresholdPerron_of_logHalfBudget_budgetedRelativelyDense_hyp
+
+/-- Relation-compatible budgeted finite-zero Kronecker plus the Perron log
+half-budget packages both Perron-only exact-seed classes through the
+explicit-radius route. -/
+theorem exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleBudgetedKronecker_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : TargetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDenseHyp :=
+    targetAntiFiniteZeroInhomogeneousPhaseBudgetedRelativelyDense_of_relationCompatibleBudgetedKronecker_hyp
+  exact exactSeedAboveThreshold_perron_of_logHalfBudget_budgetedRelativelyDense_hyp
+
+/-- Existing relation-compatible finite-set Kronecker plus explicit selected
+radius half-budgets supplies the corrected exact-seed endpoint through the
+explicit budgeted-radius route. -/
+theorem exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleKroneckerRadiusBudget_hyp
+    [PerronSqrtErrorEventuallyAtHeightHyp]
+    [PerronThresholdTowerLogHalfBudgetHyp]
+    [TargetAntiFiniteZeroInhomogeneousPhaseRelationCompatibleHyp]
+    [FiniteSetRelationCompatibleInhomogeneousPhaseRelativelyDenseKroneckerHyp]
+    [TargetAntiFiniteZeroRelationCompatibleChosenKroneckerRadiusHalfBudgetHyp] :
+    TargetTowerExactSeedAbovePerronThresholdPerronHyp ∧
+      AntiTargetTowerExactSeedAbovePerronThresholdPerronHyp := by
+  letI : TargetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKroneckerHyp :=
+    targetAntiFiniteZeroRelationCompatibleBudgetedRelativelyDenseKronecker_of_relationCompatibleKronecker_radiusBudget_hyp
+  exact
+    exactSeedAboveThreshold_perron_of_logHalfBudget_relationCompatibleBudgetedKronecker_hyp
+
 /-- Paired finite-zero relative density plus the two same-height half-budget
 inputs packages both Perron-only exact-seed classes. -/
 theorem exactSeedAboveThreshold_perron_of_pairedRelativeDensityAndHalfBudgets_hyp
