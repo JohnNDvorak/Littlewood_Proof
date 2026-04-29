@@ -2562,3 +2562,16 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Current Pi atoms:
     `PerronThresholdTowerExpHalfBudgetCanonicalMajorantResidual` and
     `TargetAntiFiniteZeroPhaseRadiusHalfBudgetGrowthHyp`.
+
+## Overnight 2026-04-29 Ninetieth Pass Status
+
+- Coordinator recovery branch is pushed through `c2d0201`.
+- Perron/B5a lane is integrated through `7bd88cf`:
+  - The fixed-window DCT route is complete through
+    `small_T_perronVerticalIntegral_continuousOn_slab16`.
+  - Validation passed in-lane:
+    `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+  - Current Perron issue: the zero-sum component remains. Do not chase false
+    unconditional closed-cutoff continuity at zero heights. Prefer a direct
+    boundedness route for `zeroSumRe` on the cutoff slab, or a boundary-aware
+    adapter that still yields the needed slab bounded-image estimate.
