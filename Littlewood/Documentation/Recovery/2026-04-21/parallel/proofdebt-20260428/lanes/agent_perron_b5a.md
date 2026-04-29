@@ -1382,3 +1382,54 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   bypasses the false pure weighted cutoff target.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 26 - Off-Boundary Davenport Handoff
+
+- Classification: `CANDIDATE_REDUCTION`.
+- Exact theorem attacked:
+  the compatible off-boundary atom at the honest linear-window scale
+  `C * (x / T) * (Real.log x)^2`.
+- Code facts banked:
+  added `perronKernelOffBoundaryDavenportEnvelopeTerm` and
+  `perronKernelOffBoundaryDavenportEnvelope`, retaining Davenport's
+  `1 / log (x / n)` structure off the sharp boundary window.
+  Proved
+  `perronKernelWeightedOffBoundaryWindowError_le_davenportEnvelope`: for
+  `x >= 2`, `2 <= T`, every positive off-boundary finite-sum term satisfies
+  `1 < x / n`, so `perron_per_term_large_bound` gives the weighted Davenport
+  envelope; the `n = 0` term is zero because `vonMangoldt 0 = 0`.
+  Added
+  `small_T_offBoundary_weighted_linear_bound_from_davenportEnvelope`, reducing
+  the requested off-boundary weighted cutoff to the envelope summation bound,
+  and
+  `small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_davenportEnvelope`,
+  wiring that bound into the closed linear boundary-window assembly.
+- Scale check:
+  preserved the scale-correct `x / T` factor.  The new off-boundary envelope
+  is a summation target at linear-window scale; it does not assert the false
+  pure bounded-height cutoff estimate.
+- Failed/demoted routes:
+  did not use a constant off-boundary kernel supremum.  That route is too
+  coarse for small `n`, where Davenport's bound naturally has `x / (T * n)`
+  size and must be summed with the von Mangoldt weight.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the off-boundary Davenport-envelope summation bound
+  `∃ Cd > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 ->
+    perronKernelOffBoundaryDavenportEnvelope x T
+      <= Cd * (x / T) * (Real.log x)^2`.
+  The likely route is to split the envelope into the smooth
+  `1 / T` part and the singular `1 / (T * log (x / n))` part; on the
+  off-boundary set, convert `1 / log (x / n)` to a distance term and sum by
+  harmonic-distance or dyadic bands below `x - x / T`.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

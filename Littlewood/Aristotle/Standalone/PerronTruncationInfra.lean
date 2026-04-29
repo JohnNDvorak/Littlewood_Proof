@@ -1544,6 +1544,26 @@ def perronKernelWeightedOffBoundaryWindowError (x T : ℝ) : ℝ :=
     ArithmeticFunction.vonMangoldt n *
       |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T|
 
+/-- Davenport-style weighted envelope for one off-boundary finite Perron term.
+
+The `n = 0` branch is harmless because `vonMangoldt 0 = 0`; it avoids asking
+the large-side Perron kernel bound to interpret `x / 0`. -/
+def perronKernelOffBoundaryDavenportEnvelopeTerm (x T : ℝ) (n : ℕ) : ℝ :=
+  if n = 0 then 0 else
+    ArithmeticFunction.vonMangoldt n *
+      (((x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1) /
+          (T * Real.log (x / (n : ℝ))) +
+        2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+          ((1 + 1 / Real.log x) * T))
+
+/-- Davenport-style weighted envelope over the off-boundary finite Perron
+range.  The remaining summation task keeps the distance from the cutoff inside
+this envelope rather than using the false pure boundary-window route. -/
+def perronKernelOffBoundaryDavenportEnvelope (x T : ℝ) : ℝ :=
+  ∑ n ∈ (Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T),
+    perronKernelOffBoundaryDavenportEnvelopeTerm x T n
+
 /-- Exact finite-sum split of the weighted cutoff error into the sharp boundary
 window and its complement. -/
 theorem perronKernelWeightedCutoffError_eq_boundary_add_offBoundary
@@ -3544,6 +3564,115 @@ theorem small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary
       perronKernelWeightedCutoffError x T ≤ Cw * (x / T) * (Real.log x) ^ 2 :=
   small_T_weighted_kernel_cutoff_linear_bound_from_boundary_and_offBoundary
     small_T_boundary_window_linear_bound hoffBoundary
+
+/-- Off-boundary weighted error is bounded by its Davenport envelope.  The
+finite Perron range only contains `n <= floor x`; after removing the boundary
+window, every positive term is on the large side `1 < x / n`, so Davenport's
+large-side per-term estimate applies. -/
+theorem perronKernelWeightedOffBoundaryWindowError_le_davenportEnvelope
+    (x T : ℝ) (hx : 2 ≤ x) (hT_lo : 2 ≤ T) :
+    perronKernelWeightedOffBoundaryWindowError x T ≤
+      perronKernelOffBoundaryDavenportEnvelope x T := by
+  classical
+  let s := (Finset.range (Nat.floor x + 1)).filter
+      (fun n : ℕ => ¬ |x - (n : ℝ)| ≤ x / T)
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hx_pos : 0 < x := by linarith
+  have hT_pos : 0 < T := by linarith
+  have hx_over_T_pos : 0 < x / T := div_pos hx_pos hT_pos
+  have hc_pos := c_param_pos x hx
+  calc perronKernelWeightedOffBoundaryWindowError x T
+      = ∑ n ∈ s,
+          ArithmeticFunction.vonMangoldt n *
+            |1 - perronPerTermIntegral (x / (n : ℝ)) (1 + 1 / Real.log x) T| := by
+        rfl
+    _ ≤ ∑ n ∈ s, perronKernelOffBoundaryDavenportEnvelopeTerm x T n := by
+        apply Finset.sum_le_sum
+        intro n hn
+        by_cases hn_zero : n = 0
+        · subst n
+          simp [perronKernelOffBoundaryDavenportEnvelopeTerm,
+            ArithmeticFunction.vonMangoldt_apply]
+        · have hn_pos : 1 ≤ n := Nat.pos_of_ne_zero hn_zero
+          have hn_pos_real : (0 : ℝ) < n := Nat.cast_pos.mpr hn_pos
+          have hrange : n ∈ Finset.range (Nat.floor x + 1) :=
+            (Finset.mem_filter.mp hn).1
+          have hoff : ¬ |x - (n : ℝ)| ≤ x / T :=
+            (Finset.mem_filter.mp hn).2
+          have hn_le_floor : n ≤ Nat.floor x :=
+            Nat.lt_succ_iff.mp (Finset.mem_range.mp hrange)
+          have hn_le_x : (n : ℝ) ≤ x :=
+            le_trans (Nat.cast_le.mpr hn_le_floor) (Nat.floor_le hx_nonneg)
+          have hn_ne_x : (n : ℝ) ≠ x := by
+            intro hn_eq
+            have hboundary : |x - (n : ℝ)| ≤ x / T := by
+              rw [hn_eq, sub_self, abs_zero]
+              exact hx_over_T_pos.le
+            exact hoff hboundary
+          have hn_lt_x : (n : ℝ) < x := lt_of_le_of_ne hn_le_x hn_ne_x
+          have hy_gt_one : 1 < x / (n : ℝ) := by
+            rw [one_lt_div hn_pos_real]
+            exact hn_lt_x
+          have hkernel :
+              |1 - perronPerTermIntegral (x / (n : ℝ))
+                  (1 + 1 / Real.log x) T| ≤
+                ((x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1) /
+                    (T * Real.log (x / (n : ℝ))) +
+                  2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+                    ((1 + 1 / Real.log x) * T) := by
+            calc |1 - perronPerTermIntegral (x / (n : ℝ))
+                    (1 + 1 / Real.log x) T|
+                = |perronPerTermIntegral (x / (n : ℝ))
+                    (1 + 1 / Real.log x) T - 1| := abs_sub_comm _ _
+              _ ≤ ((x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1) /
+                    (T * Real.log (x / (n : ℝ))) +
+                  2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+                    ((1 + 1 / Real.log x) * T) :=
+                  perron_per_term_large_bound
+                    (x / (n : ℝ)) hy_gt_one
+                    (1 + 1 / Real.log x) hc_pos T hT_pos
+          calc ArithmeticFunction.vonMangoldt n *
+                |1 - perronPerTermIntegral (x / (n : ℝ))
+                    (1 + 1 / Real.log x) T|
+              ≤ ArithmeticFunction.vonMangoldt n *
+                  (((x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1) /
+                    (T * Real.log (x / (n : ℝ))) +
+                  2 * (x / (n : ℝ)) ^ (1 + 1 / Real.log x) /
+                    ((1 + 1 / Real.log x) * T)) :=
+                  mul_le_mul_of_nonneg_left hkernel (vonMangoldt_nonneg n)
+            _ = perronKernelOffBoundaryDavenportEnvelopeTerm x T n := by
+                simp [perronKernelOffBoundaryDavenportEnvelopeTerm, hn_zero]
+    _ = perronKernelOffBoundaryDavenportEnvelope x T := by
+        rfl
+
+/-- Scale-correct off-boundary weighted cutoff from the corresponding
+Davenport-envelope summation bound. -/
+theorem small_T_offBoundary_weighted_linear_bound_from_davenportEnvelope
+    (henvelope : ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDavenportEnvelope x T ≤
+        Cd * (x / T) * (Real.log x) ^ 2) :
+    ∃ Co > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedOffBoundaryWindowError x T ≤
+        Co * (x / T) * (Real.log x) ^ 2 := by
+  rcases henvelope with ⟨Cd, hCd_pos, henvelope⟩
+  refine ⟨Cd, hCd_pos, ?_⟩
+  intro x T hx hT_lo hT_hi
+  calc perronKernelWeightedOffBoundaryWindowError x T
+      ≤ perronKernelOffBoundaryDavenportEnvelope x T :=
+        perronKernelWeightedOffBoundaryWindowError_le_davenportEnvelope
+          x T hx hT_lo
+    _ ≤ Cd * (x / T) * (Real.log x) ^ 2 := henvelope x T hx hT_lo hT_hi
+
+/-- Scale-correct weighted cutoff from an off-boundary Davenport-envelope
+summation bound, using the closed linear-scale boundary-window route. -/
+theorem small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary_davenportEnvelope
+    (henvelope : ∃ Cd > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelOffBoundaryDavenportEnvelope x T ≤
+        Cd * (x / T) * (Real.log x) ^ 2) :
+    ∃ Cw > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      perronKernelWeightedCutoffError x T ≤ Cw * (x / T) * (Real.log x) ^ 2 :=
+  small_T_weighted_kernel_cutoff_linear_bound_from_offBoundary
+    (small_T_offBoundary_weighted_linear_bound_from_davenportEnvelope henvelope)
 
 /-- Weighted finite cutoff from the Davenport separated-bound route and the
 off-boundary weighted atom. -/
