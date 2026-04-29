@@ -1738,3 +1738,25 @@ Timestamp: 2026-04-28 22:56 CDT.
     feeding the new corrected Perron-only route.
   - RS/Gabcke: prove `StandardGabckeQuarterLocalCubicTaylorCoefficientProp`
     by expanding the filled local quotient at `x = 0`.
+
+## Overnight 2026-04-29 Forty-First Pass Status
+
+- Atkinson lane is validated and pushed through `b41ded2`
+  (`proofdebt/20260429-atkinson-provider`):
+  - Commit: `Reduce Atkinson carrier cancellation to boundary split`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+  - Result: the carrier-cancellation atom is reduced to a boundary/Jacobian
+    split: an FTC decomposition, endpoint boundary control at
+    `relativePhase / relativeWeight`, and a Jacobian-integral bound at
+    `1 / relativeWeight`.
+- Current live atoms:
+  - Atkinson: shifted stationary-phase target remainder; carrier FTC
+    decomposition; endpoint boundary bound; Jacobian-integral bound.
+  - Perron/B5a: prove the isolated linear absorption atom, sharpen the small-T
+    cutoff to remove `(x / T) * (Real.log x)^2`, or deliberately strengthen the
+    public small-T surface used downstream.
+  - Pi/Phase: prove the canonical Perron/chosen-radius residual predicates
+    feeding the new corrected Perron-only route.
+  - RS/Gabcke: prove `StandardGabckeQuarterLocalCubicTaylorCoefficientProp`
+    by expanding the filled local quotient at `x = 0`.
