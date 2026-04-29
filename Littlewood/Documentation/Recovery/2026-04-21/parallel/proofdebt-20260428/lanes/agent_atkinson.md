@@ -1085,3 +1085,48 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
 - Coordinator action required:
   run the requested serialized validation; no local Lean/Lake/build/check
   validation was run in this round.
+
+### 2026-04-29 Round 21 Native Boundary/Correction Patch Handoff
+
+- Classification: `CONDITIONAL_REDUCTION`, pending coordinator validation.
+- Exact theorem attacked:
+  the two atoms left by Round 20: finite fixed-shift inverse-phase cell
+  patches and the stationary-phase complete-block target remainder.
+- Facts banked:
+  `atkinson_shiftedInversePhaseCell_finite_patch_of_boundary_and_correction`
+  reduces the finite fixed-shift inverse-phase cell patch family to native
+  fixed-shift boundary and correction prefix leaves via
+  `atkinson_shiftedInversePhaseCellPrefix_no_log_fixedShift_of_boundary_and_correction`.
+  `atkinson_largeShiftRowIntegralPrefix_bound_of_blockMode_stationaryPhase_and_finite_boundary_correction_patch`
+  wires the native shifted-interval `blockMode` remainder plus those finite
+  native leaves through the complete-block target and row-prefix route.
+- Failed routes / guardrails:
+  no boundary/correction provider decomposition was used. The finite
+  boundary/correction leaves here are local fixed-shift assumptions and do not
+  invoke `AtkinsonShiftedCorrectionPrefixBoundHyp`, so this is not the circular
+  provider route. No direct Abel, zero-model, mass-coefficient,
+  Fourier-corrected target, compensated-carrier, circular provider, diffuse
+  deweighting, axioms, sorries, or statement weakening were used.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/AtkinsonFormula.lean` and this ledger.
+- Requested validation:
+  `lake build Littlewood.Aristotle.Standalone.AtkinsonFormula`.
+- Likely first validation failure, if any:
+  local theorem reference or elaboration in
+  `atkinson_largeShiftRowIntegralPrefix_bound_of_blockMode_stationaryPhase_and_finite_boundary_correction_patch`,
+  because it composes several already-validated private reducers across their
+  exact statement shapes.
+- Remaining goal shape:
+  prove the native shifted-interval stationary-phase remainder
+  `∃ C_err > 0, ∃ J_err : ℕ, ∀ j : ℕ, J_err ≤ j -> 3 ≤ j -> 1 ≤ j ->`
+  `∀ k : ℕ, 2 * j ≤ k ->`
+  `‖(((atkinsonModeWeight (k - j) : ℝ) : ℂ) *`
+  `∫ p in Ioc (j : ℝ) ((j : ℝ) + 1),`
+  `StationaryPhaseMainMode.blockMode (k - j) p * blockJacobian (k - j) p)`
+  `- atkinsonCompleteBlockTargetK k j‖`
+  `≤ C_err * (atkinsonModeWeight k / j)`,
+  plus finite fixed-shift boundary and correction prefix leaves below the
+  eventual cutoff.
+- Coordinator action required:
+  run the requested serialized validation; no local Lean/Lake/build/check
+  validation was run in this round.
