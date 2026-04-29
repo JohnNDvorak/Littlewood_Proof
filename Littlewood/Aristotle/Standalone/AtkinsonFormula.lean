@@ -2449,6 +2449,22 @@ private theorem atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO
           rw [hnorm_inv]
           ring
 
+/-- The standard Atkinson Stirling-multiplier Big-O follows from a direct
+principal-log Stirling bound on the vertical line.  This bypasses the separate
+principal-branch identity for the multiplier. -/
+private theorem atkinson_multiplier_isBigO_of_vertical_principal_log_bound
+    (hbound :
+      ∃ C > 0, ∃ Y0 : ℝ, ∀ y : ℝ, Y0 ≤ y →
+        ‖Complex.log (Complex.Gamma ((1 / 4 : ℂ) + Complex.I * y)) -
+            Aristotle.StationaryPhaseStartValue.stirlingTerm
+              ((1 / 4 : ℂ) + Complex.I * y)‖ ≤ C / y) :
+    Asymptotics.IsBigO Filter.atTop
+      (fun t : ℝ => atkinsonGammaStirlingMultiplier t - 1)
+      (fun t : ℝ => ((1 / t : ℝ) : ℂ)) :=
+  atkinson_multiplier_isBigO_of_logGammaStirlingRemainder_isBigO
+    (atkinson_logGammaStirlingRemainder_isBigO_of_vertical_line_stirling
+      (atkinson_vertical_line_stirling_isBigO_of_principal_log_bound hbound))
+
 /-- A complex logarithmic Stirling remainder gives the branch-sensitive
 imaginary log-to-Stirling comparison directly. -/
 private theorem atkinson_logGamma_to_stirlingTerm_of_logGammaStirlingRemainder_isBigO
