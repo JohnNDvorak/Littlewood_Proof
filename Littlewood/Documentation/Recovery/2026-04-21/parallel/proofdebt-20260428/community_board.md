@@ -1528,3 +1528,34 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Perron/B5a: finite distance-weight summation bound.
   - Pi/Phase: same-height `PerronThresholdTowerPhaseWideWindowHyp` source.
   - RS/Gabcke: shifted raw numerator trig atom.
+
+## Overnight 2026-04-29 Thirty-Fifth Pass Status
+
+- RS/Gabcke lane is validated and pushed through `a85975c`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Close Gabcke numerator trig shift`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
+  - Result: the numerator trig atom is closed, and the raw trig identity plus
+    quarter local-function equality are now proved by the local normalization
+    route.
+  - Remaining RS/Gabcke atom:
+    `StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp`.
+- Pi/Phase lane is validated and pushed through `90558bd`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Expose pi wide-domination route`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: the same-height threshold-window source is reduced to
+    `PerronThresholdTowerWideDominationHyp`.
+  - Remaining Pi atom:
+    same-height arbitrary-radius domination of
+    `Real.log (max X (perronThreshold hRH T) + 1) + radius T ε + 1`
+    by the selected tower cap.
+- Current live atoms:
+  - Atkinson: normalized fixed-shift correction bound and shifted
+    stationary-phase target remainder.
+  - Perron/B5a: finite distance-weight summation bound.
+  - Pi/Phase: `PerronThresholdTowerWideDominationHyp`.
+  - RS/Gabcke:
+    `StandardGabckeRemovableCandidateQuarterTranslationThirdDerivativeProp`.
