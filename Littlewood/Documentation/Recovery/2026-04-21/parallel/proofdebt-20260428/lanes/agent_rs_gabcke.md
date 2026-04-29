@@ -2455,3 +2455,40 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   prove `StandardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp`, the
   numerator dslope coefficient data needed with the denominator data for the
   formal quotient coefficient calculation.
+
+### 2026-04-29 Round 52: numerator dslope coefficient split
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  `StandardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp`.
+- Banked inputs:
+  - The numerator dslope coefficients are the raw coefficients of
+    `standardGabckeQuarterLocalSineNumerator = sin (pi*w - 2*pi*w^2)` shifted
+    down by the Mathlib `dslope`/`fslope` transfer.
+  - The existing scalar `fslope` helper already proves the index shift for
+    `FormalMultilinearSeries.ofScalars`.
+- Proof facts banked:
+  - Added
+    `StandardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp`, the exact
+    raw numerator Taylor source at indices `1..4`:
+    `pi`, `-2*pi`, `-pi^3/6`, and `pi^3`.
+  - Proved
+    `standardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp_of_rawSineCoefficientData`,
+    reducing the numerator dslope coefficient data to that raw Taylor source.
+- Failed routes:
+  - No analytic provider or quotient shortcut was introduced.
+  - I did not assert an all-order numerator series; the remaining source is
+    the finite raw Taylor coefficient data needed by the quotient calculation.
+- Files changed:
+  - `Littlewood/Aristotle/Standalone/SiegelSaddleExpansionHyp.lean`
+  - `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_rs_gabcke.md`
+- Validation:
+  - Fast-forwarded branch to coordinator baseline `46a47d5` before editing.
+  - `git diff --check`: passed before this ledger append.
+  - `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`:
+    passed under `/tmp/littlewood-lean-singleflight.lock` using the corrected
+    `ps -axo comm=` guard.
+- Remaining smallest RS/Gabcke atom:
+  prove `StandardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp`, the
+  finite Taylor coefficient calculation for
+  `sin (Real.pi*w - 2*Real.pi*w^2)` through fourth order.

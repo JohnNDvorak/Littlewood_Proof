@@ -924,6 +924,18 @@ def StandardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp : Prop :=
       A 2 = -Real.pi ^ 3 / 6 ∧
       A 3 = Real.pi ^ 3
 
+/-- Exact raw Taylor coefficient data for
+`sin (pi*w - 2*pi*w^2)` through fourth order. The `dslope`/`fslope`
+transfer shifts these indices down to the numerator dslope coefficient data. -/
+def StandardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp : Prop :=
+  ∃ A : ℕ → ℝ,
+    HasFPowerSeriesAt standardGabckeQuarterLocalSineNumerator
+      (FormalMultilinearSeries.ofScalars ℝ A) 0 ∧
+      A 1 = Real.pi ∧
+      A 2 = -2 * Real.pi ∧
+      A 3 = -Real.pi ^ 3 / 6 ∧
+      A 4 = Real.pi ^ 3
+
 /-- Exact coefficient data for the denominator dslope through cubic order.
 For `sin(2*pi*w) / w`, the coefficients are
 `2*pi, 0, -4*pi^3/3, 0`. -/
@@ -1324,6 +1336,20 @@ private theorem standardGabckeQuarterLocalDenominatorDslope_fslope_ofScalars
     ContinuousMultilinearMap.curryLeft_apply, ContinuousMultilinearMap.smul_apply]
   intro n v
   simp [ContinuousMultilinearMap.mkPiAlgebraFin_apply]
+
+/-- Raw numerator sine coefficient data transfers to numerator dslope
+coefficient data by the same `dslope`/`fslope` index shift. -/
+theorem standardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp_of_rawSineCoefficientData
+    (h_raw : StandardGabckeQuarterLocalNumeratorRawSineCoefficientDataProp) :
+    StandardGabckeQuarterLocalNumeratorDslopeCoefficientDataProp := by
+  rcases h_raw with ⟨A, hA, hA1, hA2, hA3, hA4⟩
+  refine ⟨fun n : ℕ => A (n + 1), ?_, ?_, ?_, ?_, ?_⟩
+  · rw [← standardGabckeQuarterLocalDenominatorDslope_fslope_ofScalars A]
+    exact hA.has_fpower_series_dslope_fslope
+  · simpa using hA1
+  · simpa using hA2
+  · simpa using hA3
+  · simpa using hA4
 
 /-- A raw cubic coefficient for `sin (2*pi*w)` gives the quadratic coefficient
 of the removable quotient `sin (2*pi*w) / w` via the Mathlib `dslope`/`fslope`
