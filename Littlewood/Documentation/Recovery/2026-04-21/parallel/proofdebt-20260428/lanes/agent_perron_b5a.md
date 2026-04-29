@@ -974,3 +974,54 @@ Worktree: `/Users/john.n.dvorak/Projects/Littlewood_Proof_worktrees/proofdebt-20
   `(x/n)^(1 + 1/log x) + 1` on the boundary window.
 - Coordinator action required: run the requested focused validation; no full
   build requested.
+
+### 2026-04-29 Round 18 - Singular Pointwise Numerator Closure
+
+- Classification: `CONDITIONAL_REDUCTION`.
+- Exact theorem attacked:
+  the pointwise comparison
+  `∃ K > 0, ∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelSeparatedPuncturedBoundarySet x T,
+      perronKernelSeparatedDavenportSingularTerm x T n
+        <= K * perronKernelSeparatedLogDistanceTerm x T n`.
+- Code facts banked:
+  added `perronKernelSeparatedDavenportSingularNumerator`, isolating the
+  numerator `(x/n)^(1 + 1/log x) + 1`.
+  Added
+  `perronKernelSeparatedDavenportSingularTerm_le_logDistanceTerm_of_num_and_recip`,
+  reducing each singular summand to two elementary pointwise facts:
+  numerator boundedness and reciprocal-log distance comparison.
+  Added `small_T_separated_singular_pointwise_bound_from_num_and_recip`,
+  lifting those two local facts to the existential pointwise comparison needed
+  by `small_T_separated_singular_envelope_bound_from_logDistance`.
+  Proved `small_T_separated_singular_numerator_bound` with constant
+  `2 * Real.exp 1 + 1`; the proof uses separated-set large-side membership,
+  the boundary-window inequality, `T >= 2` to get `x / n <= 2`, and
+  `per_term_rpow_bound`.
+- Remaining pointwise atom:
+  prove the reciprocal-log distance comparison
+  `∀ x T, x >= 2 -> 2 <= T -> T <= 16 -> ∀ n ∈
+    perronKernelSeparatedPuncturedBoundarySet x T,
+      (Real.log (x / (n : ℝ)))⁻¹ <= x / (x - (n : ℝ))`.
+  This is the formal version of
+  `Real.log (x / n) >= (x - n) / x`.
+- Failed/demoted routes:
+  no use of the pure `O((log x)^2)` bounded-`T` envelope route, no macroscopic
+  pure window-weight replacement, and no pointwise
+  `K * T * (Real.log x)^2 / x` decay route.
+- Circular/forbidden routes avoided:
+  no use of `ContourRemainderBoundHyp.bound`, `general_formula_accessible`,
+  `PerronAssumptionsBridge.small_T_contour_bound`, public main imports,
+  `shifted_remainder_bound_atomic`, or any theorem consuming
+  `SmallTPerronBoundHyp`.  Did not use or modify `perron_tail_bound_core`.
+- Files changed:
+  `Littlewood/Aristotle/Standalone/PerronTruncationInfra.lean`;
+  `Littlewood/Documentation/Recovery/2026-04-21/parallel/proofdebt-20260428/lanes/agent_perron_b5a.md`.
+- Requested coordinator validation:
+  `lake build Littlewood.Aristotle.Standalone.PerronTruncationInfra`.
+- Smallest next theorem:
+  prove the reciprocal-log comparison above, likely from
+  `Real.one_sub_inv_le_log_of_pos` applied to `x / (n : ℝ)`, after rewriting
+  `1 - (x / n)⁻¹` as `(x - n) / x` using separated-set large-side membership.
+- Coordinator action required: run the requested focused validation; no full
+  build requested.

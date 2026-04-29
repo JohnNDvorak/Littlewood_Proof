@@ -1472,9 +1472,14 @@ def perronKernelSeparatedDavenportEnvelope (x T : ℝ) : ℝ :=
     ArithmeticFunction.vonMangoldt n *
       perronKernelSeparatedDavenportEnvelopeTerm x T n
 
+/-- Numerator of the singular Davenport summand.  This is uniformly bounded
+on the separated boundary window once `x / n <= 2` is extracted. -/
+def perronKernelSeparatedDavenportSingularNumerator (x : ℝ) (n : ℕ) : ℝ :=
+  (x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1
+
 /-- Singular summand of the separated Davenport envelope. -/
 def perronKernelSeparatedDavenportSingularTerm (x T : ℝ) (n : ℕ) : ℝ :=
-  ((x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1) /
+  perronKernelSeparatedDavenportSingularNumerator x n /
     (T * Real.log (x / (n : ℝ)))
 
 /-- Singular `1 / log (x/n)` part of the separated Davenport envelope. -/
@@ -1756,6 +1761,7 @@ theorem perronKernelSeparatedDavenportEnvelope_eq_singular_add_smooth
   classical
   dsimp [perronKernelSeparatedDavenportEnvelope,
     perronKernelSeparatedDavenportEnvelopeTerm,
+    perronKernelSeparatedDavenportSingularNumerator,
     perronKernelSeparatedDavenportSingularTerm,
     perronKernelSeparatedDavenportSingularEnvelope,
     perronKernelSeparatedDavenportSmoothEnvelope]
@@ -1793,6 +1799,40 @@ theorem perronKernelSeparatedDavenportSingularEnvelope_le_logDistanceEnvelope
         apply Finset.sum_congr rfl
         intro n _hn
         ring
+
+/-- Pointwise singular Davenport comparison from the two elementary local
+ingredients: a uniform numerator bound and the reciprocal-log distance
+comparison. -/
+theorem perronKernelSeparatedDavenportSingularTerm_le_logDistanceTerm_of_num_and_recip
+    (x T K : ℝ) (n : ℕ)
+    (hT_pos : 0 < T)
+    (hlog_pos : 0 < Real.log (x / (n : ℝ)))
+    (hK_nonneg : 0 ≤ K)
+    (hnum : perronKernelSeparatedDavenportSingularNumerator x n ≤ K)
+    (hrecip : (Real.log (x / (n : ℝ)))⁻¹ ≤ x / (x - (n : ℝ))) :
+    perronKernelSeparatedDavenportSingularTerm x T n ≤
+      K * perronKernelSeparatedLogDistanceTerm x T n := by
+  have hT_inv_nonneg : 0 ≤ T⁻¹ := inv_nonneg.mpr hT_pos.le
+  have hlog_inv_nonneg : 0 ≤ (Real.log (x / (n : ℝ)))⁻¹ :=
+    inv_nonneg.mpr hlog_pos.le
+  calc perronKernelSeparatedDavenportSingularTerm x T n
+      = perronKernelSeparatedDavenportSingularNumerator x n *
+          T⁻¹ * (Real.log (x / (n : ℝ)))⁻¹ := by
+        dsimp [perronKernelSeparatedDavenportSingularTerm]
+        ring
+    _ ≤ K * T⁻¹ * (Real.log (x / (n : ℝ)))⁻¹ := by
+        exact
+          mul_le_mul_of_nonneg_right
+            (mul_le_mul_of_nonneg_right hnum hT_inv_nonneg)
+            hlog_inv_nonneg
+    _ ≤ K * T⁻¹ * (x / (x - (n : ℝ))) := by
+        exact
+          mul_le_mul_of_nonneg_left hrecip
+            (mul_nonneg hK_nonneg hT_inv_nonneg)
+    _ = K * perronKernelSeparatedLogDistanceTerm x T n := by
+        dsimp [perronKernelSeparatedLogDistanceTerm]
+        rw [div_eq_mul_inv]
+        field_simp [hT_pos.ne']
 
 /-- Membership in the separated punctured boundary set puts the term strictly
 on the large side of the sharp cutoff.  The finite Perron sum only ranges over
@@ -2722,6 +2762,81 @@ theorem small_T_separated_singular_envelope_bound_from_logDistance
     _ ≤ K * (Cℓ * (x / T) * (Real.log x) ^ 2) :=
         mul_le_mul_of_nonneg_left hdistance_x hK_pos.le
     _ = (K * Cℓ) * (x / T) * (Real.log x) ^ 2 := by ring
+
+/-- Pointwise singular log-distance comparison from a numerator bound and the
+reciprocal-log distance comparison. -/
+theorem small_T_separated_singular_pointwise_bound_from_num_and_recip
+    (hnum : ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+          perronKernelSeparatedDavenportSingularNumerator x n ≤ A)
+    (hrecip : ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+          (Real.log (x / (n : ℝ)))⁻¹ ≤ x / (x - (n : ℝ))) :
+    ∃ K > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+          perronKernelSeparatedDavenportSingularTerm x T n ≤
+            K * perronKernelSeparatedLogDistanceTerm x T n := by
+  rcases hnum with ⟨A, hA_pos, hnum⟩
+  refine ⟨A, hA_pos, ?_⟩
+  intro x T hx hT_lo hT_hi n hn
+  have hT_pos : 0 < T := by linarith
+  rcases perronKernelSeparatedPuncturedBoundarySet_mem_large_side x T hx hT_lo hn with
+    ⟨_hn_pos, _hn_lt_x, hy_gt_one⟩
+  have hlog_pos : 0 < Real.log (x / (n : ℝ)) := Real.log_pos hy_gt_one
+  exact
+    perronKernelSeparatedDavenportSingularTerm_le_logDistanceTerm_of_num_and_recip
+      x T A n hT_pos hlog_pos hA_pos.le (hnum x T hx hT_lo hT_hi n hn)
+      (hrecip x T hx hT_lo hT_hi n hn)
+
+/-- The singular Davenport numerator is uniformly bounded on the separated
+boundary window.  The boundary-window condition and `T >= 2` give
+`x / n <= 2`, and the standard `c = 1 + 1/log x` rpow bound gives
+`(x/n)^c <= 2e`. -/
+theorem small_T_separated_singular_numerator_bound :
+    ∃ A > (0 : ℝ), ∀ x T : ℝ, x ≥ 2 → 2 ≤ T → T ≤ 16 →
+      ∀ n : ℕ,
+        n ∈ perronKernelSeparatedPuncturedBoundarySet x T →
+          perronKernelSeparatedDavenportSingularNumerator x n ≤ A := by
+  let A : ℝ := 2 * Real.exp 1 + 1
+  refine ⟨A, by positivity, ?_⟩
+  intro x T hx hT_lo _hT_hi n hn
+  have hx_nonneg : 0 ≤ x := by linarith
+  have hT_pos : 0 < T := by linarith
+  rcases perronKernelSeparatedPuncturedBoundarySet_mem_large_side x T hx hT_lo hn with
+    ⟨hn_pos, hn_lt_x, _hy_gt_one⟩
+  have hn_pos_real : (0 : ℝ) < n := Nat.cast_pos.mpr hn_pos
+  have hn_le_x : (n : ℝ) ≤ x := le_of_lt hn_lt_x
+  have hn_unfold := hn
+  dsimp [perronKernelSeparatedPuncturedBoundarySet] at hn_unfold
+  have hsp := (Finset.mem_filter.mp hn_unfold).1
+  have hboundary := (Finset.mem_filter.mp hsp).1
+  have hboundary_dist : |x - (n : ℝ)| ≤ x / T := (Finset.mem_filter.mp hboundary).2
+  have hdist_le : x - (n : ℝ) ≤ x / T := by
+    have hdist_nonneg : 0 ≤ x - (n : ℝ) := sub_nonneg.mpr hn_le_x
+    simpa [abs_of_nonneg hdist_nonneg] using hboundary_dist
+  have hx_div_T_le_half : x / T ≤ x / 2 := by
+    exact div_le_div_of_nonneg_left hx_nonneg (by norm_num : (0 : ℝ) < 2) hT_lo
+  have hdist_le_half : x - (n : ℝ) ≤ x / 2 := le_trans hdist_le hx_div_T_le_half
+  have hxn_le_two : x / (n : ℝ) ≤ 2 := by
+    rw [div_le_iff₀ hn_pos_real]
+    linarith
+  have hrpow_le_two_exp :
+      (x / (n : ℝ)) ^ (1 + 1 / Real.log x) ≤ 2 * Real.exp 1 := by
+    calc (x / (n : ℝ)) ^ (1 + 1 / Real.log x)
+        ≤ Real.exp 1 * (x / (n : ℝ)) :=
+          per_term_rpow_bound x hx n hn_pos hn_le_x
+      _ ≤ Real.exp 1 * 2 :=
+          mul_le_mul_of_nonneg_left hxn_le_two (Real.exp_pos 1).le
+      _ = 2 * Real.exp 1 := by ring
+  calc perronKernelSeparatedDavenportSingularNumerator x n
+      = (x / (n : ℝ)) ^ (1 + 1 / Real.log x) + 1 := by
+        rfl
+    _ ≤ A := by
+        dsimp [A]
+        linarith
 
 /-- Scale-correct separated weighted atom from a linear-window Davenport
 envelope bound.  This records the usable consequence of the separated
