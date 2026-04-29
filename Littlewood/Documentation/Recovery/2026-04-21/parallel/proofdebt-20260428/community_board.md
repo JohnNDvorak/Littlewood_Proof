@@ -1467,3 +1467,32 @@ Timestamp: 2026-04-28 22:56 CDT.
     comparison.
   - Pi/Phase: `FixedHeightPerronErrorPhaseWideWindowHyp`.
   - RS/Gabcke: shifted raw numerator/denominator trig atoms.
+
+## Overnight 2026-04-29 Thirty-Third Pass Status
+
+- Pi/Phase lane is validated and pushed through `01951b3`
+  (`proofdebt/20260429-pi-phase`):
+  - Commit: `Adapt pi fixed-height window from threshold window`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.PerronExplicitFormulaProvider Littlewood.Aristotle.Standalone.RHPiCorrectedPerronOnlyRoute Littlewood.Aristotle.Standalone.RHPiPhaseCouplingFromExactSeedBridge`.
+  - Result: `FixedHeightPerronErrorPhaseWideWindowHyp` is reduced to the
+    same-height `PerronThresholdTowerPhaseWideWindowHyp`, and the corrected
+    Perron-only route now packages through this threshold-window adapter.
+  - Remaining Pi atom: same-height threshold tower/window source, likely via
+    `PerronThresholdTowerWideDominationHyp` or its log-budget leaves.
+- RS/Gabcke lane is validated and pushed through `7f6a2e7`
+  (`proofdebt/20260429-rs-gabcke`):
+  - Commit: `Close Gabcke denominator trig shift`.
+  - Validation passed:
+    `lake build Littlewood.Aristotle.Standalone.SiegelSaddleExpansionHyp`.
+  - Result: `StandardGabckeQuarterShiftedRawDenominatorTrigProp` is closed
+    by the local quarter-shift trig normalization.
+  - Remaining RS/Gabcke atom:
+    `StandardGabckeQuarterShiftedRawNumeratorTrigProp`.
+- Current live atoms:
+  - Atkinson: shifted stationary-phase target remainder and pointwise
+    fixed-shift correction majorant.
+  - Perron/B5a: distance-weight summation and pointwise reciprocal-log
+    comparison.
+  - Pi/Phase: same-height `PerronThresholdTowerPhaseWideWindowHyp` source.
+  - RS/Gabcke: shifted raw numerator trig atom.
