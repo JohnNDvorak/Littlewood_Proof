@@ -3216,3 +3216,33 @@ Timestamp: 2026-04-28 22:56 CDT.
   - Current RS/Gabcke atom:
     `StandardGabckeQuarterLocalDslopeQuotientProductCoefficientProp`, the
     coefficient identity for orders `0,1,2,3`.
+
+## Overnight 2026-04-29 Clean Baseline Handoff
+
+- Coordinator recovery branch was clean and pushed through `47ce866` before
+  this handoff note.
+- Current proof-debt worktrees are clean and aligned to `47ce866`:
+  - `proofdebt/20260429-atkinson-provider`
+  - `proofdebt/20260429-perron-b5a`
+  - `proofdebt/20260429-pi-phase`
+  - `proofdebt/20260429-rs-gabcke`
+- No Lean/Lake process is active, and `/tmp/littlewood-lean-singleflight.lock`
+  is absent.
+- Replacement subagents could not be launched because the Codex usage limit was
+  reached. Resume after the reset with the same one-build-at-a-time rule.
+- Parked older worktrees still contain dirty, stale diffs and should not be
+  used as a baseline without explicit salvage review:
+  - `worktrees/atkinson-large-j`
+  - `worktrees/perron-hadamard`
+  - `worktrees/pi-phase`
+  - `worktrees/rs-gabcke`
+  - `worktrees/overnight-20260428/atkinson`
+  - `worktrees/overnight-20260428/perron-hadamard`
+  - `worktrees/overnight-20260428/pi-phase`
+  - `worktrees/overnight-20260428/rs-gabcke`
+- Next proof atoms remain:
+  - Atkinson: norm-scale vertical Stirling-ratio bound, or a direct standard
+    principal-log Gamma/Stirling theorem.
+  - Perron/B5a: bounded-height `perronVerticalContourRemainderRe` estimate.
+  - Pi/Phase: fixed-half threshold domination and raw chooser least-validity.
+  - RS/Gabcke: `StandardGabckeQuarterLocalDslopeQuotientProductCoefficientProp`.
